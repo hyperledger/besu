@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
 
 @FunctionalInterface
 public interface OutboundMessageHandler {
   OutboundMessageHandler NOOP = (peer, packet) -> {};
 
-  void send(final DiscoveryPeer toPeer, final Packet packet);
+  void send(final DiscoveryPeerV4 toPeer, final Packet packet);
 }

@@ -129,7 +129,11 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   }
 
   private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
-    return Caffeine.newBuilder().initialCapacity((int) maxSize).maximumSize(maxSize).expireAfterAccess(10, TimeUnit.MINUTES).build();
+    return Caffeine.newBuilder()
+        .initialCapacity((int) maxSize)
+        .maximumSize(maxSize)
+        .expireAfterAccess(10, TimeUnit.MINUTES)
+        .build();
   }
 
   /**
@@ -211,7 +215,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
     return getFromCacheOrParent(
-        ACCOUNT_INFO_STATE, accountHash, () -> parent.getAccount(accountHash));
+        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> parent.getAccount(accountHash));
   }
 
   @Override
@@ -219,24 +223,30 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    return parent.getCode(codeHash, accountHash);
+    return getFromCacheOrParent(
+        CODE_STORAGE, accountHash.getBytes(), () -> parent.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return parent.getAccountStateTrieNode(location, nodeHash);
+    return getFromCacheOrParent(
+        TRIE_BRANCH_STORAGE, nodeHash, () -> parent.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return  parent.getAccountStorageTrieNode(accountHash, location, nodeHash);
+    return getFromCacheOrParent(
+        TRIE_BRANCH_STORAGE,
+        nodeHash,
+        () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
+    final Bytes key =
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
     return getFromCacheOrParent(
         ACCOUNT_STORAGE_STORAGE,
         key,
@@ -248,7 +258,8 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
+    final Bytes key =
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
     return getFromCacheOrParent(
         ACCOUNT_STORAGE_STORAGE,
         key,
@@ -294,36 +305,36 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
-      /*if (!code.isEmpty()) {
-        stagePut(CODE_STORAGE, accountHash, code);
-      }*/
+      if (!code.isEmpty()) {
+        stagePut(CODE_STORAGE, accountHash.getBytes(), code);
+      }
       return super.putCode(accountHash, codeHash, code);
     }
 
     @Override
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      //stageRemoval(CODE_STORAGE, accountHash);
+      stageRemoval(CODE_STORAGE, accountHash.getBytes());
       return super.removeCode(accountHash, codeHash);
     }
 
     @Override
     public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
       if (!accountValue.isEmpty()) {
-        stagePut(ACCOUNT_INFO_STATE, accountHash, accountValue);
+        stagePut(ACCOUNT_INFO_STATE, accountHash.getBytes(), accountValue);
       }
       return super.putAccountInfoState(accountHash, accountValue);
     }
 
     @Override
     public Updater removeAccountInfoState(final Hash accountHash) {
-      stageRemoval(ACCOUNT_INFO_STATE, accountHash);
+      stageRemoval(ACCOUNT_INFO_STATE, accountHash.getBytes());
       return super.removeAccountInfoState(accountHash);
     }
 
     @Override
     public Updater putAccountStateTrieNode(
         final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      //stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
+      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
       return super.putAccountStateTrieNode(location, nodeHash, node);
     }
 
@@ -335,14 +346,14 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public synchronized Updater putAccountStorageTrieNode(
         final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      //stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
+      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
       return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
     }
 
     @Override
     public synchronized Updater putStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
-      final Bytes key = Bytes.concatenate(accountHash, slotHash);
+      final Bytes key = Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes());
       stagePut(ACCOUNT_STORAGE_STORAGE, key, storageValue);
       return super.putStorageValueBySlotHash(accountHash, slotHash, storageValue);
     }
@@ -350,7 +361,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public synchronized void removeStorageValueBySlotHash(
         final Hash accountHash, final Hash slotHash) {
-      final Bytes key = Bytes.concatenate(accountHash, slotHash);
+      final Bytes key = Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes());
       stageRemoval(ACCOUNT_STORAGE_STORAGE, key);
       super.removeStorageValueBySlotHash(accountHash, slotHash);
     }

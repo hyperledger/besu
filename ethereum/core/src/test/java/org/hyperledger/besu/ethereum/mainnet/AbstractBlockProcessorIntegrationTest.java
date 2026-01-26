@@ -601,7 +601,7 @@ class AbstractBlockProcessorIntegrationTest {
             300000L,
             5L,
             7L,
-            coinbase.toHexString(),
+            coinbase.getBytes().toHexString(),
             ACCOUNT_GENESIS_2_KEYPAIR); // ACCOUNT_GENESIS_2 -> COINBASE
 
     MutableWorldState worldState = worldStateArchive.getWorldState();
@@ -1138,11 +1138,7 @@ class AbstractBlockProcessorIntegrationTest {
             .baseFeePerGas(baseFeePerGas)
             .buildHeader();
     BlockBody blockBody =
-        new BlockBody(
-            Arrays.asList(transactions),
-            Collections.emptyList(),
-            Optional.empty(),
-            Optional.of(BlockAccessList.builder().build()));
+        new BlockBody(Arrays.asList(transactions), Collections.emptyList(), Optional.empty());
     return new Block(blockHeader, blockBody);
   }
 
@@ -1150,7 +1146,7 @@ class AbstractBlockProcessorIntegrationTest {
       final BlockProcessingResult result, final Address... expectedAddresses) {
     final List<Address> expected =
         Arrays.stream(expectedAddresses)
-            .sorted(Comparator.comparing(Address::toUnprefixedHexString))
+            .sorted(Comparator.comparing(addr -> addr.getBytes().toHexString()))
             .toList();
 
     final BlockAccessList blockAccessList =

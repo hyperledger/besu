@@ -21,9 +21,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.NoOpBonsaiWorldStateRegistry;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.NoOpBonsaiWorldStateRegistry;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
@@ -79,7 +79,7 @@ public class GenesisWorldStateProvider {
             storageConfiguration);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
-            bonsaiMerkleTriePreLoader,
+        bonsaiMerkleTriePreLoader,
         new NoOpBonsaiWorldStateRegistry(
             bonsaiWorldStateKeyValueStorage, EvmConfiguration.DEFAULT, codeCache),
         new NoOpTrieLogManager(),

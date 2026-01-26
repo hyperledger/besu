@@ -24,8 +24,7 @@ import dagger.Provides;
 public class BonsaiMerkleTriePreLoaderModule {
 
   @Provides
-  BonsaiMerkleTriePreLoader provideCachedMerkleTrieLoaderModule(
-      final MetricsSystem metricsSystem) {
+  BonsaiMerkleTriePreLoader provideCachedMerkleTrieLoaderModule(final MetricsSystem metricsSystem) {
     return new BonsaiMerkleTriePreLoader((ObservableMetricsSystem) metricsSystem);
   }
 }

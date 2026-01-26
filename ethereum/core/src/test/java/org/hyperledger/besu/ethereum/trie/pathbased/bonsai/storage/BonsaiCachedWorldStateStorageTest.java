@@ -73,7 +73,7 @@ public class BonsaiCachedWorldStateStorageTest {
     Bytes accountData = Bytes.of(1, 2, 3);
 
     assertThat(cachedStorage.getCacheSize(ACCOUNT_INFO_STATE)).isZero();
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isFalse();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isFalse();
 
     BonsaiWorldStateKeyValueStorage.Updater updater = parentStorage.updater();
     updater.putAccountInfoState(accountHash, accountData);
@@ -83,10 +83,10 @@ public class BonsaiCachedWorldStateStorageTest {
 
     assertThat(result1).isPresent().contains(accountData);
     assertThat(cachedStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(1);
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isTrue();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isTrue();
 
     Optional<VersionedValue> cachedValue =
-        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(cachedValue).isPresent();
     assertThat(cachedValue.get().value).isEqualTo(accountData);
     assertThat(cachedValue.get().isRemoval).isFalse();
@@ -111,7 +111,7 @@ public class BonsaiCachedWorldStateStorageTest {
 
     assertThat(result1).isPresent().contains(originalData);
     Optional<VersionedValue> cached1 =
-        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(cached1).isPresent();
     assertThat(cached1.get().version).isEqualTo(v0);
 
@@ -125,7 +125,7 @@ public class BonsaiCachedWorldStateStorageTest {
 
     assertThat(result2).isPresent().contains(updatedData);
     Optional<VersionedValue> cached2 =
-        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(cached2).isPresent();
     assertThat(cached2.get().value).isEqualTo(updatedData);
     assertThat(cached2.get().version).isEqualTo(v1);
@@ -150,7 +150,8 @@ public class BonsaiCachedWorldStateStorageTest {
     Hash accountHash = Hash.hash(Bytes.of(1));
     StorageSlotKey slotKey = new StorageSlotKey(UInt256.fromBytes(Bytes.of(2)));
     Bytes storageValue = Bytes.of(7, 8, 9);
-    Bytes concatenatedKey = Bytes.concatenate(accountHash, slotKey.getSlotHash());
+    Bytes concatenatedKey =
+        Bytes.concatenate(accountHash.getBytes(), slotKey.getSlotHash().getBytes());
 
     assertThat(cachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE)).isZero();
     assertThat(cachedStorage.isCached(ACCOUNT_STORAGE_STORAGE, concatenatedKey)).isFalse();
@@ -185,10 +186,10 @@ public class BonsaiCachedWorldStateStorageTest {
     parentUpdater.commit();
 
     cachedStorage.getAccount(accountHash);
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isTrue();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isTrue();
 
     Optional<VersionedValue> cachedBeforeRemoval =
-        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(cachedBeforeRemoval).isPresent();
     assertThat(cachedBeforeRemoval.get().isRemoval).isFalse();
 
@@ -197,10 +198,10 @@ public class BonsaiCachedWorldStateStorageTest {
     updater.removeAccountInfoState(accountHash);
     updater.commit();
 
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isTrue();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isTrue();
 
     Optional<VersionedValue> cachedAfterRemoval =
-        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(cachedAfterRemoval).isPresent();
     assertThat(cachedAfterRemoval.get().isRemoval).isTrue();
     assertThat(cachedAfterRemoval.get().value).isNull();
@@ -213,7 +214,7 @@ public class BonsaiCachedWorldStateStorageTest {
   public void testTrieNodeCaching() {
     Bytes location = Bytes.of(1, 2);
     Bytes nodeData = Bytes.of(10, 20, 30);
-    Bytes32 nodeHash = Hash.hash(nodeData);
+    Bytes32 nodeHash = Bytes32.wrap(Hash.hash(nodeData).getBytes());
 
     assertThat(cachedStorage.getCacheSize(TRIE_BRANCH_STORAGE)).isZero();
     assertThat(cachedStorage.isCached(TRIE_BRANCH_STORAGE, nodeHash)).isFalse();
@@ -238,7 +239,7 @@ public class BonsaiCachedWorldStateStorageTest {
     Hash accountHash = Hash.hash(Bytes.of(1));
     Bytes location = Bytes.of(2, 3);
     Bytes nodeData = Bytes.of(30, 40, 50);
-    Bytes32 nodeHash = Hash.hash(nodeData);
+    Bytes32 nodeHash = Bytes32.wrap(Hash.hash(nodeData).getBytes());
 
     assertThat(cachedStorage.getCacheSize(TRIE_BRANCH_STORAGE)).isZero();
 
@@ -274,8 +275,9 @@ public class BonsaiCachedWorldStateStorageTest {
     updater1.commit();
     long v1 = cachedStorage.getCurrentVersion();
 
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, account1)).isTrue();
-    Optional<VersionedValue> cached1 = cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, account1);
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, account1.getBytes())).isTrue();
+    Optional<VersionedValue> cached1 =
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, account1.getBytes());
     assertThat(cached1).isPresent();
     assertThat(cached1.get().version).isEqualTo(v1);
 
@@ -285,8 +287,9 @@ public class BonsaiCachedWorldStateStorageTest {
     updater2.commit();
     long v2 = cachedStorage.getCurrentVersion();
 
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, account2)).isTrue();
-    Optional<VersionedValue> cached2 = cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, account2);
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, account2.getBytes())).isTrue();
+    Optional<VersionedValue> cached2 =
+        cachedStorage.getCachedValue(ACCOUNT_INFO_STATE, account2.getBytes());
     assertThat(cached2).isPresent();
     assertThat(cached2.get().version).isEqualTo(v2);
 

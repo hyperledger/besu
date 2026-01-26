@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.neighbors;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.List;
@@ -38,9 +38,9 @@ public class NeighborsPacketDataRlpWriterTest {
   public void testWriteTo() {
     String idHex =
         "0x0fcd214b55ac7ad8f1d179b7a8ea637271226ab8f5ee3ec6e12d2e27b90e0ed25e1dc9d2dc847141ee7cda64c4c7d937fe37d977bef14f277e7a4273920dcc20";
-    final List<DiscoveryPeer> peers =
+    final List<DiscoveryPeerV4> peers =
         List.of(
-            DiscoveryPeer.fromIdAndEndpoint(
+            DiscoveryPeerV4.fromIdAndEndpoint(
                 Bytes.fromHexString(idHex), new Endpoint("10.0.0.1", 30303, Optional.of(123))));
     final long expiration = 456;
     final NeighborsPacketData neighborsPacketData = new NeighborsPacketData(peers, expiration);

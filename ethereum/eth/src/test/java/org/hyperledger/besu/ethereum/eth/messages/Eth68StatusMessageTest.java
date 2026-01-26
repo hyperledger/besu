@@ -57,7 +57,7 @@ public class Eth68StatusMessageTest {
     assertThat(msg.networkId()).isEqualTo(networkId);
     assertThat(msg.totalDifficulty().get()).isEqualTo(td);
     assertThat(msg.bestHash()).isEqualTo(bestHash);
-    assertThat(msg.genesisHash()).isEqualTo(genesisHash);
+    assertThat(msg.genesisHash()).isEqualTo(genesisHash.getBytes());
     assertThat(msg.forkId()).isEqualTo(forkId);
   }
 
@@ -71,7 +71,7 @@ public class Eth68StatusMessageTest {
     assertThat(copy.networkId()).isEqualTo(networkId);
     assertThat(copy.totalDifficulty().get()).isEqualTo(td);
     assertThat(copy.bestHash()).isEqualTo(bestHash);
-    assertThat(copy.genesisHash()).isEqualTo(genesisHash);
+    assertThat(copy.genesisHash()).isEqualTo(genesisHash.getBytes());
     assertThat(copy.forkId()).isEqualTo(forkId);
   }
 
@@ -149,8 +149,8 @@ public class Eth68StatusMessageTest {
     out.writeIntScalar(69);
     out.writeBigIntegerScalar(networkId);
     out.writeUInt256Scalar(Difficulty.of(1000L));
-    out.writeBytes(bestHash);
-    out.writeBytes(genesisHash);
+    out.writeBytes(bestHash.getBytes());
+    out.writeBytes(genesisHash.getBytes());
     forkId.writeTo(out);
     out.endList();
     assertThrows(

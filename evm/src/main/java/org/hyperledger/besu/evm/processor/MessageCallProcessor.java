@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.log.TransferLogEmitter;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -42,6 +43,9 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
   /** The precompiles. */
   protected final PrecompileContractRegistry precompiles;
 
+  /** Strategy for emitting ETH transfer logs (no-op before Amsterdam, EIP-7708 after). */
+  protected final TransferLogEmitter transferLogEmitter;
+
   /**
    * Instantiates a new Message call processor.
    *
@@ -53,8 +57,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
       final EVM evm,
       final PrecompileContractRegistry precompiles,
       final Collection<Address> forceCommitAddresses) {
-    super(evm, forceCommitAddresses);
-    this.precompiles = precompiles;
+    this(evm, precompiles, forceCommitAddresses, TransferLogEmitter.NOOP);
   }
 
   /**
@@ -64,8 +67,25 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    * @param precompiles the precompiles
    */
   public MessageCallProcessor(final EVM evm, final PrecompileContractRegistry precompiles) {
-    super(evm, Set.of());
+    this(evm, precompiles, Set.of(), TransferLogEmitter.NOOP);
+  }
+
+  /**
+   * Instantiates a new Message call processor with transfer log emission support.
+   *
+   * @param evm the evm
+   * @param precompiles the precompiles
+   * @param forceCommitAddresses the force commit addresses
+   * @param transferLogEmitter strategy for emitting transfer logs
+   */
+  public MessageCallProcessor(
+      final EVM evm,
+      final PrecompileContractRegistry precompiles,
+      final Collection<Address> forceCommitAddresses,
+      final TransferLogEmitter transferLogEmitter) {
+    super(evm, forceCommitAddresses);
     this.precompiles = precompiles;
+    this.transferLogEmitter = transferLogEmitter;
   }
 
   @Override
@@ -146,6 +166,10 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
           prevRecipientBalance,
           recipientAccount.getBalance());
     }
+
+    // Emit transfer log for nonzero value transfers (no-op before Amsterdam, EIP-7708 after)
+    transferLogEmitter.emitTransferLog(
+        frame, frame.getSenderAddress(), frame.getRecipientAddress(), frame.getValue());
   }
 
   /**

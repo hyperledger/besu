@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,10 +30,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A 160-bits account address. */
-public class Address extends DelegatingBytes {
+public class Address extends BytesHolder {
 
   /** The constant SIZE. */
   public static final int SIZE = 20;
@@ -104,7 +102,7 @@ public class Address extends DelegatingBytes {
               new CacheLoader<>() {
                 @Override
                 public Hash load(final Address key) {
-                  return Hash.hash(key);
+                  return Hash.hash(key.getBytes());
                 }
               });
 
@@ -129,13 +127,7 @@ public class Address extends DelegatingBytes {
         "An account address must be %s bytes long, got %s",
         SIZE,
         value.size());
-    if (value instanceof Address address) {
-      return address;
-    } else if (value instanceof DelegatingBytes delegatingBytes) {
-      return new Address(delegatingBytes.copy());
-    } else {
-      return new Address(value);
-    }
+    return new Address(value);
   }
 
   /**
@@ -240,7 +232,7 @@ public class Address extends DelegatingBytes {
             RLP.encode(
                 out -> {
                   out.startList();
-                  out.writeBytes(senderAddress);
+                  out.writeBytes(senderAddress.getBytes());
                   out.writeLongScalar(nonce);
                   out.endList();
                 })));
@@ -255,25 +247,7 @@ public class Address extends DelegatingBytes {
     try {
       return hashCache.get(this);
     } catch (ExecutionException e) {
-      return Hash.hash(this);
+      return Hash.hash(getBytes());
     }
-  }
-
-  @Override
-  public boolean equals(final Object obj) {
-    if (obj == this) {
-      return true;
-    }
-    if (!(obj instanceof Address)) {
-      return false;
-    }
-    Address other = (Address) obj;
-    return Arrays.equals(this.toArrayUnsafe(), other.toArrayUnsafe());
-  }
-
-  @Override
-  public int hashCode() {
-    // Delegate to parent's hashCode implementation which uses delegate.hashCode()
-    return super.hashCode();
   }
 }

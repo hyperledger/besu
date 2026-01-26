@@ -35,8 +35,7 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
     implements PathBasedSnapshotWorldStateKeyValueStorage, StorageSubscriber {
 
   protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
-  private static final Logger LOG =
-      LoggerFactory.getLogger(BonsaiSnapshotWorldStateStorage.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldStateStorage.class);
   private final long subscribeParentId;
 
   public BonsaiSnapshotWorldStateStorage(

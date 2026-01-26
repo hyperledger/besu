@@ -670,7 +670,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         createWorldStateArchive(
             worldStateStorageCoordinator,
             blockchain,
-                bonsaiMerkleTriePreLoader,
+            bonsaiMerkleTriePreLoader,
             worldStateHealerSupplier::get);
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
@@ -1263,11 +1263,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getPathBasedExtraStorageConfiguration()
-                    .getMaxLayersToLoad()),
-                bonsaiMerkleTriePreLoader,
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
+            bonsaiMerkleTriePreLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             worldStateHealerSupplier,
@@ -1280,11 +1277,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         yield new BonsaiArchiveWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getPathBasedExtraStorageConfiguration()
-                    .getMaxLayersToLoad()),
-                bonsaiMerkleTriePreLoader,
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
+            bonsaiMerkleTriePreLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
             worldStateHealerSupplier,

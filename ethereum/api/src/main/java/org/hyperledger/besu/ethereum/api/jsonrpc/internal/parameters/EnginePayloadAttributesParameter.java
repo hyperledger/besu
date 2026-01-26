@@ -72,7 +72,7 @@ public class EnginePayloadAttributesParameter {
         new JsonObject()
             .put("timestamp", timestamp)
             .put("prevRandao", prevRandao.toHexString())
-            .put("suggestedFeeRecipient", suggestedFeeRecipient.toHexString());
+            .put("suggestedFeeRecipient", suggestedFeeRecipient.getBytes().toHexString());
     if (withdrawals != null) {
       json.put(
           "withdrawals",

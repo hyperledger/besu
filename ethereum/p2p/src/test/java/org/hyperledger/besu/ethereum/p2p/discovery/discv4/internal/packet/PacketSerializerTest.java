@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet;
 
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PacketType;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.enrrequest.EnrRequestPacketDataFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.enrrequest.EnrRequestPacketDataRlpWriter;
@@ -170,7 +170,7 @@ public class PacketSerializerTest {
     final PacketData data =
         packetDataFactory.create(
             List.of(
-                DiscoveryPeer.fromIdAndEndpoint(
+                DiscoveryPeerV4.fromIdAndEndpoint(
                     Bytes.repeat((byte) 0x98, 64),
                     new Endpoint("10.0.0.1", 30303, Optional.empty()))),
             456);

@@ -76,7 +76,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     parentUpdater.commit();
 
     liveStorage.getAccount(accountHash);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isTrue();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isTrue();
 
     BonsaiSnapshotWorldStateStorage snapshot = liveStorage.createSnapshot();
     long snapshotVersion = liveStorage.getCurrentVersion();
@@ -93,7 +93,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     assertThat(snapshot.getAccount(accountHash)).isPresent().contains(originalData);
 
     Optional<BonsaiCachedWorldStateStorage.VersionedValue> liveValue =
-        liveStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        liveStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(liveValue).isPresent();
     assertThat(liveValue.get().value).isEqualTo(updatedData);
     assertThat(liveValue.get().version).isEqualTo(newVersion);
@@ -111,7 +111,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     updater1.putAccountInfoState(account1, data1);
     updater1.commit();
 
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, account1)).isTrue();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, account1.getBytes())).isTrue();
     long v1 = liveStorage.getCurrentVersion();
 
     BonsaiSnapshotWorldStateStorage snapshot = liveStorage.createSnapshot();
@@ -131,8 +131,8 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     assertThat(liveStorage.getAccount(account2)).isPresent().contains(data2);
 
     assertThat(liveStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(2);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, account1)).isTrue();
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, account2)).isTrue();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, account1.getBytes())).isTrue();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, account2.getBytes())).isTrue();
   }
 
   @Test
@@ -172,7 +172,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     assertThat(liveStorage.getAccount(accountHash)).isPresent().contains(data3);
 
     Optional<BonsaiCachedWorldStateStorage.VersionedValue> cachedValue =
-        liveStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        liveStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(cachedValue).isPresent();
     assertThat(cachedValue.get().version).isEqualTo(v3);
   }
@@ -183,7 +183,8 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     StorageSlotKey slotKey = new StorageSlotKey(UInt256.fromBytes(Bytes.of(2)));
     Bytes originalValue = Bytes.of(10);
     Bytes updatedValue = Bytes.of(20);
-    Bytes concatenatedKey = Bytes.concatenate(accountHash, slotKey.getSlotHash());
+    Bytes concatenatedKey =
+        Bytes.concatenate(accountHash.getBytes(), slotKey.getSlotHash().getBytes());
 
     BonsaiWorldStateKeyValueStorage.Updater parentUpdater = parentStorage.updater();
     parentUpdater.putStorageValueBySlotHash(accountHash, slotKey.getSlotHash(), originalValue);
@@ -227,7 +228,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     parentUpdater.commit();
 
     liveStorage.getAccount(accountHash);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isTrue();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isTrue();
 
     long v1 = liveStorage.getCurrentVersion();
     BonsaiSnapshotWorldStateStorage snapshot = liveStorage.createSnapshot();
@@ -244,7 +245,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     assertThat(snapshot.getAccount(accountHash)).isPresent().contains(accountData);
 
     Optional<BonsaiCachedWorldStateStorage.VersionedValue> liveValue =
-        liveStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash);
+        liveStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes());
     assertThat(liveValue).isPresent();
     assertThat(liveValue.get().isRemoval).isTrue();
     assertThat(liveValue.get().version).isEqualTo(v2);
@@ -261,7 +262,7 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     parentUpdater.commit();
 
     liveStorage.getCode(codeHash, accountHash);
-    assertThat(liveStorage.isCached(CODE_STORAGE, accountHash)).isTrue();
+    assertThat(liveStorage.isCached(CODE_STORAGE, accountHash.getBytes())).isTrue();
 
     BonsaiSnapshotWorldStateStorage snapshot = liveStorage.createSnapshot();
 
@@ -273,9 +274,9 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
   public void testSnapshot_trieNodeIsolation() {
     Bytes location = Bytes.of(1, 2);
     Bytes nodeData1 = Bytes.of(10, 20, 30);
-    Bytes32 nodeHash1 = Hash.hash(nodeData1);
+    Bytes32 nodeHash1 = Bytes32.wrap(Hash.hash(nodeData1).getBytes());
     Bytes nodeData2 = Bytes.of(40, 50, 60);
-    Bytes32 nodeHash2 = Hash.hash(nodeData2);
+    Bytes32 nodeHash2 = Bytes32.wrap(Hash.hash(nodeData2).getBytes());
 
     BonsaiWorldStateKeyValueStorage.Updater parentUpdater = parentStorage.updater();
     parentUpdater.putAccountStateTrieNode(location, nodeHash1, nodeData1);
@@ -305,9 +306,9 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     Hash accountHash = Hash.hash(Bytes.of(1));
     Bytes location = Bytes.of(2, 3);
     Bytes nodeData1 = Bytes.of(30, 40, 50);
-    Bytes32 nodeHash1 = Hash.hash(nodeData1);
+    Bytes32 nodeHash1 = Bytes32.wrap(Hash.hash(nodeData1).getBytes());
     Bytes nodeData2 = Bytes.of(60, 70, 80);
-    Bytes32 nodeHash2 = Hash.hash(nodeData2);
+    Bytes32 nodeHash2 = Bytes32.wrap(Hash.hash(nodeData2).getBytes());
 
     BonsaiWorldStateKeyValueStorage.Updater parentUpdater = parentStorage.updater();
     parentUpdater.putAccountStorageTrieNode(accountHash, location, nodeHash1, nodeData1);
@@ -342,14 +343,14 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
     parentUpdater.commit();
 
     long initialCacheSize = liveStorage.getCacheSize(ACCOUNT_INFO_STATE);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isFalse();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isFalse();
 
     BonsaiSnapshotWorldStateStorage snapshot = liveStorage.createSnapshot();
 
     snapshot.getAccount(accountHash);
 
     assertThat(liveStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(initialCacheSize);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash)).isFalse();
+    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isFalse();
   }
 
   @Test

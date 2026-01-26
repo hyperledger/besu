@@ -62,7 +62,7 @@ public class BalConfigurationOptions {
       names = {"--Xbal-api-enabled"},
       hidden = true,
       description =
-          "Set to enable eth_getBlockAccessListByNumber method and Block Access Lists in simulation results")
+          "Set to enable eth_getBlockAccessListByBlockNumber and eth_getBlockAccessListByBlockHash methods and Block Access Lists in simulation results")
   private final Boolean balApiEnabled = false;
 
   @CommandLine.Option(
@@ -79,6 +79,12 @@ public class BalConfigurationOptions {
       description = "Timeout in milliseconds when waiting for BAL transaction processing results.")
   private long balProcessingTimeoutMs = Duration.ofSeconds(1).toMillis();
 
+  @CommandLine.Option(
+      names = {"--Xbal-fetch-reading-enabled"},
+      hidden = true,
+      description = "Enable prefetching of state data based on BAL read operations.")
+  boolean balFetchReadingEnabled = false;
+
   /**
    * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
    *
@@ -92,6 +98,7 @@ public class BalConfigurationOptions {
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .isBalStateRootTrusted(balTrustStateRoot)
+        .isBalFetchReadingEnabled(balFetchReadingEnabled)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .balProcessingTimeout(Duration.ofMillis(balProcessingTimeoutMs))
         .build();

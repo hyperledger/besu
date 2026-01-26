@@ -139,6 +139,76 @@ public class DataStorageOptionsTest
   }
 
   @Test
+  public void parallelTxProcessingEnabledByDefault() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getPathBasedExtraStorageConfiguration()
+                        .getParallelTxProcessingEnabled())
+                .isEqualTo(true));
+  }
+
+  @Test
+  public void parallelTxProcessingCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getPathBasedExtraStorageConfiguration()
+                        .getParallelTxProcessingEnabled())
+                .isEqualTo(true),
+        "--bonsai-parallel-tx-processing-enabled=true");
+  }
+
+  @Test
+  public void parallelTxProcessingCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getPathBasedExtraStorageConfiguration()
+                        .getParallelTxProcessingEnabled())
+                .isEqualTo(false),
+        "--bonsai-parallel-tx-processing-enabled=false");
+  }
+
+  @Test
+  public void parallelStateRootComputationEnabledByDefault() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getPathBasedExtraStorageConfiguration()
+                        .getParallelStateRootComputationEnabled())
+                .isEqualTo(true));
+  }
+
+  @Test
+  public void parallelStateRootComputationCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getPathBasedExtraStorageConfiguration()
+                        .getParallelStateRootComputationEnabled())
+                .isEqualTo(true),
+        "--bonsai-parallel-state-root-computation-enabled=true");
+  }
+
+  @Test
+  public void parallelStateRootComputationCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration
+                        .getPathBasedExtraStorageConfiguration()
+                        .getParallelStateRootComputationEnabled())
+                .isEqualTo(false),
+        "--bonsai-parallel-state-root-computation-enabled=false");
+  }
+
+  @Test
   public void receiptCompactionCanBeEnabledWithImplicitTrueValue() {
     internalTestSuccess(
         dataStorageConfiguration ->
@@ -176,6 +246,8 @@ public class DataStorageOptionsTest
                 .maxLayersToLoad(513L)
                 .limitTrieLogsEnabled(true)
                 .trieLogPruningWindowSize(514)
+                .parallelTxProcessingEnabled(true)
+                .parallelStateRootComputationEnabled(true)
                 .build())
         .build();
   }

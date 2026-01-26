@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
 import java.util.List;

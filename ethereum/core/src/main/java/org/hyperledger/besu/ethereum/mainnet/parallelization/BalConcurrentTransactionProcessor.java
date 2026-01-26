@@ -70,6 +70,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
   private final MainnetTransactionProcessor transactionProcessor;
   private final BlockAccessList blockAccessList;
   private final Duration balProcessingTimeout;
+  private final boolean isPrefetchReadingEnabled;
 
   public BalConcurrentTransactionProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -78,6 +79,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
     this.transactionProcessor = transactionProcessor;
     this.blockAccessList = blockAccessList;
     this.balProcessingTimeout = balConfiguration.getBalProcessingTimeout();
+    this.isPrefetchReadingEnabled = balConfiguration.isBalFetchReadingEnabled();
   }
 
   @Override
@@ -90,7 +92,9 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       final Wei blobGasPrice,
       final Executor executor,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
-    preFetchRead(protocolContext, blockHeader, executor);
+    if (isPrefetchReadingEnabled) {
+      preFetchRead(protocolContext, blockHeader, executor);
+    }
     super.runAsyncBlock(
         protocolContext,
         blockHeader,
@@ -151,8 +155,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                 allReadFutures.add(slotReadFuture);
               }
             }
-            CompletableFuture.allOf(
-                    allReadFutures.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(allReadFutures.toArray(new CompletableFuture[0])).join();
             LOG.debug("Prefetch completed: {} total read operations", allReadFutures.size());
           }
         },

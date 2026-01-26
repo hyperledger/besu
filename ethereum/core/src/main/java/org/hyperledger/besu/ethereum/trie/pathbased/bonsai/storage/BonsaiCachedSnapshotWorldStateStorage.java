@@ -88,7 +88,7 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
     return getFromCacheOrParent(
-        ACCOUNT_INFO_STATE, accountHash, () -> parent.getAccount(accountHash));
+        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> parent.getAccount(accountHash));
   }
 
   @Override
@@ -97,7 +97,7 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       return Optional.of(Bytes.EMPTY);
     }
     return getFromCacheOrParent(
-        CODE_STORAGE, accountHash, () -> parent.getCode(codeHash, accountHash));
+        CODE_STORAGE, accountHash.getBytes(), () -> parent.getCode(codeHash, accountHash));
   }
 
   @Override
@@ -118,7 +118,8 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
+    final Bytes key =
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
     return getFromCacheOrParent(
         ACCOUNT_STORAGE_STORAGE,
         key,
@@ -130,7 +131,8 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    final Bytes key = Bytes.concatenate(accountHash, storageSlotKey.getSlotHash());
+    final Bytes key =
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
     return getFromCacheOrParent(
         ACCOUNT_STORAGE_STORAGE,
         key,

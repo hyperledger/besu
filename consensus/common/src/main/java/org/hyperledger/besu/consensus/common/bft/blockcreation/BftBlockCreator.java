@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -83,7 +82,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
         ((BftProtocolSchedule) protocolSchedule)
             .getByBlockNumberOrTimestamp(parentHeader.getNumber() + 1, timestamp);
 
-    if (protocolSpec.getWithdrawalsValidator() instanceof WithdrawalsValidator.AllowedWithdrawals) {
+    if (protocolSpec.getWithdrawalsProcessor().isPresent()) {
       return createEmptyWithdrawalsBlock(timestamp, parentHeader);
     } else {
       return createBlock(Optional.empty(), Optional.empty(), timestamp, parentHeader);
@@ -102,7 +101,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
               .getByBlockNumberOrTimestamp(pendingHeader.getNumber(), blockTimestamp);
       Address beneficiaryAddress =
           protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
-      return !beneficiaryAddress.isZero() ? beneficiaryAddress : localAddress;
+      return !beneficiaryAddress.getBytes().isZero() ? beneficiaryAddress : localAddress;
     };
   }
 

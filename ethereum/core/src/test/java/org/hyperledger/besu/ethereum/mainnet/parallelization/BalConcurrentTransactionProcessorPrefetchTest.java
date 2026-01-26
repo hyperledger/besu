@@ -20,21 +20,26 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.NoOpBonsaiWorldStateRegistry;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -42,6 +47,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -49,11 +55,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class BalConcurrentTransactionProcessorPrefetchTest {
 
@@ -138,8 +146,10 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     processor.preFetchRead(protocolContext, blockHeader, Runnable::run);
 
     assertThat(cachedStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(2);
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, address1.addressHash())).isTrue();
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, address2.addressHash())).isTrue();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, address1.addressHash().getBytes()))
+        .isTrue();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, address2.addressHash().getBytes()))
+        .isTrue();
   }
 
   @Test
@@ -180,17 +190,20 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
 
     processor.preFetchRead(protocolContext, blockHeader, Runnable::run);
 
-    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, address.addressHash())).isTrue();
+    assertThat(cachedStorage.isCached(ACCOUNT_INFO_STATE, address.addressHash().getBytes()))
+        .isTrue();
     assertThat(cachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE)).isEqualTo(2);
     assertThat(
             cachedStorage.isCached(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(address.addressHash(), slot1.getSlotHash())))
+                Bytes.concatenate(
+                    address.addressHash().getBytes(), slot1.getSlotHash().getBytes())))
         .isTrue();
     assertThat(
             cachedStorage.isCached(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(address.addressHash(), slot2.getSlotHash())))
+                Bytes.concatenate(
+                    address.addressHash().getBytes(), slot2.getSlotHash().getBytes())))
         .isTrue();
   }
 
@@ -254,5 +267,95 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
 
     assertThat(cachedStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(5);
     assertThat(cachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE)).isEqualTo(15);
+  }
+
+  @Test
+  public void testRunAsyncBlock_callsPrefetchWhenEnabled() {
+    Address address = Address.fromHexString("0x1111111111111111111111111111111111111111");
+    Bytes accountData = Bytes.of(1, 2, 3);
+
+    BonsaiWorldStateKeyValueStorage.Updater updater = parentStorage.updater();
+    updater.putAccountInfoState(address.addressHash(), accountData);
+    updater.commit();
+
+    List<BlockAccessList.AccountChanges> accountChangesList = new ArrayList<>();
+    accountChangesList.add(
+        new BlockAccessList.AccountChanges(
+            address, List.of(), List.of(), List.of(), List.of(), List.of()));
+
+    BlockAccessList blockAccessList = new BlockAccessList(accountChangesList);
+
+    BalConfiguration config =
+        ImmutableBalConfiguration.builder().isBalFetchReadingEnabled(true).build();
+
+    MainnetTransactionProcessor txProcessor = mock(MainnetTransactionProcessor.class);
+    BalConcurrentTransactionProcessor processor =
+        new BalConcurrentTransactionProcessor(txProcessor, blockAccessList, config);
+
+    BalConcurrentTransactionProcessor spyProcessor = Mockito.spy(processor);
+
+    List<Transaction> transactions = List.of();
+    Address miningBeneficiary = Address.ZERO;
+    BlockHashLookup blockHashLookup = mock(BlockHashLookup.class);
+    Wei blobGasPrice = Wei.ZERO;
+    Executor executor = Runnable::run;
+
+    spyProcessor.runAsyncBlock(
+        protocolContext,
+        blockHeader,
+        transactions,
+        miningBeneficiary,
+        blockHashLookup,
+        blobGasPrice,
+        executor,
+        Optional.empty());
+
+    verify(spyProcessor, times(1))
+        .preFetchRead(any(ProtocolContext.class), any(BlockHeader.class), any(Executor.class));
+  }
+
+  @Test
+  public void testRunAsyncBlock_doesNotCallPrefetchWhenDisabled() {
+    Address address = Address.fromHexString("0x1111111111111111111111111111111111111111");
+    Bytes accountData = Bytes.of(1, 2, 3);
+
+    BonsaiWorldStateKeyValueStorage.Updater updater = parentStorage.updater();
+    updater.putAccountInfoState(address.addressHash(), accountData);
+    updater.commit();
+
+    List<BlockAccessList.AccountChanges> accountChangesList = new ArrayList<>();
+    accountChangesList.add(
+        new BlockAccessList.AccountChanges(
+            address, List.of(), List.of(), List.of(), List.of(), List.of()));
+
+    BlockAccessList blockAccessList = new BlockAccessList(accountChangesList);
+
+    BalConfiguration config =
+        ImmutableBalConfiguration.builder().isBalFetchReadingEnabled(false).build();
+
+    MainnetTransactionProcessor txProcessor = mock(MainnetTransactionProcessor.class);
+    BalConcurrentTransactionProcessor processor =
+        new BalConcurrentTransactionProcessor(txProcessor, blockAccessList, config);
+
+    BalConcurrentTransactionProcessor spyProcessor = Mockito.spy(processor);
+
+    List<Transaction> transactions = List.of();
+    Address miningBeneficiary = Address.ZERO;
+    BlockHashLookup blockHashLookup = mock(BlockHashLookup.class);
+    Wei blobGasPrice = Wei.ZERO;
+    Executor executor = Runnable::run;
+
+    spyProcessor.runAsyncBlock(
+        protocolContext,
+        blockHeader,
+        transactions,
+        miningBeneficiary,
+        blockHashLookup,
+        blobGasPrice,
+        executor,
+        Optional.empty());
+
+    verify(spyProcessor, never())
+        .preFetchRead(any(ProtocolContext.class), any(BlockHeader.class), any(Executor.class));
   }
 }

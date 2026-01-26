@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryTestHelper;
 
 import java.util.List;
@@ -32,11 +31,11 @@ public class BucketTest {
   @Test
   public void successfulAddAndGet() {
     final Bucket kBucket = new Bucket(16);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(10);
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(10);
     for (int i = 0; i < peers.size() - 1; i++) {
       kBucket.add(peers.get(i));
     }
-    final DiscoveryPeer testPeer = peers.get(peers.size() - 1);
+    final DiscoveryPeerV4 testPeer = peers.get(peers.size() - 1);
     kBucket.add(testPeer);
     assertThat(testPeer).isEqualTo(kBucket.getAndTouch(testPeer.getId()).get());
   }
@@ -44,20 +43,20 @@ public class BucketTest {
   @Test
   public void unsuccessfulAdd() {
     final Bucket kBucket = new Bucket(16);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(17);
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(17);
     for (int i = 0; i < peers.size() - 1; i++) {
       kBucket.add(peers.get(i));
     }
-    final DiscoveryPeer testPeer = peers.get(peers.size() - 1);
-    final Optional<DiscoveryPeer> evictionCandidate = kBucket.add(testPeer);
+    final DiscoveryPeerV4 testPeer = peers.get(peers.size() - 1);
+    final Optional<DiscoveryPeerV4> evictionCandidate = kBucket.add(testPeer);
     assertThat(evictionCandidate.get()).isEqualTo(kBucket.getAndTouch(peers.get(0).getId()).get());
   }
 
   @Test
   public void movedToHead() {
     final Bucket kBucket = new Bucket(16);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
-    for (final DiscoveryPeer peer : peers) {
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(5);
+    for (final DiscoveryPeerV4 peer : peers) {
       kBucket.add(peer);
     }
     kBucket.getAndTouch(peers.get(0).getId());
@@ -67,8 +66,8 @@ public class BucketTest {
   @Test
   public void evictPeer() {
     final Bucket kBucket = new Bucket(16);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(5);
-    for (final DiscoveryPeer p : peers) {
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(5);
+    for (final DiscoveryPeerV4 p : peers) {
       kBucket.add(p);
     }
     kBucket.evict(peers.get(4));
@@ -78,7 +77,7 @@ public class BucketTest {
   @Test
   public void allActionsOnBucket() {
     final Bucket kBucket = new Bucket(16);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(30);
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(30);
 
     // Try to evict a peer on an empty bucket.
     assertThat(kBucket.evict(peers.get(29))).isFalse();
@@ -98,7 +97,7 @@ public class BucketTest {
     assertThat(kBucket.getAndTouch(peers.get(16).getId())).isNotPresent();
 
     // Try to add a 17th peer and check that the eviction candidate matches the first peer.
-    final Optional<DiscoveryPeer> evictionCandidate = kBucket.add(peers.get(16));
+    final Optional<DiscoveryPeerV4> evictionCandidate = kBucket.add(peers.get(16));
     assertThat(evictionCandidate).isPresent().get().isEqualTo(peers.get(0));
 
     // Try to add a peer that already exists, and check that the bucket size still remains capped at
