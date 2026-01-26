@@ -28,11 +28,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.LogsBloomFilter;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
@@ -339,7 +341,6 @@ public class BlockDataGenerator {
   }
 
   private TransactionType transactionType() {
-    // TODO: when TransactionType.EIP4844 is fully supported, revert this.
     return transactionType(
         TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
@@ -376,7 +377,6 @@ public class BlockDataGenerator {
       case ACCESS_LIST -> accessListTransaction(payload, to);
       case BLOB -> blobTransaction(payload, to);
       case DELEGATE_CODE -> null;
-        // no default, all types accounted for.
     };
   }
 
@@ -629,6 +629,109 @@ public class BlockDataGenerator {
         signatureAlgorithm.createPublicKey(publicKeyValue));
   }
 
+  /**
+   * Generates a random BlockAccessList with a specified number of account changes.
+   *
+   * @param accountCount the number of accounts to include
+   * @return a BlockAccessList with random data
+   */
+  public BlockAccessList blockAccessList(final int accountCount) {
+    final List<BlockAccessList.AccountChanges> accountChanges = new ArrayList<>(accountCount);
+
+    for (int i = 0; i < accountCount; i++) {
+      accountChanges.add(accountChanges());
+    }
+
+    return new BlockAccessList(accountChanges);
+  }
+
+  /**
+   * Generates a random BlockAccessList with 1-5 account changes.
+   *
+   * @return a BlockAccessList with random data
+   */
+  public BlockAccessList blockAccessList() {
+    return blockAccessList(1 + random.nextInt(5));
+  }
+
+  /**
+   * Generates a single AccountChanges with random data.
+   *
+   * @return an AccountChanges with random storage changes, reads, balance, nonce, and code changes
+   */
+  private BlockAccessList.AccountChanges accountChanges() {
+    final Address address = address();
+    final int storageChangeCount = random.nextInt(4);
+    final int storageReadCount = random.nextInt(3);
+    final int balanceChangeCount = random.nextInt(3) + 1;
+    final int nonceChangeCount = random.nextInt(3) + 1;
+    final int codeChangeCount = random.nextInt(2);
+
+    final List<BlockAccessList.SlotChanges> storageChanges = new ArrayList<>();
+    for (int i = 0; i < storageChangeCount; i++) {
+      storageChanges.add(slotChanges(i));
+    }
+
+    final List<BlockAccessList.SlotRead> storageReads = new ArrayList<>();
+    for (int i = 0; i < storageReadCount; i++) {
+      storageReads.add(new BlockAccessList.SlotRead(storageSlotKey()));
+    }
+
+    final List<BlockAccessList.BalanceChange> balanceChanges = new ArrayList<>();
+    for (int i = 0; i < balanceChangeCount; i++) {
+      balanceChanges.add(new BlockAccessList.BalanceChange(i, Wei.of(positiveLong())));
+    }
+
+    final List<BlockAccessList.NonceChange> nonceChanges = new ArrayList<>();
+    for (int i = 0; i < nonceChangeCount; i++) {
+      nonceChanges.add(new BlockAccessList.NonceChange(i, positiveLong()));
+    }
+
+    final List<BlockAccessList.CodeChange> codeChanges = new ArrayList<>();
+    for (int i = 0; i < codeChangeCount; i++) {
+      codeChanges.add(new BlockAccessList.CodeChange(i, bytesValue(10, 100)));
+    }
+
+    return new BlockAccessList.AccountChanges(
+        address, storageChanges, storageReads, balanceChanges, nonceChanges, codeChanges);
+  }
+
+  /**
+   * Generates SlotChanges with random storage modifications.
+   *
+   * @param txIndex the transaction index for these changes
+   * @return SlotChanges with random data
+   */
+  private BlockAccessList.SlotChanges slotChanges(final int txIndex) {
+    final StorageSlotKey slot = storageSlotKey();
+    final int changeCount = 1 + random.nextInt(3);
+    final List<BlockAccessList.StorageChange> changes = new ArrayList<>();
+
+    for (int i = 0; i < changeCount; i++) {
+      changes.add(new BlockAccessList.StorageChange(txIndex + i, uint256()));
+    }
+
+    return new BlockAccessList.SlotChanges(slot, changes);
+  }
+
+  /**
+   * Generates a random StorageSlotKey.
+   *
+   * @return a StorageSlotKey with a random UInt256 value
+   */
+  private StorageSlotKey storageSlotKey() {
+    return new StorageSlotKey(uint256());
+  }
+
+  /**
+   * Generates an empty BlockAccessList.
+   *
+   * @return an empty BlockAccessList
+   */
+  public BlockAccessList emptyBlockAccessList() {
+    return new BlockAccessList(Collections.emptyList());
+  }
+
   public static class BlockOptions {
     private OptionalLong blockNumber = OptionalLong.empty();
     private Optional<Hash> parentHash = Optional.empty();
@@ -658,6 +761,8 @@ public class BlockDataGenerator {
     private Optional<Hash> balHash = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
+
+    private Optional<BlockAccessList> blockAccessList = Optional.empty();
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -742,6 +847,10 @@ public class BlockDataGenerator {
 
     public boolean hasOmmers() {
       return hasOmmers;
+    }
+
+    public Optional<BlockAccessList> getBlockAccessList() {
+      return blockAccessList;
     }
 
     public BlockOptions addTransaction(final Transaction... tx) {
@@ -885,6 +994,21 @@ public class BlockDataGenerator {
 
     public BlockOptions setMaxFeePerBlobGas(final Optional<Wei> maxFeePerBlobGas) {
       this.maybeMaxFeePerBlobGas = Optional.of(maxFeePerBlobGas);
+      return this;
+    }
+
+    public BlockOptions setBlockAccessList(final BlockAccessList blockAccessList) {
+      this.blockAccessList = Optional.of(blockAccessList);
+      return this;
+    }
+
+    public BlockOptions setEmptyBlockAccessList() {
+      this.blockAccessList = Optional.of(new BlockAccessList(Collections.emptyList()));
+      return this;
+    }
+
+    public BlockOptions clearBlockAccessList() {
+      this.blockAccessList = Optional.empty();
       return this;
     }
   }
