@@ -89,7 +89,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
     }
   }
 
-  private static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
+  public static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
       final Address localAddress, final ProtocolSchedule protocolSchedule) {
     return (blockTimestamp, pendingHeader) -> {
       BlockHeader newBlockHeader =
