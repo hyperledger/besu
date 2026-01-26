@@ -21,14 +21,12 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage.VersionedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage.VersionedCacheManager;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -38,59 +36,35 @@ import org.apache.tuweni.bytes.Bytes32;
  *
  * <p>Key differences from BonsaiCachedWorldStateStorage: - It's IMMUTABLE (no updater, extends
  * BonsaiSnapshotWorldStateKeyValueStorage) - It only sees cached values with version <=
- * snapshotVersion - It does NOT cache new reads (to avoid polluting the shared cache with
- * snapshot-specific data)
+ * snapshotVersion - It only caches new reads if snapshotVersion matches current global version
  */
 public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldStateStorage {
 
-  // Shared reference to the live cache's caches
-  private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
+  // Shared cache manager
+  private final VersionedCacheManager cacheManager;
   // The version at which this snapshot was created
   private final long snapshotVersion;
 
   public BonsaiCachedSnapshotWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage parent,
-      final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches,
+      final VersionedCacheManager cacheManager,
       final long snapshotVersion) {
     super(parent);
-    this.caches = caches;
+    this.cacheManager = cacheManager;
     this.snapshotVersion = snapshotVersion;
   }
 
   /**
-   * Get from cache if version <= snapshotVersion, otherwise get from snapshot storage. UPDATES the
-   * cache with read-through values at snapshotVersion.
+   * Get from cache if version <= snapshotVersion, otherwise get from snapshot storage. ONLY updates
+   * the cache with read-through values if snapshotVersion == current global version.
    */
   private Optional<Bytes> getFromCacheOrSnapshot(
       final SegmentIdentifier segment,
       final Bytes key,
       final Supplier<Optional<Bytes>> snapshotGetter) {
 
-    final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-    if (cache == null) {
-      // No cache for this segment, go directly to snapshot
-      return snapshotGetter.get();
-    }
-
-    final VersionedValue versionedValue = cache.getIfPresent(key);
-
-    // Only return cached values that existed at or before snapshot time
-    if (versionedValue != null && versionedValue.version <= snapshotVersion) {
-      return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
-    }
-
-    // Not in cache at our version, get from snapshot storage
-    final Optional<Bytes> result = snapshotGetter.get();
-
-    // Update cache with the snapshot value
-    if (result.isPresent()) {
-      cache.put(key, new VersionedValue(result.get(), snapshotVersion, false));
-    } else {
-      // Cache the fact that the key doesn't exist at snapshot time
-      cache.put(key, new VersionedValue(null, snapshotVersion, true));
-    }
-
-    return result;
+    return cacheManager.getFromCacheOrSnapshotStorage(
+        segment, key, snapshotVersion, snapshotGetter);
   }
 
   @Override

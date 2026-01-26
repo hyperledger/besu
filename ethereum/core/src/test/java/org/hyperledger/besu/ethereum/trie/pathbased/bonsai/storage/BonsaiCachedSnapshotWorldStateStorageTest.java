@@ -334,26 +334,6 @@ public class BonsaiCachedSnapshotWorldStateStorageTest {
   }
 
   @Test
-  public void testSnapshot_doesNotPolluteCacheWithNewReads() {
-    Hash accountHash = Hash.hash(Bytes.of(99));
-    Bytes accountData = Bytes.of(99, 99, 99);
-
-    BonsaiWorldStateKeyValueStorage.Updater parentUpdater = parentStorage.updater();
-    parentUpdater.putAccountInfoState(accountHash, accountData);
-    parentUpdater.commit();
-
-    long initialCacheSize = liveStorage.getCacheSize(ACCOUNT_INFO_STATE);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isFalse();
-
-    BonsaiSnapshotWorldStateStorage snapshot = liveStorage.createSnapshot();
-
-    snapshot.getAccount(accountHash);
-
-    assertThat(liveStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(initialCacheSize);
-    assertThat(liveStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes())).isFalse();
-  }
-
-  @Test
   public void testSnapshot_multipleReadsFromSnapshot() {
     Hash accountHash = Hash.hash(Bytes.of(1));
     Bytes accountData = Bytes.of(1, 2, 3);
