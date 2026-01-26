@@ -56,7 +56,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   // Global version counter - incremented ONLY on commit
   private final AtomicLong globalVersion = new AtomicLong(0);
 
-  private final BonsaiWorldStateKeyValueStorage parent;
   private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
 
   private final LabelledMetric<Counter> cacheRequestCounter;
@@ -77,7 +76,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
         parent.flatDbStrategyProvider,
         parent.getComposedWorldStateStorage(),
         parent.getTrieLogStorage());
-    this.parent = parent;
     this.caches = new HashMap<>();
 
     caches.put(ACCOUNT_INFO_STATE, createCache(accountCacheSize));
@@ -142,7 +140,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
    */
   public BonsaiSnapshotWorldStateStorage createSnapshot() {
     return new BonsaiCachedSnapshotWorldStateStorage(
-        parent, caches, globalVersion.get()); // Use current version, don't increment
+        this, caches, globalVersion.get()); // Use current version, don't increment
   }
 
   public long getCurrentVersion() {
@@ -152,7 +150,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   /**
    * Get from cache or parent. Read-through values are cached with version 0 (READ_THROUGH_VERSION).
    */
-  private Optional<Bytes> getFromCacheOrParent(
+  private Optional<Bytes> getFromCacheOrStorage(
       final SegmentIdentifier segment,
       final Bytes key,
       final Supplier<Optional<Bytes>> parentGetter) {
@@ -214,8 +212,8 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFromCacheOrParent(
-        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> parent.getAccount(accountHash));
+    return getFromCacheOrStorage(
+        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> super.getAccount(accountHash));
   }
 
   @Override
@@ -223,23 +221,23 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    return getFromCacheOrParent(
-        CODE_STORAGE, accountHash.getBytes(), () -> parent.getCode(codeHash, accountHash));
+    return getFromCacheOrStorage(
+        CODE_STORAGE, accountHash.getBytes(), () -> super.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrParent(
-        TRIE_BRANCH_STORAGE, nodeHash, () -> parent.getAccountStateTrieNode(location, nodeHash));
+    return getFromCacheOrStorage(
+        TRIE_BRANCH_STORAGE, nodeHash, () -> super.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrParent(
+    return getFromCacheOrStorage(
         TRIE_BRANCH_STORAGE,
         nodeHash,
-        () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
+        () -> super.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
@@ -247,10 +245,10 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
     final Bytes key =
         Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
-    return getFromCacheOrParent(
+    return getFromCacheOrStorage(
         ACCOUNT_STORAGE_STORAGE,
         key,
-        () -> parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
+        () -> super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
   @Override
@@ -260,21 +258,21 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       final StorageSlotKey storageSlotKey) {
     final Bytes key =
         Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
-    return getFromCacheOrParent(
+    return getFromCacheOrStorage(
         ACCOUNT_STORAGE_STORAGE,
         key,
         () ->
-            parent.getStorageValueByStorageSlotKey(
+            super.getStorageValueByStorageSlotKey(
                 storageRootSupplier, accountHash, storageSlotKey));
   }
 
   @Override
   public Updater updater() {
     return new CachedUpdater(
-        parent.getComposedWorldStateStorage().startTransaction(),
-        parent.getTrieLogStorage().startTransaction(),
+        super.getComposedWorldStateStorage().startTransaction(),
+        super.getTrieLogStorage().startTransaction(),
         getFlatDbStrategy(),
-        parent.getComposedWorldStateStorage());
+        super.getComposedWorldStateStorage());
   }
 
   public static class VersionedValue {

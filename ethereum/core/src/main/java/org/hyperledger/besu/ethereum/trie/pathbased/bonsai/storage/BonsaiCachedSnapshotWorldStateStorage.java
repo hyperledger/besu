@@ -43,7 +43,6 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldStateStorage {
 
-  private final BonsaiWorldStateKeyValueStorage parent;
   // Shared reference to the live cache's caches
   private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
   // The version at which this snapshot was created
@@ -54,23 +53,23 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches,
       final long snapshotVersion) {
     super(parent);
-    this.parent = parent;
     this.caches = caches;
     this.snapshotVersion = snapshotVersion;
   }
 
   /**
-   * Get from cache if version <= snapshotVersion, otherwise get from parent. Does NOT cache the
-   * result (snapshots don't modify the cache).
+   * Get from cache if version <= snapshotVersion, otherwise get from snapshot storage. UPDATES the
+   * cache with read-through values at snapshotVersion.
    */
-  private Optional<Bytes> getFromCacheOrParent(
+  private Optional<Bytes> getFromCacheOrSnapshot(
       final SegmentIdentifier segment,
       final Bytes key,
-      final Supplier<Optional<Bytes>> parentGetter) {
+      final Supplier<Optional<Bytes>> snapshotGetter) {
 
     final Cache<Bytes, VersionedValue> cache = caches.get(segment);
     if (cache == null) {
-      return parentGetter.get();
+      // No cache for this segment, go directly to snapshot
+      return snapshotGetter.get();
     }
 
     final VersionedValue versionedValue = cache.getIfPresent(key);
@@ -80,15 +79,24 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
     }
 
-    // Not in cache at our version, get from parent
-    // Do NOT cache the result - snapshots are read-only views
-    return parentGetter.get();
+    // Not in cache at our version, get from snapshot storage
+    final Optional<Bytes> result = snapshotGetter.get();
+
+    // Update cache with the snapshot value
+    if (result.isPresent()) {
+      cache.put(key, new VersionedValue(result.get(), snapshotVersion, false));
+    } else {
+      // Cache the fact that the key doesn't exist at snapshot time
+      cache.put(key, new VersionedValue(null, snapshotVersion, true));
+    }
+
+    return result;
   }
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFromCacheOrParent(
-        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> parent.getAccount(accountHash));
+    return getFromCacheOrSnapshot(
+        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> super.getAccount(accountHash));
   }
 
   @Override
@@ -96,23 +104,23 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    return getFromCacheOrParent(
-        CODE_STORAGE, accountHash.getBytes(), () -> parent.getCode(codeHash, accountHash));
+    return getFromCacheOrSnapshot(
+        CODE_STORAGE, accountHash.getBytes(), () -> super.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrParent(
-        TRIE_BRANCH_STORAGE, nodeHash, () -> parent.getAccountStateTrieNode(location, nodeHash));
+    return getFromCacheOrSnapshot(
+        TRIE_BRANCH_STORAGE, nodeHash, () -> super.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrParent(
+    return getFromCacheOrSnapshot(
         TRIE_BRANCH_STORAGE,
         nodeHash,
-        () -> parent.getAccountStorageTrieNode(accountHash, location, nodeHash));
+        () -> super.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
@@ -120,10 +128,10 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
     final Bytes key =
         Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
-    return getFromCacheOrParent(
+    return getFromCacheOrSnapshot(
         ACCOUNT_STORAGE_STORAGE,
         key,
-        () -> parent.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
+        () -> super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
   @Override
@@ -133,11 +141,11 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       final StorageSlotKey storageSlotKey) {
     final Bytes key =
         Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
-    return getFromCacheOrParent(
+    return getFromCacheOrSnapshot(
         ACCOUNT_STORAGE_STORAGE,
         key,
         () ->
-            parent.getStorageValueByStorageSlotKey(
+            super.getStorageValueByStorageSlotKey(
                 storageRootSupplier, accountHash, storageSlotKey));
   }
 }
