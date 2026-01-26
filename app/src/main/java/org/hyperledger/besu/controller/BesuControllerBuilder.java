@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
 import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
+import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration.ChainPruningMode;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -745,9 +746,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    if (chainPrunerConfiguration.isBlockPruningEnabled()
-        || chainPrunerConfiguration.isBalPruningEnabled()
-        || dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+    final ChainPruningMode pruningMode = chainPrunerConfiguration.pruningMode();
+    final boolean preMergeEnabled = dataStorageConfiguration.getHistoryExpiryPruneEnabled();
+
+    if (pruningMode != ChainPruningMode.NONE || preMergeEnabled) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
       final ChainDataPruner chainDataPruner =
@@ -756,22 +758,31 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               () -> blockchain.removeObserver(chainDataPrunerObserverId.get()),
               syncState);
       chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
-      if (chainPrunerConfiguration.isBlockPruningEnabled()) {
+
+      if (pruningMode == ChainPruningMode.ALL) {
         LOG.info(
-            "Chain pruning enabled (mode: {}) with blocks retained: {} and frequency: {}",
-            chainPrunerConfiguration.pruningMode(),
+            "Chain pruning enabled - Mode: ALL | Blocks retained: {} | BALs retained: {} | Frequency: {}{}",
             chainPrunerConfiguration.chainPruningBlocksRetained(),
-            chainPrunerConfiguration.chainPruningFrequency());
-      }
-      if (chainPrunerConfiguration.isBalPruningEnabled()) {
+            chainPrunerConfiguration.chainPruningBalsRetained(),
+            chainPrunerConfiguration.chainPruningFrequency(),
+            preMergeEnabled
+                ? " | Pre-merge pruning: enabled (quantity="
+                    + chainPrunerConfiguration.preMergePruningBlocksQuantity()
+                    + ")"
+                : "");
+      } else if (pruningMode == ChainPruningMode.BAL) {
         LOG.info(
-            "BAL pruning enabled (mode: {}) with BALs retained: {}",
-            chainPrunerConfiguration.pruningMode(),
-            chainPrunerConfiguration.chainPruningBalsRetained());
-      }
-      if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+            "Chain pruning enabled - Mode: BAL | BALs retained: {} | Frequency: {}{}",
+            chainPrunerConfiguration.chainPruningBalsRetained(),
+            chainPrunerConfiguration.chainPruningFrequency(),
+            preMergeEnabled
+                ? " | Pre-merge pruning: enabled (quantity="
+                    + chainPrunerConfiguration.preMergePruningBlocksQuantity()
+                    + ")"
+                : "");
+      } else if (preMergeEnabled) {
         LOG.info(
-            "Pre-merge block pruning enabled with frequency: {} and quantity: {}",
+            "Chain pruning enabled - Mode: PRE_MERGE_ONLY | Frequency: {} | Quantity: {}",
             chainPrunerConfiguration.chainPruningFrequency(),
             chainPrunerConfiguration.preMergePruningBlocksQuantity());
       }
