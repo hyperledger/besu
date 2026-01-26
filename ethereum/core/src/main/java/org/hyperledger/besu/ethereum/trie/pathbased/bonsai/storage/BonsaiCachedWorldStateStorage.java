@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -426,6 +427,45 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
       stageRemoval(CODE_STORAGE, accountHash.getBytes());
       return super.removeCode(accountHash, codeHash);
+    }
+
+    @Override
+    public SegmentedKeyValueStorageTransaction getWorldStateTransaction() {
+      final SegmentedKeyValueStorageTransaction parentTransaction =
+          super.getWorldStateTransaction();
+
+      return new SegmentedKeyValueStorageTransaction() {
+        @Override
+        public void put(
+            final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
+          stagePut(segmentIdentifier, Bytes.wrap(key), Bytes.wrap(value));
+          parentTransaction.put(segmentIdentifier, key, value);
+        }
+
+        @Override
+        public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
+          stageRemoval(segmentIdentifier, Bytes.wrap(key));
+          parentTransaction.remove(segmentIdentifier, key);
+        }
+
+        @Override
+        public void commit() throws StorageException {
+          updateCache();
+          parentTransaction.commit();
+        }
+
+        @Override
+        public void rollback() {
+          pending.clear();
+          pendingRemovals.clear();
+          parentTransaction.rollback();
+        }
+
+        @Override
+        public void close() {
+          parentTransaction.close();
+        }
+      };
     }
 
     @Override
