@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -155,7 +155,7 @@ public class RestoreState implements Runnable {
         final int receiptsCount = receiptsRlp.enterList();
         final List<TransactionReceipt> receipts = new ArrayList<>(receiptsCount);
         for (int j = 0; j < receiptsCount; j++) {
-          receipts.add(TransactionReceiptDecoder.readFrom(receiptsRlp, true));
+          receipts.add(FrontierTransactionReceiptDecoder.readFrom(receiptsRlp, true));
         }
         receiptsRlp.leaveList();
 
