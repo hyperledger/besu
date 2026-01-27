@@ -73,6 +73,17 @@ public class EthTransactions {
     return new EthGetTransactionReceiptWithRevertReason(transactionHash);
   }
 
+  /**
+   * Fetches a transaction receipt with gasSpent field (EIP-7778, Amsterdam+).
+   *
+   * @param transactionHash the hash of the transaction
+   * @return the transaction to fetch the receipt with gasSpent
+   */
+  public EthGetTransactionReceiptWithGasSpent getTransactionReceiptWithGasSpent(
+      final String transactionHash) {
+    return new EthGetTransactionReceiptWithGasSpent(transactionHash);
+  }
+
   public EthMiningTransaction mining() {
     return new EthMiningTransaction();
   }

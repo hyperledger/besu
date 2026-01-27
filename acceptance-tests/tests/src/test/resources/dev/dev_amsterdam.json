@@ -176,6 +176,15 @@
       "code": "0xe65f",
       "codeDecompiled": "DUPN 0x5f",
       "storage": {}
+    },
+    "0x0000000000000000000000000000000000007778": {
+      "comment": "EIP-7778 test contract: Clears storage slot 0 when called, generating SSTORE refund. Pre-loaded with non-zero storage.",
+      "balance": "0",
+      "code": "0x5F5F5500",
+      "codeDecompiled": "PUSH0 PUSH0 SSTORE STOP",
+      "storage": {
+        "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      }
     }
   },
   "number":"0x0",
