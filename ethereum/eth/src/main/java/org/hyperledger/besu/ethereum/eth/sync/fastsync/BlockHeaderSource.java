@@ -37,46 +37,47 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   private final long pivotBlockNumber;
   private final int batchSize;
 
-  private final AtomicLong currentBlock;
+  private final AtomicLong currentBlockNumber;
 
   /**
    * Creates a new BlockHeaderSource.
    *
    * @param blockchain the blockchain to read headers from
-   * @param startBlockNumber the block number before the block to start with
+   * @param anchorBlockNumber the block number before the block to start with
    * @param pivotBlockNumber the block number to stop at (inclusive)
    * @param batchSize the number of headers to return per batch
    */
   public BlockHeaderSource(
       final Blockchain blockchain,
-      final long startBlockNumber,
+      final long anchorBlockNumber,
       final long pivotBlockNumber,
       final int batchSize) {
     this.blockchain = blockchain;
     this.pivotBlockNumber = pivotBlockNumber;
     this.batchSize = batchSize;
-    this.currentBlock = new AtomicLong(startBlockNumber + 1);
+    this.currentBlockNumber = new AtomicLong(anchorBlockNumber + 1);
 
     LOG.debug(
         "BlockHeaderSource created: start={}, end={}, batchSize={}",
-        startBlockNumber,
+        anchorBlockNumber,
         pivotBlockNumber,
         batchSize);
   }
 
   @Override
-  public synchronized boolean hasNext() {
-    return currentBlock.get() <= pivotBlockNumber;
+  public boolean hasNext() {
+    return currentBlockNumber.get() <= pivotBlockNumber;
   }
 
   @Override
-  public synchronized List<BlockHeader> next() {
-    if (currentBlock.get() > pivotBlockNumber) {
-      LOG.debug("BlockHeaderSource exhausted at block {}", currentBlock);
-      throw new NoSuchElementException("BlockHeaderSource exhausted at block " + currentBlock);
+  public List<BlockHeader> next() {
+    if (currentBlockNumber.get() > pivotBlockNumber) {
+      LOG.debug("BlockHeaderSource exhausted at block {}", currentBlockNumber);
+      throw new NoSuchElementException(
+          "BlockHeaderSource exhausted at block " + currentBlockNumber);
     }
 
-    long start = currentBlock.getAndAdd(batchSize);
+    long start = currentBlockNumber.getAndAdd(batchSize);
     final int actualLength = (int) Math.min(batchSize, pivotBlockNumber - start + 1);
 
     LOG.trace(

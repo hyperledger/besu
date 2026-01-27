@@ -32,6 +32,9 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +54,7 @@ public class SnapSyncChainDownloaderTest {
   @Mock private MutableBlockchain blockchain;
   @Mock private EthScheduler scheduler;
 
-  @TempDir private java.nio.file.Path tempDir;
+  @TempDir private Path tempDir;
 
   private ChainSyncStateStorage chainSyncStateStorage;
   private BlockHeader pivotBlockHeader;
@@ -70,13 +73,13 @@ public class SnapSyncChainDownloaderTest {
     lenient()
         .when(blockchain.getGenesisBlockHeader())
         .thenReturn(new BlockHeaderTestFixture().number(0).buildHeader());
-    lenient().when(syncState.getCheckpoint()).thenReturn(java.util.Optional.empty());
+    lenient().when(syncState.getCheckpoint()).thenReturn(Optional.empty());
   }
 
   @Test
   public void shouldInitializeWithNewStateWhenNoStateFileExists() {
     // Verify downloader initializes successfully when no prior state exists
-    org.assertj.core.api.Assertions.assertThatCode(
+    assertThatCode(
             () ->
                 new SnapSyncChainDownloader(
                     pipelineFactory,
@@ -104,7 +107,7 @@ public class SnapSyncChainDownloaderTest {
             chainSyncStateStorage);
 
     // Verify cancel completes successfully even when no pipeline is running
-    org.assertj.core.api.Assertions.assertThatCode(downloader::cancel).doesNotThrowAnyException();
+    assertThatCode(downloader::cancel).doesNotThrowAnyException();
   }
 
   @Test

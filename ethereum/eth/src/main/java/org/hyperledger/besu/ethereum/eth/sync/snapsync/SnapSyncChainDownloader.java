@@ -15,20 +15,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.downloadCheckpointHeader;
-
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -38,7 +33,6 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -61,7 +55,7 @@ import org.slf4j.LoggerFactory;
 public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
-  public static final int SMALL_DELAY = 100;
+  public static final int SMALL_DELAY_MILLISECONDS = 100;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
@@ -130,33 +124,14 @@ public class SnapSyncChainDownloader
       // First time sync - create initial state
       // This downloads headers from the pivot down to the genesis block
 
-      final Optional<Checkpoint> maybeCheckpoint = syncState.getCheckpoint();
-      Hash checkpointHash;
-      final BlockHeader checkpointBlockHeader;
       final MutableBlockchain blockchain = protocolContext.getBlockchain();
-      if (maybeCheckpoint.isEmpty()) {
-        // the current head of chain is the lower trust anchor
-        checkpointBlockHeader = blockchain.getChainHeadHeader();
-        checkpointHash = checkpointBlockHeader.getHash();
-        LOG.debug(
-            "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
-            checkpointBlockHeader.getNumber(),
-            checkpointHash);
-      } else {
-        // use the checkpoint as the lower trust anchor
-        final Checkpoint checkpoint = maybeCheckpoint.get();
-        checkpointHash = checkpoint.blockHash();
-        Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
-        checkpointBlockHeader =
-            getCheckpointBlockHeader(protocolSchedule, protocolContext, ethContext, checkpointHash);
-        blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
-        blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
-        LOG.debug(
-            "Using checkpoint {} as lower trust anchor: {}, {}",
-            checkpoint.blockNumber(),
-            checkpoint.blockHash(),
-            checkpoint.totalDifficulty());
-      }
+
+      // the current head of chain is the lower trust anchor
+      BlockHeader checkpointBlockHeader = blockchain.getChainHeadHeader();
+      LOG.debug(
+          "Using current chain head as lower trust anchor: {}, {}",
+          checkpointBlockHeader.getNumber(),
+          checkpointBlockHeader);
 
       final BlockHeader genesisBlockHeader = blockchain.getGenesisBlockHeader();
 
@@ -229,6 +204,7 @@ public class SnapSyncChainDownloader
                     totalDuration.getSeconds());
                 // Stop metrics on success
                 syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                chainSyncStateStorage.deleteState();
                 return CompletableFuture.<Void>completedFuture(null);
               }
             })
@@ -388,8 +364,7 @@ public class SnapSyncChainDownloader
                 handleDownloadError(error, overallResult);
               } else {
                 // we are stopping the time after the initial chain download has finished. From now
-                // on we are only
-                // waiting for new pivots or the world state download to finish.
+                // on we are only waiting for new pivots or the world state download to finish.
                 syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
                 handlePivotUpdateLoop(overallResult);
               }
@@ -438,7 +413,8 @@ public class SnapSyncChainDownloader
       // Use a small delay to avoid tight retry loops
       ethContext
           .getScheduler()
-          .scheduleFutureTask(() -> attemptDownload(overallResult), Duration.ofMillis(SMALL_DELAY));
+          .scheduleFutureTask(
+              () -> attemptDownload(overallResult), Duration.ofMillis(SMALL_DELAY_MILLISECONDS));
     } else {
       // Non-retryable error - fail (metrics will be stopped by outer handler)
       overallResult.completeExceptionally(error);
@@ -546,17 +522,5 @@ public class SnapSyncChainDownloader
     if (pipeline != null) {
       pipeline.abort();
     }
-  }
-
-  private static BlockHeader getCheckpointBlockHeader(
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final EthContext ethContext,
-      final Hash checkpointHash) {
-    // try the blockchain first, if not successful, download the header from the peers
-    return protocolContext
-        .getBlockchain()
-        .getBlockHeader(checkpointHash)
-        .orElse(downloadCheckpointHeader(protocolSchedule, ethContext, checkpointHash));
   }
 }

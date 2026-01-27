@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(ImportHeadersStep.class);
-  private static final int LOG_DELAY = 30;
+  private static final int LOG_DELAY_SECONDS = 30;
 
   private final MutableBlockchain blockchainStorage;
   private final long lowestHeaderToImport;
@@ -88,7 +88,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
           LOG::info,
           String.format("Header import progress %.2f%%", headersPercent),
           logInfo,
-          LOG_DELAY);
+          LOG_DELAY_SECONDS);
     }
   }
 }

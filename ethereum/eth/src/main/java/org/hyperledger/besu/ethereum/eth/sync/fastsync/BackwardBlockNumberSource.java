@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
  * Generates block numbers in descending order for backward header sync. Thread-safe for parallel
  * consumption.
  */
-public class BackwardHeaderSource implements Iterator<Long> {
-  private static final Logger LOG = LoggerFactory.getLogger(BackwardHeaderSource.class);
+public class BackwardBlockNumberSource implements Iterator<Long> {
+  private static final Logger LOG = LoggerFactory.getLogger(BackwardBlockNumberSource.class);
 
   private final AtomicLong currentBlock;
   private final int batchSize;
@@ -37,19 +37,20 @@ public class BackwardHeaderSource implements Iterator<Long> {
    * Creates a new BackwardHeaderSource.
    *
    * @param batchSize the number of blocks in each batch
-   * @param stopBlock stopBlock +1 is the lowest header to download
-   * @param startBlock the highest header to download
+   * @param lowerBlockNumber lowerBlockNumber +1 is the lowest header to download
+   * @param upperBlockNumber the highest header to download
    */
-  public BackwardHeaderSource(final int batchSize, final long stopBlock, final long startBlock) {
+  public BackwardBlockNumberSource(
+      final int batchSize, final long lowerBlockNumber, final long upperBlockNumber) {
 
-    this.currentBlock = new AtomicLong(startBlock);
-    this.stopBlock = stopBlock;
+    this.currentBlock = new AtomicLong(upperBlockNumber);
+    this.stopBlock = lowerBlockNumber;
     this.batchSize = batchSize;
 
     LOG.debug(
-        "BackwardHeaderSource: startBlock={}, stopBlock={}, batchSize={}",
-        startBlock,
-        stopBlock,
+        "BackwardHeaderSource: upperBlockNumber={}, lowerBlockNumber={}, batchSize={}",
+        upperBlockNumber,
+        lowerBlockNumber,
         batchSize);
   }
 

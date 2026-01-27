@@ -206,12 +206,12 @@ public class DynamicPivotBlockSelector {
 
             // Persist the updated pivot to storage
             fastSyncStateStorage.storeState(syncState);
-            LOG.debug("Persisted updated pivot block to storage: {}", blockHeader.getNumber());
+            LOG.trace("Persisted updated pivot block to storage: {}", blockHeader.getNumber());
 
             // Notify chain downloader of pivot update
             if (pivotUpdateListener != null) {
               pivotUpdateListener.onPivotUpdated(blockHeader);
-              LOG.debug("Notified chain downloader of pivot update: {}", blockHeader.getNumber());
+              LOG.trace("Notified chain downloader of pivot update: {}", blockHeader.getNumber());
             }
 
             lastPivotBlockFound = Optional.empty();

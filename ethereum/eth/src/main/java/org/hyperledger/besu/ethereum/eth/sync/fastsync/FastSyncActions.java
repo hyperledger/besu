@@ -62,7 +62,6 @@ public class FastSyncActions {
   protected final java.nio.file.Path fastSyncDataDirectory;
 
   private volatile PivotUpdateListener chainDownloaderListener;
-  private volatile WorldStateHealFinishedListener worldStateHealFinishedListener;
 
   public FastSyncActions(
       final SynchronizerConfiguration syncConfig,
@@ -256,25 +255,6 @@ public class FastSyncActions {
    */
   public PivotUpdateListener getChainDownloaderListener() {
     return chainDownloaderListener;
-  }
-
-  /**
-   * Sets the world state stable listener to be notified when world state download is stable.
-   *
-   * @param listener the world state stable listener
-   */
-  public void setWorldStateHealFinishedListener(final WorldStateHealFinishedListener listener) {
-    this.worldStateHealFinishedListener = listener;
-    LOG.debug("World state stable listener registered");
-  }
-
-  /**
-   * Gets the world state stable listener.
-   *
-   * @return the world state stable listener, or null if not set
-   */
-  public WorldStateHealFinishedListener getWorldStateHealFinishedListener() {
-    return worldStateHealFinishedListener;
   }
 
   /**

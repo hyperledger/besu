@@ -104,7 +104,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
       }
 
       return bestPeer
-          .map(this::fromBestPeer)
+          .map(this::fromPeer)
           .orElse(
               CompletableFuture.failedFuture(
                   new RuntimeException("No peers with sufficient height")));

@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -71,6 +70,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
   private final SyncDurationMetrics syncDurationMetrics;
 
+  private volatile SnapSyncChainDownloader chainDownloader;
+
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final SnapSyncStatePersistenceManager snapContext,
@@ -115,6 +116,17 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final SnapWorldDownloadState state = this.downloadState.get();
       return state != null ? getter.apply(state) : 0;
     };
+  }
+
+  /**
+   * Sets the chain downloader that should be wired to the world download state. This method should
+   * be called before run() to establish the bidirectional reference between the chain downloader
+   * and world state downloader.
+   *
+   * @param chainDownloader the chain downloader to wire up
+   */
+  public void setChainDownloader(final SnapSyncChainDownloader chainDownloader) {
+    this.chainDownloader = chainDownloader;
   }
 
   @Override
@@ -243,19 +255,11 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       newDownloadState.setPivotBlockSelector(dynamicPivotBlockManager);
 
-      // Set the world state stable listener if available
-      final WorldStateHealFinishedListener worldStateHealFinishedListener =
-          fastSyncActions.getWorldStateHealFinishedListener();
-      if (worldStateHealFinishedListener != null) {
-        newDownloadState.setWorldStateHealFinishedListener(worldStateHealFinishedListener);
-        LOG.debug("World state stable listener registered with download state");
-
-        // Set the bidirectional reference so the chain downloader can trigger completion checks
-        if (worldStateHealFinishedListener instanceof SnapSyncChainDownloader) {
-          ((SnapSyncChainDownloader) worldStateHealFinishedListener)
-              .setWorldDownloadState(newDownloadState);
-          LOG.debug("World download state reference registered with chain downloader");
-        }
+      // Wire up bidirectional reference if chain downloader was provided
+      if (chainDownloader != null) {
+        chainDownloader.setWorldDownloadState(newDownloadState);
+        newDownloadState.setWorldStateHealFinishedListener(chainDownloader);
+        LOG.debug("Wired bidirectional references between chain and world state downloaders");
       }
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());

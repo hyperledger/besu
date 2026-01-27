@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
@@ -121,54 +120,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   private CompletableFuture<FastSyncState> selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return retrieveForHash(safeHash).thenApply(blockHeader -> new FastSyncState(blockHeader, true));
-  }
-
-  private CompletableFuture<BlockHeader> retrieveForHash(final Hash pivotHash) {
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(
-            () -> {
-              GetHeadersFromPeerTask task =
-                  new GetHeadersFromPeerTask(
-                      pivotHash,
-                      1,
-                      0,
-                      GetHeadersFromPeerTask.Direction.FORWARD,
-                      ethContext.getEthPeers().peerCount(),
-                      protocolSchedule);
-              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  ethContext.getPeerTaskExecutor().execute(task);
-              if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE
-                  || taskResult.responseCode() == PeerTaskExecutorResponseCode.PEER_DISCONNECTED) {
-                LOG.error(
-                    "Failed to download pivot block header. Response Code was {}",
-                    taskResult.responseCode());
-                return CompletableFuture.failedFuture(new NoAvailablePeersException());
-              } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || taskResult.result().isEmpty()) {
-                LOG.error(
-                    "Failed to download pivot block header. Response Code was {}",
-                    taskResult.responseCode());
-                return CompletableFuture.failedFuture(
-                    new RuntimeException(
-                        "Failed to download pivot block header. Response Code was "
-                            + taskResult.responseCode()));
-              } else {
-                return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
-              }
-            })
-        .whenComplete(
-            (blockHeader, throwable) -> {
-              if (throwable != null) {
-                LOG.debug("Error downloading block header by hash {}", pivotHash);
-              } else {
-                LOG.atDebug()
-                    .setMessage("Successfully downloaded pivot block header by hash {}")
-                    .addArgument(blockHeader::toLogString)
-                    .log();
-              }
-            });
+    return downloadBlockHeader(safeHash)
+        .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
   private CompletableFuture<FastSyncState> selectFallbackBlockAsPivot(
@@ -177,7 +130,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return retrieveForHash(fallbackBlockHash)
+    return downloadBlockHeader(fallbackBlockHash)
         .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 

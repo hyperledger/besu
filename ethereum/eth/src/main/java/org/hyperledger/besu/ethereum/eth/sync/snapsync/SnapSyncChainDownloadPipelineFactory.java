@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.BackwardHeaderSource;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.BackwardBlockNumberSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BlockHeaderSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadBackwardHeadersStep;
@@ -103,6 +103,7 @@ public class SnapSyncChainDownloadPipelineFactory {
    */
   public Pipeline<Long> createBackwardHeaderDownloadPipeline(final ChainSyncState chainState) {
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int headerDownloadParallelismFactor = syncConfig.getHeaderDownloadParallelismFactor();
     final int headerRequestSize = syncConfig.getDownloaderHeaderRequestSize();
 
     BlockHeader anchorForHeaderDownload =
@@ -118,8 +119,8 @@ public class SnapSyncChainDownloadPipelineFactory {
         downloaderParallelism,
         headerRequestSize);
 
-    final BackwardHeaderSource headerSource =
-        new BackwardHeaderSource(
+    final BackwardBlockNumberSource headerSource =
+        new BackwardBlockNumberSource(
             headerRequestSize, anchorForHeaderDownload.getNumber() + 1L, pivotBlockNumber - 1L);
 
     final DownloadBackwardHeadersStep downloadStep =
@@ -145,7 +146,9 @@ public class SnapSyncChainDownloadPipelineFactory {
             true,
             "backwardHeaderSync")
         .thenProcessAsyncOrdered(
-            "downloadBackwardHeaders", downloadStep, downloaderParallelism * 20)
+            "downloadBackwardHeaders",
+            downloadStep,
+            downloaderParallelism * headerDownloadParallelismFactor)
         .andFinishWith("importHeadersStep", importHeadersStep);
   }
 
@@ -153,30 +156,30 @@ public class SnapSyncChainDownloadPipelineFactory {
    * Creates Pipeline 2 with custom start and end blocks: Forward bodies and receipts download from
    * start block to end block. Used for continuing sync to an updated pivot.
    *
-   * @param startBlock the block to start from
+   * @param anchorBlock the block to start from
    * @param pivotHeader the block to end at
    * @param syncState the sync state for reporting progress
    * @return the forward bodies and receipts download pipeline
    */
   public Pipeline<List<BlockHeader>> createForwardBodiesAndReceiptsDownloadPipeline(
-      final long startBlock, final BlockHeader pivotHeader, final SyncState syncState) {
+      final long anchorBlock, final BlockHeader pivotHeader, final SyncState syncState) {
 
     long pivotHeaderNumber = pivotHeader.getNumber();
 
     final int downloaderParallelism = syncConfig.getDownloaderParallelism();
-    final int headerRequestSize = 128; // syncConfig.getDownloaderHeaderRequestSize();
+    final int bodiesRequestSize = syncConfig.getDownloaderBodiesRequestSize();
 
     final MutableBlockchain blockchain = protocolContext.getBlockchain();
 
-    LOG.info(
-        "Creating forward bodies and receipts download pipeline: startBlock={}, pivotHeaderNumber={}, parallelism={}, batchSize={}",
-        startBlock,
+    LOG.trace(
+        "Creating forward bodies and receipts download pipeline: anchorBlock={}, pivotHeaderNumber={}, parallelism={}, batchSize={}",
+        anchorBlock,
         pivotHeaderNumber,
         downloaderParallelism,
-        headerRequestSize);
+        bodiesRequestSize);
 
     final BlockHeaderSource headerSource =
-        new BlockHeaderSource(blockchain, startBlock, pivotHeaderNumber, headerRequestSize);
+        new BlockHeaderSource(blockchain, anchorBlock, pivotHeaderNumber, bodiesRequestSize);
 
     final DownloadSyncBodiesStep downloadBodiesStep =
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
@@ -186,10 +189,10 @@ public class SnapSyncChainDownloadPipelineFactory {
 
     final ImportSnapSyncBlocksStep importBlocksStep =
         new ImportSnapSyncBlocksStep(
-            protocolContext,
+            protocolContext.getBlockchain(),
             ethContext,
             syncState,
-            startBlock,
+            anchorBlock,
             pivotHeader,
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 

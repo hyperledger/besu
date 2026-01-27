@@ -27,7 +27,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.function.Function;
 
-import com.google.common.io.MoreFiles;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +55,7 @@ public class ChainSyncStateStorage {
    * @param headerReader function to deserialize block headers
    * @return the loaded state, or null if no state exists
    */
-  public synchronized ChainSyncState loadState(final Function<RLPInput, BlockHeader> headerReader) {
+  public ChainSyncState loadState(final Function<RLPInput, BlockHeader> headerReader) {
     synchronized (writeLock) {
       if (!stateFile.exists()) {
         LOG.debug("No chain sync state file found");
@@ -120,7 +119,7 @@ public class ChainSyncStateStorage {
    *
    * @param state the state to store
    */
-  public synchronized void storeState(final ChainSyncState state) {
+  public void storeState(final ChainSyncState state) {
     synchronized (writeLock) {
       try {
         // Clean up any leftover temp file
@@ -175,14 +174,14 @@ public class ChainSyncStateStorage {
   }
 
   /** Deletes the chain sync state file. */
-  public synchronized void deleteState() {
+  public void deleteState() {
     synchronized (writeLock) {
       try {
         if (stateFile.exists()) {
-          MoreFiles.deleteRecursively(stateFile.toPath());
+          Files.delete(stateFile.toPath());
         }
         if (tempFile.exists()) {
-          MoreFiles.deleteRecursively(tempFile.toPath());
+          Files.delete(tempFile.toPath());
         }
       } catch (final IOException e) {
         LOG.error("Failed to delete chain sync state file", e);
