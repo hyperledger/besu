@@ -27,7 +27,7 @@
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 - Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
 - Improved `getBlobsV2` performance by disabling HTTP response compression, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
-
+- Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
 
 ### Bug fixes
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)

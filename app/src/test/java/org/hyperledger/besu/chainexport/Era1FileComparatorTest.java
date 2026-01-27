@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -166,7 +166,7 @@ public class Era1FileComparatorTest {
         rlpInput.enterList();
         List<TransactionReceipt> receipts = new ArrayList<>();
         while (rlpInput.nextIsList()) {
-          receipts.add(TransactionReceiptDecoder.readFrom(rlpInput.readAsRlp(), true));
+          receipts.add(FrontierTransactionReceiptDecoder.readFrom(rlpInput.readAsRlp(), true));
         }
         rlpInput.leaveListLenient();
         transactionReceiptLists.add(receipts);
