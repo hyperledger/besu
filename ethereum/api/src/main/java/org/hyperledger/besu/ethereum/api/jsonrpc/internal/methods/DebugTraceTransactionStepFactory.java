@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.S
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff.StateTraceResult;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -46,13 +46,12 @@ public class DebugTraceTransactionStepFactory {
    * type.
    *
    * @param traceOptions the trace options containing the tracer type and configuration
-   * @param precompileContractRegistry the precompile contract registry for the protocol spec
+   * @param protocolSpec the protocol spec for the block being traced
    * @return a function that processes a {@link TransactionTrace} and returns a {@link
    *     DebugTraceTransactionResult} with the appropriate tracer result
    */
   public static Function<TransactionTrace, DebugTraceTransactionResult> create(
-      final TraceOptions traceOptions,
-      final PrecompileContractRegistry precompileContractRegistry) {
+      final TraceOptions traceOptions, final ProtocolSpec protocolSpec) {
     TracerType tracerType = traceOptions.tracerType();
     return switch (tracerType) {
       case OPCODE_TRACER ->
@@ -95,17 +94,15 @@ public class DebugTraceTransactionStepFactory {
    * type.
    *
    * @param traceOptions the options of tracer to use for processing the transaction trace
-   * @param precompileContractRegistry the precompile contract registry for the protocol spec
+   * @param protocolSpec the protocol spec for the block being traced
    * @return an asynchronous function that processes a {@link TransactionTrace} and returns a {@link
    *     DebugTraceTransactionResult} with the appropriate tracer result
    */
   public static Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>>
-      createAsync(
-          final TraceOptions traceOptions,
-          final PrecompileContractRegistry precompileContractRegistry) {
+      createAsync(final TraceOptions traceOptions, final ProtocolSpec protocolSpec) {
     return transactionTrace ->
         CompletableFuture.supplyAsync(
-            () -> create(traceOptions, precompileContractRegistry).apply(transactionTrace));
+            () -> create(traceOptions, protocolSpec).apply(transactionTrace));
   }
 
   public static class UnimplementedTracerResult {

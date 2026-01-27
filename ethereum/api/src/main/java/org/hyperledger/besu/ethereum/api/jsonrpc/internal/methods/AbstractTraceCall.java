@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Optional;
 
@@ -76,8 +75,6 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
     }
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(maybeBlockHeader.get());
-    final PrecompileContractRegistry precompileContractRegistry =
-        protocolSpec.getPrecompileContractRegistry();
 
     final DebugOperationTracer tracer =
         new DebugOperationTracer(traceOptions.opCodeTracerConfig(), recordChildCallGas);
@@ -87,7 +84,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
             Optional.ofNullable(traceOptions.stateOverrides()),
             buildTransactionValidationParams(),
             tracer,
-            getSimulatorResultHandler(requestContext, tracer, precompileContractRegistry),
+            getSimulatorResultHandler(requestContext, tracer, protocolSpec),
             maybeBlockHeader.get())
         .orElseGet(
             () -> new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
@@ -98,5 +95,5 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
   protected abstract PreCloseStateHandler<Object> getSimulatorResultHandler(
       final JsonRpcRequestContext requestContext,
       final DebugOperationTracer tracer,
-      final PrecompileContractRegistry precompileContractRegistry);
+      final ProtocolSpec protocolSpec);
 }
