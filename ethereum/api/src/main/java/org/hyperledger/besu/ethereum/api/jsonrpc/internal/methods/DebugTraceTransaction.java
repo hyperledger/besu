@@ -101,23 +101,18 @@ public class DebugTraceTransaction implements JsonRpcMethod {
       final Hash hash,
       final TransactionWithMetadata transactionWithMetadata,
       final TraceOptions traceOptions) {
-    // Check if transaction is in a block (not pending)
-    final Optional<Hash> maybeBlockHash = transactionWithMetadata.getBlockHash();
-    if (maybeBlockHash.isEmpty()) {
-      return null; // Can't trace pending transactions
-    }
-    final Hash blockHash = maybeBlockHash.get();
+    final Hash blockHash = transactionWithMetadata.getBlockHash().get();
 
     final DebugOperationTracer execTracer =
         new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
 
-    final Optional<BlockHeader> maybeBlockHeader =
-        blockchain.getBlockchain().getBlockHeader(blockHash);
-    if (maybeBlockHeader.isEmpty()) {
-      return null; // Block header not found
+    final Optional<BlockHeader> blockHeader = blockchain.getBlockchain().getBlockHeader(blockHash);
+    if (blockHeader.isEmpty()) {
+      // Tracer.processTracing also returns Optional.empty when blockHeader is empty
+      return null;
     }
 
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(maybeBlockHeader.get());
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader.get());
 
     return Tracer.processTracing(
             blockchain,
