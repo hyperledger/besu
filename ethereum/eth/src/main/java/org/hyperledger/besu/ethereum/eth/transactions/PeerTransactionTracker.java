@@ -68,7 +68,7 @@ public class PeerTransactionTracker
   private synchronized void logStats() {
     if (LOG.isTraceEnabled()) {
       seenTransactions.forEach(
-          (ethPeer, hashes) -> LOG.trace("Seen txs: peer={} size={}", ethPeer, hashes.size()));
+          (ethPeer, txs) -> LOG.trace("Seen txs: peer={} size={}", ethPeer, txs.size()));
       transactionsToSend.forEach(
           (ethPeer, txs) -> LOG.trace("Txs to send: peer={} size={}", ethPeer, txs.size()));
       transactionHashesToSend.forEach(
