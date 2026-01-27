@@ -35,7 +35,7 @@ public class ChainDataPruner implements BlockAddedObserver {
   private final Runnable unsubscribeRunnable;
   private final ChainDataPrunerStorage prunerStorage;
   private final long mergeBlock;
-  private final Mode mode;
+  private final PruningMode pruningMode;
   private final ChainPrunerConfiguration config;
   private final ExecutorService pruningExecutor;
   private final AtomicBoolean logPreMergePruningProgress = new AtomicBoolean(true);
@@ -45,21 +45,21 @@ public class ChainDataPruner implements BlockAddedObserver {
       final Runnable unsubscribeRunnable,
       final ChainDataPrunerStorage prunerStorage,
       final long mergeBlock,
-      final Mode mode,
+      final PruningMode pruningMode,
       final ChainPrunerConfiguration config,
       final ExecutorService pruningExecutor) {
     this.blockchainStorage = blockchainStorage;
     this.unsubscribeRunnable = unsubscribeRunnable;
     this.prunerStorage = prunerStorage;
     this.mergeBlock = mergeBlock;
-    this.mode = mode;
+    this.pruningMode = pruningMode;
     this.config = config;
     this.pruningExecutor = pruningExecutor;
   }
 
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
-    switch (mode) {
+    switch (pruningMode) {
       case CHAIN_PRUNING -> chainPrunerAction(event);
       case PRE_MERGE_PRUNING -> {
         if (event.isNewCanonicalHead()) preMergePruningAction();
@@ -160,12 +160,16 @@ public class ChainDataPruner implements BlockAddedObserver {
 
       if (pruneChainAtBlock) {
         updater.removeBlockHash(blockNum);
-        prunerStorage.removeForkBlocks(pruningTransaction, blockNum);
         currentChainMark = blockNum;
+        prunerStorage.removeForkBlocks(pruningTransaction, blockNum);
       }
 
       if (pruneBalAtBlock) {
         currentBalMark = blockNum;
+        // In BAL-only mode, remove fork blocks when pruning BAL data
+        if (!config.isBlockPruningEnabled()) {
+          prunerStorage.removeForkBlocks(pruningTransaction, blockNum);
+        }
       }
     }
 
@@ -248,8 +252,18 @@ public class ChainDataPruner implements BlockAddedObserver {
         });
   }
 
-  public enum Mode {
+  public enum PruningMode {
     CHAIN_PRUNING,
     PRE_MERGE_PRUNING
+  }
+
+  /** Enum for chain pruning strategy. */
+  public enum ChainPruningStrategy {
+    /** Prune both blocks and BALs. */
+    ALL,
+    /** Prune only BALs. */
+    BAL,
+    /** Pruning disabled. */
+    NONE
   }
 }

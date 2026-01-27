@@ -19,7 +19,7 @@ import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.hyperledger.besu.cli.options.ChainPruningOptions.CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT;
+import static org.hyperledger.besu.cli.options.ChainPruningOptions.CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
 import static org.hyperledger.besu.config.NetworkDefinition.CLASSIC;
 import static org.hyperledger.besu.config.NetworkDefinition.DEV;
 import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
@@ -2854,8 +2854,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     // Equal is valid (minimum case)
     parseCommand(
         "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
-        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2864,9 +2864,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void chainPruningAllModeWithValidValuesSucceeds() {
     parseCommand(
         "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + (CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT + 100),
-        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
-        "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
+        "--Xchain-pruning-blocks-retained=" + (CHAIN_DATA_PRUNING_RETAINED_MINIMUM + 100),
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
+        "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2875,8 +2875,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void chainPruningBalModeWithValidValuesSucceeds() {
     parseCommand(
         "--Xchain-pruning-enabled=BAL",
-        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
-        "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
+        "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2897,7 +2897,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
+            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
     commandErrorOutput.reset();
 
     // for IBFT2
@@ -2912,7 +2912,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
+            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
     commandErrorOutput.reset();
 
     // for Clique
@@ -2927,7 +2927,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT);
+            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
   }
 
   @Test
@@ -2936,27 +2936,27 @@ public class BesuCommandTest extends CommandTestAbstract {
     // for QBFT
     genesis
         .getJsonObject("config")
-        .put("qbft", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT));
+        .put("qbft", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
     final Path genesisFileForQBFT = createFakeGenesisFile(genesis);
     parseCommand(
         "--genesis-file",
         genesisFileForQBFT.toString(),
         "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     // for IBFT2
     genesis
         .getJsonObject("config")
-        .put("ibft2", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT));
+        .put("ibft2", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
     genesis.getJsonObject("config").remove("qbft");
     final Path genesisFileIBFT = createFakeGenesisFile(genesis);
     parseCommand(
         "--genesis-file",
         genesisFileIBFT.toString(),
         "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2964,14 +2964,14 @@ public class BesuCommandTest extends CommandTestAbstract {
     // for Clique
     genesis
         .getJsonObject("config")
-        .put("clique", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT));
+        .put("clique", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
     genesis.getJsonObject("config").remove("ibft2");
     final Path genesisFileClique = createFakeGenesisFile(genesis);
     parseCommand(
         "--genesis-file",
         genesisFileClique.toString(),
         "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT,
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

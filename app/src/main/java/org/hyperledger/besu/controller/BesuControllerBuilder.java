@@ -35,9 +35,10 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.PruningMode;
 import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
 import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
-import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration.ChainPruningMode;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -746,10 +747,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    final ChainPruningMode pruningMode = chainPrunerConfiguration.pruningMode();
+    final ChainPruningStrategy pruningMode = chainPrunerConfiguration.pruningMode();
     final boolean preMergeEnabled = dataStorageConfiguration.getHistoryExpiryPruneEnabled();
 
-    if (pruningMode != ChainPruningMode.NONE || preMergeEnabled) {
+    if (pruningMode != ChainPruningStrategy.NONE || preMergeEnabled) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
       final ChainDataPruner chainDataPruner =
@@ -759,7 +760,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               syncState);
       chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
 
-      if (pruningMode == ChainPruningMode.ALL) {
+      if (pruningMode == ChainPruningStrategy.ALL) {
         LOG.info(
             "Chain pruning enabled - Mode: ALL | Blocks retained: {} | BALs retained: {} | Frequency: {}{}",
             chainPrunerConfiguration.chainPruningBlocksRetained(),
@@ -770,7 +771,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
                     + chainPrunerConfiguration.preMergePruningBlocksQuantity()
                     + ")"
                 : "");
-      } else if (pruningMode == ChainPruningMode.BAL) {
+      } else if (pruningMode == ChainPruningStrategy.BAL) {
         LOG.info(
             "Chain pruning enabled - Mode: BAL | BALs retained: {} | Frequency: {}{}",
             chainPrunerConfiguration.chainPruningBalsRetained(),
@@ -1325,7 +1326,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       final Runnable unsubscribeRunnable,
       final SyncState syncState) {
 
-    final ChainDataPruner.Mode mode = determineChainPrunerMode();
+    final PruningMode mode = determineChainPrunerMode();
 
     return new ChainDataPruner(
         blockchainStorage,
@@ -1343,13 +1344,13 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             metricsSystem));
   }
 
-  private ChainDataPruner.Mode determineChainPrunerMode() {
+  private PruningMode determineChainPrunerMode() {
     if (chainPrunerConfiguration.isBlockPruningEnabled()
         || chainPrunerConfiguration.isBalPruningEnabled()) {
-      return ChainDataPruner.Mode.CHAIN_PRUNING;
+      return PruningMode.CHAIN_PRUNING;
     }
     if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
-      return ChainDataPruner.Mode.PRE_MERGE_PRUNING;
+      return PruningMode.PRE_MERGE_PRUNING;
     }
     throw new IllegalStateException("Chain pruner created without any pruning mode enabled");
   }
