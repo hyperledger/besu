@@ -20,14 +20,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -120,7 +116,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   private CompletableFuture<FastSyncState> selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return downloadBlockHeader(safeHash)
+    return HeaderDownloadUtils.downloadBlockHeader(safeHash, ethContext, protocolSchedule)
         .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
@@ -130,7 +126,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return downloadBlockHeader(fallbackBlockHash)
+    return HeaderDownloadUtils.downloadBlockHeader(fallbackBlockHash, ethContext, protocolSchedule)
         .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
@@ -166,7 +162,10 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                                 return ethContext
                                     .getEthPeers()
                                     .waitForPeer((peer) -> true)
-                                    .thenCompose(unused -> downloadBlockHeader(headBlockHash))
+                                    .thenCompose(
+                                        unused ->
+                                            HeaderDownloadUtils.downloadBlockHeader(
+                                                headBlockHash, ethContext, protocolSchedule))
                                     .thenApply(
                                         blockHeader -> {
                                           maybeCachedHeadBlockHeader = Optional.of(blockHeader);
@@ -183,41 +182,5 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                             }))
             .orElse(0L),
         localChainHeight);
-  }
-
-  private CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(
-            () -> {
-              GetHeadersFromPeerTask task =
-                  new GetHeadersFromPeerTask(
-                      hash,
-                      0,
-                      1,
-                      0,
-                      GetHeadersFromPeerTask.Direction.FORWARD,
-                      ethContext.getEthPeers().peerCount(),
-                      protocolSchedule);
-              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  ethContext.getPeerTaskExecutor().execute(task);
-              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || taskResult.result().isEmpty()) {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException("Unable to retrieve header"));
-              }
-              return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
-            })
-        .whenComplete(
-            (blockHeader, throwable) -> {
-              if (throwable != null) {
-                LOG.debug("Error downloading block header by hash {}", hash);
-              } else {
-                LOG.atDebug()
-                    .setMessage("Successfully downloaded block header by hash {}")
-                    .addArgument(blockHeader::toLogString)
-                    .log();
-              }
-            });
   }
 }

@@ -15,15 +15,19 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.HeaderDownloadUtils;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -33,9 +37,11 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -124,14 +130,38 @@ public class SnapSyncChainDownloader
       // First time sync - create initial state
       // This downloads headers from the pivot down to the genesis block
 
+      final Optional<Checkpoint> maybeCheckpoint = syncState.getCheckpoint();
+      Hash checkpointHash;
+      final BlockHeader checkpointBlockHeader;
       final MutableBlockchain blockchain = protocolContext.getBlockchain();
-
-      // the current head of chain is the lower trust anchor
-      BlockHeader checkpointBlockHeader = blockchain.getChainHeadHeader();
-      LOG.debug(
-          "Using current chain head as lower trust anchor: {}, {}",
-          checkpointBlockHeader.getNumber(),
-          checkpointBlockHeader);
+      if (maybeCheckpoint.isEmpty()) {
+        // the current head of chain is the lower trust anchor
+        checkpointBlockHeader = blockchain.getChainHeadHeader();
+        checkpointHash = checkpointBlockHeader.getHash();
+        LOG.debug(
+            "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
+            checkpointBlockHeader.getNumber(),
+            checkpointHash);
+      } else {
+        // use the checkpoint as the lower trust anchor
+        final Checkpoint checkpoint = maybeCheckpoint.get();
+        checkpointHash = checkpoint.blockHash();
+        Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
+        try {
+          checkpointBlockHeader =
+              HeaderDownloadUtils.downloadBlockHeader(checkpointHash, ethContext, protocolSchedule)
+                  .get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
+        blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
+        blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
+        LOG.debug(
+            "Using block number {} as lower trust anchor: {}, {}",
+            checkpoint.blockNumber(),
+            checkpoint.blockHash(),
+            checkpoint.totalDifficulty());
+      }
 
       final BlockHeader genesisBlockHeader = blockchain.getGenesisBlockHeader();
 
