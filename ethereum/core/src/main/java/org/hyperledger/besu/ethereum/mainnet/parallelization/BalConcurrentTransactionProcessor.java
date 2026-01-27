@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionProcessor {
 
   private static final ExecutorService PREFETCH_EXECUTOR =
-      Executors.newVirtualThreadPerTaskExecutor();
+      Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
   private static final Logger LOG =
       LoggerFactory.getLogger(BalConcurrentTransactionProcessor.class);
@@ -71,6 +71,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
   private final BlockAccessList blockAccessList;
   private final Duration balProcessingTimeout;
   private final boolean isPrefetchReadingEnabled;
+  private final boolean isPrefetchSortingEnabled;
 
   public BalConcurrentTransactionProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -79,7 +80,8 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
     this.transactionProcessor = transactionProcessor;
     this.blockAccessList = blockAccessList;
     this.balProcessingTimeout = balConfiguration.getBalProcessingTimeout();
-    this.isPrefetchReadingEnabled = balConfiguration.isBalFetchReadingEnabled();
+    this.isPrefetchReadingEnabled = balConfiguration.isBalPreFetchReadingEnabled();
+    this.isPrefetchSortingEnabled = balConfiguration.isBalPreFetchSortingEnabled();
   }
 
   @Override
@@ -115,14 +117,17 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
           try (var ws = getWorldState(protocolContext, blockHeader)) {
             if (ws == null) return;
             ws.disableCacheMerkleTrieLoader();
-            final List<BlockAccessList.AccountChanges> sortedAccounts =
-                blockAccessList.accountChanges().stream()
-                    .sorted(Comparator.comparing(ac -> ac.address().addressHash()))
-                    .toList();
+
+            final List<BlockAccessList.AccountChanges> accounts =
+                isPrefetchSortingEnabled
+                    ? blockAccessList.accountChanges().stream()
+                        .sorted(Comparator.comparing(ac -> ac.address().addressHash()))
+                        .toList()
+                    : new ArrayList<>(blockAccessList.accountChanges());
 
             final List<CompletableFuture<?>> allReadFutures = new ArrayList<>();
 
-            for (var accountChanges : sortedAccounts) {
+            for (var accountChanges : accounts) {
               final Address address = accountChanges.address();
               final CompletableFuture<Hash> accountFuture =
                   CompletableFuture.supplyAsync(
@@ -138,12 +143,14 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
               accountChanges.storageChanges().forEach(sc -> uniqueSlots.add(sc.slot()));
               accountChanges.storageReads().forEach(sr -> uniqueSlots.add(sr.slot()));
 
-              final List<StorageSlotKey> sortedSlots =
-                  uniqueSlots.stream()
-                      .sorted(Comparator.comparing(StorageSlotKey::getSlotHash))
-                      .toList();
+              final List<StorageSlotKey> slots =
+                  isPrefetchSortingEnabled
+                      ? uniqueSlots.stream()
+                          .sorted(Comparator.comparing(StorageSlotKey::getSlotHash))
+                          .toList()
+                      : new ArrayList<>(uniqueSlots);
 
-              for (var slot : sortedSlots) {
+              for (var slot : slots) {
                 final CompletableFuture<Void> slotReadFuture =
                     accountFuture.thenAcceptAsync(
                         accountHash -> {

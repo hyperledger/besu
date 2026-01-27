@@ -286,7 +286,7 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     BlockAccessList blockAccessList = new BlockAccessList(accountChangesList);
 
     BalConfiguration config =
-        ImmutableBalConfiguration.builder().isBalFetchReadingEnabled(true).build();
+        ImmutableBalConfiguration.builder().isBalPreFetchReadingEnabled(true).build();
 
     MainnetTransactionProcessor txProcessor = mock(MainnetTransactionProcessor.class);
     BalConcurrentTransactionProcessor processor =
@@ -331,7 +331,7 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     BlockAccessList blockAccessList = new BlockAccessList(accountChangesList);
 
     BalConfiguration config =
-        ImmutableBalConfiguration.builder().isBalFetchReadingEnabled(false).build();
+        ImmutableBalConfiguration.builder().isBalPreFetchReadingEnabled(false).build();
 
     MainnetTransactionProcessor txProcessor = mock(MainnetTransactionProcessor.class);
     BalConcurrentTransactionProcessor processor =
