@@ -43,6 +43,10 @@ public class EthTransactions {
     return new EthGetCodeTransaction(account);
   }
 
+  public EthGetStorageAtTransaction getStorageAt(final Account account, final BigInteger position) {
+    return new EthGetStorageAtTransaction(account, position);
+  }
+
   public EthGetBalanceAtBlockTransaction getBalanceAtBlock(
       final Account account, final BigInteger block) {
     return new EthGetBalanceAtBlockTransaction(account, block);
@@ -67,6 +71,17 @@ public class EthTransactions {
   public EthGetTransactionReceiptWithRevertReason getTransactionReceiptWithRevertReason(
       final String transactionHash) {
     return new EthGetTransactionReceiptWithRevertReason(transactionHash);
+  }
+
+  /**
+   * Fetches a transaction receipt with gasSpent field (EIP-7778, Amsterdam+).
+   *
+   * @param transactionHash the hash of the transaction
+   * @return the transaction to fetch the receipt with gasSpent
+   */
+  public EthGetTransactionReceiptWithGasSpent getTransactionReceiptWithGasSpent(
+      final String transactionHash) {
+    return new EthGetTransactionReceiptWithGasSpent(transactionHash);
   }
 
   public EthMiningTransaction mining() {

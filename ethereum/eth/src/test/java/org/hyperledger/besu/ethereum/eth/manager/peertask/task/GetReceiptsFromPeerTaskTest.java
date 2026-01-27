@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.MalformedRlpFromPeerException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
@@ -140,7 +141,8 @@ public class GetReceiptsFromPeerTaskTest {
   }
 
   @Test
-  public void testParseResponse() throws InvalidPeerTaskResponseException {
+  public void testParseResponse()
+      throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
     BlockHeader blockHeader1 = mockBlockHeader(1);
     TransactionReceipt receiptForBlock1 =
         new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
@@ -183,7 +185,7 @@ public class GetReceiptsFromPeerTaskTest {
 
   @Test
   public void testParseResponseForOnlyPrefilledEmptyTrieReceiptsRoots()
-      throws InvalidPeerTaskResponseException {
+      throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
     BlockHeader blockHeader1 = mockBlockHeader(1);
     Mockito.when(blockHeader1.getReceiptsRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
 

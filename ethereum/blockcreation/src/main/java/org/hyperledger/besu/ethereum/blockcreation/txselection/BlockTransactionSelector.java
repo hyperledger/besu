@@ -65,8 +65,10 @@ import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -199,7 +201,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
    *     evaluation.
    */
   public TransactionSelectionResults buildTransactionListForBlock() {
-    timeLimitedSelection();
+    blockSelectionContext.transactionPool().selectTransactions(this::timeLimitedSelection);
     LOG.atTrace()
         .setMessage("Transaction selection result {}")
         .addArgument(transactionSelectionResults::toTraceLog)
@@ -215,12 +217,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     }
   }
 
-  private void timeLimitedSelection() {
+  private Map<PendingTransaction, TransactionSelectionResult> timeLimitedSelection(
+      final List<PendingTransaction> candidatePendingTransactions) {
     final long startTime = System.nanoTime();
 
     selectorsStateManager.blockSelectionStarted();
 
-    pluginTimeLimitedSelection(startTime);
+    pluginTimeLimitedSelection(candidatePendingTransactions, startTime);
 
     final long elapsedPluginTxsSelectionTime = System.nanoTime() - startTime;
     final long remainingSelectionTime =
@@ -237,12 +240,17 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     // reset timeout status for next selection run
     isTimeout.set(false);
 
-    internalTimeLimitedSelection(remainingSelectionTime);
+    return internalTimeLimitedSelection(candidatePendingTransactions, remainingSelectionTime);
   }
 
-  private void internalTimeLimitedSelection(final long remainingSelectionTime) {
+  private Map<PendingTransaction, TransactionSelectionResult> internalTimeLimitedSelection(
+      final List<PendingTransaction> candidateTransactions, final long remainingSelectionTime) {
     validTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT;
     invalidTxSelectionTimeoutResult = BLOCK_SELECTION_TIMEOUT_INVALID_TX;
+
+    final var selectionResults =
+        new ConcurrentHashMap<PendingTransaction, TransactionSelectionResult>(
+            candidateTransactions.size());
 
     currTxSelectionTask =
         new FutureTask<>(
@@ -253,7 +261,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                   .addArgument(() -> nanosToMillis(remainingSelectionTime))
                   .addArgument(blockSelectionContext.transactionPool()::logStats)
                   .log();
-              blockSelectionContext.transactionPool().selectTransactions(this::evaluateTransaction);
+
+              for (PendingTransaction candidateTx : candidateTransactions) {
+                final var selectionResult = evaluateTransaction(candidateTx);
+                selectionResults.put(candidateTx, selectionResult);
+                if (selectionResult.stop()) {
+                  break;
+                }
+              }
             },
             null);
     ethScheduler.scheduleBlockCreationTask(
@@ -283,9 +298,12 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
               + " the allowed max duration of {}ms",
           nanosToMillis(remainingSelectionTime));
     }
+
+    return selectionResults;
   }
 
-  private void pluginTimeLimitedSelection(final long startTime) {
+  private void pluginTimeLimitedSelection(
+      final List<PendingTransaction> candidatePendingTransactions, final long startTime) {
     validTxSelectionTimeoutResult = PLUGIN_SELECTION_TIMEOUT;
     invalidTxSelectionTimeoutResult = PLUGIN_SELECTION_TIMEOUT_INVALID_TX;
 
@@ -300,7 +318,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                     .addArgument(() -> nanosToMillis(pluginTxsSelectionMaxTimeNanos))
                     .log();
                 transactionSelectionService.selectPendingTransactions(
-                    this, blockSelectionContext.pendingBlockHeader());
+                    this, blockSelectionContext.pendingBlockHeader(), candidatePendingTransactions);
               } finally {
                 pluginSelectionDone.countDown();
               }
@@ -657,8 +675,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final TransactionProcessingResult processingResult) {
     final Transaction transaction = evaluationContext.getTransaction();
 
+    // EIP-7778: Use the protocol-specific gas accounting strategy
+    // Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
+    // Amsterdam+: estimateGasUsedByTransaction (pre-refund, prevents block gas limit circumvention)
     final long gasUsedByTransaction =
-        transaction.getGasLimit() - processingResult.getGasRemaining();
+        blockSelectionContext
+            .protocolSpec()
+            .getBlockGasAccountingStrategy()
+            .calculateBlockGas(transaction, processingResult);
 
     // queue the creation of the receipt and the update of the final results
     // these actions will be performed on commit if the pending tx is definitely selected

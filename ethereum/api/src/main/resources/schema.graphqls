@@ -52,7 +52,7 @@ type Block {
   number: Long!
 
   """Hash is the block hash of this block."""
-  hash: Bytes32!
+  hash: Hash!
 
   """Parent is the parent block of this block."""
   parent: Block
@@ -63,7 +63,7 @@ type Block {
   """
   TransactionsRoot is the keccak256 hash of the root of the trie of transactions in this block.
   """
-  transactionsRoot: Bytes32!
+  transactionsRoot: Hash!
 
   """
   TransactionCount is the number of transactions in this block. if
@@ -74,12 +74,12 @@ type Block {
   """
   StateRoot is the keccak256 hash of the state trie after this block was processed.
   """
-  stateRoot: Bytes32!
+  stateRoot: Hash!
 
   """
   ReceiptsRoot is the keccak256 hash of the trie of transaction receipts in this block.
   """
-  receiptsRoot: Bytes32!
+  receiptsRoot: Hash!
 
   """Miner is the account that mined this block."""
   miner(block: Long): Account!
@@ -117,7 +117,7 @@ type Block {
   logsBloom: Bytes!
 
   """MixHash is the hash that was used as an input to the PoW process."""
-  mixHash: Bytes32!
+  mixHash: Hash!
 
   """Difficulty is a measure of the difficulty of mining this block."""
   difficulty: BigInt!
@@ -152,7 +152,7 @@ type Block {
   OmmerHash is the keccak256 hash of all the ommers (AKA uncles)
   associated with this block.
   """
-  ommerHash: Bytes32!
+  ommerHash: Hash!
 
   """
   Transactions is a list of transactions associated with this block. If
@@ -192,7 +192,7 @@ type Block {
   WithdrawalsRoot is the withdrawals trie root in this block.
   If withdrawals are unavailable for this block, this field will be null.
   """
-  withdrawalsRoot: Bytes32
+  withdrawalsRoot: Hash
 
   """
   Withdrawals is a list of withdrawals associated with this block. If
@@ -233,7 +233,7 @@ input BlockFilterCriteria {
   - [[A], [B]]         matches topic A in first position, B in second position
   - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
   """
-  topics: [[Bytes32!]!]
+  topics: [[LogTopic!]!]
 }
 
 """
@@ -246,6 +246,21 @@ scalar Bytes
 Bytes32 is a 32 byte binary string, represented as 0x-prefixed hexadecimal.
 """
 scalar Bytes32
+
+"""
+Hash is a 32 byte keccak256 hash, represented as 0x-prefixed hexadecimal.
+"""
+scalar Hash
+
+"""
+LogTopic is a 32 byte log topic, represented as 0x-prefixed hexadecimal.
+"""
+scalar LogTopic
+
+"""
+VersionedHash is a 32 byte versioned hash for blob transactions, represented as 0x-prefixed hexadecimal.
+"""
+scalar VersionedHash
 
 """
 CallData represents the data associated with a local contract call.
@@ -324,7 +339,7 @@ input FilterCriteria {
   - [[A], [B]]         matches topic A in first position, B in second position
   - [[A, B]], [C, D]]  matches topic (A OR B) in first position, (C OR D) in second position
   """
-  topics: [[Bytes32!]!]
+  topics: [[LogTopic!]!]
 }
 
 """Log is an Ethereum event log."""
@@ -339,7 +354,7 @@ type Log {
   account(block: Long): Account!
 
   """Topics is a list of 0-4 indexed topics for the log."""
-  topics: [Bytes32!]!
+  topics: [LogTopic!]!
 
   """Data is unindexed data for this log."""
   data: Bytes!
@@ -386,7 +401,7 @@ type Query {
   Block fetches an Ethereum block by number or by hash. If neither is
   supplied, the most recent known block is returned.
   """
-  block(number: Long, hash: Bytes32): Block
+  block(number: Long, hash: Hash): Block
 
   """
   Blocks returns all the blocks between two numbers, inclusive. If
@@ -398,7 +413,7 @@ type Query {
   pending: Pending!
 
   """Transaction returns a transaction specified by its hash."""
-  transaction(hash: Bytes32!): Transaction
+  transaction(hash: Hash!): Transaction
 
   """Logs returns log entries matching the provided filter."""
   logs(filter: FilterCriteria!): [Log!]!
@@ -441,7 +456,7 @@ type SyncState {
 """Transaction is an Ethereum transaction."""
 type Transaction {
   """Hash is the hash of this transaction."""
-  hash: Bytes32!
+  hash: Hash!
 
   """Nonce is the nonce of the account this transaction was generated with."""
   nonce: Long!
@@ -578,7 +593,7 @@ type Transaction {
   """
   BlobVersionedHashes is a set of hash outputs from the blobs in the transaction.
   """
-  blobVersionedHashes: [Bytes32!]
+  blobVersionedHashes: [VersionedHash!]
 
   """Reason returned when transaction fails."""
   revertReason: Bytes

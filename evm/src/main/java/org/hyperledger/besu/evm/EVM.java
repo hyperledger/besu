@@ -30,13 +30,16 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
+import org.hyperledger.besu.evm.operation.AddOperationOptimized;
 import org.hyperledger.besu.evm.operation.AndOperation;
 import org.hyperledger.besu.evm.operation.AndOperationOptimized;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
+import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
@@ -68,6 +71,7 @@ import org.hyperledger.besu.evm.operation.SModOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
+import org.hyperledger.besu.evm.operation.SwapNOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
@@ -100,6 +104,7 @@ public class EVM {
 
   // Optimized operation flags
   private final boolean enableShanghai;
+  private final boolean enableAmsterdam;
   private final boolean enableOsaka;
 
   private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
@@ -125,6 +130,7 @@ public class EVM {
     this.jumpDestOnlyCodeCache = new JumpDestOnlyCodeCache(evmConfiguration);
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
+    enableAmsterdam = EvmSpecVersion.AMSTERDAM.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
   }
 
@@ -225,7 +231,10 @@ public class EVM {
         result =
             switch (opcode) {
               case 0x00 -> StopOperation.staticOperation(frame);
-              case 0x01 -> AddOperation.staticOperation(frame);
+              case 0x01 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AddOperationOptimized.staticOperation(frame)
+                      : AddOperation.staticOperation(frame);
               case 0x02 -> MulOperation.staticOperation(frame);
               case 0x03 -> SubOperation.staticOperation(frame);
               case 0x04 -> DivOperation.staticOperation(frame);
@@ -350,6 +359,18 @@ public class EVM {
                   0x9e,
                   0x9f ->
                   SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
+              case 0xe6 -> // DUPN (EIP-8024)
+                  enableAmsterdam
+                      ? DupNOperation.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0xe7 -> // SWAPN (EIP-8024)
+                  enableAmsterdam
+                      ? SwapNOperation.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0xe8 -> // EXCHANGE (EIP-8024)
+                  enableAmsterdam
+                      ? ExchangeOperation.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
               default -> { // unoptimized operations
                 frame.setCurrentOperation(currentOperation);
                 yield currentOperation.execute(frame, this);

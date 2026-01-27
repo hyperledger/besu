@@ -41,11 +41,14 @@ public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
    * BiMap.
    */
   class BonsaiReferenceTestPreImageProxy implements BonsaiPreImageProxy {
-    BiMap<Hash, Bytes> preImageCache = HashBiMap.create();
+    private final BiMap<Bytes32, Bytes> preImageCache = HashBiMap.create();
 
     @Override
     public synchronized Hash hashAndSavePreImage(final Bytes value) {
-      return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
+      return Hash.wrap(
+          preImageCache
+              .inverse()
+              .computeIfAbsent(value, v -> Bytes32.wrap(Hash.hash(v).getBytes())));
     }
 
     @Override

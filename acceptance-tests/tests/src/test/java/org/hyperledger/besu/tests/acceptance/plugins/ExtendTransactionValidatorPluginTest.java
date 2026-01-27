@@ -19,6 +19,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import org.hyperledger.besu.crypto.SECP256K1;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
@@ -64,6 +65,7 @@ public class ExtendTransactionValidatorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node1",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             Collections.singletonList("--plugin-tx-validator-test-enabled=true"),
             "DEBUG");
     cluster.start(minerNode, extraValidatorNode, minerNode2, minerNode3);

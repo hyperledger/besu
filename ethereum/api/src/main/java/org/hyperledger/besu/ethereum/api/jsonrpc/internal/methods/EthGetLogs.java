@@ -108,6 +108,9 @@ public class EthGetLogs implements JsonRpcMethod {
                                     new InvalidJsonRpcParameters(
                                         "toBlock not found: " + filter.getToBlock(),
                                         RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
+
+                    FilterParameter.validateBlockRange(
+                        fromBlockNumber, toBlockNumber, blockchain.headBlockNumber());
                     if (maxLogRange > 0 && (toBlockNumber - fromBlockNumber) > maxLogRange) {
                       throw new InvalidJsonRpcParameters(
                           "Requested range exceeds maximum range limit",

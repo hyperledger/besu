@@ -82,7 +82,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_PAYLOAD_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid payload id params"),
   INVALID_PENDING_TRANSACTIONS_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid pending transactions params"),
-  INVAlID_PLUGIN_NAME_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid plug in name params"),
+  INVALID_PLUGIN_NAME_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid plug in name params"),
   INVALID_POSITION_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid position params"),
   INVALID_POW_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid pow hash params"),
   INVALID_PRIVATE_FROM_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private from params"),
@@ -124,6 +124,9 @@ public enum RpcErrorType implements RpcMethodError {
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
+  PRUNED_HISTORY_UNAVAILABLE(4444, "Pruned history unavailable"),
+  BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS(
+      4445, "Block access list not available for pre-Amsterdam blocks"),
 
   // eth_sendTransaction specific error message
   ETH_SEND_TX_NOT_AVAILABLE(
