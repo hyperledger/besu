@@ -675,8 +675,14 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final TransactionProcessingResult processingResult) {
     final Transaction transaction = evaluationContext.getTransaction();
 
+    // EIP-7778: Use the protocol-specific gas accounting strategy
+    // Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
+    // Amsterdam+: estimateGasUsedByTransaction (pre-refund, prevents block gas limit circumvention)
     final long gasUsedByTransaction =
-        transaction.getGasLimit() - processingResult.getGasRemaining();
+        blockSelectionContext
+            .protocolSpec()
+            .getBlockGasAccountingStrategy()
+            .calculateBlockGas(transaction, processingResult);
 
     // queue the creation of the receipt and the update of the final results
     // these actions will be performed on commit if the pending tx is definitely selected
