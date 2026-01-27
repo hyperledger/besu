@@ -89,6 +89,13 @@ public class BftBlockCreator extends AbstractBlockCreator {
     }
   }
 
+  /**
+   * Construct a mining beneficiary calculator from given localAddress and protocolSchedule
+   *
+   * @param localAddress localAddress. Used if no mining beneficiary set in genesis config
+   * @param protocolSchedule protocol schedule
+   * @return mining beneficiary calculator
+   */
   public static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
       final Address localAddress, final ProtocolSchedule protocolSchedule) {
     return (blockTimestamp, pendingHeader) -> {
