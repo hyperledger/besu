@@ -376,7 +376,8 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(cInt) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(aInt.add(bInt).mod(cInt));
-      if (! remainder.equals(expected)) System.out.println(String.format("%s + %s == %s (mod %s)", a, b, a.add(b), c));
+      if (!remainder.equals(expected))
+        System.out.println(String.format("%s + %s == %s (mod %s)", a, b, a.add(b), c));
       assertThat(remainder).isEqualTo(expected);
     }
   }
