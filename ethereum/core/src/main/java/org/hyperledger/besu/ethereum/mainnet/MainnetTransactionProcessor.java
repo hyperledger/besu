@@ -435,6 +435,7 @@ public class MainnetTransactionProcessor {
             return TransactionProcessingResult.failed(
                 gasUsedByTransaction,
                 refundedGas,
+                usedGas,
                 ValidationResult.invalid(
                     TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                     "transaction price must be greater than base fee"),
@@ -485,6 +486,7 @@ public class MainnetTransactionProcessor {
             initialFrame.getLogs(),
             gasUsedByTransaction,
             refundedGas,
+            usedGas,
             initialFrame.getOutputData(),
             partialBlockAccessView,
             validationResult);
@@ -504,6 +506,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.failed(
             gasUsedByTransaction,
             refundedGas,
+            usedGas,
             validationResult,
             initialFrame.getRevertReason(),
             initialFrame.getExceptionalHaltReason(),

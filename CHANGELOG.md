@@ -28,11 +28,12 @@
 - Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 - Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
-
+- Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
 
 ### Bug fixes
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
 - Fix callTracer to properly capture nested calls and populate revertReason field when transactions revert [#9651](https://github.com/hyperledger/besu/pull/9651)
+- Enhance payload selection with tx count and creation time tiebreakers [#9657](https://github.com/hyperledger/besu/pull/9657)
 
 ##  25.12.0
 
