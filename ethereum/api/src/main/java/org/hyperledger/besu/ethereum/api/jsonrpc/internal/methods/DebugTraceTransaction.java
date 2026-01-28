@@ -28,10 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
@@ -98,7 +96,7 @@ public class DebugTraceTransaction implements JsonRpcMethod {
   }
 
   private DebugTraceTransactionResult debugTraceTransactionResult(
-      final Hash hash,
+      final Hash txHash,
       final TransactionWithMetadata transactionWithMetadata,
       final TraceOptions traceOptions) {
     final Hash blockHash = transactionWithMetadata.getBlockHash().get();
@@ -106,21 +104,21 @@ public class DebugTraceTransaction implements JsonRpcMethod {
     final DebugOperationTracer execTracer =
         new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
 
-    final Optional<BlockHeader> blockHeader = blockchain.getBlockchain().getBlockHeader(blockHash);
-    if (blockHeader.isEmpty()) {
-      // Tracer.processTracing also returns Optional.empty when blockHeader is empty
-      return null;
-    }
-
-    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader.get());
-
-    return Tracer.processTracing(
-            blockchain,
-            blockHash,
-            mutableWorldState ->
-                transactionTracer
-                    .traceTransaction(mutableWorldState, blockHash, hash, execTracer)
-                    .map(DebugTraceTransactionStepFactory.create(traceOptions, protocolSpec)))
+    return blockchain
+        .getBlockchain()
+        .getBlockHeader(blockHash)
+        .map(protocolSchedule::getByBlockHeader)
+        .flatMap(
+            protocolSpec ->
+                Tracer.processTracing(
+                    blockchain,
+                    blockHash,
+                    mutableWorldState ->
+                        transactionTracer
+                            .traceTransaction(mutableWorldState, blockHash, txHash, execTracer)
+                            .map(
+                                DebugTraceTransactionStepFactory.create(
+                                    traceOptions, protocolSpec))))
         .orElse(null);
   }
 }
