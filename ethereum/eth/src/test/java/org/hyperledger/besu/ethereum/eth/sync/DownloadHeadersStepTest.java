@@ -89,7 +89,8 @@ public class DownloadHeadersStepTest {
   }
 
   @Test
-  public void shouldRetrieveHeadersForCheckpointRange() throws ExecutionException, InterruptedException, TimeoutException {
+  public void shouldRetrieveHeadersForCheckpointRange()
+      throws ExecutionException, InterruptedException, TimeoutException {
     downloader =
         new DownloadHeadersStep(
             protocolSchedule,
