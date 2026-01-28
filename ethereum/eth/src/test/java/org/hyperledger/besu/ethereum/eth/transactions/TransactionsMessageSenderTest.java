@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.List;
 import java.util.Set;
@@ -50,7 +51,8 @@ public class TransactionsMessageSenderTest {
   private final Transaction transaction3 = generator.transaction();
 
   private final PeerTransactionTracker transactionTracker =
-      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
+      new PeerTransactionTracker(
+          TransactionPoolConfiguration.DEFAULT, ethPeers, new DeterministicEthScheduler());
   private final TransactionsMessageSender messageSender =
       new TransactionsMessageSender(
           transactionTracker, EthProtocolConfiguration.DEFAULT.getMaxTransactionsMessageSize());

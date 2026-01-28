@@ -1282,10 +1282,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getPathBasedExtraStorageConfiguration()
-                    .getMaxLayersToLoad()),
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
@@ -1299,10 +1296,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         yield new BonsaiArchiveWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getPathBasedExtraStorageConfiguration()
-                    .getMaxLayersToLoad()),
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,

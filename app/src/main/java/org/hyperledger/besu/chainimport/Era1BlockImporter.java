@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -129,7 +129,8 @@ public class Era1BlockImporter implements Closeable {
                       final List<TransactionReceipt> receiptsForBlock = new ArrayList<>();
                       input.readList(
                           (in) ->
-                              receiptsForBlock.add(TransactionReceiptDecoder.readFrom(in, false)));
+                              receiptsForBlock.add(
+                                  FrontierTransactionReceiptDecoder.readFrom(in, false)));
                       return receiptsForBlock;
                     }));
           }

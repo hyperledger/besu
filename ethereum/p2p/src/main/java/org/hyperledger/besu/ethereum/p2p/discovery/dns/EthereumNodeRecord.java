@@ -48,6 +48,16 @@ public record EthereumNodeRecord(
    */
   public static EthereumNodeRecord fromEnr(final String enr) {
     NodeRecord nodeRecord = NodeRecordFactory.DEFAULT.fromEnr(enr);
+    return fromNodeRecord(nodeRecord);
+  }
+
+  /**
+   * Creates an EthereumNodeRecord from a NodeRecord
+   *
+   * @param nodeRecord the NodeRecord
+   * @return the EthereumNodeRecord
+   */
+  public static EthereumNodeRecord fromNodeRecord(final NodeRecord nodeRecord) {
     final Map<String, Object> fields = new HashMap<>();
     nodeRecord.forEachField(fields::put);
     return new EthereumNodeRecord(
