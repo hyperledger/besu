@@ -79,36 +79,76 @@ def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
     )
 }
 
-def executionSpecTests = tasks.register("executionSpecTests") {
-  final referenceTestsPath = "$buildDir/execution-spec-tests/"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
-  def tarPath = configurations.tarConfig.files.find{ it.name.startsWith('execution-spec-tests')}
-
-  copy {
-    from tarTree(tarPath)
-    into "$referenceTestsPath"
+def extractStableFixtures = tasks.register("extractStableFixtures", Copy) {
+  from {
+    tarTree(configurations.tarConfig.files.find { it.name.startsWith('execution-spec-tests') })
   }
+  into layout.buildDirectory.dir("execution-spec-tests")
+}
 
-  inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
-  // generate blockchain_tests:
-  generateTestFiles(
-    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
+def executionSpecTests = tasks.register("executionSpecTests") {
+  dependsOn extractStableFixtures
+  final referenceTestsDir = layout.buildDirectory.dir("execution-spec-tests")
+  final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
+
+  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
+  outputs.files generatedTestsDir
+  // generate blockchain_tests grouped by hardfork/EIP:
+  generateTestFilesGroupedByDirectory(
+    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
     "fixtures",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "blockchain_tests",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
     "ExecutionSpecBlockchainTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
     )
 
-  // generate state_tests:
-  generateTestFiles(
-    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+  // generate state_tests grouped by hardfork/EIP:
+  generateTestFilesGroupedByDirectory(
+    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "fixtures",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "state_tests",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
     "ExecutionSpecStateTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
+    )
+}
+
+def extractDevnetFixtures = tasks.register("extractDevnetFixtures", Copy) {
+  from {
+    tarTree(configurations.devnetTarConfig.files.find { it.name.startsWith('execution-spec-tests') })
+  }
+  into layout.buildDirectory.dir("execution-spec-devnet-tests")
+}
+
+def executionSpecDevnetTests = tasks.register("executionSpecDevnetTests") {
+  dependsOn extractDevnetFixtures
+  final referenceTestsDir = layout.buildDirectory.dir("execution-spec-devnet-tests")
+  final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
+
+  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
+  outputs.files generatedTestsDir
+
+  generateTestFilesGroupedByDirectory(
+    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "fixtures",
+    "blockchain_tests",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
+    "ExecutionSpecDevnetBlockchainTest",
+    "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
+    )
+
+  generateTestFilesGroupedByDirectory(
+    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "fixtures",
+    "state_tests",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
+    "ExecutionSpecDevnetStateTest",
+    "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
     )
 }
 
@@ -154,6 +194,7 @@ sourceSets {
         eipBlockchainReferenceTests,
         eipStateReferenceTests,
         executionSpecTests,
+        executionSpecDevnetTests,
         generalstateReferenceTests,
         generalstateRegressionReferenceTests
     }
@@ -161,8 +202,29 @@ sourceSets {
       srcDirs 'src/reference-test/resources',
         'src/reference-test/external-resources',
         'src/reference-test/templates',
-        'build/execution-spec-tests/'
+        'build/execution-spec-tests/',
+        'build/execution-spec-devnet-tests/'
     }
+  }
+}
+
+// Both stable and devnet execution-spec-tests tarballs contain fixtures/.meta/index.json
+tasks.named('processReferenceTestResources') {
+  dependsOn extractStableFixtures, extractDevnetFixtures
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+configurations {
+  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
+  tarConfig.extendsFrom referenceTestImplementation
+  tarConfig {
+    canBeResolved = true
+    canBeConsumed = false
+  }
+  devnetTarConfig {
+    canBeResolved = true
+    canBeConsumed = false
   }
 }
 
@@ -203,7 +265,14 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:5.3.0:fixtures_develop@tar.gz'
+  referenceTestImplementation(
+    group: 'ethereum', name: 'execution-spec-tests',
+    version: 'v5.3.0', classifier: 'fixtures_develop', ext: 'tar.gz'
+    )
+  devnetTarConfig(
+    group: 'ethereum', name: 'execution-spec-tests',
+    version: 'bal@v4.0.0', classifier: 'fixtures_bal', ext: 'tar.gz'
+    )
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.consensys.tuweni:tuweni-bytes'
@@ -225,6 +294,19 @@ tasks.register('referenceTests', Test) {
   description = 'Runs ETH reference tests.'
   testClassesDirs = sourceSets.referenceTest.output.classesDirs
   classpath = sourceSets.referenceTest.runtimeClasspath
+  filter {
+    excludeTestsMatching "org.hyperledger.besu.ethereum.vm.executionspecdevnet.*"
+  }
+}
+
+tasks.register('referenceTestsDevnet', Test) {
+  useJUnitPlatform()
+  description = 'Runs execution-spec-tests pre-release (devnet) reference tests.'
+  testClassesDirs = sourceSets.referenceTest.output.classesDirs
+  classpath = sourceSets.referenceTest.runtimeClasspath
+  filter {
+    includeTestsMatching "org.hyperledger.besu.ethereum.vm.executionspecdevnet.*"
+  }
 }
 
 tasks.register('validateReferenceTestSubmodule') {
@@ -302,12 +384,74 @@ def generateTestFiles(
   }
 }
 
-configurations {
-  referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
-  // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
-  tarConfig.extendsFrom referenceTestImplementation
-  tarConfig {
-    canBeResolved = true
-    canBeConsumed = false
+def generateTestFilesGroupedByDirectory(
+  FileTree jsonPath,
+  File templateFile,
+  String pathstrip,
+  String groupBaseDir,
+  String destination,
+  String namePrefix,
+  String packageString,
+  String ... excludedPath) {
+  mkdir(destination)
+  def referenceTestTemplate = templateFile.text
+
+  // Collect paths and group by hardfork/EIP directory
+  def groups = [:] as TreeMap // sorted for deterministic output
+
+  jsonPath.getFiles().forEach { testJsonFile ->
+    def parentFile = testJsonFile.getParentFile()
+    def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+    def isExcluded = excludedPath.any { excluded -> parentPathFile.startsWith(excluded) }
+    if (!testJsonFile.getName().toString().startsWith(".") && !isExcluded) {
+      def pathFile = testJsonFile.getPath()
+      def relativePath = pathFile.substring(pathFile.indexOf(pathstrip))
+
+      // Extract the part after groupBaseDir to get hardfork/eip/file structure
+      def groupBaseDirIndex = relativePath.indexOf(groupBaseDir)
+      def afterGroupBase = relativePath.substring(groupBaseDirIndex + groupBaseDir.length() + 1)
+      def parts = afterGroupBase.split("[/\\\\]")
+
+      // Extract group key from directory structure (e.g. "prague_eip7702_set_code_tx")
+      def groupKey = extractGroupKey(parts)
+
+      if (!groups.containsKey(groupKey)) {
+        groups[groupKey] = []
+      }
+      groups[groupKey] << relativePath
+    }
   }
+
+  // Generate test files for each group, batched in groups of 5
+  groups.each { groupKey, paths ->
+    paths.collate(5).eachWithIndex { tests, idx ->
+      def className = namePrefix + "_" + groupKey + "_" + idx
+      def testFile = file(destination + "/" + className + ".java")
+      def allPaths = '"' + tests.join('",\n        "') + '"'
+      def testFileContents = referenceTestTemplate
+        .replaceAll("%%TESTS_FILE%%", allPaths)
+        .replaceAll("%%TESTS_NAME%%", className)
+        .replaceAll("%%PACKAGE_NAME%%", packageString)
+      testFile.newWriter().withWriter { w -> w << testFileContents }
+    }
+  }
+}
+
+// Extract a group key from path segments for hardfork/EIP-based test grouping.
+// parts = path segments after groupBaseDir, e.g. ["prague", "eip7702_set_code_tx", "test.json"]
+def extractGroupKey(String[] parts) {
+  def groupKey
+  if (parts.length >= 3 && parts[0] == "static") {
+    // static dirs have deeper nesting: static/state_tests/stCreate2/file.json → static_stCreate2
+    groupKey = "static_" + parts[parts.length - 2]
+  } else if (parts.length >= 3) {
+    // Normal: hardfork/eip/file.json → hardfork_eip
+    groupKey = parts[0] + "_" + parts[1]
+  } else if (parts.length == 2) {
+    // File directly under hardfork dir: hardfork/file.json → hardfork
+    groupKey = parts[0]
+  } else {
+    groupKey = "unknown"
+  }
+  return groupKey.replaceAll("[^a-zA-Z0-9_]", "_")
 }
