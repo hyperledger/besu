@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -110,19 +109,10 @@ public class FourByteTracerResultConverter {
 
     final Transaction tx = transactionTrace.getTransaction();
 
-    // Skip if this is a contract creation (no function selector)
-    if (tx.isContractCreation()) {
-      return;
-    }
-
-    // Skip if target is not present
-    final Optional<Address> to = tx.getTo();
-    if (to.isEmpty()) {
-      return;
-    }
-
-    // skip if target is a precompile address
-    if (protocolSpec.getPrecompileContractRegistry().get(to.get()) != null) {
+    // Skip scenarios
+    if (tx.isContractCreation()
+        || tx.getTo().isEmpty()
+        || isTargetPrecompiledContract(protocolSpec, tx.getTo().get())) {
       return;
     }
 
@@ -133,6 +123,11 @@ public class FourByteTracerResultConverter {
       final String key = createKey(inputData);
       selectorCounts.merge(key, 1, Integer::sum);
     }
+  }
+
+  private static boolean isTargetPrecompiledContract(
+      final ProtocolSpec protocolSpec, final Address toAddress) {
+    return protocolSpec.getPrecompileContractRegistry().get(toAddress) != null;
   }
 
   /**
