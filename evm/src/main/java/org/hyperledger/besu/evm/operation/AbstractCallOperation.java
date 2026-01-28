@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -287,6 +288,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     builder.build();
     // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
+
+    // Track CALL for cross-client execution metrics (includes DELEGATECALL, STATICCALL, CALLCODE)
+    EvmOperationCounters.incrementCall();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);
