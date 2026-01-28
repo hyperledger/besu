@@ -1644,13 +1644,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    final ChainPruningStrategy pruningMode = unstableChainPruningOptions.getChainPruningMode();
+    final ChainPruningStrategy chainPruningStrategy =
+        unstableChainPruningOptions.getChainPruningStrategy();
     final long blocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
     final long balsRetained = unstableChainPruningOptions.getChainDataPruningBalsRetained();
     final long retainedMinimum = unstableChainPruningOptions.getChainDataPruningRetainedMinimum();
 
     // Skip validation if pruning is disabled
-    if (pruningMode == ChainPruningStrategy.NONE) {
+    if (chainPruningStrategy == ChainPruningStrategy.NONE) {
       return;
     }
 
@@ -1664,11 +1665,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     if (retainedMinimum < 0) {
       throw new ParameterException(
-          this.commandLine, "--Xchain-pruning-retained-limit must be >= 0");
+          this.commandLine, "--Xchain-pruning-retained-minimum must be >= 0");
     }
 
     // Validate blocks pruning (when mode is ALL)
-    if (pruningMode == ChainPruningStrategy.ALL) {
+    if (chainPruningStrategy == ChainPruningStrategy.ALL) {
       if (blocksRetained < retainedMinimum) {
         throw new ParameterException(
             this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + retainedMinimum);
@@ -1691,14 +1692,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     // Validate BAL pruning (when mode is BAL or ALL)
-    if (pruningMode == ChainPruningStrategy.BAL || pruningMode == ChainPruningStrategy.ALL) {
+    if (chainPruningStrategy == ChainPruningStrategy.BAL
+        || chainPruningStrategy == ChainPruningStrategy.ALL) {
       if (balsRetained < retainedMinimum) {
         throw new ParameterException(
             this.commandLine, "--Xchain-pruning-bals-retained must be >= " + retainedMinimum);
       }
 
       // When both are enabled (ALL mode), BAL retention can't exceed block retention
-      if (pruningMode == ChainPruningStrategy.ALL && balsRetained > blocksRetained) {
+      if (chainPruningStrategy == ChainPruningStrategy.ALL && balsRetained > blocksRetained) {
         throw new ParameterException(
             this.commandLine,
             "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained when pruning mode is ALL");
@@ -2791,7 +2793,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
   public void setIgnorableStorageSegments() {
-    if (unstableChainPruningOptions.getChainPruningMode().equals(ChainPruningStrategy.NONE)
+    if (unstableChainPruningOptions.getChainPruningStrategy().equals(ChainPruningStrategy.NONE)
         && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
@@ -2925,7 +2927,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     // Add chain pruning configuration
-    final ChainPruningStrategy pruningStrategy = unstableChainPruningOptions.getChainPruningMode();
+    final ChainPruningStrategy pruningStrategy =
+        unstableChainPruningOptions.getChainPruningStrategy();
     if (!pruningStrategy.equals(ChainPruningStrategy.NONE)) {
       builder.setChainPruningEnabled(
           pruningStrategy,

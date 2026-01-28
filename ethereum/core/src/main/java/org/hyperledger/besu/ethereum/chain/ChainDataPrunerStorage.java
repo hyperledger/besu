@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ChainDataPrunerStorage {
-  private static final Bytes PRUNING_MARK_KEY =
+  private static final Bytes CHAIN_PRUNING_MARK_KEY =
       Bytes.wrap("pruningMark".getBytes(StandardCharsets.UTF_8));
   private static final Bytes BAL_PRUNING_MARK_KEY =
       Bytes.wrap("balPruningMark".getBytes(StandardCharsets.UTF_8));
@@ -47,8 +47,10 @@ public class ChainDataPrunerStorage {
     return this.storage.startTransaction();
   }
 
-  public Optional<Long> getPruningMark() {
-    return get(VARIABLES_PREFIX, PRUNING_MARK_KEY).map(UInt256::fromBytes).map(UInt256::toLong);
+  public Optional<Long> getChainPruningMark() {
+    return get(VARIABLES_PREFIX, CHAIN_PRUNING_MARK_KEY)
+        .map(UInt256::fromBytes)
+        .map(UInt256::toLong);
   }
 
   public Optional<Long> getBalPruningMark() {
@@ -61,8 +63,9 @@ public class ChainDataPrunerStorage {
         .orElse(Lists.newArrayList());
   }
 
-  public void setPruningMark(final KeyValueStorageTransaction transaction, final long pruningMark) {
-    set(transaction, VARIABLES_PREFIX, PRUNING_MARK_KEY, UInt256.valueOf(pruningMark));
+  public void setChainPruningMark(
+      final KeyValueStorageTransaction transaction, final long pruningMark) {
+    set(transaction, VARIABLES_PREFIX, CHAIN_PRUNING_MARK_KEY, UInt256.valueOf(pruningMark));
   }
 
   public void setBalPruningMark(

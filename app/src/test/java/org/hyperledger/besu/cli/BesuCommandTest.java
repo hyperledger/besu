@@ -2792,7 +2792,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=1000",
-        "--Xchain-pruning-retained-limit=2000");
+        "--Xchain-pruning-retained-minimum=2000");
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--Xchain-pruning-blocks-retained must be >= 2000");
@@ -2803,7 +2803,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xchain-pruning-enabled=BAL",
         "--Xchain-pruning-bals-retained=1000",
-        "--Xchain-pruning-retained-limit=2000");
+        "--Xchain-pruning-retained-minimum=2000");
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("--Xchain-pruning-bals-retained must be >= 2000");
@@ -2816,7 +2816,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=1000",
         "--Xchain-pruning-bals-retained=2000",
-        "--Xchain-pruning-retained-limit=500");
+        "--Xchain-pruning-retained-minimum=500");
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
@@ -2830,7 +2830,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=2000",
         "--Xchain-pruning-bals-retained=1000",
-        "--Xchain-pruning-retained-limit=500");
+        "--Xchain-pruning-retained-minimum=500");
 
     // Should succeed - we keep more BALs than blocks
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -2844,7 +2844,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-enabled=BAL",
         "--Xchain-pruning-blocks-retained=" + Long.MAX_VALUE,
         "--Xchain-pruning-bals-retained=1000",
-        "--Xchain-pruning-retained-limit=500");
+        "--Xchain-pruning-retained-minimum=500");
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2866,7 +2866,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=" + (CHAIN_DATA_PRUNING_RETAINED_MINIMUM + 100),
         "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
-        "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
+        "--Xchain-pruning-retained-minimum=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -2876,7 +2876,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--Xchain-pruning-enabled=BAL",
         "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
-        "--Xchain-pruning-retained-limit=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
+        "--Xchain-pruning-retained-minimum=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

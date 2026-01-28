@@ -30,7 +30,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       "--Xchain-pruning-blocks-retained";
   private static final String CHAIN_PRUNING_BALS_RETAINED_FLAG = "--Xchain-pruning-bals-retained";
   private static final String CHAIN_PRUNING_RETAINED_MINIMUM_FLAG =
-      "--Xchain-pruning-retained-limit";
+      "--Xchain-pruning-retained-minimum";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
   private static final String PRE_MERGE_PRUNING_QUANTITY_FLAG = "--Xpre-merge-pruning-quantity";
 
@@ -77,7 +77,7 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
               + ". Defaults to "
               + CHAIN_PRUNING_BLOCKS_RETAINED_FLAG
               + " when not specified.")
-  private final Long chainDataPruningBalsRetained = CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
+  private Long chainDataPruningBalsRetained;
 
   @CommandLine.Option(
       hidden = true,
@@ -117,11 +117,11 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   }
 
   /**
-   * Gets chain pruning mode.
+   * Gets chain pruning strategy.
    *
-   * @return the chain pruning mode
+   * @return the chain pruning strategy
    */
-  public ChainPruningStrategy getChainPruningMode() {
+  public ChainPruningStrategy getChainPruningStrategy() {
     return chainPruningStrategy;
   }
 

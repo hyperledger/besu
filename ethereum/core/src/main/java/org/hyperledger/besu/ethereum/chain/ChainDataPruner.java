@@ -69,8 +69,8 @@ public class ChainDataPruner implements BlockAddedObserver {
 
   private void chainPrunerAction(final BlockAddedEvent event) {
     final long blockNumber = event.getHeader().getNumber();
-    final long storedBlockPruningMark = prunerStorage.getPruningMark().orElse(0L);
-    final long storedBalPruningMark = prunerStorage.getBalPruningMark().orElse(0L);
+    final long storedBlockPruningMark = prunerStorage.getChainPruningMark().orElse(1L);
+    final long storedBalPruningMark = prunerStorage.getBalPruningMark().orElse(1L);
 
     validatePruningMarks(blockNumber, storedBlockPruningMark, storedBalPruningMark);
     recordForkBlock(event, blockNumber);
@@ -174,7 +174,7 @@ public class ChainDataPruner implements BlockAddedObserver {
     }
 
     updater.commit();
-    prunerStorage.setPruningMark(pruningTransaction, currentChainMark);
+    prunerStorage.setChainPruningMark(pruningTransaction, currentChainMark);
     prunerStorage.setBalPruningMark(pruningTransaction, currentBalMark);
     pruningTransaction.commit();
   }
@@ -207,14 +207,17 @@ public class ChainDataPruner implements BlockAddedObserver {
         () -> {
           try {
             Thread.sleep(1000);
-            final long storedPruningMark = prunerStorage.getPruningMark().orElse(1L);
+            final long storedBlockPruningMark = prunerStorage.getChainPruningMark().orElse(1L);
             final long expectedNewPruningMark =
-                Math.min(storedPruningMark + config.preMergePruningBlocksQuantity(), mergeBlock);
+                Math.min(
+                    storedBlockPruningMark + config.preMergePruningBlocksQuantity(), mergeBlock);
             LOG.debug(
-                "Attempting to prune blocks {} to {}", storedPruningMark, expectedNewPruningMark);
+                "Attempting to prune blocks {} to {}",
+                storedBlockPruningMark,
+                expectedNewPruningMark);
             final KeyValueStorageTransaction pruningTransaction = prunerStorage.startTransaction();
             final BlockchainStorage.Updater updater = blockchainStorage.updater();
-            for (long blockNumber = storedPruningMark;
+            for (long blockNumber = storedBlockPruningMark;
                 blockNumber < expectedNewPruningMark;
                 blockNumber++) {
               blockchainStorage
@@ -234,7 +237,7 @@ public class ChainDataPruner implements BlockAddedObserver {
                       });
             }
             updater.commit();
-            prunerStorage.setPruningMark(pruningTransaction, expectedNewPruningMark);
+            prunerStorage.setChainPruningMark(pruningTransaction, expectedNewPruningMark);
             pruningTransaction.commit();
             LOG.debug("Pruned pre-merge blocks up to {}", expectedNewPruningMark);
             LogUtil.throttledLog(
