@@ -69,7 +69,7 @@ class ExtCodeHashOperationTest {
   @Test
   void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY);
+    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY.getBytes());
   }
 
   @Test
@@ -87,7 +87,7 @@ class ExtCodeHashOperationTest {
   void shouldReturnEmptyCodeHashWhenPrecompileHasBalance() {
     // Sending money to a precompile causes it to exist in the world state archive.
     worldStateUpdater.getOrCreate(Address.ECREC).setBalance(Wei.of(10));
-    assertThat(executeOperation(Address.ECREC)).isEqualTo(Hash.EMPTY);
+    assertThat(executeOperation(Address.ECREC)).isEqualTo(Hash.EMPTY.getBytes());
   }
 
   @Test
@@ -95,7 +95,7 @@ class ExtCodeHashOperationTest {
     final Bytes code = Bytes.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
+    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code).getBytes());
   }
 
   @Test
@@ -109,7 +109,7 @@ class ExtCodeHashOperationTest {
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
+    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code).getBytes());
   }
 
   @Test
@@ -123,11 +123,11 @@ class ExtCodeHashOperationTest {
 
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
+    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code).getBytes());
 
     final MessageFrame frameIstanbul = createMessageFrame(value);
     operationIstanbul.execute(frameIstanbul, null);
-    assertThat(frameIstanbul.getStackItem(0)).isEqualTo(Hash.hash(code));
+    assertThat(frameIstanbul.getStackItem(0)).isEqualTo(Hash.hash(code).getBytes());
   }
 
   private Bytes executeOperation(final Address requestedAddress) {

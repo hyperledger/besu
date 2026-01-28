@@ -30,6 +30,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -59,7 +60,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
@@ -474,11 +474,12 @@ public class T8nExecutor {
       receipts.add(receipt);
       ObjectNode receiptObject = receiptsArray.addObject();
       receiptObject.put(
-          "root", receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().toHexString());
+          "root",
+          receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().getBytes().toHexString());
       int status = receipt.getStatus();
       receiptObject.put("status", "0x" + Math.max(status, 0));
       receiptObject.put("cumulativeGasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
-      receiptObject.put("logsBloom", receipt.getBloomFilter().toHexString());
+      receiptObject.put("logsBloom", receipt.getBloomFilter().getBytes().toHexString());
       if (result.getLogs().isEmpty()) {
         receiptObject.putNull("logs");
       } else {
@@ -487,23 +488,24 @@ public class T8nExecutor {
         for (int logIndex = 0; logIndex < logs.size(); logIndex++) {
           Log log = logs.get(logIndex);
           var obj = logsArray.addObject();
-          obj.put("address", log.getLogger().toHexString());
+          obj.put("address", log.getLogger().getBytes().toHexString());
           var topics = obj.putArray("topics");
-          log.getTopics().forEach(topic -> topics.add(topic.toHexString()));
+          log.getTopics().forEach(topic -> topics.add(topic.getBytes().toHexString()));
           obj.put("data", log.getData().toHexString());
           obj.put("blockNumber", blockHeader.getNumber());
-          obj.put("transactionHash", transaction.getHash().toHexString());
+          obj.put("transactionHash", transaction.getHash().getBytes().toHexString());
           obj.put("transactionIndex", String.format("0x%x", transactionIndex));
-          obj.put("blockHash", blockHeader.getHash().toHexString());
+          obj.put("blockHash", blockHeader.getHash().getBytes().toHexString());
           obj.put("logIndex", String.format("0x%x", logIndex));
           obj.put("removed", "false");
         }
       }
-      receiptObject.put("transactionHash", transaction.getHash().toHexString());
+      receiptObject.put("transactionHash", transaction.getHash().getBytes().toHexString());
       receiptObject.put(
-          "contractAddress", transaction.contractAddress().orElse(Address.ZERO).toHexString());
+          "contractAddress",
+          transaction.contractAddress().orElse(Address.ZERO).getBytes().toHexString());
       receiptObject.put("gasUsed", gasUsedInTransaction.toQuantityHexString());
-      receiptObject.put("blockHash", Hash.ZERO.toHexString());
+      receiptObject.put("blockHash", Hash.ZERO.getBytes().toHexString());
       receiptObject.put(
           "transactionIndex", Bytes.ofUnsignedLong(transactionIndex).toQuantityHexString());
       worldStateUpdater.commit();
@@ -560,7 +562,7 @@ public class T8nExecutor {
           Optional.of(rpc.process(requestContext, Optional.empty()));
       Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
 
-      resultObject.put("requestsHash", requestsHash.toHexString());
+      resultObject.put("requestsHash", requestsHash.getBytes().toHexString());
       ArrayNode requests = resultObject.putArray("requests");
       maybeRequests
           .orElseGet(List::of)
@@ -574,9 +576,11 @@ public class T8nExecutor {
 
     worldState.persist(blockHeader);
 
-    resultObject.put("stateRoot", worldState.rootHash().toHexString());
-    resultObject.put("txRoot", BodyValidation.transactionsRoot(validTransactions).toHexString());
-    resultObject.put("receiptsRoot", BodyValidation.receiptsRoot(receipts).toHexString());
+    resultObject.put("stateRoot", worldState.rootHash().getBytes().toHexString());
+    resultObject.put(
+        "txRoot", BodyValidation.transactionsRoot(validTransactions).getBytes().toHexString());
+    resultObject.put(
+        "receiptsRoot", BodyValidation.receiptsRoot(receipts).getBytes().toHexString());
     resultObject.put(
         "logsHash",
         Hash.hash(
@@ -585,8 +589,9 @@ public class T8nExecutor {
                         out.writeList(
                             receipts.stream().flatMap(r -> r.getLogsList().stream()).toList(),
                             Log::writeTo)))
+            .getBytes()
             .toHexString());
-    resultObject.put("logsBloom", BodyValidation.logsBloom(receipts).toHexString());
+    resultObject.put("logsBloom", BodyValidation.logsBloom(receipts).getBytes().toHexString());
     resultObject.set("receipts", receiptsArray);
     if (!invalidTransactions.isEmpty()) {
       resultObject.putPOJO("rejected", invalidTransactions);
@@ -603,7 +608,7 @@ public class T8nExecutor {
         .ifPresent(bf -> resultObject.put("currentBaseFee", bf.toQuantityHexString()));
     blockHeader
         .getWithdrawalsRoot()
-        .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
+        .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.getBytes().toHexString()));
     var maybeExcessBlobGas = blockHeader.getExcessBlobGas();
     if (maybeExcessBlobGas.isPresent()) {
       resultObject.put(
@@ -617,11 +622,12 @@ public class T8nExecutor {
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+        .sorted(Comparator.comparing(o -> o.getAddress().get().getBytes().toHexString()))
         .forEach(
             a -> {
               Account account = worldState.get(a.getAddress().get());
-              ObjectNode accountObject = allocObject.putObject(account.getAddress().toHexString());
+              ObjectNode accountObject =
+                  allocObject.putObject(account.getAddress().getBytes().toHexString());
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 accountObject.put("code", account.getCode().toHexString());
               }

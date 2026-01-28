@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -55,7 +56,9 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolReques
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -68,6 +71,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.io.MoreFiles;
@@ -137,6 +142,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Map<String, String> environment;
   private SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<KeyValueStorageFactory> storageFactory;
+  private final PluginConfiguration pluginConfiguration;
 
   public BesuNode(
       final String name,
@@ -173,7 +179,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<KeyPair> keyPair,
       final boolean isStrictTxReplayProtectionEnabled,
       final Map<String, String> environment,
-      final Optional<KeyValueStorageFactory> maybeStorageFactory)
+      final Optional<KeyValueStorageFactory> maybeStorageFactory,
+      final PluginConfiguration pluginConfiguration)
       throws IOException {
     this.homeDirectory = dataPath.orElseGet(BesuNode::createTmpDataDirectory);
     this.isStrictTxReplayProtectionEnabled = isStrictTxReplayProtectionEnabled;
@@ -220,11 +227,21 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         pluginName -> {
           try {
             homeDirectory.resolve("plugins").toFile().mkdirs();
-            copyResource(
-                pluginName + ".jar", homeDirectory.resolve("plugins/" + pluginName + ".jar"));
-            BesuNode.this.plugins.add(pluginName);
-          } catch (final IOException e) {
-            LOG.error("Could not find plugin \"{}\" in resources", pluginName);
+            try {
+              copyResource(
+                  pluginName + ".jar", homeDirectory.resolve("plugins/" + pluginName + ".jar"));
+              BesuNode.this.plugins.add(pluginName);
+            } catch (final IllegalArgumentException jarException) {
+              // JAR not found, try ZIP
+              try {
+                unzipPlugin(pluginName + ".zip", homeDirectory.resolve("plugins"));
+                BesuNode.this.plugins.add(pluginName);
+              } catch (final IOException zipException) {
+                LOG.error("Could not find plugin \"{}\" as JAR or ZIP in resources", pluginName);
+              }
+            }
+          } catch (final Exception e) {
+            LOG.error("Error loading plugin \"{}\"", pluginName, e);
           }
         });
     this.requestedPlugins = requestedPlugins;
@@ -235,6 +252,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.isDnsEnabled = isDnsEnabled;
     this.environment = environment;
     this.synchronizerConfiguration = SynchronizerConfiguration.builder().build(); // Default config
+    this.pluginConfiguration = pluginConfiguration;
     LOG.info("Created BesuNode {}", this);
   }
 
@@ -243,6 +261,34 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       return Files.createTempDirectory("acctest");
     } catch (final IOException e) {
       throw new RuntimeException("Unable to create temporary data directory", e);
+    }
+  }
+
+  private void unzipPlugin(final String zipResourceName, final Path targetDirectory)
+      throws IOException {
+    try (final InputStream zipInputStream =
+        getClass().getClassLoader().getResourceAsStream(zipResourceName)) {
+      if (zipInputStream == null) {
+        throw new IOException("Resource not found: " + zipResourceName);
+      }
+      try (final ZipInputStream zis = new ZipInputStream(zipInputStream)) {
+        ZipEntry entry;
+        while ((entry = zis.getNextEntry()) != null) {
+          if (!entry.isDirectory()) {
+            // Extract only the file name without any directory path
+            final String fileName = new File(entry.getName()).getName();
+            final Path targetPath = targetDirectory.resolve(fileName);
+            try (final FileOutputStream fos = new FileOutputStream(targetPath.toFile())) {
+              final byte[] buffer = new byte[8192];
+              int len;
+              while ((len = zis.read(buffer)) > 0) {
+                fos.write(buffer, 0, len);
+              }
+            }
+          }
+          zis.closeEntry();
+        }
+      }
     }
   }
 
@@ -547,8 +593,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public void start(final BesuNodeRunner runner) {
+    exitCode = Optional.empty();
     runner.startNode(this);
-    if (runCommand.isEmpty()) {
+    // an empty exit code means the process is still running
+    if (runCommand.isEmpty() && exitCode.isEmpty()) {
       loadPortsFile();
     }
   }
@@ -860,5 +908,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public Optional<KeyValueStorageFactory> getStorageFactory() {
     return storageFactory;
+  }
+
+  public PluginConfiguration getPluginConfiguration() {
+    return pluginConfiguration;
   }
 }

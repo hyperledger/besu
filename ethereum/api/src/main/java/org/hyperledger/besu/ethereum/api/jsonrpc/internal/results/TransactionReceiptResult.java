@@ -15,12 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.apache.tuweni.bytes.Bytes;
   "cumulativeGasUsed",
   "from",
   "gasUsed",
+  "gasSpent",
   "effectiveGasPrice",
   "logs",
   "logsBloom",
@@ -58,6 +60,7 @@ public abstract class TransactionReceiptResult {
   private final String cumulativeGasUsed;
   private final String from;
   private final String gasUsed;
+  private final String gasSpent;
   private final String effectiveGasPrice;
   private final List<TransactionReceiptLogResult> logs;
   private final String logsBloom;
@@ -81,6 +84,8 @@ public abstract class TransactionReceiptResult {
     this.cumulativeGasUsed = Quantity.create(receipt.getCumulativeGasUsed());
     this.from = txn.getSender().toString();
     this.gasUsed = Quantity.create(receiptWithMetadata.getGasUsed());
+    // EIP-7778: gasSpent is the post-refund gas (what user pays), only present in Amsterdam+
+    this.gasSpent = receipt.getGasSpent().map(Quantity::create).orElse(null);
     this.blobGasUsed = receiptWithMetadata.getBlobGasUsed().map(Quantity::create).orElse(null);
     this.blobGasPrice = receiptWithMetadata.getBlobGasPrice().map(Quantity::create).orElse(null);
     this.effectiveGasPrice =
@@ -96,7 +101,7 @@ public abstract class TransactionReceiptResult {
             receiptWithMetadata.getTransactionIndex(),
             receiptWithMetadata.getLogIndexOffset());
     this.logsBloom = receipt.getBloomFilter().toString();
-    this.to = txn.getTo().map(Bytes::toHexString).orElse(null);
+    this.to = txn.getTo().map(BytesHolder::getBytes).map(Bytes::toHexString).orElse(null);
     this.transactionHash = txn.getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
     this.revertReason = receipt.getRevertReason().map(Bytes::toString).orElse(null);
@@ -134,6 +139,18 @@ public abstract class TransactionReceiptResult {
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
+  }
+
+  /**
+   * Returns the gas spent by this transaction (post-refund, what the user pays). This field is only
+   * present for Amsterdam+ (EIP-7778) receipts.
+   *
+   * @return the gas spent in hex format, or null for pre-Amsterdam receipts
+   */
+  @JsonGetter(value = "gasSpent")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public String getGasSpent() {
+    return gasSpent;
   }
 
   @JsonGetter(value = "blobGasUsed")

@@ -23,12 +23,12 @@ import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionRec
 import static org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration.STORAGE_WITH_COMPACTION;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -57,7 +57,8 @@ public class TransactionReceiptEncodingConfigurationTest {
     final TransactionReceipt receipt = createTransactionReceiptStatus(FRONTIER, 1);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
+    final TransactionReceipt copy =
+        FrontierTransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -68,7 +69,8 @@ public class TransactionReceiptEncodingConfigurationTest {
     final TransactionReceipt receipt = createTransactionReceiptStatus(FRONTIER, 0);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
+    final TransactionReceipt copy =
+        FrontierTransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -79,7 +81,8 @@ public class TransactionReceiptEncodingConfigurationTest {
     final TransactionReceipt receipt = createTransactionReceiptStateRoot(FRONTIER);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
+    final TransactionReceipt copy =
+        FrontierTransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -91,7 +94,8 @@ public class TransactionReceiptEncodingConfigurationTest {
     final TransactionReceipt receipt = createTransactionReceiptStatus(EIP1559, 1);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
+    final TransactionReceipt copy =
+        FrontierTransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -102,7 +106,8 @@ public class TransactionReceiptEncodingConfigurationTest {
     final TransactionReceipt receipt = createTransactionReceiptStatus(EIP1559, 0);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
+    final TransactionReceipt copy =
+        FrontierTransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
     assertThat(copy).isEqualTo(receipt);
   }
 
@@ -113,7 +118,8 @@ public class TransactionReceiptEncodingConfigurationTest {
     final TransactionReceipt receipt = createTransactionReceiptStateRoot(EIP1559);
     Bytes encoded =
         RLP.encode(rlpOut -> TransactionReceiptEncoder.writeTo(receipt, rlpOut, encodingOptions));
-    final TransactionReceipt copy = TransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
+    final TransactionReceipt copy =
+        FrontierTransactionReceiptDecoder.readFrom(RLP.input(encoded), true);
     assertThat(copy).isEqualTo(receipt);
   }
 

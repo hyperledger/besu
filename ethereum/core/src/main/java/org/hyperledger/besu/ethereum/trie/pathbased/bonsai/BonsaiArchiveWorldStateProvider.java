@@ -20,19 +20,17 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.ServiceManager;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +41,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
   public BonsaiArchiveWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
-      final Optional<Long> maxLayersToLoad,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
@@ -52,30 +50,9 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
     super(
         worldStateKeyValueStorage,
         blockchain,
-        maxLayersToLoad,
+        pathBasedExtraStorageConfiguration,
         bonsaiCachedMerkleTrieLoader,
         pluginContext,
-        evmConfiguration,
-        worldStateHealerSupplier,
-        codeCache);
-  }
-
-  @VisibleForTesting
-  BonsaiArchiveWorldStateProvider(
-      final BonsaiCachedWorldStorageManager bonsaiCachedWorldStorageManager,
-      final TrieLogManager trieLogManager,
-      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Blockchain blockchain,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final EvmConfiguration evmConfiguration,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier,
-      final CodeCache codeCache) {
-    super(
-        bonsaiCachedWorldStorageManager,
-        trieLogManager,
-        worldStateKeyValueStorage,
-        blockchain,
-        bonsaiCachedMerkleTrieLoader,
         evmConfiguration,
         worldStateHealerSupplier,
         codeCache);
@@ -118,7 +95,8 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
   // back the state root, block hash and block number
   protected Optional<MutableWorldState> rollMutableArchiveStateToBlockHash(
       final PathBasedWorldState mutableState, final Hash blockHash) {
-    LOG.trace("Rolling mutable archive world state to block hash " + blockHash.toHexString());
+    LOG.trace(
+        "Rolling mutable archive world state to block hash " + blockHash.getBytes().toHexString());
     try {
       // Simply persist the block hash/number and state root for this archive state
       mutableState.persist(blockchain.getBlockHeader(blockHash).get());

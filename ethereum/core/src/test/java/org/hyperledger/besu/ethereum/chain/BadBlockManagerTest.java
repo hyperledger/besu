@@ -61,7 +61,7 @@ public class BadBlockManagerTest {
                     List.of(),
                     List.of())));
 
-    badBlockManager.addBadBlock(block, cause, Optional.of(generatedBal));
+    badBlockManager.addBadBlock(block, cause, Optional.empty(), Optional.of(generatedBal));
 
     assertThat(badBlockManager.getGeneratedBlockAccessList(block.getHash())).contains(generatedBal);
   }
