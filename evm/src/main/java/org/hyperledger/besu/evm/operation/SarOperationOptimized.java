@@ -69,12 +69,12 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = leftPad(frame.popStackItem()); // ideally eliminate, see below
+    final Bytes value = leftPad(frame.popStackItem());
 
     final boolean negative = (value.get(0) & 0x80) != 0;
 
     // detect shift >= 256 cheaply (check high bytes)
-    if (isShiftOverflow(shiftAmount)) {
+    if (isShiftOverflowEarlyExit(shiftAmount)) {
       frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
       return sarSuccess;
     }
@@ -85,7 +85,6 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
   }
 
   private static Bytes sar256(final Bytes value32, final int shift, final boolean negative) {
-    // shift is assumed 0..255, value32 is 32 bytes.
     if (shift == 0) return value32;
 
     final int shiftBytes = shift >>> 3; // /8
@@ -117,15 +116,12 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
     return Bytes.wrap(out);
   }
 
-  private static boolean isShiftOverflow(final Bytes shiftAmount) {
+  private static boolean isShiftOverflowEarlyExit(final Bytes shiftAmount) {
     final byte[] a = shiftAmount.toArrayUnsafe();
     final int n = a.length;
-    if (n <= 1) return false;
-
-    int acc = 0;
     for (int i = 0; i < n - 1; i++) {
-      acc |= a[i]; // OR-reduce all high bytes
+      if (a[i] != 0) return true;
     }
-    return acc != 0;
+    return false;
   }
 }
