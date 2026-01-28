@@ -34,7 +34,8 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
   private static final String PRE_MERGE_PRUNING_QUANTITY_FLAG = "--Xpre-merge-pruning-quantity";
 
-  private static final long WSP_EPOCHS_PER_WINDOW = 3533L; // Weak Subjectivity Period
+  private static final long WSP_EPOCHS_PER_WINDOW =
+      3533L; // 3533 epochs in the Weak Subjectivity Period time window
   private static final long SLOTS_PER_EPOCH = 32L;
 
   /**
