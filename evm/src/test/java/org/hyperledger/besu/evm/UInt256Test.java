@@ -269,6 +269,17 @@ public class UInt256Test {
   }
 
   @Test
+  public void modH() {
+    BigInteger big_number = new BigInteger("000000000000000000ff00000000000000000000000000000000000000000000", 16);
+    BigInteger big_modulus = new BigInteger("0000000000000000000000000000000000fe0000000000000000000000000001", 16);
+    UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
+    UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
+    Bytes32 expected = Bytes32.leftPad(Bytes.wrap(big_number.mod(big_modulus).toByteArray()));
+    assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
   public void modGeneralState() {
     BigInteger big_number = new BigInteger("cea0c5cc171fa61277e5604a3bc8aef4de3d3882", 16);
     BigInteger big_modulus = new BigInteger("7dae7454bb193b1c28e64a6a935bc3", 16);
@@ -441,6 +452,7 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(cInt) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
+      if (!remainder.equals(expected)) System.out.println(String.format("%s * %s (mod %s)", a.toHexString(), b.toHexString(), c.toHexString()));
       assertThat(remainder).isEqualTo(expected);
     }
   }
