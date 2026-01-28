@@ -123,7 +123,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
       @JsonProperty("parentUncleHash") final String _parentUncleHash,
-      @JsonProperty("isStateTest") final String isStateTest) {
+      @JsonProperty("isStateTest") final String isStateTest,
+      @JsonProperty("slotNumber") final String slotNumber) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
@@ -147,7 +148,7 @@ public class ReferenceTestEnv extends BlockHeader {
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // requestsHash
         null, // block access list hash
-        null, // slotNumber
+        slotNumber == null ? null : decodeUnsignedLong(slotNumber),
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
