@@ -104,6 +104,10 @@ public class ChainDataPruner implements BlockAddedObserver {
     final Collection<Hash> forkBlocks = prunerStorage.getForkBlocks(blockNumber);
     forkBlocks.add(event.getHeader().getHash());
     prunerStorage.setForkBlocks(tx, blockNumber, forkBlocks);
+    if(event.getBlock().getHeader().getBalHash().isEmpty()){
+      // BAL not activated yet just move the marker
+      prunerStorage.setBalPruningMark(tx, blockNumber);
+    }
     tx.commit();
   }
 
@@ -112,6 +116,7 @@ public class ChainDataPruner implements BlockAddedObserver {
 
     final long blockPruningMark = blockNumber - config.chainPruningBlocksRetained();
     final long balPruningMark = blockNumber - config.chainPruningBalsRetained();
+
 
     final boolean shouldPruneBlock =
         config.isBlockPruningEnabled() && shouldPrune(blockPruningMark, storedBlockPruningMark);
