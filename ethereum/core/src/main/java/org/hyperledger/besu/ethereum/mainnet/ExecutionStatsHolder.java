@@ -62,19 +62,4 @@ public final class ExecutionStatsHolder {
   public static void clear() {
     CURRENT.remove();
   }
-
-  /**
-   * Executes an action with the given ExecutionStats set as current, then clears it.
-   *
-   * @param stats the ExecutionStats to use during execution
-   * @param action the action to execute
-   */
-  public static void runWith(final ExecutionStats stats, final Runnable action) {
-    set(stats);
-    try {
-      action.run();
-    } finally {
-      clear();
-    }
-  }
 }
