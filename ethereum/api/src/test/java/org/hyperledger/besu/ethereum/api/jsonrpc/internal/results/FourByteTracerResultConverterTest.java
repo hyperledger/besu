@@ -22,6 +22,9 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
+import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.Arrays;
@@ -33,7 +36,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("FourByteTracerResultConverter")
 class FourByteTracerResultConverterTest {
 
   // Helper methods for creating mocks
@@ -81,12 +83,35 @@ class FourByteTracerResultConverterTest {
     return frame;
   }
 
+  /**
+   * Creates a mock ProtocolSpec with a PrecompileContractRegistry that returns null for all
+   * addresses (i.e., no precompiles). Tests that need to verify precompile behavior should mock
+   * specific addresses.
+   */
+  private ProtocolSpec createMockProtocolSpec() {
+    ProtocolSpec mockSpec = mock(ProtocolSpec.class);
+    PrecompileContractRegistry mockRegistry = mock(PrecompileContractRegistry.class);
+    when(mockSpec.getPrecompileContractRegistry()).thenReturn(mockRegistry);
+    when(mockRegistry.get(org.mockito.ArgumentMatchers.any(Address.class))).thenReturn(null);
+    return mockSpec;
+  }
+
   @Test
   @DisplayName("should throw NullPointerException when transactionTrace is null")
   void shouldThrowNullPointerExceptionWhenTransactionTraceIsNull() {
-    assertThatThrownBy(() -> FourByteTracerResultConverter.convert(null))
+    ProtocolSpec mockSpec = createMockProtocolSpec();
+    assertThatThrownBy(() -> FourByteTracerResultConverter.convert(null, mockSpec))
         .isInstanceOf(NullPointerException.class)
         .hasMessageContaining("FourByteTracerResultConverter requires a non-null TransactionTrace");
+  }
+
+  @Test
+  @DisplayName("should throw NullPointerException when protocolSpec is null")
+  void shouldThrowNullPointerExceptionWhenProtocolSpecIsNull() {
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
+    assertThatThrownBy(() -> FourByteTracerResultConverter.convert(mockTrace, null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("FourByteTracerResultConverter requires a non-null ProtocolSpec");
   }
 
   @Test
@@ -95,9 +120,10 @@ class FourByteTracerResultConverterTest {
     // Given
     TransactionTrace mockTrace = createMockTraceWithContractCreation();
     when(mockTrace.getTraceFrames()).thenReturn(null);
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -110,9 +136,10 @@ class FourByteTracerResultConverterTest {
     // Given
     TransactionTrace mockTrace = createMockTraceWithContractCreation();
     when(mockTrace.getTraceFrames()).thenReturn(List.of());
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -139,9 +166,10 @@ class FourByteTracerResultConverterTest {
     when(nextFrame.getInputData()).thenReturn(inputData);
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -167,9 +195,10 @@ class FourByteTracerResultConverterTest {
     when(nextFrame.getDepth()).thenReturn(1);
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -194,9 +223,10 @@ class FourByteTracerResultConverterTest {
     when(nextFrame.getInputData()).thenReturn(Bytes.fromHexString("0x12345678"));
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -221,9 +251,10 @@ class FourByteTracerResultConverterTest {
     when(nextFrame.getInputData()).thenReturn(Bytes.fromHexString("0x1234"));
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -247,9 +278,10 @@ class FourByteTracerResultConverterTest {
     when(nextFrame.getInputData()).thenReturn(Bytes.fromHexString("0x12345678"));
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(createFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -289,9 +321,10 @@ class FourByteTracerResultConverterTest {
 
     when(mockTrace.getTraceFrames())
         .thenReturn(List.of(callFrame1, nextFrame1, otherFrame, callFrame2, nextFrame2));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -316,9 +349,10 @@ class FourByteTracerResultConverterTest {
 
     when(mockTrace.getTraceFrames())
         .thenReturn(List.of(callFrame1, nextFrame1, callFrame2, nextFrame2));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -357,9 +391,10 @@ class FourByteTracerResultConverterTest {
                 delegatecallNextFrame,
                 staticcallFrame,
                 staticcallNextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -380,9 +415,10 @@ class FourByteTracerResultConverterTest {
     TraceFrame nextFrame = createNextFrame(2, "0x12345678");
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -455,9 +491,10 @@ class FourByteTracerResultConverterTest {
                 callC2,
                 insideC2,
                 instructionInC2)); // method-C (second call)
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -477,9 +514,10 @@ class FourByteTracerResultConverterTest {
 
     TransactionTrace mockTrace = createMockTraceWithContractCall(contractAddress, inputData);
     when(mockTrace.getTraceFrames()).thenReturn(List.of()); // No internal calls
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -502,9 +540,10 @@ class FourByteTracerResultConverterTest {
     TraceFrame nextFrame = createNextFrame(2, "0xbbbbbbbb" + "00".repeat(64));
 
     when(mockTrace.getTraceFrames()).thenReturn(List.of(callFrame, nextFrame));
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -520,9 +559,10 @@ class FourByteTracerResultConverterTest {
     // Given: Contract creation transaction
     TransactionTrace mockTrace = createMockTraceWithContractCreation();
     when(mockTrace.getTraceFrames()).thenReturn(List.of());
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -538,9 +578,10 @@ class FourByteTracerResultConverterTest {
 
     TransactionTrace mockTrace = createMockTraceWithContractCall(contractAddress, inputData);
     when(mockTrace.getTraceFrames()).thenReturn(List.of());
+    ProtocolSpec mockSpec = createMockProtocolSpec();
 
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();
@@ -557,8 +598,19 @@ class FourByteTracerResultConverterTest {
     TransactionTrace mockTrace = createMockTraceWithContractCall(precompileAddress, inputData);
     when(mockTrace.getTraceFrames()).thenReturn(List.of());
 
+    // Mock ProtocolSpec to recognize the precompile address
+    ProtocolSpec mockSpec = mock(ProtocolSpec.class);
+    PrecompileContractRegistry mockRegistry = mock(PrecompileContractRegistry.class);
+    when(mockSpec.getPrecompileContractRegistry()).thenReturn(mockRegistry);
+    // Return a non-null object for the precompile address to indicate it's a precompile
+    when(mockRegistry.get(precompileAddress)).thenReturn(mock(PrecompiledContract.class));
+    // Return null for all other addresses
+    when(mockRegistry.get(
+            org.mockito.ArgumentMatchers.argThat(addr -> !addr.equals(precompileAddress))))
+        .thenReturn(null);
+
     // When
-    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace);
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
 
     // Then
     assertThat(result).isNotNull();

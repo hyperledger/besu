@@ -88,7 +88,7 @@ public class DebugTraceTransactionStepFactory {
           };
       case FOUR_BYTE_TRACER ->
           transactionTrace -> {
-            var result = FourByteTracerResultConverter.convert(transactionTrace);
+            var result = FourByteTracerResultConverter.convert(transactionTrace, protocolSpec);
             return new DebugTraceTransactionResult(transactionTrace, result);
           };
     };

@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace.OpcodeCategory;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.List;
@@ -69,17 +70,20 @@ public class FourByteTracerResultConverter {
    * Converts a transaction trace to a 4byte tracer result.
    *
    * @param transactionTrace The transaction trace to convert
+   * @param protocolSpec Protocol Spec instance related to the transaction's block
    * @return A 4byte tracer result containing function selector counts
    * @throws NullPointerException if transactionTrace is null
    */
-  public static FourByteTracerResult convert(final TransactionTrace transactionTrace) {
+  public static FourByteTracerResult convert(
+      final TransactionTrace transactionTrace, final ProtocolSpec protocolSpec) {
     checkNotNull(
         transactionTrace, "FourByteTracerResultConverter requires a non-null TransactionTrace");
+    checkNotNull(protocolSpec, "FourByteTracerResultConverter requires a non-null ProtocolSpec");
 
     // Sort keys alphabetically to match Geth's JSON encoding behavior
     final Map<String, Integer> selectorCounts = new TreeMap<>();
 
-    processInitialTransaction(transactionTrace, selectorCounts);
+    processInitialTransaction(transactionTrace, protocolSpec, selectorCounts);
 
     // Process all trace frames for internal calls only (not the initial transaction)
     if (transactionTrace.getTraceFrames() != null) {
@@ -96,10 +100,13 @@ public class FourByteTracerResultConverter {
    * contract, not just for internal calls.
    *
    * @param transactionTrace the transaction trace
+   * @param protocolSpec Protocol Spec instance to obtain precompile registry
    * @param selectorCounts the map to update with selector counts
    */
   private static void processInitialTransaction(
-      final TransactionTrace transactionTrace, final Map<String, Integer> selectorCounts) {
+      final TransactionTrace transactionTrace,
+      final ProtocolSpec protocolSpec,
+      final Map<String, Integer> selectorCounts) {
 
     final Transaction tx = transactionTrace.getTransaction();
 
@@ -114,13 +121,8 @@ public class FourByteTracerResultConverter {
       return;
     }
 
-    // Skip precompiled contracts (addresses 0x01-0x0a typically)
-    // Note: This logic should match how precompiles are detected elsewhere in Besu
-    // For now, simple check for addresses <= 0x0a
-    final Bytes toAddressBytes = to.get().getBytes();
-    if (toAddressBytes.numberOfLeadingZeroBytes() >= 19
-        && toAddressBytes.trimLeadingZeros().size() == 1
-        && toAddressBytes.trimLeadingZeros().get(0) <= 0x0a) {
+    // skip if target is a precompile address
+    if (protocolSpec.getPrecompileContractRegistry().get(to.get()) != null) {
       return;
     }
 
