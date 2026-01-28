@@ -138,6 +138,16 @@ public interface KeyValueStorage extends Closeable {
   KeyValueStorageTransaction startTransaction() throws StorageException;
 
   /**
+   * Begins a fresh write batch, for atomic writes.
+   *
+   * @return a write batch to batch key-value operations.
+   * @throws StorageException problem encountered when starting a new transaction.
+   */
+  default KeyValueStorageTransaction startWriteBatch() throws StorageException {
+    throw new UnsupportedOperationException("Write batches are not supported");
+  }
+
+  /**
    * Return Whether the underlying storage is closed.
    *
    * @return boolean indicating whether the storage is closed.

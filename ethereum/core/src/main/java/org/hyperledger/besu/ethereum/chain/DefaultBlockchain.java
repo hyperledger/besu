@@ -721,7 +721,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   @Override
   public void unsafeImportSyncBodies(
       final List<SyncBlock> blocks, final boolean indexTransactions) {
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    final BlockchainStorage.Updater updater = blockchainStorage.writeBatch();
     for (final SyncBlock block : blocks) {
       final BlockHeader header = block.getHeader();
       final Hash blockHash = header.getHash();
@@ -739,7 +739,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public void unsafeImportReceipts(final Map<BlockHeader, List<TransactionReceipt>> receipts) {
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    final BlockchainStorage.Updater updater = blockchainStorage.writeBatch();
     receipts.forEach(
         (header, receiptsForBlock) ->
             updater.putTransactionReceipts(header.getBlockHash(), receiptsForBlock));

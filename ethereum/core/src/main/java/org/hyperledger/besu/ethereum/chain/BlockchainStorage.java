@@ -49,6 +49,8 @@ public interface BlockchainStorage {
 
   Updater updater();
 
+  Updater writeBatch();
+
   interface Updater {
 
     void putBlockHeader(Hash blockHash, BlockHeader blockHeader);

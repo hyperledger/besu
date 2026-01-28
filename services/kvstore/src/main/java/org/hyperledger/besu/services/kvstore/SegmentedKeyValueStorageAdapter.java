@@ -126,6 +126,11 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
   }
 
   @Override
+  public KeyValueStorageTransaction startWriteBatch() throws StorageException {
+    return new KeyValueStorageWriteBatchAdapter(segmentIdentifier, storage);
+  }
+
+  @Override
   public boolean isClosed() {
     return storage.isClosed();
   }
@@ -177,6 +182,49 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
     @Override
     public void close() {
       segmentedTransaction.close();
+    }
+  }
+
+  /** This class will adapt a SegmentedKeyValueStorageWriteBatch to a KeyValueStorageWriteBatch */
+  public static class KeyValueStorageWriteBatchAdapter implements KeyValueStorageTransaction {
+    private final SegmentedKeyValueStorageTransaction segmentedWriteBach;
+    private final SegmentIdentifier segmentIdentifier;
+
+    /**
+     * Instantiates a new Key value storage transaction adapter.
+     *
+     * @param segmentIdentifier the segmentIdentifier to use for the wrapped transaction
+     * @param storage the storage
+     */
+    public KeyValueStorageWriteBatchAdapter(
+        final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
+      this.segmentedWriteBach = storage.startWriteBatch();
+      this.segmentIdentifier = segmentIdentifier;
+    }
+
+    @Override
+    public void put(final byte[] key, final byte[] value) {
+      segmentedWriteBach.put(segmentIdentifier, key, value);
+    }
+
+    @Override
+    public void remove(final byte[] key) {
+      segmentedWriteBach.remove(segmentIdentifier, key);
+    }
+
+    @Override
+    public void commit() throws StorageException {
+      segmentedWriteBach.commit();
+    }
+
+    @Override
+    public void rollback() {
+      segmentedWriteBach.rollback();
+    }
+
+    @Override
+    public void close() {
+      segmentedWriteBach.close();
     }
   }
 }
