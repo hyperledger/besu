@@ -786,7 +786,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return v;
   }
 
-  // private static DivEstimate div2by1(final long x1, final long x0, final long y, final long yInv) {
+  // private static DivEstimate div2by1(final long x1, final long x0, final long y, final long yInv)
+  // {
   //   long z1 = x1;
   //   long z0 = x0;
 
@@ -902,9 +903,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     boolean isUInt64() {
       return !carry && u.isUInt64();
     }
+
     boolean isUInt256() {
       return !carry;
     }
+
     UInt256 UInt256Value() {
       return u;
     }
@@ -990,8 +993,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     }
 
     UInt256 reduce(final UInt512 that) {
-      if (that.isUInt64())
-        return UInt256.fromLong(Long.remainderUnsigned(that.u0(), u0));
+      if (that.isUInt64()) return UInt256.fromLong(Long.remainderUnsigned(that.u0(), u0));
       int shift = Long.numberOfLeadingZeros(u0);
       Modulus64 m = shiftLeft(shift);
       long inv = reciprocal(m.u0);
@@ -1000,8 +1002,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     UInt256 sum(final UInt256 a, final UInt256 b) {
       UInt257 sum = a.adc(b);
-      if (sum.isUInt64())
-        return UInt256.fromLong(Long.remainderUnsigned(sum.u().u0, u0));
+      if (sum.isUInt64()) return UInt256.fromLong(Long.remainderUnsigned(sum.u().u0, u0));
       int shift = Long.numberOfLeadingZeros(u0);
       Modulus64 m = shiftLeft(shift);
       long inv = reciprocal(m.u0);
@@ -1124,6 +1125,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       return UInt256.fromLong(r >>> shift);
     }
   }
+
   // --------------------------------------------------------------------------
   // endregion 64bits Modulus
 
@@ -1307,7 +1309,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     Modulus192 shiftLeft(final int shift) {
       if (shift == 0) return this;
       int invShift = N_BITS_PER_LIMB - shift;
-      long z0 =  u0 << shift;
+      long z0 = u0 << shift;
       long z1 = (u1 << shift) | (u0 >>> invShift);
       long z2 = (u2 << shift) | (u1 >>> invShift);
       return new Modulus192(z2, z1, z0);
@@ -1439,7 +1441,6 @@ public record UInt256(long u3, long u2, long u1, long u0) {
           borrow = (((borrow ^ 1L) | z3) == 0) ? 1 : 0;
           z3 = res;
 
-
           if (borrow != 0) { // unlikely
             // Add back
             long carry = 0;
@@ -1524,7 +1525,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     Modulus256 shiftLeft(final int shift) {
       if (shift == 0) return this;
       int invShift = N_BITS_PER_LIMB - shift;
-      long z0 =  u0 << shift;
+      long z0 = u0 << shift;
       long z1 = (u1 << shift) | (u0 >>> invShift);
       long z2 = (u2 << shift) | (u1 >>> invShift);
       long z3 = (u3 << shift) | (u2 >>> invShift);
