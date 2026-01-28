@@ -83,34 +83,34 @@ def extractStableFixtures = tasks.register("extractStableFixtures", Copy) {
   from {
     tarTree(configurations.tarConfig.files.find { it.name.startsWith('execution-spec-tests') })
   }
-  into "$buildDir/execution-spec-tests/"
+  into layout.buildDirectory.dir("execution-spec-tests")
 }
 
 def executionSpecTests = tasks.register("executionSpecTests") {
   dependsOn extractStableFixtures
-  final referenceTestsPath = "$buildDir/execution-spec-tests/"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  final referenceTestsDir = layout.buildDirectory.dir("execution-spec-tests")
+  final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
-  inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
+  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
+  outputs.files generatedTestsDir
   // generate blockchain_tests grouped by hardfork/EIP:
   generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
+    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
     "fixtures",
     "blockchain_tests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
     "ExecutionSpecBlockchainTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
     )
 
   // generate state_tests grouped by hardfork/EIP:
   generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "fixtures",
     "state_tests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
     "ExecutionSpecStateTest",
     "org.hyperledger.besu.ethereum.vm.executionspec",
     )
@@ -120,33 +120,33 @@ def extractDevnetFixtures = tasks.register("extractDevnetFixtures", Copy) {
   from {
     tarTree(configurations.devnetTarConfig.files.find { it.name.startsWith('execution-spec-tests') })
   }
-  into "$buildDir/execution-spec-devnet-tests/"
+  into layout.buildDirectory.dir("execution-spec-devnet-tests")
 }
 
 def executionSpecDevnetTests = tasks.register("executionSpecDevnetTests") {
   dependsOn extractDevnetFixtures
-  final referenceTestsPath = "$buildDir/execution-spec-devnet-tests/"
-  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  final referenceTestsDir = layout.buildDirectory.dir("execution-spec-devnet-tests")
+  final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
-  inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
-  outputs.files generatedTestsPath
+  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
+  outputs.files generatedTestsDir
 
   generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
+    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
     "fixtures",
     "blockchain_tests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspecdevnet",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
     "ExecutionSpecDevnetBlockchainTest",
     "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
     )
 
   generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "fixtures",
     "state_tests",
-    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspecdevnet",
+    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
     "ExecutionSpecDevnetStateTest",
     "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
     )
