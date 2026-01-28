@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.operation.SarOperationOptimized;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.evm.operation.SarOperationOptimized2;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;

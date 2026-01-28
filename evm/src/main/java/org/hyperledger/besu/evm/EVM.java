@@ -68,6 +68,8 @@ import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
 import org.hyperledger.besu.evm.operation.SModOperation;
 import org.hyperledger.besu.evm.operation.SModOperationOptimized;
+import org.hyperledger.besu.evm.operation.SarOperation;
+import org.hyperledger.besu.evm.operation.SarOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
@@ -280,6 +282,10 @@ public class EVM {
                       ? NotOperationOptimized.staticOperation(frame)
                       : NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
+              case 0x1d ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? SarOperationOptimized.staticOperation(frame)
+                      : SarOperation.staticOperation(frame);
               case 0x1e ->
                   enableOsaka
                       ? CountLeadingZerosOperation.staticOperation(frame)
