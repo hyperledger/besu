@@ -144,9 +144,10 @@
       "storage": {}
     },
     "0x000000000000000000000000000000000000784b": {
-      "comment": "SLOTNUM test contract - returns current slot number (EIP-7843). Bytecode: SLOTNUM PUSH0 MSTORE PUSH1 0x20 PUSH0 RETURN",
+      "comment": "SLOTNUM test contract - stores current slot number at storage key 0 (EIP-7843). Bytecode: SLOTNUM PUSH0 SSTORE STOP",
       "balance": "0x00",
-      "code": "0x4b5f5260205ff3",
+      "code": "0x4b5f5500",
+      "codeDecompiled": "SLOTNUM PUSH0 SSTORE STOP",
       "storage": {}
     },
     "0x8024000000000000000000000000000000000001": {

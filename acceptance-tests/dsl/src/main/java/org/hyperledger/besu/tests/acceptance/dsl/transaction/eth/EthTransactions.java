@@ -84,6 +84,16 @@ public class EthTransactions {
     return new EthGetTransactionReceiptWithGasSpent(transactionHash);
   }
 
+  /**
+   * Fetches a block with slotNumber field (EIP-7843, Amsterdam+).
+   *
+   * @param blockNumber the block number as hex string (e.g., "0x1") or "latest"
+   * @return the transaction to fetch the block with slotNumber
+   */
+  public EthGetBlockWithSlotNumber getBlockWithSlotNumber(final String blockNumber) {
+    return new EthGetBlockWithSlotNumber(blockNumber);
+  }
+
   public EthMiningTransaction mining() {
     return new EthMiningTransaction();
   }

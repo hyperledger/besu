@@ -115,6 +115,16 @@ public class AmsterdamAcceptanceTestHelper {
       newBlockHash = executionPayload.get("blockHash").asText();
 
       assertThat(newBlockHash).isNotEmpty();
+
+      // Verify the slot number in the execution payload matches what was requested
+      JsonNode slotNumberNode = executionPayload.get("slotNumber");
+      assertThat(slotNumberNode)
+          .withFailMessage("executionPayload missing slotNumber field")
+          .isNotNull();
+      assertThat(Long.decode(slotNumberNode.asText()))
+          .withFailMessage(
+              "Expected slotNumber 0x%x in payload but got %s", slotNumber, slotNumberNode.asText())
+          .isEqualTo(slotNumber);
     }
 
     String newPayloadRequestBody =
