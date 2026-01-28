@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.processor;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -158,6 +159,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         final MutableAccount contract =
             frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
         contract.setCode(contractCode);
+        // Track code write for cross-client execution metrics
+        EvmOperationCounters.incrementCodeWrites();
+        EvmOperationCounters.addCodeBytesWritten(contractCode.size());
         LOG.trace(
             "Successful creation of contract {} with code of size {} (Gas remaining: {})",
             frame.getContractAddress(),

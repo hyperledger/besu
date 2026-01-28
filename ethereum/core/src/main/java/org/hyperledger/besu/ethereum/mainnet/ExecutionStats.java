@@ -273,10 +273,25 @@ public class ExecutionStats {
    * called at the end of block execution to aggregate the counters from the EVM module.
    */
   public void collectEvmCounters() {
+    // EVM opcode counters
     this.sloadCount = EvmOperationCounters.getSloadCount();
     this.sstoreCount = EvmOperationCounters.getSstoreCount();
     this.callCount = EvmOperationCounters.getCallCount();
     this.createCount = EvmOperationCounters.getCreateCount();
+
+    // State read/write counters for cross-client execution metrics
+    this.accountReads = EvmOperationCounters.getAccountReads();
+    this.storageReads = EvmOperationCounters.getStorageReads();
+    this.codeReads = EvmOperationCounters.getCodeReads();
+    this.codeBytesRead = EvmOperationCounters.getCodeBytesRead();
+    this.accountWrites = EvmOperationCounters.getAccountWrites();
+    this.storageWrites = EvmOperationCounters.getStorageWrites();
+    this.codeWrites = EvmOperationCounters.getCodeWrites();
+    this.codeBytesWritten = EvmOperationCounters.getCodeBytesWritten();
+
+    // EIP-7702 delegation counters
+    this.eip7702DelegationsSet = EvmOperationCounters.getEip7702DelegationsSet();
+    this.eip7702DelegationsCleared = EvmOperationCounters.getEip7702DelegationsCleared();
   }
 
   // Cache statistics methods

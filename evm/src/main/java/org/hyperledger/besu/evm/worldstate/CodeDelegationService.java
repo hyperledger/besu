@@ -18,6 +18,7 @@ import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.CODE_DELE
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
@@ -42,10 +43,14 @@ public class CodeDelegationService {
     // code delegation to zero address removes any delegated code
     if (codeDelegationAddress.equals(Address.ZERO)) {
       account.setCode(Bytes.EMPTY);
+      // Track EIP-7702 delegation cleared for cross-client execution metrics
+      EvmOperationCounters.incrementEip7702DelegationsCleared();
       return;
     }
 
     account.setCode(Bytes.concatenate(CODE_DELEGATION_PREFIX, codeDelegationAddress));
+    // Track EIP-7702 delegation set for cross-client execution metrics
+    EvmOperationCounters.incrementEip7702DelegationsSet();
   }
 
   /**

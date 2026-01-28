@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
@@ -413,9 +414,12 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
         storageToUpdate.remove(deletedAddress);
       }
       accountValue.setUpdated(null);
+      // Track account write for cross-client execution metrics (account deleted)
+      EvmOperationCounters.incrementAccountWrites();
     }
 
-    getUpdatedAccounts().parallelStream()
+    // Note: Use sequential stream, not parallel, because metrics tracking uses ThreadLocal
+    getUpdatedAccounts().stream()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
@@ -475,6 +479,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                 pendingStorageUpdates.clear();
               }
 
+              // Track account write for cross-client execution metrics (account modified)
+              EvmOperationCounters.incrementAccountWrites();
+
               // parallel stream here may cause database corruption
               updatedAccount
                   .getUpdatedStorage()
@@ -496,6 +503,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                         } else {
                           pendingValue.setUpdated(value);
                         }
+                        // Track storage write for cross-client execution metrics
+                        EvmOperationCounters.incrementStorageWrites();
                       });
 
               updatedAccount.getUpdatedStorage().clear();

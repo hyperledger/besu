@@ -607,8 +607,7 @@ public class MainnetTransactionProcessor {
     }
 
     // Any other account can only use the cached jump dest analysis if available
-    return messageCallProcessor.getOrCreateCachedJumpDest(
-        contract.getCodeHash(), contract.getCode());
+    return messageCallProcessor.getOrCreateCachedJumpDest(contract.getCodeHash(), contract.getCode());
   }
 
   private Code delegationTargetCode(
