@@ -166,7 +166,7 @@ public class BlockReplayServiceImpl implements BlockReplayService {
     public BlockContext blockContext() {
       return new BlockContext() {
         @Override
-        public org.hyperledger.besu.plugin.data.BlockHeader getBlockHeader() {
+        public BlockHeader getBlockHeader() {
           return block.getHeader();
         }
 
