@@ -110,6 +110,11 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
+  public NavigableSet<ScheduledProtocolSpec> getProtocolSpecs() {
+    return protocolSpecs;
+  }
+
+  @Override
   public Optional<BigInteger> getChainId() {
     return chainId;
   }
