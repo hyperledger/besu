@@ -12,10 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache;
+package org.hyperledger.besu.ethereum.trie.pathbased.bonsai;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
@@ -24,9 +25,9 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorageManager {
+public class NoOpBonsaiWorldStateRegistry extends BonsaiWorldStateRegistry {
 
-  public NoOpBonsaiCachedWorldStorageManager(
+  public NoOpBonsaiWorldStateRegistry(
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
       final CodeCache codeCache) {

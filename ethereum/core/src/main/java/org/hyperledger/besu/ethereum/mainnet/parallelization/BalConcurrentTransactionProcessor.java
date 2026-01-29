@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,9 +39,18 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -50,12 +61,17 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionProcessor {
 
+  private static final ExecutorService PREFETCH_EXECUTOR =
+      Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+
   private static final Logger LOG =
       LoggerFactory.getLogger(BalConcurrentTransactionProcessor.class);
 
   private final MainnetTransactionProcessor transactionProcessor;
   private final BlockAccessList blockAccessList;
   private final Duration balProcessingTimeout;
+  private final boolean isPrefetchReadingEnabled;
+  private final boolean isPrefetchSortingEnabled;
 
   public BalConcurrentTransactionProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -64,6 +80,93 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
     this.transactionProcessor = transactionProcessor;
     this.blockAccessList = blockAccessList;
     this.balProcessingTimeout = balConfiguration.getBalProcessingTimeout();
+    this.isPrefetchReadingEnabled = balConfiguration.isBalPreFetchReadingEnabled();
+    this.isPrefetchSortingEnabled = balConfiguration.isBalPreFetchSortingEnabled();
+  }
+
+  @Override
+  public void runAsyncBlock(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice,
+      final Executor executor,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+    if (isPrefetchReadingEnabled) {
+      preFetchRead(protocolContext, blockHeader, executor);
+    }
+    super.runAsyncBlock(
+        protocolContext,
+        blockHeader,
+        transactions,
+        miningBeneficiary,
+        blockHashLookup,
+        blobGasPrice,
+        executor,
+        blockAccessListBuilder);
+  }
+
+  public void preFetchRead(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final Executor executor) {
+    CompletableFuture.runAsync(
+        () -> {
+          try (var ws = getWorldState(protocolContext, blockHeader)) {
+            if (ws == null) return;
+            ws.disableCacheMerkleTrieLoader();
+
+            final List<BlockAccessList.AccountChanges> accounts =
+                isPrefetchSortingEnabled
+                    ? blockAccessList.accountChanges().stream()
+                        .sorted(Comparator.comparing(ac -> ac.address().addressHash()))
+                        .toList()
+                    : new ArrayList<>(blockAccessList.accountChanges());
+
+            final List<CompletableFuture<?>> allReadFutures = new ArrayList<>();
+
+            for (var accountChanges : accounts) {
+              final Address address = accountChanges.address();
+              final CompletableFuture<Hash> accountFuture =
+                  CompletableFuture.supplyAsync(
+                      () -> {
+                        Objects.requireNonNull(
+                            ws.getWorldStateStorage().getAccount(address.addressHash()));
+                        return accountChanges.address().addressHash();
+                      },
+                      PREFETCH_EXECUTOR);
+              allReadFutures.add(accountFuture);
+
+              final Set<StorageSlotKey> uniqueSlots = new HashSet<>();
+              accountChanges.storageChanges().forEach(sc -> uniqueSlots.add(sc.slot()));
+              accountChanges.storageReads().forEach(sr -> uniqueSlots.add(sr.slot()));
+
+              final List<StorageSlotKey> slots =
+                  isPrefetchSortingEnabled
+                      ? uniqueSlots.stream()
+                          .sorted(Comparator.comparing(StorageSlotKey::getSlotHash))
+                          .toList()
+                      : new ArrayList<>(uniqueSlots);
+
+              for (var slot : slots) {
+                final CompletableFuture<Void> slotReadFuture =
+                    accountFuture.thenAcceptAsync(
+                        accountHash -> {
+                          Objects.requireNonNull(
+                              ws.getWorldStateStorage()
+                                  .getStorageValueByStorageSlotKey(accountHash, slot));
+                        },
+                        PREFETCH_EXECUTOR);
+                allReadFutures.add(slotReadFuture);
+              }
+            }
+            CompletableFuture.allOf(allReadFutures.toArray(new CompletableFuture[0])).join();
+            LOG.debug("Prefetch completed: {} total read operations", allReadFutures.size());
+          }
+        },
+        executor);
   }
 
   @Override
@@ -85,8 +188,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       final ParallelizedTransactionContext.Builder ctxBuilder =
           new ParallelizedTransactionContext.Builder();
 
-      final PathBasedWorldStateUpdateAccumulator<?> blockUpdater =
-          (PathBasedWorldStateUpdateAccumulator<?>) ws.updater();
+      final PathBasedWorldStateUpdateAccumulator<?> blockUpdater = ws.updater();
 
       applyWritesFromPriorTransactions(blockAccessList, transactionLocation + 1, blockUpdater);
       blockUpdater.commit();

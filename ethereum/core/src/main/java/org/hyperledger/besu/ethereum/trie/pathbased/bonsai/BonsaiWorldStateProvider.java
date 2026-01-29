@@ -19,8 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -46,24 +45,24 @@ import org.slf4j.LoggerFactory;
 public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateProvider.class);
-  private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
+  private final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader;
   private final Supplier<WorldStateHealer> worldStateHealerSupplier;
 
   public BonsaiWorldStateProvider(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
       final CodeCache codeCache) {
     super(worldStateKeyValueStorage, blockchain, pathBasedExtraStorageConfiguration, pluginContext);
-    this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.bonsaiMerkleTriePreLoader = bonsaiMerkleTriePreLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(
-        new BonsaiCachedWorldStorageManager(
+        new BonsaiWorldStateRegistry(
             this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
     loadHeadWorldState(
         new BonsaiWorldState(
@@ -72,28 +71,28 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
 
   @VisibleForTesting
   BonsaiWorldStateProvider(
-      final BonsaiCachedWorldStorageManager bonsaiCachedWorldStorageManager,
+      final BonsaiWorldStateRegistry bonsaiWorldStateRegistry,
       final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final TrieLogManager trieLogManager,
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
+      final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
       final CodeCache codeCache) {
     super(
         worldStateKeyValueStorage, blockchain, pathBasedExtraStorageConfiguration, trieLogManager);
-    this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.bonsaiMerkleTriePreLoader = bonsaiMerkleTriePreLoader;
     this.worldStateHealerSupplier = worldStateHealerSupplier;
     this.evmConfiguration = evmConfiguration;
-    provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
+    provideCachedWorldStorageManager(bonsaiWorldStateRegistry);
     loadHeadWorldState(
         new BonsaiWorldState(
             this, worldStateKeyValueStorage, evmConfiguration, worldStateConfig, codeCache));
   }
 
-  public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {
-    return bonsaiCachedMerkleTrieLoader;
+  public BonsaiMerkleTriePreLoader getCachedMerkleTrieLoader() {
+    return bonsaiMerkleTriePreLoader;
   }
 
   private BonsaiWorldStateKeyValueStorage getBonsaiWorldStateKeyValueStorage() {

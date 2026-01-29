@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiMerkleTriePreLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
@@ -87,7 +87,7 @@ public class BlockchainReferenceTestCaseSpec {
             ImmutablePathBasedExtraStorageConfiguration.builder()
                 .maxLayersToLoad(cacheSize)
                 .build(),
-            new NoopBonsaiCachedMerkleTrieLoader(),
+            new NoopBonsaiMerkleTriePreLoader(),
             new ServiceManager() {
               @Override
               public <T extends BesuService> void addService(

@@ -22,7 +22,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
-public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyValueStorage
+public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateStorage
     implements PathBasedLayeredWorldStateKeyValueStorage, StorageSubscriber {
 
   public BonsaiWorldStateLayerStorage(final BonsaiWorldStateKeyValueStorage parent) {

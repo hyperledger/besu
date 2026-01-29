@@ -57,6 +57,18 @@ public interface BalConfiguration {
     return true;
   }
 
+  /** Returns whether prefetching of state data based on BAL read operations is enabled. */
+  @Value.Default
+  default boolean isBalPreFetchReadingEnabled() {
+    return false;
+  }
+
+  /** Returns whether BAL sorting optimization should be enabled during prefetch. */
+  @Value.Default
+  default boolean isBalPreFetchSortingEnabled() {
+    return true;
+  }
+
   /** Returns whether the BALs should be logged when a constructed and block's BALs mismatch. */
   @Value.Default
   default boolean shouldLogBalsOnMismatch() {
