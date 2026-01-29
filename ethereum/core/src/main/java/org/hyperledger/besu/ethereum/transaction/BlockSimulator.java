@@ -340,7 +340,8 @@ public class BlockSimulator {
           operationTracer = new EthTransferLogOperationTracer();
         } else {
           // this shouldn't happen, and isTraceTransfers will go away with Glamsterdam
-          throw new IllegalArgumentException("Custom tracer and EthTraceTransfers are mutually exclusive");
+          throw new IllegalArgumentException(
+              "Custom tracer and EthTraceTransfers are mutually exclusive");
         }
       }
 
