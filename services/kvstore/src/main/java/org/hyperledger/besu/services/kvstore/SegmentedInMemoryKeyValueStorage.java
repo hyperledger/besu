@@ -70,6 +70,11 @@ public class SegmentedInMemoryKeyValueStorage
     return newSegmentMap(Collections.emptyMap());
   }
 
+  public ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+      getHashValueStore() {
+    return hashValueStore;
+  }
+
   /**
    * Create and populate a navigable segment map, with a compatible Bytes comparator.
    *

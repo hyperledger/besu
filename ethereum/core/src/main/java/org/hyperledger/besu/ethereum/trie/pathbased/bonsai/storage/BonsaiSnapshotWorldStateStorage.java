@@ -34,6 +34,16 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Snapshot of Bonsai world state storage.
+ *
+ * <p>This class: - Extends BonsaiWorldStateKeyValueStorage and inherits its cacheManager - Captures
+ * snapshot version when created - Delegates all reads to parent storage (through super calls) -
+ * Provides cache info to layers via inherited cacheManager and getSnapshotVersion()
+ *
+ * <p>The snapshot itself NEVER reads from cache - it's just a carrier of cache metadata for layers
+ * that will be created from it.
+ */
 public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueStorage
     implements PathBasedSnapshotWorldStateKeyValueStorage, StorageSubscriber {
 
@@ -46,7 +56,11 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(
-        parentWorldStateStorage.flatDbStrategyProvider, segmentedWorldStateStorage, trieLogStorage);
+        parentWorldStateStorage.flatDbStrategyProvider,
+        segmentedWorldStateStorage,
+        trieLogStorage,
+        parentWorldStateStorage.cacheManager);
+
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -76,6 +90,8 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
         getFlatDbStrategy(),
         composedWorldStateStorage);
   }
+
+  // All read methods just delegate to parent (via super) - NO cache reading
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -161,26 +177,22 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
 
   @Override
   public void clear() {
-    // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
 
   @Override
   public void clearFlatDatabase() {
-    // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
 
   @Override
   public void clearTrieLog() {
-    // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
 
   @Override
   public void onCloseStorage() {
     try {
-      // when the parent storage clears, close regardless of subscribers
       doClose();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -190,7 +202,6 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
   @Override
   public void onClearStorage() {
     try {
-      // when the parent storage clears, close regardless of subscribers
       doClose();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -199,7 +210,6 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
 
   @Override
   public void onClearFlatDatabaseStorage() {
-    // when the parent storage clears, close regardless of subscribers
     try {
       doClose();
     } catch (Exception e) {
@@ -209,7 +219,6 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
 
   @Override
   public void onClearTrieLog() {
-    // when the parent storage clears, close regardless of subscribers
     try {
       doClose();
     } catch (Exception e) {

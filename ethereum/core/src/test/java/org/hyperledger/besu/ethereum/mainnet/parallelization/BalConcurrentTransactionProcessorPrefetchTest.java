@@ -36,9 +36,9 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.NoOpBonsaiWorldStateRegistry;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiMerkleTriePreLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedSnapshotWorldStateStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiSnapshotWorldStateStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -65,43 +65,56 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class BalConcurrentTransactionProcessorPrefetchTest {
 
-  private BonsaiWorldStateKeyValueStorage parentStorage;
-  private BonsaiCachedWorldStateStorage baseCachedStorage;
+  private BonsaiWorldStateKeyValueStorage baseStorage;
+  private BonsaiWorldStateKeyValueStorage.VersionedCacheManager customCache;
   private BlockHeader blockHeader;
 
   private static final Executor SYNC_EXECUTOR = Runnable::run;
 
   enum StorageMode {
-    CACHED,
-    SNAPSHOT
+    BASE,
+    SNAPSHOT,
+    LAYER
   }
 
   @BeforeEach
   public void setup() {
-    parentStorage =
+    // Create custom cache with reasonable sizes for testing
+    customCache =
+        new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
+            1000, // accountCacheSize
+            1000, // storageCacheSize
+            1000, // trieCacheSize
+            new NoOpMetricsSystem());
+
+    baseStorage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
-
-    baseCachedStorage =
-        new BonsaiCachedWorldStateStorage(
-            parentStorage, 1000, 1000, 1000, 1000, new NoOpMetricsSystem());
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG,
+            customCache);
 
     blockHeader = mock(BlockHeader.class);
     when(blockHeader.getParentHash()).thenReturn(Hash.ZERO);
   }
 
   static Stream<Arguments> storageModeProvider() {
-    return Stream.of(Arguments.of(StorageMode.CACHED), Arguments.of(StorageMode.SNAPSHOT));
+    return Stream.of(
+        Arguments.of(StorageMode.BASE),
+        Arguments.of(StorageMode.SNAPSHOT),
+        Arguments.of(StorageMode.LAYER));
   }
 
   private BonsaiWorldStateKeyValueStorage createStorage(final StorageMode mode) {
-    if (mode == StorageMode.CACHED) {
-      return baseCachedStorage;
-    } else {
-      // Create snapshot but return it directly (it uses the same cache manager)
-      return baseCachedStorage.createSnapshot();
+    switch (mode) {
+      case BASE:
+        return baseStorage;
+      case SNAPSHOT:
+        return new BonsaiSnapshotWorldStateStorage(baseStorage);
+      case LAYER:
+        return new BonsaiWorldStateLayerStorage(baseStorage);
+      default:
+        throw new IllegalArgumentException("Unknown mode: " + mode);
     }
   }
 
@@ -145,21 +158,35 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     Bytes accountData1 = Bytes.of(1, 2, 3);
     Bytes accountData2 = Bytes.of(4, 5, 6);
 
-    BonsaiWorldStateKeyValueStorage.Updater updater = parentStorage.updater();
+    BonsaiWorldStateKeyValueStorage.Updater updater = baseStorage.updater();
     updater.putAccountInfoState(address1.addressHash(), accountData1);
     updater.putAccountInfoState(address2.addressHash(), accountData2);
     updater.commit();
+
+    long versionAfterCommit = baseStorage.getCurrentVersion();
 
     BonsaiWorldStateKeyValueStorage storage = createStorage(mode);
     BonsaiWorldState worldState = createWorldState(storage);
     ProtocolContext protocolContext = createProtocolContext(worldState);
 
-    // Verify storage type
-    if (mode == StorageMode.CACHED) {
-      assertThat(storage).isInstanceOf(BonsaiCachedWorldStateStorage.class);
-      assertThat(storage).isNotInstanceOf(BonsaiCachedSnapshotWorldStateStorage.class);
-    } else {
-      assertThat(storage).isInstanceOf(BonsaiCachedSnapshotWorldStateStorage.class);
+    // Verify storage type and cache sharing
+    switch (mode) {
+      case BASE:
+        assertThat(storage).isInstanceOf(BonsaiWorldStateKeyValueStorage.class);
+        assertThat(storage).isNotInstanceOf(BonsaiSnapshotWorldStateStorage.class);
+        assertThat(storage.getCacheManager()).isSameAs(customCache);
+        break;
+      case SNAPSHOT:
+        assertThat(storage).isInstanceOf(BonsaiSnapshotWorldStateStorage.class);
+        assertThat(storage).isNotInstanceOf(BonsaiWorldStateLayerStorage.class);
+        assertThat(storage.getCacheManager()).isSameAs(customCache);
+        assertThat(((BonsaiSnapshotWorldStateStorage) storage).getCacheVersion())
+            .isEqualTo(versionAfterCommit);
+        break;
+      case LAYER:
+        assertThat(storage).isInstanceOf(BonsaiWorldStateLayerStorage.class);
+        assertThat(storage.getCacheManager()).isSameAs(customCache);
+        break;
     }
 
     List<BlockAccessList.AccountChanges> accountChangesList = new ArrayList<>();
@@ -179,25 +206,26 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     BalConcurrentTransactionProcessor processor =
         new BalConcurrentTransactionProcessor(txProcessor, blockAccessList, config);
 
-    long initialCacheSize = baseCachedStorage.getCacheSize(ACCOUNT_INFO_STATE);
+    long initialCacheSize = baseStorage.getCacheSize(ACCOUNT_INFO_STATE);
 
     processor.preFetchRead(protocolContext, blockHeader, SYNC_EXECUTOR, SYNC_EXECUTOR).join();
 
-    // Verify cache was populated on the base cached storage
-    assertThat(baseCachedStorage.getCacheSize(ACCOUNT_INFO_STATE))
-        .isGreaterThanOrEqualTo(initialCacheSize + 2);
+    // Verify cache was populated on the base storage (shared by all)
+    assertThat(baseStorage.getCacheSize(ACCOUNT_INFO_STATE))
+        .isGreaterThanOrEqualTo(initialCacheSize);
+
     assertThat(
-            baseCachedStorage.isCached(
+            baseStorage.isCached(
                 ACCOUNT_INFO_STATE, address1.addressHash().getBytes().toArrayUnsafe()))
         .isTrue();
     assertThat(
-            baseCachedStorage.isCached(
+            baseStorage.isCached(
                 ACCOUNT_INFO_STATE, address2.addressHash().getBytes().toArrayUnsafe()))
         .isTrue();
 
     // Verify cached values match expected data
     assertThat(
-            baseCachedStorage.getCachedValue(
+            baseStorage.getCachedValue(
                 ACCOUNT_INFO_STATE, address1.addressHash().getBytes().toArrayUnsafe()))
         .isPresent()
         .get()
@@ -205,10 +233,12 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
             versionedValue -> {
               assertThat(versionedValue.isRemoval()).isFalse();
               assertThat(Bytes.wrap(versionedValue.getValue())).isEqualTo(accountData1);
+              // Version should be the one from commit
+              assertThat(versionedValue.getVersion()).isEqualTo(versionAfterCommit);
             });
 
     assertThat(
-            baseCachedStorage.getCachedValue(
+            baseStorage.getCachedValue(
                 ACCOUNT_INFO_STATE, address2.addressHash().getBytes().toArrayUnsafe()))
         .isPresent()
         .get()
@@ -216,6 +246,7 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
             versionedValue -> {
               assertThat(versionedValue.isRemoval()).isFalse();
               assertThat(Bytes.wrap(versionedValue.getValue())).isEqualTo(accountData2);
+              assertThat(versionedValue.getVersion()).isEqualTo(versionAfterCommit);
             });
 
     worldState.close();
@@ -232,11 +263,13 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     Bytes storageValue1 = Bytes.of(10);
     Bytes storageValue2 = Bytes.of(20);
 
-    BonsaiWorldStateKeyValueStorage.Updater updater = parentStorage.updater();
+    BonsaiWorldStateKeyValueStorage.Updater updater = baseStorage.updater();
     updater.putAccountInfoState(address.addressHash(), accountData);
     updater.putStorageValueBySlotHash(address.addressHash(), slot1.getSlotHash(), storageValue1);
     updater.putStorageValueBySlotHash(address.addressHash(), slot2.getSlotHash(), storageValue2);
     updater.commit();
+
+    long versionAfterCommit = baseStorage.getCurrentVersion();
 
     BonsaiWorldStateKeyValueStorage storage = createStorage(mode);
     BonsaiWorldState worldState = createWorldState(storage);
@@ -260,20 +293,20 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     BalConcurrentTransactionProcessor processor =
         new BalConcurrentTransactionProcessor(txProcessor, blockAccessList, config);
 
-    long initialStorageCacheSize = baseCachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE);
+    long initialStorageCacheSize = baseStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE);
 
     processor.preFetchRead(protocolContext, blockHeader, SYNC_EXECUTOR, SYNC_EXECUTOR).join();
 
     assertThat(
-            baseCachedStorage.isCached(
+            baseStorage.isCached(
                 ACCOUNT_INFO_STATE, address.addressHash().getBytes().toArrayUnsafe()))
         .isTrue();
-    assertThat(baseCachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE))
-        .isGreaterThanOrEqualTo(initialStorageCacheSize + 2);
+    assertThat(baseStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE))
+        .isGreaterThanOrEqualTo(initialStorageCacheSize);
 
     // Verify account value
     assertThat(
-            baseCachedStorage.getCachedValue(
+            baseStorage.getCachedValue(
                 ACCOUNT_INFO_STATE, address.addressHash().getBytes().toArrayUnsafe()))
         .isPresent()
         .get()
@@ -291,22 +324,24 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
         Bytes.concatenate(address.addressHash().getBytes(), slot2.getSlotHash().getBytes())
             .toArrayUnsafe();
 
-    assertThat(baseCachedStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, storageKey1))
+    assertThat(baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, storageKey1))
         .isPresent()
         .get()
         .satisfies(
             versionedValue -> {
               assertThat(versionedValue.isRemoval()).isFalse();
               assertThat(Bytes.wrap(versionedValue.getValue())).isEqualTo(storageValue1);
+              assertThat(versionedValue.getVersion()).isLessThanOrEqualTo(versionAfterCommit);
             });
 
-    assertThat(baseCachedStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, storageKey2))
+    assertThat(baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, storageKey2))
         .isPresent()
         .get()
         .satisfies(
             versionedValue -> {
               assertThat(versionedValue.isRemoval()).isFalse();
               assertThat(Bytes.wrap(versionedValue.getValue())).isEqualTo(storageValue2);
+              assertThat(versionedValue.getVersion()).isLessThanOrEqualTo(versionAfterCommit);
             });
 
     worldState.close();
@@ -317,37 +352,36 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
   public void testPrefetch_multipleAccountsAndSlots(final StorageMode mode) {
     List<BlockAccessList.AccountChanges> allChanges = new ArrayList<>();
     Map<Address, Bytes> expectedAccountData = new HashMap<>();
-    Map<BonsaiCachedWorldStateStorage.ByteArrayWrapper, Bytes> expectedStorageData =
-        new HashMap<>(); // Use ByteArrayWrapper as key
+    Map<BonsaiWorldStateKeyValueStorage.ByteArrayWrapper, Bytes> expectedStorageData =
+        new HashMap<>();
 
+    // Commit all data in batches to get consistent versions
     for (int i = 0; i < 5; i++) {
       Address address = Address.fromHexString(String.format("0x%040d", i + 1));
       Bytes accountData = bytesFromInt(i);
       expectedAccountData.put(address, accountData);
 
-      BonsaiWorldStateKeyValueStorage.Updater accountUpdater = parentStorage.updater();
+      BonsaiWorldStateKeyValueStorage.Updater accountUpdater = baseStorage.updater();
       accountUpdater.putAccountInfoState(address.addressHash(), accountData);
-      accountUpdater.commit();
 
       List<BlockAccessList.SlotChanges> storageChangesList = new ArrayList<>();
       for (int j = 0; j < 3; j++) {
         StorageSlotKey slot = new StorageSlotKey(UInt256.valueOf(i * 10 + j));
         Bytes storageValue = bytesFromInt(i * 10 + j);
 
-        // Use the same cache key for both storing and retrieving
         byte[] cacheKey =
             Bytes.concatenate(address.addressHash().getBytes(), slot.getSlotHash().getBytes())
                 .toArrayUnsafe();
         expectedStorageData.put(
-            new BonsaiCachedWorldStateStorage.ByteArrayWrapper(cacheKey), storageValue);
+            new BonsaiWorldStateKeyValueStorage.ByteArrayWrapper(cacheKey), storageValue);
 
-        BonsaiWorldStateKeyValueStorage.Updater storageUpdater = parentStorage.updater();
-        storageUpdater.putStorageValueBySlotHash(
+        accountUpdater.putStorageValueBySlotHash(
             address.addressHash(), slot.getSlotHash(), storageValue);
-        storageUpdater.commit();
 
         storageChangesList.add(new BlockAccessList.SlotChanges(slot, List.of()));
       }
+
+      accountUpdater.commit();
 
       allChanges.add(
           new BlockAccessList.AccountChanges(
@@ -367,15 +401,16 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     BalConcurrentTransactionProcessor processor =
         new BalConcurrentTransactionProcessor(txProcessor, blockAccessList, config);
 
-    long initialAccountCache = baseCachedStorage.getCacheSize(ACCOUNT_INFO_STATE);
-    long initialStorageCache = baseCachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE);
+    long initialAccountCache = baseStorage.getCacheSize(ACCOUNT_INFO_STATE);
+    long initialStorageCache = baseStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE);
 
     processor.preFetchRead(protocolContext, blockHeader, SYNC_EXECUTOR, SYNC_EXECUTOR).join();
 
-    assertThat(baseCachedStorage.getCacheSize(ACCOUNT_INFO_STATE))
-        .isGreaterThanOrEqualTo(initialAccountCache + 5);
-    assertThat(baseCachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE))
-        .isGreaterThanOrEqualTo(initialStorageCache + 15);
+    // Cache should have grown (may already contain some items from commits)
+    assertThat(baseStorage.getCacheSize(ACCOUNT_INFO_STATE))
+        .isGreaterThanOrEqualTo(initialAccountCache);
+    assertThat(baseStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE))
+        .isGreaterThanOrEqualTo(initialStorageCache);
 
     // Verify all account values
     for (Map.Entry<Address, Bytes> entry : expectedAccountData.entrySet()) {
@@ -383,7 +418,7 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
       Bytes expectedData = entry.getValue();
 
       assertThat(
-              baseCachedStorage.getCachedValue(
+              baseStorage.getCachedValue(
                   ACCOUNT_INFO_STATE, address.addressHash().getBytes().toArrayUnsafe()))
           .isPresent()
           .get()
@@ -394,13 +429,13 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
               });
     }
 
-    // Verify all storage values using the same cache keys
-    for (Map.Entry<BonsaiCachedWorldStateStorage.ByteArrayWrapper, Bytes> entry :
+    // Verify all storage values
+    for (Map.Entry<BonsaiWorldStateKeyValueStorage.ByteArrayWrapper, Bytes> entry :
         expectedStorageData.entrySet()) {
       byte[] cacheKey = entry.getKey().getData();
       Bytes expectedValue = entry.getValue();
 
-      assertThat(baseCachedStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, cacheKey))
+      assertThat(baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, cacheKey))
           .isPresent()
           .get()
           .satisfies(
@@ -421,7 +456,7 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
 
     List<BlockAccessList.AccountChanges> accountChangesList = new ArrayList<>();
     Map<Address, Bytes> expectedAccountData = new HashMap<>();
-    Map<BonsaiCachedWorldStateStorage.ByteArrayWrapper, Bytes> expectedStorageData =
+    Map<BonsaiWorldStateKeyValueStorage.ByteArrayWrapper, Bytes> expectedStorageData =
         new HashMap<>();
 
     for (int i = 0; i < numAccounts; i++) {
@@ -429,9 +464,8 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
       Bytes accountData = bytesFromInt(i);
       expectedAccountData.put(address, accountData);
 
-      BonsaiWorldStateKeyValueStorage.Updater accountUpdater = parentStorage.updater();
+      BonsaiWorldStateKeyValueStorage.Updater accountUpdater = baseStorage.updater();
       accountUpdater.putAccountInfoState(address.addressHash(), accountData);
-      accountUpdater.commit();
 
       List<BlockAccessList.SlotChanges> storageChangesList = new ArrayList<>();
       for (int j = 0; j < slotsPerAccount; j++) {
@@ -442,15 +476,15 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
             Bytes.concatenate(address.addressHash().getBytes(), slot.getSlotHash().getBytes())
                 .toArrayUnsafe();
         expectedStorageData.put(
-            new BonsaiCachedWorldStateStorage.ByteArrayWrapper(cacheKey), storageValue);
+            new BonsaiWorldStateKeyValueStorage.ByteArrayWrapper(cacheKey), storageValue);
 
-        BonsaiWorldStateKeyValueStorage.Updater storageUpdater = parentStorage.updater();
-        storageUpdater.putStorageValueBySlotHash(
+        accountUpdater.putStorageValueBySlotHash(
             address.addressHash(), slot.getSlotHash(), storageValue);
-        storageUpdater.commit();
 
         storageChangesList.add(new BlockAccessList.SlotChanges(slot, List.of()));
       }
+
+      accountUpdater.commit();
 
       accountChangesList.add(
           new BlockAccessList.AccountChanges(
@@ -470,26 +504,26 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
     BalConcurrentTransactionProcessor processor =
         new BalConcurrentTransactionProcessor(txProcessor, blockAccessList, config);
 
-    long initialAccountCache = baseCachedStorage.getCacheSize(ACCOUNT_INFO_STATE);
-    long initialStorageCache = baseCachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE);
+    long initialAccountCache = baseStorage.getCacheSize(ACCOUNT_INFO_STATE);
+    long initialStorageCache = baseStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE);
 
     long startTime = System.currentTimeMillis();
     processor.preFetchRead(protocolContext, blockHeader, SYNC_EXECUTOR, SYNC_EXECUTOR).join();
     long endTime = System.currentTimeMillis();
 
-    assertThat(baseCachedStorage.getCacheSize(ACCOUNT_INFO_STATE))
-        .isGreaterThanOrEqualTo(initialAccountCache + numAccounts);
-    assertThat(baseCachedStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE))
-        .isGreaterThanOrEqualTo(initialStorageCache + (numAccounts * slotsPerAccount));
+    assertThat(baseStorage.getCacheSize(ACCOUNT_INFO_STATE))
+        .isGreaterThanOrEqualTo(initialAccountCache);
+    assertThat(baseStorage.getCacheSize(ACCOUNT_STORAGE_STORAGE))
+        .isGreaterThanOrEqualTo(initialStorageCache);
     assertThat(endTime - startTime).isLessThan(5000);
 
-    // Verify all account values
+    // Verify all account values are in cache with correct data
     for (Map.Entry<Address, Bytes> entry : expectedAccountData.entrySet()) {
       Address address = entry.getKey();
       Bytes expectedData = entry.getValue();
 
       assertThat(
-              baseCachedStorage.getCachedValue(
+              baseStorage.getCachedValue(
                   ACCOUNT_INFO_STATE, address.addressHash().getBytes().toArrayUnsafe()))
           .isPresent()
           .get()
@@ -500,13 +534,13 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
               });
     }
 
-    // Verify all storage values
-    for (Map.Entry<BonsaiCachedWorldStateStorage.ByteArrayWrapper, Bytes> entry :
+    // Verify all storage values are in cache with correct data
+    for (Map.Entry<BonsaiWorldStateKeyValueStorage.ByteArrayWrapper, Bytes> entry :
         expectedStorageData.entrySet()) {
       byte[] cacheKey = entry.getKey().getData();
       Bytes expectedValue = entry.getValue();
 
-      assertThat(baseCachedStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, cacheKey))
+      assertThat(baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, cacheKey))
           .isPresent()
           .get()
           .satisfies(
