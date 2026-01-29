@@ -46,6 +46,7 @@
 - Performance: Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
 - Update to Netty 4.2.9.Final [#9587](https://github.com/hyperledger/besu/pull/9587)
 - Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
+- Update vertx to 4.5.24 [#9645](https://github.com/hyperledger/besu/pull/9645)
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 - Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
 - Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
