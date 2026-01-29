@@ -44,7 +44,6 @@ public class BonsaiWorldStateLayerStorageCacheTest {
             new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
                 100, // accountCacheSize
                 100, // storageCacheSize
-                100, // trieCacheSize
                 new NoOpMetricsSystem()));
   }
 

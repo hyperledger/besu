@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -28,7 +27,6 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +46,6 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
             new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
                 100, // accountCacheSize
                 100, // storageCacheSize
-                100, // trieCacheSize
                 new NoOpMetricsSystem()));
   }
 
@@ -196,27 +193,6 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
         baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, key2.toArrayUnsafe());
     assertThat(cached2).isPresent();
     assertThat(Bytes.wrap(cached2.get().getValue())).isEqualTo(value2);
-  }
-
-  @Test
-  public void testCache_trieNodes() {
-    Bytes location = Bytes.of(1, 2);
-    Bytes nodeData = Bytes.of(10, 20, 30);
-    Bytes32 nodeHash = Bytes32.wrap(Hash.hash(nodeData).getBytes());
-
-    // Add trie node
-    BonsaiWorldStateKeyValueStorage.CachedUpdater updater =
-        (BonsaiWorldStateKeyValueStorage.CachedUpdater) baseStorage.updater();
-    updater.putAccountStateTrieNode(location, nodeHash, nodeData);
-    updater.commit();
-
-    // Verify trie node is cached
-    assertThat(baseStorage.isCached(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe())).isTrue();
-
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cachedNode =
-        baseStorage.getCachedValue(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe());
-    assertThat(cachedNode).isPresent();
-    assertThat(Bytes.wrap(cachedNode.get().getValue())).isEqualTo(nodeData);
   }
 
   @Test

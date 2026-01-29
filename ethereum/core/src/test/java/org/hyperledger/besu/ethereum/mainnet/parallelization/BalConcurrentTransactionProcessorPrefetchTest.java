@@ -84,7 +84,6 @@ public class BalConcurrentTransactionProcessorPrefetchTest {
         new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
             1000, // accountCacheSize
             1000, // storageCacheSize
-            1000, // trieCacheSize
             new NoOpMetricsSystem());
 
     baseStorage =

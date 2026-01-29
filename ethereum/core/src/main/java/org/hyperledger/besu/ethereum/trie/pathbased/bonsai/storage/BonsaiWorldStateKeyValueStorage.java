@@ -88,7 +88,6 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         new VersionedCacheManager(
             50000, // accountCacheSize
             200000, // storageCacheSize
-            200000, // trieCacheSize
             metricsSystem));
   }
 
@@ -343,13 +342,11 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     public VersionedCacheManager(
         final long accountCacheSize,
         final long storageCacheSize,
-        final long trieCacheSize,
         final MetricsSystem metricsSystem) {
 
       this.caches = new HashMap<>();
       caches.put(ACCOUNT_INFO_STATE, createCache(accountCacheSize));
       caches.put(ACCOUNT_STORAGE_STORAGE, createCache(storageCacheSize));
-      caches.put(TRIE_BRANCH_STORAGE, createCache(trieCacheSize));
 
       this.cacheRequestCounter =
           metricsSystem.createLabelledCounter(

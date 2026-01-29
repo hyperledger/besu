@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -36,7 +35,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Layered world state storage with integrated cache reading.
@@ -119,50 +117,6 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateStorag
         key,
         getCurrentVersion(),
         () -> parentWorldStateStorage.getAccount(accountHash));
-  }
-
-  @Override
-  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
-    return super.getCode(codeHash, accountHash);
-  }
-
-  @Override
-  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-
-    // Level 1: Check layer
-    final Optional<byte[]> layerResult =
-        getFromLayerOnly(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
-    if (layerResult != null) {
-      return layerResult.map(Bytes::wrap);
-    }
-
-    // Level 2 & 3: Check cache, then parent
-    return cacheManager.getFromCacheOrStorage(
-        TRIE_BRANCH_STORAGE,
-        nodeHash.toArrayUnsafe(),
-        getCurrentVersion(),
-        () -> parentWorldStateStorage.getAccountStateTrieNode(location, nodeHash));
-  }
-
-  @Override
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-
-    // Level 1: Check layer
-    final Optional<byte[]> layerResult =
-        getFromLayerOnly(
-            TRIE_BRANCH_STORAGE,
-            Bytes.concatenate(accountHash.getBytes(), location).toArrayUnsafe());
-    if (layerResult != null) {
-      return layerResult.map(Bytes::wrap);
-    }
-
-    // Level 2 & 3: Check cache, then parent
-    return cacheManager.getFromCacheOrStorage(
-        TRIE_BRANCH_STORAGE,
-        nodeHash.toArrayUnsafe(),
-        getCurrentVersion(),
-        () -> parentWorldStateStorage.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
