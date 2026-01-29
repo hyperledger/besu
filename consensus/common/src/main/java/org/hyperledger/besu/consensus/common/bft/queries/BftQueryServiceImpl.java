@@ -28,8 +28,6 @@ import org.hyperledger.besu.plugin.services.query.BftQueryService;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.apache.tuweni.bytes.Bytes32;
-
 /** The Bft query service. */
 public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQueryService {
 
@@ -88,7 +86,7 @@ public class BftQueryServiceImpl extends PoaQueryServiceImpl implements BftQuery
       return (BlockHeader) header;
     }
 
-    final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().getBytes().toArray()));
+    final Hash blockHash = header.getBlockHash();
     return getBlockchain().getBlockHeader(blockHash).orElseThrow();
   }
 }

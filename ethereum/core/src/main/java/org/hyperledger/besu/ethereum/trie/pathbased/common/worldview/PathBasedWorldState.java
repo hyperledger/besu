@@ -84,10 +84,9 @@ public abstract class PathBasedWorldState
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
-            Bytes32.wrap(
-                worldStateKeyValueStorage
-                    .getWorldStateRootHash()
-                    .orElse(getEmptyTrieHash().getBytes())));
+            worldStateKeyValueStorage
+                .getWorldStateRootHash()
+                .orElse(getEmptyTrieHash().getBytes()));
     this.worldStateBlockHash = worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO);
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;

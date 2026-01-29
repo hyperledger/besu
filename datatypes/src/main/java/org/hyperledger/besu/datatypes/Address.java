@@ -15,7 +15,6 @@
 package org.hyperledger.besu.datatypes;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -29,7 +28,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** A 160-bits account address. */
 public class Address extends BytesHolder {
@@ -111,7 +109,7 @@ public class Address extends BytesHolder {
    *
    * @param bytes the bytes
    */
-  protected Address(final Bytes bytes) {
+  private Address(final Bytes bytes) {
     super(bytes);
   }
 
@@ -153,8 +151,8 @@ public class Address extends BytesHolder {
    *     Yellow Paper.
    * @return The ethereum address from the provided hash.
    */
-  public static Address extract(final Bytes32 hash) {
-    return wrap(hash.slice(12, 20));
+  public static Address extract(final Hash hash) {
+    return wrap(hash.getBytes().slice(12, 20));
   }
 
   /**
@@ -164,7 +162,7 @@ public class Address extends BytesHolder {
    * @return the address
    */
   public static Address extract(final SECPPublicKey publicKey) {
-    return Address.extract(keccak256(publicKey.getEncodedBytes()));
+    return Address.extract(Hash.hash(publicKey.getEncodedBytes()));
   }
 
   /**
@@ -228,7 +226,7 @@ public class Address extends BytesHolder {
    */
   public static Address contractAddress(final Address senderAddress, final long nonce) {
     return Address.extract(
-        keccak256(
+        Hash.hash(
             RLP.encode(
                 out -> {
                   out.startList();

@@ -98,7 +98,7 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
   }
 
   private Hash getSlotHash(final Bytes location, final Bytes path) {
-    return Hash.wrap(Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(location, path))));
+    return Hash.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(location, path)));
   }
 
   @Override

@@ -66,8 +66,7 @@ public class Account {
     this(
         eth,
         name,
-        Address.extract(
-            Bytes32.wrap(Hash.hash(keyPair.getPublicKey().getEncodedBytes()).getBytes())),
+        Address.extract(Hash.hash(keyPair.getPublicKey().getEncodedBytes())),
         Optional.of(keyPair));
   }
 

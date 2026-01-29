@@ -223,7 +223,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         .streamFromKey(
             ACCOUNT_STORAGE_STORAGE,
             calculateArchiveKeyNoContextMinSuffix(
-                calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))))
+                calculateNaturalSlotKey(accountHash, Hash.wrap(startKeyHash))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
         .takeWhile(pair -> pair.slice(0, Bytes32.SIZE).equals(accountHash.getBytes()))
         .distinct()
@@ -252,7 +252,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         .streamFromKey(
             ACCOUNT_STORAGE_STORAGE,
             calculateArchiveKeyNoContextMinSuffix(
-                calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))),
+                calculateNaturalSlotKey(accountHash, Hash.wrap(startKeyHash))),
             calculateArchiveKeyNoContextMaxSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(endKeyHash))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))

@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -300,7 +300,7 @@ public class AbstractEngineNewPayloadValidationTest {
     for (int i = 1; i < 32; i++) {
       validHash[i] = (byte) (i % 256);
     }
-    return new VersionedHash(Bytes32.wrap(validHash));
+    return new VersionedHash(Bytes.wrap(validHash));
   }
 
   private VersionedHash createValidVersionedHash(final int seed) {
@@ -309,6 +309,6 @@ public class AbstractEngineNewPayloadValidationTest {
     for (int i = 1; i < 32; i++) {
       validHash[i] = (byte) ((i + seed) % 256);
     }
-    return new VersionedHash(Bytes32.wrap(validHash));
+    return new VersionedHash(Bytes.wrap(validHash));
   }
 }

@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class BlockRangeUpdateMessageTest {
@@ -29,7 +29,7 @@ public class BlockRangeUpdateMessageTest {
   public void blockRangeUpdateMessageSerializationDeserialization() {
     final long earliestBlockNumber = 10;
     final long latestBlockNumber = 20;
-    final Hash latestBlockHash = Hash.wrap(Bytes32.fromHexString("0x0A"));
+    final Hash latestBlockHash = Hash.wrap(Bytes.fromHexString("0x0A", 32));
 
     final BlockRangeUpdateMessage msg =
         BlockRangeUpdateMessage.create(earliestBlockNumber, latestBlockNumber, latestBlockHash);
@@ -43,7 +43,7 @@ public class BlockRangeUpdateMessageTest {
   public void rawMessageConversionToBlockRangeUpdateMessage() {
     final long earliestBlockNumber = 10;
     final long latestBlockNumber = 20;
-    final Hash latestBlockHash = Hash.wrap(Bytes32.fromHexString("0x0A"));
+    final Hash latestBlockHash = Hash.wrap(Bytes.fromHexString("0x0A", 32));
 
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();

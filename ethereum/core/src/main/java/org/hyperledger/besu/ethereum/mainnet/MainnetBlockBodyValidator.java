@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,23 +75,18 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot =
-        Bytes32.wrap(BodyValidation.transactionsRoot(body.getTransactions()).getBytes());
-    if (!validateTransactionsRoot(
-        header, Bytes32.wrap(header.getTransactionsRoot().getBytes()), transactionsRoot)) {
+    final Hash transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
+    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
       return false;
     }
 
-    final Bytes32 receiptsRoot = Bytes32.wrap(BodyValidation.receiptsRoot(receipts).getBytes());
-    if (!validateReceiptsRoot(
-        header, Bytes32.wrap(header.getReceiptsRoot().getBytes()), receiptsRoot)) {
+    final Hash receiptsRoot = BodyValidation.receiptsRoot(receipts);
+    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
       return false;
     }
 
     if (!validateStateRoot(
-        block.getHeader(),
-        Bytes32.wrap(block.getHeader().getStateRoot().getBytes()),
-        Bytes32.wrap(worldStateRootHash.getBytes()))) {
+        block.getHeader(), block.getHeader().getStateRoot(), worldStateRootHash)) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
       receipts.forEach(
           receipt ->
@@ -111,8 +105,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
     final BlockHeader header = block.getHeader();
 
-    final long gasUsed =
-        receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
+    final long gasUsed = receipts.isEmpty() ? 0 : receipts.getLast().getCumulativeGasUsed();
     if (!validateGasUsed(header, header.getGasUsed(), gasUsed)) {
       return false;
     }
@@ -125,14 +118,11 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateWithdrawals(block)) {
-      return false;
-    }
-    return true;
+    return validateWithdrawals(block);
   }
 
   private boolean validateTransactionsRoot(
-      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
+      final BlockHeader header, final Hash expected, final Hash actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
           "Invalid block {}: transaction root mismatch (expected={}, actual={})",
@@ -174,7 +164,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateReceiptsRoot(
-      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
+      final BlockHeader header, final Hash expected, final Hash actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
           "Invalid block {}: receipts root mismatch (expected={}, actual={})",
@@ -188,7 +178,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateStateRoot(
-      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
+      final BlockHeader header, final Hash expected, final Hash actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
           "Invalid block {}: state root mismatch (expected={}, actual={})",
@@ -208,20 +198,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 ommerHash = Bytes32.wrap(BodyValidation.ommersHash(body.getOmmers()).getBytes());
-    if (!validateOmmersHash(header, Bytes32.wrap(header.getOmmersHash().getBytes()), ommerHash)) {
+    final Hash ommerHash = BodyValidation.ommersHash(body.getOmmers());
+    if (!validateOmmersHash(header, header.getOmmersHash(), ommerHash)) {
       return false;
     }
 
-    if (!validateOmmers(context, header, body.getOmmers(), ommerValidationMode)) {
-      return false;
-    }
-
-    return true;
+    return validateOmmers(context, header, body.getOmmers(), ommerValidationMode);
   }
 
   private static boolean validateOmmersHash(
-      final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
+      final BlockHeader header, final Hash expected, final Hash actual) {
     if (!expected.equals(actual)) {
       LOG.warn(
           "Invalid block {}: ommers hash mismatch (expected={}, actual={})",
@@ -322,10 +308,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!withdrawalsValidator.validateWithdrawalsRoot(block)) {
-      return false;
-    }
-
-    return true;
+    return withdrawalsValidator.validateWithdrawalsRoot(block);
   }
 }

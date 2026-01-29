@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** The Log topic. */
+/** The Log topic. It contains exactly 32 bytes. */
 public class LogTopic extends BytesHolder {
 
   /**
@@ -27,18 +30,8 @@ public class LogTopic extends BytesHolder {
    *
    * @param bytes the bytes
    */
-  protected LogTopic(final Bytes32 bytes) {
+  private LogTopic(final Bytes bytes) {
     super(bytes);
-  }
-
-  /**
-   * Create log topic.
-   *
-   * @param bytes the bytes
-   * @return the log topic
-   */
-  public static LogTopic create(final Bytes32 bytes) {
-    return new LogTopic(bytes);
   }
 
   /**
@@ -47,7 +40,12 @@ public class LogTopic extends BytesHolder {
    * @param bytes the bytes
    * @return the log topic
    */
-  public static LogTopic wrap(final Bytes32 bytes) {
+  public static LogTopic wrap(final Bytes bytes) {
+    checkArgument(
+        bytes.size() == Bytes32.SIZE,
+        "A log topic must be %s bytes long, got %s",
+        Bytes32.SIZE,
+        bytes.size());
     return new LogTopic(bytes);
   }
 
@@ -57,7 +55,12 @@ public class LogTopic extends BytesHolder {
    * @param bytes the bytes
    * @return the log topic
    */
-  public static LogTopic of(final Bytes32 bytes) {
+  public static LogTopic of(final Bytes bytes) {
+    checkArgument(
+        bytes.size() == Bytes32.SIZE,
+        "A log topic must be %s bytes long, got %s",
+        Bytes32.SIZE,
+        bytes.size());
     return new LogTopic(bytes.copy());
   }
 
@@ -68,7 +71,7 @@ public class LogTopic extends BytesHolder {
    * @return the log topic
    */
   public static LogTopic fromHexString(final String str) {
-    return str == null ? null : LogTopic.create(Bytes32.fromHexString(str));
+    return str == null ? null : new LogTopic(Bytes.fromHexString(str, 32));
   }
 
   /**

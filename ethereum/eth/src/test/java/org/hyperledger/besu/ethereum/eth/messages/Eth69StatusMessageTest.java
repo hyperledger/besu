@@ -28,7 +28,6 @@ import java.math.BigInteger;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class Eth69StatusMessageTest {
@@ -98,7 +97,7 @@ public class Eth69StatusMessageTest {
     final Random random = new Random(seed);
     final byte[] bytes = new byte[32];
     random.nextBytes(bytes);
-    return Hash.wrap(Bytes32.wrap(bytes));
+    return Hash.wrap(Bytes.wrap(bytes));
   }
 
   @Test

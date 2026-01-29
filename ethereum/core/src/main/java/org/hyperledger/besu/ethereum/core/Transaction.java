@@ -479,8 +479,7 @@ public class Transaction
                 () ->
                     new IllegalStateException(
                         "Cannot recover public key from signature for " + this));
-    final Address calculatedSender =
-        Address.extract(Bytes32.wrap(Hash.hash(publicKey.getEncodedBytes()).getBytes()));
+    final Address calculatedSender = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
     senderCache.put(getHash(), calculatedSender);
     return calculatedSender;
   }
@@ -1214,10 +1213,7 @@ public class Transaction
                 accessListEntries.stream().map(this::accessListDetachedCopy).toList());
     final Optional<List<VersionedHash>> detachedVersionedHashes =
         versionedHashes.map(
-            hashes ->
-                hashes.stream()
-                    .map(vh -> new VersionedHash(Bytes32.wrap(vh.getBytes().copy())))
-                    .toList());
+            hashes -> hashes.stream().map(vh -> new VersionedHash(vh.getBytes().copy())).toList());
     final Optional<BlobsWithCommitments> detachedBlobsWithCommitments =
         blobsWithCommitments.map(
             withCommitments ->
@@ -1508,9 +1504,7 @@ public class Transaction
       checkState(
           signature == null, "The transaction signature has already been provided to this builder");
       signature(computeSignature(keys));
-      sender(
-          Address.extract(
-              Bytes32.wrap(Hash.hash(keys.getPublicKey().getEncodedBytes()).getBytes())));
+      sender(Address.extract(Hash.hash(keys.getPublicKey().getEncodedBytes())));
       return build();
     }
 

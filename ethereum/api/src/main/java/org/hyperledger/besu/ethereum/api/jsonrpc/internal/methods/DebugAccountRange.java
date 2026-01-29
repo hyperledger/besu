@@ -104,9 +104,9 @@ public class DebugAccountRange implements JsonRpcMethod {
                   state
                       .streamAccounts(Bytes32.fromHexStringLenient(addressHash), maxResults + 1)
                       .collect(Collectors.toList());
-              Bytes32 nextKey = Bytes32.ZERO;
+              Hash nextKey = Hash.ZERO;
               if (accounts.size() == maxResults + 1) {
-                nextKey = Bytes32.wrap(accounts.get(maxResults).getAddressHash().getBytes());
+                nextKey = accounts.get(maxResults).getAddressHash();
                 accounts.remove(maxResults);
               }
 

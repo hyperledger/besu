@@ -30,7 +30,6 @@ import java.util.List;
 
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.Bytes48;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
@@ -92,6 +91,6 @@ public class BlobTestFixture {
     digest.doFinal(dig, 0);
 
     dig[0] = VersionedHash.SHA256_VERSION_ID;
-    return new VersionedHash(Bytes32.wrap(dig));
+    return new VersionedHash(Bytes.wrap(dig));
   }
 }

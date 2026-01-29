@@ -25,7 +25,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 
 /**
@@ -118,7 +117,7 @@ public class Log {
     final List<LogTopic> topics;
     final Bytes data;
     if (compacted) {
-      topics = in.readList(listIn -> LogTopic.wrap(Bytes32.wrap(readTrimmedData(in))));
+      topics = in.readList(listIn -> LogTopic.wrap(readTrimmedData(in)));
       data = Bytes.wrap(readTrimmedData(in));
     } else {
       topics = in.readList(listIn -> LogTopic.wrap(listIn.readBytes32()));

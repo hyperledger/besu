@@ -19,15 +19,12 @@ import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.plugin.services.query.BftQueryService;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import org.apache.tuweni.bytes.Bytes32;
 
 /** The Ibft query service. */
 public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements BftQueryService {
@@ -67,8 +64,7 @@ public class IbftQueryServiceImpl extends PoaQueryServiceImpl implements BftQuer
       return (BlockHeader) header;
     }
 
-    final Hash blockHash = Hash.wrap(Bytes32.wrap(header.getBlockHash().getBytes().toArray()));
-    return getBlockchain().getBlockHeader(blockHash).orElseThrow();
+    return getBlockchain().getBlockHeader(header.getBlockHash()).orElseThrow();
   }
 
   @Override

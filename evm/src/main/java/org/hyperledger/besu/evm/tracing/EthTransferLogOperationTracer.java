@@ -91,9 +91,9 @@ public class EthTransferLogOperationTracer implements OperationTracer {
 
   private void emitTransferLogs(final Address sender, final Address recipient, final Wei value) {
     final ImmutableList.Builder<LogTopic> builder = ImmutableList.builderWithExpectedSize(3);
-    builder.add(LogTopic.create(SIMULATION_TRANSFER_TOPIC));
-    builder.add(LogTopic.create(leftPad(sender.getBytes())));
-    builder.add(LogTopic.create(leftPad(recipient.getBytes())));
+    builder.add(LogTopic.wrap(SIMULATION_TRANSFER_TOPIC));
+    builder.add(LogTopic.wrap(leftPad(sender.getBytes())));
+    builder.add(LogTopic.wrap(leftPad(recipient.getBytes())));
     traceTransfers.add(new Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
   }
 

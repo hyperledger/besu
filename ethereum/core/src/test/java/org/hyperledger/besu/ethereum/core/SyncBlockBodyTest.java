@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.junit.jupiter.api.Test;
@@ -105,7 +104,7 @@ public class SyncBlockBodyTest {
 
     assertThat(syncBlockBody.getTransactionCount()).isEqualTo(0);
     assertThat(syncBlockBody.getOmmersHash())
-        .isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
+        .isEqualTo(Hash.wrap(Bytes.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
     assertThat(syncBlockBody.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(syncBlockBody.getWithdrawalsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(syncBlockBody.getEncodedTransactions()).isEqualTo(Collections.emptyList());
@@ -120,7 +119,7 @@ public class SyncBlockBodyTest {
 
     assertThat(emptySBB.getTransactionCount()).isEqualTo(0);
     assertThat(emptySBB.getOmmersHash())
-        .isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
+        .isEqualTo(Hash.wrap(Bytes.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
     assertThat(emptySBB.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(emptySBB.getWithdrawalsRoot()).isNull();
     assertThat(emptySBB.getEncodedTransactions()).isEqualTo(Collections.emptyList());
@@ -135,7 +134,7 @@ public class SyncBlockBodyTest {
 
     assertThat(emptySBB.getTransactionCount()).isEqualTo(0);
     assertThat(emptySBB.getOmmersHash())
-        .isEqualTo(Hash.wrap(Bytes32.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
+        .isEqualTo(Hash.wrap(Bytes.wrap(keccak.digest(Bytes.EMPTY.toArray()))));
     assertThat(emptySBB.getTransactionsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(emptySBB.getWithdrawalsRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
     assertThat(emptySBB.getEncodedTransactions()).isEqualTo(Collections.emptyList());

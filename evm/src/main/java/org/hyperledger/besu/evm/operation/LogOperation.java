@@ -65,7 +65,7 @@ public class LogOperation extends AbstractOperation {
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(leftPad(frame.popStackItem())));
+      builder.add(LogTopic.wrap(leftPad(frame.popStackItem())));
     }
 
     frame.addLog(new Log(address, data, builder.build()));
