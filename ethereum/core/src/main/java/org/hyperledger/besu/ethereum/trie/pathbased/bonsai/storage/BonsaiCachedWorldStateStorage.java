@@ -31,11 +31,15 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -89,7 +93,9 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
     return cacheManager.getFromCacheOrStorage(
-        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> super.getAccount(accountHash));
+        ACCOUNT_INFO_STATE,
+        accountHash.getBytes().toArrayUnsafe(),
+        () -> super.getAccount(accountHash));
   }
 
   @Override
@@ -98,13 +104,17 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       return Optional.of(Bytes.EMPTY);
     }
     return cacheManager.getFromCacheOrStorage(
-        CODE_STORAGE, accountHash.getBytes(), () -> super.getCode(codeHash, accountHash));
+        CODE_STORAGE,
+        accountHash.getBytes().toArrayUnsafe(),
+        () -> super.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
     return cacheManager.getFromCacheOrStorage(
-        TRIE_BRANCH_STORAGE, nodeHash, () -> super.getAccountStateTrieNode(location, nodeHash));
+        TRIE_BRANCH_STORAGE,
+        nodeHash.toArrayUnsafe(),
+        () -> super.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
@@ -112,18 +122,17 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
     return cacheManager.getFromCacheOrStorage(
         TRIE_BRANCH_STORAGE,
-        nodeHash,
+        nodeHash.toArrayUnsafe(),
         () -> super.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    final Bytes key =
-        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
     return cacheManager.getFromCacheOrStorage(
         ACCOUNT_STORAGE_STORAGE,
-        key,
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+            .toArrayUnsafe(),
         () -> super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
@@ -132,14 +141,26 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    final Bytes key =
-        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
     return cacheManager.getFromCacheOrStorage(
         ACCOUNT_STORAGE_STORAGE,
-        key,
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+            .toArrayUnsafe(),
         () ->
             super.getStorageValueByStorageSlotKey(
                 storageRootSupplier, accountHash, storageSlotKey));
+  }
+
+  @Override
+  public List<Optional<byte[]>> getMultipleKeys(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    if (isClosed.get()) {
+      return new ArrayList<>();
+    }
+
+    return cacheManager.getMultipleFromCacheOrStorage(
+        segmentIdentifier,
+        keys,
+        keysToFetch -> super.getMultipleKeys(segmentIdentifier, keysToFetch));
   }
 
   @Override
@@ -155,23 +176,74 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     return cacheManager.getCacheSize(segment);
   }
 
-  public boolean isCached(final SegmentIdentifier segment, final Bytes key) {
+  public boolean isCached(final SegmentIdentifier segment, final byte[] key) {
     return cacheManager.isCached(segment, key);
   }
 
-  public Optional<VersionedValue> getCachedValue(final SegmentIdentifier segment, final Bytes key) {
+  public Optional<VersionedValue> getCachedValue(
+      final SegmentIdentifier segment, final byte[] key) {
     return cacheManager.getCachedValue(segment, key);
+  }
+
+  /** Wrapper for byte[] to use as cache key with proper equals/hashCode. */
+  public static class ByteArrayWrapper {
+    private final byte[] data;
+    private final int hashCode;
+
+    public ByteArrayWrapper(final byte[] data) {
+      this.data = data;
+      this.hashCode = Arrays.hashCode(data);
+    }
+
+    public byte[] getData() {
+      return data;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ByteArrayWrapper)) return false;
+      return Arrays.equals(data, ((ByteArrayWrapper) o).data);
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
+  }
+
+  /** Value wrapper with version and removal flag. */
+  public static class VersionedValue {
+    final byte[] value;
+    final long version;
+    final boolean isRemoval;
+
+    VersionedValue(final byte[] value, final long version, final boolean isRemoval) {
+      this.value = value;
+      this.version = version;
+      this.isRemoval = isRemoval;
+    }
+
+    public byte[] getValue() {
+      return value;
+    }
+
+    public long getVersion() {
+      return version;
+    }
+
+    public boolean isRemoval() {
+      return isRemoval;
+    }
   }
 
   /**
    * Manages versioned caching for world state data. Handles cache operations, versioning, and
-   * snapshot support.
+   * snapshot support. Works entirely with byte[] to avoid conversions.
    */
   public static class VersionedCacheManager {
-    // Global version counter - incremented ONLY on commit
     private final AtomicLong globalVersion = new AtomicLong(0);
-
-    private final Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> caches;
+    private final Map<SegmentIdentifier, Cache<ByteArrayWrapper, VersionedValue>> caches;
 
     private final LabelledMetric<Counter> cacheRequestCounter;
     private final LabelledMetric<Counter> cacheHitCounter;
@@ -188,7 +260,6 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
         final MetricsSystem metricsSystem) {
 
       this.caches = new HashMap<>();
-
       caches.put(ACCOUNT_INFO_STATE, createCache(accountCacheSize));
       caches.put(CODE_STORAGE, createCache(codeCacheSize));
       caches.put(ACCOUNT_STORAGE_STORAGE, createCache(storageCacheSize));
@@ -237,7 +308,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
               "segment");
     }
 
-    private Cache<Bytes, VersionedValue> createCache(final long maxSize) {
+    private Cache<ByteArrayWrapper, VersionedValue> createCache(final long maxSize) {
       return Caffeine.newBuilder()
           .initialCapacity((int) maxSize)
           .maximumSize(maxSize)
@@ -253,100 +324,71 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       return globalVersion.incrementAndGet();
     }
 
-    Map<SegmentIdentifier, Cache<Bytes, VersionedValue>> getCaches() {
-      return caches;
-    }
-
-    /**
-     * Get from cache or storage with read-through caching. Read-through values are cached with
-     * current global version.
-     */
+    /** Get from cache or storage with read-through caching. Always uses current global version. */
     public Optional<Bytes> getFromCacheOrStorage(
         final SegmentIdentifier segment,
-        final Bytes key,
+        final byte[] key,
         final Supplier<Optional<Bytes>> storageGetter) {
 
-      final String segmentName = segment.getName();
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-
-      // Record cache request
-      cacheRequestCounter.labels(segmentName).inc();
-
-      if (cache == null) {
-        // No cache for this segment, go directly to storage
-        cacheMissCounter.labels(segmentName).inc();
-        return storageGetter.get();
-      }
-
-      final VersionedValue versionedValue = cache.getIfPresent(key);
-
-      // If in cache, return it (cache hit)
-      if (versionedValue != null) {
-        cacheHitCounter.labels(segmentName).inc();
-        return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
-      }
-
-      // Cache miss - read from storage and cache the result
-      cacheMissCounter.labels(segmentName).inc();
-      cacheReadThroughCounter.labels(segmentName).inc();
-
-      final Optional<Bytes> result = storageGetter.get();
-      if (result.isPresent()) {
-        cache.put(key, new VersionedValue(result.get(), globalVersion.get(), false));
-        cacheInsertCounter.labels(segmentName).inc();
-      } else {
-        // Cache the fact that the key doesn't exist (negative caching)
-        cache.put(key, new VersionedValue(null, globalVersion.get(), true));
-        cacheInsertCounter.labels(segmentName).inc();
-      }
-
-      return result;
+      return getFromCacheOrStorageInternal(segment, key, globalVersion.get(), storageGetter, true);
     }
 
     /**
-     * Get from cache for a snapshot at a specific version. Only updates cache if snapshot version
-     * matches current global version.
+     * Get from cache or storage for a snapshot at a specific version. Only updates cache if
+     * snapshot version matches current global version.
      */
     public Optional<Bytes> getFromCacheOrSnapshotStorage(
         final SegmentIdentifier segment,
-        final Bytes key,
+        final byte[] key,
         final long snapshotVersion,
         final Supplier<Optional<Bytes>> storageGetter) {
 
-      final String segmentName = segment.getName();
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
+      return getFromCacheOrStorageInternal(
+          segment, key, snapshotVersion, storageGetter, snapshotVersion == globalVersion.get());
+    }
 
-      // Record cache request
+    /** Internal method for single key cache/storage access. */
+    private Optional<Bytes> getFromCacheOrStorageInternal(
+        final SegmentIdentifier segment,
+        final byte[] key,
+        final long version,
+        final Supplier<Optional<Bytes>> storageGetter,
+        final boolean shouldUpdateCache) {
+
+      final String segmentName = segment.getName();
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
+
       cacheRequestCounter.labels(segmentName).inc();
 
       if (cache == null) {
-        // No cache for this segment, go directly to storage
         cacheMissCounter.labels(segmentName).inc();
         return storageGetter.get();
       }
 
-      final VersionedValue versionedValue = cache.getIfPresent(key);
+      final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
+      final VersionedValue versionedValue = cache.getIfPresent(wrapper);
 
-      // Only return cached values that existed at or before snapshot time
-      if (versionedValue != null && versionedValue.version <= snapshotVersion) {
+      // Cache hit if value exists and is visible at requested version
+      if (versionedValue != null && versionedValue.version <= version) {
         cacheHitCounter.labels(segmentName).inc();
-        return versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value);
+        return versionedValue.isRemoval
+            ? Optional.empty()
+            : Optional.of(Bytes.wrap(versionedValue.value));
       }
 
-      // Cache miss at snapshot version - read from storage
+      // Cache miss - read from storage
       cacheMissCounter.labels(segmentName).inc();
       final Optional<Bytes> result = storageGetter.get();
 
-      // ONLY update cache if snapshot version matches current global version
-      // This prevents stale snapshots from polluting the cache
-      if (snapshotVersion == globalVersion.get()) {
+      // Update cache only if allowed
+      if (shouldUpdateCache) {
         cacheReadThroughCounter.labels(segmentName).inc();
         if (result.isPresent()) {
-          cache.put(key, new VersionedValue(result.get(), snapshotVersion, false));
+          cache.put(wrapper, new VersionedValue(result.get().toArrayUnsafe(), version, false));
           cacheInsertCounter.labels(segmentName).inc();
         } else {
-          // Cache the fact that the key doesn't exist at snapshot time
-          cache.put(key, new VersionedValue(null, snapshotVersion, true));
+          // Cache negative results (key doesn't exist)
+          cache.put(wrapper, new VersionedValue(null, version, true));
           cacheInsertCounter.labels(segmentName).inc();
         }
       }
@@ -354,57 +396,150 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       return result;
     }
 
+    /**
+     * Get multiple keys with cache-first strategy and single batch DB fetch for misses. Always uses
+     * current global version.
+     */
+    public List<Optional<byte[]>> getMultipleFromCacheOrStorage(
+        final SegmentIdentifier segment,
+        final List<byte[]> keys,
+        final Function<List<byte[]>, List<Optional<byte[]>>> batchFetcher) {
+
+      return getMultipleFromCacheOrStorageInternal(
+          segment, keys, globalVersion.get(), batchFetcher, true);
+    }
+
+    /**
+     * Get multiple keys for a snapshot at a specific version. Only updates cache if snapshot
+     * version matches current global version.
+     */
+    public List<Optional<byte[]>> getMultipleFromCacheOrSnapshotStorage(
+        final SegmentIdentifier segment,
+        final List<byte[]> keys,
+        final long snapshotVersion,
+        final Function<List<byte[]>, List<Optional<byte[]>>> batchFetcher) {
+
+      return getMultipleFromCacheOrStorageInternal(
+          segment, keys, snapshotVersion, batchFetcher, snapshotVersion == globalVersion.get());
+    }
+
+    /**
+     * Internal method for batch cache/storage access. Works entirely with byte[] - NO conversions.
+     */
+    private List<Optional<byte[]>> getMultipleFromCacheOrStorageInternal(
+        final SegmentIdentifier segment,
+        final List<byte[]> keys,
+        final long version,
+        final Function<List<byte[]>, List<Optional<byte[]>>> batchFetcher,
+        final boolean shouldUpdateCache) {
+
+      final String segmentName = segment.getName();
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
+
+      if (cache == null) {
+        // No cache - go directly to storage
+        keys.forEach(k -> cacheMissCounter.labels(segmentName).inc());
+        return batchFetcher.apply(keys);
+      }
+
+      final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
+      final List<byte[]> keysToFetch = new ArrayList<>();
+      final List<Integer> indicesToFetch = new ArrayList<>();
+
+      // First pass: check cache
+      for (int i = 0; i < keys.size(); i++) {
+        final byte[] key = keys.get(i);
+        cacheRequestCounter.labels(segmentName).inc();
+
+        final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
+        final VersionedValue versionedValue = cache.getIfPresent(wrapper);
+
+        if (versionedValue != null && versionedValue.version <= version) {
+          // Cache hit
+          cacheHitCounter.labels(segmentName).inc();
+          results.add(
+              versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value));
+        } else {
+          // Cache miss
+          cacheMissCounter.labels(segmentName).inc();
+          results.add(null); // Placeholder
+          keysToFetch.add(key);
+          indicesToFetch.add(i);
+        }
+      }
+
+      // Second pass: single batch fetch for missing keys
+      if (!keysToFetch.isEmpty()) {
+        final List<Optional<byte[]>> fetchedValues = batchFetcher.apply(keysToFetch);
+
+        // Third pass: populate results and update cache
+        for (int i = 0; i < fetchedValues.size(); i++) {
+          final Optional<byte[]> fetchedValue = fetchedValues.get(i);
+          final int resultIndex = indicesToFetch.get(i);
+          final byte[] key = keysToFetch.get(i);
+
+          results.set(resultIndex, fetchedValue);
+
+          if (shouldUpdateCache) {
+            cacheReadThroughCounter.labels(segmentName).inc();
+            final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
+            if (fetchedValue.isPresent()) {
+              cache.put(wrapper, new VersionedValue(fetchedValue.get(), version, false));
+            } else {
+              // Cache negative results
+              cache.put(wrapper, new VersionedValue(null, version, true));
+            }
+            cacheInsertCounter.labels(segmentName).inc();
+          }
+        }
+      }
+
+      return results;
+    }
+
     public void putInCache(
-        final SegmentIdentifier segment, final Bytes key, final Bytes value, final long version) {
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
+        final SegmentIdentifier segment, final byte[] key, final byte[] value, final long version) {
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
       if (cache != null) {
-        cache.put(key, new VersionedValue(value, version, false));
+        cache.put(new ByteArrayWrapper(key), new VersionedValue(value, version, false));
         cacheInsertCounter.labels(segment.getName()).inc();
       }
     }
 
     public void removeFromCache(
-        final SegmentIdentifier segment, final Bytes key, final long version) {
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
+        final SegmentIdentifier segment, final byte[] key, final long version) {
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
       if (cache != null) {
-        cache.put(key, new VersionedValue(null, version, true));
+        cache.put(new ByteArrayWrapper(key), new VersionedValue(null, version, true));
         cacheRemovalCounter.labels(segment.getName()).inc();
       }
     }
 
     public long getCacheSize(final SegmentIdentifier segment) {
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
       return cache != null ? cache.estimatedSize() : 0;
     }
 
-    public boolean isCached(final SegmentIdentifier segment, final Bytes key) {
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-      return cache != null && cache.getIfPresent(key) != null;
+    public boolean isCached(final SegmentIdentifier segment, final byte[] key) {
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
+      return cache != null && cache.getIfPresent(new ByteArrayWrapper(key)) != null;
     }
 
     public Optional<VersionedValue> getCachedValue(
-        final SegmentIdentifier segment, final Bytes key) {
-      final Cache<Bytes, VersionedValue> cache = caches.get(segment);
-      return cache != null ? Optional.ofNullable(cache.getIfPresent(key)) : Optional.empty();
+        final SegmentIdentifier segment, final byte[] key) {
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
+      return cache != null
+          ? Optional.ofNullable(cache.getIfPresent(new ByteArrayWrapper(key)))
+          : Optional.empty();
     }
   }
 
-  public static class VersionedValue {
-    final Bytes value;
-    final long version;
-    final boolean isRemoval;
-
-    VersionedValue(final Bytes value, final long version, final boolean isRemoval) {
-      this.value = value;
-      this.version = version;
-      this.isRemoval = isRemoval;
-    }
-  }
-
+  /** Cached updater that stages changes and updates cache on commit. */
   public class CachedUpdater extends BonsaiWorldStateKeyValueStorage.Updater {
 
-    private final Map<SegmentIdentifier, Map<Bytes, Bytes>> pending = new HashMap<>();
-    private final Map<SegmentIdentifier, Map<Bytes, Boolean>> pendingRemovals = new HashMap<>();
+    private final Map<SegmentIdentifier, Map<ByteArrayWrapper, byte[]>> pending = new HashMap<>();
+    private final Map<SegmentIdentifier, Map<ByteArrayWrapper, Boolean>> pendingRemovals =
+        new HashMap<>();
 
     public CachedUpdater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
@@ -418,15 +553,64 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
     @Override
     public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
       if (!code.isEmpty()) {
-        stagePut(CODE_STORAGE, accountHash.getBytes(), code);
+        stagePut(CODE_STORAGE, accountHash.getBytes().toArrayUnsafe(), code.toArrayUnsafe());
       }
       return super.putCode(accountHash, codeHash, code);
     }
 
     @Override
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      stageRemoval(CODE_STORAGE, accountHash.getBytes());
+      stageRemoval(CODE_STORAGE, accountHash.getBytes().toArrayUnsafe());
       return super.removeCode(accountHash, codeHash);
+    }
+
+    @Override
+    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
+      if (!accountValue.isEmpty()) {
+        stagePut(
+            ACCOUNT_INFO_STATE,
+            accountHash.getBytes().toArrayUnsafe(),
+            accountValue.toArrayUnsafe());
+      }
+      return super.putAccountInfoState(accountHash, accountValue);
+    }
+
+    @Override
+    public Updater removeAccountInfoState(final Hash accountHash) {
+      stageRemoval(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
+      return super.removeAccountInfoState(accountHash);
+    }
+
+    @Override
+    public Updater putAccountStateTrieNode(
+        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+      stagePut(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
+      return super.putAccountStateTrieNode(location, nodeHash, node);
+    }
+
+    @Override
+    public synchronized Updater putAccountStorageTrieNode(
+        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+      stagePut(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
+      return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
+    }
+
+    @Override
+    public synchronized Updater putStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
+      final byte[] key =
+          Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes()).toArrayUnsafe();
+      stagePut(ACCOUNT_STORAGE_STORAGE, key, storageValue.toArrayUnsafe());
+      return super.putStorageValueBySlotHash(accountHash, slotHash, storageValue);
+    }
+
+    @Override
+    public synchronized void removeStorageValueBySlotHash(
+        final Hash accountHash, final Hash slotHash) {
+      final byte[] key =
+          Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes()).toArrayUnsafe();
+      stageRemoval(ACCOUNT_STORAGE_STORAGE, key);
+      super.removeStorageValueBySlotHash(accountHash, slotHash);
     }
 
     @Override
@@ -438,13 +622,13 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
         @Override
         public void put(
             final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
-          stagePut(segmentIdentifier, Bytes.wrap(key), Bytes.wrap(value));
+          stagePut(segmentIdentifier, key, value);
           parentTransaction.put(segmentIdentifier, key, value);
         }
 
         @Override
         public void remove(final SegmentIdentifier segmentIdentifier, final byte[] key) {
-          stageRemoval(segmentIdentifier, Bytes.wrap(key));
+          stageRemoval(segmentIdentifier, key);
           parentTransaction.remove(segmentIdentifier, key);
         }
 
@@ -456,8 +640,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
         @Override
         public void rollback() {
-          pending.clear();
-          pendingRemovals.clear();
+          clearStaged();
           parentTransaction.rollback();
         }
 
@@ -468,98 +651,52 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
       };
     }
 
-    @Override
-    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (!accountValue.isEmpty()) {
-        stagePut(ACCOUNT_INFO_STATE, accountHash.getBytes(), accountValue);
-      }
-      return super.putAccountInfoState(accountHash, accountValue);
+    private void stagePut(final SegmentIdentifier segment, final byte[] key, final byte[] value) {
+      pending.computeIfAbsent(segment, k -> new HashMap<>()).put(new ByteArrayWrapper(key), value);
     }
 
-    @Override
-    public Updater removeAccountInfoState(final Hash accountHash) {
-      stageRemoval(ACCOUNT_INFO_STATE, accountHash.getBytes());
-      return super.removeAccountInfoState(accountHash);
+    private void stageRemoval(final SegmentIdentifier segment, final byte[] key) {
+      pendingRemovals
+          .computeIfAbsent(segment, k -> new HashMap<>())
+          .put(new ByteArrayWrapper(key), true);
     }
 
-    @Override
-    public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
-      return super.putAccountStateTrieNode(location, nodeHash, node);
-    }
-
-    @Override
-    public Updater removeAccountStateTrieNode(final Bytes location) {
-      return super.removeAccountStateTrieNode(location);
-    }
-
-    @Override
-    public synchronized Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE, nodeHash, node);
-      return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
-    }
-
-    @Override
-    public synchronized Updater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storageValue) {
-      final Bytes key = Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes());
-      stagePut(ACCOUNT_STORAGE_STORAGE, key, storageValue);
-      return super.putStorageValueBySlotHash(accountHash, slotHash, storageValue);
-    }
-
-    @Override
-    public synchronized void removeStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash) {
-      final Bytes key = Bytes.concatenate(accountHash.getBytes(), slotHash.getBytes());
-      stageRemoval(ACCOUNT_STORAGE_STORAGE, key);
-      super.removeStorageValueBySlotHash(accountHash, slotHash);
-    }
-
-    private void stagePut(final SegmentIdentifier segment, final Bytes key, final Bytes value) {
-      pending.computeIfAbsent(segment, k -> new HashMap<>()).put(key, value);
-    }
-
-    private void stageRemoval(final SegmentIdentifier segment, final Bytes key) {
-      pendingRemovals.computeIfAbsent(segment, k -> new HashMap<>()).put(key, true);
+    private void clearStaged() {
+      pending.clear();
+      pendingRemovals.clear();
     }
 
     private void updateCache() {
-      // Increment version for this commit
       final long updateVersion = cacheManager.incrementAndGetVersion();
 
-      // Apply all pending updates with the new version
-      for (Map.Entry<SegmentIdentifier, Map<Bytes, Bytes>> entry : pending.entrySet()) {
-        final SegmentIdentifier segment = entry.getKey();
-        for (Map.Entry<Bytes, Bytes> update : entry.getValue().entrySet()) {
-          cacheManager.putInCache(segment, update.getKey(), update.getValue(), updateVersion);
-        }
-      }
+      // Apply all pending updates
+      pending.forEach(
+          (segment, updates) ->
+              updates.forEach(
+                  (wrapper, value) ->
+                      cacheManager.putInCache(segment, wrapper.getData(), value, updateVersion)));
 
-      // Apply all pending removals with the new version
-      for (Map.Entry<SegmentIdentifier, Map<Bytes, Boolean>> entry : pendingRemovals.entrySet()) {
-        final SegmentIdentifier segment = entry.getKey();
-        for (Bytes key : entry.getValue().keySet()) {
-          cacheManager.removeFromCache(segment, key, updateVersion);
-        }
-      }
+      // Apply all pending removals
+      pendingRemovals.forEach(
+          (segment, removals) ->
+              removals
+                  .keySet()
+                  .forEach(
+                      wrapper ->
+                          cacheManager.removeFromCache(segment, wrapper.getData(), updateVersion)));
 
-      pending.clear();
-      pendingRemovals.clear();
+      clearStaged();
     }
 
     @Override
     public void commit() {
       updateCache();
-      // Commit to underlying storage
       super.commit();
     }
 
     @Override
     public void commitTrieLogOnly() {
-      pending.clear();
-      pendingRemovals.clear();
+      clearStaged();
       super.commitTrieLogOnly();
     }
 
@@ -571,8 +708,7 @@ public class BonsaiCachedWorldStateStorage extends BonsaiWorldStateKeyValueStora
 
     @Override
     public void rollback() {
-      pending.clear();
-      pendingRemovals.clear();
+      clearStaged();
       super.rollback();
     }
   }

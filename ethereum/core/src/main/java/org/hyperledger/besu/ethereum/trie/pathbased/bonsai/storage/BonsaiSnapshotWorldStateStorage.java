@@ -20,9 +20,12 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -143,6 +146,12 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
     return isClosedGet()
         ? Optional.empty()
         : super.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
+  }
+
+  @Override
+  public List<Optional<byte[]>> getMultipleKeys(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    return isClosedGet() ? new ArrayList<>() : super.getMultipleKeys(segmentIdentifier, keys);
   }
 
   @Override

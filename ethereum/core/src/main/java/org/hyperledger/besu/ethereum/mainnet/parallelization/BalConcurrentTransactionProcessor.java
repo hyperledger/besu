@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -44,7 +46,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -54,6 +55,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +97,12 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       final Executor executor,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
     if (isPrefetchReadingEnabled) {
-      preFetchRead(protocolContext, blockHeader, executor);
+      preFetchRead(protocolContext, blockHeader, executor)
+          .exceptionally(
+              ex -> {
+                LOG.error("Prefetch failed", ex);
+                return null;
+              });
     }
     super.runAsyncBlock(
         protocolContext,
@@ -108,14 +115,24 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
         blockAccessListBuilder);
   }
 
-  public void preFetchRead(
+  public CompletableFuture<Void> preFetchRead(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final Executor executor) {
-    CompletableFuture.runAsync(
+    return preFetchRead(protocolContext, blockHeader, executor, PREFETCH_EXECUTOR);
+  }
+
+  CompletableFuture<Void> preFetchRead(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final Executor outerExecutor,
+      final Executor fetchExecutor) {
+    return CompletableFuture.runAsync(
         () -> {
-          try (var ws = getWorldState(protocolContext, blockHeader)) {
-            if (ws == null) return;
+          var ws = getWorldState(protocolContext, blockHeader);
+          if (ws == null) return;
+
+          try {
             ws.disableCacheMerkleTrieLoader();
 
             final List<BlockAccessList.AccountChanges> accounts =
@@ -125,19 +142,13 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                         .toList()
                     : new ArrayList<>(blockAccessList.accountChanges());
 
-            final List<CompletableFuture<?>> allReadFutures = new ArrayList<>();
+            // Step 1: Collect ALL keys
+            final List<byte[]> accountKeys = new ArrayList<>();
+            final List<byte[]> storageKeys = new ArrayList<>();
 
-            for (var accountChanges : accounts) {
+            for (final BlockAccessList.AccountChanges accountChanges : accounts) {
               final Address address = accountChanges.address();
-              final CompletableFuture<Hash> accountFuture =
-                  CompletableFuture.supplyAsync(
-                      () -> {
-                        Objects.requireNonNull(
-                            ws.getWorldStateStorage().getAccount(address.addressHash()));
-                        return accountChanges.address().addressHash();
-                      },
-                      PREFETCH_EXECUTOR);
-              allReadFutures.add(accountFuture);
+              accountKeys.add(address.addressHash().getBytes().toArrayUnsafe());
 
               final Set<StorageSlotKey> uniqueSlots = new HashSet<>();
               accountChanges.storageChanges().forEach(sc -> uniqueSlots.add(sc.slot()));
@@ -151,22 +162,55 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                       : new ArrayList<>(uniqueSlots);
 
               for (var slot : slots) {
-                final CompletableFuture<Void> slotReadFuture =
-                    accountFuture.thenAcceptAsync(
-                        accountHash -> {
-                          Objects.requireNonNull(
-                              ws.getWorldStateStorage()
-                                  .getStorageValueByStorageSlotKey(accountHash, slot));
-                        },
-                        PREFETCH_EXECUTOR);
-                allReadFutures.add(slotReadFuture);
+                final byte[] storageKey =
+                    Bytes.concatenate(
+                            address.addressHash().getBytes(), slot.getSlotHash().getBytes())
+                        .toArrayUnsafe();
+                storageKeys.add(storageKey);
               }
             }
-            CompletableFuture.allOf(allReadFutures.toArray(new CompletableFuture[0])).join();
-            LOG.debug("Prefetch completed: {} total read operations", allReadFutures.size());
+
+            // Step 2: Parallel batch fetch using worldStateStorage directly (not composed storage)
+            // This ensures the cache is populated
+            final CompletableFuture<List<Optional<byte[]>>> accountsFuture =
+                CompletableFuture.supplyAsync(
+                    () -> {
+                      final List<Optional<byte[]>> results =
+                          ws.getWorldStateStorage()
+                              .getMultipleKeys(ACCOUNT_INFO_STATE, accountKeys);
+
+                      LOG.info("Prefetch: fetched {} accounts in single batch", accountKeys.size());
+                      return results;
+                    },
+                    fetchExecutor);
+
+            final CompletableFuture<List<Optional<byte[]>>> storageFuture =
+                storageKeys.isEmpty()
+                    ? CompletableFuture.completedFuture(List.of())
+                    : CompletableFuture.supplyAsync(
+                        () -> {
+                          final List<Optional<byte[]>> results =
+                              ws.getWorldStateStorage()
+                                  .getMultipleKeys(ACCOUNT_STORAGE_STORAGE, storageKeys);
+
+                          LOG.info(
+                              "Prefetch: fetched {} storage slots in single batch",
+                              storageKeys.size());
+                          return results;
+                        },
+                        fetchExecutor);
+
+            CompletableFuture.allOf(accountsFuture, storageFuture).join();
+
+            LOG.debug(
+                "Prefetch completed: {} accounts + {} storage slots in 2 parallel batch operations",
+                accountKeys.size(),
+                storageKeys.size());
+          } finally {
+            ws.close();
           }
         },
-        executor);
+        outerExecutor);
   }
 
   @Override

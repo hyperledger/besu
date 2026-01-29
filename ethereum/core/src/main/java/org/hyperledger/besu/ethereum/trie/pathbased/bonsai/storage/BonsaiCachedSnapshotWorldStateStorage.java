@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiCachedWorldStateStorage.VersionedCacheManager;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -40,9 +41,7 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldStateStorage {
 
-  // Shared cache manager
   private final VersionedCacheManager cacheManager;
-  // The version at which this snapshot was created
   private final long snapshotVersion;
 
   public BonsaiCachedSnapshotWorldStateStorage(
@@ -54,23 +53,13 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
     this.snapshotVersion = snapshotVersion;
   }
 
-  /**
-   * Get from cache if version <= snapshotVersion, otherwise get from snapshot storage. ONLY updates
-   * the cache with read-through values if snapshotVersion == current global version.
-   */
-  private Optional<Bytes> getFromCacheOrSnapshot(
-      final SegmentIdentifier segment,
-      final Bytes key,
-      final Supplier<Optional<Bytes>> snapshotGetter) {
-
-    return cacheManager.getFromCacheOrSnapshotStorage(
-        segment, key, snapshotVersion, snapshotGetter);
-  }
-
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFromCacheOrSnapshot(
-        ACCOUNT_INFO_STATE, accountHash.getBytes(), () -> super.getAccount(accountHash));
+    return cacheManager.getFromCacheOrSnapshotStorage(
+        ACCOUNT_INFO_STATE,
+        accountHash.getBytes().toArrayUnsafe(),
+        snapshotVersion,
+        () -> super.getAccount(accountHash));
   }
 
   @Override
@@ -78,33 +67,40 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     }
-    return getFromCacheOrSnapshot(
-        CODE_STORAGE, accountHash.getBytes(), () -> super.getCode(codeHash, accountHash));
+    return cacheManager.getFromCacheOrSnapshotStorage(
+        CODE_STORAGE,
+        accountHash.getBytes().toArrayUnsafe(),
+        snapshotVersion,
+        () -> super.getCode(codeHash, accountHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrSnapshot(
-        TRIE_BRANCH_STORAGE, nodeHash, () -> super.getAccountStateTrieNode(location, nodeHash));
+    return cacheManager.getFromCacheOrSnapshotStorage(
+        TRIE_BRANCH_STORAGE,
+        nodeHash.toArrayUnsafe(),
+        snapshotVersion,
+        () -> super.getAccountStateTrieNode(location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getAccountStorageTrieNode(
       final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return getFromCacheOrSnapshot(
+    return cacheManager.getFromCacheOrSnapshotStorage(
         TRIE_BRANCH_STORAGE,
-        nodeHash,
+        nodeHash.toArrayUnsafe(),
+        snapshotVersion,
         () -> super.getAccountStorageTrieNode(accountHash, location, nodeHash));
   }
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
       final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    final Bytes key =
-        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
-    return getFromCacheOrSnapshot(
+    return cacheManager.getFromCacheOrSnapshotStorage(
         ACCOUNT_STORAGE_STORAGE,
-        key,
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+            .toArrayUnsafe(),
+        snapshotVersion,
         () -> super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
   }
 
@@ -113,13 +109,23 @@ public class BonsaiCachedSnapshotWorldStateStorage extends BonsaiSnapshotWorldSt
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    final Bytes key =
-        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes());
-    return getFromCacheOrSnapshot(
+    return cacheManager.getFromCacheOrSnapshotStorage(
         ACCOUNT_STORAGE_STORAGE,
-        key,
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+            .toArrayUnsafe(),
+        snapshotVersion,
         () ->
             super.getStorageValueByStorageSlotKey(
                 storageRootSupplier, accountHash, storageSlotKey));
+  }
+
+  @Override
+  public List<Optional<byte[]>> getMultipleKeys(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    return cacheManager.getMultipleFromCacheOrSnapshotStorage(
+        segmentIdentifier,
+        keys,
+        snapshotVersion,
+        keysToFetch -> super.getMultipleKeys(segmentIdentifier, keysToFetch));
   }
 }
