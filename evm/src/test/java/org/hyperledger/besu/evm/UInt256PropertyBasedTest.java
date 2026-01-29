@@ -511,7 +511,7 @@ public class UInt256PropertyBasedTest {
   void property_xor_with_allOnes_is_complement(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
 
     // Act
     final UInt256 result = ua.xor(allOnes);
@@ -574,7 +574,7 @@ public class UInt256PropertyBasedTest {
               (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55
             }); // 01010101...
 
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
     // Act & Assert - 0xAA XOR 0x55 = 0xFF
     assertThat(pattern1.xor(pattern2)).isEqualTo(allOnes);
 
@@ -687,7 +687,7 @@ public class UInt256PropertyBasedTest {
   void property_or_with_allOnes(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
     // Act & Assert - A | 0xFF...FF = 0xFF...FF (domination)
     assertThat(ua.or(allOnes)).isEqualTo(allOnes);
     assertThat(allOnes.or(ua)).isEqualTo(allOnes);
@@ -742,7 +742,7 @@ public class UInt256PropertyBasedTest {
       complementBytes[i] = (byte) ~aBytes32[i];
     }
     final UInt256 complement = UInt256.fromBytesBE(complementBytes);
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
     // Act & Assert - A | ~A = 0xFF...FF
     assertThat(ua.or(complement)).isEqualTo(allOnes);
   }
@@ -774,7 +774,7 @@ public class UInt256PropertyBasedTest {
               (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55,
               (byte) 0x55, (byte) 0x55, (byte) 0x55, (byte) 0x55
             }); // 01010101...
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
     // Act & Assert - 0xAA OR 0x55 = 0xFF
     assertThat(pattern1.or(pattern2)).isEqualTo(allOnes);
     // Verify with Bytes implementation
@@ -896,7 +896,7 @@ public class UInt256PropertyBasedTest {
   void property_not_different_from_original(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
 
     // Act
     final UInt256 notA = ua.not();
@@ -922,7 +922,7 @@ public class UInt256PropertyBasedTest {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     // Act & Assert - A | ~A = 0xFF...FF
-    assertThat(ua.or(ua.not())).isEqualTo(UInt256.ALL_ONES);
+    assertThat(ua.or(ua.not())).isEqualTo(UInt256.MAX);
   }
 
   @Property
@@ -930,7 +930,7 @@ public class UInt256PropertyBasedTest {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
     // Act & Assert - A ^ ~A = 0xFF...FF
-    assertThat(ua.xor(ua.not())).isEqualTo(UInt256.ALL_ONES);
+    assertThat(ua.xor(ua.not())).isEqualTo(UInt256.MAX);
   }
 
   @Property
@@ -963,7 +963,7 @@ public class UInt256PropertyBasedTest {
   void property_not_zero_is_allOnes() {
     // Arrange
     final UInt256 zero = UInt256.ZERO;
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
 
     // Act & Assert - ~0 = 0xFF...FF
     assertThat(zero.not()).isEqualTo(allOnes);
@@ -972,7 +972,7 @@ public class UInt256PropertyBasedTest {
   @Property
   void property_not_allOnes_is_zero() {
     // Arrange
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
     final UInt256 zero = UInt256.ZERO;
 
     // Act & Assert - ~0xFF...FF = 0
@@ -1036,7 +1036,7 @@ public class UInt256PropertyBasedTest {
   void property_not_xor_equivalence(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
 
     // Act & Assert - ~A = A ^ 0xFF...FF
     assertThat(ua.not()).isEqualTo(ua.xor(allOnes));
@@ -1046,7 +1046,7 @@ public class UInt256PropertyBasedTest {
   void property_not_sum_with_original(@ForAll("unsigned1to32") final byte[] a) {
     // Arrange
     final UInt256 ua = UInt256.fromBytesBE(a);
-    final UInt256 allOnes = UInt256.ALL_ONES;
+    final UInt256 allOnes = UInt256.MAX;
 
     // Act
     // When we add A + ~A (bitwise), we should get all 1s in each bit position
