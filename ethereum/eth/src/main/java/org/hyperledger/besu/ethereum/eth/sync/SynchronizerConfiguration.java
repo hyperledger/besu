@@ -40,10 +40,12 @@ public class SynchronizerConfiguration {
   public static final long DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT = 200L;
   public static final UInt256 DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD =
       UInt256.valueOf(1_000_000_000_000_000_000L);
-  public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 200;
+  public static final int DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE = 192;
+  public static final int DEFAULT_DOWNLOADER_BODIES_REQUEST_SIZE = 128;
   public static final int DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED = 5;
   public static final int DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE = 200;
   public static final int DEFAULT_DOWNLOADER_PARALLELISM = 8;
+  public static final int DEFAULT_HEADER_DOWNLOAD_PARALLELISM_FACTOR = 20;
   public static final int DEFAULT_TRANSACTIONS_PARALLELISM = 4;
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
@@ -82,9 +84,11 @@ public class SynchronizerConfiguration {
   private final long downloaderChangeTargetThresholdByHeight;
   private final UInt256 downloaderChangeTargetThresholdByTd;
   private final int downloaderHeaderRequestSize;
+  private final int downloaderBodiesRequestSize;
   private final int downloaderCheckpointRetries;
   private final int downloaderChainSegmentSize;
   private final int downloaderParallelism;
+  private final int headerDownloadParallelismFactor;
   private final int transactionsParallelism;
   private final int computationParallelism;
   private final int maxTrailingPeers;
@@ -113,9 +117,11 @@ public class SynchronizerConfiguration {
       final long downloaderChangeTargetThresholdByHeight,
       final UInt256 downloaderChangeTargetThresholdByTd,
       final int downloaderHeaderRequestSize,
+      final int downloaderBodiesRequestSize,
       final int downloaderCheckpointRetries,
       final int downloaderChainSegmentSize,
       final int downloaderParallelism,
+      final int headerDownloadParallelismFactor,
       final int transactionsParallelism,
       final int computationParallelism,
       final int maxTrailingPeers,
@@ -140,9 +146,11 @@ public class SynchronizerConfiguration {
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
     this.downloaderChangeTargetThresholdByTd = downloaderChangeTargetThresholdByTd;
     this.downloaderHeaderRequestSize = downloaderHeaderRequestSize;
+    this.downloaderBodiesRequestSize = downloaderBodiesRequestSize;
     this.downloaderCheckpointRetries = downloaderCheckpointRetries;
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
     this.downloaderParallelism = downloaderParallelism;
+    this.headerDownloadParallelismFactor = headerDownloadParallelismFactor;
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
@@ -215,6 +223,10 @@ public class SynchronizerConfiguration {
     return downloaderHeaderRequestSize;
   }
 
+  public int getDownloaderBodiesRequestSize() {
+    return downloaderBodiesRequestSize;
+  }
+
   public int getDownloaderCheckpointRetries() {
     return downloaderCheckpointRetries;
   }
@@ -225,6 +237,10 @@ public class SynchronizerConfiguration {
 
   public int getDownloaderParallelism() {
     return downloaderParallelism;
+  }
+
+  public int getHeaderDownloadParallelismFactor() {
+    return headerDownloadParallelismFactor;
   }
 
   public int getTransactionsParallelism() {
@@ -308,10 +324,12 @@ public class SynchronizerConfiguration {
     private UInt256 downloaderChangeTargetThresholdByTd =
         DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD;
     private int downloaderHeaderRequestSize = DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
+    private int downloaderBodiesRequestSize = DEFAULT_DOWNLOADER_BODIES_REQUEST_SIZE;
     private int downloaderCheckpointRetries = DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
     private SnapSyncConfiguration snapSyncConfiguration = SnapSyncConfiguration.getDefault();
     private int downloaderChainSegmentSize = DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE;
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
+    private int headerDownloadParallelismFactor = DEFAULT_HEADER_DOWNLOAD_PARALLELISM_FACTOR;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
     private int computationParallelism =
         Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
@@ -376,6 +394,11 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder downloaderBodiesRequestSize(final int downloaderBodiesRequestSize) {
+      this.downloaderBodiesRequestSize = downloaderBodiesRequestSize;
+      return this;
+    }
+
     public Builder downloaderCheckpointRetries(final int downloaderCheckpointRetries) {
       this.downloaderCheckpointRetries = downloaderCheckpointRetries;
       return this;
@@ -394,6 +417,11 @@ public class SynchronizerConfiguration {
 
     public Builder downloaderParallelism(final int downloaderParallelism) {
       this.downloaderParallelism = downloaderParallelism;
+      return this;
+    }
+
+    public Builder headerDownloadParallelismFactor(final int headerDownloadParallelismFactor) {
+      this.headerDownloadParallelismFactor = headerDownloadParallelismFactor;
       return this;
     }
 
@@ -497,9 +525,11 @@ public class SynchronizerConfiguration {
           downloaderChangeTargetThresholdByHeight,
           downloaderChangeTargetThresholdByTd,
           downloaderHeaderRequestSize,
+          downloaderBodiesRequestSize,
           downloaderCheckpointRetries,
           downloaderChainSegmentSize,
           downloaderParallelism,
+          headerDownloadParallelismFactor,
           transactionsParallelism,
           computationParallelism,
           maxTrailingPeers,

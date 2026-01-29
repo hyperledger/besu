@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -42,22 +43,28 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   private final EthContext ethContext;
+  private final SyncState syncState;
+  private final long startBlock;
   private long accumulatedTime = 0L;
   private OptionalLong logStartBlock = OptionalLong.empty();
-  private final BlockHeader pivotHeader;
   private final boolean transactionIndexingEnabled;
   private final AtomicBoolean shouldLog = new AtomicBoolean(true);
+  private final long pivotHeaderNumber;
 
   public ImportSyncBlocksStep(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
+      final SyncState syncState,
+      final long startBlock,
       final BlockHeader pivotHeader,
       final boolean transactionIndexingEnabled) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
-    this.pivotHeader = pivotHeader;
+    this.syncState = syncState;
+    this.startBlock = startBlock;
+    this.pivotHeaderNumber = pivotHeader.getNumber();
     this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 
@@ -66,6 +73,7 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     final long startTime = System.nanoTime();
     for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
+        LOG.debug("Failed to import block {}", blockWithReceipts.getHeader());
         throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
       }
       LOG.atTrace()
@@ -74,22 +82,25 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
           .log();
     }
     if (logStartBlock.isEmpty()) {
-      logStartBlock = OptionalLong.of(blocksWithReceipts.get(0).getNumber());
+      logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
-    final long lastBlock = blocksWithReceipts.get(blocksWithReceipts.size() - 1).getNumber();
+    final long lastBlock = blocksWithReceipts.getLast().getNumber();
     int peerCount = -1; // ethContext is not available in tests
     if (ethContext != null && ethContext.getEthPeers().peerCount() >= 0) {
       peerCount = ethContext.getEthPeers().peerCount();
     }
     final long endTime = System.nanoTime();
     accumulatedTime += TimeUnit.MILLISECONDS.convert(endTime - startTime, TimeUnit.NANOSECONDS);
+
+    syncState.setSyncProgress(startBlock, lastBlock, pivotHeaderNumber);
+
     if (shouldLog.get()) {
-      final long blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
+      final long blocksPercent = getBlocksPercent(lastBlock, pivotHeaderNumber);
       throttledLog(
           LOG::info,
           String.format(
               "Block import progress: %s of %s (%s%%), Peer count: %s",
-              lastBlock, pivotHeader.getNumber(), blocksPercent, peerCount),
+              lastBlock, pivotHeaderNumber, blocksPercent, peerCount),
           shouldLog,
           PRINT_DELAY_SECONDS);
       LOG.debug(
