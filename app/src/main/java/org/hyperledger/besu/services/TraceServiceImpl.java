@@ -163,10 +163,8 @@ public class TraceServiceImpl implements TraceService {
           beforeTracing.accept(worldStateUpdater);
           final List<TransactionProcessingResult> results = new ArrayList<>();
           blocks.forEach(
-              block -> {
-                runPreExecutionProcessor(blockchain, block, traceableState, tracer);
-                results.addAll(trace(blockchain, block, chainUpdater, tracer));
-              });
+              block ->
+                  results.addAll(trace(blockchain, block, traceableState, chainUpdater, tracer)));
           afterTracing.accept(chainUpdater.getNextUpdater());
           return Optional.of(results);
         });
@@ -182,7 +180,13 @@ public class TraceServiceImpl implements TraceService {
             blockchainQueries,
             block.getHash(),
             traceableState ->
-                Optional.of(trace(blockchain, block, new ChainUpdater(traceableState), tracer)));
+                Optional.of(
+                    trace(
+                        blockchain,
+                        block,
+                        traceableState,
+                        new ChainUpdater(traceableState),
+                        tracer)));
 
     return results;
   }
@@ -190,6 +194,7 @@ public class TraceServiceImpl implements TraceService {
   private List<TransactionProcessingResult> trace(
       final Blockchain blockchain,
       final Block block,
+      final MutableWorldState worldState,
       final ChainUpdater chainUpdater,
       final BlockAwareOperationTracer tracer) {
     final List<TransactionProcessingResult> results = new ArrayList<>();
@@ -200,7 +205,7 @@ public class TraceServiceImpl implements TraceService {
         protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(block.getHeader());
     tracer.traceStartBlock(
         chainUpdater.getNextUpdater(), block.getHeader(), block.getBody(), miningBeneficiary);
-
+    runPreExecutionProcessor(blockchain, block, worldState, tracer);
     block
         .getBody()
         .getTransactions()
