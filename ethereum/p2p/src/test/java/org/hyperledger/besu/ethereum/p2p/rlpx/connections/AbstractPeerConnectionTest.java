@@ -18,7 +18,15 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper.createPeer;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
@@ -64,6 +72,7 @@ public class AbstractPeerConnectionTest {
             connectionId,
             multiplexer,
             connectionEvents,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
             NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
   }
 
@@ -139,6 +148,7 @@ public class AbstractPeerConnectionTest {
             connectionId,
             multiplexer,
             connectionEvents,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
             NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
 
     assertThat(connection2).isEqualTo(connection);
@@ -155,9 +165,129 @@ public class AbstractPeerConnectionTest {
             connectionId + "-other",
             multiplexer,
             connectionEvents,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
             NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER);
 
     assertThat(connection2).isNotEqualTo(connection);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldIncrementOutboundBytesCounterForWireProtocolMessage() throws PeerNotConnected {
+    // Setup mocks
+    LabelledMetric<Counter> bytesCounter = mock(LabelledMetric.class);
+    Counter counter = mock(Counter.class);
+    when(bytesCounter.labels(anyString(), anyString(), anyString())).thenReturn(counter);
+
+    // Create connection with real bytes counter
+    TestPeerConnection testConnection =
+        new TestPeerConnection(
+            peer,
+            peerInfo,
+            mock(InetSocketAddress.class),
+            mock(InetSocketAddress.class),
+            connectionId,
+            multiplexer,
+            connectionEvents,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
+            bytesCounter);
+
+    // Send wire protocol message (null capability)
+    MessageData message = mock(MessageData.class);
+    when(message.getSize()).thenReturn(1024);
+    when(message.getCode()).thenReturn(WireMessageCodes.PING);
+
+    testConnection.send(null, message);
+
+    // Verify bytes counter was incremented with correct size
+    verify(bytesCounter).labels(eq("Wire"), anyString(), anyString());
+    verify(counter).inc(1024);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldIncrementOutboundBytesCounterForCapabilityMessage() throws PeerNotConnected {
+    // Setup mocks
+    LabelledMetric<Counter> bytesCounter = mock(LabelledMetric.class);
+    Counter counter = mock(Counter.class);
+    when(bytesCounter.labels(anyString(), anyString(), anyString())).thenReturn(counter);
+
+    Capability capability = Capability.create("eth", 68);
+    CapabilityMultiplexer testMultiplexer = mock(CapabilityMultiplexer.class);
+    org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol subProtocol =
+        mock(org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol.class);
+    when(testMultiplexer.subProtocol(any())).thenReturn(subProtocol);
+    when(subProtocol.isValidMessageCode(anyInt(), anyInt())).thenReturn(true);
+    when(subProtocol.messageName(anyInt(), anyInt())).thenReturn("Status");
+
+    // Create connection with real bytes counter
+    TestPeerConnection testConnection =
+        new TestPeerConnection(
+            peer,
+            peerInfo,
+            mock(InetSocketAddress.class),
+            mock(InetSocketAddress.class),
+            connectionId,
+            testMultiplexer,
+            connectionEvents,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
+            bytesCounter);
+
+    // Send capability-based message
+    MessageData message = mock(MessageData.class);
+    when(message.getSize()).thenReturn(2048);
+    when(message.getCode()).thenReturn(1);
+
+    testConnection.send(capability, message);
+
+    // Verify bytes counter was incremented with correct size and capability
+    verify(bytesCounter).labels(eq(capability.toString()), eq("Status"), eq("1"));
+    verify(counter).inc(2048);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldAccumulateBytesAcrossMultipleMessages() throws PeerNotConnected {
+    // Setup mocks
+    LabelledMetric<Counter> bytesCounter = mock(LabelledMetric.class);
+    Counter counter = mock(Counter.class);
+    when(bytesCounter.labels(anyString(), anyString(), anyString())).thenReturn(counter);
+
+    // Create connection with real bytes counter
+    TestPeerConnection testConnection =
+        new TestPeerConnection(
+            peer,
+            peerInfo,
+            mock(InetSocketAddress.class),
+            mock(InetSocketAddress.class),
+            connectionId,
+            multiplexer,
+            connectionEvents,
+            NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
+            bytesCounter);
+
+    // Send multiple messages with different sizes
+    MessageData message1 = mock(MessageData.class);
+    when(message1.getSize()).thenReturn(512);
+    when(message1.getCode()).thenReturn(WireMessageCodes.PING);
+
+    MessageData message2 = mock(MessageData.class);
+    when(message2.getSize()).thenReturn(1024);
+    when(message2.getCode()).thenReturn(WireMessageCodes.PING);
+
+    MessageData message3 = mock(MessageData.class);
+    when(message3.getSize()).thenReturn(256);
+    when(message3.getCode()).thenReturn(WireMessageCodes.PONG);
+
+    testConnection.send(null, message1);
+    testConnection.send(null, message2);
+    testConnection.send(null, message3);
+
+    // Verify each message incremented the counter correctly
+    verify(counter).inc(512);
+    verify(counter).inc(1024);
+    verify(counter).inc(256);
+    verify(counter, times(3)).inc(anyLong());
   }
 
   private static class TestPeerConnection extends AbstractPeerConnection {
@@ -172,7 +302,8 @@ public class AbstractPeerConnectionTest {
         final String connectionId,
         final CapabilityMultiplexer multiplexer,
         final PeerConnectionEventDispatcher connectionEventDispatcher,
-        final LabelledMetric<Counter> outboundMessagesCounter) {
+        final LabelledMetric<Counter> outboundMessagesCounter,
+        final LabelledMetric<Counter> outboundBytesCounter) {
       super(
           peer,
           peerInfo,
@@ -182,6 +313,7 @@ public class AbstractPeerConnectionTest {
           multiplexer,
           connectionEventDispatcher,
           outboundMessagesCounter,
+          outboundBytesCounter,
           true);
     }
 
