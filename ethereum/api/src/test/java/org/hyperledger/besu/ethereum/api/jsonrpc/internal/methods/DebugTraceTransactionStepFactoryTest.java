@@ -23,12 +23,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FourByteTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -61,6 +63,11 @@ class DebugTraceTransactionStepFactoryTest {
     mockHash = mock(Hash.class);
     mockResult = mock(TransactionProcessingResult.class);
     mockProtocolSpec = mock(ProtocolSpec.class);
+
+    // Setup PrecompileContractRegistry for FourByteTracer
+    PrecompileContractRegistry mockRegistry = mock(PrecompileContractRegistry.class);
+    when(mockProtocolSpec.getPrecompileContractRegistry()).thenReturn(mockRegistry);
+    when(mockRegistry.get(org.mockito.ArgumentMatchers.any(Address.class))).thenReturn(null);
 
     // Set up transaction hash chain
     when(mockTransactionTrace.getTransaction()).thenReturn(mockTransaction);
@@ -95,6 +102,24 @@ class DebugTraceTransactionStepFactoryTest {
     assertThat(result).isNotNull();
     assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
     assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
+  }
+
+  @Test
+  @DisplayName("should create function for FOUR_BYTE_TRACER that returns FourByteTracerResult")
+  void shouldCreateFunctionForFourByteTracer() {
+    // Given
+    TracerType tracerType = TracerType.FOUR_BYTE_TRACER;
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
+
+    // When
+    DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isInstanceOf(FourByteTracerResult.class);
   }
 
   @ParameterizedTest
