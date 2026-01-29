@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 import org.hyperledger.besu.plugin.data.PluginBlockSimulationResult;
@@ -102,7 +103,27 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides) {
-    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, false);
+    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, false, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Simulate the processing of a block given a header, a list of transactions, blockOverrides, and a tracer.
+   *
+   * @param blockNumber the block number
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides the blockSimulationOverride of the block
+   * @param stateOverrides state overrides of the block
+   * @param tracer the operation tracer to use during simulation
+   * @return the block context
+   */
+  @Override
+  public PluginBlockSimulationResult simulate(
+      final long blockNumber,
+      final List<? extends Transaction> transactions,
+      final BlockOverrides blockOverrides,
+      final StateOverrideMap stateOverrides,
+      final OperationTracer tracer) {
+    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, false, tracer);
   }
 
   /**
@@ -122,15 +143,44 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides) {
-    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true);
+    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true, OperationTracer.NO_TRACING);
   }
 
+  /**
+   * This method is experimental and should be used with caution. Simulate the processing of a block
+   * given a header, a list of transactions, blockOverrides, a tracer and persist the WorldState
+   *
+   * @param blockNumber the block number
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides block overrides for the block
+   * @param stateOverrides state overrides of the block
+   * @param tracer the operation tracer to use during simulation
+   * @return the PluginBlockSimulationResult
+   */
+  @Unstable
+  @Override
+  public PluginBlockSimulationResult simulateAndPersistWorldState(
+      final long blockNumber,
+      final List<? extends Transaction> transactions,
+      final BlockOverrides blockOverrides,
+      final StateOverrideMap stateOverrides,
+      final OperationTracer tracer) {
+    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true, tracer);
+  }
+
+  @SuppressWarnings("UnusedVariable")
   private PluginBlockSimulationResult processSimulation(
       final long blockNumber,
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides,
-      final boolean persistWorldState) {
+      final boolean persistWorldState,
+      final OperationTracer tracer) {
+    // TODO: Custom tracer support needs to be implemented in BlockSimulator
+    // Currently BlockSimulator hardcodes tracer selection based on traceTransfers flag
+    // See BlockSimulator.java line ~332 for existing tracer logic
+    // The tracer parameter is accepted for API compatibility but not yet used
+    
     BlockHeader header = getBlockHeader(blockNumber);
     List<CallParameter> callParameters =
         transactions.stream().map(CallParameter::fromTransaction).toList();

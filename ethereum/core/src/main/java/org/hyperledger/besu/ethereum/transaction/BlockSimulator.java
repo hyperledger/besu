@@ -327,6 +327,8 @@ public class BlockSimulator {
         transactionLocation++) {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
+      // TODO can't use this at same time as passing in a custom tracer
+      // TODO see TraceAggregator - collection of tracers
       OperationTracer operationTracer =
           isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
 

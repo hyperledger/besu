@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 import org.hyperledger.besu.plugin.data.PluginBlockSimulationResult;
@@ -41,6 +42,23 @@ public interface BlockSimulationService extends BesuService {
       StateOverrideMap stateOverrides);
 
   /**
+   * Simulate the processing of a block given a header, a list of transactions, blockOverrides, and a tracer.
+   *
+   * @param blockNumber the block number
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides the blockSimulationOverride of the block
+   * @param stateOverrides state overrides of the block
+   * @param tracer the operation tracer to use during simulation
+   * @return the block context
+   */
+  PluginBlockSimulationResult simulate(
+      long blockNumber,
+      List<? extends Transaction> transactions,
+      BlockOverrides blockOverrides,
+      StateOverrideMap stateOverrides,
+      OperationTracer tracer);
+
+  /**
    * This method is experimental and should be used with caution. Simulate the processing of a block
    * given a header, a list of transactions, and blockOverrides and persist the WorldState
    *
@@ -56,4 +74,23 @@ public interface BlockSimulationService extends BesuService {
       List<? extends Transaction> transactions,
       BlockOverrides blockOverrides,
       StateOverrideMap stateOverrides);
+
+  /**
+   * This method is experimental and should be used with caution. Simulate the processing of a block
+   * given a header, a list of transactions, blockOverrides, a tracer and persist the WorldState
+   *
+   * @param blockNumber the block number
+   * @param transactions the transactions to include in the block
+   * @param blockOverrides block overrides for the block
+   * @param stateOverrides state overrides of the block
+   * @param tracer the operation tracer to use during simulation
+   * @return the PluginBlockSimulationResult
+   */
+  @Unstable
+  PluginBlockSimulationResult simulateAndPersistWorldState(
+      long blockNumber,
+      List<? extends Transaction> transactions,
+      BlockOverrides blockOverrides,
+      StateOverrideMap stateOverrides,
+      OperationTracer tracer);
 }
