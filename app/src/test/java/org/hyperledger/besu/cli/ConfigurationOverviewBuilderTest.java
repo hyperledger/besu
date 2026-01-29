@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.InternalProfileName;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -277,5 +278,44 @@ class ConfigurationOverviewBuilderTest {
     final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
     assertThat(targetGasLimitSelected)
         .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setChainPruningDisabled() {
+    final String noChainPruningSet = builder.build();
+    assertThat(noChainPruningSet).doesNotContain("Chain pruning enabled");
+  }
+
+  @Test
+  void setChainPruningEnabledNoneMode() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.NONE, 113_152L, 113_152L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet).doesNotContain("Chain pruning enabled");
+  }
+
+  @Test
+  void setChainPruningEnabledAllMode() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.ALL, 113_152L, 113_152L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet)
+        .contains("Chain pruning enabled (retained BALs: 113152; blocks: 113152)");
+  }
+
+  @Test
+  void setChainPruningEnabledAllModeWithDifferentRetentionValues() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.ALL, 150_000L, 113_152L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet)
+        .contains("Chain pruning enabled (retained BALs: 113152; blocks: 150000)");
+  }
+
+  @Test
+  void setChainPruningEnabledBalModeOnly() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.BAL, null, 50_000L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet)
+        .contains("Chain pruning enabled (retained BALs: 50000)")
+        .doesNotContain("blocks:")
+        .doesNotContain(";");
   }
 }

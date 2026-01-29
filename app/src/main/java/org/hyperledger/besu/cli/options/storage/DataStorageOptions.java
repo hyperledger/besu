@@ -51,7 +51,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @CommandLine.Option(
       names = {"--history-expiry-prune"},
       description =
-          "Convenience option to enable online history pruning and configure BlobDB garbage collection settings (default: ${DEFAULT-VALUE}). \"--Xhistory-expiry-prune\" is deprecated and will be removed in a future release. Use \"--history-expiry-prune\" instead.")
+          "Convenience option to enable online history pruning and configure BlobDB garbage collection settings (default: ${DEFAULT-VALUE}). \"--history-expiry-prune\" is deprecated and will be removed in a future release.")
   private Boolean historyExpiryPrune = false;
 
   /**

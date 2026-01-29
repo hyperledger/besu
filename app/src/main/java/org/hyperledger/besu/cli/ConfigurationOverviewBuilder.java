@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
@@ -67,6 +68,10 @@ public class ConfigurationOverviewBuilder {
   private BesuPluginContextImpl besuPluginContext;
   private boolean isHistoryExpiryPruneEnabled = false;
   private boolean isParallelTxProcessingEnabled = false;
+  private ChainPruningStrategy chainPruningStrategy = ChainPruningStrategy.NONE;
+  private Long chainPruningBlocksRetained;
+  private Long chainPruningBalsRetained;
+
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
 
@@ -382,6 +387,24 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the chain pruning configuration.
+   *
+   * @param pruningStrategy the chain pruning strategy
+   * @param blocksRetained the number of blocks to retain
+   * @param balsRetained the number of BALs to retain
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setChainPruningEnabled(
+      final ChainPruningStrategy pruningStrategy,
+      final Long blocksRetained,
+      final Long balsRetained) {
+    this.chainPruningStrategy = pruningStrategy;
+    this.chainPruningBlocksRetained = blocksRetained;
+    this.chainPruningBalsRetained = balsRetained;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -462,6 +485,21 @@ public class ConfigurationOverviewBuilder {
         trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
       }
       lines.add(trieLogPruningString.toString());
+    }
+
+    if (!chainPruningStrategy.equals(ChainPruningStrategy.NONE)) {
+      final StringBuilder chainPruningString = new StringBuilder();
+      chainPruningString.append("Chain pruning enabled (retained ");
+
+      if (chainPruningStrategy.equals(ChainPruningStrategy.ALL)
+          || chainPruningStrategy.equals(ChainPruningStrategy.BAL)) {
+        chainPruningString.append("BALs: ").append(chainPruningBalsRetained);
+        if (chainPruningStrategy.equals(ChainPruningStrategy.ALL)) {
+          chainPruningString.append("; blocks: ").append(chainPruningBlocksRetained);
+        }
+      }
+      chainPruningString.append(")");
+      lines.add(chainPruningString.toString());
     }
 
     if (isSnapServerEnabled) {
