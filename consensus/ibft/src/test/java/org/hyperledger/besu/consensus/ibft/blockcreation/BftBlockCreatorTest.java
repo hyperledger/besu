@@ -348,7 +348,7 @@ public class BftBlockCreatorTest {
 
     // Pass in non-zero coinbase, check we get zero address back based on bft config
     AbstractBlockCreator.MiningBeneficiaryCalculator calculatedBeneficiary =
-        BftBlockCreator.miningBeneficiaryCalculator(initialValidatorList.get(3), protocolSchedule);
+        BftBlockCreator.miningBeneficiaryCalculator(protocolSchedule);
     // Our custom mining beneficiary should be returned when beneficiary is calculated
     assertThat(calculatedBeneficiary.getMiningBeneficiary(0, block.getHeader()))
         .isEqualTo(Address.fromHexString("0x00000000000000000000000000000000000abcd"));
@@ -482,7 +482,7 @@ public class BftBlockCreatorTest {
 
     // Pass in non-zero coinbase, check we get zero address back based on bft config
     AbstractBlockCreator.MiningBeneficiaryCalculator calculatedBeneficiary =
-        BftBlockCreator.miningBeneficiaryCalculator(initialValidatorList.get(3), protocolSchedule);
+        BftBlockCreator.miningBeneficiaryCalculator(protocolSchedule);
 
     // Our custom mining beneficiary should be returned when beneficiary is calculated
     assertThat(calculatedBeneficiary.getMiningBeneficiary(0, block.getHeader()))
@@ -617,7 +617,7 @@ public class BftBlockCreatorTest {
 
     // Pass in non-zero coinbase, check we get zero address back based on bft config
     AbstractBlockCreator.MiningBeneficiaryCalculator calculatedBeneficiary =
-        BftBlockCreator.miningBeneficiaryCalculator(initialValidatorList.get(3), protocolSchedule);
+        BftBlockCreator.miningBeneficiaryCalculator(protocolSchedule);
 
     // Coinbase should be returned when beneficiary is calculated, not the empty "" custom mining
     // beneficiary

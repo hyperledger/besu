@@ -67,7 +67,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final EthScheduler ethScheduler) {
     super(
         miningConfiguration.setCoinbase(localAddress),
-        miningBeneficiaryCalculator(localAddress, protocolSchedule),
+        miningBeneficiaryCalculator(protocolSchedule),
         extraDataCalculator,
         transactionPool,
         protocolContext,
@@ -90,14 +90,13 @@ public class BftBlockCreator extends AbstractBlockCreator {
   }
 
   /**
-   * Construct a mining beneficiary calculator from given localAddress and protocolSchedule
+   * Construct a mining beneficiary calculator using the given protocolSchedule
    *
-   * @param localAddress localAddress. Used if no mining beneficiary set in genesis config
    * @param protocolSchedule protocol schedule
    * @return mining beneficiary calculator
    */
   public static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
-      final Address localAddress, final ProtocolSchedule protocolSchedule) {
+      final ProtocolSchedule protocolSchedule) {
     return (blockTimestamp, pendingHeader) -> {
       BlockHeader newBlockHeader =
           BlockHeaderBuilder.createDefault()
@@ -106,9 +105,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       ProtocolSpec protocolSpec =
           ((BftProtocolSchedule) protocolSchedule)
               .getByBlockNumberOrTimestamp(pendingHeader.getNumber(), blockTimestamp);
-      Address beneficiaryAddress =
-          protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
-      return beneficiaryAddress != null ? beneficiaryAddress : localAddress;
+      return protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
     };
   }
 
