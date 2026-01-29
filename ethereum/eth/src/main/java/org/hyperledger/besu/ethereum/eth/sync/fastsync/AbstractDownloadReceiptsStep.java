@@ -17,17 +17,8 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,86 +28,62 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractDownloadReceiptsStep<B, BWR>
+public abstract class AbstractDownloadReceiptsStep<B, TR, BWR>
     implements Function<List<B>, CompletableFuture<List<BWR>>> {
-  // B is the type of block being processed (Block, SyncBlock), BWR is the type of block with
-  // receipts (BlockWithReceipts, SyncBlockWithReceipts)
+  // B is the type of block being processed (Block, SyncBlock),
+  // TR is the type of transaction receipt (TransactionReceipt, SyncTransactionReceipt),
+  // BWR is the type of block with receipts (BlockWithReceipts, SyncBlockWithReceipts)
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDownloadReceiptsStep.class);
 
-  private final ProtocolSchedule protocolSchedule;
-  private final EthContext ethContext;
-  private final SynchronizerConfiguration synchronizerConfiguration;
-  private final MetricsSystem metricsSystem;
+  private final EthScheduler ethScheduler;
 
-  public AbstractDownloadReceiptsStep(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
-    this.protocolSchedule = protocolSchedule;
-    this.ethContext = ethContext;
-    this.synchronizerConfiguration = synchronizerConfiguration;
-    this.metricsSystem = metricsSystem;
+  public AbstractDownloadReceiptsStep(final EthScheduler ethScheduler) {
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
   public CompletableFuture<List<BWR>> apply(final List<B> blocks) {
     final List<BlockHeader> headers = blocks.stream().map(this::getBlockHeader).collect(toList());
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-      return ethContext
-          .getScheduler()
-          .scheduleServiceTask(() -> getReceiptsWithPeerTaskSystem(headers))
-          .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
-    } else {
-      return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
-          .run()
-          .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
-    }
+    final List<BlockHeader> originalBlockHeaders =
+        LOG.isTraceEnabled() ? List.copyOf(headers) : null;
+    return ethScheduler
+        .scheduleServiceTask(
+            () -> {
+              Map<BlockHeader, List<TR>> receiptsByBlockHeader = new HashMap<>();
+              while (!headers.isEmpty()) {
+                Map<BlockHeader, List<TR>> receipts = getReceipts(headers);
+                headers.removeAll(receipts.keySet());
+                for (BlockHeader blockHeader : receipts.keySet()) {
+                  receiptsByBlockHeader.put(blockHeader, receipts.get(blockHeader));
+                }
+              }
+              if (LOG.isTraceEnabled()) {
+                for (BlockHeader blockHeader : originalBlockHeaders) {
+                  final List<TR> transactionReceipts = receiptsByBlockHeader.get(blockHeader);
+                  LOG.atTrace()
+                      .setMessage("{} receipts received for header {}")
+                      .addArgument(transactionReceipts == null ? 0 : transactionReceipts.size())
+                      .addArgument(blockHeader.getBlockHash())
+                      .log();
+                }
+              }
+              return CompletableFuture.completedFuture(receiptsByBlockHeader);
+            })
+        .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
   }
 
   abstract BlockHeader getBlockHeader(final B b);
 
   abstract List<BWR> combineBlocksAndReceipts(
-      final List<B> blocks, final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader);
+      final List<B> blocks, final Map<BlockHeader, List<TR>> receiptsByHeader);
 
-  private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>>
-      getReceiptsWithPeerTaskSystem(final List<BlockHeader> headers) {
-    final ArrayList<BlockHeader> originalBlockHeaders = new ArrayList<>(headers);
-    Map<BlockHeader, List<TransactionReceipt>> getReceipts = HashMap.newHashMap(headers.size());
-    do {
-      GetReceiptsFromPeerTask task = new GetReceiptsFromPeerTask(headers, protocolSchedule);
-      PeerTaskExecutorResult<Map<BlockHeader, List<TransactionReceipt>>> getReceiptsResult =
-          ethContext.getPeerTaskExecutor().execute(task);
-      if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-          && getReceiptsResult.result().isPresent()) {
-        Map<BlockHeader, List<TransactionReceipt>> taskResult = getReceiptsResult.result().get();
-        taskResult
-            .keySet()
-            .forEach(
-                (blockHeader) ->
-                    getReceipts.merge(
-                        blockHeader,
-                        taskResult.get(blockHeader),
-                        (initialReceipts, newReceipts) -> {
-                          throw new IllegalStateException(
-                              "Unexpectedly got receipts for block header already populated!");
-                        }));
-        // remove all the headers we found receipts for
-        headers.removeAll(getReceipts.keySet());
-      }
-      // repeat until all headers have receipts
-    } while (!headers.isEmpty());
-    if (LOG.isTraceEnabled()) {
-      for (BlockHeader blockHeader : originalBlockHeaders) {
-        final List<TransactionReceipt> transactionReceipts = getReceipts.get(blockHeader);
-        LOG.atTrace()
-            .setMessage("{} receipts received for header {}")
-            .addArgument(transactionReceipts == null ? 0 : transactionReceipts.size())
-            .addArgument(blockHeader.getBlockHash())
-            .log();
-      }
-    }
-    return CompletableFuture.completedFuture(getReceipts);
-  }
+  /**
+   * Retrieves transaction receipts for as many of the supplied headers as possible. Repeat calls
+   * may be made after removing headers no longer needing transaction receipts.
+   *
+   * @param headers A list of headers to retrieve transaction receipts for
+   * @return transaction receipts for as many of the supplied headers as possible
+   */
+  abstract Map<BlockHeader, List<TR>> getReceipts(final List<BlockHeader> headers);
 }

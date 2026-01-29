@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
@@ -163,4 +164,14 @@ public interface MutableBlockchain extends Blockchain {
    * @param blockHash The hash of the last safe block.
    */
   void setSafeBlock(final Hash blockHash);
+
+  /**
+   * Performs an unsafe import of the supplied SyncBlockWithReceipts, optionally indexing
+   * transactions depending upon the indexTransactions
+   *
+   * @param blocksAndReceipts The SyncBlockWithReceipts to be imported
+   * @param indexTransactions Whether to index the transactions
+   */
+  void unsafeImportSyncBodyAndReceipts(
+      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions);
 }
