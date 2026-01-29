@@ -149,7 +149,7 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
       final WorldUpdater worldState,
       final Set<Address> selfDestructs,
       final Consumer<Log> logConsumer) {
-    // Collect addresses with nonzero balances, sorted lexicographically
+    // Collect selfdestruct addresses with nonzero balances, sorted lexicographically
     final List<Map.Entry<Address, Wei>> closures =
         selfDestructs.stream()
             .map(
