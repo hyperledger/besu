@@ -170,6 +170,7 @@ public class BlockchainReferenceTestCaseSpec {
     return sealEngine;
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class ReferenceTestBlockHeader extends BlockHeader {
 
     @JsonCreator
