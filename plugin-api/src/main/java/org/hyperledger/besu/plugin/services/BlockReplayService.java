@@ -15,8 +15,9 @@
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.Unstable;
-import org.hyperledger.besu.plugin.data.BlockProcessingResult;
+import org.hyperledger.besu.plugin.data.BlockReplayResult;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.function.Consumer;
  *   <li>The correct protocol spec is applied per block, according to the protocol schedule.
  *   <li>The associated world state is retrieved for each block header.
  *   <li>Optional user-defined actions can be applied before and after block processing using {@link
- *       Consumer} callbacks on the {@link WorldUpdater}.
+ *       Consumer} callbacks on the {@link WorldView}.
  * </ul>
  */
 @Unstable
@@ -45,15 +46,15 @@ public interface BlockReplayService extends BesuService {
    *
    * @param fromBlockNumber the beginning of the range (inclusive)
    * @param toBlockNumber the end of the range (inclusive)
-   * @param beforeTracing Function which performs an operation on a MutableWorldState before tracing
-   * @param afterTracing Function which performs an operation on a MutableWorldState after tracing
+   * @param beforeTracing Function which performs an operation on a WorldView before tracing
+   * @param afterTracing Function which performs an operation on a WorldView after tracing
    * @param tracer an instance of OperationTracer
    * @return a list of BlockProcessingResult, one per block in the range
    */
-  List<BlockProcessingResult> replayBlocks(
+  List<BlockReplayResult> replayBlocks(
       final long fromBlockNumber,
       final long toBlockNumber,
-      final Consumer<WorldUpdater> beforeTracing,
-      final Consumer<WorldUpdater> afterTracing,
+      final Consumer<WorldView> beforeTracing,
+      final Consumer<WorldView> afterTracing,
       final BlockAwareOperationTracer tracer);
 }

@@ -26,7 +26,11 @@ import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.data.BlockBody;
+import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockProcessingResult;
+import org.hyperledger.besu.plugin.data.BlockReplayResult;
 import org.hyperledger.besu.plugin.services.BlockReplayService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
@@ -52,6 +56,13 @@ public class BlockReplayServiceImpl implements BlockReplayService {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
 
+  /**
+   * Constructs a new {@link BlockReplayServiceImpl}.
+   *
+   * @param blockchain the blockchain to replay blocks from
+   * @param protocolSchedule the protocol schedule to use for block processing
+   * @param protocolContext the protocol context containing world state and other data
+   */
   public BlockReplayServiceImpl(
       final Blockchain blockchain,
       final ProtocolSchedule protocolSchedule,
@@ -62,11 +73,11 @@ public class BlockReplayServiceImpl implements BlockReplayService {
   }
 
   @Override
-  public List<BlockProcessingResult> replayBlocks(
+  public List<BlockReplayResult> replayBlocks(
       final long fromBlockNumber,
       final long toBlockNumber,
-      final Consumer<WorldUpdater> beforeTracing,
-      final Consumer<WorldUpdater> afterTracing,
+      final Consumer<WorldView> beforeTracing,
+      final Consumer<WorldView> afterTracing,
       final BlockAwareOperationTracer tracer) {
     checkArgument(tracer != null, "Tracer must not be null");
     checkArgument(fromBlockNumber <= toBlockNumber, "Invalid block range: from > to");
@@ -93,7 +104,7 @@ public class BlockReplayServiceImpl implements BlockReplayService {
     beforeTracing.accept(updater);
 
     // Replay the blocks with tracing
-    final List<BlockProcessingResult> results = replayBlocks(blocks, worldState, tracer);
+    final List<BlockReplayResult> results = replayBlocks(blocks, worldState, tracer);
 
     // Apply any post-tracing operations
     afterTracing.accept(updater);
@@ -121,11 +132,11 @@ public class BlockReplayServiceImpl implements BlockReplayService {
                     "World state not available for block: " + parentHeader.toLogString()));
   }
 
-  private List<BlockProcessingResult> replayBlocks(
+  private List<BlockReplayResult> replayBlocks(
       final List<Block> blocks,
       final MutableWorldState worldState,
       final BlockAwareOperationTracer tracer) {
-    final List<BlockProcessingResult> results = new ArrayList<>(blocks.size());
+    final List<BlockReplayResult> results = new ArrayList<>(blocks.size());
     for (final Block block : blocks) {
       final BlockProcessor processor =
           protocolSchedule.getByBlockHeader(block.getHeader()).getBlockProcessor();
@@ -138,8 +149,43 @@ public class BlockReplayServiceImpl implements BlockReplayService {
               Optional.empty(),
               new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing(),
               tracer);
-      results.add(result);
+      results.add(new BlockReplayResultImpl(blockContext(block), result));
     }
     return results;
+  }
+
+  private static class BlockReplayResultImpl implements BlockReplayResult {
+    private final BlockContext blockContext;
+    private final BlockProcessingResult blockProcessingResult;
+
+    BlockReplayResultImpl(
+        final BlockContext blockContext, final BlockProcessingResult blockProcessingResult) {
+      this.blockContext = blockContext;
+      this.blockProcessingResult = blockProcessingResult;
+    }
+
+    @Override
+    public BlockContext getBlockContext() {
+      return blockContext;
+    }
+
+    @Override
+    public BlockProcessingResult getBlockProcessingResult() {
+      return blockProcessingResult;
+    }
+  }
+
+  private static BlockContext blockContext(final Block block) {
+    return new BlockContext() {
+      @Override
+      public org.hyperledger.besu.plugin.data.BlockHeader getBlockHeader() {
+        return block.getHeader();
+      }
+
+      @Override
+      public BlockBody getBlockBody() {
+        return block.getBody();
+      }
+    };
   }
 }
