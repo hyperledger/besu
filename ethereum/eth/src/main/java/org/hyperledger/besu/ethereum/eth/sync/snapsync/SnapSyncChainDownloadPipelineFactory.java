@@ -204,7 +204,7 @@ public class SnapSyncChainDownloadPipelineFactory {
         .thenProcessAsyncOrdered(
             "downloadAndStoreBodiesAndReceipts",
             downloadAndStoreBodiesAndReceiptsStep,
-            downloaderParallelism * 3)
+            downloaderParallelism * 2)
         .andFinishWith("storeTTDAndSetChainHead", storeTTDAndSetChainHead);
   }
 }
