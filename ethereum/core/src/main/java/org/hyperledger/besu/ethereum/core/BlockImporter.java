@@ -18,8 +18,10 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * An interface for a block importer.
@@ -61,6 +63,25 @@ public interface BlockImporter {
       Block block,
       HeaderValidationMode headerValidationMode,
       HeaderValidationMode ommerValidationMode);
+
+  /**
+   * Attempts to import the given block to the specified blockchain and world state, using the
+   * supplied block-level access list when available.
+   *
+   * @param context The context to attempt to update
+   * @param block The block
+   * @param headerValidationMode Determines the validation to perform on this header.
+   * @param ommerValidationMode Determines the validation to perform on ommer headers.
+   * @param blockAccessList Optional block-level access list to use during processing.
+   * @return {@code BlockImportResult}
+   * @see BlockImportResult
+   */
+  BlockImportResult importBlock(
+      final ProtocolContext context,
+      final Block block,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList);
 
   /**
    * Attempts to import the given block. Uses "fast" validation. Performs light validation using the

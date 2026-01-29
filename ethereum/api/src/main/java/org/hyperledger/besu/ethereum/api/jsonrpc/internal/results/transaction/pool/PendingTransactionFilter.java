@@ -97,7 +97,9 @@ public class PendingTransactionFilter {
       throws InvalidJsonRpcParameters {
     return predicate
         .getOperator()
-        .apply(pendingTransaction.getTransaction().getSender(), Address.fromHexString(value));
+        .apply(
+            pendingTransaction.getTransaction().getSender().getBytes(),
+            Address.fromHexString(value).getBytes());
   }
 
   private boolean validateTo(
@@ -105,7 +107,9 @@ public class PendingTransactionFilter {
       throws InvalidJsonRpcParameters {
     final Optional<Address> maybeTo = pendingTransaction.getTransaction().getTo();
     if (maybeTo.isPresent() && predicate.equals(EQ)) {
-      return predicate.getOperator().apply(maybeTo.get(), Address.fromHexString(value));
+      return predicate
+          .getOperator()
+          .apply(maybeTo.get().getBytes(), Address.fromHexString(value).getBytes());
     } else if (predicate.equals(ACTION)) {
       return pendingTransaction.getTransaction().isContractCreation();
     }

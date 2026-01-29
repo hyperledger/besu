@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 import java.util.Objects;
@@ -51,6 +51,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
   private final int status;
   private final TransactionReceiptType transactionReceiptType;
   private final Optional<Bytes> revertReason;
+  private final Optional<Long> gasSpent;
 
   /**
    * Creates an instance of a state root-encoded transaction receipt.
@@ -72,7 +73,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason);
+        revertReason,
+        Optional.empty());
   }
 
   public TransactionReceipt(
@@ -89,7 +91,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         cumulativeGasUsed,
         logs,
         bloomFilter,
-        revertReason);
+        revertReason,
+        Optional.empty());
   }
 
   /**
@@ -112,7 +115,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         cumulativeGasUsed,
         logs,
         LogsBloomFilter.builder().insertLogs(logs).build(),
-        revertReason);
+        revertReason,
+        Optional.empty());
   }
 
   public TransactionReceipt(
@@ -122,7 +126,15 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
-    this(transactionType, null, status, cumulativeGasUsed, logs, bloomFilter, revertReason);
+    this(
+        transactionType,
+        null,
+        status,
+        cumulativeGasUsed,
+        logs,
+        bloomFilter,
+        revertReason,
+        Optional.empty());
   }
 
   public TransactionReceipt(
@@ -140,6 +152,37 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         maybeRevertReason);
   }
 
+  /**
+   * Creates an instance of a status-encoded transaction receipt with gasSpent (EIP-7778,
+   * Amsterdam+).
+   *
+   * @param transactionType the transaction type
+   * @param status the status code for the transaction (1 for success and 0 for failure)
+   * @param cumulativeGasUsed the total amount of gas consumed in the block after this transaction
+   *     (pre-refund in Amsterdam+)
+   * @param gasSpent the gas spent by this transaction (post-refund, what user pays)
+   * @param logs the logs generated within the transaction
+   * @param revertReason the revert reason for a failed transaction (if applicable)
+   */
+  public TransactionReceipt(
+      final TransactionType transactionType,
+      final int status,
+      final long cumulativeGasUsed,
+      final long gasSpent,
+      final List<Log> logs,
+      final Optional<Bytes> revertReason) {
+    this(
+        transactionType,
+        null,
+        status,
+        cumulativeGasUsed,
+        logs,
+        LogsBloomFilter.builder().insertLogs(logs).build(),
+        revertReason,
+        Optional.of(gasSpent));
+  }
+
+  /** Private constructor with gasSpent for Amsterdam+ forks (EIP-7778). */
   private TransactionReceipt(
       final TransactionType transactionType,
       final Hash stateRoot,
@@ -147,7 +190,8 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       final long cumulativeGasUsed,
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason) {
+      final Optional<Bytes> revertReason,
+      final Optional<Long> gasSpent) {
     this.transactionType = transactionType;
     this.stateRoot = stateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
@@ -157,6 +201,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     this.transactionReceiptType =
         stateRoot == null ? TransactionReceiptType.STATUS : TransactionReceiptType.ROOT;
     this.revertReason = revertReason;
+    this.gasSpent = gasSpent;
   }
 
   /**
@@ -235,24 +280,38 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     return revertReason;
   }
 
+  /**
+   * Returns the gas spent by this transaction (post-refund, what the user pays). This field is only
+   * present for Amsterdam+ (EIP-7778) receipts.
+   *
+   * <p>In Amsterdam+, cumulativeGasUsed represents pre-refund gas (for block accounting), while
+   * gasSpent represents post-refund gas (what users actually pay).
+   *
+   * @return the gas spent if present (Amsterdam+), otherwise empty (pre-Amsterdam)
+   */
+  @Override
+  public Optional<Long> getGasSpent() {
+    return gasSpent;
+  }
+
   @Override
   public boolean equals(final Object obj) {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof TransactionReceipt)) {
+    if (!(obj instanceof TransactionReceipt other)) {
       return false;
     }
-    final TransactionReceipt other = (TransactionReceipt) obj;
     return logs.equals(other.getLogsList())
         && Objects.equals(stateRoot, other.stateRoot)
         && cumulativeGasUsed == other.getCumulativeGasUsed()
-        && status == other.status;
+        && status == other.status
+        && Objects.equals(gasSpent, other.gasSpent);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(logs, stateRoot, cumulativeGasUsed);
+    return Objects.hash(logs, stateRoot, cumulativeGasUsed, gasSpent);
   }
 
   @Override
@@ -260,6 +319,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     return MoreObjects.toStringHelper(this)
         .add("stateRoot", stateRoot)
         .add("cumulativeGasUsed", cumulativeGasUsed)
+        .add("gasSpent", gasSpent)
         .add("logs", logs)
         .add("bloomFilter", bloomFilter)
         .add("status", status)

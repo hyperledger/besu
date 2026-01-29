@@ -58,6 +58,10 @@ public class BlockCreationTiming {
     return elapsed;
   }
 
+  public Instant startedAt() {
+    return startedAt;
+  }
+
   @Override
   public String toString() {
     final var sb = new StringBuilder("started at " + startedAt + ", ");

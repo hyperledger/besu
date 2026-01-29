@@ -15,7 +15,7 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -56,7 +56,7 @@ public class RlpConverterServiceImpl implements RlpConverterService {
 
   @Override
   public TransactionReceipt buildReceiptFromRlp(final Bytes rlp) {
-    return TransactionReceiptDecoder.readFrom(RLP.input(rlp), true);
+    return FrontierTransactionReceiptDecoder.readFrom(RLP.input(rlp), true);
   }
 
   @Override

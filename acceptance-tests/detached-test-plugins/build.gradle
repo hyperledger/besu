@@ -1,23 +1,84 @@
 plugins {
-    id 'net.consensys.besu-plugin-distribution' version '0.1.4'
+  id 'net.consensys.besu-plugin-distribution' version '0.1.5'
+  id 'com.diffplug.spotless' version '7.0.3'
 }
 
 group = 'org.hyperledger.besu.tests'
+ext.besuVersion = getBesuVersion()
 version = besuVersion
 
+besuPlugin {
+  besuVersion = version
+}
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+  sourceCompatibility = JavaVersion.VERSION_21
+  targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
-    archiveFileName = 'testPlugins.jar'
-    manifest {
-        attributes(
-                'Specification-Title': archiveBaseName,
-                'Specification-Version': project.version,
-                'Implementation-Title': archiveBaseName,
-                'Implementation-Version': project.version
-        )
-    }
+  archiveFileName = 'testPlugins.jar'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': project.version
+      )
+  }
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+  archiveVersion = ''
+  archiveBaseName = 'testPlugins'
+}
+
+spotless {
+  java {
+    // This path needs to be relative to each project
+    target 'src/**/*.java'
+    targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+    removeUnusedImports()
+    googleJavaFormat('1.25.2')
+    importOrder 'org.hyperledger', 'java', ''
+    trimTrailingWhitespace()
+    endWithNewline()
+    // apply appropriate license header files.
+    licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+    licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+    licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
+  }
+  // spotless check applied to build.gradle (groovy) files
+  groovyGradle {
+    target '*.gradle'
+    greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
+    endWithNewline()
+  }
+}
+
+def preparePlugins = tasks.register('preparePlugins', GradleBuild) {
+  dir = file('../..')
+  tasks = ['prepareDetachedTestPlugins']
+}
+
+allprojects {
+  tasks.withType(JavaCompile).configureEach {
+    dependsOn preparePlugins
+  }
+}
+
+def getBesuVersion() {
+  def besuRootDir = project.projectDir.toPath().resolve('../..').toFile().canonicalFile
+  def gradlewPath = new File(besuRootDir, 'gradlew').absolutePath
+  def process = new ProcessBuilder(gradlewPath, 'printVersion', '-q')
+    .directory(besuRootDir)
+    .redirectErrorStream(true)
+    .start()
+  def output = process.inputStream.text
+  process.waitFor()
+  def versionLine = output.readLines().find { it.startsWith('Besu version:') }
+  if (versionLine == null) {
+    throw new GradleException("Could not find 'Besu version:' in output: ${output}")
+  }
+  return versionLine.replaceFirst('Besu version:\\s*', '').trim()
 }

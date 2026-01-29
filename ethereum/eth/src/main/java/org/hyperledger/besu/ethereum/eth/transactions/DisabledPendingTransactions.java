@@ -52,7 +52,7 @@ public class DisabledPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public void selectTransactions(final TransactionSelector selector) {}
+  public void selectTransactions(final PendingTransactionsSelector selector) {}
 
   @Override
   public long maxSize() {

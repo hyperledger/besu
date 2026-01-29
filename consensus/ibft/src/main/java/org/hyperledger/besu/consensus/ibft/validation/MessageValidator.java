@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Optional;
 
@@ -80,7 +81,7 @@ public class MessageValidator {
 
     // We want to validate the block but not persist it yet as it's just a proposal. If it turns
     // out to be an accepted block it will be persisted at block import time
-    if (!validateBlockWithoutPersisting(msg.getBlock())) {
+    if (!validateBlockWithoutPersisting(msg.getBlock(), msg.getBlockAccessList())) {
       return false;
     }
 
@@ -95,14 +96,20 @@ public class MessageValidator {
         msg.getSignedPayload(), msg.getBlock(), blockInterface);
   }
 
-  private boolean validateBlockWithoutPersisting(final Block block) {
+  private boolean validateBlockWithoutPersisting(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
 
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
     final var validationResult =
         blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL, false);
+            protocolContext,
+            block,
+            HeaderValidationMode.LIGHT,
+            HeaderValidationMode.FULL,
+            blockAccessList,
+            false);
 
     if (validationResult.isFailed()) {
       LOG.info(

@@ -46,7 +46,7 @@ public class EngineExchangeTransitionConfigurationResult {
 
   @JsonGetter(value = "terminalBlockHash")
   public String getTerminalBlockHashAsString() {
-    return terminalBlockHash.toHexString();
+    return terminalBlockHash.getBytes().toHexString();
   }
 
   public Hash getTerminalBlockHash() {

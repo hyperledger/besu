@@ -86,7 +86,7 @@ public class WorldStateProofProviderTest {
         new PmtStateTrieAccountValue(
             1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
-    worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
+    worldStateTrie.put(Bytes32.wrap(addressHash.getBytes()), RLP.encode(accountValue::writeTo));
     worldStateTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
 
     // Persist updates
@@ -131,7 +131,7 @@ public class WorldStateProofProviderTest {
         new PmtStateTrieAccountValue(
             1L, Wei.of(2L), Hash.wrap(storageTrie.getRootHash()), codeHash);
     // Save to storage
-    worldStateTrie.put(addressHash, RLP.encode(accountValue::writeTo));
+    worldStateTrie.put(Bytes32.wrap(addressHash.getBytes()), RLP.encode(accountValue::writeTo));
     worldStateTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
 
     // Persist updates
@@ -146,7 +146,7 @@ public class WorldStateProofProviderTest {
     assertThat(accountProof).isPresent();
     assertThat(accountProof.get().getStateTrieAccountValue()).isEmpty();
     assertThat(accountProof.get().getAccountProof()).hasSize(1);
-    assertThat(Hash.hash(accountProof.get().getAccountProof().get(0)))
+    assertThat(Hash.hash(accountProof.get().getAccountProof().getFirst()).getBytes())
         .isEqualTo(worldStateTrie.getRootHash());
   }
 
@@ -156,7 +156,7 @@ public class WorldStateProofProviderTest {
   }
 
   private Bytes32 storageKeyHash(final UInt256 storageKey) {
-    return Hash.hash(storageKey);
+    return Bytes32.wrap(Hash.hash(storageKey).getBytes());
   }
 
   private Bytes encodeStorageValue(final UInt256 storageValue) {

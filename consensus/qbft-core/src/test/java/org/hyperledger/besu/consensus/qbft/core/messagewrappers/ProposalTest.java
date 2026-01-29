@@ -32,10 +32,12 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -49,43 +51,82 @@ public class ProposalTest {
 
   @Test
   public void canRoundTripProposalMessage() {
+    testRoundTripProposal(Optional.empty());
+  }
+
+  @Test
+  public void canRoundTripProposalMessageWithBlockAccessList() {
+    testRoundTripProposal(Optional.of(BlockAccessList.builder().build()));
+  }
+
+  private void testRoundTripProposal(final Optional<BlockAccessList> blockAccessList) {
     when(blockEncoder.readFrom(any())).thenReturn(BLOCK);
 
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final Address addr = Util.publicKeyToAddress(nodeKey.getPublicKey());
 
-    final ProposalPayload payload =
-        new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK, blockEncoder);
-
+    final ProposalPayload payload = createProposalPayload(blockAccessList);
     final SignedData<ProposalPayload> signedPayload =
-        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
+        SignedData.create(
+            payload, nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes())));
 
+    final SignedData<PreparePayload> prepare = createPrepare(nodeKey);
+    final SignedData<RoundChangePayload> roundChange = createRoundChange(nodeKey);
+
+    final Proposal proposal = new Proposal(signedPayload, List.of(roundChange), List.of(prepare));
+    final Proposal decodedProposal = Proposal.decode(proposal.encode(), blockEncoder);
+
+    assertProposal(decodedProposal, addr, prepare, roundChange, payload, blockAccessList);
+  }
+
+  private ProposalPayload createProposalPayload(final Optional<BlockAccessList> blockAccessList) {
+    if (blockAccessList.isPresent()) {
+      return new ProposalPayload(
+          new ConsensusRoundIdentifier(1, 1), BLOCK, blockEncoder, blockAccessList);
+    }
+    return new ProposalPayload(new ConsensusRoundIdentifier(1, 1), BLOCK, blockEncoder);
+  }
+
+  private SignedData<PreparePayload> createPrepare(final NodeKey nodeKey) {
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
-    final SignedData<PreparePayload> prepare =
-        SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
+    return SignedData.create(
+        preparePayload, nodeKey.sign(Bytes32.wrap(preparePayload.hashForSignature().getBytes())));
+  }
 
+  private SignedData<RoundChangePayload> createRoundChange(final NodeKey nodeKey) {
     final RoundChangePayload roundChangePayload =
         new RoundChangePayload(
             new ConsensusRoundIdentifier(1, 0),
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
+    return SignedData.create(
+        roundChangePayload,
+        nodeKey.sign(Bytes32.wrap(roundChangePayload.hashForSignature().getBytes())));
+  }
 
-    final SignedData<RoundChangePayload> roundChange =
-        SignedData.create(roundChangePayload, nodeKey.sign(roundChangePayload.hashForSignature()));
+  private void assertProposal(
+      final Proposal decodedProposal,
+      final Address expectedAddr,
+      final SignedData<PreparePayload> expectedPrepare,
+      final SignedData<RoundChangePayload> expectedRoundChange,
+      final ProposalPayload originalPayload,
+      final Optional<BlockAccessList> expectedBlockAccessList) {
 
-    final Proposal proposal = new Proposal(signedPayload, List.of(roundChange), List.of(prepare));
-
-    final Proposal decodedProposal = Proposal.decode(proposal.encode(), blockEncoder);
-
-    assertThat(decodedProposal.getAuthor()).isEqualTo(addr);
+    assertThat(decodedProposal.getAuthor()).isEqualTo(expectedAddr);
     assertThat(decodedProposal.getMessageType()).isEqualTo(QbftV1.PROPOSAL);
     assertThat(decodedProposal.getPrepares()).hasSize(1);
-    assertThat(decodedProposal.getPrepares().getFirst()).isEqualToComparingFieldByField(prepare);
+    assertThat(decodedProposal.getPrepares().getFirst())
+        .isEqualToComparingFieldByField(expectedPrepare);
     assertThat(decodedProposal.getRoundChanges()).hasSize(1);
     assertThat(decodedProposal.getRoundChanges().getFirst())
-        .isEqualToComparingFieldByField(roundChange);
+        .isEqualToComparingFieldByField(expectedRoundChange);
     assertThat(decodedProposal.getSignedPayload().getPayload().getProposedBlock()).isEqualTo(BLOCK);
     assertThat(decodedProposal.getSignedPayload().getPayload().getRoundIdentifier())
-        .isEqualTo(payload.getRoundIdentifier());
+        .isEqualTo(originalPayload.getRoundIdentifier());
+
+    if (expectedBlockAccessList.isPresent()) {
+      assertThat(decodedProposal.getBlockAccessList()).isPresent();
+      assertThat(decodedProposal.getSignedPayload().getPayload().getBlockAccessList()).isPresent();
+    }
   }
 }

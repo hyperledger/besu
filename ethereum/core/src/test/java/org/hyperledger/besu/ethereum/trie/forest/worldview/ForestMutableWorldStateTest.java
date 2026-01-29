@@ -67,10 +67,10 @@ class ForestMutableWorldStateTest {
   @Test
   void rootHash_Empty() {
     final MutableWorldState worldState = createEmpty();
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -98,10 +98,10 @@ class ForestMutableWorldStateTest {
     final WorldUpdater updater = worldState.updater();
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -111,10 +111,10 @@ class ForestMutableWorldStateTest {
     updater.createAccount(ADDRESS).setBalance(Wei.of(100000));
     updater.deleteAccount(ADDRESS);
     updater.commit();
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
     worldState.persist(null);
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -135,7 +135,7 @@ class ForestMutableWorldStateTest {
     updater.commit();
     assertThat(updater.get(ADDRESS)).isNull();
 
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -161,7 +161,7 @@ class ForestMutableWorldStateTest {
     worldState.persist(null);
     assertThat(updater.get(ADDRESS)).isNull();
 
-    assertThat(worldState.rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(worldState.rootHash().getBytes()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @Test
@@ -181,15 +181,15 @@ class ForestMutableWorldStateTest {
     List<StreamableAccount> accounts =
         worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
     assertThat(accounts).hasSize(1);
-    assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
-    assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
+    assertThat(accounts.getFirst().getAddress()).hasValue(ADDRESS);
+    assertThat(accounts.getFirst().getBalance()).isEqualTo(Wei.of(100000));
 
     // Check again after persisting
     worldState.persist(null);
     accounts = worldState.streamAccounts(Bytes32.ZERO, 10).collect(Collectors.toList());
     assertThat(accounts).hasSize(1);
-    assertThat(accounts.get(0).getAddress()).hasValue(ADDRESS);
-    assertThat(accounts.get(0).getBalance()).isEqualTo(Wei.of(100000));
+    assertThat(accounts.getFirst().getAddress()).hasValue(ADDRESS);
+    assertThat(accounts.getFirst().getBalance()).isEqualTo(Wei.of(100000));
   }
 
   @Test
@@ -212,15 +212,17 @@ class ForestMutableWorldStateTest {
     final boolean accountAIsFirst =
         accountA
                 .getAddressHash()
+                .getBytes()
                 .toUnsignedBigInteger()
-                .compareTo(accountB.getAddressHash().toUnsignedBigInteger())
+                .compareTo(accountB.getAddressHash().getBytes().toUnsignedBigInteger())
             < 0;
     final Hash startHash = accountAIsFirst ? accountA.getAddressHash() : accountB.getAddressHash();
 
     // Get first account
-    final List<StreamableAccount> firstAccount = worldState.streamAccounts(startHash, 1).toList();
+    final List<StreamableAccount> firstAccount =
+        worldState.streamAccounts(Bytes32.wrap(startHash.getBytes()), 1).toList();
     assertThat(firstAccount).hasSize(1);
-    assertThat(firstAccount.get(0).getAddress())
+    assertThat(firstAccount.getFirst().getAddress())
         .hasValue(accountAIsFirst ? accountA.getAddress() : accountB.getAddress());
 
     // Get both accounts
@@ -232,11 +234,11 @@ class ForestMutableWorldStateTest {
         .hasValue(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
 
     // Get second account
-    final Bytes32 startHashForSecondAccount = UInt256.fromBytes(startHash).add(1L);
+    final Bytes32 startHashForSecondAccount = UInt256.fromBytes(startHash.getBytes()).add(1L);
     final List<StreamableAccount> secondAccount =
         worldState.streamAccounts(startHashForSecondAccount, 100).toList();
     assertThat(secondAccount).hasSize(1);
-    assertThat(secondAccount.get(0).getAddress())
+    assertThat(secondAccount.getFirst().getAddress())
         .hasValue(accountAIsFirst ? accountB.getAddress() : accountA.getAddress());
   }
 
@@ -263,12 +265,18 @@ class ForestMutableWorldStateTest {
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
+    assertThat(
+            kvWorldStateStorage.isWorldStateAvailable(
+                Bytes32.wrap(worldState.rootHash().getBytes())))
+        .isFalse();
 
     // Persist and re-run assertions
     worldState.persist(null);
 
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
+    assertThat(
+            kvWorldStateStorage.isWorldStateAvailable(
+                Bytes32.wrap(worldState.rootHash().getBytes())))
+        .isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
@@ -276,7 +284,7 @@ class ForestMutableWorldStateTest {
     // Create new world state and check that it can access modified address
     final MutableWorldState newWorldState =
         new ForestMutableWorldState(
-            expectedRootHash,
+            Bytes32.wrap(expectedRootHash.getBytes()),
             new ForestWorldStateKeyValueStorage(storage),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
@@ -661,18 +669,25 @@ class ForestMutableWorldStateTest {
     final Map<Bytes32, AccountStorageEntry> finalEntries = new TreeMap<>();
     finalSetOfEntries.forEach(entry -> finalEntries.put(entry.getKeyHash(), entry));
 
-    assertThat(account.storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
-    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
+    assertThat(account.storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(finalEntries);
+    assertThat(updater.get(ADDRESS).storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(initialEntries);
 
     worldState.persist(null);
-    assertThat(updater.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(initialEntries);
+    assertThat(updater.get(ADDRESS).storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(initialEntries);
 
     updater.commit();
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(finalEntries);
 
     worldState.persist(null);
-    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Hash.ZERO, 10)).isEqualTo(finalEntries);
+    assertThat(worldState.get(ADDRESS).storageEntriesFrom(Bytes32.wrap(Hash.ZERO.getBytes()), 10))
+        .isEqualTo(finalEntries);
   }
 }

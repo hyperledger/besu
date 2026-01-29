@@ -18,10 +18,13 @@ import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.qbft.core.messagedata.QbftV1;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockCodec;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.MoreObjects;
 
@@ -32,6 +35,26 @@ public class ProposalPayload extends QbftPayload {
   private final ConsensusRoundIdentifier roundIdentifier;
   private final QbftBlock proposedBlock;
   private final QbftBlockCodec blockEncoder;
+  private final Optional<BlockAccessList> blockAccessList;
+
+  /**
+   * Instantiates a new Proposal payload.
+   *
+   * @param roundIdentifier the round identifier
+   * @param proposedBlock the proposed block
+   * @param blockEncoder the qbft block encoder
+   * @param blockAccessList the block access list
+   */
+  public ProposalPayload(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final QbftBlock proposedBlock,
+      final QbftBlockCodec blockEncoder,
+      final Optional<BlockAccessList> blockAccessList) {
+    this.roundIdentifier = roundIdentifier;
+    this.proposedBlock = proposedBlock;
+    this.blockEncoder = blockEncoder;
+    this.blockAccessList = blockAccessList;
+  }
 
   /**
    * Instantiates a new Proposal payload.
@@ -44,9 +67,7 @@ public class ProposalPayload extends QbftPayload {
       final ConsensusRoundIdentifier roundIdentifier,
       final QbftBlock proposedBlock,
       final QbftBlockCodec blockEncoder) {
-    this.roundIdentifier = roundIdentifier;
-    this.proposedBlock = proposedBlock;
-    this.blockEncoder = blockEncoder;
+    this(roundIdentifier, proposedBlock, blockEncoder, Optional.empty());
   }
 
   /**
@@ -61,9 +82,10 @@ public class ProposalPayload extends QbftPayload {
     rlpInput.enterList();
     final ConsensusRoundIdentifier roundIdentifier = readConsensusRound(rlpInput);
     final QbftBlock proposedBlock = blockEncoder.readFrom(rlpInput);
+    final Optional<BlockAccessList> blockAccessList = readBlockAccessList(rlpInput);
     rlpInput.leaveList();
 
-    return new ProposalPayload(roundIdentifier, proposedBlock, blockEncoder);
+    return new ProposalPayload(roundIdentifier, proposedBlock, blockEncoder, blockAccessList);
   }
 
   @Override
@@ -71,6 +93,7 @@ public class ProposalPayload extends QbftPayload {
     rlpOutput.startList();
     writeConsensusRound(rlpOutput);
     blockEncoder.writeTo(proposedBlock, rlpOutput);
+    blockAccessList.ifPresentOrElse((bal) -> bal.writeTo(rlpOutput), rlpOutput::writeNull);
     rlpOutput.endList();
   }
 
@@ -81,6 +104,15 @@ public class ProposalPayload extends QbftPayload {
    */
   public QbftBlock getProposedBlock() {
     return proposedBlock;
+  }
+
+  /**
+   * Gets block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockAccessList;
   }
 
   @Override
@@ -103,12 +135,13 @@ public class ProposalPayload extends QbftPayload {
     }
     ProposalPayload that = (ProposalPayload) o;
     return Objects.equals(roundIdentifier, that.roundIdentifier)
-        && Objects.equals(proposedBlock, that.proposedBlock);
+        && Objects.equals(proposedBlock, that.proposedBlock)
+        && Objects.equals(blockAccessList, that.blockAccessList);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(roundIdentifier, proposedBlock);
+    return Objects.hash(roundIdentifier, proposedBlock, blockAccessList);
   }
 
   @Override
@@ -116,6 +149,15 @@ public class ProposalPayload extends QbftPayload {
     return MoreObjects.toStringHelper(this)
         .add("roundIdentifier", roundIdentifier)
         .add("proposedBlock", proposedBlock)
+        .add("blockAccessList", blockAccessList)
         .toString();
+  }
+
+  private static Optional<BlockAccessList> readBlockAccessList(final RLPInput rlpInput) {
+    if (!rlpInput.nextIsNull()) {
+      return Optional.of(BlockAccessListDecoder.decode(rlpInput));
+    }
+    rlpInput.skipNext();
+    return Optional.empty();
   }
 }

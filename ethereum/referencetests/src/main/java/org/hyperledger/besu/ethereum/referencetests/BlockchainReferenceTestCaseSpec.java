@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -32,9 +33,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
@@ -42,9 +41,9 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.services.BesuService;
@@ -85,14 +84,17 @@ public class BlockchainReferenceTestCaseSpec {
                 inMemoryKeyValueStorageProvider.createWorldStateStorage(
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            Optional.of(cacheSize),
+            ImmutablePathBasedExtraStorageConfiguration.builder()
+                .maxLayersToLoad(cacheSize)
+                .build(),
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
-              public <T extends BesuService> void addService(Class<T> serviceType, T service) {}
+              public <T extends BesuService> void addService(
+                  final Class<T> serviceType, final T service) {}
 
               @Override
-              public <T extends BesuService> Optional<T> getService(Class<T> serviceType) {
+              public <T extends BesuService> Optional<T> getService(final Class<T> serviceType) {
                 return Optional.empty();
               }
             },
@@ -168,6 +170,7 @@ public class BlockchainReferenceTestCaseSpec {
     return sealEngine;
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class ReferenceTestBlockHeader extends BlockHeader {
 
     @JsonCreator
@@ -214,7 +217,7 @@ public class BlockchainReferenceTestCaseSpec {
           Long.decode(timestamp), // timestamp
           Bytes.fromHexString(extraData), // extraData
           baseFee != null ? Wei.fromHexString(baseFee) : null, // baseFee
-          Hash.fromHexString(mixHash), // mixHash
+          Bytes32.wrap(Hash.fromHexString(mixHash).getBytes()), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
           blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
@@ -318,11 +321,7 @@ public class BlockchainReferenceTestCaseSpec {
           input.isEndOfCurrentList()
               ? Optional.empty()
               : Optional.of(input.readList(Withdrawal::readFrom));
-      final Optional<BlockAccessList> blockAccessList =
-          input.isEndOfCurrentList()
-              ? Optional.empty()
-              : Optional.of(BlockAccessListDecoder.decode(input));
-      final BlockBody body = new BlockBody(transactions, ommers, withdrawals, blockAccessList);
+      final BlockBody body = new BlockBody(transactions, ommers, withdrawals);
       return new Block(header, body);
     }
   }

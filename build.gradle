@@ -187,7 +187,7 @@ configure(allprojects - project(':platform')) {
     def ethExecSpecTestsRepo = ivy {
       url = 'https://github.com'
       patternLayout {
-        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+        artifact '/[organisation]/[module]/releases/download/[revision]/[classifier].[ext]'
       }
       metadataSources {
         artifact()
@@ -1324,8 +1324,8 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   dir = file('acceptance-tests/detached-test-plugins')
   tasks = [
     'clean',
-    'build',
-    'installDist'
+    'compileJava',
+    'distZip'
   ]
 
   startParameter.projectProperties = [
@@ -1337,6 +1337,29 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   }
 }
 
+tasks.register('buildDetachedOutdatedTestPlugins', GradleBuild) {
+  group = 'build'
+  dependsOn 'prepareDetachedTestPlugins'
+
+  dir = file('acceptance-tests/detached-outdated-test-plugins')
+  tasks = [
+    'clean',
+    'compileJava',
+    'distZip'
+  ]
+
+  doFirst {
+    println "Building detached-outdated-test-plugins project"
+  }
+}
+
+tasks.register('printVersion') {
+  group = 'help'
+  description = 'Prints the calculated version'
+  doLast {
+    println "Besu version: " + calculateVersion()
+  }
+}
 
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions

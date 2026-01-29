@@ -146,7 +146,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block) {
-    return processBlock(protocolContext, blockchain, worldState, block, new NoPreprocessing());
+    return processBlock(
+        protocolContext, blockchain, worldState, block, Optional.empty(), new NoPreprocessing());
   }
 
   @Override
@@ -155,6 +156,34 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block,
+      final PreprocessingFunction preprocessingBlockFunction) {
+    return processBlock(
+        protocolContext,
+        blockchain,
+        worldState,
+        block,
+        Optional.empty(),
+        preprocessingBlockFunction);
+  }
+
+  @Override
+  public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList) {
+    return processBlock(
+        protocolContext, blockchain, worldState, block, blockAccessList, new NoPreprocessing());
+  }
+
+  @Override
+  public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -181,17 +210,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Optional<BlockAccessListFactory> maybeBalFactory =
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
 
-    final Optional<BlockAccessList> maybeBlockBal = blockBody.getBlockAccessList();
-    if (maybeBalFactory.isPresent() && maybeBlockBal.isEmpty()) {
-      final String errorMessage = "BALs enabled but BAL not found in block body";
-      LOG.error(errorMessage);
-      return new BlockProcessingResult(Optional.empty(), errorMessage);
-    }
-
     final StateRootCommitter stateRootCommitter =
         protocolSpec
             .getStateRootCommitterFactory()
-            .forBlock(protocolContext, blockHeader, maybeBlockBal);
+            .forBlock(protocolContext, blockHeader, blockAccessList);
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
@@ -234,7 +256,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               blobGasPrice,
               blockAccessListBuilder,
-              maybeBlockBal);
+              blockAccessList);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -272,8 +294,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               MessageFormat.format(
                   "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
                   transactionProcessingResult.getValidationResult().getErrorMessage(),
-                  blockHeader.getHash().toHexString(),
-                  transaction.getHash().toHexString());
+                  blockHeader.getHash().getBytes().toHexString(),
+                  transaction.getHash().getBytes().toHexString());
           LOG.info(errorMessage);
           if (worldState instanceof BonsaiWorldState) {
             ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
@@ -287,7 +309,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockUpdater.commit();
         blockUpdater.markTransactionBoundary();
 
-        currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
+        currentGasUsed +=
+            protocolSpec
+                .getBlockGasAccountingStrategy()
+                .calculateBlockGas(transaction, transactionProcessingResult);
         final var optionalVersionedHashes = transaction.getVersionedHashes();
         if (optionalVersionedHashes.isPresent()) {
           final var versionedHashes = optionalVersionedHashes.get();
@@ -385,7 +410,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           String errorMessage =
               String.format(
                   "Requests hash mismatch, calculated: %s header: %s",
-                  calculatedRequestHash.toHexString(), headerRequestsHash.toHexString());
+                  calculatedRequestHash.getBytes().toHexString(),
+                  headerRequestsHash.getBytes().toHexString());
           LOG.error(errorMessage);
           if (worldState instanceof BonsaiWorldState) {
             ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
@@ -413,19 +439,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               final String errorMessage =
                   String.format(
                       "Block access list hash mismatch, calculated: %s header: %s",
-                      expectedHash.toHexString(), headerBalHash.get().toHexString());
+                      expectedHash.getBytes().toHexString(),
+                      headerBalHash.get().getBytes().toHexString());
               LOG.error(errorMessage);
 
               if (balConfiguration.shouldLogBalsOnMismatch()) {
                 final String constructedBalStr = bal.toString();
                 final String blockBalStr =
-                    blockBody
-                        .getBlockAccessList()
-                        .map(Object::toString)
-                        .orElse("<no BAL present in block body>");
+                    blockAccessList.map(Object::toString).orElse("<no BAL present for block>");
                 LOG.error(
                     "--- BAL constructed during execution ---\n{}\n"
-                        + "--- BAL from block body ---\n{}",
+                        + "--- BAL supplied for block ---\n{}",
                     constructedBalStr,
                     blockBalStr);
               }
@@ -466,8 +490,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       } catch (StateRootMismatchException ex) {
         LOG.error(
             "failed persisting block due to stateroot mismatch; expected {}, actual {}",
-            ex.getExpectedRoot().toHexString(),
-            ex.getActualRoot().toHexString());
+            ex.getExpectedRoot().getBytes().toHexString(),
+            ex.getActualRoot().getBytes().toHexString());
         return new BlockProcessingResult(Optional.empty(), ex.getMessage());
       } catch (Exception e) {
         LOG.error("failed persisting block", e);
@@ -518,8 +542,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               + " remaining {}. Block {} Transaction {}",
           transaction.getGasLimit(),
           remainingGasBudget,
-          blockHeader.getHash().toHexString(),
-          transaction.getHash().toHexString());
+          blockHeader.getHash().getBytes().toHexString(),
+          transaction.getHash().getBytes().toHexString());
       return false;
     }
 

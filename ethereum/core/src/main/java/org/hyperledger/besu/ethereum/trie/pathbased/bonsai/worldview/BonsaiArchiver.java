@@ -179,7 +179,8 @@ public class BonsaiArchiver implements BlockAddedObserver {
                                                   .get()
                                                   .getParentHash()),
                                           Bytes.concatenate(
-                                              address.addressHash(), slotKey.getSlotHash())));
+                                              address.addressHash().getBytes(),
+                                              slotKey.getSlotHash().getBytes())));
                                 });
                           });
                 }
