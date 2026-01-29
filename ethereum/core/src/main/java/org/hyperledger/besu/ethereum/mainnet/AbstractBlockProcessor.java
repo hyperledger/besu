@@ -185,6 +185,27 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction) {
+    final BlockAwareOperationTracer blockTracer =
+        getBlockImportTracer(protocolContext, block.getHeader());
+    return processBlock(
+        protocolContext,
+        blockchain,
+        worldState,
+        block,
+        blockAccessList,
+        preprocessingBlockFunction,
+        blockTracer);
+  }
+
+  @Override
+  public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final PreprocessingFunction preprocessingBlockFunction,
+      final BlockAwareOperationTracer blockTracer) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -198,9 +219,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final BlockHashLookup blockHashLookup =
         protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader);
-
-    final BlockAwareOperationTracer blockTracer =
-        getBlockImportTracer(protocolContext, blockHeader);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 

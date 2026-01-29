@@ -71,6 +71,7 @@ import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BlockReplayService;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PermissioningService;
@@ -92,6 +93,7 @@ import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolServi
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockReplayServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
@@ -273,6 +275,12 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 besuController.getMiningParameters()),
             besuController.getProtocolSchedule());
     besuPluginContext.addService(TraceService.class, traceService);
+    besuPluginContext.addService(
+        BlockReplayService.class,
+        new BlockReplayServiceImpl(
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolSchedule(),
+            besuController.getProtocolContext()));
     besuPluginContext.addService(
         BesuEvents.class,
         new BesuEventsImpl(

@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Optional;
 
 /** Contains the outputs of processing a block. */
-public class BlockProcessingResult extends BlockValidationResult {
+public class BlockProcessingResult extends BlockValidationResult
+    implements org.hyperledger.besu.plugin.data.BlockProcessingResult {
 
   private final Optional<BlockProcessingOutputs> yield;
   private final boolean isPartial;
@@ -161,6 +162,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    *
    * @return the transaction receipts of the result
    */
+  @Override
   public List<TransactionReceipt> getReceipts() {
     return yield.map(BlockProcessingOutputs::getReceipts).orElse(List.of());
   }
@@ -170,6 +172,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    *
    * @return the requests of the result
    */
+  @Override
   public Optional<List<Request>> getRequests() {
     return yield.flatMap(BlockProcessingOutputs::getRequests);
   }
@@ -188,6 +191,7 @@ public class BlockProcessingResult extends BlockValidationResult {
    *
    * @return the generated block access list
    */
+  @Override
   public Optional<BlockAccessList> getGeneratedBlockAccessList() {
     return maybeGeneratedBlockAccessList;
   }

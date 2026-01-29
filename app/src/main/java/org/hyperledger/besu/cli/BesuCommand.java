@@ -158,6 +158,7 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.BlockReplayService;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -185,6 +186,7 @@ import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolServi
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
+import org.hyperledger.besu.services.BlockReplayServiceImpl;
 import org.hyperledger.besu.services.BlockSimulatorServiceImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
 import org.hyperledger.besu.services.MiningServiceImpl;
@@ -1368,6 +1370,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         RlpConverterService.class,
         new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
+
+    besuPluginContext.addService(
+        BlockReplayService.class,
+        new BlockReplayServiceImpl(
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolSchedule(),
+            besuController.getProtocolContext()));
 
     besuPluginContext.addService(
         TraceService.class,
