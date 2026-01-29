@@ -56,6 +56,13 @@ public class BlockReplayServiceImpl implements BlockReplayService {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
 
+  /**
+   * Constructs a BlockReplayServiceImpl.
+   *
+   * @param blockchain the blockchain to replay blocks from
+   * @param protocolSchedule the protocol schedule to determine block processing rules
+   * @param protocolContext the protocol context containing world state and other necessary data
+   */
   public BlockReplayServiceImpl(
       final Blockchain blockchain,
       final ProtocolSchedule protocolSchedule,
