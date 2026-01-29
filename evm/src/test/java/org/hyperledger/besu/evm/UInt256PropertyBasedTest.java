@@ -123,6 +123,7 @@ public class UInt256PropertyBasedTest {
     BigInteger A = toBigUnsigned(a);
     BigInteger M = toBigUnsigned(m);
     byte[] exp = (M.signum() == 0) ? Bytes32.ZERO.toArrayUnsafe() : bigUnsignedToBytes32(A.mod(M));
+    if (!Arrays.equals(got, exp)) System.out.println(String.format("%s %% %s == %s", ua.toHexString(), um.toHexString(), ua.mod(um).toHexString()));
     assertThat(got).containsExactly(exp);
   }
 
