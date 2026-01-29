@@ -498,6 +498,9 @@ public class ChainDataPrunerTest {
         DefaultBlockchain.createMutable(
             genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     blockchain.observeBlockAdded(chainDataPruner);
+    // Configure generator with BAL generation
+    gen.setBlockOptionsSupplier(
+        () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
     gen.blockSequence(genesisBlock, 1000)
         .forEach(
