@@ -72,6 +72,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
    * @param timestamp the timestamp
    * @param withdrawals optional list of withdrawals
    * @param parentBeaconBlockRoot optional root hash of the parent beacon block
+   * @param slotNumber optional slot number (EIP-7843)
    * @return the block creation result
    */
   public BlockCreationResult createBlock(
@@ -80,6 +81,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber,
       final BlockHeader parentHeader) {
 
     return createBlock(
@@ -88,6 +90,7 @@ class MergeBlockCreator extends AbstractBlockCreator {
         withdrawals,
         Optional.of(random),
         parentBeaconBlockRoot,
+        slotNumber,
         timestamp,
         false,
         parentHeader);
