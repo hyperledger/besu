@@ -59,7 +59,7 @@ public class SyncTransactionReceiptEncoder {
         List.of(
             rlpEncoder.encode(receipt.getStatusOrStateRoot()),
             rlpEncoder.encode(receipt.getCumulativeGasUsed()),
-            rlpEncoder.encode(receipt.getBloomFilter()),
+            rlpEncoder.encode(receipt.getBloomFilter().getBytes()),
             rlpEncoder.encodeList(encodedLogs));
 
     return !isFrontier

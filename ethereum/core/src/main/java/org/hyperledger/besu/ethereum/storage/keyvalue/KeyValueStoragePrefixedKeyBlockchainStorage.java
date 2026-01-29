@@ -378,7 +378,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         final Hash blockHash, final List<SyncTransactionReceipt> transactionReceipts) {
       set(
           TRANSACTION_RECEIPTS_PREFIX,
-          blockHash,
+          blockHash.getBytes(),
           Bytes.wrap(
               transactionReceipts.stream().map(SyncTransactionReceipt::getRlpBytes).toList()));
     }
