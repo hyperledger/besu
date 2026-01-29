@@ -520,7 +520,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final SealableBlockHeader sealableBlockHeader);
 
   @FunctionalInterface
-  protected interface MiningBeneficiaryCalculator {
+  public interface MiningBeneficiaryCalculator {
     Address getMiningBeneficiary(long blockTimestamp, ProcessableBlockHeader parentHeader);
   }
 }
