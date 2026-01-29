@@ -178,11 +178,10 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
               .blockStateCalls(List.of(blockStateCall))
               .validation(true)
               .fakeSignature(FAKE_SIGNATURE)
-              .operationTracer(tracer)
               .build();
 
       List<BlockSimulationResult> results =
-          blockSimulator.process(header, blockSimulationParameter, ws);
+          blockSimulator.process(header, blockSimulationParameter, ws, tracer);
       BlockSimulationResult result = results.getFirst();
       if (persistWorldState) {
         ws.persist(result.getBlock().getHeader());
