@@ -29,6 +29,7 @@
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 - Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
 - Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
+- Add ability to pass a custom tracer to block simulation []()
 
 ### Bug fixes
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
