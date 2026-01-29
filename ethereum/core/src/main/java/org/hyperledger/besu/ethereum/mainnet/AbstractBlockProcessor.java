@@ -205,7 +205,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction,
-      final BlockAwareOperationTracer operationTracer) {
+      final BlockAwareOperationTracer blockTracer) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -223,7 +223,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
-    operationTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
+    blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final Optional<BlockAccessListFactory> maybeBalFactory =
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
@@ -246,7 +246,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               worldState,
               protocolSpec,
               blockHashLookup,
-              operationTracer,
+              blockTracer,
               blockAccessListBuilder);
       protocolSpec
           .getPreExecutionProcessor()
@@ -492,7 +492,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
-      operationTracer.traceEndBlock(blockHeader, blockBody);
+      blockTracer.traceEndBlock(blockHeader, blockBody);
 
       try {
         worldState.persist(blockHeader, stateRootCommitter);
