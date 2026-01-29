@@ -97,11 +97,12 @@ class LogRollingTests {
           Bytes32.wrap(Hash.ZERO.getBytes()),
           0,
           Hash.EMPTY_LIST_HASH,
-          null, // blobGasUSed
+          null, // blobGasUsed
           null,
           null,
           null,
           null,
+          null, // slotNumber
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -127,6 +128,7 @@ class LogRollingTests {
           null,
           null,
           null,
+          null, // slotNumber
           new MainnetBlockHeaderFunctions());
 
   @BeforeEach

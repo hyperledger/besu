@@ -257,6 +257,7 @@ public class EngineExchangeTransitionConfigurationTest {
         null,
         null,
         null,
+        null, // slotNumber
         new BlockHeaderFunctions() {
           @Override
           public Hash hash(final BlockHeader header) {

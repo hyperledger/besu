@@ -47,6 +47,7 @@ public class AmsterdamAcceptanceTestHelper {
       "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   private long blockTimeStamp = 0;
+  private long slotNumber = 0;
 
   AmsterdamAcceptanceTestHelper(final BesuNode besuNode, final EthTransactions ethTransactions) {
     this.besuNode = besuNode;
@@ -59,8 +60,9 @@ public class AmsterdamAcceptanceTestHelper {
     final EthBlock.Block block = besuNode.execute(ethTransactions.block());
 
     blockTimeStamp += 1;
+    slotNumber += 1;
     final Call buildBlockRequest =
-        createEngineCall(createForkChoiceRequest(block.getHash(), blockTimeStamp));
+        createEngineCall(createForkChoiceRequest(block.getHash(), blockTimeStamp, slotNumber));
 
     final String payloadId;
     try (final Response buildBlockResponse = buildBlockRequest.execute()) {
@@ -113,6 +115,16 @@ public class AmsterdamAcceptanceTestHelper {
       newBlockHash = executionPayload.get("blockHash").asText();
 
       assertThat(newBlockHash).isNotEmpty();
+
+      // Verify the slot number in the execution payload matches what was requested
+      JsonNode slotNumberNode = executionPayload.get("slotNumber");
+      assertThat(slotNumberNode)
+          .withFailMessage("executionPayload missing slotNumber field")
+          .isNotNull();
+      assertThat(Long.decode(slotNumberNode.asText()))
+          .withFailMessage(
+              "Expected slotNumber 0x%x in payload but got %s", slotNumber, slotNumberNode.asText())
+          .isEqualTo(slotNumber);
     }
 
     String newPayloadRequestBody =
@@ -173,16 +185,18 @@ public class AmsterdamAcceptanceTestHelper {
   }
 
   private String createForkChoiceRequest(final String blockHash) {
-    return createForkChoiceRequest(blockHash, null);
+    return createForkChoiceRequest(blockHash, null, null);
   }
 
-  private String createForkChoiceRequest(final String parentBlockHash, final Long timeStamp) {
+  private String createForkChoiceRequest(
+      final String parentBlockHash, final Long timeStamp, final Long slotNum) {
     final Optional<Long> maybeTimeStamp = Optional.ofNullable(timeStamp);
+    final Optional<Long> maybeSlotNum = Optional.ofNullable(slotNum);
 
     String forkChoiceRequest =
         "{"
             + "  \"jsonrpc\": \"2.0\","
-            + "  \"method\": \"engine_forkchoiceUpdatedV3\","
+            + "  \"method\": \"engine_forkchoiceUpdatedV4\","
             + "  \"params\": ["
             + "    {"
             + "      \"headBlockHash\": \""
@@ -205,7 +219,10 @@ public class AmsterdamAcceptanceTestHelper {
               + "      \"prevRandao\": \"0x0000000000000000000000000000000000000000000000000000000000000000\","
               + "      \"suggestedFeeRecipient\": \"0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b\","
               + "      \"withdrawals\": [],"
-              + "      \"parentBeaconBlockRoot\": \"0x0000000000000000000000000000000000000000000000000000000000000000\""
+              + "      \"parentBeaconBlockRoot\": \"0x0000000000000000000000000000000000000000000000000000000000000000\","
+              + "      \"slotNumber\": \""
+              + (maybeSlotNum.isPresent() ? "0x" + Long.toHexString(maybeSlotNum.get()) : "0x0")
+              + "\""
               + "    }";
     }
 

@@ -121,6 +121,7 @@ import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.operation.ShlOperation;
 import org.hyperledger.besu.evm.operation.ShrOperation;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
+import org.hyperledger.besu.evm.operation.SlotNumOperation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
@@ -1135,6 +1136,9 @@ public class MainnetEVMs {
     // EIP-7708: SelfDestruct with transfer log emission
     registry.put(
         new SelfDestructOperation(gasCalculator, true, EIP7708TransferLogEmitter.INSTANCE));
+
+    // EIP-7843 SLOTNUM opcode
+    registry.put(new SlotNumOperation(gasCalculator));
 
     // EIP-8024: DUPN, SWAPN, EXCHANGE
     registry.put(new DupNOperation(gasCalculator));

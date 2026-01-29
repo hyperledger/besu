@@ -80,4 +80,13 @@ public interface BlockValues {
   default long getGasLimit() {
     return 0L;
   }
+
+  /**
+   * Return the block slot number.
+   *
+   * @return the block slot number
+   */
+  default long getSlotNumber() {
+    return 0L;
+  }
 }

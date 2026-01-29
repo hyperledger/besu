@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import static org.hyperledger.besu.evm.internal.Words.decodeUnsignedLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -197,7 +199,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
         @JsonProperty("hash") final String hash,
-        @JsonProperty("blockAccessListHash") final String blockAccessListHash) {
+        @JsonProperty("blockAccessListHash") final String blockAccessListHash,
+        @JsonProperty("slotNumber") final String slotNumber) {
       super(
           Hash.fromHexString(parentHash), // parentHash
           uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
@@ -225,6 +228,7 @@ public class BlockchainReferenceTestCaseSpec {
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
           blockAccessListHash != null ? Hash.fromHexString(blockAccessListHash) : null,
+          slotNumber != null ? decodeUnsignedLong(slotNumber) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {

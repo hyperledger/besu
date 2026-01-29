@@ -407,7 +407,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         withdrawals,
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
         header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
-        blockAccessList);
+        blockAccessList,
+        header.getOptionalSlotNumber().map(UnsignedLongParameter::new).orElse(null));
   }
 
   protected BlockHeader setupValidPayload(

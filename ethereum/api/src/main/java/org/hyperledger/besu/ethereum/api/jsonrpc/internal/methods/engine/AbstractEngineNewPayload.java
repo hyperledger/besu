@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
@@ -90,6 +91,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private final EthPeers ethPeers;
   private long lastExecutionTimeInNs = 0L;
 
+  protected final Optional<Long> amsterdamMilestone;
+
   public AbstractEngineNewPayload(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -106,6 +109,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         "execution_time_head",
         "The execution time of the last block (head)",
         this::getLastExecutionTime);
+
+    this.amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
   }
 
   @Override
@@ -290,6 +295,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
             maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
+            blockParam.getSlotNumber(),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash

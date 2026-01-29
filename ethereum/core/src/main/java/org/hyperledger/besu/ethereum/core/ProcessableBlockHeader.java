@@ -46,6 +46,8 @@ public class ProcessableBlockHeader
   protected final Bytes32 mixHashOrPrevRandao;
   // parentBeaconBlockRoot is included for Cancun
   protected final Bytes32 parentBeaconBlockRoot;
+  // slotNumber is included for Amsterdam (EIP-7843)
+  protected final Long slotNumber;
 
   protected ProcessableBlockHeader(
       final Hash parentHash,
@@ -56,7 +58,8 @@ public class ProcessableBlockHeader
       final long timestamp,
       final Wei baseFee,
       final Bytes32 mixHashOrPrevRandao,
-      final Bytes32 parentBeaconBlockRoot) {
+      final Bytes32 parentBeaconBlockRoot,
+      final Long slotNumber) {
     this.parentHash = parentHash;
     this.coinbase = coinbase;
     this.difficulty = difficulty;
@@ -66,6 +69,7 @@ public class ProcessableBlockHeader
     this.baseFee = baseFee;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao;
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
+    this.slotNumber = slotNumber;
   }
 
   /**
@@ -178,6 +182,26 @@ public class ProcessableBlockHeader
     return Optional.ofNullable(parentBeaconBlockRoot);
   }
 
+  /**
+   * Returns the slot number for the block.
+   *
+   * @return the slot number
+   */
+  @Override
+  public long getSlotNumber() {
+    return slotNumber != null ? slotNumber : 0L;
+  }
+
+  /**
+   * Returns the optional slot number for the block.
+   *
+   * @return the optional slot number
+   */
+  @Override
+  public Optional<Long> getOptionalSlotNumber() {
+    return Optional.ofNullable(slotNumber);
+  }
+
   public String toLogString() {
     return getNumber() + " (time: " + getTimestamp() + ")";
   }
@@ -196,6 +220,9 @@ public class ProcessableBlockHeader
     sb.append("mixHashOrPrevRandao=").append(mixHashOrPrevRandao).append(", ");
     if (parentBeaconBlockRoot != null) {
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
+    }
+    if (slotNumber != null) {
+      sb.append("slotNumber=").append(slotNumber).append(", ");
     }
     return sb.append("}").toString();
   }

@@ -63,6 +63,7 @@ public class ChainForTestCreator {
         null,
         null,
         null,
+        null, // slotNumber
         new MainnetBlockHeaderFunctions());
   }
 
@@ -91,7 +92,8 @@ public class ChainForTestCreator {
         blockHeader.getExcessBlobGas().orElse(null),
         blockHeader.getParentBeaconBlockRoot().orElse(null),
         blockHeader.getRequestsHash().orElse(null),
-        null,
+        null, // balHash
+        null, // slotNumber
         new MainnetBlockHeaderFunctions());
   }
 
@@ -143,6 +145,7 @@ public class ChainForTestCreator {
         null,
         null,
         null,
+        null, // slotNumber
         new MainnetBlockHeaderFunctions());
   }
 }

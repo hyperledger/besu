@@ -227,7 +227,8 @@ public class BlockchainReferenceTestTools {
         blockFromReference.getHeader().getMixHashOrPrevRandao(),
         blockFromReference.getHeader().getTimestamp(),
         withdrawals,
-        blockFromReference.getHeader().getParentBeaconBlockRoot());
+        blockFromReference.getHeader().getParentBeaconBlockRoot(),
+        blockFromReference.getHeader().getOptionalSlotNumber());
   }
 
   static void verifyJournaledEVMAccountCompatability(
