@@ -802,10 +802,9 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   //    if ((cmp > 0) || ((cmp == 0) && (Long.compareUnsigned(t0, x0) >= 0))) v--;
   //  }
   //  return v;
-  //}
+  // }
 
-  private static DivEstimate div2by1(final long x1, final long x0, final long y, final long yInv)
-  {
+  private static DivEstimate div2by1(final long x1, final long x0, final long y, final long yInv) {
     long z1 = x1;
     long z0 = x0;
 
@@ -856,8 +855,9 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return z0;
   }
 
-  //private static Div2Estimate div3by2(
-  //    final long x2, final long x1, final long x0, final long y1, final long y0, final long yInv) {
+  // private static Div2Estimate div3by2(
+  //    final long x2, final long x1, final long x0, final long y1, final long y0, final long yInv)
+  // {
   //  // <x2, x1, x0> divided by <y1, y0>.
   //  // Requires <x2, x1> < <y1, y0> otherwise quotient overflows.
   //  long overflow; // carry or borrow
@@ -910,7 +910,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   //    z1 -= (y1 + overflow);
   //  }
   //  return new Div2Estimate(q1, z1, z0);
-  //}
+  // }
 
   // --------------------------------------------------------------------------
   // endregion
