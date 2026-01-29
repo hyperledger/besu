@@ -193,6 +193,7 @@ public class TransactionSimulator {
                 miningConfiguration,
                 timestamp,
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty())
             .buildProcessableBlockHeader();
 

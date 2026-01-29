@@ -198,6 +198,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             null,
             null,
             null,
+            null, // slotNumber
             getBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 

@@ -228,6 +228,7 @@ public class CliqueBesuControllerBuilderTest {
             null,
             null,
             null,
+            null, // slotNumber
             new CliqueBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 
