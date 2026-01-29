@@ -20,7 +20,7 @@
 
 ### Bug fixes
 
-## 26.1.0
+## 26.1.0-RC1
 
 ### Breaking Changes
 - Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
