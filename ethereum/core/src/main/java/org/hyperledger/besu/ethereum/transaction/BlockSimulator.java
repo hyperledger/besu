@@ -333,14 +333,14 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
 
-      // Use custom tracer if provided, otherwise fall back to transfer tracing logic
+      // Custom tracer and EthTraceTransfers are mutually exclusive
       OperationTracer operationTracer = customOperationTracer;
       if (isTraceTransfers) {
         if (operationTracer == OperationTracer.NO_TRACING) {
           operationTracer = new EthTransferLogOperationTracer();
         } else {
-          // this shouldn't happen and isTraceTransfers will go away with Glamsterdam
-          throw new IllegalArgumentException("can't use a custom tracer with Eth Trace Transfers");
+          // this shouldn't happen, and isTraceTransfers will go away with Glamsterdam
+          throw new IllegalArgumentException("Custom tracer and EthTraceTransfers are mutually exclusive");
         }
       }
 
