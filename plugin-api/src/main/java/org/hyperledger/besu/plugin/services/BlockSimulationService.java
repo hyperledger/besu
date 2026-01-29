@@ -42,7 +42,8 @@ public interface BlockSimulationService extends BesuService {
       StateOverrideMap stateOverrides);
 
   /**
-   * Simulate the processing of a block given a header, a list of transactions, blockOverrides, and a tracer.
+   * Simulate the processing of a block given a header, a list of transactions, blockOverrides, and
+   * a tracer.
    *
    * @param blockNumber the block number
    * @param transactions the transactions to include in the block

@@ -103,11 +103,18 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides) {
-    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, false, OperationTracer.NO_TRACING);
+    return processSimulation(
+        blockNumber,
+        transactions,
+        blockOverrides,
+        stateOverrides,
+        false,
+        OperationTracer.NO_TRACING);
   }
 
   /**
-   * Simulate the processing of a block given a header, a list of transactions, blockOverrides, and a tracer.
+   * Simulate the processing of a block given a header, a list of transactions, blockOverrides, and
+   * a tracer.
    *
    * @param blockNumber the block number
    * @param transactions the transactions to include in the block
@@ -123,7 +130,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides,
       final OperationTracer tracer) {
-    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, false, tracer);
+    return processSimulation(
+        blockNumber, transactions, blockOverrides, stateOverrides, false, tracer);
   }
 
   /**
@@ -143,7 +151,13 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides) {
-    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true, OperationTracer.NO_TRACING);
+    return processSimulation(
+        blockNumber,
+        transactions,
+        blockOverrides,
+        stateOverrides,
+        true,
+        OperationTracer.NO_TRACING);
   }
 
   /**
@@ -165,7 +179,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides,
       final OperationTracer tracer) {
-    return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true, tracer);
+    return processSimulation(
+        blockNumber, transactions, blockOverrides, stateOverrides, true, tracer);
   }
 
   private PluginBlockSimulationResult processSimulation(
