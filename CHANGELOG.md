@@ -17,6 +17,7 @@
     - Fast Sync
 
 ### Additions and Improvements
+- Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 
 ### Bug fixes
 
