@@ -160,29 +160,6 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
         OperationTracer.NO_TRACING);
   }
 
-  /**
-   * This method is experimental and should be used with caution. Simulate the processing of a block
-   * given a header, a list of transactions, blockOverrides, a tracer and persist the WorldState
-   *
-   * @param blockNumber the block number
-   * @param transactions the transactions to include in the block
-   * @param blockOverrides block overrides for the block
-   * @param stateOverrides state overrides of the block
-   * @param tracer the operation tracer to use during simulation
-   * @return the PluginBlockSimulationResult
-   */
-  @Unstable
-  @Override
-  public PluginBlockSimulationResult simulateAndPersistWorldState(
-      final long blockNumber,
-      final List<? extends Transaction> transactions,
-      final BlockOverrides blockOverrides,
-      final StateOverrideMap stateOverrides,
-      final OperationTracer tracer) {
-    return processSimulation(
-        blockNumber, transactions, blockOverrides, stateOverrides, true, tracer);
-  }
-
   private PluginBlockSimulationResult processSimulation(
       final long blockNumber,
       final List<? extends Transaction> transactions,
