@@ -185,7 +185,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction) {
-    final BlockAwareOperationTracer blockTracer =
+    final BlockAwareOperationTracer operationTracer =
         getBlockImportTracer(protocolContext, block.getHeader());
     return processBlock(
         protocolContext,
@@ -194,7 +194,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         block,
         blockAccessList,
         preprocessingBlockFunction,
-        blockTracer);
+        operationTracer);
   }
 
   @Override
@@ -205,7 +205,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction,
-      final BlockAwareOperationTracer blockTracer) {
+      final BlockAwareOperationTracer operationTracer) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -223,7 +223,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
-    blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
+    operationTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final Optional<BlockAccessListFactory> maybeBalFactory =
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
@@ -246,7 +246,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               worldState,
               protocolSpec,
               blockHashLookup,
-              blockTracer,
+              operationTracer,
               blockAccessListBuilder);
       protocolSpec
           .getPreExecutionProcessor()
@@ -492,7 +492,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
-      blockTracer.traceEndBlock(blockHeader, blockBody);
+      operationTracer.traceEndBlock(blockHeader, blockBody);
 
       try {
         worldState.persist(blockHeader, stateRootCommitter);

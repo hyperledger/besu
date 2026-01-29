@@ -103,7 +103,7 @@ public interface BlockProcessor {
    * @param block the block to process
    * @param blockAccessList the optional block access list
    * @param preprocessingBlockFunction a preprocessing function for block execution
-   * @param blockTracer the block aware operation tracer
+   * @param operationTracer the block aware operation tracer
    * @return the block processing result
    */
   BlockProcessingResult processBlock(
@@ -113,7 +113,7 @@ public interface BlockProcessor {
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
       final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction,
-      final BlockAwareOperationTracer blockTracer);
+      final BlockAwareOperationTracer operationTracer);
 
   /**
    * Get ommer reward in ${@link Wei}
