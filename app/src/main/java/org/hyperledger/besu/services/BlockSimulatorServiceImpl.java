@@ -168,7 +168,6 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
     return processSimulation(blockNumber, transactions, blockOverrides, stateOverrides, true, tracer);
   }
 
-  @SuppressWarnings("UnusedVariable")
   private PluginBlockSimulationResult processSimulation(
       final long blockNumber,
       final List<? extends Transaction> transactions,
@@ -176,11 +175,6 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final StateOverrideMap stateOverrides,
       final boolean persistWorldState,
       final OperationTracer tracer) {
-    // TODO: Custom tracer support needs to be implemented in BlockSimulator
-    // Currently BlockSimulator hardcodes tracer selection based on traceTransfers flag
-    // See BlockSimulator.java line ~332 for existing tracer logic
-    // The tracer parameter is accepted for API compatibility but not yet used
-    
     BlockHeader header = getBlockHeader(blockNumber);
     List<CallParameter> callParameters =
         transactions.stream().map(CallParameter::fromTransaction).toList();
@@ -192,6 +186,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
               .blockStateCalls(List.of(blockStateCall))
               .validation(true)
               .fakeSignature(FAKE_SIGNATURE)
+              .operationTracer(tracer)
               .build();
 
       List<BlockSimulationResult> results =

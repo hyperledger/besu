@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StateOverride;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -47,6 +48,7 @@ public class BlockSimulationParameter {
   private final boolean returnFullTransactions;
   private final boolean returnTrieLog;
   private final SECPSignature fakeSignature;
+  private final OperationTracer operationTracer;
 
   public BlockSimulationParameter(
       final List<? extends BlockStateCall> blockStateCalls,
@@ -78,13 +80,33 @@ public class BlockSimulationParameter {
       final boolean returnFullTransactions,
       final boolean returnTrieLog,
       final SECPSignature fakeSignature) {
+    this(
+        blockStateCalls,
+        validation,
+        traceTransfers,
+        returnFullTransactions,
+        returnTrieLog,
+        fakeSignature,
+        OperationTracer.NO_TRACING);
+  }
+
+  public BlockSimulationParameter(
+      final List<? extends BlockStateCall> blockStateCalls,
+      final boolean validation,
+      final boolean traceTransfers,
+      final boolean returnFullTransactions,
+      final boolean returnTrieLog,
+      final SECPSignature fakeSignature,
+      final OperationTracer operationTracer) {
     checkNotNull(blockStateCalls);
+    checkNotNull(operationTracer);
     this.blockStateCalls = blockStateCalls;
     this.validation = validation;
     this.traceTransfers = traceTransfers;
     this.returnFullTransactions = returnFullTransactions;
     this.returnTrieLog = returnTrieLog;
     this.fakeSignature = fakeSignature;
+    this.operationTracer = operationTracer;
   }
 
   public List<? extends BlockStateCall> getBlockStateCalls() {
@@ -109,6 +131,10 @@ public class BlockSimulationParameter {
 
   public SECPSignature getFakeSignature() {
     return fakeSignature;
+  }
+
+  public OperationTracer getOperationTracer() {
+    return operationTracer;
   }
 
   public Optional<BlockStateCallError> validate(final Set<Address> validPrecompileAddresses) {
@@ -216,6 +242,7 @@ public class BlockSimulationParameter {
     private boolean returnTrieLog = false;
     private SECPSignature fakeSignature =
         new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0);
+    private OperationTracer operationTracer = OperationTracer.NO_TRACING;
 
     public BlockSimulationParameterBuilder blockStateCalls(
         final List<? extends BlockStateCall> blockStateCalls) {
@@ -249,6 +276,11 @@ public class BlockSimulationParameter {
       return this;
     }
 
+    public BlockSimulationParameterBuilder operationTracer(final OperationTracer operationTracer) {
+      this.operationTracer = operationTracer;
+      return this;
+    }
+
     public BlockSimulationParameter build() {
       return new BlockSimulationParameter(
           blockStateCalls,
@@ -256,7 +288,8 @@ public class BlockSimulationParameter {
           traceTransfers,
           returnFullTransactions,
           returnTrieLog,
-          fakeSignature);
+          fakeSignature,
+          operationTracer);
     }
   }
 }

@@ -171,7 +171,8 @@ public class BlockSimulator {
               simulationParameter.isReturnTrieLog(),
               simulationParameter::getFakeSignature,
               blockHashCache,
-              simulationCumulativeGasUsed);
+              simulationCumulativeGasUsed,
+              simulationParameter.getOperationTracer());
       results.add(result);
       BlockHeader resultBlockHeader = result.getBlock().getHeader();
       blockHashCache.put(resultBlockHeader.getNumber(), resultBlockHeader.getHash());
@@ -187,6 +188,7 @@ public class BlockSimulator {
    * @param baseBlockHeader The block header for the simulation.
    * @param blockStateCall The BlockStateCall to process.
    * @param ws The MutableWorldState to use for the simulation.
+   * @param customOperationTracer The custom operation tracer to use
    * @return A BlockSimulationResult from processing the BlockStateCall.
    */
   private BlockSimulationResult processBlockStateCall(
@@ -198,7 +200,8 @@ public class BlockSimulator {
       final boolean returnTrieLog,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
-      final long simulationCumulativeGasUsed) {
+      final long simulationCumulativeGasUsed,
+      final OperationTracer customOperationTracer) {
 
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     ProtocolSpec protocolSpec =
@@ -257,7 +260,8 @@ public class BlockSimulator {
             blockHashLookup,
             signatureSupplier,
             simulationCumulativeGasUsed,
-            blockAccessListBuilder);
+            blockAccessListBuilder,
+            customOperationTracer);
 
     Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
@@ -305,7 +309,8 @@ public class BlockSimulator {
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
       final long simulationCumulativeGasUsed,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final OperationTracer customOperationTracer) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
@@ -327,10 +332,17 @@ public class BlockSimulator {
         transactionLocation++) {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
-      // TODO can't use this at same time as passing in a custom tracer
-      // TODO see TraceAggregator - collection of tracers
-      OperationTracer operationTracer =
-          isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
+
+      // Use custom tracer if provided, otherwise fall back to transfer tracing logic
+      OperationTracer operationTracer = customOperationTracer;
+      if (isTraceTransfers) {
+        if (operationTracer == OperationTracer.NO_TRACING) {
+          operationTracer = new EthTransferLogOperationTracer();
+        } else {
+          // this shouldn't happen and isTraceTransfers will go away with Glamsterdam
+          throw new IllegalArgumentException("can't use a custom tracer with Eth Trace Transfers");
+        }
+      }
 
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
