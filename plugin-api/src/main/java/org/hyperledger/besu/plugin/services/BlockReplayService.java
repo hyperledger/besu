@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.plugin.services;
 
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockReplayResult;

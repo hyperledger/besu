@@ -13,8 +13,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.plugin.data;
+
 /**
- * The result of replaying a block, including both the context of the block and the result of processing it.
+ * The result of replaying a block, including both the context of the block and the result of
+ * processing it.
  */
 public interface BlockReplayResult {
   /**
@@ -22,12 +24,12 @@ public interface BlockReplayResult {
    *
    * @return the context of the block
    */
-  BlockContext getBlockContext();
+  BlockContext blockContext();
 
-    /**
-     * Gets the result of processing the block.
-     *
-     * @return the result of processing the block
-     */
-  BlockProcessingResult getBlockProcessingResult();
+  /**
+   * Gets the result of processing the block.
+   *
+   * @return the result of processing the block
+   */
+  BlockProcessingResult processingResult();
 }
