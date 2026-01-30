@@ -36,6 +36,7 @@ import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -217,5 +218,410 @@ public class BftBlockCreatorTest {
         .isEqualTo(
             new BftBlockHashing(bftExtraDataEncoder)
                 .calculateDataHashForCommittedSeal(header, extraData));
+  }
+
+  @Test
+  public void createdBlockCheckNonZeroCustomMiningBeneficiaryReturned() {
+    // Construct a parent block.
+    final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
+    blockHeaderBuilder.gasLimit(5000); // required to pass validation rule checks.
+    final BlockHeader parentHeader = blockHeaderBuilder.buildHeader();
+    final Optional<BlockHeader> optionalHeader = Optional.of(parentHeader);
+
+    // Construct a blockchain and world state
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
+    when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+
+    final List<Address> initialValidatorList = Lists.newArrayList();
+    for (int i = 0; i < 4; i++) {
+      initialValidatorList.add(AddressHelpers.ofValue(i));
+    }
+
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
+          @Override
+          public BlockHeaderValidator.Builder createBlockHeaderRuleset(
+              final BftConfigOptions config, final FeeMarket feeMarket) {
+            return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                Duration.ofSeconds(5), Optional.empty());
+          }
+        };
+
+    // Custom (non-zero) mining beneficiary should be returned when beneficiary is calculated
+    final GenesisConfigOptions configOptions =
+        GenesisConfig.fromConfig(
+                "{\"config\": {\"berlinBlock\":0, \"qbft\": {\"blockperiodseconds\": 2, \"miningbeneficiary\":\"0x000000000000000000000000000000000000abcd\"}}}")
+            .getConfigOptions();
+
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));
+    final ProtocolSchedule protocolSchedule =
+        bftProtocolSchedule.createProtocolSchedule(
+            configOptions,
+            forksSchedule,
+            false,
+            bftExtraDataEncoder,
+            EvmConfiguration.DEFAULT,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem());
+    final ProtocolContext protContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(createInMemoryWorldStateArchive())
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder))
+            .build();
+
+    final TransactionPoolConfiguration poolConf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        new GasPricePendingTransactionsSorter(
+            poolConf,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            blockchain::getChainHeadHeader);
+
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            protocolSchedule,
+            protContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf,
+            new BlobCache());
+
+    transactionPool.setEnabled();
+
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(
+                        bftExtraDataEncoder.encode(
+                            new BftExtraData(
+                                Bytes.wrap(new byte[32]),
+                                Collections.emptyList(),
+                                Optional.empty(),
+                                0,
+                                initialValidatorList)))
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
+            .build();
+
+    final BftBlockCreator blockCreator =
+        new BftBlockCreator(
+            miningConfiguration,
+            forksSchedule,
+            initialValidatorList.get(3),
+            parent ->
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
+                        Bytes.wrap(new byte[32]),
+                        Collections.emptyList(),
+                        Optional.empty(),
+                        0,
+                        initialValidatorList)),
+            transactionPool,
+            protContext,
+            protocolSchedule,
+            bftExtraDataEncoder,
+            new DeterministicEthScheduler());
+
+    final Block block =
+        blockCreator.createBlock(parentHeader.getTimestamp() + 1, parentHeader).getBlock();
+
+    // Pass in non-zero coinbase, check we get zero address back based on bft config
+    AbstractBlockCreator.MiningBeneficiaryCalculator calculatedBeneficiary =
+        BftBlockCreator.miningBeneficiaryCalculator(protocolSchedule);
+    // Our custom mining beneficiary should be returned when beneficiary is calculated
+    assertThat(calculatedBeneficiary.getMiningBeneficiary(0, block.getHeader()))
+        .isEqualTo(Address.fromHexString("0x00000000000000000000000000000000000abcd"));
+  }
+
+  @Test
+  public void createdBlockCheckZeroAddressCustomMiningBeneficiaryReturned() {
+    // Construct a parent block.
+    final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
+    blockHeaderBuilder.gasLimit(5000); // required to pass validation rule checks.
+    final BlockHeader parentHeader = blockHeaderBuilder.buildHeader();
+    final Optional<BlockHeader> optionalHeader = Optional.of(parentHeader);
+
+    // Construct a blockchain and world state
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
+    when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+
+    final List<Address> initialValidatorList = Lists.newArrayList();
+    for (int i = 0; i < 4; i++) {
+      initialValidatorList.add(AddressHelpers.ofValue(i));
+    }
+
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
+          @Override
+          public BlockHeaderValidator.Builder createBlockHeaderRuleset(
+              final BftConfigOptions config, final FeeMarket feeMarket) {
+            return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                Duration.ofSeconds(5), Optional.empty());
+          }
+        };
+
+    // Custom (but zero) mining beneficiary should be returned when beneficiary is calculated
+    final GenesisConfigOptions configOptions =
+        GenesisConfig.fromConfig(
+                "{\"config\": {\"berlinBlock\":0, \"qbft\": {\"blockperiodseconds\": 2, \"miningbeneficiary\":\"0x0000000000000000000000000000000000000000\"}}}")
+            .getConfigOptions();
+
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));
+    final ProtocolSchedule protocolSchedule =
+        bftProtocolSchedule.createProtocolSchedule(
+            configOptions,
+            forksSchedule,
+            false,
+            bftExtraDataEncoder,
+            EvmConfiguration.DEFAULT,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem());
+    final ProtocolContext protContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(createInMemoryWorldStateArchive())
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder))
+            .build();
+
+    final TransactionPoolConfiguration poolConf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        new GasPricePendingTransactionsSorter(
+            poolConf,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            blockchain::getChainHeadHeader);
+
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            protocolSchedule,
+            protContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf,
+            new BlobCache());
+
+    transactionPool.setEnabled();
+
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(
+                        bftExtraDataEncoder.encode(
+                            new BftExtraData(
+                                Bytes.wrap(new byte[32]),
+                                Collections.emptyList(),
+                                Optional.empty(),
+                                0,
+                                initialValidatorList)))
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
+            .build();
+
+    final BftBlockCreator blockCreator =
+        new BftBlockCreator(
+            miningConfiguration,
+            forksSchedule,
+            initialValidatorList.get(3),
+            parent ->
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
+                        Bytes.wrap(new byte[32]),
+                        Collections.emptyList(),
+                        Optional.empty(),
+                        0,
+                        initialValidatorList)),
+            transactionPool,
+            protContext,
+            protocolSchedule,
+            bftExtraDataEncoder,
+            new DeterministicEthScheduler());
+
+    final Block block =
+        blockCreator.createBlock(parentHeader.getTimestamp() + 1, parentHeader).getBlock();
+
+    // Pass in non-zero coinbase, check we get zero address back based on bft config
+    AbstractBlockCreator.MiningBeneficiaryCalculator calculatedBeneficiary =
+        BftBlockCreator.miningBeneficiaryCalculator(protocolSchedule);
+
+    // Our custom mining beneficiary should be returned when beneficiary is calculated
+    assertThat(calculatedBeneficiary.getMiningBeneficiary(0, block.getHeader()))
+        .isEqualTo(Address.fromHexString("0x000000000000000000000000000000000000000"));
+  }
+
+  @Test
+  public void createdBlockCheckEmptyCustomMiningBeneficiaryReturnsHeaderCoinbase() {
+    // Construct a parent block.
+    final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
+    blockHeaderBuilder.gasLimit(5000); // required to pass validation rule checks.
+    final BlockHeader parentHeader = blockHeaderBuilder.buildHeader();
+    final Optional<BlockHeader> optionalHeader = Optional.of(parentHeader);
+
+    // Construct a blockchain and world state
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
+    when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+
+    final List<Address> initialValidatorList = Lists.newArrayList();
+    for (int i = 0; i < 4; i++) {
+      initialValidatorList.add(AddressHelpers.ofValue(i));
+    }
+
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
+          @Override
+          public BlockHeaderValidator.Builder createBlockHeaderRuleset(
+              final BftConfigOptions config, final FeeMarket feeMarket) {
+            return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                Duration.ofSeconds(5), Optional.empty());
+          }
+        };
+
+    // Empty mining beneficiary should result in block coinbase being returned
+    final GenesisConfigOptions configOptions =
+        GenesisConfig.fromConfig(
+                "{\"config\": {\"berlinBlock\":0, \"qbft\": {\"blockperiodseconds\": 2, \"miningbeneficiary\":\"\"}}}")
+            .getConfigOptions();
+
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));
+    final ProtocolSchedule protocolSchedule =
+        bftProtocolSchedule.createProtocolSchedule(
+            configOptions,
+            forksSchedule,
+            false,
+            bftExtraDataEncoder,
+            EvmConfiguration.DEFAULT,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem());
+    final ProtocolContext protContext =
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(createInMemoryWorldStateArchive())
+            .withConsensusContext(
+                setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder))
+            .build();
+
+    final TransactionPoolConfiguration poolConf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        new GasPricePendingTransactionsSorter(
+            poolConf,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            blockchain::getChainHeadHeader);
+
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            protocolSchedule,
+            protContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf,
+            new BlobCache());
+
+    transactionPool.setEnabled();
+
+    final MiningConfiguration miningConfiguration =
+        ImmutableMiningConfiguration.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(
+                        bftExtraDataEncoder.encode(
+                            new BftExtraData(
+                                Bytes.wrap(new byte[32]),
+                                Collections.emptyList(),
+                                Optional.empty(),
+                                0,
+                                initialValidatorList)))
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
+            .build();
+
+    final BftBlockCreator blockCreator =
+        new BftBlockCreator(
+            miningConfiguration,
+            forksSchedule,
+            initialValidatorList.get(3),
+            parent ->
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
+                        Bytes.wrap(new byte[32]),
+                        Collections.emptyList(),
+                        Optional.empty(),
+                        0,
+                        initialValidatorList)),
+            transactionPool,
+            protContext,
+            protocolSchedule,
+            bftExtraDataEncoder,
+            new DeterministicEthScheduler());
+
+    final Block block =
+        blockCreator.createBlock(parentHeader.getTimestamp() + 1, parentHeader).getBlock();
+
+    // Pass in non-zero coinbase, check we get zero address back based on bft config
+    AbstractBlockCreator.MiningBeneficiaryCalculator calculatedBeneficiary =
+        BftBlockCreator.miningBeneficiaryCalculator(protocolSchedule);
+
+    // Coinbase should be returned when beneficiary is calculated, not the empty "" custom mining
+    // beneficiary
+    assertThat(calculatedBeneficiary.getMiningBeneficiary(0, block.getHeader()))
+        .isEqualTo(initialValidatorList.get(3));
   }
 }
