@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
@@ -92,7 +93,9 @@ public class DebugTraceCall extends AbstractTraceCall {
 
   @Override
   protected PreCloseStateHandler<Object> getSimulatorResultHandler(
-      final JsonRpcRequestContext requestContext, final DebugOperationTracer tracer) {
+      final JsonRpcRequestContext requestContext,
+      final DebugOperationTracer tracer,
+      final ProtocolSpec protocolSpec) {
     return (mutableWorldState, maybeSimulatorResult) ->
         maybeSimulatorResult.map(
             result -> {
@@ -106,7 +109,8 @@ public class DebugTraceCall extends AbstractTraceCall {
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
                       result.transaction(), result.result(), tracer.getTraceFrames());
-              return DebugTraceTransactionStepFactory.create(getTraceOptions(requestContext))
+              return DebugTraceTransactionStepFactory.create(
+                      getTraceOptions(requestContext), protocolSpec)
                   .apply(transactionTrace)
                   .getResult();
             });
