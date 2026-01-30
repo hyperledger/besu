@@ -23,11 +23,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.FourByteTracerResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.debug.TracerType;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +50,7 @@ class DebugTraceTransactionStepFactoryTest {
   private Transaction mockTransaction;
   private Hash mockHash;
   private TransactionProcessingResult mockResult;
+  private ProtocolSpec mockProtocolSpec;
 
   private static final String EXPECTED_HASH =
       "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
@@ -58,6 +62,12 @@ class DebugTraceTransactionStepFactoryTest {
     mockTransaction = mock(Transaction.class);
     mockHash = mock(Hash.class);
     mockResult = mock(TransactionProcessingResult.class);
+    mockProtocolSpec = mock(ProtocolSpec.class);
+
+    // Setup PrecompileContractRegistry for FourByteTracer
+    PrecompileContractRegistry mockRegistry = mock(PrecompileContractRegistry.class);
+    when(mockProtocolSpec.getPrecompileContractRegistry()).thenReturn(mockRegistry);
+    when(mockRegistry.get(org.mockito.ArgumentMatchers.any(Address.class))).thenReturn(null);
 
     // Set up transaction hash chain
     when(mockTransactionTrace.getTransaction()).thenReturn(mockTransaction);
@@ -83,7 +93,7 @@ class DebugTraceTransactionStepFactoryTest {
     TracerType tracerType = TracerType.OPCODE_TRACER;
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(traceOptions);
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
 
     // When
     DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
@@ -92,6 +102,24 @@ class DebugTraceTransactionStepFactoryTest {
     assertThat(result).isNotNull();
     assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
     assertThat(result.getResult()).isInstanceOf(OpCodeLoggerTracerResult.class);
+  }
+
+  @Test
+  @DisplayName("should create function for FOUR_BYTE_TRACER that returns FourByteTracerResult")
+  void shouldCreateFunctionForFourByteTracer() {
+    // Given
+    TracerType tracerType = TracerType.FOUR_BYTE_TRACER;
+    TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
+    Function<TransactionTrace, DebugTraceTransactionResult> function =
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
+
+    // When
+    DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
+
+    // Then
+    assertThat(result).isNotNull();
+    assertThat(result.getTxHash()).isEqualTo(EXPECTED_HASH);
+    assertThat(result.getResult()).isInstanceOf(FourByteTracerResult.class);
   }
 
   @ParameterizedTest
@@ -103,7 +131,7 @@ class DebugTraceTransactionStepFactoryTest {
     // Given
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(traceOptions);
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
 
     // When
     DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
@@ -122,7 +150,7 @@ class DebugTraceTransactionStepFactoryTest {
     // When
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(traceOptions);
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
 
     // Then
     assertThat(function).isNotNull();
@@ -136,7 +164,7 @@ class DebugTraceTransactionStepFactoryTest {
     // Given
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> function =
-        DebugTraceTransactionStepFactory.create(traceOptions);
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
 
     // When
     DebugTraceTransactionResult result = function.apply(mockTransactionTrace);
@@ -153,7 +181,7 @@ class DebugTraceTransactionStepFactoryTest {
     // Given
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
         DebugTraceTransactionStepFactory.createAsync(
-            new TraceOptions(TracerType.OPCODE_TRACER, null, null));
+            new TraceOptions(TracerType.OPCODE_TRACER, null, null), mockProtocolSpec);
 
     // When
     CompletableFuture<DebugTraceTransactionResult> future =
@@ -175,7 +203,7 @@ class DebugTraceTransactionStepFactoryTest {
     // When
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(traceOptions);
+        DebugTraceTransactionStepFactory.createAsync(traceOptions, mockProtocolSpec);
 
     // Then
     assertThat(asyncFunction).isNotNull();
@@ -189,7 +217,7 @@ class DebugTraceTransactionStepFactoryTest {
     // Given
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(traceOptions);
+        DebugTraceTransactionStepFactory.createAsync(traceOptions, mockProtocolSpec);
 
     // When
     CompletableFuture<DebugTraceTransactionResult> future =
@@ -211,9 +239,9 @@ class DebugTraceTransactionStepFactoryTest {
     TracerType tracerType = TracerType.OPCODE_TRACER;
     TraceOptions traceOptions = new TraceOptions(tracerType, null, null);
     Function<TransactionTrace, DebugTraceTransactionResult> syncFunction =
-        DebugTraceTransactionStepFactory.create(traceOptions);
+        DebugTraceTransactionStepFactory.create(traceOptions, mockProtocolSpec);
     Function<TransactionTrace, CompletableFuture<DebugTraceTransactionResult>> asyncFunction =
-        DebugTraceTransactionStepFactory.createAsync(traceOptions);
+        DebugTraceTransactionStepFactory.createAsync(traceOptions, mockProtocolSpec);
 
     // When
     DebugTraceTransactionResult syncResult = syncFunction.apply(mockTransactionTrace);

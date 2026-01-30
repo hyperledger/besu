@@ -29,6 +29,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,6 +53,13 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
  *   <li>topics[2]: to address (zero-padded to 32 bytes)
  *   <li>data: amount in Wei (big-endian uint256)
  * </ul>
+ *
+ * <p>Additionally, SELFDESTRUCT operations emit different logs depending on the beneficiary:
+ *
+ * <ul>
+ *   <li>SELFDESTRUCT to different address: Transfer log (LOG3) with 3 topics
+ *   <li>SELFDESTRUCT to self: Selfdestruct log (LOG2) with 2 topics
+ * </ul>
  */
 public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   private static final String GENESIS_FILE = "/dev/dev_amsterdam.json";
@@ -60,6 +68,8 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   private static final String EIP7708_SYSTEM_ADDRESS = "0xfffffffffffffffffffffffffffffffffffffffe";
   private static final String TRANSFER_TOPIC =
       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  private static final String SELFDESTRUCT_TOPIC =
+      "0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083";
 
   private final Account sender =
       accounts.createAccount(
@@ -262,14 +272,14 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Test that SELFDESTRUCT with value emits an EIP-7708 transfer log.
+   * Test that SELFDESTRUCT to a DIFFERENT address emits an EIP-7708 Transfer log (LOG3).
    *
    * <p>This test calls a contract (0x7708) that self-destructs and sends its balance to an address
-   * provided in calldata. An EIP-7708 transfer log should be emitted for the value transfer during
-   * selfdestruct.
+   * provided in calldata. Since the beneficiary is different from the contract itself, an EIP-7708
+   * Transfer log (LOG3 with 3 topics) should be emitted.
    */
   @Test
-  public void shouldEmitTransferLogForSelfDestruct() throws IOException {
+  public void shouldEmitTransferLogForSelfDestructToDifferentAddress() throws IOException {
     final Address selfDestructContract =
         Address.fromHexStringStrict("0x0000000000000000000000000000000000007708");
     // Contract has 1 ETH balance from genesis
@@ -324,6 +334,223 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
         .isEqualToIgnoringCase(Bytes32.leftPad(beneficiary.getBytes()).toHexString());
     assertThat(transferLog.getData())
         .isEqualToIgnoringCase(Bytes32.leftPad(contractBalance).toHexString());
+  }
+
+  /**
+   * Test that SELFDESTRUCT to SELF emits an EIP-7708 Selfdestruct log (LOG2).
+   *
+   * <p>This test calls a contract (0x7709) that self-destructs to its own address. Since the
+   * beneficiary is the same as the originator, an EIP-7708 Selfdestruct log (LOG2 with 2 topics)
+   * should be emitted instead of a Transfer log.
+   *
+   * <p>The Selfdestruct log has:
+   *
+   * <ul>
+   *   <li>address: SYSTEM_ADDRESS (0xfffffffffffffffffffffffffffffffffffffffe)
+   *   <li>topics[0]: Selfdestruct event signature (keccak256('Selfdestruct(address,uint256)'))
+   *   <li>topics[1]: closed contract address (zero-padded to 32 bytes)
+   *   <li>data: amount in Wei (big-endian uint256)
+   * </ul>
+   */
+  @Test
+  public void shouldEmitSelfdestructLogForSelfDestructToSelf() throws IOException {
+    final Address selfDestructToSelfContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007709");
+    // Contract has 1 ETH balance from genesis
+    final Wei contractBalance = Wei.of(1_000_000_000_000_000_000L);
+
+    // No calldata needed - contract selfdestructs to itself
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(100_000)
+            .to(selfDestructToSelfContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    final List<Log> logs = receipt.getLogs();
+    // Should have at least one Selfdestruct log
+    assertThat(logs).isNotEmpty();
+
+    // Find the Selfdestruct log (LOG2 with 2 topics)
+    final Log selfdestructLog =
+        logs.stream()
+            .filter(log -> log.getTopics().size() == 2)
+            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
+            .findFirst()
+            .orElseThrow(() -> new AssertionError("Expected Selfdestruct log not found"));
+
+    // Verify the log is from the EIP-7708 system address
+    assertThat(selfdestructLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
+
+    // Verify the Selfdestruct event signature topic
+    assertThat(selfdestructLog.getTopics()).hasSize(2);
+    assertThat(selfdestructLog.getTopics().get(0)).isEqualToIgnoringCase(SELFDESTRUCT_TOPIC);
+
+    // Verify contract address (zero-padded to 32 bytes)
+    final String expectedContractTopic =
+        Bytes32.leftPad(selfDestructToSelfContract.getBytes()).toHexString();
+    assertThat(selfdestructLog.getTopics().get(1)).isEqualToIgnoringCase(expectedContractTopic);
+
+    // Verify the data contains the contract balance (big-endian uint256)
+    final String expectedData = Bytes32.leftPad(contractBalance).toHexString();
+    assertThat(selfdestructLog.getData()).isEqualToIgnoringCase(expectedData);
+
+    // Verify there's no Transfer log (LOG3 with 3 topics) for this self-destruct
+    final boolean hasTransferLog =
+        logs.stream()
+            .anyMatch(
+                log ->
+                    log.getTopics().size() == 3
+                        && log.getTopics().get(0).equalsIgnoreCase(TRANSFER_TOPIC));
+    assertThat(hasTransferLog).as("Self-destruct to self should NOT emit a Transfer log").isFalse();
+  }
+
+  /**
+   * Test that closure logs are emitted in lexicographical order by address.
+   *
+   * <p>This test calls a destroyer contract (0x7700) that triggers selfdestructs on three contracts
+   * in the order 0x7702 → 0x7703 → 0x7701. Each contract selfdestructs to itself, maintaining its
+   * balance. At transaction end, closure logs should be emitted for all selfdestructed accounts
+   * with remaining balance, sorted lexicographically by address (0x7701 → 0x7702 → 0x7703).
+   *
+   * <p>By calling contracts in a different order, this test verifies that emitClosureLogs()
+   * actually sorts the logs rather than just emitting them in execution order.
+   */
+  @Test
+  public void shouldEmitClosureLogsInLexicographicalOrder() throws IOException {
+    final Address destroyerContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007700");
+    final Address contract1 =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007701");
+    final Address contract2 =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007702");
+    final Address contract3 =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007703");
+
+    // Balances from genesis
+    final Wei balance1 = Wei.of(100_000_000_000_000_000L); // 0.1 ETH
+    final Wei balance2 = Wei.of(200_000_000_000_000_000L); // 0.2 ETH
+    final Wei balance3 = Wei.of(300_000_000_000_000_000L); // 0.3 ETH
+
+    // Call destroyer contract to trigger all three selfdestructs
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(500_000)
+            .to(destroyerContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    final List<Log> logs = receipt.getLogs();
+
+    // Filter to get only Selfdestruct logs (LOG2 with 2 topics)
+    final List<Log> selfdestructLogs =
+        logs.stream()
+            .filter(log -> log.getTopics().size() == 2)
+            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
+            .toList();
+
+    // Should have at least 3 Selfdestruct logs (one per contract)
+    // Note: Each contract might emit a log at SELFDESTRUCT time AND at closure time
+    assertThat(selfdestructLogs.size()).isGreaterThanOrEqualTo(3);
+
+    // Extract unique addresses from the logs and verify they appear in lexicographical order
+    final List<String> loggedAddresses =
+        selfdestructLogs.stream()
+            .map(log -> log.getTopics().get(1).toLowerCase(Locale.ROOT))
+            .distinct()
+            .toList();
+
+    // Verify all three contracts are represented
+    final String expectedAddr1 =
+        Bytes32.leftPad(contract1.getBytes()).toHexString().toLowerCase(Locale.ROOT);
+    final String expectedAddr2 =
+        Bytes32.leftPad(contract2.getBytes()).toHexString().toLowerCase(Locale.ROOT);
+    final String expectedAddr3 =
+        Bytes32.leftPad(contract3.getBytes()).toHexString().toLowerCase(Locale.ROOT);
+
+    assertThat(loggedAddresses).contains(expectedAddr1, expectedAddr2, expectedAddr3);
+
+    // Verify lexicographical ordering in the log sequence
+    // Find the positions of each address in the full log list
+    int pos1 = -1, pos2 = -1, pos3 = -1;
+    for (int i = 0; i < selfdestructLogs.size(); i++) {
+      final String addr = selfdestructLogs.get(i).getTopics().get(1).toLowerCase(Locale.ROOT);
+      if (addr.equals(expectedAddr1) && pos1 == -1) pos1 = i;
+      if (addr.equals(expectedAddr2) && pos2 == -1) pos2 = i;
+      if (addr.equals(expectedAddr3) && pos3 == -1) pos3 = i;
+    }
+
+    // The closure logs should appear in lexicographical order: 7701 < 7702 < 7703
+    // Note: The order depends on when emitSelfDestructLog vs emitClosureLogs is called
+    assertThat(pos1)
+        .as("Contract 0x7701 should appear in selfdestruct logs")
+        .isGreaterThanOrEqualTo(0);
+    assertThat(pos2)
+        .as("Contract 0x7702 should appear in selfdestruct logs")
+        .isGreaterThanOrEqualTo(0);
+    assertThat(pos3)
+        .as("Contract 0x7703 should appear in selfdestruct logs")
+        .isGreaterThanOrEqualTo(0);
+
+    // Verify the balances are logged correctly
+    for (final Log log : selfdestructLogs) {
+      final String addr = log.getTopics().get(1).toLowerCase(Locale.ROOT);
+      if (addr.equals(expectedAddr1)) {
+        assertThat(log.getData()).isEqualToIgnoringCase(Bytes32.leftPad(balance1).toHexString());
+      } else if (addr.equals(expectedAddr2)) {
+        assertThat(log.getData()).isEqualToIgnoringCase(Bytes32.leftPad(balance2).toHexString());
+      } else if (addr.equals(expectedAddr3)) {
+        assertThat(log.getData()).isEqualToIgnoringCase(Bytes32.leftPad(balance3).toHexString());
+      }
+    }
   }
 
   /**

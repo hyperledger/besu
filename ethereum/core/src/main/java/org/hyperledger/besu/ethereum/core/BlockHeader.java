@@ -69,6 +69,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final Hash balHash,
+      final Long slotNumber,
       final BlockHeaderFunctions blockHeaderFunctions) {
     this(
         parentHash,
@@ -93,6 +94,7 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         blockHeaderFunctions,
         Optional.empty());
   }
@@ -120,6 +122,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final Hash balHash,
+      final Long slotNumber,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<Bytes> rawRlp) {
     super(
@@ -143,7 +146,8 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        balHash);
+        balHash,
+        slotNumber);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -173,6 +177,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final Hash balHash,
+      final Long slotNumber,
       final Hash blockHeaderHash,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<Bytes> rawRlp) {
@@ -197,7 +202,8 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        balHash);
+        balHash,
+        slotNumber);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderHash);
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -305,6 +311,9 @@ public class BlockHeader extends SealableBlockHeader
 
             if (blockAccessListHash == null) break;
             out.writeBytes(blockAccessListHash.getBytes());
+
+            if (slotNumber == null) break;
+            out.writeLongScalar(slotNumber);
           } while (false);
           out.endList();
         });
@@ -347,6 +356,7 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
     final Hash balHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Long slotNumber = !headerRlp.isEndOfCurrentList() ? headerRlp.readLongScalar() : null;
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -371,6 +381,7 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         blockHeaderFunctions,
         Optional.of(headerRlp.raw()));
   }
@@ -412,6 +423,7 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
     final Hash balHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Long slotNumber = !headerRlp.isEndOfCurrentList() ? headerRlp.readLongScalar() : null;
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -436,6 +448,7 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         knownHash,
         blockHeaderFunctions,
         Optional.of(headerRlp.raw()));
@@ -492,7 +505,10 @@ public class BlockHeader extends SealableBlockHeader
       sb.append("requestsHash=").append(requestsHash).append(", ");
     }
     if (blockAccessListHash != null) {
-      sb.append("blockAccessListHash=").append(blockAccessListHash);
+      sb.append("blockAccessListHash=").append(blockAccessListHash).append(", ");
+    }
+    if (slotNumber != null) {
+      sb.append("slotNumber=").append(slotNumber);
     }
     return sb.append("}").toString();
   }
@@ -532,6 +548,7 @@ public class BlockHeader extends SealableBlockHeader
             .getBalHash()
             .map(h -> Hash.fromHexString(h.getBytes().toHexString()))
             .orElse(null),
+        pluginBlockHeader.getOptionalSlotNumber().orElse(null),
         blockHeaderFunctions);
   }
 
