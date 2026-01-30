@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BlockGasAccountingStrategy;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -675,19 +676,25 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       final TransactionProcessingResult processingResult) {
     final Transaction transaction = evaluationContext.getTransaction();
 
-    // EIP-7778: Use the protocol-specific gas accounting strategy
-    // Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
-    // Amsterdam+: estimateGasUsedByTransaction (pre-refund, prevents block gas limit circumvention)
-    final long gasUsedByTransaction =
+    // EIP-7778: Calculate both block gas and receipt gas separately
+    // Block gas: Uses protocol-specific strategy (pre-refund for Amsterdam+)
+    // This is used for block gas limit enforcement
+    final long blockGasUsed =
         blockSelectionContext
             .protocolSpec()
             .getBlockGasAccountingStrategy()
             .calculateBlockGas(transaction, processingResult);
 
+    // Receipt gas: Standard post-refund calculation (gasLimit - gasRemaining)
+    // This is used for receipt cumulativeGasUsed field
+    final long receiptGasUsed =
+        BlockGasAccountingStrategy.calculateReceiptGas(transaction, processingResult);
+
     // queue the creation of the receipt and the update of the final results
     // these actions will be performed on commit if the pending tx is definitely selected
     selectionPendingActions.add(
-        new SelectedPendingAction(evaluationContext, processingResult, gasUsedByTransaction));
+        new SelectedPendingAction(
+            evaluationContext, processingResult, blockGasUsed, receiptGasUsed));
 
     if (isTimeout.get()) {
       // even if this tx passed all the checks, it is too late to include it in this block,
@@ -842,26 +849,31 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
   private class SelectedPendingAction extends PendingAction {
     final Transaction transaction;
     final TransactionProcessingResult processingResult;
-    final long gasUsedByTransaction;
+    // EIP-7778: Track both block gas (for block limit) and receipt gas (for receipts)
+    final long blockGasUsed; // From strategy, used for block gas limit enforcement
+    final long receiptGasUsed; // Standard post-refund, used for receipt cumulativeGasUsed
 
     public SelectedPendingAction(
         final TransactionEvaluationContext evaluationContext,
         final TransactionProcessingResult processingResult,
-        final long gasUsedByTransaction) {
+        final long blockGasUsed,
+        final long receiptGasUsed) {
       super(evaluationContext);
       this.processingResult = processingResult;
-      this.gasUsedByTransaction = gasUsedByTransaction;
+      this.blockGasUsed = blockGasUsed;
+      this.receiptGasUsed = receiptGasUsed;
       this.transaction = evaluationContext.getTransaction();
     }
 
     @Override
     void runOnCommit() {
-      final long cumulativeGasUsed =
-          transactionSelectionResults.getCumulativeGasUsed() + gasUsedByTransaction;
+      // EIP-7778: Use receipt gas (always post-refund) for receipt cumulativeGasUsed
+      final long cumulativeReceiptGasUsed =
+          transactionSelectionResults.getCumulativeReceiptGasUsed() + receiptGasUsed;
 
       final TransactionReceipt receipt =
           transactionReceiptFactory.create(
-              transaction.getType(), processingResult, cumulativeGasUsed);
+              transaction.getType(), processingResult, cumulativeReceiptGasUsed);
 
       maybeBlockAccessListBuilder.ifPresent(
           blockAccessListBuilder ->
@@ -869,7 +881,8 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
                   .getPartialBlockAccessView()
                   .ifPresent(blockAccessListBuilder::apply));
 
-      transactionSelectionResults.updateSelected(transaction, receipt, gasUsedByTransaction);
+      transactionSelectionResults.updateSelected(
+          transaction, receipt, blockGasUsed, receiptGasUsed);
 
       notifySelected(evaluationContext, processingResult);
       LOG.atTrace()
