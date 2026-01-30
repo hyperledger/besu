@@ -16,16 +16,12 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteSyncBlocksTask;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.GetReceiptsForHeadersTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -65,23 +61,10 @@ public class DownloadAndStoreBodiesAndReceiptsStep
   }
 
   private void getAndStoreSyncBodies(final List<BlockHeader> headers) {
-    final int numSyncBlocksToGet = headers.size();
-    final List<SyncBlock> syncBlocks = new ArrayList<>(numSyncBlocksToGet);
-    do {
-      final List<BlockHeader> headersForBodiesStillToGet =
-          headers.subList(syncBlocks.size(), numSyncBlocksToGet);
-      GetSyncBlockBodiesFromPeerTask task =
-          new GetSyncBlockBodiesFromPeerTask(headersForBodiesStillToGet, protocolSchedule);
-      PeerTaskExecutorResult<List<SyncBlock>> result =
-          ethContext.getPeerTaskExecutor().execute(task);
-      if (result.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
-          && result.result().isPresent()) {
-        List<SyncBlock> taskResult = result.result().get();
-        syncBlocks.addAll(taskResult);
-      }
-      // repeat until all sync blocks have been downloaded
-    } while (syncBlocks.size() < numSyncBlocksToGet);
-    blockchain.unsafeImportSyncBodies(syncBlocks, transactionIndexingEnabled);
+    CompleteSyncBlocksTask.forHeaders(protocolSchedule, ethContext, headers, metricsSystem)
+        .run()
+        .thenAccept(
+            bodies -> blockchain.unsafeImportSyncBodies(bodies, transactionIndexingEnabled));
   }
 
   private void getAndStoreReceipts(final List<BlockHeader> headers) {
