@@ -134,12 +134,63 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbStrategy()
-        .getFlatAccount(
-            this::getWorldStateRootHash,
-            this::getAccountStateTrieNode,
-            accountHash,
-            composedWorldStateStorage);
+    final byte[] key = accountHash.getBytes().toArrayUnsafe();
+    return cacheManager.getFromCacheOrStorage(
+        ACCOUNT_INFO_STATE,
+        key,
+        getCurrentVersion(),
+        () ->
+            getFlatDbStrategy()
+                .getFlatAccount(
+                    this::getWorldStateRootHash,
+                    this::getAccountStateTrieNode,
+                    accountHash,
+                    composedWorldStateStorage));
+  }
+
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+    return getStorageValueByStorageSlotKey(
+        () ->
+            getAccount(accountHash)
+                .map(
+                    b ->
+                        PmtStateTrieAccountValue.readFrom(
+                                org.hyperledger.besu.ethereum.rlp.RLP.input(b))
+                            .getStorageRoot()),
+        accountHash,
+        storageSlotKey);
+  }
+
+  public Optional<Bytes> getStorageValueByStorageSlotKey(
+      final Supplier<Optional<Hash>> storageRootSupplier,
+      final Hash accountHash,
+      final StorageSlotKey storageSlotKey) {
+    final byte[] key =
+        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+            .toArrayUnsafe();
+    return cacheManager.getFromCacheOrStorage(
+        ACCOUNT_STORAGE_STORAGE,
+        key,
+        getCurrentVersion(),
+        () ->
+            getFlatDbStrategy()
+                .getFlatStorageValueByStorageSlotKey(
+                    this::getWorldStateRootHash,
+                    storageRootSupplier,
+                    (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                    accountHash,
+                    storageSlotKey,
+                    composedWorldStateStorage));
+  }
+
+  public List<Optional<byte[]>> getMultipleKeys(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    return cacheManager.getMultipleFromCacheOrStorage(
+        segmentIdentifier,
+        keys,
+        getCurrentVersion(),
+        keysToFetch -> composedWorldStateStorage.multiget(segmentIdentifier, keysToFetch));
   }
 
   public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
@@ -174,39 +225,6 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
     return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
-  }
-
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    return getStorageValueByStorageSlotKey(
-        () ->
-            getAccount(accountHash)
-                .map(
-                    b ->
-                        PmtStateTrieAccountValue.readFrom(
-                                org.hyperledger.besu.ethereum.rlp.RLP.input(b))
-                            .getStorageRoot()),
-        accountHash,
-        storageSlotKey);
-  }
-
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final Hash accountHash,
-      final StorageSlotKey storageSlotKey) {
-    return getFlatDbStrategy()
-        .getFlatStorageValueByStorageSlotKey(
-            this::getWorldStateRootHash,
-            storageRootSupplier,
-            (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-            accountHash,
-            storageSlotKey,
-            composedWorldStateStorage);
-  }
-
-  public List<Optional<byte[]>> getMultipleKeys(
-      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
-    return composedWorldStateStorage.multiget(segmentIdentifier, keys);
   }
 
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
