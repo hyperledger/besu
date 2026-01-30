@@ -87,9 +87,10 @@ public class BlockReplayServiceImpl implements BlockReplayService {
     validateInputs(fromBlockNumber, toBlockNumber, tracer);
 
     LOG.debug("Replaying blocks [{} → {}]", fromBlockNumber, toBlockNumber);
-
     final List<Block> blocks = getBlocks(fromBlockNumber, toBlockNumber);
-    withWorldView(blocks.getFirst().getHeader().getParentHash(), beforeTracing);
+
+    // Hook to provide world view before tracing starts
+    beforeTracing(blocks.getFirst(), beforeTracing);
 
     final List<BlockReplayResult> results = new ArrayList<>(blocks.size());
     for (final Block block : blocks) {
@@ -102,10 +103,23 @@ public class BlockReplayServiceImpl implements BlockReplayService {
                               + block.getHeader().toLogString()));
       results.add(new BlockReplayResultImpl(block, result));
     }
-    withWorldView(blocks.getLast().getHash(), afterTracing);
+
+    // Hook to provide world view after tracing ends
+    afterTracing(blocks.getLast(), afterTracing);
     return Collections.unmodifiableList(results);
   }
 
+  /** Hooks to provide world view before and after tracing */
+  private void beforeTracing(final Block firstBlock, final Consumer<WorldView> beforeTracing) {
+    withWorldView(firstBlock.getHeader().getParentHash(), beforeTracing);
+  }
+
+  /** Hooks to provide world view before and after tracing */
+  private void afterTracing(final Block lastBlock, final Consumer<WorldView> afterTracing) {
+    withWorldView(lastBlock.getHeader().getHash(), afterTracing);
+  }
+
+  /** Replays a single block and returns the processing result. */
   private Optional<BlockProcessingResult> replayBlock(
       final Block block, final BlockAwareOperationTracer tracer) {
     return Tracer.processTracing(
@@ -131,6 +145,7 @@ public class BlockReplayServiceImpl implements BlockReplayService {
         });
   }
 
+  /** Validates the input parameters for block replay. */
   private void validateInputs(
       final long fromBlockNumber,
       final long toBlockNumber,
