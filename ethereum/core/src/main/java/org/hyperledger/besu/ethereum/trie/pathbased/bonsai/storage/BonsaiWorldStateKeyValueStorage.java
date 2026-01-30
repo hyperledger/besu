@@ -719,16 +719,6 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     }
 
     @Override
-    public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
-      return super.putCode(accountHash, codeHash, code);
-    }
-
-    @Override
-    public Updater removeCode(final Hash accountHash, final Hash codeHash) {
-      return super.removeCode(accountHash, codeHash);
-    }
-
-    @Override
     public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
       if (!accountValue.isEmpty()) {
         stagePut(
@@ -743,20 +733,6 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     public Updater removeAccountInfoState(final Hash accountHash) {
       stageRemoval(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
       return super.removeAccountInfoState(accountHash);
-    }
-
-    @Override
-    public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
-      return super.putAccountStateTrieNode(location, nodeHash, node);
-    }
-
-    @Override
-    public synchronized Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      stagePut(TRIE_BRANCH_STORAGE, nodeHash.toArrayUnsafe(), node.toArrayUnsafe());
-      return super.putAccountStorageTrieNode(accountHash, location, nodeHash, node);
     }
 
     @Override
