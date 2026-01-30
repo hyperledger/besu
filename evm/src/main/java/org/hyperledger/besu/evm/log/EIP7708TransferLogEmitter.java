@@ -20,7 +20,16 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes32;
@@ -55,6 +64,14 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
   public static final Bytes32 TRANSFER_TOPIC =
       Bytes32.fromHexString("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
 
+  /**
+   * The Selfdestruct event signature topic: keccak256('Selfdestruct(address,uint256)').
+   *
+   * <p>Used for SELFDESTRUCT to self and for account closures with remaining balance.
+   */
+  public static final Bytes32 SELFDESTRUCT_TOPIC =
+      Bytes32.fromHexString("0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083");
+
   /** Private constructor to enforce singleton usage. */
   private EIP7708TransferLogEmitter() {}
 
@@ -80,11 +97,74 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
         ImmutableList.of(LogTopic.create(TRANSFER_TOPIC), fromTopic, toTopic));
   }
 
+  /**
+   * Creates an EIP-7708 compliant selfdestruct log (LOG2).
+   *
+   * <p>Used when SELFDESTRUCT targets itself or for account closures with remaining balance.
+   *
+   * @param closedAddress the address of the contract being closed
+   * @param value the balance being destroyed in Wei
+   * @return the selfdestruct log
+   */
+  public static Log createSelfdestructLog(final Address closedAddress, final Wei value) {
+    // Zero-pad address to 32 bytes for topic
+    final LogTopic addressTopic = LogTopic.create(leftPad(closedAddress.getBytes()));
+
+    // Value as big-endian uint256 (32 bytes, zero-padded)
+    final Bytes32 data = leftPad(value);
+
+    return new Log(
+        EIP7708_SYSTEM_ADDRESS,
+        data,
+        ImmutableList.of(LogTopic.create(SELFDESTRUCT_TOPIC), addressTopic));
+  }
+
   @Override
   public void emitTransferLog(
       final MessageFrame frame, final Address from, final Address to, final Wei value) {
     if (value.greaterThan(Wei.ZERO)) {
       frame.addLog(createTransferLog(from, to, value));
     }
+  }
+
+  @Override
+  public void emitSelfDestructLog(
+      final MessageFrame frame,
+      final Address originator,
+      final Address beneficiary,
+      final Wei value) {
+    if (value.greaterThan(Wei.ZERO)) {
+      if (originator.equals(beneficiary)) {
+        // SELFDESTRUCT to self → Selfdestruct log (LOG2)
+        frame.addLog(createSelfdestructLog(originator, value));
+      } else {
+        // SELFDESTRUCT to other → Transfer log (LOG3)
+        frame.addLog(createTransferLog(originator, beneficiary, value));
+      }
+    }
+  }
+
+  @Override
+  public void emitClosureLogs(
+      final WorldUpdater worldState,
+      final Set<Address> selfDestructs,
+      final Consumer<Log> logConsumer) {
+    // Collect selfdestruct addresses with nonzero balances, sorted lexicographically
+    final List<Map.Entry<Address, Wei>> closures =
+        selfDestructs.stream()
+            .map(
+                addr ->
+                    Map.entry(
+                        addr,
+                        Optional.ofNullable(worldState.get(addr))
+                            .map(Account::getBalance)
+                            .orElse(Wei.ZERO)))
+            .filter(e -> e.getValue().greaterThan(Wei.ZERO))
+            .sorted(Comparator.comparing(e -> e.getKey().getBytes().toHexString()))
+            .toList();
+
+    // Emit Selfdestruct log for each closure
+    closures.forEach(
+        entry -> logConsumer.accept(createSelfdestructLog(entry.getKey(), entry.getValue())));
   }
 }
