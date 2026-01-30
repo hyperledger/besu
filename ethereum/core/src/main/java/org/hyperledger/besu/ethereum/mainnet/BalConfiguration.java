@@ -86,4 +86,15 @@ public interface BalConfiguration {
   default Duration getBalProcessingTimeout() {
     return Duration.ofSeconds(1);
   }
+
+  /**
+   * Returns the batch size for prefetch operations. A value of 0 or negative means no batching
+   * (fetch all at once).
+   *
+   * @return the batch size for prefetch operations
+   */
+  @Value.Default
+  default int getBalPreFetchBatchSize() {
+    return 0; // Default: no batching, fetch all at once
+  }
 }

@@ -47,6 +47,7 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>The layer avoids LayeredKeyValueStorage's automatic fallback to parent, allowing cache
  * interception between layer and parent.
  */
+@SuppressWarnings("DoNotReturnNullOptionals")
 public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateStorage
     implements PathBasedLayeredWorldStateKeyValueStorage, StorageSubscriber {
 

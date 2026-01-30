@@ -417,6 +417,18 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     }
 
     /**
+     * Clear cache for a specific segment.
+     *
+     * @param segment the segment to clear
+     */
+    public void clear(final SegmentIdentifier segment) {
+      final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
+      if (cache != null) {
+        cache.invalidateAll();
+      }
+    }
+
+    /**
      * Get from cache or storage - used only by layers. Updates cache if version matches current
      * version (read-through caching).
      */
