@@ -423,7 +423,6 @@ public class EthStatsService {
     }
     final boolean isSyncing = syncState.isInSync();
     final long gasPrice = suggestGasPrice(blockchainQueries.getBlockchain().getChainHeadBlock());
-    final long hashrate = miningCoordinator.hashesPerSecond().orElse(0L);
     // safe to cast to int since it isn't realistic to have more than max int peers
     final int peersNumber =
         (int) protocolManager.ethContext().getEthPeers().streamAvailablePeers().count();
@@ -431,7 +430,7 @@ public class EthStatsService {
     final NodeStatsReport nodeStatsReport =
         ImmutableNodeStatsReport.builder()
             .id(enodeURL.getNodeId().toHexString())
-            .stats(true, isMiningEnabled, hashrate, peersNumber, gasPrice, isSyncing, 100)
+            .stats(true, isMiningEnabled, 0L, peersNumber, gasPrice, isSyncing, 100)
             .build();
     sendMessage(webSocket, new EthStatsRequest(STATS, nodeStatsReport));
   }

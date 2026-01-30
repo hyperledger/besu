@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -33,11 +32,12 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
+/** The EngineForkchoiceUpdatedV4 method for Amsterdam fork with slotNumber support (EIP-7843). */
+public class EngineForkchoiceUpdatedV4 extends AbstractEngineForkchoiceUpdated {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV3.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV4.class);
 
-  public EngineForkchoiceUpdatedV3(
+  public EngineForkchoiceUpdatedV4(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -48,7 +48,7 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V3.getMethodName();
+    return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V4.getMethodName();
   }
 
   @Override
@@ -70,14 +70,17 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
         return ValidationResult.invalid(
             getInvalidPayloadAttributesError(), "Missing parent beacon block root hash");
       }
+      if (maybePayloadAttributes.get().getSlotNumber() == null) {
+        return ValidationResult.invalid(
+            RpcErrorType.INVALID_SLOT_NUMBER_PARAMS, "Missing slot number field");
+      }
     }
     return ValidationResult.valid();
   }
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    return ForkSupportHelper.validateForkSupported(
-        CANCUN, cancunMilestone, AMSTERDAM, amsterdamMilestone, blockTimestamp);
+    return ForkSupportHelper.validateForkSupported(AMSTERDAM, amsterdamMilestone, blockTimestamp);
   }
 
   @Override
@@ -86,8 +89,14 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
     if (payloadAttributes.getParentBeaconBlockRoot() == null) {
       LOG.error(
-          "Parent beacon block root hash not present in payload attributes after cancun hardfork");
+          "Parent beacon block root hash not present in payload attributes after Amsterdam hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    }
+
+    if (payloadAttributes.getSlotNumber() == null) {
+      LOG.error("Slot number not present in payload attributes after Amsterdam hardfork");
+      return Optional.of(
+          new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_SLOT_NUMBER_PARAMS));
     }
 
     if (payloadAttributes.getTimestamp() == 0) {
