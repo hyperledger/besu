@@ -98,6 +98,9 @@ public class DownloadBackwardHeadersStep
 
       final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
       if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
+        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
+          throw new RuntimeException("Failed to download headers starting from block 100");
+        }
         // wait for a peer to become available before retrying
         ethContext.getEthPeers().waitForPeer(__ -> true);
       } else {
