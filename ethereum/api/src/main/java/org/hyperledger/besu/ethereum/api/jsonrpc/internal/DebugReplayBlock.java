@@ -88,7 +88,12 @@ public class DebugReplayBlock extends AbstractBlockParameterMethod {
           .getByBlockHeader(block.getHeader())
           .getBlockValidator()
           .validateAndProcessBlock(
-              protocolContext, block, HeaderValidationMode.FULL, HeaderValidationMode.NONE, true);
+              protocolContext,
+              block,
+              HeaderValidationMode.FULL,
+              HeaderValidationMode.NONE,
+              Optional.empty(),
+              true);
     } catch (Exception e) {
       LOG.error(e.getMessage());
       return new JsonRpcErrorResponse(request.getRequest().getId(), INTERNAL_ERROR);

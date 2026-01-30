@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 /**
  * Listener interface for world state heal finished notifications. Allows the chain downloader to be
- * notified when the world state heal download hat finished and will not select any new pivot
+ * notified when the world state heal download has finished and will not select any new pivot
  * blocks, enabling safe completion of chain download without missing pivot updates.
  */
 public interface WorldStateHealFinishedListener {

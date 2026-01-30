@@ -99,11 +99,11 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
     addresses.addAll(layer.getStorageChanges().keySet());
 
     output.startList(); // container
-    output.writeBytes(layer.getBlockHash());
+    output.writeBytes(layer.getBlockHash().getBytes());
 
     for (final Address address : addresses) {
       output.startList(); // this change
-      output.writeBytes(address);
+      output.writeBytes(address.getBytes());
 
       final TrieLog.LogTuple<AccountValue> accountChange = layer.getAccountChanges().get(address);
       if (accountChange == null || accountChange.isUnchanged()) {
@@ -129,7 +129,7 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
             storageChanges.entrySet()) {
           output.startList();
           // do not write slotKey, it is not used in mainnet bonsai trielogs
-          output.writeBytes(storageChangeEntry.getKey().getSlotHash());
+          output.writeBytes(storageChangeEntry.getKey().getSlotHash().getBytes());
           writeInnerRlp(storageChangeEntry.getValue(), output, RLPOutput::writeUInt256Scalar);
           output.endList();
         }

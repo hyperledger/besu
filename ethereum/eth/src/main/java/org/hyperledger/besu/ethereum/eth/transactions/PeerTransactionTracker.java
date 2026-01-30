@@ -22,7 +22,9 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,16 +49,32 @@ public class PeerTransactionTracker
   private final Map<EthPeer, Set<Transaction>> transactionHashesToSend = new ConcurrentHashMap<>();
 
   public PeerTransactionTracker(
-      final TransactionPoolConfiguration txPoolConfig, final EthPeers ethPeers) {
+      final TransactionPoolConfiguration txPoolConfig,
+      final EthPeers ethPeers,
+      final EthScheduler ethScheduler) {
     this.ethPeers = ethPeers;
     this.maxTrackedSeenTxsPerPeer = txPoolConfig.getUnstable().getMaxTrackedSeenTxsPerPeer();
     this.forgetEvictedTxsEnabled = txPoolConfig.getUnstable().getPeerTrackerForgetEvictedTxs();
+    ethScheduler.scheduleFutureTaskWithFixedDelay(
+        this::logStats, Duration.ofMinutes(1), Duration.ofMinutes(1));
   }
 
   public void reset() {
     seenTransactions.clear();
     transactionsToSend.clear();
     transactionHashesToSend.clear();
+  }
+
+  private synchronized void logStats() {
+    if (LOG.isTraceEnabled()) {
+      seenTransactions.forEach(
+          (ethPeer, txs) -> LOG.trace("Seen txs: peer={} size={}", ethPeer, txs.size()));
+      transactionsToSend.forEach(
+          (ethPeer, txs) -> LOG.trace("Txs to send: peer={} size={}", ethPeer, txs.size()));
+      transactionHashesToSend.forEach(
+          (ethPeer, txs) ->
+              LOG.trace("Announcements to send: peer={} size={}", ethPeer, txs.size()));
+    }
   }
 
   public synchronized void markTransactionsAsSeen(

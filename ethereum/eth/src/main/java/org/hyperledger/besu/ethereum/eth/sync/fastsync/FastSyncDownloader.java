@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedExc
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldStateDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -185,6 +187,28 @@ public class FastSyncDownloader<REQUEST> {
     return state;
   }
 
+  /**
+   * Wires up the chain downloader by registering it for callbacks and establishing bidirectional
+   * references with the world state downloader for SnapSync.
+   *
+   * @param chainDownloader the chain downloader to wire up
+   */
+  private void wireSnapSyncBidirectionalReferences(final ChainDownloader chainDownloader) {
+    // Register chain downloader for pivot update callbacks
+    if (chainDownloader instanceof PivotUpdateListener) {
+      fastSyncActions.setChainDownloaderListener((PivotUpdateListener) chainDownloader);
+      LOG.debug("Registered chain downloader as pivot update listener");
+    }
+
+    // Wire bidirectional references for SnapSync
+    if (worldStateDownloader instanceof SnapWorldStateDownloader
+        && chainDownloader instanceof SnapSyncChainDownloader) {
+      ((SnapWorldStateDownloader) worldStateDownloader)
+          .setChainDownloader((SnapSyncChainDownloader) chainDownloader);
+      LOG.debug("Wired bidirectional references between chain and world state downloaders");
+    }
+  }
+
   protected FastSyncState storeState(final FastSyncState state) {
     fastSyncStateStorage.storeState(state);
     return state;
@@ -203,19 +227,8 @@ public class FastSyncDownloader<REQUEST> {
       final ChainDownloader chainDownloader =
           fastSyncActions.createChainDownloader(currentState, syncDurationMetrics);
 
-      // Register chain downloader as pivot update listener if it implements the interface
-      if (chainDownloader instanceof PivotUpdateListener) {
-        fastSyncActions.setChainDownloaderListener((PivotUpdateListener) chainDownloader);
-        LOG.debug("Registered chain downloader as pivot update listener");
-      }
-
-      // Register chain downloader as world state heal finished listener if it implements the
-      // interface
-      if (chainDownloader instanceof WorldStateHealFinishedListener) {
-        fastSyncActions.setWorldStateHealFinishedListener(
-            (WorldStateHealFinishedListener) chainDownloader);
-        LOG.debug("Registered chain downloader as world state stable listener");
-      }
+      // Wire up chain downloader callbacks and bidirectional references
+      wireSnapSyncBidirectionalReferences(chainDownloader);
 
       final CompletableFuture<Void> worldStateFuture =
           worldStateDownloader.run(fastSyncActions, currentState);

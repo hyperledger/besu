@@ -15,20 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Immutable state for the chain synchronization in two-stages. This state is managed exclusively by
@@ -96,86 +83,6 @@ public record ChainSyncState(
         chainHeadHeader,
         this.headerDownloadAnchor,
         this.headersDownloadComplete);
-  }
-
-  public static BlockHeader downloadCheckpointHeader(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final Hash checkpointHash) {
-
-    final EthPeers ethPeers = ethContext.getEthPeers();
-    GetHeadersFromPeerTask task =
-        new GetHeadersFromPeerTask(
-            checkpointHash,
-            1,
-            0,
-            GetHeadersFromPeerTask.Direction.FORWARD,
-            ethPeers.getMaxPeers(),
-            protocolSchedule);
-
-    final EthPeer ethPeer;
-
-    ethPeer = getEthPeer(ethPeers, task);
-
-    try {
-      return getHeader(ethContext, ethPeer, ethPeers, task).get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static EthPeer getEthPeer(final EthPeers ethPeers, final GetHeadersFromPeerTask task) {
-    final EthPeer ethPeer;
-    try {
-      ethPeer =
-          ethPeers
-              .waitForPeer(candidatePeer -> task.getPeerRequirementFilter().test(candidatePeer))
-              .get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    return ethPeer;
-  }
-
-  private static CompletableFuture<BlockHeader> getHeader(
-      final EthContext ethContext,
-      final EthPeer ethPeer,
-      final EthPeers ethPeers,
-      final GetHeadersFromPeerTask task) {
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(
-            () -> {
-              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  ethContext.getPeerTaskExecutor().executeAgainstPeer(task, ethPeer);
-              if (taskResult.responseCode() == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
-                // something is probably wrong with the request, so we won't retry as below
-                return CompletableFuture.failedFuture(
-                    new RuntimeException("Unexpected internal issue"));
-              } else if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || taskResult.result().isEmpty()) {
-                ethPeer.recordUselessResponse("headers");
-                return getHeader(ethContext, getEthPeer(ethPeers, task), ethPeers, task);
-              }
-              return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
-            });
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    final ChainSyncState that = (ChainSyncState) o;
-    return Objects.equals(blockDownloadAnchor, that.blockDownloadAnchor)
-        && Objects.equals(pivotBlockHeader, that.pivotBlockHeader)
-        && Objects.equals(headerDownloadAnchor, that.headerDownloadAnchor)
-        && headersDownloadComplete == that.headersDownloadComplete;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        pivotBlockHeader, blockDownloadAnchor, headerDownloadAnchor, headersDownloadComplete);
   }
 
   @Override

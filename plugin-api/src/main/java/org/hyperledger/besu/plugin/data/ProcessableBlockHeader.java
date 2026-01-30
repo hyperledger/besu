@@ -105,4 +105,14 @@ public interface ProcessableBlockHeader {
    */
   @Unstable
   Optional<? extends Bytes32> getParentBeaconBlockRoot();
+
+  /**
+   * The slot number of this header (EIP-7843).
+   *
+   * @return The slot number of this header.
+   */
+  @Unstable
+  default Optional<Long> getOptionalSlotNumber() {
+    return Optional.empty();
+  }
 }

@@ -59,7 +59,7 @@ public final class GetTrieNodesMessage extends AbstractSnapMessageData {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
-    tmp.writeBytes(worldStateRootHash);
+    tmp.writeBytes(worldStateRootHash.getBytes());
     tmp.writeList(
         paths,
         (path, rlpOutput) ->

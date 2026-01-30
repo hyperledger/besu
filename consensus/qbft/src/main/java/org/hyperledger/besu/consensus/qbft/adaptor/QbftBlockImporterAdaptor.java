@@ -20,6 +20,9 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+
+import java.util.Optional;
 
 /** Adaptor class to allow a {@link BlockImporter} to be used as a {@link QbftBlockImporter}. */
 public class QbftBlockImporterAdaptor implements QbftBlockImporter {
@@ -40,10 +43,15 @@ public class QbftBlockImporterAdaptor implements QbftBlockImporter {
   }
 
   @Override
-  public boolean importBlock(final QbftBlock block) {
+  public boolean importBlock(
+      final QbftBlock block, final Optional<BlockAccessList> blockAccessList) {
     final BlockImportResult blockImportResult =
         blockImporter.importBlock(
-            context, AdaptorUtil.toBesuBlock(block), HeaderValidationMode.FULL);
+            context,
+            AdaptorUtil.toBesuBlock(block),
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            blockAccessList);
     return blockImportResult.isImported();
   }
 }

@@ -463,13 +463,8 @@ public class DefaultBlockchain implements MutableBlockchain {
         .map(
             cache ->
                 Optional.ofNullable(cache.getIfPresent(blockHash))
-                    .or(
-                        () ->
-                            blockchainStorage
-                                .getBlockBody(blockHash)
-                                .flatMap(BlockBody::getBlockAccessList)))
-        .orElseGet(
-            () -> blockchainStorage.getBlockBody(blockHash).flatMap(BlockBody::getBlockAccessList));
+                    .or(() -> blockchainStorage.getBlockAccessList(blockHash)))
+        .orElseGet(() -> blockchainStorage.getBlockAccessList(blockHash));
   }
 
   @Override
@@ -519,7 +514,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), blockAccessList, false, true);
   }
 
   @Override
@@ -528,7 +523,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), false, false);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), blockAccessList, false, false);
   }
 
   @Override
@@ -551,7 +546,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<TransactionReceipt> receipts,
       final Optional<BlockAccessList> blockAccessList) {
     cacheBlockData(block, receipts, blockAccessList);
-    appendBlockHelper(new BlockWithReceipts(block, receipts), true, true);
+    appendBlockHelper(new BlockWithReceipts(block, receipts), blockAccessList, true, true);
   }
 
   @Override
@@ -610,6 +605,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void appendBlockHelper(
       final BlockWithReceipts blockWithReceipts,
+      final Optional<BlockAccessList> blockAccessList,
       final boolean storeOnly,
       final boolean transactionIndexing) {
 
@@ -626,6 +622,7 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     updater.putBlockHeader(hash, block.getHeader());
     updater.putBlockBody(hash, block.getBody());
+    blockAccessList.ifPresent(bal -> updater.putBlockAccessList(hash, bal));
     updater.putTransactionReceipts(hash, receipts);
     updater.putTotalDifficulty(hash, td);
 

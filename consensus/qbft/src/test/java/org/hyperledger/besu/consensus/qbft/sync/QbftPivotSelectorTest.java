@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.consensus.qbft.sync;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,12 +78,11 @@ public class QbftPivotSelectorTest {
     BFTPivotSelectorFromPeers pivotSelector =
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
-    try {
-      pivotSelector.selectNewPivotBlock().get();
-      fail("Expected CompletableFuture to be failed but it completed successfully");
-    } catch (Exception e) {
-      // Expected - the future should fail when no peers are available
-    }
+
+    assertThatThrownBy(() -> pivotSelector.selectNewPivotBlock().get())
+        .isInstanceOf(ExecutionException.class)
+        .hasCauseInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Not enough peers");
   }
 
   @Test
@@ -115,12 +116,10 @@ public class QbftPivotSelectorTest {
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
-    try {
-      pivotSelector.selectNewPivotBlock().get();
-      fail("Expected CompletableFuture to be failed but it completed successfully");
-    } catch (Exception e) {
-      // Expected - the future should fail when no best peer is available
-    }
+    assertThatThrownBy(() -> pivotSelector.selectNewPivotBlock().get())
+        .isInstanceOf(ExecutionException.class)
+        .hasCauseInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Not enough peers");
   }
 
   @Test
@@ -132,11 +131,9 @@ public class QbftPivotSelectorTest {
         new BFTPivotSelectorFromPeers(
             ethContext, syncConfig, syncState, protocolContext, nodeKey, blockHeader);
 
-    try {
-      pivotSelector.selectNewPivotBlock().get();
-      fail("Expected CompletableFuture to be failed but it completed successfully");
-    } catch (Exception e) {
-      // Expected - the future should fail when no best peer is available
-    }
+    assertThatThrownBy(() -> pivotSelector.selectNewPivotBlock().get())
+        .isInstanceOf(ExecutionException.class)
+        .hasCauseInstanceOf(RuntimeException.class)
+        .hasMessageContaining("Not enough peers");
   }
 }

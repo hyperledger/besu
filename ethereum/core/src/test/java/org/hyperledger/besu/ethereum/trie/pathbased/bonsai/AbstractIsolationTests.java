@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -173,7 +174,7 @@ public abstract class AbstractIsolationTests {
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
-            Optional.of(16L),
+            ImmutablePathBasedExtraStorageConfiguration.builder().maxLayersToLoad(16L).build(),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
@@ -347,7 +348,9 @@ public abstract class AbstractIsolationTests {
 
   protected Transaction burnTransaction(final KeyPair sender, final Long nonce, final Address to) {
     return new TransactionTestFixture()
-        .sender(Address.extract(Hash.hash(sender.getPublicKey().getEncodedBytes())))
+        .sender(
+            Address.extract(
+                Bytes32.wrap(Hash.hash(sender.getPublicKey().getEncodedBytes()).getBytes())))
         .to(Optional.of(to))
         .value(Wei.of(1_000_000_000_000_000_000L))
         .gasLimit(21_000L)

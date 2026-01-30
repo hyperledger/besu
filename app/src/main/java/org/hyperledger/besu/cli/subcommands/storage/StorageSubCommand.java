@@ -121,7 +121,7 @@ public class StorageSubCommand implements Runnable {
           .ifPresent(
               v -> {
                 setBlockchainVariable(
-                    blockchainUpdater, VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes(), v);
+                    blockchainUpdater, VARIABLES_PREFIX, CHAIN_HEAD_HASH.getBytes(), v.getBytes());
                 LOG.info("Reverted variable storage for key {}", CHAIN_HEAD_HASH);
               });
 
@@ -130,7 +130,10 @@ public class StorageSubCommand implements Runnable {
           .ifPresent(
               v -> {
                 setBlockchainVariable(
-                    blockchainUpdater, VARIABLES_PREFIX, FINALIZED_BLOCK_HASH.getBytes(), v);
+                    blockchainUpdater,
+                    VARIABLES_PREFIX,
+                    FINALIZED_BLOCK_HASH.getBytes(),
+                    v.getBytes());
                 LOG.info("Reverted variable storage for key {}", FINALIZED_BLOCK_HASH);
               });
 
@@ -139,7 +142,7 @@ public class StorageSubCommand implements Runnable {
           .ifPresent(
               v -> {
                 setBlockchainVariable(
-                    blockchainUpdater, VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes(), v);
+                    blockchainUpdater, VARIABLES_PREFIX, SAFE_BLOCK_HASH.getBytes(), v.getBytes());
                 LOG.info("Reverted variable storage for key {}", SAFE_BLOCK_HASH);
               });
 
@@ -149,7 +152,7 @@ public class StorageSubCommand implements Runnable {
             blockchainUpdater,
             VARIABLES_PREFIX,
             FORK_HEADS.getBytes(),
-            RLP.encode(o -> o.writeList(forkHeads, (val, out) -> out.writeBytes(val))));
+            RLP.encode(o -> o.writeList(forkHeads, (val, out) -> out.writeBytes(val.getBytes()))));
         LOG.info("Reverted variable storage for key {}", FORK_HEADS);
       }
 

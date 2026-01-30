@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
@@ -216,5 +217,59 @@ public class MergeProtocolScheduleTest {
 
   private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
+  }
+
+  @Test
+  public void amsterdamHasBlockAccessListFactoryWithForkActivated() {
+    final String jsonInput =
+        "{\"config\": "
+            + "{\"chainId\": 20211,\n"
+            + "\"homesteadBlock\": 0,\n"
+            + "\"eip150Block\": 0,\n"
+            + "\"eip155Block\": 0,\n"
+            + "\"eip158Block\": 0,\n"
+            + "\"byzantiumBlock\": 0,\n"
+            + "\"constantinopleBlock\": 0,\n"
+            + "\"petersburgBlock\": 0,\n"
+            + "\"istanbulBlock\": 0,\n"
+            + "\"muirGlacierBlock\": 0,\n"
+            + "\"berlinBlock\": 0,\n"
+            + "\"londonBlock\": 0,\n"
+            + "\"terminalTotalDifficulty\": 0,\n"
+            + "\"cancunTime\": 0,\n"
+            + "\"pragueTime\": 0,\n"
+            + "\"osakaTime\": 0,\n"
+            + "\"amsterdamTime\": 0,\n"
+            + "\"depositContractAddress\": \"0x4242424242424242424242424242424242424242\",\n"
+            + "\"withdrawalRequestContractAddress\": \"0x00A3ca265EBcb825B45F985A16CEFB49958cE017\",\n"
+            + "\"consolidationRequestContractAddress\": \"0x00b42dbF2194e931E80326D950320f7d9Dbeac02\"\n"
+            + "}}";
+
+    final GenesisConfigOptions config = GenesisConfig.fromConfig(jsonInput).getConfigOptions();
+    final ProtocolSchedule protocolSchedule =
+        MergeProtocolSchedule.create(
+            config,
+            false,
+            MiningConfiguration.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            EvmConfiguration.DEFAULT);
+
+    // Get the Amsterdam protocol spec for a block at timestamp 1
+    final ProtocolSpec amsterdamSpec =
+        protocolSchedule.getByBlockHeader(
+            new BlockHeaderTestFixture().number(1).timestamp(1).buildHeader());
+
+    assertThat(amsterdamSpec.getHardforkId()).isEqualTo(AMSTERDAM);
+
+    // Verify that BlockAccessListFactory is present and fork-activated
+    assertThat(amsterdamSpec.getBlockAccessListFactory())
+        .withFailMessage("BlockAccessListFactory should be present for Amsterdam, but it was empty")
+        .isPresent();
+    assertThat(amsterdamSpec.getBlockAccessListFactory().get().isForkActivated())
+        .withFailMessage("BlockAccessListFactory.isForkActivated should be true for Amsterdam")
+        .isTrue();
   }
 }

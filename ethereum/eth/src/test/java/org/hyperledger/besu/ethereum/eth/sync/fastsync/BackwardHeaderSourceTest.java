@@ -33,7 +33,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldIterateBackwardFromStartToStop() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 0, 1000);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(100, 0, 1000);
 
     final List<Long> blocks = new ArrayList<>();
     while (source.hasNext()) {
@@ -49,7 +49,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldThrowWhenExhausted() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 50, 100);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(100, 50, 100);
 
     assertThat(source.next()).isEqualTo(100L);
     // After first call, currentBlock = 0, which is < stopBlock (50), so throws
@@ -58,7 +58,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldHandleStartBlockEqualToStopBlock() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 500, 500);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(100, 500, 500);
 
     assertThat(source.hasNext()).isTrue();
     assertThat(source.next()).isEqualTo(500L);
@@ -68,7 +68,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldHandleInvalidRangeStartBlockLessThanStopBlock() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 1000, 500);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(100, 1000, 500);
 
     // currentBlock starts at 500, which is < stopBlock (1000)
     assertThat(source.hasNext()).isFalse();
@@ -77,7 +77,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldHandleBatchSizeLargerThanRange() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(1000, 0, 100);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(1000, 0, 100);
 
     assertThat(source.hasNext()).isTrue();
     assertThat(source.next()).isEqualTo(100L);
@@ -87,7 +87,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldHandleBatchSizeOfOne() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(1, 5, 10);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(1, 5, 10);
 
     final List<Long> blocks = new ArrayList<>();
     while (source.hasNext()) {
@@ -102,7 +102,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void hasNextShouldReturnTrueUntilExhausted() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 0, 200);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(100, 0, 200);
 
     assertThat(source.hasNext()).isTrue();
     source.next(); // 200
@@ -115,7 +115,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void hasNextShouldNotConsumeElements() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(50, 0, 100);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(50, 0, 100);
 
     assertThat(source.hasNext()).isTrue();
     assertThat(source.hasNext()).isTrue();
@@ -127,7 +127,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldHandleConcurrentNextCalls() throws InterruptedException {
-    final BackwardHeaderSource source = new BackwardHeaderSource(1, 0, 100);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(1, 0, 100);
 
     final int numThreads = 10;
     final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
@@ -175,7 +175,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldHandleConcurrentHasNextAndNextCalls() throws InterruptedException {
-    final BackwardHeaderSource source = new BackwardHeaderSource(10, 0, 50);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(10, 0, 50);
 
     final int numThreads = 5;
     final ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
@@ -215,7 +215,7 @@ public class BackwardHeaderSourceTest {
   public void shouldHandlePartialBatchAtEnd() {
     // Start at 105, stop at 0, batch size 100
     // Should give: 105, 5 (105-100=5, which is >= 0)
-    final BackwardHeaderSource source = new BackwardHeaderSource(100, 0, 105);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(100, 0, 105);
 
     assertThat(source.next()).isEqualTo(105L);
     assertThat(source.next()).isEqualTo(5L);
@@ -224,7 +224,7 @@ public class BackwardHeaderSourceTest {
 
   @Test
   public void shouldIterateCorrectlyWithOddBatchSize() {
-    final BackwardHeaderSource source = new BackwardHeaderSource(37, 0, 100);
+    final BackwardBlockNumberSource source = new BackwardBlockNumberSource(37, 0, 100);
 
     final List<Long> blocks = new ArrayList<>();
     while (source.hasNext()) {

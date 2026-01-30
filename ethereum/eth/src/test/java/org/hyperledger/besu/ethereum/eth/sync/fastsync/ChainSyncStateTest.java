@@ -16,35 +16,13 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,13 +32,6 @@ public class ChainSyncStateTest {
   private BlockHeader checkpointBlockHeader;
   private BlockHeader genesisBlockHeader;
   private BlockHeader chainHeadHeader;
-
-  @Mock private ProtocolSchedule protocolSchedule;
-  @Mock private EthContext ethContext;
-  @Mock private EthPeers ethPeers;
-  @Mock private EthScheduler scheduler;
-  @Mock private PeerTaskExecutor peerTaskExecutor;
-  @Mock private EthPeer ethPeer;
 
   @BeforeEach
   public void setUp() {
@@ -270,51 +241,6 @@ public class ChainSyncStateTest {
     assertThat(result).contains("headersDownloadComplete=true");
   }
 
-  // downloadCheckpointHeader Tests
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void downloadCheckpointHeaderShouldReturnHeaderOnSuccess() {
-    setupMocksForDownloadCheckpointHeader();
-
-    BlockHeader expectedHeader = new BlockHeaderTestFixture().number(500).buildHeader();
-    PeerTaskExecutorResult<List<BlockHeader>> successResult =
-        new PeerTaskExecutorResult<>(
-            Optional.of(List.of(expectedHeader)),
-            PeerTaskExecutorResponseCode.SUCCESS,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), eq(ethPeer)))
-        .thenReturn(successResult);
-
-    BlockHeader result =
-        ChainSyncState.downloadCheckpointHeader(protocolSchedule, ethContext, Hash.ZERO);
-
-    assertThat(result).isEqualTo(expectedHeader);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void downloadCheckpointHeaderShouldFailOnInternalServerError() {
-    setupMocksForDownloadCheckpointHeader();
-
-    PeerTaskExecutorResult<List<BlockHeader>> errorResult =
-        new PeerTaskExecutorResult<>(
-            Optional.empty(),
-            PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), eq(ethPeer)))
-        .thenReturn(errorResult);
-
-    assertThatThrownBy(
-            () -> ChainSyncState.downloadCheckpointHeader(protocolSchedule, ethContext, Hash.ZERO))
-        .isInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Unexpected internal issue");
-  }
-
-  // Immutability Tests
-
   @Test
   public void factoryMethodsShouldReturnNewInstances() {
     ChainSyncState state1 =
@@ -331,8 +257,6 @@ public class ChainSyncStateTest {
     assertThat(state1.headersDownloadComplete()).isFalse();
     assertThat(state1.headerDownloadAnchor()).isEqualTo(genesisBlockHeader);
   }
-
-  // Edge Case Tests
 
   @Test
   public void shouldHandleMultipleContinuations() {
@@ -371,27 +295,5 @@ public class ChainSyncStateTest {
 
     assertThat(state.pivotBlockHeader().getNumber()).isEqualTo(Long.MAX_VALUE - 100);
     assertThat(state.blockDownloadAnchor().getNumber()).isEqualTo(Long.MAX_VALUE - 500);
-  }
-
-  @SuppressWarnings("unchecked")
-  private void setupMocksForDownloadCheckpointHeader() {
-    when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    when(ethContext.getScheduler()).thenReturn(scheduler);
-    when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
-
-    when(ethPeers.getMaxPeers()).thenReturn(25);
-    when(ethPeers.waitForPeer(any(Predicate.class)))
-        .thenReturn(CompletableFuture.completedFuture(ethPeer));
-
-    lenient().doNothing().when(ethPeer).recordUselessResponse(any());
-
-    // Scheduler just executes tasks immediately for testing
-    when(scheduler.scheduleServiceTask(any(java.util.function.Supplier.class)))
-        .thenAnswer(
-            invocation -> {
-              java.util.function.Supplier<CompletableFuture<?>> supplier =
-                  invocation.getArgument(0);
-              return supplier.get();
-            });
   }
 }

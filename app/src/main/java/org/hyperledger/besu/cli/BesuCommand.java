@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.lang.Long.parseLong;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -44,7 +45,6 @@ import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.BalConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
-import org.hyperledger.besu.cli.options.DebugTracerOptions;
 import org.hyperledger.besu.cli.options.DnsOptions;
 import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
 import org.hyperledger.besu.cli.options.EngineRPCOptions;
@@ -324,7 +324,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
   private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
-  private final DebugTracerOptions unstableDebugTracerOptions = DebugTracerOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -355,7 +354,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final Supplier<GenesisConfig> genesisConfigSupplier =
+  private Supplier<GenesisConfig> genesisConfigSupplier =
       Suppliers.memoize(this::readGenesisConfig);
 
   /** Memoized supplier for genesis configuration options. Protected to allow test access. */
@@ -388,7 +387,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       names = {"--data-path"},
       paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "The path to Besu data directory (default: ${DEFAULT-VALUE})")
-  final Path dataPath = getDefaultBesuDataPath(this);
+  Path dataPath = getDefaultBesuDataPath(this);
 
   // Genesis file path with null default option.
   // This default is handled by Runner
@@ -674,8 +673,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuConfigurationImpl pluginCommonConfiguration;
 
   private Vertx vertx;
+  private Runner runner;
   private EnodeDnsConfiguration enodeDnsConfiguration;
   private KeyValueStorageProvider keyValueStorageProvider;
+  private KeyPair keyPair;
+  private BigInteger ephemeryNextCycleId = BigInteger.ZERO;
 
   /**
    * Besu command constructor.
@@ -963,34 +965,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       validateOptions();
 
-      configure();
+      initialProcess();
 
-      setIgnorableStorageSegments();
-
-      // If we're not running against a named network, or if version compat protection has been
-      // explicitly enabled, perform compatibility check
-      VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
-
-      configureNativeLibs(Optional.ofNullable(network));
-      if (enablePrecompileCaching) {
-        configurePrecompileCaching();
+      if (network.equals(EPHEMERY)) {
+        long lastGenesisTimestamp = parseLong(genesisConfigOverrides.get("timestamp"));
+        runner.scheduleEphemeryRestart(this, lastGenesisTimestamp);
       }
-
-      besuController = buildController();
-
-      besuPluginContext.beforeExternalServices();
-
-      final var runner = buildRunner();
-      runner.startExternalServices();
-
-      startPlugins(runner);
-      setReleaseMetrics();
-      preSynchronization();
-
-      runner.startEthereumMainLoop();
-
-      besuPluginContext.afterExternalServicesMainLoop();
-
       runner.awaitStop();
 
     } catch (final Exception e) {
@@ -998,6 +978,50 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.debug("Startup failure cause", e);
       throw new ParameterException(this.commandLine, e.getMessage(), e);
     }
+  }
+
+  /**
+   * contains the initial setup and configurations required for Ephemery restart cycles.
+   *
+   * @throws Exception if startup fails
+   */
+  public void initialProcess() throws Exception {
+    if (network.equals(EPHEMERY)) {
+      genesisConfigSupplier = Suppliers.memoize(this::readGenesisConfig);
+      if (BigInteger.ZERO.equals(ephemeryNextCycleId)) {
+        ephemeryNextCycleId = genesisConfigSupplier.get().getConfigOptions().getChainId().get();
+      }
+      dataPath = dataPath.resolve("Ephemery-data-chain-" + ephemeryNextCycleId);
+      ephemeryNextCycleId = ephemeryNextCycleId.add(BigInteger.ONE);
+    }
+
+    configure();
+
+    setIgnorableStorageSegments();
+
+    // If we're not running against a named network, or if version compat protection has been
+    // explicitly enabled, perform compatibility check
+    VersionMetadata.versionCompatibilityChecks(versionCompatibilityProtection, dataDir());
+
+    configureNativeLibs(Optional.ofNullable(network));
+    if (enablePrecompileCaching) {
+      configurePrecompileCaching();
+    }
+
+    besuController = buildController();
+
+    besuPluginContext.beforeExternalServices();
+
+    runner = buildRunner();
+    runner.startExternalServices();
+
+    startPlugins(runner);
+    setReleaseMetrics();
+    preSynchronization();
+
+    runner.startEthereumMainLoop();
+
+    besuPluginContext.afterExternalServicesMainLoop();
   }
 
   private void configurePrecompileCaching() {
@@ -1224,7 +1248,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
             .put("QBFT Options", unstableQbftOptions)
-            .put("Debug Tracer Options", unstableDebugTracerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1261,7 +1284,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private SecurityModule defaultSecurityModule() {
-    return new KeyPairSecurityModule(loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile()));
+    keyPair = loadKeyPair(nodePrivateKeyFileOption.getNodePrivateKeyFile());
+    return new KeyPairSecurityModule(keyPair);
   }
 
   /**
@@ -1278,7 +1302,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preSynchronizationTaskRunner.runTasks(besuController);
   }
 
-  private Runner buildRunner() {
+  Runner buildRunner() {
     return synchronize(
         besuController,
         p2PDiscoveryConfig.p2pEnabled(),
@@ -2900,5 +2924,56 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public MetricsOptions getMetricsOptions() {
     return metricsOptions;
+  }
+
+  /**
+   * returns current runner for Ephemery restart.
+   *
+   * @return current runner
+   */
+  public Runner getRunner() {
+    return this.runner;
+  }
+
+  /**
+   * returns rocksDBPlugin for Ephemery restart.
+   *
+   * @return rocksDBPlugin
+   */
+  public RocksDBPlugin getRocksDBPlugin() {
+    return this.rocksDBPlugin;
+  }
+
+  /**
+   * returns keyPair for Ephemery restart.
+   *
+   * @return KeyPair
+   */
+  public KeyPair getKeyPair() {
+    return keyPair;
+  }
+
+  /**
+   * returns commandLine for Ephemery restart.
+   *
+   * @return KeyPair
+   */
+  public CommandLine getCommandLine() {
+    return this.commandLine;
+  }
+
+  /** Clears all allocated ports for Ephemery restart. */
+  public void clearAllocatedPorts() {
+    allocatedPorts.clear();
+  }
+
+  /** Sets data path to parent for Ephemery restart. */
+  public void setDataPathToParent() {
+    this.dataPath = dataPath.getParent();
+  }
+
+  @VisibleForTesting
+  Supplier<GenesisConfig> getGenesisConfigSupplier() {
+    return genesisConfigSupplier;
   }
 }

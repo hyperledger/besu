@@ -21,8 +21,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.DaggerPacketPackage;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.PacketData;
@@ -126,11 +124,11 @@ public class PeerDiscoveryController {
   private static final int PEER_REFRESH_ROUND_TIMEOUT_IN_SECONDS = 5;
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
-  private final Cache<Bytes, DiscoveryPeer> bondingPeers =
+  private final Cache<Bytes, DiscoveryPeerV4> bondingPeers =
       CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
   private final Cache<Bytes, Packet> cachedEnrRequests;
 
-  private final Collection<DiscoveryPeer> bootstrapNodes;
+  private final Collection<DiscoveryPeerV4> bootstrapNodes;
 
   /* A tracker for inflight interactions and the state machine of a peer. */
   private final Map<Bytes, Map<PacketType, PeerInteractionState>> inflightInteractions =
@@ -140,7 +138,7 @@ public class PeerDiscoveryController {
 
   private final NodeKey nodeKey;
   // The peer representation of this node
-  private final DiscoveryPeer localPeer;
+  private final DiscoveryPeerV4 localPeer;
   private final OutboundMessageHandler outboundMessageHandler;
   private final PeerDiscoveryPermissions peerPermissions;
   private final DiscoveryProtocolLogger discoveryProtocolLogger;
@@ -174,9 +172,9 @@ public class PeerDiscoveryController {
 
   PeerDiscoveryController(
       final NodeKey nodeKey,
-      final DiscoveryPeer localPeer,
+      final DiscoveryPeerV4 localPeer,
       final PeerTable peerTable,
-      final Collection<DiscoveryPeer> bootstrapNodes,
+      final Collection<DiscoveryPeerV4> bootstrapNodes,
       final OutboundMessageHandler outboundMessageHandler,
       final TimerUtil timerUtil,
       final AsyncExecutor workerExecutor,
@@ -256,11 +254,11 @@ public class PeerDiscoveryController {
     }
 
     LOG.debug("Starting with filterOnEnrForkId = {}", filterOnEnrForkId);
-    final List<DiscoveryPeer> initialDiscoveryPeers =
+    final List<DiscoveryPeerV4> initialDiscoveryPeerV4s =
         bootstrapNodes.stream()
             .filter(peerPermissions::isAllowedInPeerTable)
             .collect(Collectors.toList());
-    initialDiscoveryPeers.forEach(peerTable::tryAdd);
+    initialDiscoveryPeerV4s.forEach(peerTable::tryAdd);
 
     recursivePeerRefreshState =
         new RecursivePeerRefreshState(
@@ -275,7 +273,7 @@ public class PeerDiscoveryController {
 
     peerPermissions.subscribeUpdate(this::handlePermissionsUpdate);
 
-    recursivePeerRefreshState.start(initialDiscoveryPeers, localPeer.getId());
+    recursivePeerRefreshState.start(initialDiscoveryPeerV4s, localPeer.getId());
 
     final long refreshTimerId =
         timerUtil.setPeriodic(
@@ -338,7 +336,7 @@ public class PeerDiscoveryController {
 
   /**
    * Handles an incoming message and processes it based on the state machine for the {@link
-   * DiscoveryPeer}.
+   * DiscoveryPeerV4}.
    *
    * <p>The callback will be called with the canonical representation of the sender Peer as stored
    * in our table, or with an empty Optional if the message was out of band and we didn't process
@@ -347,7 +345,7 @@ public class PeerDiscoveryController {
    * @param packet The incoming message.
    * @param sender The sender.
    */
-  public void onMessage(final Packet packet, final DiscoveryPeer sender) {
+  public void onMessage(final Packet packet, final DiscoveryPeerV4 sender) {
     discoveryProtocolLogger.logReceivedPacket(sender, packet);
 
     // Message from self. This should not happen.
@@ -355,7 +353,7 @@ public class PeerDiscoveryController {
       return;
     }
 
-    final DiscoveryPeer peer = resolvePeer(sender);
+    final DiscoveryPeerV4 peer = resolvePeer(sender);
     if (peer == null) {
       return;
     }
@@ -426,14 +424,14 @@ public class PeerDiscoveryController {
     }
   }
 
-  private void processEnrRequest(final DiscoveryPeer peer, final Packet packet) {
+  private void processEnrRequest(final DiscoveryPeerV4 peer, final Packet packet) {
     LOG.trace("ENR_REQUEST received from bonded peer Id: {}", peer.getId());
     packet
         .getPacketData(EnrRequestPacketData.class)
         .ifPresent(p -> respondToENRRequest(p, packet.getHash(), peer));
   }
 
-  private List<DiscoveryPeer> getPeersFromNeighborsPacket(final Packet packet) {
+  private List<DiscoveryPeerV4> getPeersFromNeighborsPacket(final Packet packet) {
     final Optional<NeighborsPacketData> maybeNeighborsData =
         packet.getPacketData(NeighborsPacketData.class);
     if (maybeNeighborsData.isEmpty()) {
@@ -446,7 +444,7 @@ public class PeerDiscoveryController {
         .collect(Collectors.toList());
   }
 
-  private void checkBeforeAddingToPeerTable(final DiscoveryPeer peer) {
+  private void checkBeforeAddingToPeerTable(final DiscoveryPeerV4 peer) {
     if (peerTable.isIpAddressInvalid(peer.getEndpoint())) {
       return;
     }
@@ -477,7 +475,7 @@ public class PeerDiscoveryController {
     }
   }
 
-  public void addToPeerTable(final DiscoveryPeer peer) {
+  public void addToPeerTable(final DiscoveryPeerV4 peer) {
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
 
     if (result.getOutcome() == PeerTable.AddResult.AddOutcome.ALREADY_EXISTED) {
@@ -490,7 +488,7 @@ public class PeerDiscoveryController {
     }
   }
 
-  CompletableFuture<PeerConnection> connectOnRlpxLayer(final DiscoveryPeer peer) {
+  CompletableFuture<PeerConnection> connectOnRlpxLayer(final DiscoveryPeerV4 peer) {
     return rlpxAgent.connect(peer);
   }
 
@@ -542,7 +540,7 @@ public class PeerDiscoveryController {
   private void refreshTable() {
     final Bytes target = Peer.randomId();
 
-    final List<DiscoveryPeer> initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
+    final List<DiscoveryPeerV4> initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
     if (includeBootnodesOnPeerRefresh) {
       bootstrapNodes.stream()
           .filter(p -> p.getStatus() != PeerDiscoveryStatus.BONDED)
@@ -562,7 +560,7 @@ public class PeerDiscoveryController {
    * @param peer The targeted peer.
    */
   @VisibleForTesting
-  void bond(final DiscoveryPeer peer) {
+  void bond(final DiscoveryPeerV4 peer) {
     if (!peerPermissions.isAllowedInPeerTable(peer)) {
       return;
     }
@@ -608,7 +606,7 @@ public class PeerDiscoveryController {
    * @param peer The targeted peer.
    */
   @VisibleForTesting
-  void requestENR(final DiscoveryPeer peer) {
+  void requestENR(final DiscoveryPeerV4 peer) {
     final Consumer<PeerInteractionState> action =
         interaction -> {
           final EnrRequestPacketData data = enrRequestPacketDataFactory.create();
@@ -637,7 +635,8 @@ public class PeerDiscoveryController {
     dispatchInteraction(peer, peerInteractionState);
   }
 
-  private void sendPacket(final DiscoveryPeer peer, final PacketType type, final PacketData data) {
+  private void sendPacket(
+      final DiscoveryPeerV4 peer, final PacketType type, final PacketData data) {
     createPacket(
         type,
         data,
@@ -647,7 +646,7 @@ public class PeerDiscoveryController {
         });
   }
 
-  private void sendPacket(final DiscoveryPeer peer, final Packet packet) {
+  private void sendPacket(final DiscoveryPeerV4 peer, final Packet packet) {
     discoveryProtocolLogger.logSendingPacket(peer, packet);
     outboundMessageHandler.send(peer, packet);
   }
@@ -667,12 +666,12 @@ public class PeerDiscoveryController {
   }
 
   /**
-   * Sends a FIND_NEIGHBORS message to a {@link DiscoveryPeer}, in search of a target value.
+   * Sends a FIND_NEIGHBORS message to a {@link DiscoveryPeerV4}, in search of a target value.
    *
    * @param peer the peer to interrogate
    * @param target the target node ID to find
    */
-  private void findNodes(final DiscoveryPeer peer, final Bytes target) {
+  private void findNodes(final DiscoveryPeerV4 peer, final Bytes target) {
     final Consumer<PeerInteractionState> action =
         interaction -> {
           final FindNeighborsPacketData data = findNeighborsPacketDataFactory.create(target);
@@ -705,7 +704,7 @@ public class PeerDiscoveryController {
   }
 
   private void respondToPing(
-      final PingPacketData packetData, final Bytes pingHash, final DiscoveryPeer sender) {
+      final PingPacketData packetData, final Bytes pingHash, final DiscoveryPeerV4 sender) {
     if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
       LOG.debug("ignoring expired PING");
       return;
@@ -721,7 +720,7 @@ public class PeerDiscoveryController {
   }
 
   private void respondToFindNeighbors(
-      final FindNeighborsPacketData packetData, final DiscoveryPeer sender) {
+      final FindNeighborsPacketData packetData, final DiscoveryPeerV4 sender) {
     if (packetData.getExpiration() < Instant.now().getEpochSecond()) {
       return;
     }
@@ -730,7 +729,7 @@ public class PeerDiscoveryController {
     // 16 + 4 + 4 + 64 = 88 bytes
     // 88 * 13 = 1144 bytes
     // To fit under 1280 bytes, we must return just 13 peers maximum.
-    final List<DiscoveryPeer> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
+    final List<DiscoveryPeerV4> peers = peerTable.nearestBondedPeers(packetData.getTarget(), 13);
     final PacketData data = neighborsPacketDataFactory.create(peers);
     sendPacket(sender, PacketType.NEIGHBORS, data);
   }
@@ -738,7 +737,7 @@ public class PeerDiscoveryController {
   private void respondToENRRequest(
       final EnrRequestPacketData enrRequestPacketData,
       final Bytes requestHash,
-      final DiscoveryPeer sender) {
+      final DiscoveryPeerV4 sender) {
     if (enrRequestPacketData.getExpiration() >= Instant.now().getEpochSecond()) {
       final EnrResponsePacketData data =
           enrResponsePacketDataFactory.create(requestHash, localPeer.getNodeRecord().orElse(null));
@@ -752,7 +751,7 @@ public class PeerDiscoveryController {
    *
    * @return List of peers.
    */
-  public Stream<DiscoveryPeer> streamDiscoveredPeers() {
+  public Stream<DiscoveryPeerV4> streamDiscoveredPeers() {
     return peerTable.streamAllPeers().filter(peerPermissions::isAllowedInPeerTable);
   }
 
@@ -760,8 +759,8 @@ public class PeerDiscoveryController {
     this.retryDelayFunction = retryDelayFunction;
   }
 
-  public void handleBondingRequest(final DiscoveryPeer peer) {
-    final DiscoveryPeer peerToBond = resolvePeer(peer);
+  public void handleBondingRequest(final DiscoveryPeerV4 peer) {
+    final DiscoveryPeerV4 peerToBond = resolvePeer(peer);
     if (peerToBond == null) {
       return;
     }
@@ -772,15 +771,15 @@ public class PeerDiscoveryController {
   }
 
   // Load the peer first from the table, then from bonding cache or use the instance that comes in.
-  private DiscoveryPeer resolvePeer(final DiscoveryPeer peer) {
+  private DiscoveryPeerV4 resolvePeer(final DiscoveryPeerV4 peer) {
     if (peerTable.isIpAddressInvalid(peer.getEndpoint())) {
       return null;
     }
-    final Optional<DiscoveryPeer> maybeKnownPeer =
+    final Optional<DiscoveryPeerV4> maybeKnownPeer =
         peerTable.get(peer).filter(known -> known.discoveryEndpointMatches(peer));
-    DiscoveryPeer resolvedPeer = maybeKnownPeer.orElse(peer);
+    DiscoveryPeerV4 resolvedPeer = maybeKnownPeer.orElse(peer);
     if (maybeKnownPeer.isEmpty()) {
-      final DiscoveryPeer bondingPeer = bondingPeers.getIfPresent(peer.getId());
+      final DiscoveryPeerV4 bondingPeer = bondingPeers.getIfPresent(peer.getId());
       if (bondingPeer != null) {
         resolvedPeer = bondingPeer;
       }
@@ -881,13 +880,13 @@ public class PeerDiscoveryController {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
     private long tableRefreshIntervalMs = MILLISECONDS.convert(30, TimeUnit.MINUTES);
     private long cleanPeerTableIntervalMs = MILLISECONDS.convert(1, TimeUnit.MINUTES);
-    private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
+    private final List<DiscoveryPeerV4> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
     private boolean includeBootnodesOnPeerRefresh = true;
 
     // Required dependencies
     private NodeKey nodeKey;
-    private DiscoveryPeer localPeer;
+    private DiscoveryPeerV4 localPeer;
     private TimerUtil timerUtil;
     private AsyncExecutor workerExecutor;
     private MetricsSystem metricsSystem;
@@ -962,7 +961,7 @@ public class PeerDiscoveryController {
       return this;
     }
 
-    public Builder localPeer(final DiscoveryPeer localPeer) {
+    public Builder localPeer(final DiscoveryPeerV4 localPeer) {
       checkNotNull(localPeer);
       this.localPeer = localPeer;
       return this;
@@ -974,7 +973,7 @@ public class PeerDiscoveryController {
       return this;
     }
 
-    public Builder bootstrapNodes(final Collection<DiscoveryPeer> bootstrapNodes) {
+    public Builder bootstrapNodes(final Collection<DiscoveryPeerV4> bootstrapNodes) {
       this.bootstrapNodes.addAll(bootstrapNodes);
       return this;
     }

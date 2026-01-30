@@ -23,11 +23,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -192,27 +195,6 @@ public class DownloadBackwardHeadersStepTest {
   }
 
   @Test
-  public void shouldFailOnPeerDisconnected() {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
-
-    final PeerTaskExecutorResult<List<BlockHeader>> disconnectedResult =
-        new PeerTaskExecutorResult<>(
-            Optional.empty(),
-            PeerTaskExecutorResponseCode.PEER_DISCONNECTED,
-            Collections.emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
-        .thenReturn(disconnectedResult);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
-
-    assertThatThrownBy(() -> result.get())
-        .hasCauseInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Failed to download headers starting from block 100");
-  }
-
-  @Test
   public void shouldHandleSmallRemainingHeaders() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
         new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 100, 95);
@@ -286,10 +268,29 @@ public class DownloadBackwardHeadersStepTest {
   }
 
   private List<BlockHeader> createMockHeaders(final int count, final long startBlock) {
+    final BlockHeaderFunctions bhf = new LocalBlockHeaderFunctions();
     final List<BlockHeader> headers = new ArrayList<>();
     for (int i = 0; i < count; i++) {
-      headers.add(new BlockHeaderTestFixture().number(startBlock - i).buildHeader());
+      headers.add(
+          new BlockHeaderTestFixture()
+              .number(startBlock - i)
+              .blockHeaderFunctions(bhf)
+              .parentHash(Hash.EMPTY)
+              .buildHeader());
     }
     return headers;
+  }
+
+  static class LocalBlockHeaderFunctions implements BlockHeaderFunctions {
+
+    @Override
+    public Hash hash(final BlockHeader header) {
+      return Hash.EMPTY;
+    }
+
+    @Override
+    public ParsedExtraData parseExtraData(final BlockHeader header) {
+      return null;
+    }
   }
 }

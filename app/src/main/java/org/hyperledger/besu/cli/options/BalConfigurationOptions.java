@@ -62,7 +62,7 @@ public class BalConfigurationOptions {
       names = {"--Xbal-api-enabled"},
       hidden = true,
       description =
-          "Set to enable eth_getBlockAccessListByNumber method and Block Access Lists in simulation results")
+          "Set to enable eth_getBlockAccessListByBlockNumber and eth_getBlockAccessListByBlockHash methods and Block Access Lists in simulation results")
   private final Boolean balApiEnabled = false;
 
   @CommandLine.Option(

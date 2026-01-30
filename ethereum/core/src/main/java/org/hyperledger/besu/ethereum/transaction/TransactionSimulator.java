@@ -192,6 +192,7 @@ public class TransactionSimulator {
                 miningConfiguration,
                 timestamp,
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty())
             .buildProcessableBlockHeader();
 
@@ -592,8 +593,8 @@ public class TransactionSimulator {
       maxPriorityFeePerGas = Wei.ZERO;
       maxFeePerBlobGas = Wei.ZERO;
     } else {
-      if (noPricingParametersPresent && !transactionValidationParams.allowUnderpriced()) {
-        // in case there are gas price parameters and underpriced txs are not allowed,
+      if (noPricingParametersPresent) {
+        // in case there are no gas price parameters,
         // then set the gas price to the min necessary to process the tx.
         gasPrice = processableHeader.getBaseFee().orElse(Wei.ZERO);
       } else {

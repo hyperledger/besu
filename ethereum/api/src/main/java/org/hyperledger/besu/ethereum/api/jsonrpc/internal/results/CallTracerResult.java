@@ -417,12 +417,27 @@ public class CallTracerResult {
     /**
      * Sets the revert reason if the call was reverted.
      *
-     * @param revertReason the revert reason
+     * @param revertReason the revert reason as raw bytes (will be decoded)
      * @return this builder instance for method chaining
      */
     public Builder revertReason(final Bytes revertReason) {
       this.revertReason =
           JsonRpcErrorResponse.decodeRevertReason(revertReason).orElse(revertReason.toHexString());
+      return this;
+    }
+
+    /**
+     * Sets the revert reason directly from a decoded string.
+     *
+     * <p>This method should be used when you have already decoded the revert reason and want to set
+     * it directly without any fallback to hex encoding. This is useful for Geth compatibility where
+     * revertReason should only be set if it's a valid decoded Error(string).
+     *
+     * @param revertReason the decoded revert reason string
+     * @return this builder instance for method chaining
+     */
+    public Builder revertReasonDecoded(final String revertReason) {
+      this.revertReason = revertReason;
       return this;
     }
 

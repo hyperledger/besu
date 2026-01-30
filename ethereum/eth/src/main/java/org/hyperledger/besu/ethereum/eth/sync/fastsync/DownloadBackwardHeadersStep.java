@@ -24,7 +24,9 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -37,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
-  public static final long ONE_SECOND = 1000L;
+  public static final long MILLISECONDS_PER_SECOND = 1000L;
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -57,6 +59,7 @@ public class DownloadBackwardHeadersStep
       final EthContext ethContext,
       final int headerRequestSize,
       final long trustAnchorBlockNumber) {
+    if (headerRequestSize < 1) throw new IllegalArgumentException("headerRequestSize must be >= 1");
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.headerRequestSize = headerRequestSize;
@@ -74,7 +77,8 @@ public class DownloadBackwardHeadersStep
 
     return ethContext
         .getScheduler()
-        .scheduleServiceTask(() -> downloadAllHeaders(startBlockNumber, headersToRequest));
+        .scheduleServiceTask(() -> downloadAllHeaders(startBlockNumber, headersToRequest))
+        .orTimeout(2L, TimeUnit.MINUTES);
   }
 
   private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
@@ -94,26 +98,28 @@ public class DownloadBackwardHeadersStep
 
       final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
       if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
-        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
-          try {
-            Thread.sleep(ONE_SECOND); // TODO: Stefan: replace with async scheduler: return
-            // ethContext.getScheduler().scheduleFutureTask(() ->
-            // downloadAllHeaders(...), Duration.ofSeconds(1));
-          } catch (InterruptedException e) {
-            // do nothing
-          }
-        } else {
-          LOG.warn(
-              "Failed to download {} headers from block {} (response: {})",
-              headersToRequest,
-              startBlockNumber,
-              peerTaskExecutorResponseCode);
-          return CompletableFuture.failedFuture(
-              new RuntimeException(
-                  "Failed to download headers starting from block " + startBlockNumber));
+        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
+          throw new RuntimeException("Failed to download headers starting from block 100");
         }
+        // wait for a peer to become available before retrying
+        ethContext.getEthPeers().waitForPeer(__ -> true);
       } else {
-        headers.addAll(result.result().get());
+        final Optional<List<BlockHeader>> optionalBlockHeaderList = result.result();
+        final List<BlockHeader> resultBlockHeaders = optionalBlockHeaderList.orElseGet(List::of);
+        if (!headers.isEmpty()) { // we need to check continuation of parent hash / block hash
+          if (optionalBlockHeaderList.isPresent()) {
+            if (!resultBlockHeaders.isEmpty()) {
+              if (!resultBlockHeaders
+                  .getFirst()
+                  .getHash()
+                  .equals(headers.getLast().getParentHash())) {
+                throw new IllegalStateException(
+                    "Parent hash of last header does not match first header");
+              }
+            }
+          }
+        }
+        headers.addAll(resultBlockHeaders);
       }
     } while (headers.size() < headersToRequest);
     LOG.debug(

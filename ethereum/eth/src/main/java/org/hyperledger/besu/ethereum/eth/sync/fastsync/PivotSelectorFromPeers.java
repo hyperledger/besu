@@ -51,7 +51,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   @Override
   public CompletableFuture<FastSyncState> selectNewPivotBlock() {
     return selectBestPeer()
-        .map(this::fromBestPeer)
+        .map(this::fromPeer)
         .orElse(
             CompletableFuture.failedFuture(
                 new RuntimeException("Not enough peers to select pivot block")));
@@ -79,7 +79,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return syncState.bestChainHeight();
   }
 
-  protected CompletableFuture<FastSyncState> fromBestPeer(final EthPeer peer) {
+  protected CompletableFuture<FastSyncState> fromPeer(final EthPeer peer) {
     final long pivotBlockNumber =
         peer.chainState().getEstimatedHeight() - syncConfig.getSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {

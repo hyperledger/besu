@@ -173,7 +173,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         && pendingAccountFlatDatabaseHealingRequests.allTasksCompleted()
         && pendingStorageFlatDatabaseHealingRequests.allTasksCompleted()) {
 
-      LOG.info("Stefan: Calling checkCompletion");
       // if all snapsync tasks are completed and the healing process was not running
       if (!snapSyncState.isHealTrieInProgress()) {
         // Start the healing process
@@ -182,7 +181,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing was running and blockchain is behind
       // the pivot block
       else if (pivotBlockSelector.isBlockchainBehind()) {
-        LOG.info("Pausing world state download while waiting for sync to complete");
+        LOG.debug("Pausing world state download while waiting for chain sync to complete");
         // Set the snapsync to wait for the blockchain to catch up
         snapSyncState.setWaitingBlockchain(true);
       }
@@ -207,10 +206,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           applyForStrategy(
               updater,
               onBonsai -> {
-                onBonsai.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+                onBonsai.saveWorldState(
+                    header.getHash().getBytes(),
+                    Bytes32.wrap(header.getStateRoot().getBytes()),
+                    rootNodeData);
               },
               onForest -> {
-                onForest.saveWorldState(header.getStateRoot(), rootNodeData);
+                onForest.saveWorldState(
+                    Bytes32.wrap(header.getStateRoot().getBytes()), rootNodeData);
               });
           updater.commit();
 

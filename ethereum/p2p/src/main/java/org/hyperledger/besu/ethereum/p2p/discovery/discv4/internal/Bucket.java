@@ -18,7 +18,6 @@ import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
@@ -37,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
  * the bucket filled with alive, responsive peers.
  */
 public class Bucket {
-  private final DiscoveryPeer[] kBucket;
+  private final DiscoveryPeerV4[] kBucket;
   private final int bucketSize;
   private int tailIndex = -1;
 
@@ -49,7 +48,7 @@ public class Bucket {
    */
   Bucket(final int bucketSize) {
     this.bucketSize = bucketSize;
-    this.kBucket = new DiscoveryPeer[bucketSize];
+    this.kBucket = new DiscoveryPeerV4[bucketSize];
   }
 
   /**
@@ -62,9 +61,9 @@ public class Bucket {
    * @return An empty optional if the peer was not a member of this bucket, or a filled optional if
    *     it was.
    */
-  synchronized Optional<DiscoveryPeer> getAndTouch(final Bytes id) {
+  synchronized Optional<DiscoveryPeerV4> getAndTouch(final Bytes id) {
     for (int i = 0; i <= tailIndex; i++) {
-      final DiscoveryPeer p = kBucket[i];
+      final DiscoveryPeerV4 p = kBucket[i];
       if (id.equals(p.getId())) {
         arraycopy(kBucket, 0, kBucket, 1, i);
         kBucket[0] = p;
@@ -88,7 +87,7 @@ public class Bucket {
    * @return an empty optional or alternatively the least recently contacted peer (tail of array)
    * @throws IllegalArgumentException The peer already existed in the bucket.
    */
-  synchronized Optional<DiscoveryPeer> add(final DiscoveryPeer peer)
+  synchronized Optional<DiscoveryPeerV4> add(final DiscoveryPeerV4 peer)
       throws IllegalArgumentException {
     assert tailIndex >= -1 && tailIndex < bucketSize;
 
@@ -137,7 +136,7 @@ public class Bucket {
    *
    * @return immutable view of the peer array
    */
-  synchronized List<DiscoveryPeer> getPeers() {
+  synchronized List<DiscoveryPeerV4> getPeers() {
     return unmodifiableList(asList(Arrays.copyOf(kBucket, tailIndex + 1)));
   }
 

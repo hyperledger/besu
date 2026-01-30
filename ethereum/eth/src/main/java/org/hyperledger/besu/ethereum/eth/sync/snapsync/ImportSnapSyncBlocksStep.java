@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
@@ -35,7 +34,6 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   private static final Logger LOG = LoggerFactory.getLogger(ImportSnapSyncBlocksStep.class);
   private static final int PRINT_DELAY_SECONDS = 30;
 
-  protected final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
   private final long startBlock;
@@ -45,19 +43,18 @@ public class ImportSnapSyncBlocksStep implements Consumer<List<SyncBlockWithRece
   private final MutableBlockchain blockchain;
 
   public ImportSnapSyncBlocksStep(
-      final ProtocolContext protocolContext,
+      final MutableBlockchain blockchain,
       final EthContext ethContext,
       final SyncState syncState,
       final long startBlock,
       final BlockHeader pivotHeader,
       final boolean transactionIndexingEnabled) {
-    this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.startBlock = startBlock;
     this.pivotHeaderNumber = pivotHeader.getNumber();
     this.transactionIndexingEnabled = transactionIndexingEnabled;
-    this.blockchain = protocolContext.getBlockchain();
+    this.blockchain = blockchain;
   }
 
   @Override

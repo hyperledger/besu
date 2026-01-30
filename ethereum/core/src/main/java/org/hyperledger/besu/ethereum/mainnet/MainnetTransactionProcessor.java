@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -47,6 +46,7 @@ import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -230,7 +230,7 @@ public class MainnetTransactionProcessor {
 
       operationTracer.tracePrepareTransaction(worldState, transaction);
 
-      final Set<Address> eip2930WarmAddressList = new BytesTrieSet<>(Address.SIZE);
+      final Set<Address> eip2930WarmAddressList = new HashSet<>(Address.SIZE);
 
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
@@ -246,13 +246,21 @@ public class MainnetTransactionProcessor {
 
       final Wei upfrontGasCost =
           transaction.getUpfrontGasCost(transactionGasPrice, blobGasPrice, blobGas);
-      final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
-      LOG.trace(
-          "Deducted sender {} upfront gas cost {} ({} -> {})",
-          senderAddress,
-          upfrontGasCost,
-          previousBalance,
-          sender.getBalance());
+      try {
+        final Wei previousBalance = sender.decrementBalance(upfrontGasCost);
+        LOG.trace(
+            "Deducted sender {} upfront gas cost {} ({} -> {})",
+            senderAddress,
+            upfrontGasCost,
+            previousBalance,
+            sender.getBalance());
+      } catch (final IllegalStateException ise) {
+        if (transactionValidationParams.allowUnderpriced()) {
+          LOG.trace("Allowing account balance underflow as requested");
+        } else {
+          throw ise;
+        }
+      }
 
       long codeDelegationRefund = 0L;
       if (transaction.getType().equals(TransactionType.DELEGATE_CODE)) {
@@ -427,6 +435,7 @@ public class MainnetTransactionProcessor {
             return TransactionProcessingResult.failed(
                 gasUsedByTransaction,
                 refundedGas,
+                usedGas,
                 ValidationResult.invalid(
                     TransactionInvalidReason.TRANSACTION_PRICE_TOO_LOW,
                     "transaction price must be greater than base fee"),
@@ -477,6 +486,7 @@ public class MainnetTransactionProcessor {
             initialFrame.getLogs(),
             gasUsedByTransaction,
             refundedGas,
+            usedGas,
             initialFrame.getOutputData(),
             partialBlockAccessView,
             validationResult);
@@ -496,6 +506,7 @@ public class MainnetTransactionProcessor {
         return TransactionProcessingResult.failed(
             gasUsedByTransaction,
             refundedGas,
+            usedGas,
             validationResult,
             initialFrame.getRevertReason(),
             initialFrame.getExceptionalHaltReason(),

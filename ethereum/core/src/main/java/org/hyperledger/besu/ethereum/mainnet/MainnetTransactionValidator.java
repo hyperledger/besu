@@ -122,7 +122,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
       if (!blobTransactionResult.isValid()) {
         LOG.debug(
             "Blob transaction {} validation failed: {}",
-            transaction.getHash().toHexString(),
+            transaction.getHash().getBytes().toHexString(),
             blobTransactionResult.getErrorMessage());
         return blobTransactionResult;
       }
@@ -247,7 +247,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
             TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
             String.format(
                 "tx max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
-                transaction.getSender().toHexString(),
+                transaction.getSender().getBytes().toHexString(),
                 transaction.getMaxFeePerBlobGas().get().toHumanReadableString(),
                 maybeBlobFee.get().toHumanReadableString()));
       }
@@ -302,24 +302,26 @@ public class MainnetTransactionValidator implements TransactionValidator {
       return ValidationResult.invalid(
           TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
           String.format(
-              "transaction up-front cost %s exceeds transaction sender account balance %s",
-              upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
+              "transaction up-front cost %s exceeds transaction sender account balance %s for sender %s",
+              upfrontCost.toQuantityHexString(),
+              senderBalance.toQuantityHexString(),
+              transaction.getSender()));
     }
 
     if (Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_LOW,
           String.format(
-              "transaction nonce %s below sender account nonce %s",
-              transaction.getNonce(), senderNonce));
+              "transaction nonce %s below sender account nonce %s for sender %s",
+              transaction.getNonce(), senderNonce, transaction.getSender()));
     }
 
     if (!validationParams.isAllowFutureNonce() && senderNonce != transaction.getNonce()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_HIGH,
           String.format(
-              "transaction nonce %s does not match sender account nonce %s.",
-              transaction.getNonce(), senderNonce));
+              "transaction nonce %s does not match sender account nonce %s for sender %s",
+              transaction.getNonce(), senderNonce, transaction.getSender()));
     }
 
     if (!validationParams.isAllowContractAddressAsSender()

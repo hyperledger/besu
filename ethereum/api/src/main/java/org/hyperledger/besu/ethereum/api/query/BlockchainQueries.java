@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -39,11 +40,12 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.util.OrderStatistics;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -532,6 +534,14 @@ public class BlockchainQueries {
 
   public Optional<BlockHeader> getBlockHeaderByNumber(final long number) {
     return blockchain.getBlockHeader(number);
+  }
+
+  public boolean isBlockAccessListSupported(final BlockHeader header) {
+    return protocolSchedule
+        .getByBlockHeader(header)
+        .getBlockAccessListFactory()
+        .map(BlockAccessListFactory::isForkActivated)
+        .orElse(false);
   }
 
   public boolean blockIsOnCanonicalChain(final Hash hash) {
@@ -1032,7 +1042,8 @@ public class BlockchainQueries {
                   return mapper.apply(ws);
                 }
               } catch (Exception ex) {
-                LOG.error("failed worldstate query for " + blockHash.toShortHexString(), ex);
+                LOG.error(
+                    "failed worldstate query for " + blockHash.getBytes().toShortHexString(), ex);
               }
               LOG.atDebug()
                   .setMessage("Failed to find worldstate for {}")
@@ -1084,7 +1095,6 @@ public class BlockchainQueries {
             .flatMap(Collection::stream)
             .filter(t -> t.getGasPrice().isPresent())
             .map(t -> t.getGasPrice().get())
-            .sorted()
             .toArray(Wei[]::new);
 
     return gasCollection.length == 0
@@ -1093,10 +1103,11 @@ public class BlockchainQueries {
             gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket),
             UInt256s.min(
                 apiConfig.getGasPriceMax(),
-                gasCollection[
+                OrderStatistics.selectKthInPlace(
+                    gasCollection,
                     Math.min(
                         gasCollection.length - 1,
-                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
+                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction())))));
   }
 
   /**
@@ -1148,17 +1159,17 @@ public class BlockchainQueries {
             .flatMap(Collection::stream)
             .filter(t -> t.getMaxPriorityFeePerGas().isPresent())
             .map(t -> t.getMaxPriorityFeePerGas().get())
-            .sorted()
             .toArray(Wei[]::new);
 
     return gasCollection.length == 0
         ? miningConfiguration.getMinPriorityFeePerGas()
         : UInt256s.max(
             miningConfiguration.getMinPriorityFeePerGas(),
-            gasCollection[
+            OrderStatistics.selectKthInPlace(
+                gasCollection,
                 Math.min(
                     gasCollection.length - 1,
-                    (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]);
+                    (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))));
   }
 
   /**

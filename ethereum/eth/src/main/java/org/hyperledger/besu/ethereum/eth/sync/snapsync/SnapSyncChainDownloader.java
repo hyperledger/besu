@@ -15,8 +15,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState.downloadCheckpointHeader;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -26,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.HeaderDownloadUtils;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
@@ -42,6 +41,7 @@ import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,7 +61,7 @@ import org.slf4j.LoggerFactory;
 public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
-  public static final int SMALL_DELAY = 100;
+  public static final int SMALL_DELAY_MILLISECONDS = 100;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolContext protocolContext;
@@ -147,12 +147,17 @@ public class SnapSyncChainDownloader
         final Checkpoint checkpoint = maybeCheckpoint.get();
         checkpointHash = checkpoint.blockHash();
         Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
-        checkpointBlockHeader =
-            getCheckpointBlockHeader(protocolSchedule, protocolContext, ethContext, checkpointHash);
+        try {
+          checkpointBlockHeader =
+              HeaderDownloadUtils.downloadBlockHeader(checkpointHash, ethContext, protocolSchedule)
+                  .get();
+        } catch (InterruptedException | ExecutionException e) {
+          throw new RuntimeException(e);
+        }
         blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
         blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
         LOG.debug(
-            "Using checkpoint {} as lower trust anchor: {}, {}",
+            "Using block number {} as lower trust anchor: {}, {}",
             checkpoint.blockNumber(),
             checkpoint.blockHash(),
             checkpoint.totalDifficulty());
@@ -229,6 +234,7 @@ public class SnapSyncChainDownloader
                     totalDuration.getSeconds());
                 // Stop metrics on success
                 syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+                chainSyncStateStorage.deleteState();
                 return CompletableFuture.<Void>completedFuture(null);
               }
             })
@@ -388,8 +394,7 @@ public class SnapSyncChainDownloader
                 handleDownloadError(error, overallResult);
               } else {
                 // we are stopping the time after the initial chain download has finished. From now
-                // on we are only
-                // waiting for new pivots or the world state download to finish.
+                // on we are only waiting for new pivots or the world state download to finish.
                 syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
                 handlePivotUpdateLoop(overallResult);
               }
@@ -438,7 +443,8 @@ public class SnapSyncChainDownloader
       // Use a small delay to avoid tight retry loops
       ethContext
           .getScheduler()
-          .scheduleFutureTask(() -> attemptDownload(overallResult), Duration.ofMillis(SMALL_DELAY));
+          .scheduleFutureTask(
+              () -> attemptDownload(overallResult), Duration.ofMillis(SMALL_DELAY_MILLISECONDS));
     } else {
       // Non-retryable error - fail (metrics will be stopped by outer handler)
       overallResult.completeExceptionally(error);
@@ -546,17 +552,5 @@ public class SnapSyncChainDownloader
     if (pipeline != null) {
       pipeline.abort();
     }
-  }
-
-  private static BlockHeader getCheckpointBlockHeader(
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final EthContext ethContext,
-      final Hash checkpointHash) {
-    // try the blockchain first, if not successful, download the header from the peers
-    return protocolContext
-        .getBlockchain()
-        .getBlockHeader(checkpointHash)
-        .orElse(downloadCheckpointHeader(protocolSchedule, ethContext, checkpointHash));
   }
 }

@@ -20,11 +20,10 @@ import static org.apache.tuweni.bytes.Bytes.wrapBuffer;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryPacketDecodingException;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerDiscoveryController.AsyncExecutor;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable;
@@ -64,11 +63,12 @@ import io.vertx.core.datagram.DatagramPacket;
 import io.vertx.core.datagram.DatagramSocket;
 import io.vertx.core.datagram.DatagramSocketOptions;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.rlp.EndOfRLPException;
 import org.ethereum.beacon.discovery.util.DecodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
+public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgentV4 {
   private static final Logger LOG = LoggerFactory.getLogger(VertxPeerDiscoveryAgent.class);
 
   private final Vertx vertx;
@@ -109,6 +109,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
         "vertx_eventloop_pending_tasks",
         "The number of pending tasks in the Vertx event loop",
         pendingTaskCounter(vertx.nettyEventLoopGroup()));
+    addPeerRequirement(() -> rlpxAgent.getConnectionCount() >= rlpxAgent.getMaxPeers());
   }
 
   public static VertxPeerDiscoveryAgent create(
@@ -208,7 +209,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected CompletableFuture<Void> sendOutgoingPacket(
-      final DiscoveryPeer peer, final Packet packet) {
+      final DiscoveryPeerV4 peer, final Packet packet) {
     final CompletableFuture<Void> result = new CompletableFuture<>();
     if (socket == null) {
       result.completeExceptionally(
@@ -252,7 +253,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
 
   @Override
   protected void handleOutgoingPacketError(
-      final Throwable err, final DiscoveryPeer peer, final Packet packet) {
+      final Throwable err, final DiscoveryPeerV4 peer, final Packet packet) {
     if (err instanceof NativeIoException) {
       final var nativeErr = (NativeIoException) err;
       if (nativeErr.expectedErr() == Errors.ERROR_ENETUNREACH_NEGATIVE) {
@@ -348,7 +349,7 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
           } else {
             if (event.cause() instanceof PeerDiscoveryPacketDecodingException
                 || event.cause() instanceof DecodeException
-                || event.cause() instanceof org.apache.tuweni.rlp.EndOfRLPException) {
+                || event.cause() instanceof EndOfRLPException) {
               LOG.debug(
                   "Discarding invalid peer discovery packet: {}, {}",
                   event.cause().getMessage(),
