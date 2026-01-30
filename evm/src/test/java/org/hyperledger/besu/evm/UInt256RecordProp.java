@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
+import net.jqwik.api.Assume;
 import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
@@ -162,6 +163,9 @@ public class UInt256RecordProp {
   @Property(seed = "1123581321")
   void property_shiftLeft_matches_big_integer_mod_2_256(
       @ForAll("bytes32_shaped") final byte[] a, @ForAll("shifts_extreme") final int shift) {
+    // UInt256.shiftLeft is only defined for 0 <= shift < 64 (unchecked precondition).
+    // This property intentionally tests the record refactor, not EVM-wide shift semantics.
+    Assume.that(shift >= 0 && shift < 64);
     // Arrange.
     final BigInteger A = new BigInteger(1, a);
     final byte[] expected = expectedShl(A, shift);
@@ -176,6 +180,9 @@ public class UInt256RecordProp {
   @Property(seed = "867530900")
   void property_shiftRight_matches_big_integer_mod_2_256(
       @ForAll("bytes32_shaped") final byte[] a, @ForAll("shifts_extreme") final int shift) {
+    // UInt256.shiftRight is only defined for 0 <= shift < 64 (unchecked precondition).
+    // This property intentionally tests the record refactor, not EVM-wide shift semantics.
+    Assume.that(shift >= 0 && shift < 64);
     // Arrange.
     final BigInteger A = new BigInteger(1, a);
     final byte[] expected = expectedShr(A, shift);
