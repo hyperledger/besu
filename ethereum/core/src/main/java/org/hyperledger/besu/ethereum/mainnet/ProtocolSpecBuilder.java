@@ -99,6 +99,10 @@ public class ProtocolSpecBuilder {
   private StateRootCommitterFactory stateRootCommitterFactory =
       new StateRootCommitterFactoryDefault();
   private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
+  private BlockGasAccountingStrategy blockGasAccountingStrategy =
+      BlockGasAccountingStrategy.FRONTIER;
+  private TransactionReceiptDecoderStrategy receiptDecoderStrategy =
+      TransactionReceiptDecoderStrategy.FRONTIER;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -323,6 +327,18 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder blockGasAccountingStrategy(
+      final BlockGasAccountingStrategy blockGasAccountingStrategy) {
+    this.blockGasAccountingStrategy = blockGasAccountingStrategy;
+    return this;
+  }
+
+  public ProtocolSpecBuilder receiptDecoderStrategy(
+      final TransactionReceiptDecoderStrategy receiptDecoderStrategy) {
+    this.receiptDecoderStrategy = receiptDecoderStrategy;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -440,7 +456,9 @@ public class ProtocolSpecBuilder {
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
         Optional.ofNullable(finalBalFactory),
-        stateRootCommitterFactory);
+        stateRootCommitterFactory,
+        blockGasAccountingStrategy,
+        receiptDecoderStrategy);
   }
 
   private BlockProcessor createBlockProcessor(

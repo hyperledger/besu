@@ -143,6 +143,13 @@
       "code": "0x3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500",
       "storage": {}
     },
+    "0x000000000000000000000000000000000000784b": {
+      "comment": "SLOTNUM test contract - stores current slot number at storage key 0 (EIP-7843). Bytecode: SLOTNUM PUSH0 SSTORE STOP",
+      "balance": "0x00",
+      "code": "0x4b5f5500",
+      "codeDecompiled": "SLOTNUM PUSH0 SSTORE STOP",
+      "storage": {}
+    },
     "0x8024000000000000000000000000000000000001": {
       "comment": "EIP-8024 DUPN test contract: PUSH1 1, PUSH1 0, 16xDUP1, DUPN 0, PUSH0, SSTORE",
       "balance": "0x0",
@@ -170,6 +177,15 @@
       "code": "0xe65f",
       "codeDecompiled": "DUPN 0x5f",
       "storage": {}
+    },
+    "0x0000000000000000000000000000000000007778": {
+      "comment": "EIP-7778 test contract: Clears storage slot 0 when called, generating SSTORE refund. Pre-loaded with non-zero storage.",
+      "balance": "0",
+      "code": "0x5F5F5500",
+      "codeDecompiled": "PUSH0 PUSH0 SSTORE STOP",
+      "storage": {
+        "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      }
     }
   },
   "number":"0x0",
