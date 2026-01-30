@@ -16,15 +16,16 @@ package org.hyperledger.besu.services;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
+import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.plugin.services.BlockReplayService;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -56,18 +58,21 @@ public class BlockReplayServiceImpl implements BlockReplayService {
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
 
+  private final BlockchainQueries blockchainQueries;
+
   /**
    * Constructs a BlockReplayServiceImpl.
    *
-   * @param blockchain the blockchain to replay blocks from
+   * @param blockchainQueries the blockchainQueries to replay blocks from
    * @param protocolSchedule the protocol schedule to determine block processing rules
    * @param protocolContext the protocol context containing world state and other necessary data
    */
   public BlockReplayServiceImpl(
-      final Blockchain blockchain,
+      final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext) {
-    this.blockchain = blockchain;
+    this.blockchain = blockchainQueries.getBlockchain();
+    this.blockchainQueries = blockchainQueries;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
   }
@@ -79,40 +84,51 @@ public class BlockReplayServiceImpl implements BlockReplayService {
       final Consumer<WorldView> beforeTracing,
       final Consumer<WorldView> afterTracing,
       final BlockAwareOperationTracer tracer) {
-
     validateInputs(fromBlockNumber, toBlockNumber, tracer);
 
     LOG.debug("Replaying blocks [{} → {}]", fromBlockNumber, toBlockNumber);
 
     final List<Block> blocks = getBlocks(fromBlockNumber, toBlockNumber);
-
-    MutableWorldState worldState = getParentWorldState(blocks.getFirst());
-    beforeTracing.accept(worldState);
+    withWorldView(blocks.getFirst().getHeader().getParentHash(), beforeTracing);
 
     final List<BlockReplayResult> results = new ArrayList<>(blocks.size());
-
     for (final Block block : blocks) {
-      worldState = getParentWorldState(block);
-      final BlockProcessor processor =
-          protocolSchedule.getByBlockHeader(block.getHeader()).getBlockProcessor();
-      final BlockProcessingResult processingResult =
-          processor.processBlock(
-              protocolContext,
-              blockchain,
-              worldState,
-              block,
-              Optional.empty(),
-              new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing(),
-              tracer);
-      if (processingResult.isSuccessful()) {
-        results.add(new BlockReplayResultImpl(block, processingResult));
-      } else {
-        throw new RuntimeException(
-            "Block processing failed for block: " + block.getHeader().toLogString());
-      }
+      final BlockProcessingResult result =
+          replayBlock(block, tracer)
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Unexpected empty result while replaying block: "
+                              + block.getHeader().toLogString()));
+      results.add(new BlockReplayResultImpl(block, result));
     }
-    afterTracing.accept(worldState);
-    return results;
+    withWorldView(blocks.getLast().getHash(), afterTracing);
+    return Collections.unmodifiableList(results);
+  }
+
+  private Optional<BlockProcessingResult> replayBlock(
+      final Block block, final BlockAwareOperationTracer tracer) {
+    return Tracer.processTracing(
+        blockchainQueries,
+        block.getHeader().getHash(),
+        mutableWorldState -> {
+          final BlockProcessor processor =
+              protocolSchedule.getByBlockHeader(block.getHeader()).getBlockProcessor();
+          final BlockProcessingResult processingResult =
+              processor.processBlock(
+                  protocolContext,
+                  blockchain,
+                  mutableWorldState,
+                  block,
+                  Optional.empty(),
+                  new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing(),
+                  tracer);
+          if (!processingResult.isSuccessful()) {
+            throw new RuntimeException(
+                "Block processing failed for block: " + block.getHeader().toLogString());
+          }
+          return Optional.of(processingResult);
+        });
   }
 
   private void validateInputs(
@@ -134,29 +150,13 @@ public class BlockReplayServiceImpl implements BlockReplayService {
         .toList();
   }
 
-  private MutableWorldState getParentWorldState(final Block block) {
-    final BlockHeader parentHeader =
-        blockchain
-            .getBlockByHash(block.getHeader().getParentHash())
-            .map(Block::getHeader)
-            .orElseThrow(
-                () ->
-                    new IllegalArgumentException(
-                        "Parent block not found for: " + block.getHeader().toLogString()));
-    return getWorldState(parentHeader);
-  }
-
-  private MutableWorldState getWorldState(final BlockHeader header) {
-    final WorldStateQueryParams params =
-        WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(header);
-
-    return protocolContext
-        .getWorldStateArchive()
-        .getWorldState(params)
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "World state not available for block: " + header.toLogString()));
+  private void withWorldView(final Hash blockHash, final Consumer<WorldView> consumer) {
+    blockchainQueries.getAndMapWorldState(
+        blockHash,
+        ws -> {
+          consumer.accept(ws);
+          return Optional.empty();
+        });
   }
 
   private record BlockReplayResultImpl(Block block, BlockProcessingResult processingResult)

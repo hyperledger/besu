@@ -266,19 +266,19 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
   private void loadAdditionalServices(
       final BesuController besuController, final BesuPluginContextImpl besuPluginContext) {
+    final BlockchainQueries blockchainQueries =
+        new BlockchainQueries(
+            besuController.getProtocolSchedule(),
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolContext().getWorldStateArchive(),
+            besuController.getMiningParameters());
     final TraceServiceImpl traceService =
-        new TraceServiceImpl(
-            new BlockchainQueries(
-                besuController.getProtocolSchedule(),
-                besuController.getProtocolContext().getBlockchain(),
-                besuController.getProtocolContext().getWorldStateArchive(),
-                besuController.getMiningParameters()),
-            besuController.getProtocolSchedule());
+        new TraceServiceImpl(blockchainQueries, besuController.getProtocolSchedule());
     besuPluginContext.addService(TraceService.class, traceService);
     besuPluginContext.addService(
         BlockReplayService.class,
         new BlockReplayServiceImpl(
-            besuController.getProtocolContext().getBlockchain(),
+            blockchainQueries,
             besuController.getProtocolSchedule(),
             besuController.getProtocolContext()));
     besuPluginContext.addService(

@@ -1371,22 +1371,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         RlpConverterService.class,
         new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
 
+    BlockchainQueries blockchainQueries =
+        new BlockchainQueries(
+            besuController.getProtocolSchedule(),
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolContext().getWorldStateArchive(),
+            miningParametersSupplier.get());
+    besuPluginContext.addService(
+        TraceService.class,
+        new TraceServiceImpl(blockchainQueries, besuController.getProtocolSchedule()));
+
     besuPluginContext.addService(
         BlockReplayService.class,
         new BlockReplayServiceImpl(
-            besuController.getProtocolContext().getBlockchain(),
+            blockchainQueries,
             besuController.getProtocolSchedule(),
             besuController.getProtocolContext()));
-
-    besuPluginContext.addService(
-        TraceService.class,
-        new TraceServiceImpl(
-            new BlockchainQueries(
-                besuController.getProtocolSchedule(),
-                besuController.getProtocolContext().getBlockchain(),
-                besuController.getProtocolContext().getWorldStateArchive(),
-                miningParametersSupplier.get()),
-            besuController.getProtocolSchedule()));
 
     besuPluginContext.addService(
         MiningService.class, new MiningServiceImpl(besuController.getMiningCoordinator()));
