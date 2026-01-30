@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -86,8 +85,8 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         metricsSystem,
         dataStorageConfiguration,
         new VersionedCacheManager(
-            50000, // accountCacheSize
-            200000, // storageCacheSize
+            100_000, // accountCacheSize
+            1_000_000, // storageCacheSize
             metricsSystem));
   }
 
@@ -386,9 +385,8 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
     private Cache<ByteArrayWrapper, VersionedValue> createCache(final long maxSize) {
       return Caffeine.newBuilder()
-          .initialCapacity((int) maxSize)
+          .initialCapacity((int) (maxSize * 0.1))
           .maximumSize(maxSize)
-          .expireAfterAccess(10, TimeUnit.MINUTES)
           .build();
     }
 
