@@ -20,6 +20,11 @@ import java.math.BigInteger;
  * 256-bits wide unsigned integer class.
  *
  * <p>This class is an optimised version of BigInteger for fixed width 256-bits integers.
+ *
+ * @param u3 4th digit
+ * @param u2 3rd digit
+ * @param u1 2nd digit
+ * @param u0 1st digit
  */
 public record UInt256(long u3, long u2, long u1, long u0) {
 
@@ -28,25 +33,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // UInt256 represents a big-endian 256-bits integer.
   // As opposed to Java int, operations are by default unsigned,
   // and signed version are interpreted in two-complements as usual.
-  // offset is used to optimise algorithms, skipping leading zeroes.
-  // Nonetheless, 256bits are always allocated and initialised to zeroes.
-  //
-  // We apply modulus reduction to a product:  a * b (mod this)
-  // Multiplication is O(MN) in the number of long operations.
-  // Reduction is O(M + N) in the number of reduction steps.
-  //
-  // Applying reduction before multiplication reduces the multiplication size
-  // at the cost of a few more shifts and a single additional reduction step.
-  //
-  // Modulus always fits 256bits, so we dispatch mod from the modulus:
-  // that.applyMod(this, inv) is the integer this (mod that).
-  //
-  // applyMod methods require that the highest digit of the modulus be negative,
-  // that is its highest bit is set. We can then leverage the reciprocal `inv`.
-  //
-  // We sometimes need to apply several reductions with the same modulus.
-  // To be able to reuse the modulus' reciprocal `inv`, we pass it as argument.
-  // If modulus is 1 digit, we use reciprocal, otherwise reciprocal2.
+  // --------------------------------------------------------------------------
 
   /** Fixed size in bytes. */
   public static final int BYTESIZE = 32;
@@ -96,62 +83,20 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     long u1 = 0;
     long u0 = 0;
     int b = bytes.length - 1; // Index in bytes array
-    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
       u0 |= ((bytes[b] & 0xFFL) << shift);
     }
-    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
       u1 |= ((bytes[b] & 0xFFL) << shift);
     }
-    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
       u2 |= ((bytes[b] & 0xFFL) << shift);
     }
-    for (int j = 0, shift = 0; j < 8 && b >= 0; j++, b--, shift += 8) {
+    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
       u3 |= ((bytes[b] & 0xFFL) << shift);
     }
     return new UInt256(u3, u2, u1, u0);
   }
-
-  // Up: # comp = 1 + 2 * len + 2 * (len // 8)
-  //   # inc/dec = 1 + 3 * len
-  // Down: # comp = 1 + len % 8 + 1-4
-  //     # inc/dec = 1 + 2 * (len % 8) + 0-2
-
-  // public static UInt256 fromBytesBE(final byte[] bytes) {
-  //   if (bytes.length == 0) return ZERO;
-  //   int rem = bytes.length & 7;
-  //   long u3 = 0;
-  //   long u2 = 0;
-  //   long u1 = 0;
-  //   long u0 = 0;
-  //   long u = 0;
-  //   for (int i = rem - 1, shift = 0; i >= 0 ; i--, shift += 8) {
-  //     u |= ((bytes[i] & 0xFFL) << shift);
-  //   }
-  //   if (len >= 32) {
-  //     u3 = bytesToLong(bytes, 0);
-  //     u2 = bytesToLong(bytes, 8);
-  //     u1 = bytesToLong(bytes, 16);
-  //     u0 = bytesToLong(bytes, 24);
-  //   } else if (len >= 24) {
-  //     u3 = u;
-  //     u2 = bytesToLong(bytes, rem);
-  //     rem += 8;
-  //     u1 = bytesToLong(bytes, rem);
-  //     rem += 8;
-  //     u0 = bytesToLong(bytes, rem);
-  //   } else if (len >= 16) {
-  //     u2 = u;
-  //     u1 = bytesToLong(bytes, rem);
-  //     rem += 8;
-  //     u0 = bytesToLong(bytes, rem);
-  //   } else if (len >= 8) {
-  //     u1 = u;
-  //     u0 = bytesToLong(bytes, rem);
-  //   } else {
-  //     u0 = u;
-  //   }
-  //   return new UInt256(u3, u2, u1, u0);
-  // }
 
   /**
    * Instantiates a new UInt256 from an int.
@@ -173,6 +118,15 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return new UInt256(0, 0, 0, value);
   }
 
+  /**
+   * Instantiates a new UInt256 from an array.
+   *
+   * <p>Read digits from an array starting from the end. The array must have at least N_LIMBS
+   * elements.
+   *
+   * @param limbs The array holding the digits.
+   * @return The UInt256 from the array
+   */
   public static UInt256 fromArray(final long[] limbs) {
     int i = limbs.length;
     long z0 = limbs[--i];
@@ -240,6 +194,13 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return new BigInteger(1, toBytesBE());
   }
 
+  /**
+   * Convert to hexstring.
+   *
+   * <p>Convert this integer into big-endian hexstring representation.
+   *
+   * @return The hexstring representing the integer.
+   */
   public String toHexString() {
     StringBuilder sb = new StringBuilder("0x");
     for (byte b : toBytesBE()) {
@@ -248,6 +209,14 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return sb.toString();
   }
 
+  /**
+   * Fills an array with digits.
+   *
+   * <p>Fills an array with the integer's digits starting from the end. The array must have at least
+   * N_LIMBS elements.
+   *
+   * @param limbs The array to fill
+   */
   public void intoArray(final long[] limbs) {
     int len = limbs.length;
     limbs[len--] = u0;
@@ -321,16 +290,26 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   /**
    * Does the value fit a long.
    *
-   * @return true if this UInt256 value is 1 limb.
+   * @return true if it has at most 1 effective digit.
    */
   public boolean isUInt64() {
     return (u1 | u2 | u3) == 0;
   }
 
+  /**
+   * Does the value fit 2 longs.
+   *
+   * @return true if it has at most 2 effective digits.
+   */
   public boolean isUInt128() {
     return (u2 | u3) == 0;
   }
 
+  /**
+   * Does the value fit 3 longs.
+   *
+   * @return true if it has at most 3 effective digits.
+   */
   public boolean isUInt192() {
     return u3 == 0;
   }
@@ -477,7 +456,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   /**
    * Multiplication
    *
-   * <p>Compute the product of 2 256-bits integers.
+   * <p>Compute the wrapping product of 2 256-bits integers.
    *
    * @param other Integer to multiply with this integer.
    * @return The product.
