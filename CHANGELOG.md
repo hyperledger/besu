@@ -61,6 +61,7 @@
 
   
 ### Additions and Improvements
+- Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9462][9462]. Thanks to [@JukLee0ira](https://github.com/JukLee0ira).
 - Performance: Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
 - Performance: Improved `getBlobsV2` by disabling HTTP response compression for engine API, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
 - Performance: Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
@@ -75,6 +76,8 @@
 - Fix callTracer to properly capture nested calls and populate revertReason field when transactions revert [#9651](https://github.com/hyperledger/besu/pull/9651)
 - Enhance payload selection with tx count and creation time tiebreakers [#9657](https://github.com/hyperledger/besu/pull/9657)
 - Fix mining beneficiary for BFT networks when set to zero address [#9679](https://github.com/hyperledger/besu/pull/9679)
+
+[PR_9462]: https://github.com/hyperledger/besu/pull/9642
 
 ##  25.12.0
 
