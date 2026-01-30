@@ -106,6 +106,7 @@ import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -1452,6 +1453,26 @@ public abstract class MainnetProtocolSpecs {
           block,
           blockAccessList,
           preprocessingBlockFunction);
+    }
+
+    @Override
+    public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final Block block,
+        final Optional<BlockAccessList> blockAccessList,
+        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction,
+        final BlockAwareOperationTracer operationTracer) {
+      updateWorldStateForDao(worldState);
+      return wrapped.processBlock(
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          blockAccessList,
+          preprocessingBlockFunction,
+          operationTracer);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

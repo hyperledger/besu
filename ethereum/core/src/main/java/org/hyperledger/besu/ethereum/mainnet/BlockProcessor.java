@@ -20,39 +20,13 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Processes a block. */
 public interface BlockProcessor {
-
-  /** A block processing result. */
-  interface Result {
-
-    /**
-     * The receipts generated for the transactions in a block
-     *
-     * <p>This is only valid when {@code BlockProcessor#isSuccessful} returns {@code true}.
-     *
-     * @return the receipts generated for the transactions in a block
-     */
-    List<TransactionReceipt> getReceipts();
-
-    /**
-     * Returns whether the block was successfully processed.
-     *
-     * @return {@code true} if the block was processed successfully; otherwise {@code false}
-     */
-    boolean isSuccessful();
-
-    default boolean isFailed() {
-      return !isSuccessful();
-    }
-  }
-
   /**
    * Processes the block.
    *
@@ -119,6 +93,27 @@ public interface BlockProcessor {
       final Block block,
       final Optional<BlockAccessList> blockAccessList,
       final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction);
+
+  /**
+   * Processes the block with an optional block access list.
+   *
+   * @param protocolContext the current context of the protocol
+   * @param blockchain the blockchain to append the block to
+   * @param worldState the world state to apply changes to
+   * @param block the block to process
+   * @param blockAccessList the optional block access list
+   * @param preprocessingBlockFunction a preprocessing function for block execution
+   * @param operationTracer the block aware operation tracer
+   * @return the block processing result
+   */
+  BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction,
+      final BlockAwareOperationTracer operationTracer);
 
   /**
    * Get ommer reward in ${@link Wei}
