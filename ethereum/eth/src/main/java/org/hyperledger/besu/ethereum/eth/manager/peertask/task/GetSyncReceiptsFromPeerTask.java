@@ -40,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class GetSyncReceiptsFromPeerTask
     implements PeerTask<Map<BlockHeader, List<SyncTransactionReceipt>>> {
 
@@ -128,7 +130,15 @@ public class GetSyncReceiptsFromPeerTask
             headersByReceiptsRoot.get(
                 Util.getRootFromListOfBytes(
                     receiptsInBlock.stream()
-                        .map(syncTransactionReceiptEncoder::encodeForRootCalculation)
+                        .map(
+                            (r) -> {
+                              Bytes rlp =
+                                  r.isFormattedForRootCalculation()
+                                      ? r.getRlpBytes()
+                                      : syncTransactionReceiptEncoder.encodeForRootCalculation(r);
+                              r.clearSubVariables();
+                              return rlp;
+                            })
                         .toList()));
         if (blockHeaders == null) {
           // Contains receipts that we didn't request, so mustn't be the response we're looking for.
