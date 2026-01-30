@@ -57,7 +57,7 @@ import org.apache.tuweni.bytes.Bytes;
  * @see <a href="https://github.com/ethereum/go-ethereum/blob/master/eth/tracers/native/4byte.go">
  *     Geth 4byteTracer Implementation</a>
  */
-public class FourByteTracerResultConverter {
+public final class FourByteTracerResultConverter {
 
   private static final int FUNCTION_SELECTOR_LENGTH = 4;
 
