@@ -48,8 +48,10 @@ public class EngineGetPayloadResultV6 {
       final Optional<List<String>> executionRequests,
       final String blockValue,
       final BlobsBundleV2 blobsBundle,
-      final String blockAccessList) {
-    this.executionPayload = new PayloadResult(header, transactions, withdrawals, blockAccessList);
+      final String blockAccessList,
+      final String slotNumber) {
+    this.executionPayload =
+        new PayloadResult(header, transactions, withdrawals, blockAccessList, slotNumber);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
@@ -99,6 +101,7 @@ public class EngineGetPayloadResultV6 {
     private final String excessBlobGas;
     private final String blobGasUsed;
     private final String blockAccessList;
+    private final String slotNumber;
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
@@ -107,7 +110,8 @@ public class EngineGetPayloadResultV6 {
         final BlockHeader header,
         final List<String> transactions,
         final Optional<List<Withdrawal>> withdrawals,
-        final String blockAccessList) {
+        final String blockAccessList,
+        final String slotNumber) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -134,6 +138,7 @@ public class EngineGetPayloadResultV6 {
       this.excessBlobGas =
           header.getExcessBlobGas().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.blockAccessList = blockAccessList;
+      this.slotNumber = slotNumber;
     }
 
     @JsonGetter(value = "blockNumber")
@@ -225,6 +230,11 @@ public class EngineGetPayloadResultV6 {
     @JsonGetter(value = "blockAccessList")
     public String getBlockAccessList() {
       return blockAccessList;
+    }
+
+    @JsonGetter(value = "slotNumber")
+    public String getSlotNumber() {
+      return slotNumber;
     }
   }
 }

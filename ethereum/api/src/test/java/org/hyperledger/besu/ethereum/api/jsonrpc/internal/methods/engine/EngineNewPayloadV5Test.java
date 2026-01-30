@@ -101,7 +101,7 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   }
 
   @Override
-  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterFutureEipsMilestone() {
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterAmsterdamMilestone() {
     final BlockHeader header =
         setupValidPayload(
             new BlockProcessingResult(
@@ -223,7 +223,8 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
         .parentBeaconBlockRoot(
             maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
         .balHash(BodyValidation.balHash(BLOCK_ACCESS_LIST))
-        .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS));
+        .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+        .slotNumber(1L);
   }
 
   @Override
