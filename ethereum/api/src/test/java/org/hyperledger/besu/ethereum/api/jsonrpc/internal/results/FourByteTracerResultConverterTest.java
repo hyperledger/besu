@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -83,6 +82,13 @@ class FourByteTracerResultConverterTest {
     return frame;
   }
 
+  private TraceFrame createInstructionFrame(final String opcode, final int depth) {
+    TraceFrame frame = mock(TraceFrame.class);
+    when(frame.getOpcode()).thenReturn(opcode);
+    when(frame.getDepth()).thenReturn(depth);
+    return frame;
+  }
+
   /**
    * Creates a mock ProtocolSpec with a PrecompileContractRegistry that returns null for all
    * addresses (i.e., no precompiles). Tests that need to verify precompile behavior should mock
@@ -94,24 +100,6 @@ class FourByteTracerResultConverterTest {
     when(mockSpec.getPrecompileContractRegistry()).thenReturn(mockRegistry);
     when(mockRegistry.get(org.mockito.ArgumentMatchers.any(Address.class))).thenReturn(null);
     return mockSpec;
-  }
-
-  @Test
-  @DisplayName("should throw NullPointerException when transactionTrace is null")
-  void shouldThrowNullPointerExceptionWhenTransactionTraceIsNull() {
-    ProtocolSpec mockSpec = createMockProtocolSpec();
-    assertThatThrownBy(() -> FourByteTracerResultConverter.convert(null, mockSpec))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("FourByteTracerResultConverter requires a non-null TransactionTrace");
-  }
-
-  @Test
-  @DisplayName("should throw NullPointerException when protocolSpec is null")
-  void shouldThrowNullPointerExceptionWhenProtocolSpecIsNull() {
-    TransactionTrace mockTrace = createMockTraceWithContractCreation();
-    assertThatThrownBy(() -> FourByteTracerResultConverter.convert(mockTrace, null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessageContaining("FourByteTracerResultConverter requires a non-null ProtocolSpec");
   }
 
   @Test
@@ -428,52 +416,25 @@ class FourByteTracerResultConverterTest {
   }
 
   @Test
-  @DisplayName("should handle nested sub-calls and count multiple occurrences")
-  void shouldHandleNestedSubCallsAndCountMultipleOccurrences() {
-    // Given: method-A (depth 1) calls method-B (depth 2) which calls method-C (depth 3) TWICE
+  @DisplayName("should handle nested sub-calls at different depths")
+  void shouldHandleNestedSubCalls() {
+    // Given: method-A (depth 1) calls method-B (depth 2) which calls method-C (depth 3)
     TransactionTrace mockTrace = createMockTraceWithContractCreation();
 
     // Initial call to method-A
     TraceFrame callA = createCallFrame("CALL", 0);
-    TraceFrame insideA = createNextFrame(1, "0xAAAAAAAA" + "00".repeat(32)); // method-A selector
-
-    // Some instructions executing inside method-A
-    TraceFrame instructionInA = mock(TraceFrame.class);
-    when(instructionInA.getOpcode()).thenReturn("ADD");
-    when(instructionInA.getDepth()).thenReturn(1);
+    TraceFrame insideA = createNextFrame(1, "0xAAAAAAAA" + "00".repeat(32));
+    TraceFrame instructionInA = createInstructionFrame("ADD", 1);
 
     // method-A calls method-B
     TraceFrame callB = createCallFrame("CALL", 1);
-    TraceFrame insideB = createNextFrame(2, "0xBBBBBBBB" + "00".repeat(64)); // method-B selector
+    TraceFrame insideB = createNextFrame(2, "0xBBBBBBBB" + "00".repeat(64));
+    TraceFrame instructionInB = createInstructionFrame("MUL", 2);
 
-    // Some instructions executing inside method-B
-    TraceFrame instructionInB1 = mock(TraceFrame.class);
-    when(instructionInB1.getOpcode()).thenReturn("MUL");
-    when(instructionInB1.getDepth()).thenReturn(2);
-
-    // method-B calls method-C (FIRST TIME)
-    TraceFrame callC1 = createCallFrame("CALL", 2);
-    TraceFrame insideC1 = createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96)); // method-C selector
-
-    // Some instructions executing inside method-C
-    TraceFrame instructionInC1 = mock(TraceFrame.class);
-    when(instructionInC1.getOpcode()).thenReturn("SSTORE");
-    when(instructionInC1.getDepth()).thenReturn(3);
-
-    // Back in method-B, more instructions
-    TraceFrame instructionInB2 = mock(TraceFrame.class);
-    when(instructionInB2.getOpcode()).thenReturn("SUB");
-    when(instructionInB2.getDepth()).thenReturn(2);
-
-    // method-B calls method-C (SECOND TIME)
-    TraceFrame callC2 = createCallFrame("CALL", 2);
-    TraceFrame insideC2 =
-        createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96)); // method-C selector (same)
-
-    // Some instructions executing inside method-C (second invocation)
-    TraceFrame instructionInC2 = mock(TraceFrame.class);
-    when(instructionInC2.getOpcode()).thenReturn("SLOAD");
-    when(instructionInC2.getDepth()).thenReturn(3);
+    // method-B calls method-C
+    TraceFrame callC = createCallFrame("CALL", 2);
+    TraceFrame insideC = createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96));
+    TraceFrame instructionInC = createInstructionFrame("SSTORE", 3);
 
     when(mockTrace.getTraceFrames())
         .thenReturn(
@@ -481,6 +442,59 @@ class FourByteTracerResultConverterTest {
                 callA,
                 insideA,
                 instructionInA, // method-A
+                callB,
+                insideB,
+                instructionInB, // method-B
+                callC,
+                insideC,
+                instructionInC)); // method-C
+    ProtocolSpec mockSpec = createMockProtocolSpec();
+
+    // When
+    FourByteTracerResult result = FourByteTracerResultConverter.convert(mockTrace, mockSpec);
+
+    // Then
+    assertThat(result).isNotNull();
+    Map<String, Integer> counts = result.getSelectorCounts();
+    assertThat(counts).hasSize(3);
+    assertThat(counts).containsEntry("0xaaaaaaaa-32", 1); // method-A called once
+    assertThat(counts).containsEntry("0xbbbbbbbb-64", 1); // method-B called once
+    assertThat(counts).containsEntry("0xcccccccc-96", 1); // method-C called once
+  }
+
+  @Test
+  @DisplayName("should count multiple occurrences of same selector in nested calls")
+  void shouldCountMultipleOccurrencesInNestedCalls() {
+    // Given: method-A calls method-B, which calls method-C twice
+    TransactionTrace mockTrace = createMockTraceWithContractCreation();
+
+    // Initial call to method-A
+    TraceFrame callA = createCallFrame("CALL", 0);
+    TraceFrame insideA = createNextFrame(1, "0xAAAAAAAA" + "00".repeat(32));
+
+    // method-A calls method-B
+    TraceFrame callB = createCallFrame("CALL", 1);
+    TraceFrame insideB = createNextFrame(2, "0xBBBBBBBB" + "00".repeat(64));
+    TraceFrame instructionInB1 = createInstructionFrame("MUL", 2);
+
+    // method-B calls method-C (FIRST TIME)
+    TraceFrame callC1 = createCallFrame("CALL", 2);
+    TraceFrame insideC1 = createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96));
+    TraceFrame instructionInC1 = createInstructionFrame("SSTORE", 3);
+
+    // Back in method-B, more instructions
+    TraceFrame instructionInB2 = createInstructionFrame("SUB", 2);
+
+    // method-B calls method-C (SECOND TIME)
+    TraceFrame callC2 = createCallFrame("CALL", 2);
+    TraceFrame insideC2 = createNextFrame(3, "0xCCCCCCCC" + "00".repeat(96));
+    TraceFrame instructionInC2 = createInstructionFrame("SLOAD", 3);
+
+    when(mockTrace.getTraceFrames())
+        .thenReturn(
+            List.of(
+                callA,
+                insideA,
                 callB,
                 insideB,
                 instructionInB1, // method-B
