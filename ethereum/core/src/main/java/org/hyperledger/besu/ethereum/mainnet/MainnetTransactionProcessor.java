@@ -38,6 +38,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.log.TransferLogEmitter;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
@@ -83,6 +84,8 @@ public class MainnetTransactionProcessor {
 
   private final Optional<CodeDelegationProcessor> maybeCodeDelegationProcessor;
 
+  private final TransferLogEmitter transferLogEmitter;
+
   private MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
@@ -93,7 +96,8 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-      final CodeDelegationProcessor maybeCodeDelegationProcessor) {
+      final CodeDelegationProcessor maybeCodeDelegationProcessor,
+      final TransferLogEmitter transferLogEmitter) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -104,6 +108,7 @@ public class MainnetTransactionProcessor {
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
     this.maybeCodeDelegationProcessor = Optional.ofNullable(maybeCodeDelegationProcessor);
+    this.transferLogEmitter = transferLogEmitter;
   }
 
   /**
@@ -469,6 +474,11 @@ public class MainnetTransactionProcessor {
         coinbase.incrementBalance(coinbaseWeiDelta);
       }
 
+      // EIP-7708: Emit closure logs for accounts with remaining balance before deletion
+      // Noop before Amsterdam
+      transferLogEmitter.emitClosureLogs(
+          worldState, initialFrame.getSelfDestructs(), initialFrame::addLog);
+
       operationTracer.traceEndTransaction(
           worldState.updater(),
           transaction,
@@ -649,6 +659,7 @@ public class MainnetTransactionProcessor {
     private FeeMarket feeMarket;
     private CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
     private CodeDelegationProcessor codeDelegationProcessor;
+    private TransferLogEmitter transferLogEmitter = TransferLogEmitter.NOOP;
 
     public Builder gasCalculator(final GasCalculator gasCalculator) {
       this.gasCalculator = gasCalculator;
@@ -704,6 +715,11 @@ public class MainnetTransactionProcessor {
       return this;
     }
 
+    public Builder transferLogEmitter(final TransferLogEmitter transferLogEmitter) {
+      this.transferLogEmitter = transferLogEmitter;
+      return this;
+    }
+
     public Builder populateFrom(final MainnetTransactionProcessor processor) {
       this.gasCalculator = processor.gasCalculator;
       this.transactionValidatorFactory = processor.transactionValidatorFactory;
@@ -715,6 +731,7 @@ public class MainnetTransactionProcessor {
       this.feeMarket = processor.feeMarket;
       this.coinbaseFeePriceCalculator = processor.coinbaseFeePriceCalculator;
       this.codeDelegationProcessor = processor.maybeCodeDelegationProcessor.orElse(null);
+      this.transferLogEmitter = processor.transferLogEmitter;
       return this;
     }
 
@@ -729,7 +746,8 @@ public class MainnetTransactionProcessor {
           maxStackSize,
           feeMarket,
           coinbaseFeePriceCalculator,
-          codeDelegationProcessor);
+          codeDelegationProcessor,
+          transferLogEmitter);
     }
   }
 }
