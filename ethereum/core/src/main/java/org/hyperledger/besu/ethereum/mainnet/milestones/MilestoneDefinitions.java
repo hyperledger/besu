@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 
-/** Provides milestone definitions for the Ethereum Mainnet and Classic networks. */
+/** Provides milestone definitions for the Ethereum Mainnet network. */
 public class MilestoneDefinitions {
 
   public static List<MilestoneDefinition> createMilestoneDefinitions(
@@ -34,7 +34,7 @@ public class MilestoneDefinitions {
   }
 
   /**
-   * Creates the milestone definitions for the Mainnet networks.
+   * Creates the milestone definitions for the Mainnet network.
    *
    * @param specFactory the protocol spec factory
    * @param config the genesis config options
