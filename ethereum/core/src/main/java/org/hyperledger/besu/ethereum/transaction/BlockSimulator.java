@@ -133,8 +133,23 @@ public class BlockSimulator {
    */
   public List<BlockSimulationResult> process(
       final BlockHeader header, final BlockSimulationParameter blockSimulationParameter) {
+    return process(header, blockSimulationParameter, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param header The block header for all simulations.
+   * @param blockSimulationParameter The BlockSimulationParameter containing the block state calls.
+   * @param operationTracer The operation tracer to use during simulation.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
+  public List<BlockSimulationResult> process(
+      final BlockHeader header,
+      final BlockSimulationParameter blockSimulationParameter,
+      final OperationTracer operationTracer) {
     try (final MutableWorldState ws = getWorldState(header)) {
-      return process(header, blockSimulationParameter, ws);
+      return process(header, blockSimulationParameter, ws, operationTracer);
     } catch (IllegalArgumentException | BlockStateCallException e) {
       throw e;
     } catch (final Exception e) {
@@ -154,6 +169,23 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockSimulationParameter simulationParameter,
       final MutableWorldState worldState) {
+    return process(blockHeader, simulationParameter, worldState, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param blockHeader The block header for all simulations.
+   * @param simulationParameter The BlockSimulationParameter containing the block state calls.
+   * @param worldState The initial MutableWorldState to start with.
+   * @param operationTracer The operation tracer to use during simulation.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
+  public List<BlockSimulationResult> process(
+      final BlockHeader blockHeader,
+      final BlockSimulationParameter simulationParameter,
+      final MutableWorldState worldState,
+      final OperationTracer operationTracer) {
     int countStateCalls = simulationParameter.getBlockStateCalls().size();
     List<BlockSimulationResult> results = new ArrayList<>(countStateCalls);
 
@@ -179,7 +211,8 @@ public class BlockSimulator {
               simulationParameter.isCollectExecutionMetrics(),
               simulationParameter::getFakeSignature,
               blockHashCache,
-              simulationCumulativeGasUsed);
+              simulationCumulativeGasUsed,
+              operationTracer);
       results.add(result);
       BlockHeader resultBlockHeader = result.getBlock().getHeader();
       blockHashCache.put(resultBlockHeader.getNumber(), resultBlockHeader.getHash());
@@ -195,6 +228,7 @@ public class BlockSimulator {
    * @param baseBlockHeader The block header for the simulation.
    * @param blockStateCall The BlockStateCall to process.
    * @param ws The MutableWorldState to use for the simulation.
+   * @param operationTracer The operation tracer to use
    * @return A BlockSimulationResult from processing the BlockStateCall.
    */
   private BlockSimulationResult processBlockStateCall(
@@ -207,7 +241,8 @@ public class BlockSimulator {
       final boolean collectExecutionMetrics,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
-      final long simulationCumulativeGasUsed) {
+      final long simulationCumulativeGasUsed,
+      final OperationTracer operationTracer) {
 
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     ProtocolSpec protocolSpec =
@@ -267,7 +302,8 @@ public class BlockSimulator {
             blockHashLookup,
             signatureSupplier,
             simulationCumulativeGasUsed,
-            blockAccessListBuilder);
+            blockAccessListBuilder,
+            operationTracer);
 
     Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
@@ -316,7 +352,8 @@ public class BlockSimulator {
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
       final long simulationCumulativeGasUsed,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final OperationTracer operationTracer) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
