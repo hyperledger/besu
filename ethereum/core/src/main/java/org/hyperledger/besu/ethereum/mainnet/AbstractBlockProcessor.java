@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -196,6 +198,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     var maybeWithdrawals = blockBody.getWithdrawals();
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+    final boolean isPostAmsterdam =
+        protocolSpec.getHardforkId() == MainnetHardforkId.AMSTERDAM;
     final BlockHashLookup blockHashLookup =
         protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader);
 
@@ -309,7 +313,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockUpdater.commit();
         blockUpdater.markTransactionBoundary();
 
-        currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
+        // EIP-7778: Post-Amsterdam, block gas accounting uses gas before refunds
+        if (isPostAmsterdam) {
+          currentGasUsed += transactionProcessingResult.getEstimateGasUsedByTransaction();
+        } else {
+          currentGasUsed +=
+              transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
+        }
         final var optionalVersionedHashes = transaction.getVersionedHashes();
         if (optionalVersionedHashes.isPresent()) {
           final var versionedHashes = optionalVersionedHashes.get();

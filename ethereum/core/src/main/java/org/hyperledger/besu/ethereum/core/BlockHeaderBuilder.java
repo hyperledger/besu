@@ -86,6 +86,8 @@ public class BlockHeaderBuilder {
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
 
+  private Long slotNumber = null;
+
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
   }
@@ -136,7 +138,8 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .requestsHash(header.getRequestsHash().orElse(null))
-        .balHash(header.getBalHash().orElse(null));
+        .balHash(header.getBalHash().orElse(null))
+        .slotNumber(header.getSlotNumber().orElse(null));
   }
 
   public static BlockHeaderBuilder fromHeader(
@@ -191,6 +194,7 @@ public class BlockHeaderBuilder {
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .requestsHash(fromBuilder.requestsHash)
             .balHash(fromBuilder.balHash)
+            .slotNumber(fromBuilder.slotNumber)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -275,6 +279,7 @@ public class BlockHeaderBuilder {
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         blockHeaderFunctions);
   }
 
@@ -317,7 +322,8 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        balHash);
+        balHash,
+        slotNumber);
   }
 
   private void validateBlockHeader() {
@@ -383,6 +389,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
     balHash(sealableBlockHeader.getBalHash().orElse(null));
+    slotNumber(sealableBlockHeader.getSlotNumber().orElse(null));
     return this;
   }
 
@@ -505,6 +512,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder balHash(final Hash hash) {
     this.balHash = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder slotNumber(final Long slotNumber) {
+    this.slotNumber = slotNumber;
     return this;
   }
 

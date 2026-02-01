@@ -221,6 +221,7 @@ public class BlockchainReferenceTestCaseSpec {
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
           blockAccessListHash != null ? Hash.fromHexString(blockAccessListHash) : null,
+          null, // slotNumber
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
