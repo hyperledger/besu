@@ -372,7 +372,7 @@ scalar Long
 
 type Mutation {
   """SendRawTransaction sends an RLP-encoded transaction to the network."""
-  sendRawTransaction(data: Bytes!): Bytes32!
+  sendRawTransaction(data: Bytes!): Hash!
 }
 
 """Pending represents the current pending state."""

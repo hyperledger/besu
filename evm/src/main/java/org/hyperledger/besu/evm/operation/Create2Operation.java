@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -60,8 +60,8 @@ public class Create2Operation extends AbstractCreateOperation {
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
     final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
-    final Bytes32 hash =
-        keccak256(
+    final Hash hash =
+        Hash.hash(
             Bytes.concatenate(PREFIX, sender.getBytes(), salt, initcode.getCodeHash().getBytes()));
     return Address.extract(hash);
   }

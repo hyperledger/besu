@@ -97,7 +97,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
     if (withRequestId) input.skipNext();
-    final Hash worldStateRootHash = Hash.wrap(Bytes32.wrap(input.readBytes32()));
+    final Hash worldStateRootHash = Hash.wrap(input.readBytes32());
     final ImmutableStorageRange.Builder range =
         ImmutableStorageRange.builder()
             .worldStateRootHash(getRootHash().orElse(worldStateRootHash));
@@ -112,13 +112,13 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
       input.skipNext();
       range.startKeyHash(Hash.ZERO);
     } else {
-      range.startKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())));
+      range.startKeyHash(Hash.wrap(input.readBytes32()));
     }
     if (input.nextIsNull()) {
       input.skipNext();
       range.endKeyHash(Hash.LAST);
     } else {
-      range.endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())));
+      range.endKeyHash(Hash.wrap(input.readBytes32()));
     }
     range.responseBytes(input.readBigIntegerScalar());
     input.leaveList();

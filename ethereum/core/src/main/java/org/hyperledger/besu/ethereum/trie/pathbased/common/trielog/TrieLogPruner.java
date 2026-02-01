@@ -40,7 +40,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,7 +143,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
               throw new RuntimeException(
                   new InterruptedException("Thread interrupted during trie log processing."));
             }
-            final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
+            final Hash blockHash = Hash.wrap(Bytes.wrap(blockHashAsBytes));
             final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
             if (header.isPresent()) {
               addToPruneQueue(header.get().getNumber(), blockHash);

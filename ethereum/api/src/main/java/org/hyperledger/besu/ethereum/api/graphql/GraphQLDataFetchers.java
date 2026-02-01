@@ -58,7 +58,6 @@ import com.google.common.base.Preconditions;
 import graphql.GraphQLContext;
 import graphql.schema.DataFetcher;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * This class contains data fetchers for GraphQL queries.
@@ -121,7 +120,7 @@ public class GraphQLDataFetchers {
    *
    * @return a DataFetcher that fetches the result of sending a raw transaction
    */
-  DataFetcher<Optional<Bytes32>> getSendRawTransactionDataFetcher() {
+  DataFetcher<Optional<Hash>> getSendRawTransactionDataFetcher() {
     return dataFetchingEnvironment -> {
       try {
         final TransactionPool transactionPool =
@@ -132,7 +131,7 @@ public class GraphQLDataFetchers {
         final ValidationResult<TransactionInvalidReason> validationResult =
             transactionPool.addTransactionViaApi(transaction);
         if (validationResult.isValid()) {
-          return Optional.of(Bytes32.wrap(transaction.getHash().getBytes()));
+          return Optional.of(transaction.getHash());
         } else {
           throw new GraphQLException(GraphQLError.of(validationResult.getInvalidReason()));
         }

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.crypto.Hash.sha256;
 
@@ -27,10 +28,10 @@ import org.apache.tuweni.bytes.Bytes32;
 public class Hash extends BytesHolder {
 
   /** The constant ZERO. */
-  public static final Hash ZERO = new Hash(Bytes32.ZERO);
+  public static final Hash ZERO = new Hash(Bytes.wrap(new byte[Bytes32.SIZE]));
 
   /** Last hash */
-  public static final Hash LAST = new Hash(Bytes32.fromHexString("F".repeat(64)));
+  public static final Hash LAST = new Hash(Bytes.fromHexString("F".repeat(64)));
 
   /**
    * Hash of an RLP encoded trie hash with no content, or
@@ -66,7 +67,7 @@ public class Hash extends BytesHolder {
    *
    * @param bytes raw bytes
    */
-  protected Hash(final Bytes32 bytes) {
+  protected Hash(final Bytes bytes) {
     super(bytes);
   }
 
@@ -86,7 +87,12 @@ public class Hash extends BytesHolder {
    * @param bytes the bytes
    * @return the hash
    */
-  public static Hash wrap(final Bytes32 bytes) {
+  public static Hash wrap(final Bytes bytes) {
+    checkArgument(
+        bytes.size() == Bytes32.SIZE,
+        "A hash must be %s bytes long, got %s",
+        Bytes32.SIZE,
+        bytes.size());
     return new Hash(bytes);
   }
 
@@ -102,7 +108,7 @@ public class Hash extends BytesHolder {
    */
   @JsonCreator
   public static Hash fromHexString(final String str) {
-    return new Hash(Bytes32.fromHexStringStrict(str));
+    return wrap(Bytes.fromHexString(str));
   }
 
   /**
@@ -112,7 +118,7 @@ public class Hash extends BytesHolder {
    * @return the hash
    */
   public static Hash fromHexStringLenient(final String str) {
-    return new Hash(Bytes32.fromHexStringLenient(str));
+    return new Hash(Bytes.fromHexStringLenient(str, 32));
   }
 
   /***

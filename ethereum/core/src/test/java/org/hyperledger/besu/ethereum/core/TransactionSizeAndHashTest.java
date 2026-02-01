@@ -327,7 +327,7 @@ public class TransactionSizeAndHashTest {
         .versionedHashes(
             List.of(
                 new VersionedHash(
-                    Bytes32.fromHexString(
+                    Bytes.fromHexString(
                         "0x0122334455667788991011121314151617181920212223242526272829303101"))))
         .blobsWithCommitments(
             new BlobsWithCommitments(
@@ -337,7 +337,7 @@ public class TransactionSizeAndHashTest {
                 List.of(new KZGProof(Bytes48.fromHexStringLenient("0x1234"))),
                 List.of(
                     new VersionedHash(
-                        Bytes32.fromHexStringLenient(
+                        Bytes.fromHexStringLenient(
                             "0x0122334455667788991011121314151617181920212223242526272829303101")))))
         .signature(FAKE_SIGNATURE)
         .build();
@@ -360,7 +360,7 @@ public class TransactionSizeAndHashTest {
         .versionedHashes(
             List.of(
                 new VersionedHash(
-                    Bytes32.fromHexString(
+                    Bytes.fromHexString(
                         "0x0122334455667788991011121314151617181920212223242526272829303101"))))
         .signature(FAKE_SIGNATURE)
         .build();

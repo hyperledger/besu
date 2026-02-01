@@ -76,13 +76,13 @@ class EIP7708TransferLogEmitterTest {
     assertThat(topics).hasSize(3);
 
     // First topic is the transfer event signature
-    assertThat(topics.get(0)).isEqualTo(LogTopic.create(TRANSFER_TOPIC));
+    assertThat(topics.get(0)).isEqualTo(LogTopic.wrap(TRANSFER_TOPIC));
 
     // Second topic is the sender address (zero-padded to 32 bytes)
-    assertThat(topics.get(1)).isEqualTo(LogTopic.create(Bytes32.leftPad(SENDER.getBytes())));
+    assertThat(topics.get(1)).isEqualTo(LogTopic.wrap(Bytes32.leftPad(SENDER.getBytes())));
 
     // Third topic is the recipient address (zero-padded to 32 bytes)
-    assertThat(topics.get(2)).isEqualTo(LogTopic.create(Bytes32.leftPad(RECIPIENT.getBytes())));
+    assertThat(topics.get(2)).isEqualTo(LogTopic.wrap(Bytes32.leftPad(RECIPIENT.getBytes())));
 
     // Data should be the value as 32-byte big-endian
     assertThat(log.getData()).isEqualTo(Bytes32.leftPad(value));
@@ -104,7 +104,7 @@ class EIP7708TransferLogEmitterTest {
     final Wei value = Wei.of(100);
     final Log log = EIP7708TransferLogEmitter.createTransferLog(zeroAddress, RECIPIENT, value);
 
-    assertThat(log.getTopics().get(1)).isEqualTo(LogTopic.create(Bytes32.ZERO));
+    assertThat(log.getTopics().get(1)).isEqualTo(LogTopic.wrap(Bytes32.ZERO));
   }
 
   @Test

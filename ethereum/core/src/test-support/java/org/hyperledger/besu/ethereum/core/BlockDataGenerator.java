@@ -450,7 +450,7 @@ public class BlockDataGenerator {
                 options
                     .getTimestamp()
                     .orElse(Instant.now().truncatedTo(ChronoUnit.SECONDS).getEpochSecond()))
-            .extraData(options.getExtraData(bytes32()))
+            .extraData(options.getExtraData(bytesValue(32)))
             .mixHash(hash())
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
@@ -509,7 +509,7 @@ public class BlockDataGenerator {
   }
 
   public Transaction transaction(final TransactionType transactionType) {
-    return transaction(transactionType, bytes32(), address());
+    return transaction(transactionType, bytesValue(32), address());
   }
 
   public Transaction transaction(final Bytes payload) {
@@ -538,7 +538,7 @@ public class BlockDataGenerator {
         .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
-        .value(Wei.wrap(bytes32()))
+        .value(Wei.wrap(bytesValue(32)))
         .payload(payload)
         .accessList(accessList())
         .chainId(BigInteger.ONE)
@@ -594,7 +594,7 @@ public class BlockDataGenerator {
         .gasPrice(Wei.wrap(bytesValue(4)))
         .gasLimit(positiveLong())
         .to(to)
-        .value(Wei.wrap(bytes32()))
+        .value(Wei.wrap(bytesValue(32)))
         .payload(payload)
         .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
@@ -687,7 +687,7 @@ public class BlockDataGenerator {
   }
 
   private LogTopic logTopic() {
-    return LogTopic.wrap(bytes32());
+    return LogTopic.wrap(bytesValue(Bytes32.SIZE));
   }
 
   public Bytes32 bytes32() {
@@ -722,7 +722,7 @@ public class BlockDataGenerator {
   }
 
   private UInt256 uint256() {
-    return UInt256.fromBytes(bytes32());
+    return UInt256.fromBytes(bytesValue(32));
   }
 
   private long positiveLong() {
@@ -731,7 +731,7 @@ public class BlockDataGenerator {
   }
 
   public Hash hash() {
-    return Hash.wrap(bytes32());
+    return Hash.wrap(bytesValue(32));
   }
 
   public Address address() {
@@ -739,7 +739,7 @@ public class BlockDataGenerator {
   }
 
   public LogsBloomFilter logsBloom() {
-    return new LogsBloomFilter(Bytes.of(bytes(LogsBloomFilter.BYTE_SIZE)));
+    return new LogsBloomFilter(Bytes.wrap(bytes(LogsBloomFilter.BYTE_SIZE)));
   }
 
   private byte[] bytes(final int size) {
@@ -948,7 +948,7 @@ public class BlockDataGenerator {
       return difficulty.orElse(defaultValue);
     }
 
-    public Bytes getExtraData(final Bytes32 defaultValue) {
+    public Bytes getExtraData(final Bytes defaultValue) {
       return extraData.orElse(defaultValue);
     }
 

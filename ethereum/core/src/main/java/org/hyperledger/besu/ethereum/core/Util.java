@@ -52,7 +52,7 @@ public class Util {
   }
 
   public static Address publicKeyToAddress(final Bytes publicKeyBytes) {
-    return Address.extract(Bytes32.wrap(Hash.hash(publicKeyBytes).getBytes()));
+    return Address.extract(Hash.hash(publicKeyBytes));
   }
 
   /**

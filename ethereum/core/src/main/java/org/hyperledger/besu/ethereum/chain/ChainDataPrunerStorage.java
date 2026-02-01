@@ -25,7 +25,6 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class ChainDataPrunerStorage {
@@ -107,6 +106,6 @@ public class ChainDataPrunerStorage {
   }
 
   private Hash bytesToHash(final Bytes bytes) {
-    return Hash.wrap(Bytes32.wrap(bytes, 0));
+    return Hash.wrap(bytes);
   }
 }

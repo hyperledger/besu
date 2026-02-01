@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class BftCommitSealsValidationRuleTest {
@@ -69,8 +68,7 @@ public class BftCommitSealsValidationRuleTest {
   public void insufficientCommitSealsFailsValidation() {
     final NodeKey committerNodeKey = NodeKeyUtils.generate();
     final Address committerAddress =
-        Address.extract(
-            Bytes32.wrap(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes()).getBytes()));
+        Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes()));
 
     final List<Address> validators = singletonList(committerAddress);
     final BftContext bftContext = setupContextWithValidators(validators);
@@ -154,10 +152,7 @@ public class BftCommitSealsValidationRuleTest {
 
     for (int i = 0; i < validatorCount; i++) { // need -1 to account for proposer
       final NodeKey committerNodeKey = NodeKeyUtils.generate();
-      validators.add(
-          Address.extract(
-              Bytes32.wrap(
-                  Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes()).getBytes())));
+      validators.add(Address.extract(Hash.hash(committerNodeKey.getPublicKey().getEncodedBytes())));
     }
 
     Collections.sort(validators);

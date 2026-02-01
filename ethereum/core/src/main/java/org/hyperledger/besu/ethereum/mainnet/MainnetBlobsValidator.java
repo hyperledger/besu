@@ -28,7 +28,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 /**
@@ -234,6 +234,6 @@ public class MainnetBlobsValidator {
 
     // Prefix with supported version ID
     dig[0] = VersionedHash.SHA256_VERSION_ID;
-    return new VersionedHash(Bytes32.wrap(dig));
+    return new VersionedHash(Bytes.wrap(dig));
   }
 }

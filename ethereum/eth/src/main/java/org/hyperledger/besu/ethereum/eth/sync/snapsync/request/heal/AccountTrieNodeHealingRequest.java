@@ -160,8 +160,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
     // Retrieve account hash
     final Hash accountHash =
-        Hash.wrap(
-            Bytes32.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path))));
+        Hash.wrap(CompactEncoding.pathToBytes(Bytes.concatenate(getLocation(), path)));
 
     // update the flat db only for bonsai
     worldStateStorageCoordinator.applyWhenFlatModeEnabled(

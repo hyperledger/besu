@@ -38,6 +38,7 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobType;
 import org.hyperledger.besu.datatypes.CodeDelegation;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -149,7 +150,9 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
             BlobType.KZG_PROOF,
             null);
     Transaction txTo =
-        preparedTx.to(Optional.of(Address.extract(Bytes32.random()))).createTransaction(KEYS1);
+        preparedTx
+            .to(Optional.of(Address.extract(Hash.hash(Bytes.random(32)))))
+            .createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txTo.writeTo(rlpOut);
 
@@ -394,7 +397,8 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     System.setProperty("jol.magicFieldOffset", "true");
 
     final AccessListEntry ale1 =
-        new AccessListEntry(Address.extract(Bytes32.random()), List.of(Bytes32.random()));
+        new AccessListEntry(
+            Address.extract(Hash.hash(Bytes.random(32))), List.of(Bytes32.random()));
 
     final List<AccessListEntry> ales = List.of(ale1);
 

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class VariablesStorageHelper {
   public static final Bytes VARIABLES_PREFIX = Bytes.of(1);
@@ -149,6 +148,6 @@ public class VariablesStorageHelper {
   }
 
   public static Hash bytesToHash(final Bytes bytes) {
-    return Hash.wrap(Bytes32.wrap(bytes, 0));
+    return Hash.wrap(bytes);
   }
 }

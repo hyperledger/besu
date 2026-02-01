@@ -661,7 +661,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return maybeVersionedHashParam.map(
         versionedHashes ->
             versionedHashes.stream()
-                .map(Bytes32::fromHexString)
+                .map(str -> Bytes.fromHexString(str, 32))
                 .map(
                     hash -> {
                       try {

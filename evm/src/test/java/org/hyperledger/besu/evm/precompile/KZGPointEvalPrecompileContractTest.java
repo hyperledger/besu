@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -85,7 +84,7 @@ public class KZGPointEvalPrecompileContractTest {
               final Bytes input = Bytes.fromHexString(testCase.get("Input").asText());
               final boolean valid = testCase.get("Valid").asBoolean();
               return new PrecompileTestParameters(
-                  input, valid, returnValue, new VersionedHash(Bytes32.wrap(input.slice(0, 32))));
+                  input, valid, returnValue, new VersionedHash(input.slice(0, 32)));
             })
         .collect(Collectors.toList());
   }

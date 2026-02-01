@@ -36,7 +36,6 @@ import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -179,7 +178,7 @@ class FlatDbStrategyProviderTest {
     final AccountHashCodeStorageStrategy accountHashCodeStorageStrategy =
         new AccountHashCodeStorageStrategy();
     // key representing account hash just needs to not be the code hash
-    final Hash accountHash = Hash.wrap(Bytes32.fromHexString("0001"));
+    final Hash accountHash = Hash.wrap(Bytes.fromHexString("0001", 32));
     accountHashCodeStorageStrategy.putFlatCode(
         composedWorldStateStorage, transaction, accountHash, null, Bytes.of(2));
     transaction.commit();
@@ -215,7 +214,7 @@ class FlatDbStrategyProviderTest {
     final AccountHashCodeStorageStrategy accountHashCodeStorageStrategy =
         new AccountHashCodeStorageStrategy();
     // key representing account hash just needs to not be the code hash
-    final Hash accountHash = Hash.wrap(Bytes32.fromHexString("0001"));
+    final Hash accountHash = Hash.wrap(Bytes.fromHexString("0001", 32));
     accountHashCodeStorageStrategy.putFlatCode(
         composedWorldStateStorage, transaction, accountHash, null, Bytes.of(2));
     transaction.commit();

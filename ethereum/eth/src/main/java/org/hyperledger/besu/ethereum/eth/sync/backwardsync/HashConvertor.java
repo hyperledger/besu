@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 
-import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes;
 
 public class HashConvertor implements ValueConvertor<Hash> {
   @Override
   public Hash fromBytes(final byte[] bytes) {
-    return Hash.wrap(Bytes32.wrap(bytes));
+    return Hash.wrap(Bytes.wrap(bytes));
   }
 
   @Override

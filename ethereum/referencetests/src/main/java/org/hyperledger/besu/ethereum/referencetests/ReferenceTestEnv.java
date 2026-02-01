@@ -196,7 +196,7 @@ public class ReferenceTestEnv extends BlockHeader {
         return Hash.hash(Bytes.wrap(bytes));
       }
     } else {
-      return Hash.wrap(Bytes32.fromHexString(previousHash));
+      return Hash.wrap(Bytes.fromHexString(previousHash, 32));
     }
   }
 

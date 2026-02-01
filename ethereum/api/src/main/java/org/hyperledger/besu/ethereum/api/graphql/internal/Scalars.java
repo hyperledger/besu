@@ -121,7 +121,7 @@ public class Scalars {
                   "LogTopic value '" + input + "' is not prefixed with 0x");
             } else {
               try {
-                return LogTopic.wrap(Bytes32.fromHexStringLenient(string));
+                return LogTopic.wrap(Bytes.fromHexStringLenient(string, 32));
               } catch (IllegalArgumentException iae) {
                 return null;
               }
@@ -185,7 +185,7 @@ public class Scalars {
                   "VersionedHash value '" + input + "' is not prefixed with 0x");
             } else {
               try {
-                return new VersionedHash(Bytes32.fromHexStringLenient(string));
+                return new VersionedHash(Bytes.fromHexStringLenient(string, 32));
               } catch (IllegalArgumentException iae) {
                 return null;
               }
@@ -377,7 +377,7 @@ public class Scalars {
                   "Hash value '" + input + "' is not prefixed with 0x");
             } else {
               try {
-                return Hash.wrap(Bytes32.fromHexStringLenient(string));
+                return Hash.wrap(Bytes.fromHexStringLenient(string, 32));
               } catch (IllegalArgumentException iae) {
                 return null;
               }
