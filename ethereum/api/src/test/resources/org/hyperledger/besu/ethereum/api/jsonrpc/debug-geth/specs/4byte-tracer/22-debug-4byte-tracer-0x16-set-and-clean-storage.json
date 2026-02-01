@@ -1,0 +1,48 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x16",
+      {
+        "tracer": "4byteTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x1f74ac428df5427f3a5576869e870cfff6712e4cffb1506bb4ef8f36c5e48162",
+        "result": {
+          "0x00000000-124": 1,
+          "0x00000000-156": 1
+        }
+      },
+      {
+        "txHash": "0x43d6ba1caeced03b6fa8cc3549c0557eea52917f1de50f4da23c9642beca95ee",
+        "result": {
+          "0x00000000-124": 1,
+          "0x00000000-156": 1
+        }
+      },
+      {
+        "txHash": "0x9eb50f31fc1d953e27331cd923f6b2f7fa11827d399c70aec00a04cf98cfd2ac",
+        "result": {
+          "0x00000000-124": 1,
+          "0x00000000-156": 1
+        }
+      },
+      {
+        "txHash": "0xe2ef09a0b71f50947bd0bd1cacac77903d2a5fce80f34862bd4559727e0f608c",
+        "result": {
+          "0x00000000-124": 1,
+          "0x00000000-156": 1
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}
