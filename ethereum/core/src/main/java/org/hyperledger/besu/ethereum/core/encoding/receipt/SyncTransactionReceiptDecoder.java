@@ -86,7 +86,6 @@ public class SyncTransactionReceiptDecoder {
     } else {
       result = decodeLegacyReceipt(rawRlp, rlpInput, firstElement, secondElement, bloomFilter);
     }
-    rlpInput.leaveList();
     return result;
   }
 
