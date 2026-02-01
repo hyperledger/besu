@@ -3,6 +3,26 @@
 ## Unreleased
 
 ### Breaking Changes
+
+### Upcoming Breaking Changes
+- RPC changes to enhance compatibility with other ELs
+  - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
+  - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
+- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - ETC (Ethereum Classic) network support
+    - Proof of Work consensus (PoW)
+    - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+    - Fast Sync
+
+### Additions and Improvements
+
+### Bug fixes
+
+## 26.1.0-RC1
+
+### Breaking Changes
 - Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
 - RPC changes to enhance compatibility with other ELs
   - RPCs using filter parameter including `eth_getLogs` and `trace_filter` return an error if `fromBlock` is greater than `toBlock`, or if `toBlock` extends beyond chain head (previously returned an empty list) [#9604](https://github.com/hyperledger/besu/pull/9604)
@@ -34,6 +54,7 @@
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
 - Fix callTracer to properly capture nested calls and populate revertReason field when transactions revert [#9651](https://github.com/hyperledger/besu/pull/9651)
 - Enhance payload selection with tx count and creation time tiebreakers [#9657](https://github.com/hyperledger/besu/pull/9657)
+- Fix mining beneficiary for BFT networks when set to zero address [#9679](https://github.com/hyperledger/besu/pull/9679)
 
 ##  25.12.0
 
