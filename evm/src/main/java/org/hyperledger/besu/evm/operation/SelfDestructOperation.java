@@ -110,8 +110,9 @@ public class SelfDestructOperation extends AbstractOperation {
     originatorAccount.decrementBalance(originatorBalance);
     beneficiaryAccount.incrementBalance(originatorBalance);
 
-    // Emit transfer log for nonzero value sweeps (no-op before Amsterdam, EIP-7708 after)
-    transferLogEmitter.emitTransferLog(
+    // Emit selfdestruct log for nonzero value sweeps (no-op before Amsterdam, EIP-7708 after)
+    // This emits LOG2 (Selfdestruct) if originator == beneficiary, LOG3 (Transfer) otherwise
+    transferLogEmitter.emitSelfDestructLog(
         frame, originatorAddress, beneficiaryAddress, originatorBalance);
 
     // If we are actually destroying the originator (pre-Cancun or same-tx-create) we need to
