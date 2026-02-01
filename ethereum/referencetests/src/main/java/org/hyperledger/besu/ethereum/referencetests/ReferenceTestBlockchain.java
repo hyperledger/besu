@@ -134,6 +134,12 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  public List<BlockHeader> getBlockHeaders(final long startBlockNumber, final int numberOfHeaders) {
+    // Deterministic, but just not implemented.
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Optional<BlockHeader> getBlockHeader(final Hash blockHeaderHash) {
     return Optional.ofNullable(hashToHeader.get(blockHeaderHash));
   }
