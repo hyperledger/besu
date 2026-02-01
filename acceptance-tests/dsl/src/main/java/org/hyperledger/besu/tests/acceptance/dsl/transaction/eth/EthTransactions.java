@@ -74,17 +74,6 @@ public class EthTransactions {
   }
 
   /**
-   * Fetches a transaction receipt with gasSpent field (EIP-7778, Amsterdam+).
-   *
-   * @param transactionHash the hash of the transaction
-   * @return the transaction to fetch the receipt with gasSpent
-   */
-  public EthGetTransactionReceiptWithGasSpent getTransactionReceiptWithGasSpent(
-      final String transactionHash) {
-    return new EthGetTransactionReceiptWithGasSpent(transactionHash);
-  }
-
-  /**
    * Fetches a block with slotNumber field (EIP-7843, Amsterdam+).
    *
    * @param blockNumber the block number as hex string (e.g., "0x1") or "latest"
