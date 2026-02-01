@@ -50,4 +50,21 @@ public interface BlockGasAccountingStrategy {
    * gas limit circumvention by not crediting refunds back to the block's gas budget.
    */
   BlockGasAccountingStrategy EIP7778 = (tx, result) -> result.getEstimateGasUsedByTransaction();
+
+  /**
+   * Calculates the gas to be used in transaction receipts. This is always the standard post-refund
+   * calculation (gasLimit - gasRemaining), regardless of the block gas accounting strategy.
+   *
+   * <p>Receipt gas is protocol-invariant: it always reflects the actual gas charged to the user
+   * after refunds are applied. This differs from block gas accounting which may use pre-refund
+   * values (EIP-7778) for block limit enforcement.
+   *
+   * @param transaction the transaction being processed
+   * @param result the transaction processing result
+   * @return the gas amount to record in the receipt
+   */
+  static long calculateReceiptGas(
+      final Transaction transaction, final TransactionProcessingResult result) {
+    return transaction.getGasLimit() - result.getGasRemaining();
+  }
 }
