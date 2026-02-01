@@ -186,9 +186,12 @@ public class CallTracerResultConverter {
     }
 
     // Handle CREATE contract address
+    // Only set 'to' if CREATE succeeded (no REVERT or exceptional halt)
     if (OpcodeCategory.isCreateOp(childCallInfo.builder.getType())
         && frame.getDepth() > 0
-        && childCallInfo.builder.getTo() == null) {
+        && childCallInfo.builder.getTo() == null
+        && frame.getExceptionalHaltReason().isEmpty()
+        && !OpcodeCategory.isRevertOp(opcode)) {
       childCallInfo.builder.to(frame.getRecipient().getBytes().toHexString());
     }
 
@@ -323,6 +326,10 @@ public class CallTracerResultConverter {
 
     if (CALL_TYPE.equals(opcode) || CALLCODE_TYPE.equals(opcode)) {
       return StackExtractor.extractCallValue(frame);
+    }
+
+    if (OpcodeCategory.isCreateOp(opcode)) {
+      return StackExtractor.extractCreateValue(frame);
     }
 
     return frame.getValue().toShortHexString();

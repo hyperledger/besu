@@ -56,9 +56,11 @@ public final class StackExtractor {
   private static final int CALL_STACK_IN_SIZE_POS = 3; // 3rd from top (for size, after value)
 
   // Stack position constants for CREATE operations
-  // CREATE stack layout: value, offset, size
+  // CREATE stack layout (from top of stack): value, offset, size
+  // When accessed as stack[length-N], this translates to:
+  private static final int CREATE_STACK_VALUE_POS = 1; // Top of stack (stack[length-1])
   private static final int CREATE_STACK_OFFSET_POS = 2; // 2nd from top
-  private static final int CREATE_STACK_SIZE_POS = 1; // 1st from top (top of stack)
+  private static final int CREATE_STACK_SIZE_POS = 3; // 3rd from top
 
   // CREATE2 stack layout: value, offset, size, salt
   private static final int CREATE2_STACK_OFFSET_POS = 3; // 3rd from top
@@ -81,6 +83,22 @@ public final class StackExtractor {
         .getStack()
         .filter(stack -> stack.length >= CALL_STACK_VALUE_OFFSET)
         .map(stack -> Wei.wrap(stack[stack.length - CALL_STACK_VALUE_OFFSET]).toShortHexString())
+        .orElse(ZERO_VALUE);
+  }
+
+  /**
+   * Extracts the value (wei) being transferred in a CREATE or CREATE2 operation.
+   *
+   * <p>Stack layout for CREATE (from top): value, offset, size
+   *
+   * @param frame the trace frame containing the stack
+   * @return the value as a hex string, or "0x0" if not available
+   */
+  public static String extractCreateValue(final TraceFrame frame) {
+    return frame
+        .getStack()
+        .filter(stack -> stack.length >= 3) // CREATE has at least 3 items: value, offset, size
+        .map(stack -> Wei.wrap(stack[stack.length - CREATE_STACK_VALUE_POS]).toShortHexString())
         .orElse(ZERO_VALUE);
   }
 
