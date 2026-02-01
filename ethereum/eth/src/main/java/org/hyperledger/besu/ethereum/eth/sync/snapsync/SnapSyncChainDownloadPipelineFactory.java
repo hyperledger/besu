@@ -14,30 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BackwardBlockNumberSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BlockHeaderSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadAndStoreBodiesAndReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadBackwardHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
@@ -56,8 +48,6 @@ public class SnapSyncChainDownloadPipelineFactory {
   protected final EthContext ethContext;
   protected final FastSyncState fastSyncState;
   protected final MetricsSystem metricsSystem;
-  protected final FastSyncValidationPolicy detachedValidationPolicy;
-  protected final ValidationPolicy downloadHeaderValidation;
 
   public SnapSyncChainDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -72,24 +62,6 @@ public class SnapSyncChainDownloadPipelineFactory {
     this.ethContext = ethContext;
     this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
-    final LabelledMetric<Counter> fastSyncValidationCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.SYNCHRONIZER,
-            "fast_sync_validation_mode",
-            "Number of blocks validated using light vs full validation during fast sync",
-            "validationMode");
-    detachedValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.getFastSyncFullValidationRate(),
-            LIGHT_DETACHED_ONLY,
-            DETACHED_ONLY,
-            fastSyncValidationCounter);
-    final ValidationPolicy noneValidationPolicy = () -> HeaderValidationMode.NONE;
-    downloadHeaderValidation =
-        fastSyncState.isSourceTrusted() ? noneValidationPolicy : detachedValidationPolicy;
-    if (fastSyncState.isSourceTrusted()) {
-      LOG.trace("Pivot block is from trusted source, skipping header validation");
-    }
   }
 
   /**
@@ -190,7 +162,7 @@ public class SnapSyncChainDownloadPipelineFactory {
 
     final StoreTTDAndSetChainHeadStep storeTTDAndSetChainHead =
         new StoreTTDAndSetChainHeadStep(
-            protocolContext, ethContext, syncState, startBlock, pivotHeader);
+            protocolContext, ethContext, syncState, anchorBlock, pivotHeader);
 
     return PipelineBuilder.createPipelineFrom(
             "forwardHeaderSource",
