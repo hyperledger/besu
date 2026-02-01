@@ -48,27 +48,6 @@ public class CustomRequestFactory {
       extends Response<TransactionReceiptWithRevertReason> {}
 
   /**
-   * Transaction receipt that includes the gasSpent field introduced by EIP-7778 (Amsterdam+). This
-   * extends the standard web3j TransactionReceipt to include the new field.
-   */
-  public static class TransactionReceiptWithGasSpent extends TransactionReceipt {
-    private String gasSpent;
-
-    public TransactionReceiptWithGasSpent() {}
-
-    public void setGasSpent(final String gasSpent) {
-      this.gasSpent = gasSpent;
-    }
-
-    public String getGasSpent() {
-      return gasSpent;
-    }
-  }
-
-  public static class EthGetTransactionReceiptWithGasSpentResponse
-      extends Response<TransactionReceiptWithGasSpent> {}
-
-  /**
    * Block result that includes the slotNumber field introduced by EIP-7843 (Amsterdam+). This
    * provides access to the slot number field that is not available in standard web3j EthBlock.
    */
@@ -122,21 +101,6 @@ public class CustomRequestFactory {
         Collections.singletonList(transactionHash),
         web3jService,
         EthGetTransactionReceiptWithRevertReasonResponse.class);
-  }
-
-  /**
-   * Fetches a transaction receipt with gasSpent field (EIP-7778, Amsterdam+).
-   *
-   * @param transactionHash the hash of the transaction
-   * @return the request that returns a receipt with gasSpent
-   */
-  public Request<?, EthGetTransactionReceiptWithGasSpentResponse>
-      ethGetTransactionReceiptWithGasSpent(final String transactionHash) {
-    return new Request<>(
-        "eth_getTransactionReceipt",
-        Collections.singletonList(transactionHash),
-        web3jService,
-        EthGetTransactionReceiptWithGasSpentResponse.class);
   }
 
   /**

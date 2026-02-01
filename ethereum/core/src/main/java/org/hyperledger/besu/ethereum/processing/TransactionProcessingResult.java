@@ -285,10 +285,26 @@ public class TransactionProcessingResult
   }
 
   /**
-   * Returns the estimate gas used by the transaction Difference between the gas limit and the
-   * remaining gas
+   * Returns the estimated gas used by the transaction for block gas accounting purposes.
    *
-   * @return the estimate gas used
+   * <p>This value has different semantics depending on the protocol version:
+   *
+   * <ul>
+   *   <li><b>Pre-Prague:</b> Equals the execution gas (gasLimit - gasRemaining), same as what would
+   *       be charged to the user before refunds.
+   *   <li><b>Prague+ (EIP-7623):</b> {@code max(executionGas, floorCost)} where floorCost is
+   *       calculated based on calldata costs. This implements the "floor gas" mechanism that
+   *       prevents calldata-heavy transactions from paying less than their fair share of block
+   *       space.
+   *   <li><b>Amsterdam+ (EIP-7778):</b> This value is used for block gas limit accounting instead
+   *       of the post-refund gas, preventing block gas limit circumvention through refund credits.
+   * </ul>
+   *
+   * <p>Note: This value is set by {@link
+   * org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor} during transaction
+   * processing.
+   *
+   * @return the estimated gas used for block accounting purposes
    */
   @Override
   public long getEstimateGasUsedByTransaction() {
