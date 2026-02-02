@@ -98,7 +98,7 @@ public class GetReceiptsForHeadersTask
         () -> {
           final GetReceiptsFromPeerTask task =
               GetReceiptsFromPeerTask.forHeaders(ethContext, incompleteHeaders, metricsSystem);
-          assignedPeer.ifPresent(task::assignPeer);
+          //          assignedPeer.ifPresent(task::assignPeer);
           return task.run().thenApply(PeerTaskResult::getResult);
         });
   }
