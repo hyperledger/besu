@@ -17,6 +17,7 @@
     - Fast Sync
 
 ### Additions and Improvements
+- Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 
 ### Bug fixes
 
@@ -27,7 +28,25 @@
 - RPC changes to enhance compatibility with other ELs
   - RPCs using filter parameter including `eth_getLogs` and `trace_filter` return an error if `fromBlock` is greater than `toBlock`, or if `toBlock` extends beyond chain head (previously returned an empty list) [#9604](https://github.com/hyperledger/besu/pull/9604)
 - Plugin API changes to BlockHeader, Log, LogWithMetadata, TransactionProcessingResult and TransactionReceipt to use specific types for LogsBloomFilter, LogTopic and Log [#9556](https://github.com/hyperledger/besu/pull/9556)
-
+- **Chain pruning CLI options have been redesigned with new behavior:** [#9637](https://github.com/hyperledger/besu/pull/9637)
+  - `--Xchain-pruning-enabled` now accepts three strategy values instead of boolean:
+    - `ALL` - prunes both blocks and BALs (replaces the old `--Xchain-pruning-enabled=true`)
+    - `BAL` - prunes only BALs, keeps all blocks forever (new mode, **now the default**)
+    - `NONE` - disables all pruning (replaces the old `--Xchain-pruning-enabled=false`)
+  - `--Xchain-pruning-blocks-retained` behavior changes:
+    - In `ALL` mode: controls block retention (previously the only mode)
+    - In `BAL` mode: has no effect as blocks are never pruned
+    - Default value changed from `7200` to `113056` blocks (Weak Subjectivity Period: 3533 epochs × 32 slots)
+  - New flag `--Xchain-pruning-bals-retained` sets the number of BALs to retain:
+    - Defaults to the value of `--Xchain-pruning-blocks-retained` when not specified
+    - Must be >= `113056` (configurable via `--Xchain-pruning-retained-minimum`)
+    - In `ALL` mode: should typically be less than or equal to `--Xchain-pruning-blocks-retained`
+    - In `BAL` mode: controls BAL retention independently
+  - `--Xchain-pruning-frequency` now controls both block and BAL pruning operations (previously only controlled block pruning)
+  - Renamed `--Xchain-pruning-blocks-retained-limit` to `--Xchain-pruning-retained-minimum` (applies to both blocks and BALs)
+    - New default value: `113056` blocks (3533 epochs × 32 slots, based on Weak Subjectivity Period)
+    - Previous default: `7200` blocks
+    
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
   - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
@@ -39,6 +58,8 @@
     - Proof of Work consensus (PoW)
     - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
     - Fast Sync
+- `--history-expiry-prune` is deprecated and will be removed in a future release
+
   
 ### Additions and Improvements
 - Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9462][9462]. Thanks to [@JukLee0ira](https://github.com/JukLee0ira).
@@ -50,6 +71,7 @@
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 - Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
 - Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
+- Treat EndOfRLPException as invalid packet in peer discovery, meaning you will no longer see these exceptions, unless you enable DEBUG logs [#9597](https://github.com/hyperledger/besu/pull/9597)
 
 ### Bug fixes
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
