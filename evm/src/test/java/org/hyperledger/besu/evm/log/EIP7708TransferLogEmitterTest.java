@@ -150,6 +150,44 @@ class EIP7708TransferLogEmitterTest {
   }
 
   @Test
+  void emitTransferLogDoesNotEmitForSelfTransfer() {
+    final MessageFrame frame = mock(MessageFrame.class);
+    final Wei value = Wei.of(1000);
+
+    EIP7708TransferLogEmitter.INSTANCE.emitTransferLog(frame, SENDER, SENDER, value);
+
+    verify(frame, never()).addLog(any());
+  }
+
+  @Test
+  void emitTransferLogEmitsForTransferToDifferentAddress() {
+    final MessageFrame frame = mock(MessageFrame.class);
+    final Wei value = Wei.of(1000);
+
+    EIP7708TransferLogEmitter.INSTANCE.emitTransferLog(frame, SENDER, RECIPIENT, value);
+
+    final ArgumentCaptor<Log> logCaptor = ArgumentCaptor.forClass(Log.class);
+    verify(frame).addLog(logCaptor.capture());
+
+    final Log capturedLog = logCaptor.getValue();
+    assertThat(capturedLog.getTopics()).hasSize(3);
+    assertThat(capturedLog.getTopics().get(0)).isEqualTo(LogTopic.create(TRANSFER_TOPIC));
+    assertThat(capturedLog.getTopics().get(1))
+        .isEqualTo(LogTopic.create(Bytes32.leftPad(SENDER.getBytes())));
+    assertThat(capturedLog.getTopics().get(2))
+        .isEqualTo(LogTopic.create(Bytes32.leftPad(RECIPIENT.getBytes())));
+  }
+
+  @Test
+  void emitTransferLogDoesNotEmitForZeroValue() {
+    final MessageFrame frame = mock(MessageFrame.class);
+
+    EIP7708TransferLogEmitter.INSTANCE.emitTransferLog(frame, SENDER, RECIPIENT, Wei.ZERO);
+
+    verify(frame, never()).addLog(any());
+  }
+
+  @Test
   void emitSelfDestructLogEmitsSelfdestructLogWhenOriginatorEqualsBeneficiary() {
     final MessageFrame frame = mock(MessageFrame.class);
     final Wei value = Wei.of(1000);
