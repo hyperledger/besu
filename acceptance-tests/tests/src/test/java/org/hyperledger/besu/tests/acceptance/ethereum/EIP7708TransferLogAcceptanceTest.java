@@ -29,7 +29,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -337,27 +336,20 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Test that SELFDESTRUCT to SELF emits an EIP-7708 Selfdestruct log (LOG2).
+   * Test that SELFDESTRUCT to SELF for a pre-existing contract emits NO log under EIP-6780.
    *
-   * <p>This test calls a contract (0x7709) that self-destructs to its own address. Since the
-   * beneficiary is the same as the originator, an EIP-7708 Selfdestruct log (LOG2 with 2 topics)
-   * should be emitted instead of a Transfer log.
+   * <p>With EIP-6780 (post-Cancun), SELFDESTRUCT only destroys contracts created in the same
+   * transaction. For pre-existing contracts (like 0x7709 from genesis), SELFDESTRUCT to self is
+   * effectively a no-op - the contract is NOT destroyed and retains its balance.
    *
-   * <p>The Selfdestruct log has:
-   *
-   * <ul>
-   *   <li>address: SYSTEM_ADDRESS (0xfffffffffffffffffffffffffffffffffffffffe)
-   *   <li>topics[0]: Selfdestruct event signature (keccak256('Selfdestruct(address,uint256)'))
-   *   <li>topics[1]: closed contract address (zero-padded to 32 bytes)
-   *   <li>data: amount in Wei (big-endian uint256)
-   * </ul>
+   * <p>Per EIP-7708, since no actual destruction or value transfer occurs, no log should be
+   * emitted. This is different from pre-Cancun behavior where the contract would be destroyed and a
+   * Selfdestruct log would be emitted.
    */
   @Test
-  public void shouldEmitSelfdestructLogForSelfDestructToSelf() throws IOException {
+  public void shouldNotEmitLogForPreExistingContractSelfDestructToSelf() throws IOException {
     final Address selfDestructToSelfContract =
         Address.fromHexStringStrict("0x0000000000000000000000000000000000007709");
-    // Contract has 1 ETH balance from genesis
-    final Wei contractBalance = Wei.of(1_000_000_000_000_000_000L);
 
     // No calldata needed - contract selfdestructs to itself
     final Transaction tx =
@@ -391,70 +383,30 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
     final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
     assertThat(receipt.getStatus()).isEqualTo("0x1");
 
-    final List<Log> logs = receipt.getLogs();
-    // Should have at least one Selfdestruct log
-    assertThat(logs).isNotEmpty();
-
-    // Find the Selfdestruct log (LOG2 with 2 topics)
-    final Log selfdestructLog =
-        logs.stream()
-            .filter(log -> log.getTopics().size() == 2)
-            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
-            .findFirst()
-            .orElseThrow(() -> new AssertionError("Expected Selfdestruct log not found"));
-
-    // Verify the log is from the EIP-7708 system address
-    assertThat(selfdestructLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
-
-    // Verify the Selfdestruct event signature topic
-    assertThat(selfdestructLog.getTopics()).hasSize(2);
-    assertThat(selfdestructLog.getTopics().get(0)).isEqualToIgnoringCase(SELFDESTRUCT_TOPIC);
-
-    // Verify contract address (zero-padded to 32 bytes)
-    final String expectedContractTopic =
-        Bytes32.leftPad(selfDestructToSelfContract.getBytes()).toHexString();
-    assertThat(selfdestructLog.getTopics().get(1)).isEqualToIgnoringCase(expectedContractTopic);
-
-    // Verify the data contains the contract balance (big-endian uint256)
-    final String expectedData = Bytes32.leftPad(contractBalance).toHexString();
-    assertThat(selfdestructLog.getData()).isEqualToIgnoringCase(expectedData);
-
-    // Verify there's no Transfer log (LOG3 with 3 topics) for this self-destruct
-    final boolean hasTransferLog =
-        logs.stream()
-            .anyMatch(
-                log ->
-                    log.getTopics().size() == 3
-                        && log.getTopics().get(0).equalsIgnoreCase(TRANSFER_TOPIC));
-    assertThat(hasTransferLog).as("Self-destruct to self should NOT emit a Transfer log").isFalse();
+    // Under EIP-6780, pre-existing contracts selfdestructing to self is a no-op.
+    // No destruction happens, no value moves, so no EIP-7708 log should be emitted.
+    assertThat(receipt.getLogs())
+        .as("Pre-existing contract SELFDESTRUCT to self should NOT emit any logs under EIP-6780")
+        .isEmpty();
   }
 
   /**
-   * Test that closure logs are emitted in lexicographical order by address.
+   * Test that pre-existing contracts selfdestructing to self emit NO logs under EIP-6780.
    *
-   * <p>This test calls a destroyer contract (0x7700) that triggers selfdestructs on three contracts
-   * in the order 0x7702 → 0x7703 → 0x7701. Each contract selfdestructs to itself, maintaining its
-   * balance. At transaction end, closure logs should be emitted for all selfdestructed accounts
-   * with remaining balance, sorted lexicographically by address (0x7701 → 0x7702 → 0x7703).
+   * <p>This test calls a destroyer contract (0x7700) that triggers selfdestructs on three
+   * pre-existing contracts (0x7701, 0x7702, 0x7703). Each contract selfdestructs to itself.
    *
-   * <p>By calling contracts in a different order, this test verifies that emitClosureLogs()
-   * actually sorts the logs rather than just emitting them in execution order.
+   * <p>Under EIP-6780 (post-Cancun), SELFDESTRUCT only destroys contracts created in the same
+   * transaction. Since these contracts are pre-existing (from genesis), SELFDESTRUCT to self is a
+   * no-op - no destruction occurs and no value moves.
+   *
+   * <p>Per EIP-7708, since no actual destruction or value transfer occurs, no logs should be
+   * emitted.
    */
   @Test
-  public void shouldEmitClosureLogsInLexicographicalOrder() throws IOException {
+  public void shouldNotEmitLogsForPreExistingContractsSelfDestructingToSelf() throws IOException {
     final Address destroyerContract =
         Address.fromHexStringStrict("0x0000000000000000000000000000000000007700");
-    final Address contract1 =
-        Address.fromHexStringStrict("0x0000000000000000000000000000000000007701");
-    final Address contract2 =
-        Address.fromHexStringStrict("0x0000000000000000000000000000000000007702");
-    final Address contract3 =
-        Address.fromHexStringStrict("0x0000000000000000000000000000000000007703");
-
-    // Balances from genesis
-    final Wei balance1 = Wei.of(100_000_000_000_000_000L); // 0.1 ETH
-    final Wei balance2 = Wei.of(200_000_000_000_000_000L); // 0.2 ETH
-    final Wei balance3 = Wei.of(300_000_000_000_000_000L); // 0.3 ETH
 
     // Call destroyer contract to trigger all three selfdestructs
     final Transaction tx =
@@ -488,69 +440,11 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
     final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
     assertThat(receipt.getStatus()).isEqualTo("0x1");
 
-    final List<Log> logs = receipt.getLogs();
-
-    // Filter to get only Selfdestruct logs (LOG2 with 2 topics)
-    final List<Log> selfdestructLogs =
-        logs.stream()
-            .filter(log -> log.getTopics().size() == 2)
-            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
-            .toList();
-
-    // Should have at least 3 Selfdestruct logs (one per contract)
-    // Note: Each contract might emit a log at SELFDESTRUCT time AND at closure time
-    assertThat(selfdestructLogs.size()).isGreaterThanOrEqualTo(3);
-
-    // Extract unique addresses from the logs and verify they appear in lexicographical order
-    final List<String> loggedAddresses =
-        selfdestructLogs.stream()
-            .map(log -> log.getTopics().get(1).toLowerCase(Locale.ROOT))
-            .distinct()
-            .toList();
-
-    // Verify all three contracts are represented
-    final String expectedAddr1 =
-        Bytes32.leftPad(contract1.getBytes()).toHexString().toLowerCase(Locale.ROOT);
-    final String expectedAddr2 =
-        Bytes32.leftPad(contract2.getBytes()).toHexString().toLowerCase(Locale.ROOT);
-    final String expectedAddr3 =
-        Bytes32.leftPad(contract3.getBytes()).toHexString().toLowerCase(Locale.ROOT);
-
-    assertThat(loggedAddresses).contains(expectedAddr1, expectedAddr2, expectedAddr3);
-
-    // Verify lexicographical ordering in the log sequence
-    // Find the positions of each address in the full log list
-    int pos1 = -1, pos2 = -1, pos3 = -1;
-    for (int i = 0; i < selfdestructLogs.size(); i++) {
-      final String addr = selfdestructLogs.get(i).getTopics().get(1).toLowerCase(Locale.ROOT);
-      if (addr.equals(expectedAddr1) && pos1 == -1) pos1 = i;
-      if (addr.equals(expectedAddr2) && pos2 == -1) pos2 = i;
-      if (addr.equals(expectedAddr3) && pos3 == -1) pos3 = i;
-    }
-
-    // The closure logs should appear in lexicographical order: 7701 < 7702 < 7703
-    // Note: The order depends on when emitSelfDestructLog vs emitClosureLogs is called
-    assertThat(pos1)
-        .as("Contract 0x7701 should appear in selfdestruct logs")
-        .isGreaterThanOrEqualTo(0);
-    assertThat(pos2)
-        .as("Contract 0x7702 should appear in selfdestruct logs")
-        .isGreaterThanOrEqualTo(0);
-    assertThat(pos3)
-        .as("Contract 0x7703 should appear in selfdestruct logs")
-        .isGreaterThanOrEqualTo(0);
-
-    // Verify the balances are logged correctly
-    for (final Log log : selfdestructLogs) {
-      final String addr = log.getTopics().get(1).toLowerCase(Locale.ROOT);
-      if (addr.equals(expectedAddr1)) {
-        assertThat(log.getData()).isEqualToIgnoringCase(Bytes32.leftPad(balance1).toHexString());
-      } else if (addr.equals(expectedAddr2)) {
-        assertThat(log.getData()).isEqualToIgnoringCase(Bytes32.leftPad(balance2).toHexString());
-      } else if (addr.equals(expectedAddr3)) {
-        assertThat(log.getData()).isEqualToIgnoringCase(Bytes32.leftPad(balance3).toHexString());
-      }
-    }
+    // Under EIP-6780, pre-existing contracts selfdestructing to self is a no-op.
+    // No destruction happens, no value moves, so no EIP-7708 logs should be emitted.
+    assertThat(receipt.getLogs())
+        .as("Pre-existing contracts SELFDESTRUCT to self should NOT emit any logs under EIP-6780")
+        .isEmpty();
   }
 
   /**
@@ -600,5 +494,90 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
 
     // Reverted transactions should NOT emit any EIP-7708 logs
     assertThat(receipt.getLogs()).isEmpty();
+  }
+
+  /**
+   * Test that SELFDESTRUCT to SELF for a same-tx-created contract DOES emit a Selfdestruct log.
+   *
+   * <p>This test calls a factory contract (0x7710) that:
+   *
+   * <ol>
+   *   <li>CREATEs a new child contract with code "ADDRESS SELFDESTRUCT" (30FF)
+   *   <li>Sends its entire balance (1 ETH) to the child
+   *   <li>CALLs the child, triggering SELFDESTRUCT to itself
+   * </ol>
+   *
+   * <p>Under EIP-6780, contracts created in the same transaction CAN be destroyed by SELFDESTRUCT.
+   * Per EIP-7708, when a same-tx-created contract selfdestructs to itself, a Selfdestruct log
+   * (LOG2) should be emitted with the destroyed balance.
+   */
+  @Test
+  public void shouldEmitSelfdestructLogForSameTxCreatedContractSelfDestructToSelf()
+      throws IOException {
+    final Address factoryContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007710");
+    // Factory has 1 ETH balance which it sends to the created contract
+    final Wei contractBalance = Wei.of(1_000_000_000_000_000_000L);
+
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(200_000)
+            .to(factoryContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    final List<Log> logs = receipt.getLogs();
+
+    // Should have at least one Selfdestruct log (LOG2 with 2 topics)
+    final List<Log> selfdestructLogs =
+        logs.stream()
+            .filter(log -> log.getTopics().size() == 2)
+            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
+            .toList();
+
+    assertThat(selfdestructLogs)
+        .as("Same-tx-created contract SELFDESTRUCT to self SHOULD emit a Selfdestruct log")
+        .isNotEmpty();
+
+    // Verify the Selfdestruct log has the correct balance
+    final Log selfdestructLog = selfdestructLogs.getFirst();
+    assertThat(selfdestructLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
+    assertThat(selfdestructLog.getData())
+        .isEqualToIgnoringCase(Bytes32.leftPad(contractBalance).toHexString());
+
+    // There should also be a Transfer log for the CREATE value transfer (factory -> child)
+    final boolean hasTransferLog =
+        logs.stream()
+            .anyMatch(
+                log ->
+                    log.getTopics().size() == 3
+                        && log.getTopics().get(0).equalsIgnoreCase(TRANSFER_TOPIC));
+    assertThat(hasTransferLog)
+        .as("CREATE with value should emit a Transfer log for the value transfer")
+        .isTrue();
   }
 }
