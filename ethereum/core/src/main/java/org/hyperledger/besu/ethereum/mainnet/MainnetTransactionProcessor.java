@@ -190,7 +190,7 @@ public class MainnetTransactionProcessor {
         miningBeneficiary,
         operationTracer,
         blockHashLookup,
-        ImmutableTransactionValidationParams.builder().build(),
+        transactionValidationParams,
         blobGasPrice,
         Optional.empty());
   }
