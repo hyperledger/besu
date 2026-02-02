@@ -17,11 +17,9 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -32,8 +30,6 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class BlockProcessingMetrics {
 
   private final AtomicLong accountsCount = new AtomicLong();
@@ -41,7 +37,6 @@ public class BlockProcessingMetrics {
   private final AtomicLong codeCount = new AtomicLong();
   private final AtomicLong accountsUpdated = new AtomicLong();
   private final AtomicLong storageSlotsUpdated = new AtomicLong();
-  private final AtomicLong sizeBytes = new AtomicLong();
   private final Counter blocksTotal;
   private final OperationTimer stateRootCalculationTimer;
 
@@ -71,8 +66,6 @@ public class BlockProcessingMetrics {
         "storage_slots_updated",
         "Number of storage slots modified in a BAL (writes)",
         storageSlotsUpdated::get);
-    metricsSystem.createLongGauge(
-        BesuMetricCategory.BAL, "size_bytes", "RLP-encoded BAL size in bytes", sizeBytes::get);
     blocksTotal =
         metricsSystem.createCounter(
             BesuMetricCategory.BAL, "blocks_total", "Number of BAL-enabled blocks processed");
@@ -101,7 +94,6 @@ public class BlockProcessingMetrics {
     codeCount.set(countCodeAccounts(bal));
     accountsUpdated.set(countUpdatedAccounts(bal));
     storageSlotsUpdated.set(countUpdatedStorageSlots(bal));
-    sizeBytes.set(encodedSizeBytes(bal));
   }
 
   private void resetMetrics() {
@@ -110,7 +102,6 @@ public class BlockProcessingMetrics {
     codeCount.set(0L);
     accountsUpdated.set(0L);
     storageSlotsUpdated.set(0L);
-    sizeBytes.set(0L);
   }
 
   private long countStorageSlots(final BlockAccessList bal) {
@@ -142,11 +133,6 @@ public class BlockProcessingMetrics {
         || !accountChanges.nonceChanges().isEmpty()
         || !accountChanges.codeChanges().isEmpty()
         || !accountChanges.storageChanges().isEmpty();
-  }
-
-  private long encodedSizeBytes(final BlockAccessList bal) {
-    final Bytes encoded = RLP.encode(out -> BlockAccessListEncoder.encode(bal, out));
-    return encoded.size();
   }
 
   private static class TimedStateRootCommitter implements StateRootCommitter {
