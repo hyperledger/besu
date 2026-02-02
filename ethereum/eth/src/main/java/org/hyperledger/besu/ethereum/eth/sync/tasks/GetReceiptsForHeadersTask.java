@@ -90,6 +90,7 @@ public class GetReceiptsForHeadersTask
     if (incompleteHeaders.isEmpty()) {
       return CompletableFuture.completedFuture(emptyMap());
     }
+    LOG.atTrace().setMessage("Stefan {}").addArgument(assignedPeer.isEmpty()).log(); // TODO: remove
     LOG.debug(
         "Requesting bodies to complete {} blocks, starting with {}.",
         incompleteHeaders.size(),
