@@ -33,10 +33,10 @@ import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptDecoderStrategy;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -154,7 +154,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<List<TransactionReceipt>> getTransactionReceipts(final Hash blockHash) {
     return get(TRANSACTION_RECEIPTS_PREFIX, blockHash.getBytes())
-        .map(bytes -> rlpDecodeTransactionReceipts(bytes, blockHash));
+        .map(this::rlpDecodeTransactionReceipts);
   }
 
   @Override
@@ -180,26 +180,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         blockchainStorage.startTransaction(), variablesStorage.updater(), receiptCompaction);
   }
 
-  private List<TransactionReceipt> rlpDecodeTransactionReceipts(
-      final Bytes bytes, final Hash blockHash) {
-    // Get the appropriate decoder strategy from the protocol spec for this block
-    final TransactionReceiptDecoderStrategy decoderStrategy = getDecoderStrategyForBlock(blockHash);
-    return RLP.input(bytes).readList(in -> decoderStrategy.decode(in, true));
-  }
-
-  /**
-   * Gets the appropriate receipt decoder strategy for the given block.
-   *
-   * @param blockHash the hash of the block
-   * @return the decoder strategy from the protocol spec, or PRE_AMSTERDAM if not available
-   */
-  private TransactionReceiptDecoderStrategy getDecoderStrategyForBlock(final Hash blockHash) {
-    if (protocolSchedule == null) {
-      return TransactionReceiptDecoderStrategy.FRONTIER;
-    }
-    return getBlockHeader(blockHash)
-        .map(header -> protocolSchedule.getByBlockHeader(header).getReceiptDecoderStrategy())
-        .orElse(TransactionReceiptDecoderStrategy.FRONTIER);
+  private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
+    return RLP.input(bytes).readList(in -> TransactionReceiptDecoder.readFrom(in, true));
   }
 
   private BlockAccessList rlpDecodeBlockAccessList(final Bytes bytes) {

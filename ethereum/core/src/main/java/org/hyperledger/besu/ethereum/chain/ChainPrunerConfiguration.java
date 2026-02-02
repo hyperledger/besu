@@ -14,12 +14,40 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
+
 public record ChainPrunerConfiguration(
-    boolean chainPruningEnabled,
+    ChainPruningStrategy pruningMode,
     long chainPruningBlocksRetained,
-    long blocksFrequency,
-    long chainPruningBlocksRetainedLimit,
+    long chainPruningBalsRetained,
+    long chainPruningRetainedMinimum,
+    long chainPruningFrequency,
     int preMergePruningBlocksQuantity) {
+
   public static final ChainPrunerConfiguration DEFAULT =
-      new ChainPrunerConfiguration(false, 7200, 7200, 256, 1000);
+      new ChainPrunerConfiguration(
+          ChainPruningStrategy.NONE,
+          113056 /*WSP_EPOCHS_PER_WINDOW * SLOTS_PER_EPOCH */,
+          113056,
+          113056,
+          256,
+          1000);
+
+  /**
+   * Check if block chain pruning is enabled.
+   *
+   * @return true if ALL mode is enabled
+   */
+  public boolean isBlockPruningEnabled() {
+    return pruningMode == ChainPruningStrategy.ALL;
+  }
+
+  /**
+   * Check if BAL pruning is enabled.
+   *
+   * @return true if BAL or ALL mode is enabled
+   */
+  public boolean isBalPruningEnabled() {
+    return pruningMode == ChainPruningStrategy.BAL || pruningMode == ChainPruningStrategy.ALL;
+  }
 }
