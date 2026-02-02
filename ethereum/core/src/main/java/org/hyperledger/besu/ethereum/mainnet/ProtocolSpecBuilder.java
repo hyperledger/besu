@@ -101,8 +101,7 @@ public class ProtocolSpecBuilder {
   private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private BlockGasAccountingStrategy blockGasAccountingStrategy =
       BlockGasAccountingStrategy.FRONTIER;
-  private TransactionReceiptDecoderStrategy receiptDecoderStrategy =
-      TransactionReceiptDecoderStrategy.FRONTIER;
+  private BlockGasUsedValidator blockGasUsedValidator = BlockGasUsedValidator.FRONTIER;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -333,9 +332,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder receiptDecoderStrategy(
-      final TransactionReceiptDecoderStrategy receiptDecoderStrategy) {
-    this.receiptDecoderStrategy = receiptDecoderStrategy;
+  public ProtocolSpecBuilder blockGasUsedValidator(
+      final BlockGasUsedValidator blockGasUsedValidator) {
+    this.blockGasUsedValidator = blockGasUsedValidator;
     return this;
   }
 
@@ -458,7 +457,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(finalBalFactory),
         stateRootCommitterFactory,
         blockGasAccountingStrategy,
-        receiptDecoderStrategy);
+        blockGasUsedValidator);
   }
 
   private BlockProcessor createBlockProcessor(
