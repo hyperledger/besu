@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -71,7 +71,7 @@ class BonsaiWorldStateProviderTest {
   @Mock private SegmentedKeyValueStorage segmentedKeyValueStorage;
   @Mock private KeyValueStorage trieLogStorage;
   @Mock private SegmentedKeyValueStorageTransaction segmentedKeyValueStorageTransaction;
-  @Mock private BonsaiWorldStateRegistry cachedWorldStorageManager;
+  @Mock private BonsaiCachedWorldStorageManager cachedWorldStorageManager;
   @Mock private TrieLogManager trieLogManager;
 
   private BonsaiWorldStateProvider bonsaiWorldStateArchive;
@@ -131,7 +131,7 @@ class BonsaiWorldStateProviderTest {
                 storageProvider, new NoOpMetricsSystem(), DEFAULT_CONFIG),
             blockchain,
             ImmutablePathBasedExtraStorageConfiguration.builder().maxLayersToLoad(512L).build(),
-            new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
+            new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
             throwingWorldStateHealerSupplier(),
@@ -294,7 +294,7 @@ class BonsaiWorldStateProviderTest {
         trieLogManager,
         worldStateKeyValueStorage,
         blockchain,
-        new BonsaiMerkleTriePreLoader(new NoOpMetricsSystem()),
+        new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
         EvmConfiguration.DEFAULT,
         throwingWorldStateHealerSupplier(),
         new CodeCache());

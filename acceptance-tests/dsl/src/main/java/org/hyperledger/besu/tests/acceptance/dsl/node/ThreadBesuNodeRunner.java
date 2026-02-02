@@ -58,7 +58,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoaderModule;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCacheModule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -755,7 +755,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         ThreadBesuNodeRunner.MockBesuCommandModule.class,
         ThreadBesuNodeRunner.ObservableMetricsSystemModule.class,
         ThreadBesuNodeRunnerModule.class,
-        BonsaiMerkleTriePreLoaderModule.class,
+        BonsaiCachedMerkleTrieLoaderModule.class,
         MetricsSystemModule.class,
         ThreadBesuNodeRunner.BesuNodeProviderModule.class,
         BlobCacheModule.class,

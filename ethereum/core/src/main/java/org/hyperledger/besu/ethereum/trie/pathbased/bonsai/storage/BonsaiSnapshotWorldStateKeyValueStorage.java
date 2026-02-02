@@ -44,14 +44,15 @@ import org.slf4j.LoggerFactory;
  * <p>The snapshot itself NEVER reads from cache - it's just a carrier of cache metadata for layers
  * that will be created from it.
  */
-public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueStorage
+public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
     implements PathBasedSnapshotWorldStateKeyValueStorage, StorageSubscriber {
 
   protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
-  private static final Logger LOG = LoggerFactory.getLogger(BonsaiSnapshotWorldStateStorage.class);
+  private static final Logger LOG =
+      LoggerFactory.getLogger(BonsaiSnapshotWorldStateKeyValueStorage.class);
   private final long subscribeParentId;
 
-  public BonsaiSnapshotWorldStateStorage(
+  public BonsaiSnapshotWorldStateKeyValueStorage(
       final BonsaiWorldStateKeyValueStorage parentWorldStateStorage,
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
@@ -65,7 +66,7 @@ public class BonsaiSnapshotWorldStateStorage extends BonsaiWorldStateKeyValueSto
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
 
-  public BonsaiSnapshotWorldStateStorage(
+  public BonsaiSnapshotWorldStateKeyValueStorage(
       final BonsaiWorldStateKeyValueStorage worldStateStorageKeyValueStorage) {
     this(
         worldStateStorageKeyValueStorage,

@@ -25,9 +25,9 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class NoOpBonsaiWorldStateRegistry extends BonsaiWorldStateRegistry {
+public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorageManager {
 
-  public NoOpBonsaiWorldStateRegistry(
+  public NoOpBonsaiCachedWorldStorageManager(
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage,
       final EvmConfiguration evmConfiguration,
       final CodeCache codeCache) {

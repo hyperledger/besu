@@ -48,7 +48,7 @@ import org.apache.tuweni.bytes.Bytes;
  * interception between layer and parent.
  */
 @SuppressWarnings("DoNotReturnNullOptionals")
-public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateStorage
+public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyValueStorage
     implements PathBasedLayeredWorldStateKeyValueStorage, StorageSubscriber {
 
   public BonsaiWorldStateLayerStorage(final BonsaiWorldStateKeyValueStorage parent) {

@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiMerkleTriePreLoader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
@@ -42,7 +42,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
-      final BonsaiMerkleTriePreLoader bonsaiMerkleTriePreLoader,
+      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ServiceManager pluginContext,
       final EvmConfiguration evmConfiguration,
       final Supplier<WorldStateHealer> worldStateHealerSupplier,
@@ -51,7 +51,7 @@ public class BonsaiArchiveWorldStateProvider extends BonsaiWorldStateProvider {
         worldStateKeyValueStorage,
         blockchain,
         pathBasedExtraStorageConfiguration,
-        bonsaiMerkleTriePreLoader,
+        bonsaiCachedMerkleTrieLoader,
         pluginContext,
         evmConfiguration,
         worldStateHealerSupplier,

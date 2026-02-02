@@ -38,7 +38,7 @@ import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BonsaiMerkleTriePreLoader implements StorageSubscriber {
+public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
 
   private static final ExecutorService VIRTUAL_POOL = Executors.newVirtualThreadPerTaskExecutor();
 
@@ -49,7 +49,7 @@ public class BonsaiMerkleTriePreLoader implements StorageSubscriber {
   private final Cache<Bytes, Bytes> storageNodes =
       CacheBuilder.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
 
-  public BonsaiMerkleTriePreLoader(final ObservableMetricsSystem metricsSystem) {
+  public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);
     metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "storageNodes", storageNodes);
   }
