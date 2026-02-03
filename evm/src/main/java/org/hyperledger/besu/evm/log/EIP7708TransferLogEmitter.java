@@ -122,7 +122,7 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
   @Override
   public void emitTransferLog(
       final MessageFrame frame, final Address from, final Address to, final Wei value) {
-    if (value.greaterThan(Wei.ZERO)) {
+    if (value.greaterThan(Wei.ZERO) && !from.equals(to)) {
       frame.addLog(createTransferLog(from, to, value));
     }
   }
