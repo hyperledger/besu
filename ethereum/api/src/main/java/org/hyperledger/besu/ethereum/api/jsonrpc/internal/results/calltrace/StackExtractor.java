@@ -147,18 +147,24 @@ public final class StackExtractor {
    *
    * @param frame the trace frame containing stack and memory
    * @param opcode the opcode ("CREATE" or "CREATE2")
+   * @param entered whether the CREATE operation successfully entered (depth increased)
    * @return the initialization code bytes, or empty if extraction fails
    */
-  public static Bytes extractCreateInitCode(final TraceFrame frame, final String opcode) {
-    // Try getMaybeCode() first - this is the preferred source
-    if (frame.getMaybeCode().isPresent()) {
+  public static Bytes extractCreateInitCode(
+      final TraceFrame frame, final String opcode, final boolean entered) {
+    // Only try getMaybeCode() if the CREATE entered successfully
+    // When CREATE doesn't enter (soft failure), getMaybeCode() contains the parent's code, not the
+    // init code
+    if (entered && frame.getMaybeCode().isPresent()) {
       return frame.getMaybeCode().get().getBytes();
     }
 
-    // Fallback to memory extraction
+    // Extract from memory for soft-failed CREATEs or as fallback
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-          "Falling back to memory extraction for CREATE input data at depth {}", frame.getDepth());
+          "Using memory extraction for CREATE input data at depth {} (entered: {})",
+          frame.getDepth(),
+          entered);
     }
 
     return frame
@@ -209,7 +215,9 @@ public final class StackExtractor {
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
     if (OpcodeCategory.isCreateOp(opcode)) {
-      return extractCreateInitCode(frame, opcode);
+      // Check if the CREATE entered (depth increased)
+      boolean entered = nextTrace != null && nextTrace.getDepth() > frame.getDepth();
+      return extractCreateInitCode(frame, opcode, entered);
     }
 
     // Prefer callee frame's input data for calls
