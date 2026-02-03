@@ -23,9 +23,9 @@ import com.google.common.base.MoreObjects;
 
 public class SyncBlockWithReceipts {
   private final SyncBlock block;
-  private final List<TransactionReceipt> receipts;
+  private final List<SyncTransactionReceipt> receipts;
 
-  public SyncBlockWithReceipts(final SyncBlock block, final List<TransactionReceipt> receipts) {
+  public SyncBlockWithReceipts(final SyncBlock block, final List<SyncTransactionReceipt> receipts) {
     this.block = block;
     this.receipts = receipts;
   }
@@ -38,7 +38,7 @@ public class SyncBlockWithReceipts {
     return block;
   }
 
-  public List<TransactionReceipt> getReceipts() {
+  public List<SyncTransactionReceipt> getReceipts() {
     return receipts;
   }
 
