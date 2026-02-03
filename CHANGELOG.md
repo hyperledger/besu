@@ -20,6 +20,7 @@
 - Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 
 ### Bug fixes
+- Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 
 ## 26.1.0-RC1
 
