@@ -58,7 +58,6 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -130,9 +129,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
     this.balConfiguration = balConfiguration;
-    this.blockProcessingMetrics =
-        new BlockProcessingMetrics(
-            Objects.requireNonNullElse(metricsSystem, new NoOpMetricsSystem()));
+    this.blockProcessingMetrics = new BlockProcessingMetrics(metricsSystem);
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
