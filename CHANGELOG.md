@@ -79,6 +79,12 @@
 - Enhance payload selection with tx count and creation time tiebreakers [#9657](https://github.com/hyperledger/besu/pull/9657)
 - Fix mining beneficiary for BFT networks when set to zero address [#9679](https://github.com/hyperledger/besu/pull/9679)
 
+#### Dependencies
+- Update assertj dependencies [#9710](https://github.com/hyperledger/besu/pull/9710)
+  - resolves CVE-2026-24400
+- Update vertx dependencies [#9729](https://github.com/hyperledger/besu/pull/9729)
+  - resolves CVE-2026-1002
+
 [PR_9462]: https://github.com/hyperledger/besu/pull/9642
 
 ##  25.12.0
