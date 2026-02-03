@@ -50,7 +50,9 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.text.MessageFormat;
@@ -87,6 +89,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
   protected final BalConfiguration balConfiguration;
+  private final BlockProcessingMetrics blockProcessingMetrics;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -99,6 +102,26 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration) {
+    this(
+        transactionProcessor,
+        transactionReceiptFactory,
+        blockReward,
+        miningBeneficiaryCalculator,
+        skipZeroBlockRewards,
+        protocolSchedule,
+        balConfiguration,
+        new NoOpMetricsSystem());
+  }
+
+  protected AbstractBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionReceiptFactory transactionReceiptFactory,
+      final Wei blockReward,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final boolean skipZeroBlockRewards,
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
@@ -106,6 +129,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
     this.balConfiguration = balConfiguration;
+    this.blockProcessingMetrics = new BlockProcessingMetrics(metricsSystem);
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -217,9 +241,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
 
     final StateRootCommitter stateRootCommitter =
-        protocolSpec
-            .getStateRootCommitterFactory()
-            .forBlock(protocolContext, blockHeader, blockAccessList);
+        blockProcessingMetrics.wrapStateRootCommitter(
+            protocolSpec
+                .getStateRootCommitterFactory()
+                .forBlock(protocolContext, blockHeader, blockAccessList));
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
@@ -477,6 +502,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             }
           }
           maybeBlockAccessList = Optional.of(bal);
+          blockProcessingMetrics.recordBlockAccessListMetrics(bal);
         } else {
           maybeBlockAccessList = Optional.empty();
         }
