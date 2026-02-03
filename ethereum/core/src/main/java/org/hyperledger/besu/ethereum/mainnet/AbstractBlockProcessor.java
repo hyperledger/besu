@@ -490,6 +490,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             }
           }
           maybeBlockAccessList = Optional.of(bal);
+          blockProcessingMetrics.recordBlockAccessListMetrics(bal);
         } else {
           maybeBlockAccessList = Optional.empty();
         }
@@ -526,7 +527,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), e);
       }
 
-      blockProcessingMetrics.recordBlockAccessListMetrics(maybeBlockAccessList);
       return new BlockProcessingResult(
           Optional.of(
               new BlockProcessingOutputs(

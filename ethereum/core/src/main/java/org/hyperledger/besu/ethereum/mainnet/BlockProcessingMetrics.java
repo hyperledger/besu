@@ -27,7 +27,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class BlockProcessingMetrics {
@@ -81,27 +80,13 @@ public class BlockProcessingMetrics {
     return new TimedStateRootCommitter(wrapped, stateRootCalculationTimer);
   }
 
-  public void recordBlockAccessListMetrics(final Optional<BlockAccessList> maybeBal) {
-    if (maybeBal.isEmpty()) {
-      resetMetrics();
-      return;
-    }
-
-    final BlockAccessList bal = maybeBal.get();
+  public void recordBlockAccessListMetrics(final BlockAccessList bal) {
     blocksTotal.inc();
     accountsCount.set(bal.accountChanges().size());
     storageSlotsCount.set(countStorageSlots(bal));
     codeCount.set(countCodeAccounts(bal));
     accountsUpdated.set(countUpdatedAccounts(bal));
     storageSlotsUpdated.set(countUpdatedStorageSlots(bal));
-  }
-
-  private void resetMetrics() {
-    accountsCount.set(0L);
-    storageSlotsCount.set(0L);
-    codeCount.set(0L);
-    accountsUpdated.set(0L);
-    storageSlotsUpdated.set(0L);
   }
 
   private long countStorageSlots(final BlockAccessList bal) {
