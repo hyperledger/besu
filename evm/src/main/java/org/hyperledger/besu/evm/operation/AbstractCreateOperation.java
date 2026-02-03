@@ -103,15 +103,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (insufficientBalance || maxDepthReached || hasOtherFailure) {
       fail(frame);
       // Set soft failure reason for callTracer compatibility
-      final long gasAvailableForChildCall =
-          gasCalculator().gasAvailableForChildCreate(frame.getRemainingGas());
       final SoftFailureReason softFailureReason =
           insufficientBalance
               ? LEGACY_INSUFFICIENT_BALANCE
               : (maxDepthReached ? LEGACY_MAX_CALL_DEPTH : UNKNOWN_ERROR);
-      // TODO: Verify if we need to pass gasAvailableForChildCall or create a new constructor
-      return new OperationResult(
-          cost, getPcIncrement(), softFailureReason, gasAvailableForChildCall);
+      return new OperationResult(cost, getPcIncrement(), softFailureReason);
     } else {
       account.incrementNonce();
       frame.decrementRemainingGas(cost);
