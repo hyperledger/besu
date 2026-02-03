@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.feemarket.TransactionPriceCalculator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -41,9 +42,11 @@ public class BaseFeeBlockBodyValidator extends MainnetBlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final OptionalLong cumulativeBlockGasUsed) {
 
-    return super.validateBodyLight(context, block, receipts, ommerValidationMode)
+    return super.validateBodyLight(
+            context, block, receipts, ommerValidationMode, cumulativeBlockGasUsed)
         && validateTransactionGasPrice(block);
   }
 

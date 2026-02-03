@@ -52,6 +52,13 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
  *   <li>topics[2]: to address (zero-padded to 32 bytes)
  *   <li>data: amount in Wei (big-endian uint256)
  * </ul>
+ *
+ * <p>Additionally, SELFDESTRUCT operations emit different logs depending on the beneficiary:
+ *
+ * <ul>
+ *   <li>SELFDESTRUCT to different address: Transfer log (LOG3) with 3 topics
+ *   <li>SELFDESTRUCT to self: Selfdestruct log (LOG2) with 2 topics
+ * </ul>
  */
 public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   private static final String GENESIS_FILE = "/dev/dev_amsterdam.json";
@@ -60,6 +67,8 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   private static final String EIP7708_SYSTEM_ADDRESS = "0xfffffffffffffffffffffffffffffffffffffffe";
   private static final String TRANSFER_TOPIC =
       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  private static final String SELFDESTRUCT_TOPIC =
+      "0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083";
 
   private final Account sender =
       accounts.createAccount(
@@ -262,14 +271,14 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Test that SELFDESTRUCT with value emits an EIP-7708 transfer log.
+   * Test that SELFDESTRUCT to a DIFFERENT address emits an EIP-7708 Transfer log (LOG3).
    *
    * <p>This test calls a contract (0x7708) that self-destructs and sends its balance to an address
-   * provided in calldata. An EIP-7708 transfer log should be emitted for the value transfer during
-   * selfdestruct.
+   * provided in calldata. Since the beneficiary is different from the contract itself, an EIP-7708
+   * Transfer log (LOG3 with 3 topics) should be emitted.
    */
   @Test
-  public void shouldEmitTransferLogForSelfDestruct() throws IOException {
+  public void shouldEmitTransferLogForSelfDestructToDifferentAddress() throws IOException {
     final Address selfDestructContract =
         Address.fromHexStringStrict("0x0000000000000000000000000000000000007708");
     // Contract has 1 ETH balance from genesis
@@ -327,6 +336,118 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
+   * Test that SELFDESTRUCT to SELF for a pre-existing contract emits NO log under EIP-6780.
+   *
+   * <p>With EIP-6780 (post-Cancun), SELFDESTRUCT only destroys contracts created in the same
+   * transaction. For pre-existing contracts (like 0x7709 from genesis), SELFDESTRUCT to self is
+   * effectively a no-op - the contract is NOT destroyed and retains its balance.
+   *
+   * <p>Per EIP-7708, since no actual destruction or value transfer occurs, no log should be
+   * emitted. This is different from pre-Cancun behavior where the contract would be destroyed and a
+   * Selfdestruct log would be emitted.
+   */
+  @Test
+  public void shouldNotEmitLogForPreExistingContractSelfDestructToSelf() throws IOException {
+    final Address selfDestructToSelfContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007709");
+
+    // No calldata needed - contract selfdestructs to itself
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(100_000)
+            .to(selfDestructToSelfContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    // Under EIP-6780, pre-existing contracts selfdestructing to self is a no-op.
+    // No destruction happens, no value moves, so no EIP-7708 log should be emitted.
+    assertThat(receipt.getLogs())
+        .as("Pre-existing contract SELFDESTRUCT to self should NOT emit any logs under EIP-6780")
+        .isEmpty();
+  }
+
+  /**
+   * Test that pre-existing contracts selfdestructing to self emit NO logs under EIP-6780.
+   *
+   * <p>This test calls a destroyer contract (0x7700) that triggers selfdestructs on three
+   * pre-existing contracts (0x7701, 0x7702, 0x7703). Each contract selfdestructs to itself.
+   *
+   * <p>Under EIP-6780 (post-Cancun), SELFDESTRUCT only destroys contracts created in the same
+   * transaction. Since these contracts are pre-existing (from genesis), SELFDESTRUCT to self is a
+   * no-op - no destruction occurs and no value moves.
+   *
+   * <p>Per EIP-7708, since no actual destruction or value transfer occurs, no logs should be
+   * emitted.
+   */
+  @Test
+  public void shouldNotEmitLogsForPreExistingContractsSelfDestructingToSelf() throws IOException {
+    final Address destroyerContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007700");
+
+    // Call destroyer contract to trigger all three selfdestructs
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(500_000)
+            .to(destroyerContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    // Under EIP-6780, pre-existing contracts selfdestructing to self is a no-op.
+    // No destruction happens, no value moves, so no EIP-7708 logs should be emitted.
+    assertThat(receipt.getLogs())
+        .as("Pre-existing contracts SELFDESTRUCT to self should NOT emit any logs under EIP-6780")
+        .isEmpty();
+  }
+
+  /**
    * Test that reverted transactions do NOT emit EIP-7708 transfer logs.
    *
    * <p>This test sends ETH to a contract (0x666) that immediately reverts. Even though value was
@@ -373,5 +494,90 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
 
     // Reverted transactions should NOT emit any EIP-7708 logs
     assertThat(receipt.getLogs()).isEmpty();
+  }
+
+  /**
+   * Test that SELFDESTRUCT to SELF for a same-tx-created contract DOES emit a Selfdestruct log.
+   *
+   * <p>This test calls a factory contract (0x7710) that:
+   *
+   * <ol>
+   *   <li>CREATEs a new child contract with code "ADDRESS SELFDESTRUCT" (30FF)
+   *   <li>Sends its entire balance (1 ETH) to the child
+   *   <li>CALLs the child, triggering SELFDESTRUCT to itself
+   * </ol>
+   *
+   * <p>Under EIP-6780, contracts created in the same transaction CAN be destroyed by SELFDESTRUCT.
+   * Per EIP-7708, when a same-tx-created contract selfdestructs to itself, a Selfdestruct log
+   * (LOG2) should be emitted with the destroyed balance.
+   */
+  @Test
+  public void shouldEmitSelfdestructLogForSameTxCreatedContractSelfDestructToSelf()
+      throws IOException {
+    final Address factoryContract =
+        Address.fromHexStringStrict("0x0000000000000000000000000000000000007710");
+    // Factory has 1 ETH balance which it sends to the created contract
+    final Wei contractBalance = Wei.of(1_000_000_000_000_000_000L);
+
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1_000_000_000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(200_000)
+            .to(factoryContract)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(SENDER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    final AtomicReference<Optional<TransactionReceipt>> maybeReceiptHolder =
+        new AtomicReference<>(Optional.empty());
+    WaitUtils.waitFor(
+        60,
+        () -> {
+          maybeReceiptHolder.set(besuNode.execute(ethTransactions.getTransactionReceipt(txHash)));
+          assertThat(maybeReceiptHolder.get()).isPresent();
+        });
+
+    final TransactionReceipt receipt = maybeReceiptHolder.get().orElseThrow();
+    assertThat(receipt.getStatus()).isEqualTo("0x1");
+
+    final List<Log> logs = receipt.getLogs();
+
+    // Should have at least one Selfdestruct log (LOG2 with 2 topics)
+    final List<Log> selfdestructLogs =
+        logs.stream()
+            .filter(log -> log.getTopics().size() == 2)
+            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
+            .toList();
+
+    assertThat(selfdestructLogs)
+        .as("Same-tx-created contract SELFDESTRUCT to self SHOULD emit a Selfdestruct log")
+        .isNotEmpty();
+
+    // Verify the Selfdestruct log has the correct balance
+    final Log selfdestructLog = selfdestructLogs.getFirst();
+    assertThat(selfdestructLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
+    assertThat(selfdestructLog.getData())
+        .isEqualToIgnoringCase(Bytes32.leftPad(contractBalance).toHexString());
+
+    // There should also be a Transfer log for the CREATE value transfer (factory -> child)
+    final boolean hasTransferLog =
+        logs.stream()
+            .anyMatch(
+                log ->
+                    log.getTopics().size() == 3
+                        && log.getTopics().get(0).equalsIgnoreCase(TRANSFER_TOPIC));
+    assertThat(hasTransferLog)
+        .as("CREATE with value should emit a Transfer log for the value transfer")
+        .isTrue();
   }
 }

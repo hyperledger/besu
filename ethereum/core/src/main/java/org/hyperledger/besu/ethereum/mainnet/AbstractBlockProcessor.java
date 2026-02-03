@@ -210,7 +210,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
-    long currentGasUsed = 0;
+    // EIP-7778: Track two separate cumulative gas values
+    // cumulativeBlockGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
+    //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
+    //   - Amsterdam+: pre-refund gas (prevents block gas limit circumvention via refunds)
+    // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
+    long cumulativeBlockGasUsed = 0;
+    long cumulativeReceiptGasUsed = 0;
     long currentBlobGasUsed = 0;
 
     var blockHeader = block.getHeader();
@@ -293,7 +299,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
           transactionUpdater = blockUpdater;
         }
-        if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
+        if (!hasAvailableBlockBudget(blockHeader, transaction, cumulativeBlockGasUsed)) {
           return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
 
@@ -334,10 +340,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockUpdater.commit();
         blockUpdater.markTransactionBoundary();
 
-        currentGasUsed +=
+        // EIP-7778: Update both cumulative gas values
+        // Block gas uses protocol-specific strategy (pre-refund for Amsterdam+)
+        cumulativeBlockGasUsed +=
             protocolSpec
                 .getBlockGasAccountingStrategy()
                 .calculateBlockGas(transaction, transactionProcessingResult);
+        // Receipt gas always uses standard post-refund calculation
+        cumulativeReceiptGasUsed +=
+            BlockGasAccountingStrategy.calculateReceiptGas(
+                transaction, transactionProcessingResult);
         final var optionalVersionedHashes = transaction.getVersionedHashes();
         if (optionalVersionedHashes.isPresent()) {
           final var versionedHashes = optionalVersionedHashes.get();
@@ -347,7 +359,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
         final TransactionReceipt transactionReceipt =
             transactionReceiptFactory.create(
-                transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
+                transaction.getType(),
+                transactionProcessingResult,
+                worldState,
+                cumulativeReceiptGasUsed);
         receipts.add(transactionReceipt);
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
@@ -527,7 +542,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(
           Optional.of(
               new BlockProcessingOutputs(
-                  worldState, receipts, maybeRequests, maybeBlockAccessList)),
+                  worldState,
+                  receipts,
+                  maybeRequests,
+                  maybeBlockAccessList,
+                  cumulativeBlockGasUsed)),
           parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
     } finally {
       stateRootCommitter.cancel();

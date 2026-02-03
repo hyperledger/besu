@@ -266,6 +266,15 @@ public class GenesisConfig {
   }
 
   /**
+   * Gets slot number.
+   *
+   * @return the slot number
+   */
+  public String getSlotNumber() {
+    return JsonUtil.getValueAsString(genesisRoot, "slotnumber", "0x0");
+  }
+
+  /**
    * Gets coinbase.
    *
    * @return the coinbase
