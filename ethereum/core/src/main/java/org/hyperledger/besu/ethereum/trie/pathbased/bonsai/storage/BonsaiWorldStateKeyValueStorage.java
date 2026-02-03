@@ -108,7 +108,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     this.cacheVersion = cacheManager.globalVersion.get();
   }
 
-  protected BonsaiWorldStateKeyValueStorage(
+  public BonsaiWorldStateKeyValueStorage(
       final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,

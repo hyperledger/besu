@@ -122,26 +122,32 @@ public class SnapServerTest {
     storage = new SegmentedInMemoryKeyValueStorage();
 
     // force a full flat db with code stored by code hash:
+    final BonsaiFlatDbStrategyProvider bonsaiFlatDbStrategyProvider =
+        new BonsaiFlatDbStrategyProvider(
+            noopMetrics,
+            dbMode == FlatDbMode.FULL
+                ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+                : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG) {
+          @Override
+          public FlatDbMode getFlatDbMode() {
+            return dbMode;
+          }
+
+          @Override
+          protected boolean deriveUseCodeStorageByHash(
+              final SegmentedKeyValueStorage composedWorldStateStorage) {
+            return true;
+          }
+        };
     inMemoryStorage =
         new BonsaiWorldStateKeyValueStorage(
-            new BonsaiFlatDbStrategyProvider(
-                noopMetrics,
-                dbMode == FlatDbMode.FULL
-                    ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
-                    : DataStorageConfiguration.DEFAULT_BONSAI_ARCHIVE_CONFIG) {
-              @Override
-              public FlatDbMode getFlatDbMode() {
-                return dbMode;
-              }
-
-              @Override
-              protected boolean deriveUseCodeStorageByHash(
-                  final SegmentedKeyValueStorage composedWorldStateStorage) {
-                return true;
-              }
-            },
+            bonsaiFlatDbStrategyProvider,
             storage,
-            new InMemoryKeyValueStorage());
+            new InMemoryKeyValueStorage(),
+            new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
+                100_000, // accountCacheSize
+                1_000_000, // storageCacheSize
+                noopMetrics));
 
     storageCoordinator = new WorldStateStorageCoordinator(inMemoryStorage);
     storageTrie =
