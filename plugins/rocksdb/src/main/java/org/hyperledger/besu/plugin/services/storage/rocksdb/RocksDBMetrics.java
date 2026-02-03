@@ -61,6 +61,11 @@ public class RocksDBMetrics {
     return readLatency;
   }
 
+  /**
+   * Gets multiread latency.
+   *
+   * @return the multiread latency
+   */
   public OperationTimer getMultiReadLatency() {
     return multiReadLatency;
   }
