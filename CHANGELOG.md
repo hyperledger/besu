@@ -41,6 +41,7 @@
     - Fast Sync
   
 ### Additions and Improvements
+- Performance: Optimise ADD Opcode: ADD 86% faster, using new UInt256 implementation [#9477](https://github.com/hyperledger/besu/pull/9477)
 - Performance: Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
 - Performance: Improved `getBlobsV2` by disabling HTTP response compression for engine API, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
 - Performance: Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
@@ -49,6 +50,7 @@
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
 - Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
 - Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
+- Treat EndOfRLPException as invalid packet in peer discovery, meaning you will no longer see these exceptions, unless you enable DEBUG logs [#9597](https://github.com/hyperledger/besu/pull/9597)
 
 ### Bug fixes
 - Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
