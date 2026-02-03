@@ -54,21 +54,22 @@ public class DownloadAndStoreBodiesAndReceiptsStep
         .getScheduler()
         .scheduleServiceTask(
             () -> {
-              getAndStoreSyncBodies(blockHeaders);
-              getAndStoreReceipts(List.copyOf(blockHeaders));
-              return CompletableFuture.completedFuture(blockHeaders);
+              final CompletableFuture<Void> bodiesFuture = getAndStoreSyncBodies(blockHeaders);
+              final CompletableFuture<Void> receiptsFuture = getAndStoreReceipts(blockHeaders);
+              return CompletableFuture.allOf(bodiesFuture, receiptsFuture)
+                  .thenApply(v -> blockHeaders);
             });
   }
 
-  private void getAndStoreSyncBodies(final List<BlockHeader> headers) {
-    CompleteSyncBlocksTask.forHeaders(protocolSchedule, ethContext, headers, metricsSystem)
+  private CompletableFuture<Void> getAndStoreSyncBodies(final List<BlockHeader> headers) {
+    return CompleteSyncBlocksTask.forHeaders(protocolSchedule, ethContext, headers, metricsSystem)
         .run()
         .thenAccept(
             bodies -> blockchain.unsafeImportSyncBodies(bodies, transactionIndexingEnabled));
   }
 
-  private void getAndStoreReceipts(final List<BlockHeader> headers) {
-    GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
+  private CompletableFuture<Void> getAndStoreReceipts(final List<BlockHeader> headers) {
+    return GetReceiptsForHeadersTask.forHeaders(ethContext, headers, metricsSystem)
         .run()
         .thenAccept(blockchain::unsafeImportReceipts);
   }
