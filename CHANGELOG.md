@@ -64,10 +64,12 @@
 - `--history-expiry-prune` is deprecated and will be removed in a future release
   
 ### Additions and Improvements
-- Performance: Optimise ADD Opcode: ADD 86% faster, using new UInt256 implementation [#9477](https://github.com/hyperledger/besu/pull/9477)
-- Performance: Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
-- Performance: Improved `getBlobsV2` by disabling HTTP response compression for engine API, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
-- Performance: Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
+- Performance
+  - Optimise ADD Opcode: ADD 86% faster, using new UInt256 implementation [#9477](https://github.com/hyperledger/besu/pull/9477)
+  - Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
+  - Improved `getBlobsV2` by disabling HTTP response compression for engine API, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
+  - Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
+  - Parallelize state root computation for Bonsai (#9576)[https://github.com/hyperledger/besu/pull/9576]
 - Update to Netty 4.2.9.Final [#9587](https://github.com/hyperledger/besu/pull/9587)
 - Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)

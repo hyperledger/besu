@@ -19,13 +19,17 @@ import static java.util.Collections.emptyList;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,16 +37,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DownloadSyncReceiptsStep
-    extends AbstractDownloadReceiptsStep<SyncBlock, SyncBlockWithReceipts> {
+    extends AbstractDownloadReceiptsStep<SyncBlock, SyncTransactionReceipt, SyncBlockWithReceipts> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DownloadSyncReceiptsStep.class);
+
+  private final ProtocolSchedule protocolSchedule;
+  private final PeerTaskExecutor peerTaskExecutor;
+  private final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder;
 
   public DownloadSyncReceiptsStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final MetricsSystem metricsSystem) {
-    super(protocolSchedule, ethContext, synchronizerConfiguration, metricsSystem);
+      final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder) {
+    super(ethContext.getScheduler());
+    this.protocolSchedule = protocolSchedule;
+    this.peerTaskExecutor = ethContext.getPeerTaskExecutor();
+    this.syncTransactionReceiptEncoder = syncTransactionReceiptEncoder;
   }
 
   @Override
@@ -53,11 +63,11 @@ public class DownloadSyncReceiptsStep
   @Override
   List<SyncBlockWithReceipts> combineBlocksAndReceipts(
       final List<SyncBlock> blocks,
-      final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader) {
+      final Map<BlockHeader, List<SyncTransactionReceipt>> receiptsByHeader) {
     return blocks.stream()
         .map(
             block -> {
-              final List<TransactionReceipt> receipts =
+              final List<SyncTransactionReceipt> receipts =
                   receiptsByHeader.getOrDefault(block.getHeader(), emptyList());
               if (block.getBody().getTransactionCount() != receipts.size()) {
                 final BytesValueRLPOutput headerRlpOutput = new BytesValueRLPOutput();
@@ -78,5 +88,18 @@ public class DownloadSyncReceiptsStep
               return new SyncBlockWithReceipts(block, receipts);
             })
         .toList();
+  }
+
+  @Override
+  Map<BlockHeader, List<SyncTransactionReceipt>> getReceipts(final List<BlockHeader> headers) {
+    GetSyncReceiptsFromPeerTask task =
+        new GetSyncReceiptsFromPeerTask(headers, protocolSchedule, syncTransactionReceiptEncoder);
+    PeerTaskExecutorResult<Map<BlockHeader, List<SyncTransactionReceipt>>> getReceiptsResult =
+        peerTaskExecutor.execute(task);
+    if (getReceiptsResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+        && getReceiptsResult.result().isPresent()) {
+      return getReceiptsResult.result().get();
+    }
+    return Collections.emptyMap();
   }
 }
