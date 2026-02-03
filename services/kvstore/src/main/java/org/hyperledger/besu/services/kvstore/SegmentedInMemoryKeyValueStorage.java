@@ -70,6 +70,11 @@ public class SegmentedInMemoryKeyValueStorage
     return newSegmentMap(Collections.emptyMap());
   }
 
+  /**
+   * Get in memory hash value store
+   *
+   * @return map
+   */
   public ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
       getHashValueStore() {
     return hashValueStore;
