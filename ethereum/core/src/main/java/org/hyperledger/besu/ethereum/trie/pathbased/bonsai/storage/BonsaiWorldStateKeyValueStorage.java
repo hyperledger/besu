@@ -86,7 +86,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         dataStorageConfiguration,
         new VersionedCacheManager(
             100_000, // accountCacheSize
-            1_000_000, // storageCacheSize
+            500_000, // storageCacheSize
             metricsSystem));
   }
 
@@ -234,16 +234,29 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
   public void upgradeToFullFlatDbMode() {
     flatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
+    cacheManager.clear(ACCOUNT_INFO_STATE);
+    cacheManager.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
   public void downgradeToPartialFlatDbMode() {
     flatDbStrategyProvider.downgradeToPartialFlatDbMode(composedWorldStateStorage);
+    cacheManager.clear(ACCOUNT_INFO_STATE);
+    cacheManager.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
   @Override
   public void clear() {
     super.clear();
+    cacheManager.clear(ACCOUNT_INFO_STATE);
+    cacheManager.clear(ACCOUNT_STORAGE_STORAGE);
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
+  }
+
+  @Override
+  public void clearFlatDatabase() {
+    super.clearFlatDatabase();
+    cacheManager.clear(ACCOUNT_INFO_STATE);
+    cacheManager.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
   @Override
@@ -464,14 +477,23 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       final Optional<Bytes> result = storageGetter.get();
 
       // Update cache if version matches current version (only for current version reads)
+      // Use compute to ensure atomicity - only update if current cached version is older
       if (version == globalVersion.get()) {
         cacheInsertCounter.labels(segmentName).inc();
-        if (result.isPresent()) {
-          cache.put(wrapper, new VersionedValue(result.get().toArrayUnsafe(), version, false));
-        } else {
-          // Cache negative results (key doesn't exist)
-          cache.put(wrapper, new VersionedValue(null, version, true));
-        }
+        final byte[] valueToCache = result.map(Bytes::toArrayUnsafe).orElse(null);
+        final boolean isRemoval = result.isEmpty();
+
+        cache
+            .asMap()
+            .compute(
+                wrapper,
+                (k, existingValue) -> {
+                  // Only update if no existing value or existing value is older
+                  if (existingValue == null || existingValue.version < version) {
+                    return new VersionedValue(valueToCache, version, isRemoval);
+                  }
+                  return existingValue;
+                });
       }
 
       return result;
@@ -524,7 +546,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       // Second pass: fetch missing keys and optionally update cache
       if (!keysToFetch.isEmpty()) {
         final List<Optional<byte[]>> fetchedValues = batchFetcher.apply(keysToFetch);
-        final boolean shouldUpdateCache = (version == globalVersion.get());
+        final boolean shouldUpdateCache = version == globalVersion.get();
 
         for (int i = 0; i < fetchedValues.size(); i++) {
           final Optional<byte[]> fetchedValue = fetchedValues.get(i);
@@ -537,12 +559,21 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
           if (shouldUpdateCache) {
             cacheInsertCounter.labels(segmentName).inc();
             final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
-            if (fetchedValue.isPresent()) {
-              cache.put(wrapper, new VersionedValue(fetchedValue.get(), version, false));
-            } else {
-              // Cache negative results
-              cache.put(wrapper, new VersionedValue(null, version, true));
-            }
+            final byte[] valueToCache = fetchedValue.orElse(null);
+            final boolean isRemoval = fetchedValue.isEmpty();
+
+            cache
+                .asMap()
+                .compute(
+                    wrapper,
+                    (k, existingValue) -> {
+                      // Only update if no existing value or existing value is older
+                      if (existingValue == null || existingValue.version < version) {
+                        return new VersionedValue(valueToCache, version, isRemoval);
+                      }
+                      // Keep existing newer value
+                      return existingValue;
+                    });
           }
         }
       }
@@ -555,8 +586,20 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         final SegmentIdentifier segment, final byte[] key, final byte[] value, final long version) {
       final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
       if (cache != null) {
-        cache.put(new ByteArrayWrapper(key), new VersionedValue(value, version, false));
-        cacheInsertCounter.labels(segment.getName()).inc();
+        final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
+        cache
+            .asMap()
+            .compute(
+                wrapper,
+                (k, existingValue) -> {
+                  // Only update if no existing value or existing value is older
+                  if (existingValue == null || existingValue.version < version) {
+                    cacheInsertCounter.labels(segment.getName()).inc();
+                    return new VersionedValue(value, version, false);
+                  }
+                  // Keep existing newer value
+                  return existingValue;
+                });
       }
     }
 
@@ -565,8 +608,20 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         final SegmentIdentifier segment, final byte[] key, final long version) {
       final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
       if (cache != null) {
-        cache.put(new ByteArrayWrapper(key), new VersionedValue(null, version, true));
-        cacheRemovalCounter.labels(segment.getName()).inc();
+        final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
+        cache
+            .asMap()
+            .compute(
+                wrapper,
+                (k, existingValue) -> {
+                  // Only update if no existing value or existing value is older
+                  if (existingValue == null || existingValue.version < version) {
+                    cacheRemovalCounter.labels(segment.getName()).inc();
+                    return new VersionedValue(null, version, true);
+                  }
+                  // Keep existing newer value
+                  return existingValue;
+                });
       }
     }
 
