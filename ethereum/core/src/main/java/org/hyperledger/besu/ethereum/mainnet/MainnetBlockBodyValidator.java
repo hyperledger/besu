@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -51,14 +52,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final List<TransactionReceipt> receipts,
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode) {
+      final BodyValidationMode bodyValidationMode,
+      final OptionalLong cumulativeBlockGasUsed) {
     if (bodyValidationMode == BodyValidationMode.NONE) {
       return true;
     }
 
     if (bodyValidationMode == BodyValidationMode.LIGHT
         || bodyValidationMode == BodyValidationMode.FULL) {
-      if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
+      if (!validateBodyLight(
+          context, block, receipts, ommerValidationMode, cumulativeBlockGasUsed)) {
         return false;
       }
     }
@@ -107,13 +110,23 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final OptionalLong cumulativeBlockGasUsed) {
 
     final BlockHeader header = block.getHeader();
 
-    final long gasUsed =
-        receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
-    if (!validateGasUsed(header, header.getGasUsed(), gasUsed)) {
+    // Use the protocol-specific gas validation strategy
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+    final BlockGasUsedValidator gasValidator = protocolSpec.getBlockGasUsedValidator();
+    if (!gasValidator.validate(header, receipts, cumulativeBlockGasUsed)) {
+      final long receiptGasUsed =
+          receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
+      LOG.warn(
+          "Invalid block {}: gas used mismatch (header={}, receipts={}, blockGas={})",
+          header.toLogString(),
+          header.getGasUsed(),
+          receiptGasUsed,
+          cumulativeBlockGasUsed.orElse(-1));
       return false;
     }
 
@@ -150,20 +163,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     if (!expected.equals(actual)) {
       LOG.warn(
           "Invalid block {}: logs bloom filter mismatch (expected={}, actual={})",
-          header.toLogString(),
-          expected,
-          actual);
-      return false;
-    }
-
-    return true;
-  }
-
-  private static boolean validateGasUsed(
-      final BlockHeader header, final long expected, final long actual) {
-    if (expected != actual) {
-      LOG.warn(
-          "Invalid block {}: gas used mismatch (expected={}, actual={})",
           header.toLogString(),
           expected,
           actual);

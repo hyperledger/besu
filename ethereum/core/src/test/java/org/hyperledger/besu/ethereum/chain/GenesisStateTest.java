@@ -333,6 +333,45 @@ final class GenesisStateTest {
                 "0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
   }
 
+  @ParameterizedTest
+  @ArgumentsSource(GenesisStateTestArguments.class)
+  void genesisFromAmsterdam(final DataStorageConfiguration dataStorageConfiguration) {
+    final GenesisState genesisState =
+        GenesisState.fromJsonSource(
+            dataStorageConfiguration,
+            GenesisStateTest.class.getResource("genesis_amsterdam.json"),
+            ProtocolScheduleFixture.TESTING_NETWORK);
+    final BlockHeader header = genesisState.getBlock().getHeader();
+    assertThat(header.getGasLimit()).isEqualTo(0x2fefd8);
+    assertThat(header.getGasUsed()).isZero();
+    assertThat(header.getNumber()).isZero();
+    assertThat(header.getExtraData()).isEqualTo(Bytes.EMPTY);
+    assertThat(header.getParentHash()).isEqualTo(Hash.ZERO);
+
+    // Amsterdam-specific: slot number should be present
+    assertThat(header.getOptionalSlotNumber()).isPresent();
+    assertThat(header.getOptionalSlotNumber().get()).isEqualTo(0x42L);
+    assertThat(header.getSlotNumber()).isEqualTo(0x42L);
+
+    // Amsterdam-specific: BAL hash should be present
+    assertThat(header.getBalHash()).isPresent();
+    assertThat(header.getBalHash().get()).isEqualTo(Hash.EMPTY_BAL_HASH);
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(GenesisStateTestArguments.class)
+  void genesisSlotNumberNotPresentPreAmsterdam(
+      final DataStorageConfiguration dataStorageConfiguration) {
+    // Prague genesis should NOT have slot number
+    final GenesisState genesisState =
+        GenesisState.fromJsonSource(
+            dataStorageConfiguration,
+            GenesisStateTest.class.getResource("genesis_prague.json"),
+            ProtocolScheduleFixture.TESTING_NETWORK);
+    final BlockHeader header = genesisState.getBlock().getHeader();
+    assertThat(header.getOptionalSlotNumber()).isEmpty();
+  }
+
   @Test
   void dryRunDetector() {
     assertThat(true)

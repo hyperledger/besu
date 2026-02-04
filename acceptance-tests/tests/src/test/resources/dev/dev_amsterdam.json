@@ -77,6 +77,41 @@
       "codeDecompiled": "PUSH0 CALLDATALOAD SELFDESTRUCT",
       "storage": {}
     },
+    "0x0000000000000000000000000000000000007709": {
+      "comment": "Contract that self-destructs to ITSELF (for testing Selfdestruct LOG2)",
+      "balance": "1000000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007700": {
+      "comment": "Destroyer contract - calls 7702, 7703, 7701 to test lexicographical sorting",
+      "balance": "0",
+      "code": "0x5F5F5F5F5F7300000000000000000000000000000000000077025AF15F5F5F5F5F7300000000000000000000000000000000000077035AF15F5F5F5F5F7300000000000000000000000000000000000077015AF100",
+      "codeDecompiled": "PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 PUSH20<0x7702> GAS CALL PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 PUSH20<0x7703> GAS CALL PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 PUSH20<0x7701> GAS CALL STOP",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007701": {
+      "comment": "Selfdestruct-to-self contract 1 (lowest address)",
+      "balance": "100000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007702": {
+      "comment": "Selfdestruct-to-self contract 2 (middle address)",
+      "balance": "200000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
+    "0x0000000000000000000000000000000000007703": {
+      "comment": "Selfdestruct-to-self contract 3 (highest address)",
+      "balance": "300000000000000000",
+      "code": "0x30FF",
+      "codeDecompiled": "ADDRESS SELFDESTRUCT",
+      "storage": {}
+    },
     "0xa4664C40AACeBD82A2Db79f0ea36C06Bc6A19Adb": {
       "balance": "1000000000000000000000000000"
     },
@@ -143,6 +178,13 @@
       "code": "0x3373fffffffffffffffffffffffffffffffffffffffe14604d57602036146024575f5ffd5b5f35801560495762001fff810690815414603c575f5ffd5b62001fff01545f5260205ff35b5f5ffd5b62001fff42064281555f359062001fff015500",
       "storage": {}
     },
+    "0x000000000000000000000000000000000000784b": {
+      "comment": "SLOTNUM test contract - stores current slot number at storage key 0 (EIP-7843). Bytecode: SLOTNUM PUSH0 SSTORE STOP",
+      "balance": "0x00",
+      "code": "0x4b5f5500",
+      "codeDecompiled": "SLOTNUM PUSH0 SSTORE STOP",
+      "storage": {}
+    },
     "0x8024000000000000000000000000000000000001": {
       "comment": "EIP-8024 DUPN test contract: PUSH1 1, PUSH1 0, 16xDUP1, DUPN 0, PUSH0, SSTORE",
       "balance": "0x0",
@@ -179,6 +221,13 @@
       "storage": {
         "0x0000000000000000000000000000000000000000000000000000000000000000": "0x0000000000000000000000000000000000000000000000000000000000000001"
       }
+    },
+    "0x0000000000000000000000000000000000007710": {
+      "comment": "Factory that CREATEs a child contract (30FF = ADDRESS SELFDESTRUCT) with its balance, then CALLs it. Used to test EIP-7708 Selfdestruct logs for same-tx-created contracts.",
+      "balance": "1000000000000000000",
+      "code": "0x6130FF5F526002601E47F05F5F5F5F5F945AF100",
+      "codeDecompiled": "PUSH2 0x30FF PUSH0 MSTORE PUSH1 2 PUSH1 30 SELFBALANCE CREATE PUSH0 PUSH0 PUSH0 PUSH0 PUSH0 SWAP5 GAS CALL STOP",
+      "storage": {}
     }
   },
   "number":"0x0",

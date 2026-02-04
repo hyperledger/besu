@@ -1,0 +1,30 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x19",
+      {
+        "tracer": "4byteTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0xbff48524cc47abf4a733299f32733cc1c3105741f8466fce973d3f9b6cd052ed",
+        "result": {}
+      },
+      {
+        "txHash": "0x56cb286da4ca53b1cef0361d8224ccfd1f8a9d8b85c97f693b83f70cae4a6e0e",
+        "result": {
+          "0xa9059cbb-64": 1
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}

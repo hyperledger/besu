@@ -74,14 +74,13 @@ public class EthTransactions {
   }
 
   /**
-   * Fetches a transaction receipt with gasSpent field (EIP-7778, Amsterdam+).
+   * Fetches a block with slotNumber field (EIP-7843, Amsterdam+).
    *
-   * @param transactionHash the hash of the transaction
-   * @return the transaction to fetch the receipt with gasSpent
+   * @param blockNumber the block number as hex string (e.g., "0x1") or "latest"
+   * @return the transaction to fetch the block with slotNumber
    */
-  public EthGetTransactionReceiptWithGasSpent getTransactionReceiptWithGasSpent(
-      final String transactionHash) {
-    return new EthGetTransactionReceiptWithGasSpent(transactionHash);
+  public EthGetBlockWithSlotNumber getBlockWithSlotNumber(final String blockNumber) {
+    return new EthGetBlockWithSlotNumber(blockNumber);
   }
 
   public EthMiningTransaction mining() {
@@ -98,5 +97,13 @@ public class EthTransactions {
 
   public EthFilterChangesTransaction filterChanges(final BigInteger filterId) {
     return new EthFilterChangesTransaction(filterId);
+  }
+
+  public EthCallTransaction call(final String contractAddress, final String functionCall) {
+    return new EthCallTransaction(contractAddress, functionCall);
+  }
+
+  public EthCallTransaction call(final String contractAddress) {
+    return new EthCallTransaction(contractAddress, "0x");
   }
 }

@@ -379,4 +379,38 @@ class ProtocolScheduleBuilderTest {
   private BlockHeader blockHeader(final long number, final long timestamp) {
     return new BlockHeaderTestFixture().number(number).timestamp(timestamp).buildHeader();
   }
+
+  @Test
+  void amsterdamHasBlockAccessListFactoryWithForkActivated() {
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getConstantinopleBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPetersburgBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getIstanbulBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBerlinBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getOsakaTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo1Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo2Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo4Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo5Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    // Get the Amsterdam protocol spec
+    final ProtocolSpec amsterdamSpec = protocolSchedule.getByBlockHeader(blockHeader(1, 1));
+    assertThat(amsterdamSpec.getHardforkId()).isEqualTo(AMSTERDAM);
+
+    // Verify that BlockAccessListFactory is present and fork-activated
+    assertThat(amsterdamSpec.getBlockAccessListFactory()).isPresent();
+    assertThat(amsterdamSpec.getBlockAccessListFactory().get().isForkActivated()).isTrue();
+  }
 }

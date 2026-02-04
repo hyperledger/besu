@@ -50,7 +50,9 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.text.MessageFormat;
@@ -87,6 +89,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
   protected final BalConfiguration balConfiguration;
+  private final BlockProcessingMetrics blockProcessingMetrics;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private BlockImportTracerProvider blockImportTracerProvider = null;
@@ -99,6 +102,26 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration) {
+    this(
+        transactionProcessor,
+        transactionReceiptFactory,
+        blockReward,
+        miningBeneficiaryCalculator,
+        skipZeroBlockRewards,
+        protocolSchedule,
+        balConfiguration,
+        new NoOpMetricsSystem());
+  }
+
+  protected AbstractBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionReceiptFactory transactionReceiptFactory,
+      final Wei blockReward,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final boolean skipZeroBlockRewards,
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
@@ -106,6 +129,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
     this.balConfiguration = balConfiguration;
+    this.blockProcessingMetrics = new BlockProcessingMetrics(metricsSystem);
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -186,7 +210,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<BlockAccessList> blockAccessList,
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
-    long currentGasUsed = 0;
+    // EIP-7778: Track two separate cumulative gas values
+    // cumulativeBlockGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
+    //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
+    //   - Amsterdam+: pre-refund gas (prevents block gas limit circumvention via refunds)
+    // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
+    long cumulativeBlockGasUsed = 0;
+    long cumulativeReceiptGasUsed = 0;
     long currentBlobGasUsed = 0;
 
     var blockHeader = block.getHeader();
@@ -211,9 +241,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
 
     final StateRootCommitter stateRootCommitter =
-        protocolSpec
-            .getStateRootCommitterFactory()
-            .forBlock(protocolContext, blockHeader, blockAccessList);
+        blockProcessingMetrics.wrapStateRootCommitter(
+            protocolSpec
+                .getStateRootCommitterFactory()
+                .forBlock(protocolContext, blockHeader, blockAccessList));
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
@@ -268,7 +299,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
           transactionUpdater = blockUpdater;
         }
-        if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
+        if (!hasAvailableBlockBudget(blockHeader, transaction, cumulativeBlockGasUsed)) {
           return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
 
@@ -309,10 +340,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         blockUpdater.commit();
         blockUpdater.markTransactionBoundary();
 
-        currentGasUsed +=
+        // EIP-7778: Update both cumulative gas values
+        // Block gas uses protocol-specific strategy (pre-refund for Amsterdam+)
+        cumulativeBlockGasUsed +=
             protocolSpec
                 .getBlockGasAccountingStrategy()
                 .calculateBlockGas(transaction, transactionProcessingResult);
+        // Receipt gas always uses standard post-refund calculation
+        cumulativeReceiptGasUsed +=
+            BlockGasAccountingStrategy.calculateReceiptGas(
+                transaction, transactionProcessingResult);
         final var optionalVersionedHashes = transaction.getVersionedHashes();
         if (optionalVersionedHashes.isPresent()) {
           final var versionedHashes = optionalVersionedHashes.get();
@@ -322,7 +359,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
         final TransactionReceipt transactionReceipt =
             transactionReceiptFactory.create(
-                transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
+                transaction.getType(),
+                transactionProcessingResult,
+                worldState,
+                cumulativeReceiptGasUsed);
         receipts.add(transactionReceipt);
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
@@ -462,6 +502,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             }
           }
           maybeBlockAccessList = Optional.of(bal);
+          blockProcessingMetrics.recordBlockAccessListMetrics(bal);
         } else {
           maybeBlockAccessList = Optional.empty();
         }
@@ -501,7 +542,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(
           Optional.of(
               new BlockProcessingOutputs(
-                  worldState, receipts, maybeRequests, maybeBlockAccessList)),
+                  worldState,
+                  receipts,
+                  maybeRequests,
+                  maybeBlockAccessList,
+                  cumulativeBlockGasUsed)),
           parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
     } finally {
       stateRootCommitter.cancel();

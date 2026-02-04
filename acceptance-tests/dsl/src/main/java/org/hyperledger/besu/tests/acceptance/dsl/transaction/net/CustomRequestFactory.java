@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.transaction.net;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -47,25 +48,42 @@ public class CustomRequestFactory {
       extends Response<TransactionReceiptWithRevertReason> {}
 
   /**
-   * Transaction receipt that includes the gasSpent field introduced by EIP-7778 (Amsterdam+). This
-   * extends the standard web3j TransactionReceipt to include the new field.
+   * Block result that includes the slotNumber field introduced by EIP-7843 (Amsterdam+). This
+   * provides access to the slot number field that is not available in standard web3j EthBlock.
    */
-  public static class TransactionReceiptWithGasSpent extends TransactionReceipt {
-    private String gasSpent;
+  public static class BlockWithSlotNumber {
+    private String number;
+    private String hash;
+    private String slotNumber;
 
-    public TransactionReceiptWithGasSpent() {}
+    public BlockWithSlotNumber() {}
 
-    public void setGasSpent(final String gasSpent) {
-      this.gasSpent = gasSpent;
+    public String getNumber() {
+      return number;
     }
 
-    public String getGasSpent() {
-      return gasSpent;
+    public void setNumber(final String number) {
+      this.number = number;
+    }
+
+    public String getHash() {
+      return hash;
+    }
+
+    public void setHash(final String hash) {
+      this.hash = hash;
+    }
+
+    public String getSlotNumber() {
+      return slotNumber;
+    }
+
+    public void setSlotNumber(final String slotNumber) {
+      this.slotNumber = slotNumber;
     }
   }
 
-  public static class EthGetTransactionReceiptWithGasSpentResponse
-      extends Response<TransactionReceiptWithGasSpent> {}
+  public static class EthGetBlockWithSlotNumberResponse extends Response<BlockWithSlotNumber> {}
 
   public CustomRequestFactory(final Web3jService web3jService) {
     this.web3jService = web3jService;
@@ -86,17 +104,18 @@ public class CustomRequestFactory {
   }
 
   /**
-   * Fetches a transaction receipt with gasSpent field (EIP-7778, Amsterdam+).
+   * Fetches a block by number with slotNumber field (EIP-7843, Amsterdam+).
    *
-   * @param transactionHash the hash of the transaction
-   * @return the request that returns a receipt with gasSpent
+   * @param blockNumber the block number (hex string like "0x1" or "latest")
+   * @param fullTransactionObjects whether to return full transaction objects
+   * @return the request that returns a block with slotNumber
    */
-  public Request<?, EthGetTransactionReceiptWithGasSpentResponse>
-      ethGetTransactionReceiptWithGasSpent(final String transactionHash) {
+  public Request<?, EthGetBlockWithSlotNumberResponse> ethGetBlockByNumberWithSlotNumber(
+      final String blockNumber, final boolean fullTransactionObjects) {
     return new Request<>(
-        "eth_getTransactionReceipt",
-        Collections.singletonList(transactionHash),
+        "eth_getBlockByNumber",
+        Arrays.asList(blockNumber, fullTransactionObjects),
         web3jService,
-        EthGetTransactionReceiptWithGasSpentResponse.class);
+        EthGetBlockWithSlotNumberResponse.class);
   }
 }

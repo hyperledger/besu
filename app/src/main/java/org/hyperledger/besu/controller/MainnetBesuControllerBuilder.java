@@ -64,12 +64,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
             ethProtocolManager.ethContext().getScheduler());
 
     final PoWMiningCoordinator miningCoordinator =
-        new PoWMiningCoordinator(
-            protocolContext.getBlockchain(),
-            executor,
-            syncState,
-            miningConfiguration.getUnstable().getRemoteSealersLimit(),
-            miningConfiguration.getUnstable().getRemoteSealersTimeToLive());
+        new PoWMiningCoordinator(protocolContext.getBlockchain(), executor, syncState);
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
     if (miningConfiguration.isMiningEnabled()) {
       miningCoordinator.enable();
