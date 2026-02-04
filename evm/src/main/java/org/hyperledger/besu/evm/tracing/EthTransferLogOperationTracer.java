@@ -103,6 +103,7 @@ public class EthTransferLogOperationTracer implements OperationTracer {
    *
    * @return the logs emitted by this tracer
    */
+  @Override
   public List<Log> getLogs() {
     return traceTransfers;
   }
