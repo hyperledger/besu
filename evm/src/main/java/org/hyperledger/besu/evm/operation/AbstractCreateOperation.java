@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -187,9 +186,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     }
 
     builder.build();
-
-    // Track CREATE for cross-client execution metrics (includes CREATE2)
-    EvmOperationCounters.incrementCreate();
 
     parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
