@@ -15,25 +15,22 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.stream.Collectors.toList;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
-import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -45,29 +42,26 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class ImportSyncBlocksStepTest {
 
-  @Mock private ProtocolSchedule protocolSchedule;
-  @Mock private ProtocolSpec protocolSpec;
   @Mock private ProtocolContext protocolContext;
-  @Mock private BlockImporter blockImporter;
+  @Mock private MutableBlockchain blockchain;
   @Mock private BlockHeader pivotHeader;
-  @Mock private SyncState syncState;
   private final BlockDataGenerator gen = new BlockDataGenerator();
+  private final boolean transactionIndexingEnabled = false;
+  private final SyncTransactionReceiptDecoder syncTransactionReceiptDecoder =
+      new SyncTransactionReceiptDecoder();
 
   private ImportSyncBlocksStep importSyncBlocksStep;
 
   @BeforeEach
   public void setUp() {
-    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-
     importSyncBlocksStep =
-        new ImportSyncBlocksStep(
-            protocolSchedule, protocolContext, null, syncState, 0, pivotHeader, false);
+        new ImportSyncBlocksStep(protocolContext, null, pivotHeader, transactionIndexingEnabled);
   }
 
   @Test
@@ -80,22 +74,28 @@ public class ImportSyncBlocksStepTest {
             .map(
                 block ->
                     new SyncBlockWithReceipts(
-                        block, gen.receipts(realBlocks.get(i.getAndIncrement()))))
+                        block,
+                        gen.receipts(realBlocks.get(i.getAndIncrement())).stream()
+                            .map(
+                                (tr) ->
+                                    syncTransactionReceiptDecoder.decode(
+                                        RLP.encode(
+                                            (out) ->
+                                                TransactionReceiptEncoder.writeTo(
+                                                    tr,
+                                                    out,
+                                                    TransactionReceiptEncodingConfiguration
+                                                        .DEFAULT))))
+                            .toList()))
             .collect(toList());
 
-    for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      when(blockImporter.importSyncBlockForSyncing(
-              protocolContext,
-              blockWithReceipts.getBlock(),
-              blockWithReceipts.getReceipts(),
-              false))
-          .thenReturn(new BlockImportResult(true));
-    }
+    Mockito.when(protocolContext.getBlockchain()).thenReturn(blockchain);
+
     importSyncBlocksStep.accept(blocksWithReceipts);
 
-    for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      verify(protocolSchedule).getByBlockHeader(blockWithReceipts.getHeader());
-    }
+    Mockito.verify(protocolContext).getBlockchain();
+    Mockito.verify(blockchain)
+        .unsafeImportSyncBodyAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
   }
 
   private List<SyncBlock> blockToSyncBlock(final List<Block> blocks) {

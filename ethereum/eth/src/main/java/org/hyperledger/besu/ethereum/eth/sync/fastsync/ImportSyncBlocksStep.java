@@ -18,7 +18,6 @@ import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -40,7 +39,6 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private static final Logger LOG = LoggerFactory.getLogger(ImportSyncBlocksStep.class);
   private static final int PRINT_DELAY_SECONDS = 30;
 
-  private final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
@@ -52,14 +50,12 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final long pivotHeaderNumber;
 
   public ImportSyncBlocksStep(
-      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
       final long startBlock,
       final BlockHeader pivotHeader,
       final boolean transactionIndexingEnabled) {
-    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
@@ -71,16 +67,9 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
     final long startTime = System.nanoTime();
-    for (final SyncBlockWithReceipts blockWithReceipts : blocksWithReceipts) {
-      if (!importBlock(blockWithReceipts)) {
-        LOG.debug("Failed to import block {}", blockWithReceipts.getHeader());
-        throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
-      }
-      LOG.atTrace()
-          .setMessage("Imported block {}")
-          .addArgument(blockWithReceipts.getBlock()::toLogString)
-          .log();
-    }
+    protocolContext
+        .getBlockchain()
+        .unsafeImportSyncBodyAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
     if (logStartBlock.isEmpty()) {
       logStartBlock = OptionalLong.of(blocksWithReceipts.getFirst().getNumber());
     }
@@ -121,17 +110,5 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
       return 0;
     }
     return (100 * lastBlock / totalBlocks);
-  }
-
-  protected boolean importBlock(final SyncBlockWithReceipts blockWithReceipts) {
-    final BlockImporter importer =
-        protocolSchedule.getByBlockHeader(blockWithReceipts.getHeader()).getBlockImporter();
-    final BlockImportResult blockImportResult =
-        importer.importSyncBlockForSyncing(
-            protocolContext,
-            blockWithReceipts.getBlock(),
-            blockWithReceipts.getReceipts(),
-            transactionIndexingEnabled);
-    return blockImportResult.isImported();
   }
 }

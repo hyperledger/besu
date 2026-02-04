@@ -302,6 +302,16 @@ class GenesisConfigTest {
   }
 
   @Test
+  void shouldGetSlotNumber() {
+    assertThat(configWithProperty("slotnumber", "0x10").getSlotNumber()).isEqualTo("0x10");
+  }
+
+  @Test
+  void shouldDefaultSlotNumberToZero() {
+    assertThat(EMPTY_CONFIG.getSlotNumber()).isEqualTo("0x0");
+  }
+
+  @Test
   void shouldGetAllocations() {
     final GenesisConfig config =
         fromConfig(

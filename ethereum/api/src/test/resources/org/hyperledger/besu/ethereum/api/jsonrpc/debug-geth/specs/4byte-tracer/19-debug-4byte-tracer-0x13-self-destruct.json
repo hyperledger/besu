@@ -1,0 +1,44 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x13",
+      {
+        "tracer": "4byteTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x19c45aa6439f878b264ab055e055eb2a776ae954a05c87aba9960eaf99a84908",
+        "result": {}
+      },
+      {
+        "txHash": "0x98495096b07bb76ad0449e8a9b684f4791ab2b07ee6d57165a5dc410a410abca",
+        "result": {}
+      },
+      {
+        "txHash": "0x352bd56f213c80ebe0b9b17a228534c23794d57b3a50a302a361bdf439a9df55",
+        "result": {}
+      },
+      {
+        "txHash": "0x13d41c773c2edc78e6e8400767f70a18d0779329b0adbef5b15bc931eb30598a",
+        "result": {}
+      },
+      {
+        "txHash": "0x88bf37661d67e7d2e25a436ce6461044d13afe4e19a45c8099ff7cd2dce4c1bd",
+        "result": {}
+      },
+      {
+        "txHash": "0x48a26d1ec46089754838aa7380823a507b76752e955a4b5ec2d54328d5d72879",
+        "result": {}
+      }
+    ]
+  },
+  "statusCode": 200
+}
