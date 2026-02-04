@@ -208,6 +208,9 @@ configure(allprojects - project(':platform')) {
     // for validation annotations like @NotNull
     implementation 'jakarta.validation:jakarta.validation-api'
 
+    // Gradle 9 requires junit-platform-launcher on test runtime classpath
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
@@ -873,7 +876,7 @@ tasks.register("dockerDistUntar") {
   }
 }
 
-task distDocker {
+task distDockerCopy {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
   def dockerBuildDir = "build/docker-besu/"
@@ -884,26 +887,31 @@ task distDocker {
       from file("${projectDir}/docker/pyroscope.properties")
       into(dockerBuildDir)
     }
-    exec {
-      def image = "${dockerImageName}:${dockerBuildVersion}"
-
-      println "Docker Build Version: $dockerBuildVersion"
-      println "Docker Organization Name: $dockerOrgName"
-      println "Docker Artifact Name: $dockerArtifactName"
-      println "Docker Image Name: $dockerImageName"
-      println "Building docker image name ${image}"
-
-      def dockerPlatform = ""
-      if (project.hasProperty('docker-platform')){
-        dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
-        println "Building for platform ${project.getProperty('docker-platform')}"
-      }
-      def gitDetails = getGitCommitDetails(7)
-      executable shell
-      workingDir dockerBuildDir
-      args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
-    }
   }
+}
+
+task distDocker(type: Exec) {
+  dependsOn distDockerCopy
+  def dockerBuildDir = "build/docker-besu/"
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doFirst {
+    println "Docker Build Version: $dockerBuildVersion"
+    println "Docker Organization Name: $dockerOrgName"
+    println "Docker Artifact Name: $dockerArtifactName"
+    println "Docker Image Name: $dockerImageName"
+    println "Building docker image name ${image}"
+  }
+
+  executable shell
+  workingDir dockerBuildDir
+
+  def dockerPlatform = ""
+  if (project.hasProperty('docker-platform')){
+    dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+  }
+  def gitDetails = getGitCommitDetails(7)
+  args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
 }
 
 tasks.register("downloadGossBinaries") {
@@ -970,7 +978,7 @@ tasks.register("testDocker", Exec) {
   args "-c", "./test.sh ${image}"
 }
 
-task dockerUpload {
+task dockerUpload(type: Exec) {
   dependsOn distDocker
   def architecture = System.getenv('architecture')
   def image = "${dockerImageName}:${dockerBuildVersion}"
@@ -984,15 +992,15 @@ task dockerUpload {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
-  doLast {
-    exec {
-      def archVariantImage = "${image}-${architecture}"
-      def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
-      println "Executing '${cmd}'"
-      executable shell
-      args "-c", cmd
-    }
+  def archVariantImage = "${image}-${architecture}"
+  def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
+
+  doFirst {
+    println "Executing '${cmd}'"
   }
+
+  executable shell
+  args "-c", cmd
 }
 
 task dockerUploadRelease {
