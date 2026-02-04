@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_D
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -35,6 +36,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -185,7 +187,10 @@ public class SnapSyncChainDownloadPipelineFactory {
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
 
     final DownloadSyncReceiptsStep downloadReceiptsStep =
-        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+        new DownloadSyncReceiptsStep(
+            protocolSchedule,
+            ethContext,
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
 
     final ImportSnapSyncBlocksStep importBlocksStep =
         new ImportSnapSyncBlocksStep(
