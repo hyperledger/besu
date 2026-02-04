@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.apache.tuweni.bytes.Bytes32.leftPad;
-
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -42,24 +41,11 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
-
-  private static final Bytes[] SIGN_EXTENSION_MASKS = new Bytes[256];
-
   /** All ones (0xFF repeated 32 times). */
   public static final Bytes ALL_ONES = Bytes.repeat((byte) 0xFF, 32);
 
   /** Zero value (32 zero bytes). */
   public static final Bytes ZERO_32 = Bytes.wrap(new byte[32]);
-
-  static {
-    // shift = 0 → no sign extension (never used, but keep ZERO)
-    SIGN_EXTENSION_MASKS[0] = ZERO_32;
-
-    for (int s = 1; s < 256; s++) {
-      // mask with top s bits set
-      SIGN_EXTENSION_MASKS[s] = ALL_ONES.shiftLeft(256 - s);
-    }
-  }
 
   /**
    * Performs sar operation.
@@ -69,12 +55,12 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = leftPad(frame.popStackItem());
+    final Bytes value = Bytes32.leftPad(frame.popStackItem());
 
     final boolean negative = (value.get(0) & 0x80) != 0;
 
     // detect shift >= 256 cheaply (check high bytes)
-    if (isShiftOverflowEarlyExit(shiftAmount)) {
+    if (isShiftOverflow(shiftAmount)) {
       frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
       return sarSuccess;
     }
@@ -84,6 +70,23 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
     return sarSuccess;
   }
 
+
+  /**
+   * Performs a 256-bit arithmetic right shift (EVM SAR).
+   *
+   * <p>The input value is treated as a signed 256-bit integer in two’s complement
+   * representation. The shift amount is in the range {@code [0..255]} and is assumed
+   * to have been validated by the caller.</p>
+   *
+   * <p>For shift values greater than or equal to 256, the result is fully sign-extended
+   * and handled by the caller.</p>
+   *
+   * @param value32 a 32-byte value representing a signed 256-bit integer
+   * @param shift the right shift amount in bits (0–255)
+   * @param negative whether the input value is negative (sign bit set)
+   * @return the shifted 256-bit value
+   */
+
   private static Bytes sar256(final Bytes value32, final int shift, final boolean negative) {
     if (shift == 0) return value32;
 
@@ -92,19 +95,10 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
     final int fill = negative ? 0xFF : 0x00;
 
     final byte[] out = new byte[32];
-
-    // If shiftBytes >= 32, result is all fill (but you should have handled shift>=256 earlier)
-    if (shiftBytes >= 32) {
-      if (negative) java.util.Arrays.fill(out, (byte) 0xFF);
-      return Bytes.wrap(out);
-    }
-
     final byte[] in = value32.toArrayUnsafe();
 
     for (int i = 31; i >= 0; i--) {
-      final int src = i - shiftBytes;
-
-      final int hi = (src >= 0) ? (in[src] & 0xFF) : fill;
+      final int src = i - shiftBytes; final int hi = (src >= 0) ? (in[src] & 0xFF) : fill;
       if (shiftBits == 0) {
         out[i] = (byte) hi;
       } else {
@@ -116,7 +110,13 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
     return Bytes.wrap(out);
   }
 
-  private static boolean isShiftOverflowEarlyExit(final Bytes shiftAmount) {
+  /**
+   * Checks whether the EVM SAR shift amount overflows (shift ≥ 256).
+   *
+   * @param shiftAmount the shift amount as a stack value
+   * @return {@code true} if the shift amount is ≥ 256, {@code false} otherwise
+   */
+  private static boolean isShiftOverflow(final Bytes shiftAmount) {
     final byte[] a = shiftAmount.toArrayUnsafe();
     final int n = a.length;
     for (int i = 0; i < n - 1; i++) {
