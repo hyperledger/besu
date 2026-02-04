@@ -67,6 +67,7 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -344,19 +345,19 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
 
-      // Compose operation tracers based on configuration
-      OperationTracer operationTracer;
+      // Compose operation tracers using TracerAggregator
+      final TracerAggregator finalOperationTracer;
       if (isTraceTransfers && blockExecutionMetricsTracer != null) {
         // Compose both tracers
-        operationTracer =
-            new CompositeOperationTracer(
-                new EthTransferLogOperationTracer(), blockExecutionMetricsTracer);
+        finalOperationTracer =
+            TracerAggregator.combining(
+                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer(), blockExecutionMetricsTracer);
       } else if (isTraceTransfers) {
-        operationTracer = new EthTransferLogOperationTracer();
+        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, new EthTransferLogOperationTracer());
       } else if (blockExecutionMetricsTracer != null) {
-        operationTracer = blockExecutionMetricsTracer;
+        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, blockExecutionMetricsTracer);
       } else {
-        operationTracer = OperationTracer.NO_TRACING;
+        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING);
       }
 
       long gasLimit =
@@ -376,7 +377,7 @@ public class BlockSimulator {
               callParameter,
               Optional.empty(), // We have already applied state overrides on block level
               transactionValidationParams,
-              operationTracer,
+              finalOperationTracer,
               blockHeader,
               transactionUpdater,
               miningBeneficiaryCalculator.calculateBeneficiary(blockHeader),
@@ -408,7 +409,7 @@ public class BlockSimulator {
       transactionUpdater.commit();
       blockUpdater.commit();
 
-      blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
+      blockStateCallSimulationResult.add(transactionSimulationResult, ws, finalOperationTracer);
     }
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
