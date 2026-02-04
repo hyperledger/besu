@@ -106,19 +106,26 @@ public class SelfDestructOperation extends AbstractOperation {
     // We passed preliminary checks, get mutable accounts.
     final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
 
+    // Determine if the account will actually be destroyed (pre-Cancun or same-tx-create)
+    // or if only a SENDALL will be executed
+    final boolean willBeDestroyed =
+        !eip6780Semantics || frame.wasCreatedInTransaction(originatorAccount.getAddress());
+
     // Do the "sweep," all modes send all originator balance to the beneficiary account.
     originatorAccount.decrementBalance(originatorBalance);
     beneficiaryAccount.incrementBalance(originatorBalance);
 
-    // Emit selfdestruct log for nonzero value sweeps (no-op before Amsterdam, EIP-7708 after)
-    // This emits LOG2 (Selfdestruct) if originator == beneficiary, LOG3 (Transfer) otherwise
-    transferLogEmitter.emitSelfDestructLog(
-        frame, originatorAddress, beneficiaryAddress, originatorBalance);
+    // EIP-7708: if the contract will be actually be destroyed and it is not a self transfer emit
+    // Selfdestruct log
+    if (!originatorAddress.equals(beneficiaryAddress) || willBeDestroyed) {
+      transferLogEmitter.emitSelfDestructLog(
+          frame, originatorAddress, beneficiaryAddress, originatorBalance);
+    }
 
     // If we are actually destroying the originator (pre-Cancun or same-tx-create) we need to
     // explicitly zero out the account balance (destroying ether/value if the originator is the
     // beneficiary) as well as tag it for later self-destruct cleanup.
-    if (!eip6780Semantics || frame.wasCreatedInTransaction(originatorAccount.getAddress())) {
+    if (willBeDestroyed) {
       frame.addSelfDestruct(originatorAccount.getAddress());
       originatorAccount.setBalance(Wei.ZERO);
     }
