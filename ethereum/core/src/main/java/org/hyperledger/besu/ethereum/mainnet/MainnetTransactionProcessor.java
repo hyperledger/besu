@@ -42,12 +42,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
+import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
+import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracerHelper;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -316,6 +320,30 @@ public class MainnetTransactionProcessor {
 
       operationTracer.traceStartTransaction(worldUpdater, transaction);
 
+      // Prepare context variables with ExecutionMetricsTracer if available
+      final Map<String, Object> contextVariables = new HashMap<>();
+      if (operationTracer instanceof ExecutionMetricsTracer) {
+        contextVariables.put(ExecutionMetricsTracerHelper.getContextKey(), operationTracer);
+      }
+      // Handle composite tracers by extracting ExecutionMetricsTracer from them
+      // This works with BlockSimulator.CompositeOperationTracer and similar patterns
+      else if (operationTracer.getClass().getName().contains("CompositeOperationTracer")) {
+        try {
+          // Use reflection to access tracers field for composite tracers
+          final var tracersField = operationTracer.getClass().getDeclaredField("tracers");
+          tracersField.setAccessible(true);
+          final OperationTracer[] tracers = (OperationTracer[]) tracersField.get(operationTracer);
+          for (OperationTracer tracer : tracers) {
+            if (tracer instanceof ExecutionMetricsTracer) {
+              contextVariables.put(ExecutionMetricsTracerHelper.getContextKey(), tracer);
+              break;
+            }
+          }
+        } catch (Exception e) {
+          // Ignore reflection errors - ExecutionMetricsTracer will just not be available
+        }
+      }
+
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)
@@ -331,7 +359,8 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .eip2930AccessListWarmStorage(eip2930StorageList);
+              .eip2930AccessListWarmStorage(eip2930StorageList)
+              .contextVariables(contextVariables);
 
       accessLocationTracker.ifPresent(commonMessageFrameBuilder::eip7928AccessList);
 
@@ -607,7 +636,8 @@ public class MainnetTransactionProcessor {
     }
 
     // Any other account can only use the cached jump dest analysis if available
-    return messageCallProcessor.getOrCreateCachedJumpDest(contract.getCodeHash(), contract.getCode());
+    return messageCallProcessor.getOrCreateCachedJumpDest(
+        contract.getCodeHash(), contract.getCode());
   }
 
   private Code delegationTargetCode(

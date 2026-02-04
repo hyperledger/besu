@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracerHolder;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -99,7 +98,7 @@ public abstract class AbstractOperation implements Operation {
    * @return the {@link Account}, or {@code null} if it does not exist
    */
   protected Account getAccount(final Address address, final MessageFrame frame) {
-    ExecutionMetricsTracerHolder.trackAccountRead();
+    // Track account read via ExecutionMetricsTracer if available in the tracer
     final Account account = frame.getWorldUpdater().get(address);
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(address));
     return account;
@@ -115,7 +114,7 @@ public abstract class AbstractOperation implements Operation {
    * @return the {@link MutableAccount}, or {@code null} if it does not exist
    */
   protected MutableAccount getMutableAccount(final Address address, final MessageFrame frame) {
-    ExecutionMetricsTracerHolder.trackAccountRead();
+    // Track account read via ExecutionMetricsTracer if available in the tracer
     final MutableAccount account = frame.getWorldUpdater().getAccount(address);
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(address));
     return account;
@@ -165,7 +164,7 @@ public abstract class AbstractOperation implements Operation {
    */
   protected UInt256 getStorageValue(
       final Account account, final UInt256 slotKey, final MessageFrame frame) {
-    ExecutionMetricsTracerHolder.trackStorageRead();
+    // Track storage read via ExecutionMetricsTracer if available in the tracer
     final UInt256 slotValue = account.getStorageValue(slotKey);
     frame
         .getEip7928AccessList()

@@ -271,7 +271,11 @@ public class ExecutionStats {
   /**
    * Collects EVM operation counters from the thread-local EvmOperationCounters. This should be
    * called at the end of block execution to aggregate the counters from the EVM module.
+   *
+   * @deprecated Use {@link
+   *     #collectMetricsFromTracer(org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer)} instead
    */
+  @Deprecated
   public void collectEvmCounters() {
     // EVM opcode counters
     this.sloadCount = EvmOperationCounters.getSloadCount();
@@ -292,6 +296,41 @@ public class ExecutionStats {
     // EIP-7702 delegation counters
     this.eip7702DelegationsSet = EvmOperationCounters.getEip7702DelegationsSet();
     this.eip7702DelegationsCleared = EvmOperationCounters.getEip7702DelegationsCleared();
+  }
+
+  /**
+   * Collects EVM operation counters from ExecutionMetricsTracer. This should be called at the end
+   * of block execution to aggregate the metrics from the tracer.
+   *
+   * @param metricsTracer the ExecutionMetricsTracer containing the collected metrics
+   */
+  public void collectMetricsFromTracer(
+      final org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer metricsTracer) {
+    if (metricsTracer == null) {
+      return;
+    }
+
+    final var metrics = metricsTracer.getMetrics();
+
+    // EVM opcode counters
+    this.sloadCount = metrics.getSloadCount();
+    this.sstoreCount = metrics.getSstoreCount();
+    this.callCount = metrics.getCallCount();
+    this.createCount = metrics.getCreateCount();
+
+    // State read/write counters for cross-client execution metrics
+    this.accountReads = metrics.getAccountReads();
+    this.storageReads = metrics.getStorageReads();
+    this.codeReads = metrics.getCodeReads();
+    this.codeBytesRead = metrics.getCodeBytesRead();
+    this.accountWrites = metrics.getAccountWrites();
+    this.storageWrites = metrics.getStorageWrites();
+    this.codeWrites = metrics.getCodeWrites();
+    this.codeBytesWritten = metrics.getCodeBytesWritten();
+
+    // EIP-7702 delegation counters
+    this.eip7702DelegationsSet = metrics.getEip7702DelegationsSet();
+    this.eip7702DelegationsCleared = metrics.getEip7702DelegationsCleared();
   }
 
   // Cache statistics methods

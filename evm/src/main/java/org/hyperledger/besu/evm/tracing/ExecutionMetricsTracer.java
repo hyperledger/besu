@@ -14,38 +14,96 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.worldstate.WorldView;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 
 /**
  * An OperationTracer that collects execution metrics for EVM operations.
- * 
- * <p>This tracer replaces the direct counter increment calls in EVM operations with a 
- * centralized metrics collection approach. It tracks:
+ *
+ * <p>This tracer follows the standard Besu tracer pattern and is designed to be passed through
+ * method parameters like DebugOperationTracer. It tracks:
+ *
  * <ul>
  *   <li>EVM operation counts (SLOAD, SSTORE, CALL, CREATE)
  *   <li>State access operations (account/storage/code reads/writes)
  *   <li>EIP-7702 delegation operations
  * </ul>
- * 
- * <p>The metrics collected by this tracer can be aggregated across parallel transaction
- * executions and provide detailed insights into block execution performance.
+ *
+ * <p>The metrics collected by this tracer can be aggregated across parallel transaction executions
+ * and provide detailed insights into block execution performance.
  */
 public class ExecutionMetricsTracer implements OperationTracer {
 
-  /** Container for execution metrics. */
+  /** Configuration for what metrics to collect. */
+  public static class ExecutionMetricsConfig {
+    private final boolean trackEvmOperations;
+    private final boolean trackStateAccess;
+    private final boolean trackEip7702Operations;
+
+    /**
+     * Create a new ExecutionMetricsConfig with the specified tracking options.
+     *
+     * @param trackEvmOperations whether to track EVM operation counts
+     * @param trackStateAccess whether to track state access operations
+     * @param trackEip7702Operations whether to track EIP-7702 delegation operations
+     */
+    public ExecutionMetricsConfig(
+        final boolean trackEvmOperations,
+        final boolean trackStateAccess,
+        final boolean trackEip7702Operations) {
+      this.trackEvmOperations = trackEvmOperations;
+      this.trackStateAccess = trackStateAccess;
+      this.trackEip7702Operations = trackEip7702Operations;
+    }
+
+    /**
+     * Default configuration that tracks all metrics.
+     *
+     * @return a new ExecutionMetricsConfig that tracks all available metrics
+     */
+    public static ExecutionMetricsConfig createDefault() {
+      return new ExecutionMetricsConfig(true, true, true);
+    }
+
+    /**
+     * Check if EVM operation tracking is enabled.
+     *
+     * @return true if EVM operation tracking is enabled
+     */
+    public boolean isTrackEvmOperations() {
+      return trackEvmOperations;
+    }
+
+    /**
+     * Check if state access tracking is enabled.
+     *
+     * @return true if state access tracking is enabled
+     */
+    public boolean isTrackStateAccess() {
+      return trackStateAccess;
+    }
+
+    /**
+     * Check if EIP-7702 delegation tracking is enabled.
+     *
+     * @return true if EIP-7702 delegation tracking is enabled
+     */
+    public boolean isTrackEip7702Operations() {
+      return trackEip7702Operations;
+    }
+  }
+
+  /**
+   * Container for execution metrics.
+   *
+   * <p>This class holds all collected execution metrics and provides getters for accessing the
+   * various counters.
+   */
   public static final class ExecutionMetrics {
     // EVM operation counters
     private int sloadCount;
@@ -67,6 +125,11 @@ public class ExecutionMetricsTracer implements OperationTracer {
     private int eip7702DelegationsSet;
     private int eip7702DelegationsCleared;
 
+    /** Creates a new ExecutionMetrics instance with all counters initialized to zero. */
+    public ExecutionMetrics() {
+      // All primitive int fields are automatically initialized to 0
+    }
+
     /** Reset all counters to zero. */
     public void reset() {
       sloadCount = 0;
@@ -87,7 +150,7 @@ public class ExecutionMetricsTracer implements OperationTracer {
 
     /**
      * Merge metrics from another ExecutionMetrics instance into this one.
-     * 
+     *
      * @param other the metrics to merge
      */
     public void merge(final ExecutionMetrics other) {
@@ -108,31 +171,161 @@ public class ExecutionMetricsTracer implements OperationTracer {
     }
 
     // Getters for all metrics
-    public int getSloadCount() { return sloadCount; }
-    public int getSstoreCount() { return sstoreCount; }
-    public int getCallCount() { return callCount; }
-    public int getCreateCount() { return createCount; }
-    public int getAccountReads() { return accountReads; }
-    public int getStorageReads() { return storageReads; }
-    public int getCodeReads() { return codeReads; }
-    public int getCodeBytesRead() { return codeBytesRead; }
-    public int getAccountWrites() { return accountWrites; }
-    public int getStorageWrites() { return storageWrites; }
-    public int getCodeWrites() { return codeWrites; }
-    public int getCodeBytesWritten() { return codeBytesWritten; }
-    public int getEip7702DelegationsSet() { return eip7702DelegationsSet; }
-    public int getEip7702DelegationsCleared() { return eip7702DelegationsCleared; }
+    /**
+     * Returns the number of SLOAD operations executed.
+     *
+     * @return the number of SLOAD operations executed
+     */
+    public int getSloadCount() {
+      return sloadCount;
+    }
+
+    /**
+     * Returns the number of SSTORE operations executed.
+     *
+     * @return the number of SSTORE operations executed
+     */
+    public int getSstoreCount() {
+      return sstoreCount;
+    }
+
+    /**
+     * Returns the number of CALL operations executed.
+     *
+     * @return the number of CALL operations executed
+     */
+    public int getCallCount() {
+      return callCount;
+    }
+
+    /**
+     * Returns the number of CREATE operations executed.
+     *
+     * @return the number of CREATE operations executed
+     */
+    public int getCreateCount() {
+      return createCount;
+    }
+
+    /**
+     * Returns the number of account read operations.
+     *
+     * @return the number of account read operations
+     */
+    public int getAccountReads() {
+      return accountReads;
+    }
+
+    /**
+     * Returns the number of storage read operations.
+     *
+     * @return the number of storage read operations
+     */
+    public int getStorageReads() {
+      return storageReads;
+    }
+
+    /**
+     * Returns the number of code read operations.
+     *
+     * @return the number of code read operations
+     */
+    public int getCodeReads() {
+      return codeReads;
+    }
+
+    /**
+     * Returns the total number of code bytes read.
+     *
+     * @return the total number of code bytes read
+     */
+    public int getCodeBytesRead() {
+      return codeBytesRead;
+    }
+
+    /**
+     * Returns the number of account write operations.
+     *
+     * @return the number of account write operations
+     */
+    public int getAccountWrites() {
+      return accountWrites;
+    }
+
+    /**
+     * Returns the number of storage write operations.
+     *
+     * @return the number of storage write operations
+     */
+    public int getStorageWrites() {
+      return storageWrites;
+    }
+
+    /**
+     * Returns the number of code write operations.
+     *
+     * @return the number of code write operations
+     */
+    public int getCodeWrites() {
+      return codeWrites;
+    }
+
+    /**
+     * Returns the total number of code bytes written.
+     *
+     * @return the total number of code bytes written
+     */
+    public int getCodeBytesWritten() {
+      return codeBytesWritten;
+    }
+
+    /**
+     * Returns the number of EIP-7702 delegations set.
+     *
+     * @return the number of EIP-7702 delegations set
+     */
+    public int getEip7702DelegationsSet() {
+      return eip7702DelegationsSet;
+    }
+
+    /**
+     * Returns the number of EIP-7702 delegations cleared.
+     *
+     * @return the number of EIP-7702 delegations cleared
+     */
+    public int getEip7702DelegationsCleared() {
+      return eip7702DelegationsCleared;
+    }
   }
 
+  private final ExecutionMetricsConfig config;
   private final ExecutionMetrics metrics = new ExecutionMetrics();
+
+  /** Create a new ExecutionMetricsTracer with the default configuration. */
+  public ExecutionMetricsTracer() {
+    this(ExecutionMetricsConfig.createDefault());
+  }
+
+  /**
+   * Create a new ExecutionMetricsTracer with the specified configuration.
+   *
+   * @param config the configuration specifying which metrics to collect
+   */
+  public ExecutionMetricsTracer(final ExecutionMetricsConfig config) {
+    this.config = config;
+  }
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
+    if (!config.isTrackEvmOperations()) {
+      return;
+    }
+
     // Track EVM operation based on the operation being executed
     final var operation = frame.getCurrentOperation();
     if (operation != null) {
       final String opcodeName = operation.getName();
-      
+
       switch (opcodeName) {
         case "SLOAD":
           metrics.sloadCount++;
@@ -170,99 +363,101 @@ public class ExecutionMetricsTracer implements OperationTracer {
     // But we may want to track them separately if needed
   }
 
-  /**
-   * Track account read operation.
-   */
-  public void trackAccountRead() {
-    metrics.accountReads++;
+  /** Track account read operation. Called directly from state operations. */
+  public void onAccountRead() {
+    if (config.isTrackStateAccess()) {
+      metrics.accountReads++;
+    }
+  }
+
+  /** Track storage read operation. Called directly from state operations. */
+  public void onStorageRead() {
+    if (config.isTrackStateAccess()) {
+      metrics.storageReads++;
+    }
+  }
+
+  /** Track code read operation. Called directly from state operations. */
+  public void onCodeRead() {
+    if (config.isTrackStateAccess()) {
+      metrics.codeReads++;
+    }
   }
 
   /**
-   * Track storage read operation.
-   */
-  public void trackStorageRead() {
-    metrics.storageReads++;
-  }
-
-  /**
-   * Track code read operation.
-   */
-  public void trackCodeRead() {
-    metrics.codeReads++;
-  }
-
-  /**
-   * Track code bytes read.
-   * 
+   * Track code bytes read. Called directly from state operations.
+   *
    * @param bytes the number of bytes read
    */
-  public void trackCodeBytesRead(final int bytes) {
-    metrics.codeBytesRead += bytes;
+  public void onCodeBytesRead(final int bytes) {
+    if (config.isTrackStateAccess()) {
+      metrics.codeBytesRead += bytes;
+    }
+  }
+
+  /** Track account write operation. Called directly from state operations. */
+  public void onAccountWrite() {
+    if (config.isTrackStateAccess()) {
+      metrics.accountWrites++;
+    }
+  }
+
+  /** Track storage write operation. Called directly from state operations. */
+  public void onStorageWrite() {
+    if (config.isTrackStateAccess()) {
+      metrics.storageWrites++;
+    }
+  }
+
+  /** Track code write operation. Called directly from state operations. */
+  public void onCodeWrite() {
+    if (config.isTrackStateAccess()) {
+      metrics.codeWrites++;
+    }
   }
 
   /**
-   * Track account write operation.
-   */
-  public void trackAccountWrite() {
-    metrics.accountWrites++;
-  }
-
-  /**
-   * Track storage write operation.
-   */
-  public void trackStorageWrite() {
-    metrics.storageWrites++;
-  }
-
-  /**
-   * Track code write operation.
-   */
-  public void trackCodeWrite() {
-    metrics.codeWrites++;
-  }
-
-  /**
-   * Track code bytes written.
-   * 
+   * Track code bytes written. Called directly from state operations.
+   *
    * @param bytes the number of bytes written
    */
-  public void trackCodeBytesWritten(final int bytes) {
-    metrics.codeBytesWritten += bytes;
+  public void onCodeBytesWritten(final int bytes) {
+    if (config.isTrackStateAccess()) {
+      metrics.codeBytesWritten += bytes;
+    }
   }
 
-  /**
-   * Track EIP-7702 delegation set operation.
-   */
-  public void trackEip7702DelegationSet() {
-    metrics.eip7702DelegationsSet++;
+  /** Track EIP-7702 delegation set operation. Called directly from delegation service. */
+  public void onEip7702DelegationSet() {
+    if (config.isTrackEip7702Operations()) {
+      metrics.eip7702DelegationsSet++;
+    }
   }
 
-  /**
-   * Track EIP-7702 delegation cleared operation.
-   */
-  public void trackEip7702DelegationCleared() {
-    metrics.eip7702DelegationsCleared++;
+  /** Track EIP-7702 delegation cleared operation. Called directly from delegation service. */
+  public void onEip7702DelegationCleared() {
+    if (config.isTrackEip7702Operations()) {
+      metrics.eip7702DelegationsCleared++;
+    }
   }
 
   /**
    * Get the current execution metrics.
-   * 
+   *
    * @return the execution metrics
    */
   public ExecutionMetrics getMetrics() {
     return metrics;
   }
 
-  /**
-   * Reset all metrics to zero.
-   */
+  /** Reset all metrics to zero. */
   public void reset() {
     metrics.reset();
   }
 
   /**
    * Create a copy of the current metrics.
-   * 
+   *
    * @return a new ExecutionMetrics instance with copied values
    */
   public ExecutionMetrics copyMetrics() {

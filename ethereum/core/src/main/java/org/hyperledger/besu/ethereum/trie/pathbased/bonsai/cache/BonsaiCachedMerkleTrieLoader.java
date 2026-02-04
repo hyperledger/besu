@@ -165,8 +165,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       } else {
         // Track storage cache miss for cross-client execution metrics
         ExecutionStatsHolder.getOptional().ifPresent(ExecutionStats::incrementStorageCacheMisses);
-        return worldStateKeyValueStorage.getAccountStorageTrieNode(
-            accountHash, location, nodeHash);
+        return worldStateKeyValueStorage.getAccountStorageTrieNode(accountHash, location, nodeHash);
       }
     }
   }

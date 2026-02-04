@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -61,9 +60,15 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
+import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
@@ -71,6 +76,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -169,6 +175,7 @@ public class BlockSimulator {
               simulationParameter.isValidation(),
               simulationParameter.isTraceTransfers(),
               simulationParameter.isReturnTrieLog(),
+              simulationParameter.isCollectExecutionMetrics(),
               simulationParameter::getFakeSignature,
               blockHashCache,
               simulationCumulativeGasUsed);
@@ -196,6 +203,7 @@ public class BlockSimulator {
       final boolean shouldValidate,
       final boolean isTraceTransfers,
       final boolean returnTrieLog,
+      final boolean collectExecutionMetrics,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
       final long simulationCumulativeGasUsed) {
@@ -253,6 +261,7 @@ public class BlockSimulator {
             protocolSpec,
             shouldValidate,
             isTraceTransfers,
+            collectExecutionMetrics,
             transactionProcessor,
             blockHashLookup,
             signatureSupplier,
@@ -301,6 +310,7 @@ public class BlockSimulator {
       final ProtocolSpec protocolSpec,
       final boolean shouldValidate,
       final boolean isTraceTransfers,
+      final boolean collectExecutionMetrics,
       final MainnetTransactionProcessor transactionProcessor,
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
@@ -321,14 +331,33 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
+    // Create execution metrics tracer for the entire block if requested
+    ExecutionMetricsTracer blockExecutionMetricsTracer = null;
+    if (collectExecutionMetrics) {
+      blockExecutionMetricsTracer = new ExecutionMetricsTracer();
+    }
+
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
         transactionLocation < blockStateCall.getCalls().size();
         transactionLocation++) {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
-      OperationTracer operationTracer =
-          isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
+
+      // Compose operation tracers based on configuration
+      OperationTracer operationTracer;
+      if (isTraceTransfers && blockExecutionMetricsTracer != null) {
+        // Compose both tracers
+        operationTracer =
+            new CompositeOperationTracer(
+                new EthTransferLogOperationTracer(), blockExecutionMetricsTracer);
+      } else if (isTraceTransfers) {
+        operationTracer = new EthTransferLogOperationTracer();
+      } else if (blockExecutionMetricsTracer != null) {
+        operationTracer = blockExecutionMetricsTracer;
+      } else {
+        operationTracer = OperationTracer.NO_TRACING;
+      }
 
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
@@ -383,6 +412,12 @@ public class BlockSimulator {
     }
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
+
+    // Set the execution metrics tracer if it was collected
+    if (blockExecutionMetricsTracer != null) {
+      blockStateCallSimulationResult.setExecutionMetricsTracer(blockExecutionMetricsTracer);
+    }
+
     return blockStateCallSimulationResult;
   }
 
@@ -401,7 +436,7 @@ public class BlockSimulator {
       final Optional<List<Request>> maybeRequests,
       final boolean returnTrieLog) {
 
-    List<Transaction> transactions = simResult.getTransactions();
+    var transactions = simResult.getTransactions();
     List<TransactionReceipt> receipts = simResult.getReceipts();
 
     BlockHeader finalBlockHeader =
@@ -434,7 +469,11 @@ public class BlockSimulator {
       var trieLogFactory = pathBasedArchive.getTrieLogManager().getTrieLogFactory();
       var trieLog = trieLogFactory.create(pathBasedAccumulator, finalBlockHeader);
       return new BlockSimulationResult(
-          block, simResult, trieLog, log -> Bytes.wrap(trieLogFactory.serialize(log)));
+          block,
+          simResult,
+          trieLog,
+          log -> Bytes.wrap(trieLogFactory.serialize(log)),
+          simResult.getExecutionMetricsTracer().orElse(null));
     } else {
       // otherwise return result w/o trielog
       return new BlockSimulationResult(block, simResult);
@@ -628,5 +667,121 @@ public class BlockSimulator {
       return Math.min(remainingGas, blockHeader.getGasLimit());
     }
     return blockHeader.getGasLimit();
+  }
+
+  /**
+   * Simple composite operation tracer that delegates to multiple tracers. TODO: Replace with proper
+   * TracerAggregator when implementing task 8.
+   */
+  private static class CompositeOperationTracer implements OperationTracer {
+    private final OperationTracer[] tracers;
+
+    public CompositeOperationTracer(final OperationTracer... tracers) {
+      this.tracers = tracers;
+    }
+
+    @Override
+    public void tracePreExecution(final MessageFrame frame) {
+      for (OperationTracer tracer : tracers) {
+        tracer.tracePreExecution(frame);
+      }
+    }
+
+    @Override
+    public void tracePostExecution(
+        final MessageFrame frame, final OperationResult operationResult) {
+      for (OperationTracer tracer : tracers) {
+        tracer.tracePostExecution(frame, operationResult);
+      }
+    }
+
+    @Override
+    public void tracePrecompileCall(
+        final MessageFrame frame, final long gasRequirement, final Bytes output) {
+      for (OperationTracer tracer : tracers) {
+        tracer.tracePrecompileCall(frame, gasRequirement, output);
+      }
+    }
+
+    @Override
+    public void traceAccountCreationResult(
+        final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceAccountCreationResult(frame, haltReason);
+      }
+    }
+
+    @Override
+    public void tracePrepareTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      for (OperationTracer tracer : tracers) {
+        tracer.tracePrepareTransaction(worldView, transaction);
+      }
+    }
+
+    @Override
+    public void traceStartTransaction(
+        final WorldView worldView, final org.hyperledger.besu.datatypes.Transaction transaction) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceStartTransaction(worldView, transaction);
+      }
+    }
+
+    @Override
+    public void traceBeforeRewardTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction tx,
+        final Wei miningReward) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceBeforeRewardTransaction(worldView, tx, miningReward);
+      }
+    }
+
+    @Override
+    public void traceEndTransaction(
+        final WorldView worldView,
+        final org.hyperledger.besu.datatypes.Transaction tx,
+        final boolean status,
+        final Bytes output,
+        final List<Log> logs,
+        final long gasUsed,
+        final Set<Address> selfDestructs,
+        final long timeNs) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceEndTransaction(
+            worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+      }
+    }
+
+    @Override
+    public void traceContextEnter(final MessageFrame frame) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceContextEnter(frame);
+      }
+    }
+
+    @Override
+    public void traceContextReEnter(final MessageFrame frame) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceContextReEnter(frame);
+      }
+    }
+
+    @Override
+    public void traceContextExit(final MessageFrame frame) {
+      for (OperationTracer tracer : tracers) {
+        tracer.traceContextExit(frame);
+      }
+    }
+
+    @Override
+    public boolean isExtendedTracing() {
+      for (OperationTracer tracer : tracers) {
+        if (tracer.isExtendedTracing()) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

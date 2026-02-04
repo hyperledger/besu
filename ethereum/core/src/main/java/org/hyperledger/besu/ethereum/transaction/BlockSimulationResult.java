@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.transaction;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -32,6 +33,7 @@ public class BlockSimulationResult {
   final BlockStateCallSimulationResult blockStateCallSimulationResult;
   final Optional<TrieLog> trieLog;
   final Optional<Function<TrieLog, Bytes>> trieLogSerializer;
+  final Optional<ExecutionMetricsTracer> executionMetricsTracer;
 
   public BlockSimulationResult(
       final Block block, final BlockStateCallSimulationResult blockStateCallSimulationResult) {
@@ -39,6 +41,7 @@ public class BlockSimulationResult {
     this.blockStateCallSimulationResult = blockStateCallSimulationResult;
     this.trieLog = Optional.empty();
     this.trieLogSerializer = Optional.empty();
+    this.executionMetricsTracer = blockStateCallSimulationResult.getExecutionMetricsTracer();
   }
 
   public BlockSimulationResult(
@@ -50,6 +53,20 @@ public class BlockSimulationResult {
     this.blockStateCallSimulationResult = blockStateCallSimulationResult;
     this.trieLog = Optional.ofNullable(trieLog);
     this.trieLogSerializer = Optional.ofNullable(trieLogSerializer);
+    this.executionMetricsTracer = Optional.empty();
+  }
+
+  public BlockSimulationResult(
+      final Block block,
+      final BlockStateCallSimulationResult blockStateCallSimulationResult,
+      final TrieLog trieLog,
+      final Function<TrieLog, Bytes> trieLogSerializer,
+      final ExecutionMetricsTracer executionMetricsTracer) {
+    this.block = block;
+    this.blockStateCallSimulationResult = blockStateCallSimulationResult;
+    this.trieLog = Optional.ofNullable(trieLog);
+    this.trieLogSerializer = Optional.ofNullable(trieLogSerializer);
+    this.executionMetricsTracer = Optional.ofNullable(executionMetricsTracer);
   }
 
   public BlockHeader getBlockHeader() {
@@ -98,5 +115,9 @@ public class BlockSimulationResult {
 
   public Optional<Bytes> getSerializedTrieLog() {
     return trieLogSerializer.flatMap(trieLog::map);
+  }
+
+  public Optional<ExecutionMetricsTracer> getExecutionMetricsTracer() {
+    return executionMetricsTracer;
   }
 }

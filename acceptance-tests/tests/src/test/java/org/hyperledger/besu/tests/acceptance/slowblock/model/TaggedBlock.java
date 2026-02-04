@@ -129,7 +129,8 @@ public class TaggedBlock {
         passed = true; // Accept any non-missing value for complex types
       }
 
-      validationResults.put(metricPath, new ValidationResult(metricPath, expected, actual, passed, reason));
+      validationResults.put(
+          metricPath, new ValidationResult(metricPath, expected, actual, passed, reason));
       if (!passed) {
         allPassed = false;
       }
@@ -290,45 +291,75 @@ public class TaggedBlock {
     sb.append("tx_count=").append(getTxCount()).append("\n");
 
     // Line 2: Timing metrics
-    sb.append("timing_execution_ms=").append(formatDouble(getMetricValueAsDouble("timing/execution_ms"))).append(" ");
-    sb.append("timing_state_read_ms=").append(formatDouble(getMetricValueAsDouble("timing/state_read_ms"))).append(" ");
-    sb.append("timing_state_hash_ms=").append(formatDouble(getMetricValueAsDouble("timing/state_hash_ms"))).append(" ");
-    sb.append("timing_commit_ms=").append(formatDouble(getMetricValueAsDouble("timing/commit_ms"))).append(" ");
-    sb.append("timing_total_ms=").append(formatDouble(getMetricValueAsDouble("timing/total_ms"))).append("\n");
+    sb.append("timing_execution_ms=")
+        .append(formatDouble(getMetricValueAsDouble("timing/execution_ms")))
+        .append(" ");
+    sb.append("timing_state_read_ms=")
+        .append(formatDouble(getMetricValueAsDouble("timing/state_read_ms")))
+        .append(" ");
+    sb.append("timing_state_hash_ms=")
+        .append(formatDouble(getMetricValueAsDouble("timing/state_hash_ms")))
+        .append(" ");
+    sb.append("timing_commit_ms=")
+        .append(formatDouble(getMetricValueAsDouble("timing/commit_ms")))
+        .append(" ");
+    sb.append("timing_total_ms=")
+        .append(formatDouble(getMetricValueAsDouble("timing/total_ms")))
+        .append("\n");
 
     // Line 3: Throughput
-    sb.append("throughput_mgas_per_sec=").append(formatDouble(getMetricValueAsDouble("throughput/mgas_per_sec"))).append("\n");
+    sb.append("throughput_mgas_per_sec=")
+        .append(formatDouble(getMetricValueAsDouble("throughput/mgas_per_sec")))
+        .append("\n");
 
     // Line 4: State reads
     sb.append("state_reads_accounts=").append(getMetricValue("state_reads/accounts")).append(" ");
-    sb.append("state_reads_storage=").append(getMetricValue("state_reads/storage_slots")).append(" ");
+    sb.append("state_reads_storage=")
+        .append(getMetricValue("state_reads/storage_slots"))
+        .append(" ");
     sb.append("state_reads_code=").append(getMetricValue("state_reads/code")).append(" ");
-    sb.append("state_reads_code_bytes=").append(getMetricValue("state_reads/code_bytes")).append("\n");
+    sb.append("state_reads_code_bytes=")
+        .append(getMetricValue("state_reads/code_bytes"))
+        .append("\n");
 
     // Line 5: State writes
     sb.append("state_writes_accounts=").append(getMetricValue("state_writes/accounts")).append(" ");
-    sb.append("state_writes_storage=").append(getMetricValue("state_writes/storage_slots")).append(" ");
+    sb.append("state_writes_storage=")
+        .append(getMetricValue("state_writes/storage_slots"))
+        .append(" ");
     sb.append("state_writes_code=").append(getMetricValue("state_writes/code")).append(" ");
-    sb.append("state_writes_code_bytes=").append(getMetricValue("state_writes/code_bytes")).append("\n");
+    sb.append("state_writes_code_bytes=")
+        .append(getMetricValue("state_writes/code_bytes"))
+        .append("\n");
 
     // Line 6: EIP-7702 delegations
-    sb.append("state_writes_eip7702_set=").append(getMetricValue("state_writes/eip7702_delegations_set")).append(" ");
-    sb.append("state_writes_eip7702_cleared=").append(getMetricValue("state_writes/eip7702_delegations_cleared")).append("\n");
+    sb.append("state_writes_eip7702_set=")
+        .append(getMetricValue("state_writes/eip7702_delegations_set"))
+        .append(" ");
+    sb.append("state_writes_eip7702_cleared=")
+        .append(getMetricValue("state_writes/eip7702_delegations_cleared"))
+        .append("\n");
 
     // Line 7: Cache stats - accounts
     sb.append("cache_account_hits=").append(getMetricValue("cache/account/hits")).append(" ");
     sb.append("cache_account_misses=").append(getMetricValue("cache/account/misses")).append(" ");
-    sb.append("cache_account_hit_rate=").append(formatDouble(getMetricValueAsDouble("cache/account/hit_rate"))).append("\n");
+    sb.append("cache_account_hit_rate=")
+        .append(formatDouble(getMetricValueAsDouble("cache/account/hit_rate")))
+        .append("\n");
 
     // Line 8: Cache stats - storage
     sb.append("cache_storage_hits=").append(getMetricValue("cache/storage/hits")).append(" ");
     sb.append("cache_storage_misses=").append(getMetricValue("cache/storage/misses")).append(" ");
-    sb.append("cache_storage_hit_rate=").append(formatDouble(getMetricValueAsDouble("cache/storage/hit_rate"))).append("\n");
+    sb.append("cache_storage_hit_rate=")
+        .append(formatDouble(getMetricValueAsDouble("cache/storage/hit_rate")))
+        .append("\n");
 
     // Line 9: Cache stats - code
     sb.append("cache_code_hits=").append(getMetricValue("cache/code/hits")).append(" ");
     sb.append("cache_code_misses=").append(getMetricValue("cache/code/misses")).append(" ");
-    sb.append("cache_code_hit_rate=").append(formatDouble(getMetricValueAsDouble("cache/code/hit_rate"))).append("\n");
+    sb.append("cache_code_hit_rate=")
+        .append(formatDouble(getMetricValueAsDouble("cache/code/hit_rate")))
+        .append("\n");
 
     // Line 10: Unique counts
     sb.append("unique_accounts=").append(getMetricValue("unique/accounts")).append(" ");
