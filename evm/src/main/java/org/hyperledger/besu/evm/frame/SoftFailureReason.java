@@ -21,8 +21,8 @@ public enum SoftFailureReason {
   LEGACY_INSUFFICIENT_BALANCE("insufficient balance for transfer"),
   /** Soft failure due to max call depth. Mainly use to provide visibility to Tracers. */
   LEGACY_MAX_CALL_DEPTH("max call depth exceeded"),
-  /** Soft failure due to unknown reason. Mainly use to provide visibility to Tracers. */
-  UNKNOWN_ERROR("execution failed");
+  /** Soft failure due to invalid state. Mainly use to provide visibility to Tracers. */
+  INVALID_STATE("execution failed");
 
   /** The Description of soft failure. */
   final String description;

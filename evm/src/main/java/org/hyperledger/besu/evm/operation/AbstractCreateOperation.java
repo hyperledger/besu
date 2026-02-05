@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.INVALID_STATE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
-import static org.hyperledger.besu.evm.frame.SoftFailureReason.UNKNOWN_ERROR;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -106,7 +106,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final SoftFailureReason softFailureReason =
           insufficientBalance
               ? LEGACY_INSUFFICIENT_BALANCE
-              : (maxDepthReached ? LEGACY_MAX_CALL_DEPTH : UNKNOWN_ERROR);
+              : (maxDepthReached ? LEGACY_MAX_CALL_DEPTH : INVALID_STATE);
       return new OperationResult(cost, getPcIncrement(), softFailureReason);
     }
 
