@@ -191,8 +191,17 @@ public class BlockProcessingResult extends BlockValidationResult
    *
    * @return the generated block access list
    */
-  @Override
   public Optional<BlockAccessList> getGeneratedBlockAccessList() {
     return maybeGeneratedBlockAccessList;
+  }
+
+  /**
+   * Returns the block access list produced during processing, when available.
+   *
+   * @return the generated block access list
+   */
+  @Override
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return yield.flatMap(BlockProcessingOutputs::getBlockAccessList);
   }
 }

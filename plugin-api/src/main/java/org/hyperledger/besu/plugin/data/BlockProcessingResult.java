@@ -46,5 +46,5 @@ public interface BlockProcessingResult {
    *
    * @return the generated block access list
    */
-  Optional<? extends BlockAccessList> getGeneratedBlockAccessList();
+  Optional<? extends BlockAccessList> getBlockAccessList();
 }
