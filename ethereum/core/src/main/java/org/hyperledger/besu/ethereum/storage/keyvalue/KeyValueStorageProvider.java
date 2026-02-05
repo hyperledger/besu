@@ -75,6 +75,7 @@ public class KeyValueStorageProvider implements StorageProvider {
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
         variablesStorage,
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+        protocolSchedule,
         dataStorageConfiguration.getReceiptCompactionEnabled());
   }
 

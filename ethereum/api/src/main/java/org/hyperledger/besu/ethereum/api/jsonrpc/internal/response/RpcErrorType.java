@@ -61,6 +61,8 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_EXCESS_BLOB_GAS_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid excess blob gas params (missing or invalid)"),
   INVALID_EXECUTION_REQUESTS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid execution requests params"),
+  INVALID_SLOT_NUMBER_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid slot number params (missing or invalid)"),
   INVALID_EXTRA_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid extra data params"),
   INVALID_FILTER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid filter params"),
   INVALID_HASH_RATE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid hash rate params"),
@@ -124,6 +126,9 @@ public enum RpcErrorType implements RpcMethodError {
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
+  PRUNED_HISTORY_UNAVAILABLE(4444, "Pruned history unavailable"),
+  BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS(
+      4445, "Block access list not available for pre-Amsterdam blocks"),
 
   // eth_sendTransaction specific error message
   ETH_SEND_TX_NOT_AVAILABLE(

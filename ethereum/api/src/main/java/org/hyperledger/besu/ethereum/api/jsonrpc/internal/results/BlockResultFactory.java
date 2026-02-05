@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1.PayloadBody;
 import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,6 +32,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -214,6 +214,9 @@ public class BlockResultFactory {
                 })
             .orElse(null);
 
+    final String slotNumber =
+        blockWithReceipts.getHeader().getOptionalSlotNumber().map(Quantity::create).orElse(null);
+
     return new EngineGetPayloadResultV6(
         blockWithReceipts.getHeader(),
         txs,
@@ -221,7 +224,8 @@ public class BlockResultFactory {
         requestsWithoutRequestId,
         Quantity.create(payload.blockValue()),
         blobsBundleV2,
-        blockAccessList);
+        blockAccessList,
+        slotNumber);
   }
 
   private static List<String> txsAsHex(final Block block) {
@@ -252,11 +256,30 @@ public class BlockResultFactory {
 
   public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
       final List<Optional<BlockBody>> blockBodies) {
-    final List<PayloadBody> payloadBodies =
+    final List<EngineGetPayloadBodiesResultV1.PayloadBody> payloadBodies =
         blockBodies.stream()
-            .map(maybeBody -> maybeBody.map(PayloadBody::new).orElse(null))
+            .map(
+                maybeBody ->
+                    maybeBody.map(EngineGetPayloadBodiesResultV1.PayloadBody::new).orElse(null))
             .collect(Collectors.toList());
     return new EngineGetPayloadBodiesResultV1(payloadBodies);
+  }
+
+  public EngineGetPayloadBodiesResultV2 payloadBodiesCompleteV2(
+      final List<Optional<BlockBody>> blockBodies, final List<Optional<String>> blockAccessLists) {
+    final List<EngineGetPayloadBodiesResultV2.PayloadBody> payloadBodies =
+        IntStream.range(0, blockBodies.size())
+            .mapToObj(
+                index ->
+                    blockBodies
+                        .get(index)
+                        .map(
+                            body ->
+                                new EngineGetPayloadBodiesResultV2.PayloadBody(
+                                    body, blockAccessLists.get(index).orElse(null)))
+                        .orElse(null))
+            .collect(Collectors.toList());
+    return new EngineGetPayloadBodiesResultV2(payloadBodies);
   }
 
   // endregion EngineGetPayloadBodiesResult

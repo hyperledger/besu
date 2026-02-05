@@ -140,6 +140,7 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
         maybeRevertReason);
   }
 
+  /** Private constructor used by all public constructors. */
   private TransactionReceipt(
       final TransactionType transactionType,
       final Hash stateRoot,
@@ -240,10 +241,9 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof TransactionReceipt)) {
+    if (!(obj instanceof TransactionReceipt other)) {
       return false;
     }
-    final TransactionReceipt other = (TransactionReceipt) obj;
     return logs.equals(other.getLogsList())
         && Objects.equals(stateRoot, other.stateRoot)
         && cumulativeGasUsed == other.getCumulativeGasUsed()

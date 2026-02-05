@@ -206,7 +206,7 @@ public abstract class MainnetProtocolSpecs {
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : MainnetBlockProcessor::new)
+                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
         .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
@@ -312,7 +312,8 @@ public abstract class MainnetProtocolSpecs {
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
                             protocolSchedule,
-                            balConfig)))
+                            balConfig,
+                            metricsSystem)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
 
@@ -331,7 +332,7 @@ public abstract class MainnetProtocolSpecs {
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : MainnetBlockProcessor::new)
+                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
         .hardforkId(DAO_RECOVERY_TRANSITION);
   }
 
@@ -1190,7 +1191,7 @@ public abstract class MainnetProtocolSpecs {
                     precompileContractRegistry,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
                     EIP7708TransferLogEmitter.INSTANCE))
-        // EIP-7708: TransactionProcessor configured for Amsterdam
+        // EIP-7708: TransactionProcessor configured for Amsterdam with transfer log emission
         .transactionProcessorBuilder(
             (gasCalculator,
                 feeMarket,
@@ -1212,10 +1213,14 @@ public abstract class MainnetProtocolSpecs {
                             chainId,
                             SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
                             new CodeDelegationService()))
+                    .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
                     .build())
         .blockAccessListFactory(
             new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
+        // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
+        .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
+        .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)
         .hardforkId(AMSTERDAM);
   }
 

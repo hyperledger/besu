@@ -99,6 +99,9 @@ public class ProtocolSpecBuilder {
   private StateRootCommitterFactory stateRootCommitterFactory =
       new StateRootCommitterFactoryDefault();
   private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
+  private BlockGasAccountingStrategy blockGasAccountingStrategy =
+      BlockGasAccountingStrategy.FRONTIER;
+  private BlockGasUsedValidator blockGasUsedValidator = BlockGasUsedValidator.FRONTIER;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -323,6 +326,18 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder blockGasAccountingStrategy(
+      final BlockGasAccountingStrategy blockGasAccountingStrategy) {
+    this.blockGasAccountingStrategy = blockGasAccountingStrategy;
+    return this;
+  }
+
+  public ProtocolSpecBuilder blockGasUsedValidator(
+      final BlockGasUsedValidator blockGasUsedValidator) {
+    this.blockGasUsedValidator = blockGasUsedValidator;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -440,7 +455,9 @@ public class ProtocolSpecBuilder {
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
         Optional.ofNullable(finalBalFactory),
-        stateRootCommitterFactory);
+        stateRootCommitterFactory,
+        blockGasAccountingStrategy,
+        blockGasUsedValidator);
   }
 
   private BlockProcessor createBlockProcessor(

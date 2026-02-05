@@ -85,6 +85,7 @@ public class BlockHeaderBuilder {
   private Long blobGasUsed = null;
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
+  private Long slotNumber = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -136,7 +137,8 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .requestsHash(header.getRequestsHash().orElse(null))
-        .balHash(header.getBalHash().orElse(null));
+        .balHash(header.getBalHash().orElse(null))
+        .slotNumber(header.getOptionalSlotNumber().orElse(null));
   }
 
   public static BlockHeaderBuilder fromHeader(
@@ -164,7 +166,8 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .requestsHash(header.getRequestsHash().orElse(null))
-        .balHash(header.getBalHash().orElse(null));
+        .balHash(header.getBalHash().orElse(null))
+        .slotNumber(header.getOptionalSlotNumber().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -191,6 +194,7 @@ public class BlockHeaderBuilder {
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .requestsHash(fromBuilder.requestsHash)
             .balHash(fromBuilder.balHash)
+            .slotNumber(fromBuilder.slotNumber)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -202,7 +206,8 @@ public class BlockHeaderBuilder {
       final MiningConfiguration miningConfiguration,
       final long timestamp,
       final Optional<Bytes32> maybePrevRandao,
-      final Optional<Bytes32> maybeParentBeaconBlockRoot) {
+      final Optional<Bytes32> maybeParentBeaconBlockRoot,
+      final Optional<Long> maybeSlotNumber) {
 
     final long newBlockNumber = parentHeader.getNumber() + 1;
     final long gasLimit =
@@ -246,7 +251,8 @@ public class BlockHeaderBuilder {
         .timestamp(timestamp)
         .baseFee(baseFee)
         .prevRandao(prevRandao)
-        .parentBeaconBlockRoot(parentBeaconBlockRoot);
+        .parentBeaconBlockRoot(parentBeaconBlockRoot)
+        .slotNumber(maybeSlotNumber.orElse(null));
   }
 
   public BlockHeader buildBlockHeader() {
@@ -275,6 +281,7 @@ public class BlockHeaderBuilder {
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         blockHeaderFunctions);
   }
 
@@ -290,7 +297,8 @@ public class BlockHeaderBuilder {
         timestamp,
         baseFee,
         mixHashOrPrevRandao,
-        parentBeaconBlockRoot);
+        parentBeaconBlockRoot,
+        slotNumber);
   }
 
   public SealableBlockHeader buildSealableBlockHeader() {
@@ -317,7 +325,8 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        balHash);
+        balHash,
+        slotNumber);
   }
 
   private void validateBlockHeader() {
@@ -357,6 +366,7 @@ public class BlockHeaderBuilder {
     baseFee(processableBlockHeader.getBaseFee().orElse(null));
     processableBlockHeader.getPrevRandao().ifPresent(this::prevRandao);
     processableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
+    processableBlockHeader.getOptionalSlotNumber().ifPresent(this::slotNumber);
     return this;
   }
 
@@ -383,6 +393,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     requestsHash(sealableBlockHeader.getRequestsHash().orElse(null));
     balHash(sealableBlockHeader.getBalHash().orElse(null));
+    sealableBlockHeader.getOptionalSlotNumber().ifPresent(this::slotNumber);
     return this;
   }
 
@@ -520,6 +531,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder parentBeaconBlockRoot(final Bytes32 parentBeaconBlockRoot) {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
+    return this;
+  }
+
+  public BlockHeaderBuilder slotNumber(final Long slotNumber) {
+    this.slotNumber = slotNumber;
     return this;
   }
 }

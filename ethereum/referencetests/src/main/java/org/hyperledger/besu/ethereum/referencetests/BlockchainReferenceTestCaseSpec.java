@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
+import static org.hyperledger.besu.evm.internal.Words.decodeUnsignedLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -41,6 +43,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -83,7 +86,9 @@ public class BlockchainReferenceTestCaseSpec {
                 inMemoryKeyValueStorageProvider.createWorldStateStorage(
                     DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             blockchain,
-            Optional.of(cacheSize),
+            ImmutablePathBasedExtraStorageConfiguration.builder()
+                .maxLayersToLoad(cacheSize)
+                .build(),
             new NoopBonsaiCachedMerkleTrieLoader(),
             new ServiceManager() {
               @Override
@@ -167,6 +172,7 @@ public class BlockchainReferenceTestCaseSpec {
     return sealEngine;
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class ReferenceTestBlockHeader extends BlockHeader {
 
     @JsonCreator
@@ -193,7 +199,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
         @JsonProperty("hash") final String hash,
-        @JsonProperty("blockAccessListHash") final String blockAccessListHash) {
+        @JsonProperty("blockAccessListHash") final String blockAccessListHash,
+        @JsonProperty("slotNumber") final String slotNumber) {
       super(
           Hash.fromHexString(parentHash), // parentHash
           uncleHash == null ? Hash.EMPTY_LIST_HASH : Hash.fromHexString(uncleHash), // ommersHash
@@ -221,6 +228,7 @@ public class BlockchainReferenceTestCaseSpec {
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsHash != null ? Hash.fromHexString(requestsHash) : null,
           blockAccessListHash != null ? Hash.fromHexString(blockAccessListHash) : null,
+          slotNumber != null ? decodeUnsignedLong(slotNumber) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -250,7 +258,8 @@ public class BlockchainReferenceTestCaseSpec {
     "expectExceptionHomestead",
     "expectExceptionALL",
     "hasBigInt",
-    "rlp_decoded"
+    "rlp_decoded",
+    "receipts"
   })
   public static class CandidateBlock {
 

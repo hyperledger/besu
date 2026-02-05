@@ -36,6 +36,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -223,13 +224,16 @@ public class MainnetBlockValidator implements BlockValidator {
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
         Optional<BlockAccessList> processedBlockAccessList =
             result.getYield().flatMap(BlockProcessingOutputs::getBlockAccessList);
+        long cumulativeBlockGasUsed =
+            result.getYield().map(BlockProcessingOutputs::getCumulativeBlockGasUsed).orElse(0L);
         if (!blockBodyValidator.validateBody(
             context,
             block,
             receipts,
             worldState.rootHash(),
             ommerValidationMode,
-            BodyValidationMode.FULL)) {
+            BodyValidationMode.FULL,
+            OptionalLong.of(cumulativeBlockGasUsed))) {
           result = new BlockProcessingResult("failed to validate output of imported block");
           handleFailedBlockProcessing(
               block, blockAccessList, result, shouldRecordBadBlock, context);
@@ -239,7 +243,11 @@ public class MainnetBlockValidator implements BlockValidator {
         return new BlockProcessingResult(
             Optional.of(
                 new BlockProcessingOutputs(
-                    worldState, receipts, maybeRequests, processedBlockAccessList)),
+                    worldState,
+                    receipts,
+                    maybeRequests,
+                    processedBlockAccessList,
+                    cumulativeBlockGasUsed)),
             result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {
@@ -349,7 +357,8 @@ public class MainnetBlockValidator implements BlockValidator {
       return true;
     }
 
-    if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
+    if (!blockBodyValidator.validateBodyLight(
+        context, block, receipts, ommerValidationMode, OptionalLong.empty())) {
       context
           .getBadBlockManager()
           .addBadBlock(
