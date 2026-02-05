@@ -101,7 +101,6 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
     return results;
   }
 
-  /** Three-level read: Layer -> Cache -> Parent. */
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
     final byte[] key = accountHash.getBytes().toArrayUnsafe();
@@ -185,7 +184,6 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
     }
 
     if (missingKeys.isEmpty()) {
-      // All keys found in layer - just return as-is
       return layerResults;
     }
 
@@ -197,7 +195,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
             getCurrentVersion(),
             keysToFetch -> parentWorldStateStorage.getMultipleKeys(segmentIdentifier, keysToFetch));
 
-    // Merge results: layer results + cache/parent results
+    // Merge results
     final List<Optional<byte[]>> finalResults = new ArrayList<>(layerResults);
     for (int i = 0; i < missingIndices.size(); i++) {
       finalResults.set(missingIndices.get(i), cachedResults.get(i));

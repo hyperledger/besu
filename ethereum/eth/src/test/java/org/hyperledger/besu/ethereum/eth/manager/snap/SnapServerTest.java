@@ -144,10 +144,11 @@ public class SnapServerTest {
             bonsaiFlatDbStrategyProvider,
             storage,
             new InMemoryKeyValueStorage(),
-            new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
-                100_000, // accountCacheSize
-                1_000_000, // storageCacheSize
-                noopMetrics));
+            Optional.of(
+                new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
+                    100_000, // accountCacheSize
+                    1_000_000, // storageCacheSize
+                    noopMetrics)));
 
     storageCoordinator = new WorldStateStorageCoordinator(inMemoryStorage);
     storageTrie =

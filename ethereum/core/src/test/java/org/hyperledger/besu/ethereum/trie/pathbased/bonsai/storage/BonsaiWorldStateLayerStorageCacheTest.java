@@ -20,8 +20,10 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -40,11 +42,11 @@ public class BonsaiWorldStateLayerStorageCacheTest {
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG,
-            new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
-                100, // accountCacheSize
-                100, // storageCacheSize
-                new NoOpMetricsSystem()));
+            ImmutableDataStorageConfiguration.builder()
+                .dataStorageFormat(DataStorageFormat.BONSAI)
+                .bonsaiCacheEnabled(true)
+                .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
+                .build());
   }
 
   @Test

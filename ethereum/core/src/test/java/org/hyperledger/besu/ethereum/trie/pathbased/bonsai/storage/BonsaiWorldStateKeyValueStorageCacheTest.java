@@ -21,8 +21,11 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.cache.CacheManager.VersionedValue;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Optional;
 
@@ -42,11 +45,11 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG,
-            new BonsaiWorldStateKeyValueStorage.VersionedCacheManager(
-                100, // accountCacheSize
-                100, // storageCacheSize
-                new NoOpMetricsSystem()));
+            ImmutableDataStorageConfiguration.builder()
+                .dataStorageFormat(DataStorageFormat.BONSAI)
+                .bonsaiCacheEnabled(true)
+                .pathBasedExtraStorageConfiguration(PathBasedExtraStorageConfiguration.DEFAULT)
+                .build());
   }
 
   @Test
@@ -64,7 +67,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     assertThat(baseStorage.isCached(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe()))
         .isTrue();
 
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cachedValue =
+    Optional<VersionedValue> cachedValue =
         baseStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
     assertThat(cachedValue).isPresent();
     assertThat(Bytes.wrap(cachedValue.get().getValue())).isEqualTo(accountData);
@@ -97,7 +100,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     assertThat(v2).isEqualTo(2);
 
     // Cache should have latest version
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cachedValue =
+    Optional<VersionedValue> cachedValue =
         baseStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
     assertThat(cachedValue).isPresent();
     assertThat(cachedValue.get().getVersion()).isEqualTo(v2);
@@ -126,7 +129,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     assertThat(v2).isGreaterThan(v1);
 
     // Cache should show removal
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cachedValue =
+    Optional<VersionedValue> cachedValue =
         baseStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
     assertThat(cachedValue).isPresent();
     assertThat(cachedValue.get().isRemoval()).isTrue();
@@ -184,12 +187,12 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     assertThat(baseStorage.isCached(ACCOUNT_STORAGE_STORAGE, key1.toArrayUnsafe())).isTrue();
     assertThat(baseStorage.isCached(ACCOUNT_STORAGE_STORAGE, key2.toArrayUnsafe())).isTrue();
 
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cached1 =
+    Optional<VersionedValue> cached1 =
         baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, key1.toArrayUnsafe());
     assertThat(cached1).isPresent();
     assertThat(Bytes.wrap(cached1.get().getValue())).isEqualTo(value1);
 
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cached2 =
+    Optional<VersionedValue> cached2 =
         baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, key2.toArrayUnsafe());
     assertThat(cached2).isPresent();
     assertThat(Bytes.wrap(cached2.get().getValue())).isEqualTo(value2);
@@ -260,7 +263,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     // Cache should only have latest version
     assertThat(baseStorage.getCacheSize(ACCOUNT_INFO_STATE)).isEqualTo(1);
 
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cachedValue =
+    Optional<VersionedValue> cachedValue =
         baseStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
     assertThat(cachedValue).isPresent();
     assertThat(Bytes.wrap(cachedValue.get().getValue())).isEqualTo(data3);
@@ -288,7 +291,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     updater2.commit();
 
     // Cache should show removal
-    Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cachedValue =
+    Optional<VersionedValue> cachedValue =
         baseStorage.getCachedValue(ACCOUNT_STORAGE_STORAGE, concatenatedKey.toArrayUnsafe());
     assertThat(cachedValue).isPresent();
     assertThat(cachedValue.get().isRemoval()).isTrue();
@@ -313,7 +316,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
 
     for (int i = 0; i < 10; i++) {
       Hash accountHash = Hash.hash(Bytes.of(i));
-      Optional<BonsaiWorldStateKeyValueStorage.VersionedValue> cached =
+      Optional<VersionedValue> cached =
           baseStorage.getCachedValue(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe());
       assertThat(cached).isPresent();
       assertThat(cached.get().getVersion()).isEqualTo(version);

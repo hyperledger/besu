@@ -2349,10 +2349,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
         dataStorageConfiguration =
             ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+                .withBonsaiCacheEnabled(
+                    balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled())
                 .withPathBasedExtraStorageConfiguration(
                     ImmutablePathBasedExtraStorageConfiguration.copyOf(
                             dataStorageConfiguration.getPathBasedExtraStorageConfiguration())
                         .withLimitTrieLogsEnabled(false));
+        logger.info(
+            "Prefetch status {}",
+            balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled());
         logger.warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
             PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
