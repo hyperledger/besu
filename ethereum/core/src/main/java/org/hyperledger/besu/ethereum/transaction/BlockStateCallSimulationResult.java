@@ -91,10 +91,11 @@ public class BlockStateCallSimulationResult {
         transactionReceiptFactory.create(
             result.transaction().getType(), result.result(), worldState, cumulativeGasUsed);
 
-    List<Log> logs = tracerAggregator.getLogs();
-    if (logs.isEmpty()) {
-      logs = transactionReceipt.getLogsList();
-    }
+    final List<Log> logs =
+        tracerAggregator
+            .findTracer(EthTransferLogOperationTracer.class)
+            .map(EthTransferLogOperationTracer::getLogs)
+            .orElse(transactionReceipt.getLogsList());
 
     transactionSimulatorResults.add(
         new TransactionSimulatorResultWithMetadata(
