@@ -2330,10 +2330,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
     }
 
-    dataStorageConfiguration =
-        ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
-            .withBonsaiCacheEnabled(
-                balConfigurationOptions.toDomainObject().isBalPreFetchSortingEnabled());
+    if (!dataStorageConfiguration.getBonsaiCacheEnabled()) {
+      dataStorageConfiguration =
+          ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+              .withBonsaiCacheEnabled(
+                  balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled());
+      if (dataStorageConfiguration.getBonsaiCacheEnabled()) {
+        logger.info("Bonsai cache enabled for prefetch reading");
+      }
+    } else {
+      logger.info("Bonsai cache enabled");
+    }
 
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
