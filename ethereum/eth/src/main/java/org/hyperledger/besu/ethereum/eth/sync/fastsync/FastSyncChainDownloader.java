@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.PipelineChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloadPipelineFactory;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -30,14 +27,26 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.nio.file.Path;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class FastSyncChainDownloader {
-  private static final Logger LOG = LoggerFactory.getLogger(FastSyncChainDownloader.class);
 
   protected FastSyncChainDownloader() {}
 
+  /**
+   * Creates a traditional fast sync chain downloader using pipeline-based single-stage sync.
+   *
+   * @param config the synchronizer configuration
+   * @param worldStateStorageCoordinator the world state storage coordinator
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param ethContext the Ethereum context
+   * @param syncState the sync state
+   * @param metricsSystem the metrics system
+   * @param fastSyncState the fast sync state
+   * @param syncDurationMetrics the sync duration metrics
+   * @param fastSyncDataDirectory the directory for storing sync state (unused for traditional fast
+   *     sync)
+   * @return a PipelineChainDownloader configured for traditional fast sync
+   */
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -50,31 +59,26 @@ public class FastSyncChainDownloader {
       final SyncDurationMetrics syncDurationMetrics,
       final Path fastSyncDataDirectory) {
 
-    final SnapSyncChainDownloadPipelineFactory pipelineFactory =
-        new SnapSyncChainDownloadPipelineFactory(
+    final SyncTargetManager syncTargetManager =
+        new SyncTargetManager(
+            config,
+            worldStateStorageCoordinator,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            metricsSystem,
+            fastSyncState);
+
+    final FastSyncDownloadPipelineFactory pipelineFactory =
+        new FastSyncDownloadPipelineFactory(
             config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
 
-    final BlockHeader pivotBlockHeader =
-        fastSyncState
-            .getPivotBlockHeader()
-            .orElseThrow(() -> new RuntimeException("pivot block header not available"));
-    final Hash pivotBlockHash = pivotBlockHeader.getHash();
-    LOG.debug(
-        "Using two-stage fast sync with pivotHash={}, pivotBlockNumber={}, ",
-        pivotBlockHash,
-        pivotBlockHeader.getNumber());
-
-    final ChainSyncStateStorage chainSyncStateStorage =
-        new ChainSyncStateStorage(fastSyncDataDirectory);
-
-    return new SnapSyncChainDownloader(
-        pipelineFactory,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
+    return new PipelineChainDownloader(
         syncState,
-        syncDurationMetrics,
-        pivotBlockHeader,
-        chainSyncStateStorage);
+        syncTargetManager,
+        pipelineFactory,
+        ethContext.getScheduler(),
+        metricsSystem,
+        syncDurationMetrics);
   }
 }

@@ -22,18 +22,23 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.HeaderDownloadUtils;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.SingleBlockHeaderDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -41,7 +46,6 @@ import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -64,19 +68,24 @@ public class SnapSyncChainDownloader
   public static final int SMALL_DELAY_MILLISECONDS = 100;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
+  private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
   private final SyncState syncState;
   private final SyncDurationMetrics syncDurationMetrics;
   private final ChainSyncStateStorage chainSyncStateStorage;
+  private final BlockHeader initialPivotHeader;
+  private final SingleBlockHeaderDownloader headerDownloader;
+
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
-  private final AtomicReference<ChainSyncState> chainSyncState;
+  private final AtomicReference<ChainSyncState> chainSyncState = new AtomicReference<>(null);
   private final AtomicReference<BlockHeader> pendingPivotUpdate = new AtomicReference<>(null);
   private CompletableFuture<Void> pivotUpdateFuture = new CompletableFuture<>();
   private final CompletableFuture<Void> worldStateHealFinishedFuture = new CompletableFuture<>();
   private volatile SnapWorldDownloadState worldDownloadState;
 
   private final AtomicBoolean downloadInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean initialized = new AtomicBoolean(false);
 
   private volatile Pipeline<?> currentPipeline;
   private Instant overallStartTime;
@@ -97,12 +106,14 @@ public class SnapSyncChainDownloader
    * block.
    *
    * @param pipelineFactory the pipeline factory for creating download pipelines
+   * @param protocolSchedule the protocol schedule for deserializing headers
    * @param protocolContext the protocol context providing access to the blockchain
    * @param ethContext the ethContext for running pipelines
    * @param syncState the sync state tracker
    * @param syncDurationMetrics the sync duration metrics tracker
    * @param initialPivotHeader the initial pivot block header
    * @param chainStateStorage the storage for chain sync state
+   * @param headerDownloader the downloader for fetching checkpoint headers
    */
   public SnapSyncChainDownloader(
       final SnapSyncChainDownloadPipelineFactory pipelineFactory,
@@ -112,68 +123,61 @@ public class SnapSyncChainDownloader
       final SyncState syncState,
       final SyncDurationMetrics syncDurationMetrics,
       final BlockHeader initialPivotHeader,
-      final ChainSyncStateStorage chainStateStorage) {
+      final ChainSyncStateStorage chainStateStorage,
+      final SingleBlockHeaderDownloader headerDownloader) {
     this.pipelineFactory = pipelineFactory;
+    this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.syncDurationMetrics = syncDurationMetrics;
+    this.initialPivotHeader = initialPivotHeader;
     this.chainSyncStateStorage = chainStateStorage;
+    this.headerDownloader = headerDownloader;
+  }
 
-    // Initialize or load chain sync state
-    ChainSyncState chainSyncState =
-        chainStateStorage.loadState(
-            rlpInput ->
-                BlockHeader.readFrom(
-                    rlpInput, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
-    if (chainSyncState == null) {
-      // First time sync - create initial state
-      // This downloads headers from the pivot down to the genesis block
+  public static ChainDownloader create(
+      final SynchronizerConfiguration config,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final SyncState syncState,
+      final MetricsSystem metricsSystem,
+      final FastSyncState fastSyncState,
+      final SyncDurationMetrics syncDurationMetrics,
+      final Path fastSyncDataDirectory) {
 
-      final Optional<Checkpoint> maybeCheckpoint = syncState.getCheckpoint();
-      Hash checkpointHash;
-      final BlockHeader checkpointBlockHeader;
-      final MutableBlockchain blockchain = protocolContext.getBlockchain();
-      if (maybeCheckpoint.isEmpty()) {
-        // the current head of chain is the lower trust anchor
-        checkpointBlockHeader = blockchain.getChainHeadHeader();
-        checkpointHash = checkpointBlockHeader.getHash();
-        LOG.debug(
-            "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
-            checkpointBlockHeader.getNumber(),
-            checkpointHash);
-      } else {
-        // use the checkpoint as the lower trust anchor
-        final Checkpoint checkpoint = maybeCheckpoint.get();
-        checkpointHash = checkpoint.blockHash();
-        Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
-        try {
-          checkpointBlockHeader =
-              HeaderDownloadUtils.downloadBlockHeader(checkpointHash, ethContext, protocolSchedule)
-                  .get();
-        } catch (InterruptedException | ExecutionException e) {
-          throw new RuntimeException(e);
-        }
-        blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
-        blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
-        LOG.debug(
-            "Using block number {} as lower trust anchor: {}, {}",
-            checkpoint.blockNumber(),
-            checkpoint.blockHash(),
-            checkpoint.totalDifficulty());
-      }
+    final SnapSyncChainDownloadPipelineFactory pipelineFactory =
+        new SnapSyncChainDownloadPipelineFactory(
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
 
-      final BlockHeader genesisBlockHeader = blockchain.getGenesisBlockHeader();
+    final BlockHeader pivotBlockHeader =
+        fastSyncState
+            .getPivotBlockHeader()
+            .orElseThrow(() -> new RuntimeException("pivot block header not available"));
+    final Hash pivotBlockHash = pivotBlockHeader.getHash();
+    LOG.debug(
+        "Using two-stage fast sync with pivotHash={}, pivotBlockNumber={}, ",
+        pivotBlockHash,
+        pivotBlockHeader.getNumber());
 
-      chainSyncState =
-          ChainSyncState.initialSync(initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
+    final ChainSyncStateStorage chainSyncStateStorage =
+        new ChainSyncStateStorage(fastSyncDataDirectory);
 
-      LOG.info("Created initial chain sync state: {}", chainSyncState);
-    } else {
-      LOG.info("Loaded existing chain sync state: {}", chainSyncState);
-    }
+    final SingleBlockHeaderDownloader headerDownloader =
+        new SingleBlockHeaderDownloader(ethContext, protocolSchedule);
 
-    this.chainSyncState = new AtomicReference<>(chainSyncState);
+    return new SnapSyncChainDownloader(
+        pipelineFactory,
+        protocolSchedule,
+        protocolContext,
+        ethContext,
+        syncState,
+        syncDurationMetrics,
+        pivotBlockHeader,
+        chainSyncStateStorage,
+        headerDownloader);
   }
 
   @Override
@@ -202,20 +206,28 @@ public class SnapSyncChainDownloader
 
   @Override
   public CompletableFuture<Void> start() {
-    final ChainSyncState initialState = chainSyncState.get();
-    final BlockHeader pivotBlockHeader = initialState.pivotBlockHeader();
-    final BlockHeader checkpointBlockHeader = initialState.blockDownloadAnchor();
-    LOG.info(
-        "Starting two-stage fast sync chain download from pivot block {}, {}, and checkpoint block {}.",
-        pivotBlockHeader.getHash(),
-        pivotBlockHeader.getNumber(),
-        checkpointBlockHeader.getNumber());
+    if (!initialized.compareAndSet(false, true)) {
+      return CompletableFuture.failedFuture(
+          new IllegalStateException("SnapSyncChainDownloader already started"));
+    }
 
     overallStartTime = Instant.now();
-
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
 
-    return downloadAccordingToChainState()
+    // Initialize chain sync state asynchronously before starting download
+    return initializeChainSyncState()
+        .thenCompose(
+            state -> {
+              final BlockHeader pivotBlockHeader = state.pivotBlockHeader();
+              final BlockHeader checkpointBlockHeader = state.blockDownloadAnchor();
+              LOG.info(
+                  "Starting two-stage fast sync chain download from pivot block {}, {}, and checkpoint block {}.",
+                  pivotBlockHeader.getHash(),
+                  pivotBlockHeader.getNumber(),
+                  checkpointBlockHeader.getNumber());
+
+              return downloadAccordingToChainState();
+            })
         .handle(
             (ignored, throwable) -> {
               if (throwable != null) {
@@ -241,6 +253,86 @@ public class SnapSyncChainDownloader
         .thenCompose(f -> f);
   }
 
+  /**
+   * Initializes the chain sync state by loading from storage or creating new state. This method
+   * performs async operations including network calls to download checkpoint headers if needed.
+   *
+   * @return CompletableFuture that completes with the initialized ChainSyncState
+   */
+  private CompletableFuture<ChainSyncState> initializeChainSyncState() {
+    // Try to load existing state from storage
+    final ChainSyncState loadedState =
+        chainSyncStateStorage.loadState(
+            rlpInput ->
+                BlockHeader.readFrom(
+                    rlpInput, ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+
+    if (loadedState != null) {
+      LOG.info("Loaded existing chain sync state: {}", loadedState);
+      chainSyncState.set(loadedState);
+      return CompletableFuture.completedFuture(loadedState);
+    }
+
+    // No existing state - create initial state
+    LOG.debug("No existing chain sync state found, creating initial state");
+
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    final Optional<Checkpoint> maybeCheckpoint = syncState.getCheckpoint();
+
+    if (maybeCheckpoint.isEmpty()) {
+      // No checkpoint - use current chain head as lower trust anchor
+      final BlockHeader checkpointBlockHeader = blockchain.getChainHeadHeader();
+      final Hash checkpointHash = checkpointBlockHeader.getHash();
+      LOG.debug(
+          "No checkpoint found, using current chain head as lower trust anchor: {}, {}",
+          checkpointBlockHeader.getNumber(),
+          checkpointHash);
+
+      final BlockHeader genesisBlockHeader = blockchain.getGenesisBlockHeader();
+      final ChainSyncState newState =
+          ChainSyncState.initialSync(initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
+
+      LOG.info("Created initial chain sync state: {}", newState);
+      chainSyncState.set(newState);
+      return CompletableFuture.completedFuture(newState);
+    }
+
+    // Checkpoint exists - download checkpoint header asynchronously
+    final Checkpoint checkpoint = maybeCheckpoint.get();
+    final Hash checkpointHash = checkpoint.blockHash();
+    final Difficulty checkpointDifficulty = checkpoint.totalDifficulty();
+
+    LOG.debug(
+        "Downloading checkpoint block header {}, {} (difficulty: {})",
+        checkpoint.blockNumber(),
+        checkpointHash,
+        checkpointDifficulty);
+
+    return headerDownloader
+        .downloadBlockHeader(checkpointHash)
+        .thenApply(
+            checkpointBlockHeader -> {
+              // Store checkpoint header in blockchain
+              blockchain.unsafeSetChainHead(checkpointBlockHeader, checkpointDifficulty);
+              blockchain.unsafeStoreHeader(checkpointBlockHeader, checkpointDifficulty);
+
+              LOG.debug(
+                  "Using block number {} as lower trust anchor: {}, {}",
+                  checkpoint.blockNumber(),
+                  checkpoint.blockHash(),
+                  checkpoint.totalDifficulty());
+
+              final BlockHeader genesisBlockHeader = blockchain.getGenesisBlockHeader();
+              final ChainSyncState newState =
+                  ChainSyncState.initialSync(
+                      initialPivotHeader, checkpointBlockHeader, genesisBlockHeader);
+
+              LOG.info("Created initial chain sync state: {}", newState);
+              chainSyncState.set(newState);
+              return newState;
+            });
+  }
+
   private boolean shouldRetry(final Throwable error) {
     final Throwable cause = error instanceof CompletionException ? error.getCause() : error;
     return !(cause instanceof CancellationException);
@@ -253,7 +345,7 @@ public class SnapSyncChainDownloader
    * @param state the chain sync state to use for this stage
    * @return CompletableFuture that completes when Stage 1 is done
    */
-  private CompletableFuture<Void> determineStage1Execution(final ChainSyncState state) {
+  private CompletableFuture<Void> runStage1Download(final ChainSyncState state) {
     if (state.headersDownloadComplete()) {
       LOG.debug(
           "Backward header download already complete for pivot {}. Skipping Stage 1.",
@@ -411,7 +503,7 @@ public class SnapSyncChainDownloader
     // Snapshot state once - both stages use the same snapshot
     final ChainSyncState currentState = chainSyncState.get();
 
-    return determineStage1Execution(currentState)
+    return runStage1Download(currentState)
         .thenCompose(
             ignore -> {
               if (cancelled.get()) {
@@ -462,7 +554,7 @@ public class SnapSyncChainDownloader
       return;
     }
 
-    checkForPivotUpdate()
+    isAnotherDownloadCycleNeeded()
         .whenComplete(
             (needsContinue, error) -> {
               if (error != null) {
@@ -485,7 +577,7 @@ public class SnapSyncChainDownloader
    *
    * @return CompletableFuture<Boolean> - true if should continue, false if complete
    */
-  private CompletableFuture<Boolean> checkForPivotUpdate() {
+  private CompletableFuture<Boolean> isAnotherDownloadCycleNeeded() {
 
     final BlockHeader previousPivot;
     // Check if there's an immediate pivot update available

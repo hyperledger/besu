@@ -33,7 +33,7 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
   private final MutableBlockchain blockchainStorage;
   private final long lowestHeaderToImport;
-  private final AtomicBoolean logInfo = new AtomicBoolean(true);
+  private final AtomicBoolean isTimeToLog = new AtomicBoolean(true);
   private final Hash checkpointBlockHash;
   private BlockHeader currentChildHeader;
   private final long totalHeaders;
@@ -80,14 +80,14 @@ public class ImportHeadersStep implements Consumer<List<BlockHeader>> {
 
     blockchainStorage.storeBlockHeaders(blockHeaders);
 
-    if (logInfo.get()) {
+    if (isTimeToLog.get()) {
       final long downloadedHeaders =
           totalHeaders - (blockHeaders.getFirst().getNumber() - lowestHeaderToImport);
       final double headersPercent = (double) (downloadedHeaders) / totalHeaders * 100;
       LogUtil.throttledLog(
           LOG::info,
           String.format("Header import progress %.2f%%", headersPercent),
-          logInfo,
+          isTimeToLog,
           LOG_DELAY_SECONDS);
     }
   }

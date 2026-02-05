@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
@@ -50,7 +49,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ImportSyncBlocksStepTest {
 
   @Mock private ProtocolContext protocolContext;
-  @Mock private BlockHeader pivotHeader;
   @Mock private MutableBlockchain blockchain;
   @Mock private SyncState syncState;
   private final BlockDataGenerator gen = new BlockDataGenerator();
@@ -60,10 +58,9 @@ public class ImportSyncBlocksStepTest {
   @BeforeEach
   public void setUp() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    when(pivotHeader.getNumber()).thenReturn(10L);
 
     importSyncBlocksStep =
-        new ImportSyncBlocksStep(protocolContext, null, syncState, 0L, pivotHeader, false);
+        new ImportSyncBlocksStep(protocolContext, null, syncState, 0L, 10L, false);
   }
 
   @Test
@@ -82,7 +79,7 @@ public class ImportSyncBlocksStepTest {
 
     importSyncBlocksStep.accept(blocksWithReceipts);
 
-    verify(blockchain).unsafeImportSyncBodyAndReceipts(blocksWithReceipts, false);
+    verify(blockchain).unsafeImportSyncBodiesAndReceipts(blocksWithReceipts, false);
     verify(syncState).setSyncProgress(0L, blocksWithReceipts.getLast().getNumber(), 10L);
   }
 

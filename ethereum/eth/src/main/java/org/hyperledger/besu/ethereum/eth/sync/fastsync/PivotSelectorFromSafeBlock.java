@@ -39,11 +39,11 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private static final long UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL =
       Duration.ofMinutes(7).toMillis();
   private final ProtocolContext protocolContext;
-  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final GenesisConfigOptions genesisConfig;
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
+  private final SingleBlockHeaderDownloader headerDownloader;
 
   private volatile long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
   private volatile long lastPivotBlockChange = System.currentTimeMillis();
@@ -59,13 +59,14 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
       final EthContext ethContext,
       final GenesisConfigOptions genesisConfig,
       final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
-      final Runnable cleanupAction) {
+      final Runnable cleanupAction,
+      final SingleBlockHeaderDownloader headerDownloader) {
     this.protocolContext = protocolContext;
-    this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.genesisConfig = genesisConfig;
     this.forkchoiceStateSupplier = forkchoiceStateSupplier;
     this.cleanupAction = cleanupAction;
+    this.headerDownloader = headerDownloader;
   }
 
   @Override
@@ -116,7 +117,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   private CompletableFuture<FastSyncState> selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return HeaderDownloadUtils.downloadBlockHeader(safeHash, ethContext, protocolSchedule)
+    return headerDownloader
+        .downloadBlockHeader(safeHash)
         .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
@@ -126,7 +128,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return HeaderDownloadUtils.downloadBlockHeader(fallbackBlockHash, ethContext, protocolSchedule)
+    return headerDownloader
+        .downloadBlockHeader(fallbackBlockHash)
         .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
@@ -164,8 +167,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                                     .waitForPeer((peer) -> true)
                                     .thenCompose(
                                         unused ->
-                                            HeaderDownloadUtils.downloadBlockHeader(
-                                                headBlockHash, ethContext, protocolSchedule))
+                                            headerDownloader.downloadBlockHeader(headBlockHash))
                                     .thenApply(
                                         blockHeader -> {
                                           maybeCachedHeadBlockHeader = Optional.of(blockHeader);

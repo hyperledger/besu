@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.chain;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.reverse;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.BLOCKCHAIN;
@@ -375,30 +376,30 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public List<BlockHeader> getBlockHeaders(final long firstBlock, final int numberOfHeaders) {
+
     List<BlockHeader> headers = new ArrayList<>(numberOfHeaders);
 
-    final Optional<BlockHeader> optionalBlockHeaderStart =
-        getBlockHeader(firstBlock + numberOfHeaders - 1);
-    if (optionalBlockHeaderStart.isEmpty()) {
-      LOG.error("Missing header at block number {}", firstBlock + numberOfHeaders - 1);
-      throw new IllegalStateException(
-          "Missing header at block " + (firstBlock + numberOfHeaders - 1));
-    } else {
-      final BlockHeader startBlockHeader = optionalBlockHeaderStart.get();
-      headers.add(startBlockHeader);
-      Hash nextHash = startBlockHeader.getParentHash();
-      for (int i = 0; i < numberOfHeaders - 1; i++) {
-        Optional<BlockHeader> optionalBlockHeader = getBlockHeader(nextHash);
-        if (optionalBlockHeader.isEmpty()) {
-          LOG.error("Missing header for block {}", nextHash);
-          throw new IllegalStateException("Missing header for block " + nextHash);
-        } else {
-          BlockHeader blockHeader = optionalBlockHeader.get();
-          headers.addFirst(blockHeader);
-          nextHash = blockHeader.getParentHash();
-        }
-      }
+    BlockHeader currentHeader =
+        getBlockHeader(firstBlock + numberOfHeaders - 1)
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Missing header at block " + (firstBlock + numberOfHeaders - 1)));
+
+    headers.add(currentHeader);
+
+    for (int i = 1; i < numberOfHeaders; i++) {
+      final BlockHeader finalCurrentHeader = currentHeader;
+      currentHeader =
+          getBlockHeader(currentHeader.getParentHash())
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Missing header for hash " + finalCurrentHeader.getParentHash()));
+      headers.add(currentHeader);
     }
+
+    reverse(headers);
     return headers;
   }
 
@@ -1094,32 +1095,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   public void setSafeBlock(final Hash blockHash) {
     final var updater = blockchainStorage.updater();
     updater.setSafeBlock(blockHash);
-    updater.commit();
-  }
-
-  @Override
-  public synchronized void unsafeImportSyncBodyAndReceipts(
-      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions) {
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
-    for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
-      final SyncBlock block = blockAndReceipts.getBlock();
-      final Hash blockHash = block.getHash();
-      final BlockHeader header = block.getHeader();
-      final SyncBlockBody body = block.getBody();
-      updater.putBlockHash(header.getNumber(), blockHash);
-      updater.putBlockHeader(blockHash, header);
-      updater.putSyncBlockBody(blockHash, body);
-      updater.putSyncTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
-      this.totalDifficulty = calculateTotalDifficultyForSyncing(header);
-      updater.putTotalDifficulty(blockHash, totalDifficulty);
-      this.chainHeader = header;
-      if (indexTransactions) {
-        final List<Hash> listOfTxHashes =
-            body.getEncodedTransactions().stream().map(Hash::hash).toList();
-        indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
-      }
-    }
-    updater.setChainHead(chainHeader.getBlockHash());
     updater.commit();
   }
 

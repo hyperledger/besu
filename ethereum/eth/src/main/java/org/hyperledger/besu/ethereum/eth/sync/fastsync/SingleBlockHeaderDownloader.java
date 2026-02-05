@@ -29,25 +29,36 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Utility class for downloading block headers from peers. */
-public class HeaderDownloadUtils {
+/**
+ * Service for downloading single block headers by hash from peers. This class encapsulates the
+ * dependencies required for header download operations and supports dependency injection.
+ */
+public class SingleBlockHeaderDownloader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HeaderDownloadUtils.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SingleBlockHeaderDownloader.class);
 
-  private HeaderDownloadUtils() {
-    // Utility class
+  private final EthContext ethContext;
+  private final ProtocolSchedule protocolSchedule;
+
+  /**
+   * Creates a new SingleBlockHeaderDownloader instance.
+   *
+   * @param ethContext the Ethereum context for peer communication
+   * @param protocolSchedule the protocol schedule for validation
+   */
+  public SingleBlockHeaderDownloader(
+      final EthContext ethContext, final ProtocolSchedule protocolSchedule) {
+    this.ethContext = ethContext;
+    this.protocolSchedule = protocolSchedule;
   }
 
   /**
    * Downloads a single block header by hash from peers.
    *
    * @param hash the hash of the block header to download
-   * @param ethContext the Ethereum context for peer communication
-   * @param protocolSchedule the protocol schedule for validation
    * @return a CompletableFuture that completes with the downloaded BlockHeader
    */
-  public static CompletableFuture<BlockHeader> downloadBlockHeader(
-      final Hash hash, final EthContext ethContext, final ProtocolSchedule protocolSchedule) {
+  public CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
     return ethContext
         .getScheduler()
         .scheduleServiceTask(

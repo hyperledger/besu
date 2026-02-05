@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportHeadersStep;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportSyncBlocksStep;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -192,13 +193,13 @@ public class SnapSyncChainDownloadPipelineFactory {
             ethContext,
             new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
 
-    final ImportSnapSyncBlocksStep importBlocksStep =
-        new ImportSnapSyncBlocksStep(
-            protocolContext.getBlockchain(),
+    final ImportSyncBlocksStep importBlocksStep =
+        new ImportSyncBlocksStep(
+            protocolContext,
             ethContext,
             syncState,
             anchorBlock,
-            pivotHeader,
+            pivotHeader.getNumber(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(

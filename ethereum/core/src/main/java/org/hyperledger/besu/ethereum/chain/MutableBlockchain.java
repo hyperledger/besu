@@ -182,14 +182,4 @@ public interface MutableBlockchain extends Blockchain {
    * @param blockHash The hash of the last safe block.
    */
   void setSafeBlock(final Hash blockHash);
-
-  /**
-   * Performs an unsafe import of the supplied SyncBlockWithReceipts, optionally indexing
-   * transactions depending upon the indexTransactions
-   *
-   * @param blocksAndReceipts The SyncBlockWithReceipts to be imported
-   * @param indexTransactions Whether to index the transactions
-   */
-  void unsafeImportSyncBodyAndReceipts(
-      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions);
 }
