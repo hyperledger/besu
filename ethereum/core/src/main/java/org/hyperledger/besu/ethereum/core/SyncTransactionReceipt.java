@@ -23,6 +23,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class SyncTransactionReceipt {
 
   private final Bytes rlpBytes;
+  private final boolean isFormattedForRootCalculation;
   private Bytes transactionTypeCode;
   private Bytes statusOrStateRoot;
   private Bytes cumulativeGasUsed;
@@ -31,6 +32,7 @@ public class SyncTransactionReceipt {
 
   public SyncTransactionReceipt(final Bytes rlpBytes) {
     this.rlpBytes = rlpBytes;
+    isFormattedForRootCalculation = true;
   }
 
   public SyncTransactionReceipt(
@@ -41,6 +43,7 @@ public class SyncTransactionReceipt {
       final LogsBloomFilter bloomFilter,
       final List<List<Bytes>> logs) {
     this.rlpBytes = rlpBytes;
+    isFormattedForRootCalculation = false;
     this.transactionTypeCode = transactionTypeCode;
     this.statusOrStateRoot = statusOrStateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
@@ -50,6 +53,10 @@ public class SyncTransactionReceipt {
 
   public Bytes getRlpBytes() {
     return rlpBytes;
+  }
+
+  public boolean isFormattedForRootCalculation() {
+    return isFormattedForRootCalculation;
   }
 
   public Bytes getTransactionTypeCode() {

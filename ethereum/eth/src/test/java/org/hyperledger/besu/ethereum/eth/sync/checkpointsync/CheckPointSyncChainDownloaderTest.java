@@ -28,7 +28,11 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
@@ -46,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
@@ -55,6 +60,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -96,6 +102,9 @@ public class CheckPointSyncChainDownloaderTest {
   private Checkpoint checkpoint;
 
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
+
+  private final SyncTransactionReceiptDecoder syncTransactionReceiptDecoder =
+      new SyncTransactionReceiptDecoder();
 
   static class CheckPointSyncChainDownloaderTestArguments implements ArgumentsProvider {
     @Override
@@ -166,6 +175,36 @@ public class CheckPointSyncChainDownloaderTest {
                       (bh) ->
                           getReceiptsFromPeerTaskResult.put(
                               bh, otherBlockchain.getTxReceipts(bh.getHash()).get()));
+
+              return new PeerTaskExecutorResult<>(
+                  Optional.of(getReceiptsFromPeerTaskResult),
+                  PeerTaskExecutorResponseCode.SUCCESS,
+                  Collections.emptyList());
+            });
+    when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
+        .thenAnswer(
+            (invocationOnMock) -> {
+              GetSyncReceiptsFromPeerTask task =
+                  invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
+              Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
+                  new HashMap<>();
+              task.getBlockHeaders()
+                  .forEach(
+                      (bh) ->
+                          getReceiptsFromPeerTaskResult.put(
+                              bh,
+                              otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
+                                  .map(
+                                      (tr) ->
+                                          syncTransactionReceiptDecoder.decode(
+                                              RLP.encode(
+                                                  (rlpOut) ->
+                                                      TransactionReceiptEncoder.writeTo(
+                                                          tr,
+                                                          rlpOut,
+                                                          TransactionReceiptEncodingConfiguration
+                                                              .DEFAULT))))
+                                  .toList()));
 
               return new PeerTaskExecutorResult<>(
                   Optional.of(getReceiptsFromPeerTaskResult),

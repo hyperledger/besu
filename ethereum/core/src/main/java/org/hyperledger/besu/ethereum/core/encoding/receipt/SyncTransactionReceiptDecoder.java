@@ -50,18 +50,18 @@ public class SyncTransactionReceiptDecoder {
     Bytes statusOrStateRoot = input.readBytes();
     Bytes cumulativeGasUsed = input.readBytes();
     final boolean isCompacted = isNextNotBloomFilter(input);
-    LogsBloomFilter bloomFilter = null;
+    SyncTransactionReceipt syncTransactionReceipt;
     if (!isCompacted) {
-      bloomFilter = new LogsBloomFilter(input.readBytes());
+      syncTransactionReceipt = new SyncTransactionReceipt(rawRlp);
+    } else {
+      List<List<Bytes>> logs = parseLogs(input);
+      LogsBloomFilter bloomFilter = LogsBloomFilter.builder().insertRawLogs(logs).build();
+      input.leaveList();
+      syncTransactionReceipt =
+          new SyncTransactionReceipt(
+              rawRlp, transactionTypeCode, statusOrStateRoot, cumulativeGasUsed, bloomFilter, logs);
     }
-    List<List<Bytes>> logs = parseLogs(input);
-    // if the receipt is compacted, we need to build the bloom filter from the logs
-    if (isCompacted) {
-      bloomFilter = LogsBloomFilter.builder().insertRawLogs(logs).build();
-    }
-    input.leaveList();
-    return new SyncTransactionReceipt(
-        rawRlp, transactionTypeCode, statusOrStateRoot, cumulativeGasUsed, bloomFilter, logs);
+    return syncTransactionReceipt;
   }
 
   private SyncTransactionReceipt decodeFlatReceipt(final Bytes rawRlp, final RLPInput rlpInput) {
@@ -86,7 +86,6 @@ public class SyncTransactionReceiptDecoder {
     } else {
       result = decodeLegacyReceipt(rawRlp, rlpInput, firstElement, secondElement, bloomFilter);
     }
-    rlpInput.leaveList();
     return result;
   }
 
@@ -112,15 +111,22 @@ public class SyncTransactionReceiptDecoder {
       final Bytes statusOrStateRoot,
       final Bytes cumulativeGasUsed,
       final LogsBloomFilter bloomFilter) {
-    Bytes transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getSerializedType());
-    List<List<Bytes>> logs = parseLogs(input);
-    return new SyncTransactionReceipt(
-        rawRlp,
-        transactionTypeCode,
-        statusOrStateRoot,
-        cumulativeGasUsed,
-        bloomFilter == null ? LogsBloomFilter.builder().insertRawLogs(logs).build() : bloomFilter,
-        logs);
+    SyncTransactionReceipt syncTransactionReceipt;
+    if (bloomFilter != null) {
+      syncTransactionReceipt = new SyncTransactionReceipt(rawRlp);
+    } else {
+      Bytes transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getSerializedType());
+      List<List<Bytes>> logs = parseLogs(input);
+      syncTransactionReceipt =
+          new SyncTransactionReceipt(
+              rawRlp,
+              transactionTypeCode,
+              statusOrStateRoot,
+              cumulativeGasUsed,
+              LogsBloomFilter.builder().insertRawLogs(logs).build(),
+              logs);
+    }
+    return syncTransactionReceipt;
   }
 
   private List<List<Bytes>> parseLogs(final RLPInput input) {
