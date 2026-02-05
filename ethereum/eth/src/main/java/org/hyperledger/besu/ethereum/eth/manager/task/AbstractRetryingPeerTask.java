@@ -126,10 +126,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
 
-    if (cause instanceof NoAvailablePeersException
-        || cause
-            instanceof
-            org.hyperledger.besu.ethereum.eth.manager.peertask.NoAvailablePeerException) {
+    if (cause instanceof NoAvailablePeersException) {
       LOG.debug(
           "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
           ethContext.getEthPeers().peerCount());
@@ -165,9 +162,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
   protected boolean isPeerFailure(final Throwable error) {
     return error instanceof PeerBreachedProtocolException
         || error instanceof PeerDisconnectedException
-        || error instanceof NoAvailablePeersException
-        || error
-            instanceof org.hyperledger.besu.ethereum.eth.manager.peertask.NoAvailablePeerException;
+        || error instanceof NoAvailablePeersException;
   }
 
   protected EthContext getEthContext() {
