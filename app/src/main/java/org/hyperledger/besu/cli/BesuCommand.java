@@ -2330,6 +2330,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
     }
 
+    dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+            .withBonsaiCacheEnabled(
+                balConfigurationOptions.toDomainObject().isBalPreFetchSortingEnabled());
+
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration =
@@ -2349,15 +2354,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
         dataStorageConfiguration =
             ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
-                .withBonsaiCacheEnabled(
-                    balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled())
                 .withPathBasedExtraStorageConfiguration(
                     ImmutablePathBasedExtraStorageConfiguration.copyOf(
                             dataStorageConfiguration.getPathBasedExtraStorageConfiguration())
                         .withLimitTrieLogsEnabled(false));
-        logger.info(
-            "Prefetch status {}",
-            balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled());
         logger.warn(
             "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
             PathBasedExtraStorageOptions.LIMIT_TRIE_LOGS_ENABLED + "=false",
@@ -2365,6 +2365,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             DataStorageFormat.BONSAI);
       }
     }
+    logger.info(
+        "Prefetch status {}",
+        balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled());
+
     return dataStorageConfiguration;
   }
 
