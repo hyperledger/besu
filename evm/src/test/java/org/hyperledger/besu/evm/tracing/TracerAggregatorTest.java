@@ -332,4 +332,39 @@ public class TracerAggregatorTest {
     inOrder.verify(tracer2).tracePreExecution(frame);
     inOrder.verify(tracer3).tracePreExecution(frame);
   }
+
+  @Test
+  void staticHasTracerShouldCheckDirectTracer() {
+    final EthTransferLogOperationTracer tracer = mock(EthTransferLogOperationTracer.class);
+
+    assertThat(TracerAggregator.hasTracer(tracer, EthTransferLogOperationTracer.class)).isTrue();
+    assertThat(TracerAggregator.hasTracer(tracer, OperationTracer.class)).isTrue();
+
+    // Test for a tracer type that doesn't match
+    abstract class NonExistentTracer implements OperationTracer {}
+    assertThat(TracerAggregator.hasTracer(tracer, NonExistentTracer.class)).isFalse();
+  }
+
+  @Test
+  void staticHasTracerShouldCheckAggregatedTracer() {
+    final OperationTracer tracer1 = mock(OperationTracer.class);
+    final EthTransferLogOperationTracer tracer2 = mock(EthTransferLogOperationTracer.class);
+    final TracerAggregator aggregator = new TracerAggregator(tracer1, tracer2);
+
+    assertThat(TracerAggregator.hasTracer(aggregator, EthTransferLogOperationTracer.class))
+        .isTrue();
+    assertThat(TracerAggregator.hasTracer(aggregator, OperationTracer.class)).isTrue();
+
+    // Test for a tracer type that doesn't exist in the aggregator
+    abstract class NonExistentTracer implements OperationTracer {}
+    assertThat(TracerAggregator.hasTracer(aggregator, NonExistentTracer.class)).isFalse();
+  }
+
+  @Test
+  void staticHasTracerShouldReturnFalseForNoTracing() {
+    assertThat(
+            TracerAggregator.hasTracer(
+                OperationTracer.NO_TRACING, EthTransferLogOperationTracer.class))
+        .isFalse();
+  }
 }
