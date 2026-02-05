@@ -2365,9 +2365,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             DataStorageFormat.BONSAI);
       }
     }
-    logger.info(
-        "Prefetch status {}",
-        balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled());
 
     return dataStorageConfiguration;
   }

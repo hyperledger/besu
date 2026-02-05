@@ -53,6 +53,8 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Bonsai world state storage with integrated cache maintenance.
@@ -66,6 +68,8 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateKeyValueStorage.class);
 
   protected final BonsaiFlatDbStrategyProvider flatDbStrategyProvider;
   protected final CacheManager cacheManager;
@@ -114,11 +118,13 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
   private static CacheManager createCacheManager(
       final DataStorageConfiguration dataStorageConfiguration, final MetricsSystem metricsSystem) {
     if (dataStorageConfiguration.getBonsaiCacheEnabled()) {
+      LOG.info("Cached enabled");
       return new VersionedCacheManager(
           100_000, // accountCacheSize
           500_000, // storageCacheSize
           metricsSystem);
     } else {
+      LOG.info("Cached disabled");
       return CacheManager.EMPTY_CACHE;
     }
   }
