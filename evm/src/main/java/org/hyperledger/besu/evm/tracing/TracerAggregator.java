@@ -267,4 +267,28 @@ public class TracerAggregator implements OperationTracer {
   public boolean hasTracer(final Class<? extends OperationTracer> tracerClass) {
     return findTracer(tracerClass).isPresent();
   }
+
+  /**
+   * Static utility method to check if an operation tracer contains a tracer of the specified type,
+   * either directly or within an aggregated tracer.
+   *
+   * @param operationTracer the tracer to check
+   * @param tracerClass the class of the tracer to check for
+   * @return true if a tracer of the specified type is present
+   */
+  public static boolean hasTracer(
+      final OperationTracer operationTracer, final Class<? extends OperationTracer> tracerClass) {
+    // Check if the tracer is directly of the specified type
+    if (tracerClass.isInstance(operationTracer)) {
+      return true;
+    }
+
+    // Check if it's a TracerAggregator that might contain the specified tracer type
+    if (operationTracer instanceof TracerAggregator) {
+      final TracerAggregator aggregator = (TracerAggregator) operationTracer;
+      return aggregator.hasTracer(tracerClass);
+    }
+
+    return false;
+  }
 }
