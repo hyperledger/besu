@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
 
 import java.util.ArrayList;
@@ -69,11 +68,12 @@ public class BlockStateCallSimulationResult {
    *
    * @param result the transaction simulation result
    * @param worldState the world state after the transaction
+   * @param tracerAggregator the tracer aggregator used for the transaction
    */
   public void add(
       final TransactionSimulatorResult result,
       final MutableWorldState worldState,
-      final OperationTracer operationTracer) {
+      final TracerAggregator tracerAggregator) {
     Objects.requireNonNull(result, "TransactionSimulatorResult cannot be null");
     Objects.requireNonNull(worldState, "WorldState cannot be null");
 
@@ -89,8 +89,11 @@ public class BlockStateCallSimulationResult {
             result.transaction().getType(), result.result(), worldState, cumulativeGasUsed);
 
     List<Log> logs =
-        TracerAggregator.hasTracer(operationTracer, EthTransferLogOperationTracer.class)
-            ? getEthTransferLogs(operationTracer)
+        tracerAggregator.hasTracer(EthTransferLogOperationTracer.class)
+            ? tracerAggregator
+                .findTracer(EthTransferLogOperationTracer.class)
+                .map(EthTransferLogOperationTracer::getLogs)
+                .orElse(transactionReceipt.getLogsList())
             : transactionReceipt.getLogsList();
 
     transactionSimulatorResults.add(
@@ -126,29 +129,6 @@ public class BlockStateCallSimulationResult {
 
   public Optional<BlockAccessList> getBlockAccessList() {
     return blockAccessList;
-  }
-
-  /**
-   * Extract logs from EthTransferLogOperationTracer, handling both direct and aggregated tracers.
-   *
-   * @param operationTracer the operation tracer to search
-   * @return the logs from the EthTransferLogOperationTracer, or empty list if not found
-   */
-  private List<Log> getEthTransferLogs(final OperationTracer operationTracer) {
-    // Handle direct EthTransferLogOperationTracer
-    if (operationTracer instanceof EthTransferLogOperationTracer) {
-      return ((EthTransferLogOperationTracer) operationTracer).getLogs();
-    }
-
-    // Handle aggregated tracers
-    if (operationTracer instanceof TracerAggregator) {
-      return ((TracerAggregator) operationTracer)
-          .findTracer(EthTransferLogOperationTracer.class)
-          .map(EthTransferLogOperationTracer::getLogs)
-          .orElse(List.of());
-    }
-
-    return List.of();
   }
 
   /** Represents a single block call simulation result with metadata. */

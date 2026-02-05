@@ -366,13 +366,13 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
 
-      // Compose tracers using TracerAggregator
-      final OperationTracer finalOperationTracer;
+      // Always use TracerAggregator, optionally adding EthTransferLogOperationTracer
+      final TracerAggregator finalOperationTracer;
       if (isTraceTransfers) {
         finalOperationTracer =
             TracerAggregator.combining(operationTracer, new EthTransferLogOperationTracer());
       } else {
-        finalOperationTracer = operationTracer;
+        finalOperationTracer = TracerAggregator.combining(operationTracer);
       }
 
       long gasLimit =
