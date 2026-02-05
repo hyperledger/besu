@@ -52,7 +52,7 @@ This Charter sets forth the responsibilities and procedures for technical contri
 
 3. **Voting**
 
-   1. While the Project aims to operate as a consensus-based community, if any  decision of the Maintainers requires a vote to move the Project forward, the voting members of the Maintainers will vote on a one vote per voting member basis.
+   1. While the Project aims to operate as a consensus-based community, if any decision of the Maintainers requires a vote to move the Project forward, the voting members of the Maintainers will vote on a one vote per voting member basis. Unless otherwise stated, a 51% vote is required for such decisions that cannot be made by rough consensus.
 
    2. It is anticipated that most decisions will be made asynchronously, but meetings of Maintainers may be held.  Quorum for such meetings requires at least fifty percent of all Maintainers to be present. Meetings of Maintainers may continue if quorum is not met but will be prevented from making any decisions at the meeting.
 
