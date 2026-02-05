@@ -26,7 +26,7 @@ This Charter sets forth the responsibilities and procedures for technical contri
 
       4. Participation in the Project through becoming a Contributor and Maintainer is open to anyone so long as they abide by the terms of this Charter.
 
-      5. The Maintainers may (1) establish work flow procedures for the submission, approval, and closure/archiving of sub-projects, (2) set requirements for the promotion of Contributors to Maintainer status, as applicable, and (3) amend, adjust, refine and/or eliminate the roles of Contributors, and Maintainers, and create new roles, and publicly document any technical roles, as it sees fit.
+      5. The Maintainers may (1) establish work flow procedures for the submission, approval, and closure/archiving of sub-projects, (2) set requirements for the promotion of Contributors to Maintainer status, as applicable, and (3) amend, adjust, refine and/or eliminate the roles of Contributors, and Maintainers, and create new roles, and publicly document any technical roles, as they see fit.
 
       6. The Maintainers may elect a Chair, who will preside over meetings of the Maintainers and will serve until their resignation or replacement by the Maintainers.  The Chair, or any other Maintainer so designated by the Maintainers, will serve as the primary communication contact between the Project and LF Decentralized Trust, a directed fund of The Linux Foundation.
 
