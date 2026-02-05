@@ -22,7 +22,7 @@ This Charter sets forth the responsibilities and procedures for technical contri
 
          2. Maintainers are Contributors who have earned the ability to modify ("commit") source code, documentation or other technical artifacts in a project's repository; and  
 
-         3. A Contributor may become a Maintainer by a majority approval of the existing Maintainers. A Maintainer may be removed by a majority approval of the other existing Maintainers.
+         3. A Contributor may become a Maintainer by following the previously agreed process outlined in [MAINTAINERS.md](MAINTAINERS.md).
 
       4. Participation in the Project through becoming a Contributor and Maintainer is open to anyone so long as they abide by the terms of this Charter.
 
