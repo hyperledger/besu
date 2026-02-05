@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Sar operation. */
 public class SarOperationOptimized extends AbstractFixedCostOperation {
@@ -41,6 +41,7 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
+
   /** All ones (0xFF repeated 32 times). */
   public static final Bytes ALL_ONES = Bytes.repeat((byte) 0xFF, 32);
 
@@ -56,7 +57,6 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
     final Bytes value = Bytes32.leftPad(frame.popStackItem());
-
     final boolean negative = (value.get(0) & 0x80) != 0;
 
     // detect shift >= 256 cheaply (check high bytes)
@@ -64,29 +64,27 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
       frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
       return sarSuccess;
     }
-    final int shift = (shiftAmount.get(shiftAmount.size() - 1) & 0xFF);
+    final int shift = shiftAmount.isEmpty() ? 0 : (shiftAmount.get(shiftAmount.size() - 1) & 0xFF);
 
     frame.pushStackItem(sar256(value, shift, negative));
     return sarSuccess;
   }
 
-
   /**
    * Performs a 256-bit arithmetic right shift (EVM SAR).
    *
-   * <p>The input value is treated as a signed 256-bit integer in two’s complement
-   * representation. The shift amount is in the range {@code [0..255]} and is assumed
-   * to have been validated by the caller.</p>
+   * <p>The input value is treated as a signed 256-bit integer in two’s complement representation.
+   * The shift amount is in the range {@code [0..255]} and is assumed to have been validated by the
+   * caller.
    *
-   * <p>For shift values greater than or equal to 256, the result is fully sign-extended
-   * and handled by the caller.</p>
+   * <p>For shift values greater than or equal to 256, the result is fully sign-extended and handled
+   * by the caller.
    *
    * @param value32 a 32-byte value representing a signed 256-bit integer
    * @param shift the right shift amount in bits (0–255)
    * @param negative whether the input value is negative (sign bit set)
    * @return the shifted 256-bit value
    */
-
   private static Bytes sar256(final Bytes value32, final int shift, final boolean negative) {
     if (shift == 0) return value32;
 
@@ -98,7 +96,8 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
     final byte[] in = value32.toArrayUnsafe();
 
     for (int i = 31; i >= 0; i--) {
-      final int src = i - shiftBytes; final int hi = (src >= 0) ? (in[src] & 0xFF) : fill;
+      final int src = i - shiftBytes;
+      final int hi = (src >= 0) ? (in[src] & 0xFF) : fill;
       if (shiftBits == 0) {
         out[i] = (byte) hi;
       } else {
