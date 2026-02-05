@@ -98,9 +98,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final boolean insufficientBalance = value.compareTo(account.getBalance()) > 0;
     final boolean maxDepthReached = frame.getDepth() >= 1024;
-    final boolean hasOtherFailure = account.getNonce() == -1 || code == null;
+    final boolean invalidState = account.getNonce() == -1 || code == null;
 
-    if (insufficientBalance || maxDepthReached || hasOtherFailure) {
+    if (insufficientBalance || maxDepthReached || invalidState) {
       fail(frame);
       // Set soft failure reason for callTracer compatibility
       final SoftFailureReason softFailureReason =
@@ -108,12 +108,13 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
               ? LEGACY_INSUFFICIENT_BALANCE
               : (maxDepthReached ? LEGACY_MAX_CALL_DEPTH : UNKNOWN_ERROR);
       return new OperationResult(cost, getPcIncrement(), softFailureReason);
-    } else {
-      account.incrementNonce();
-      frame.decrementRemainingGas(cost);
-      spawnChildMessage(frame, code);
-      frame.incrementRemainingGas(cost);
     }
+
+    account.incrementNonce();
+    frame.decrementRemainingGas(cost);
+    spawnChildMessage(frame, code);
+    frame.incrementRemainingGas(cost);
+
     return new OperationResult(cost, null, getPcIncrement());
   }
 
