@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.NoAvailablePeerException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
@@ -164,7 +164,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
               if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
                   || taskResult.result().isEmpty()) {
                 if (taskResult.responseCode() == PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE) {
-                  return CompletableFuture.failedFuture(new NoAvailablePeerException());
+                  return CompletableFuture.failedFuture(new NoAvailablePeersException());
                 } else {
                   return CompletableFuture.failedFuture(
                       new RuntimeException(
