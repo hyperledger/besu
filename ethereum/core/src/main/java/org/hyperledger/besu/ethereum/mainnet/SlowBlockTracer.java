@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -128,8 +128,13 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
     // Check for slow blocks using ExecutionStats from thread-local storage
     if (isEnabled()) {
       final ExecutionStats executionStats = ExecutionStatsHolder.get();
-      if (executionStats != null && executionStats.isSlowBlock(slowBlockThresholdMs)) {
-        logSlowBlock(blockHeader, executionStats);
+      try {
+        if (executionStats != null && executionStats.isSlowBlock(slowBlockThresholdMs)) {
+          logSlowBlock(blockHeader, executionStats);
+        }
+      } finally {
+        // Clean up thread-local storage to prevent memory leaks
+        ExecutionStatsHolder.clear();
       }
     }
   }

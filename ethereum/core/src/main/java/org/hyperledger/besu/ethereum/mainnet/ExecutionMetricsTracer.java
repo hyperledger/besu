@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -97,16 +97,14 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer, Operat
   @Override
   public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
     if (executionStats != null) {
-      try {
-        // Collect EVM operation counters from tracer instead of static counters
-        collectEvmMetricsFromTracer();
-        // End execution timing
-        executionStats.endExecution();
-      } finally {
-        // Clean up thread-local state
-        ExecutionStatsHolder.clear();
-        executionStats = null;
-      }
+      // Collect EVM operation counters from tracer instead of static counters
+      collectEvmMetricsFromTracer();
+      // End execution timing
+      executionStats.endExecution();
+      // NOTE: We do NOT clear ExecutionStatsHolder here because other tracers (like
+      // SlowBlockTracer)
+      // may need to access it. The thread-local will be cleared automatically when the thread ends,
+      // or can be cleared by the last tracer that needs it.
     }
   }
 
