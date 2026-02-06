@@ -130,12 +130,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     BlockAwareOperationTracer baseTracer = blockImportTracerProvider.getBlockImportTracer(header);
 
-    // Wrap with SlowBlockTracer for execution metrics collection.
-    // Threshold: negative = disabled, 0 = log all blocks, positive = threshold in ms.
-    // TODO: Replace system property with CLI flag (--slow-block-threshold)
+    // Compose execution metrics and slow block tracers using BlockAwareTracerAggregator
+    // System property is set from CLI --slow-block-threshold flag
     final long slowBlockThresholdMs = Long.getLong("besu.execution.slowBlockThresholdMs", -1L);
     if (slowBlockThresholdMs >= 0) {
-      return new SlowBlockTracer(slowBlockThresholdMs, baseTracer);
+      // Create ExecutionMetricsTracer for metrics collection
+      final ExecutionMetricsTracer executionMetricsTracer = new ExecutionMetricsTracer();
+      // Create SlowBlockTracer for logging (reuses ExecutionMetricsTracer's metrics)
+      final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(slowBlockThresholdMs, baseTracer);
+      // Compose tracers using BlockAwareTracerAggregator
+      return BlockAwareTracerAggregator.combining(baseTracer, executionMetricsTracer, slowBlockTracer);
     }
     return baseTracer;
   }

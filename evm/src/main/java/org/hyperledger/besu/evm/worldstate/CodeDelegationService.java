@@ -48,7 +48,7 @@ public class CodeDelegationService {
       return;
     }
 
-    account.setCode(Bytes.concatenate(CODE_DELEGATION_PREFIX, codeDelegationAddress));
+    account.setCode(Bytes.concatenate(CODE_DELEGATION_PREFIX, codeDelegationAddress.getBytes()));
     // Track EIP-7702 delegation set for cross-client execution metrics
     EvmOperationCounters.incrementEip7702DelegationsSet();
   }

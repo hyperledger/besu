@@ -65,6 +65,8 @@ public class MetricsConfiguration {
   private final List<String> hostsAllowlist;
   private final boolean timersEnabled;
   private final int idleTimeout;
+  private final boolean executionMetricsEnabled;
+  private final long slowBlockThresholdMs;
 
   /**
    * Builder.
@@ -88,7 +90,9 @@ public class MetricsConfiguration {
       final String prometheusJob,
       final List<String> hostsAllowlist,
       final boolean timersEnabled,
-      final int idleTimeout) {
+      final int idleTimeout,
+      final boolean executionMetricsEnabled,
+      final long slowBlockThresholdMs) {
     this.enabled = enabled;
     this.port = port;
     this.protocol = protocol;
@@ -102,6 +106,8 @@ public class MetricsConfiguration {
     this.hostsAllowlist = hostsAllowlist;
     this.timersEnabled = timersEnabled;
     this.idleTimeout = idleTimeout;
+    this.executionMetricsEnabled = executionMetricsEnabled;
+    this.slowBlockThresholdMs = slowBlockThresholdMs;
   }
 
   /**
@@ -250,6 +256,14 @@ public class MetricsConfiguration {
     return idleTimeout;
   }
 
+  public boolean isExecutionMetricsEnabled() {
+    return executionMetricsEnabled;
+  }
+
+  public long getSlowBlockThresholdMs() {
+    return slowBlockThresholdMs;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -326,6 +340,8 @@ public class MetricsConfiguration {
     private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
     private boolean timersEnabled = DEFAULT_METRICS_TIMERS_ENABLED;
     private int idleTimeout = DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS;
+    private boolean executionMetricsEnabled = false;
+    private long slowBlockThresholdMs = -1L;
 
     private Builder() {}
 
@@ -486,6 +502,28 @@ public class MetricsConfiguration {
     }
 
     /**
+     * Execution metrics enabled.
+     *
+     * @param executionMetricsEnabled the execution metrics enabled
+     * @return the builder
+     */
+    public Builder executionMetricsEnabled(final boolean executionMetricsEnabled) {
+      this.executionMetricsEnabled = executionMetricsEnabled;
+      return this;
+    }
+
+    /**
+     * Slow block threshold ms.
+     *
+     * @param slowBlockThresholdMs the slow block threshold ms
+     * @return the builder
+     */
+    public Builder slowBlockThresholdMs(final long slowBlockThresholdMs) {
+      this.slowBlockThresholdMs = slowBlockThresholdMs;
+      return this;
+    }
+
+    /**
      * Build metrics configuration.
      *
      * @return the metrics configuration
@@ -504,7 +542,9 @@ public class MetricsConfiguration {
           prometheusJob,
           hostsAllowlist,
           timersEnabled,
-          idleTimeout);
+          idleTimeout,
+          executionMetricsEnabled,
+          slowBlockThresholdMs);
     }
   }
 }

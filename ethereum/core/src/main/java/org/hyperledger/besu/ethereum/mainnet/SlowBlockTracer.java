@@ -16,8 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.evm.EvmOperationCounters;
-import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -35,18 +34,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A tracer that collects execution metrics and logs slow blocks.
+ * A tracer that logs slow blocks using execution metrics from ExecutionMetricsTracer.
  *
- * <p>This tracer implements the cross-client execution metrics specification, collecting detailed
- * statistics about block execution including timing, state access patterns, cache performance, and
- * EVM operation counts. Blocks exceeding the configured threshold are logged in a standardized JSON
- * format.
+ * <p>This tracer does not collect metrics itself - it relies on ExecutionMetricsTracer being
+ * present in the tracer composition to provide execution statistics. Blocks exceeding the
+ * configured threshold are logged in a standardized JSON format.
  *
  * <p>The tracer uses a dedicated "SlowBlock" logger, allowing operators to route slow block output
  * to a separate file/sink via logback configuration.
  *
- * <p>This tracer supports composition - it can wrap another BlockAwareOperationTracer and delegate
- * all calls to it while adding slow block metrics collection.
+ * <p>This tracer is designed to be used with TracerAggregator to compose it with
+ * ExecutionMetricsTracer.
  */
 public class SlowBlockTracer implements BlockAwareOperationTracer {
 
@@ -55,7 +53,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   private final long slowBlockThresholdMs;
   private final BlockAwareOperationTracer delegate;
-  private ExecutionStats executionStats;
 
   /**
    * Creates a new SlowBlockTracer with no delegate.
@@ -88,22 +85,15 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
     return slowBlockThresholdMs >= 0;
   }
 
+
   @Override
   public void traceStartBlock(
       final WorldView worldView,
       final BlockHeader blockHeader,
       final BlockBody blockBody,
       final Address miningBeneficiary) {
-    // Delegate first
+    // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
     delegate.traceStartBlock(worldView, blockHeader, blockBody, miningBeneficiary);
-
-    if (!isEnabled()) {
-      return;
-    }
-    executionStats = new ExecutionStats();
-    executionStats.startExecution();
-    ExecutionStatsHolder.set(executionStats);
-    EvmOperationCounters.reset();
   }
 
   @Override
@@ -111,17 +101,8 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final WorldView worldView,
       final ProcessableBlockHeader processableBlockHeader,
       final Address miningBeneficiary) {
-    // Delegate first
+    // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
     delegate.traceStartBlock(worldView, processableBlockHeader, miningBeneficiary);
-
-    // Block building - same initialization
-    if (!isEnabled()) {
-      return;
-    }
-    executionStats = new ExecutionStats();
-    executionStats.startExecution();
-    ExecutionStatsHolder.set(executionStats);
-    EvmOperationCounters.reset();
   }
 
   @Override
@@ -134,49 +115,22 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
-    // Delegate first
+    // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
     delegate.traceEndTransaction(worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
-
-    if (!isEnabled() || executionStats == null) {
-      return;
-    }
-    executionStats.incrementTransactionCount();
-    executionStats.addGasUsed(gasUsed);
   }
 
   @Override
   public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
-    // Our metrics collection first (before delegate which may do cleanup)
-    if (isEnabled() && executionStats != null) {
-      try {
-        // Collect EVM operation counters
-        executionStats.collectEvmCounters();
-        // End execution timing
-        executionStats.endExecution();
+    // Delegate first to ensure ExecutionMetricsTracer completes its work
+    delegate.traceEndBlock(blockHeader, blockBody);
 
-        // Log if slow
-        if (executionStats.isSlowBlock(slowBlockThresholdMs)) {
-          logSlowBlock(blockHeader, executionStats);
-        }
-      } finally {
-        // Clean up thread-local state
-        ExecutionStatsHolder.clear();
-        EvmOperationCounters.clear();
-        executionStats = null;
+    // Check for slow blocks using ExecutionStats from thread-local storage
+    if (isEnabled()) {
+      final ExecutionStats executionStats = ExecutionStatsHolder.get();
+      if (executionStats != null && executionStats.isSlowBlock(slowBlockThresholdMs)) {
+        logSlowBlock(blockHeader, executionStats);
       }
     }
-
-    // Delegate after our cleanup
-    delegate.traceEndBlock(blockHeader, blockBody);
-  }
-
-  /**
-   * Gets the current execution stats, if available.
-   *
-   * @return the current ExecutionStats or null if not in a block
-   */
-  public ExecutionStats getExecutionStats() {
-    return executionStats;
   }
 
   /**
