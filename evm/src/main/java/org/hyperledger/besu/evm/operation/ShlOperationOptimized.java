@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.operation.Shift256Operations.ALL_ONES;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.ZERO_32;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
 
@@ -25,19 +24,24 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** The Sar operation. */
-public class SarOperationOptimized extends AbstractFixedCostOperation {
+/**
+ * The optimized SHL (Shift Left) operation.
+ *
+ * <p>This implementation uses direct byte[] manipulation instead of Tuweni's Bytes.shiftLeft() to
+ * avoid intermediate object allocation and improve performance.
+ */
+public class ShlOperationOptimized extends AbstractFixedCostOperation {
 
-  /** The Sar operation success result. */
-  static final OperationResult sarSuccess = new OperationResult(3, null);
+  /** The Shl operation success result. */
+  static final OperationResult shlSuccess = new OperationResult(3, null);
 
   /**
-   * Instantiates a new Sar operation.
+   * Instantiates a new optimized Shl operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public SarOperationOptimized(final GasCalculator gasCalculator) {
-    super(0x1d, "SAR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+  public ShlOperationOptimized(final GasCalculator gasCalculator) {
+    super(0x1b, "SHL", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
@@ -47,7 +51,7 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
   }
 
   /**
-   * Performs sar operation.
+   * Performs optimized Shift Left operation.
    *
    * @param frame the frame
    * @return the operation result
@@ -55,52 +59,49 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
     final Bytes value = Bytes32.leftPad(frame.popStackItem());
-    final boolean negative = (value.get(0) & 0x80) != 0;
 
-    // detect shift >= 256 cheaply (check high bytes)
+    // Detect shift >= 256 cheaply (check high bytes)
     if (isShiftOverflow(shiftAmount)) {
-      frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
-      return sarSuccess;
+      frame.pushStackItem(ZERO_32);
+      return shlSuccess;
     }
+
     final int shift = shiftAmount.isEmpty() ? 0 : (shiftAmount.get(shiftAmount.size() - 1) & 0xFF);
 
-    frame.pushStackItem(sar256(value, shift, negative));
-    return sarSuccess;
+    frame.pushStackItem(shl256(value, shift));
+    return shlSuccess;
   }
 
   /**
-   * Performs a 256-bit arithmetic right shift (EVM SAR).
+   * Performs a 256-bit logical left shift (EVM SHL).
    *
-   * <p>The input value is treated as a signed 256-bit integer in two's complement representation.
-   * The shift amount is in the range {@code [0..255]} and is assumed to have been validated by the
-   * caller.
+   * <p>The shift amount is in the range {@code [0..255]} and is assumed to have been validated by
+   * the caller. For shift values >= 256, zero is returned by the caller.
    *
-   * <p>For shift values greater than or equal to 256, the result is fully sign-extended and handled
-   * by the caller.
-   *
-   * @param value32 a 32-byte value representing a signed 256-bit integer
-   * @param shift the right shift amount in bits (0–255)
-   * @param negative whether the input value is negative (sign bit set)
+   * @param value32 a 32-byte value
+   * @param shift the left shift amount in bits (0–255)
    * @return the shifted 256-bit value
    */
-  private static Bytes sar256(final Bytes value32, final int shift, final boolean negative) {
-    if (shift == 0) return value32;
+  private static Bytes shl256(final Bytes value32, final int shift) {
+    if (shift == 0) {
+      return value32;
+    }
 
     final int shiftBytes = shift >>> 3; // /8
     final int shiftBits = shift & 7; // %8
-    final int fill = negative ? 0xFF : 0x00;
 
     final byte[] out = new byte[32];
     final byte[] in = value32.toArrayUnsafe();
 
-    for (int i = 31; i >= 0; i--) {
-      final int src = i - shiftBytes;
-      final int hi = (src >= 0) ? (in[src] & 0xFF) : fill;
+    // Shift left: bytes move to lower indices (towards index 0)
+    for (int i = 0; i < 32; i++) {
+      final int src = i + shiftBytes;
+      final int lo = (src < 32) ? (in[src] & 0xFF) : 0;
       if (shiftBits == 0) {
-        out[i] = (byte) hi;
+        out[i] = (byte) lo;
       } else {
-        final int lo = (src - 1 >= 0) ? (in[src - 1] & 0xFF) : fill;
-        out[i] = (byte) ((hi >>> shiftBits) | ((lo << (8 - shiftBits)) & 0xFF));
+        final int hi = (src + 1 < 32) ? (in[src + 1] & 0xFF) : 0;
+        out[i] = (byte) ((lo << shiftBits) | (hi >>> (8 - shiftBits)));
       }
     }
 
