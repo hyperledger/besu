@@ -152,7 +152,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   });
     }
 
-    return blockImportTracerProvider.getBlockImportTracer(header);
+    BlockAwareOperationTracer baseTracer = blockImportTracerProvider.getBlockImportTracer(header);
+
+    // Compose execution metrics and slow block tracers using BlockAwareTracerAggregator
+    // System property is set from CLI --slow-block-threshold flag
+    final long slowBlockThresholdMs = Long.getLong("besu.execution.slowBlockThresholdMs", -1L);
+    if (slowBlockThresholdMs >= 0) {
+      // Create ExecutionMetricsTracer for metrics collection
+      final ExecutionMetricsTracer executionMetricsTracer = new ExecutionMetricsTracer();
+      // Create SlowBlockTracer for logging (reuses ExecutionMetricsTracer's metrics)
+      final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(slowBlockThresholdMs, baseTracer);
+      // Compose tracers using BlockAwareTracerAggregator
+      return BlockAwareTracerAggregator.combining(
+          baseTracer, executionMetricsTracer, slowBlockTracer);
+    }
+    return baseTracer;
   }
 
   /**
@@ -364,6 +378,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 worldState,
                 cumulativeReceiptGasUsed);
         receipts.add(transactionReceipt);
+
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           parallelizedTxFound = true;
@@ -372,6 +387,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           nbParallelTx++;
         }
       }
+
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {
         final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
@@ -516,7 +532,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
       blockTracer.traceEndBlock(blockHeader, blockBody);
-
       try {
         worldState.persist(blockHeader, stateRootCommitter);
       } catch (MerkleTrieException e) {
