@@ -139,7 +139,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       // Create SlowBlockTracer for logging (reuses ExecutionMetricsTracer's metrics)
       final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(slowBlockThresholdMs, baseTracer);
       // Compose tracers using BlockAwareTracerAggregator
-      return BlockAwareTracerAggregator.combining(baseTracer, executionMetricsTracer, slowBlockTracer);
+      return BlockAwareTracerAggregator.combining(
+          baseTracer, executionMetricsTracer, slowBlockTracer);
     }
     return baseTracer;
   }

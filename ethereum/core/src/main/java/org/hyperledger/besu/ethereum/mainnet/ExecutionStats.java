@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.EvmOperationCounters;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -268,30 +267,132 @@ public class ExecutionStats {
     createCount++;
   }
 
+  // EVM metrics setter methods for tracer-based collection
+
   /**
-   * Collects EVM operation counters from the thread-local EvmOperationCounters. This should be
-   * called at the end of block execution to aggregate the counters from the EVM module.
+   * Sets the SLOAD count from tracer metrics.
+   *
+   * @param count the SLOAD count
    */
-  public void collectEvmCounters() {
-    // EVM opcode counters
-    this.sloadCount = EvmOperationCounters.getSloadCount();
-    this.sstoreCount = EvmOperationCounters.getSstoreCount();
-    this.callCount = EvmOperationCounters.getCallCount();
-    this.createCount = EvmOperationCounters.getCreateCount();
+  public void setSloadCount(final int count) {
+    this.sloadCount = count;
+  }
 
-    // State read/write counters for cross-client execution metrics
-    this.accountReads = EvmOperationCounters.getAccountReads();
-    this.storageReads = EvmOperationCounters.getStorageReads();
-    this.codeReads = EvmOperationCounters.getCodeReads();
-    this.codeBytesRead = EvmOperationCounters.getCodeBytesRead();
-    this.accountWrites = EvmOperationCounters.getAccountWrites();
-    this.storageWrites = EvmOperationCounters.getStorageWrites();
-    this.codeWrites = EvmOperationCounters.getCodeWrites();
-    this.codeBytesWritten = EvmOperationCounters.getCodeBytesWritten();
+  /**
+   * Sets the SSTORE count from tracer metrics.
+   *
+   * @param count the SSTORE count
+   */
+  public void setSstoreCount(final int count) {
+    this.sstoreCount = count;
+  }
 
-    // EIP-7702 delegation counters
-    this.eip7702DelegationsSet = EvmOperationCounters.getEip7702DelegationsSet();
-    this.eip7702DelegationsCleared = EvmOperationCounters.getEip7702DelegationsCleared();
+  /**
+   * Sets the CALL count from tracer metrics.
+   *
+   * @param count the CALL count
+   */
+  public void setCallCount(final int count) {
+    this.callCount = count;
+  }
+
+  /**
+   * Sets the CREATE count from tracer metrics.
+   *
+   * @param count the CREATE count
+   */
+  public void setCreateCount(final int count) {
+    this.createCount = count;
+  }
+
+  /**
+   * Sets the account reads count from tracer metrics.
+   *
+   * @param count the account reads count
+   */
+  public void setAccountReads(final int count) {
+    this.accountReads = count;
+  }
+
+  /**
+   * Sets the storage reads count from tracer metrics.
+   *
+   * @param count the storage reads count
+   */
+  public void setStorageReads(final int count) {
+    this.storageReads = count;
+  }
+
+  /**
+   * Sets the code reads count from tracer metrics.
+   *
+   * @param count the code reads count
+   */
+  public void setCodeReads(final int count) {
+    this.codeReads = count;
+  }
+
+  /**
+   * Sets the code bytes read from tracer metrics.
+   *
+   * @param bytes the code bytes read
+   */
+  public void setCodeBytesRead(final long bytes) {
+    this.codeBytesRead = bytes;
+  }
+
+  /**
+   * Sets the account writes count from tracer metrics.
+   *
+   * @param count the account writes count
+   */
+  public void setAccountWrites(final int count) {
+    this.accountWrites = count;
+  }
+
+  /**
+   * Sets the storage writes count from tracer metrics.
+   *
+   * @param count the storage writes count
+   */
+  public void setStorageWrites(final int count) {
+    this.storageWrites = count;
+  }
+
+  /**
+   * Sets the code writes count from tracer metrics.
+   *
+   * @param count the code writes count
+   */
+  public void setCodeWrites(final int count) {
+    this.codeWrites = count;
+  }
+
+  /**
+   * Sets the code bytes written from tracer metrics.
+   *
+   * @param bytes the code bytes written
+   */
+  public void setCodeBytesWritten(final long bytes) {
+    this.codeBytesWritten = bytes;
+  }
+
+  /**
+   * Sets the EIP-7702 delegations set count from tracer metrics.
+   *
+   * @param count the EIP-7702 delegations set count
+   */
+  public void setEip7702DelegationsSet(final int count) {
+    this.eip7702DelegationsSet = count;
+  }
+
+  /**
+   * Sets the EIP-7702 delegations cleared count from tracer metrics.
+   *
+   * @param count the EIP-7702 delegations cleared count
+   */
+  public void setEip7702DelegationsCleared(final int count) {
+    this.eip7702DelegationsCleared = count;
   }
 
   // Cache statistics methods

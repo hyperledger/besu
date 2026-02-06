@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -74,7 +73,6 @@ public interface WorldUpdater extends MutableWorldView {
    *     #createAccount(Address)} (and thus all his fields will be zero/empty).
    */
   default MutableAccount getOrCreate(final Address address) {
-    EvmOperationCounters.incrementAccountReads();
     final MutableAccount account = getAccount(address);
     return account == null ? createAccount(address) : account;
   }
@@ -107,7 +105,6 @@ public interface WorldUpdater extends MutableWorldView {
    * @return the account {@code address}, or {@code null} if the account does not exist.
    */
   default MutableAccount getSenderAccount(final MessageFrame frame) {
-    EvmOperationCounters.incrementAccountReads();
     return getAccount(frame.getSenderAddress());
   }
 

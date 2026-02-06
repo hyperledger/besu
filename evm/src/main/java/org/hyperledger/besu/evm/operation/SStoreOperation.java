@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -105,9 +104,6 @@ public class SStoreOperation extends AbstractOperation {
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);
     frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(address, key));
-
-    // Track SSTORE for cross-client execution metrics
-    EvmOperationCounters.incrementSstore();
 
     return new OperationResult(cost, null);
   }

@@ -182,7 +182,12 @@ public class SlowBlockMetricsReportGenerator {
     report.append("|--------|--------|\n");
     report.append("| **Verification Status** | ").append(verificationStatus).append(" |\n");
     report.append("| Total Metric Fields | ").append(totalFields).append(" |\n");
-    report.append("| Fields Verified | ").append(verifiedFields).append("/").append(totalFields).append(" |\n");
+    report
+        .append("| Fields Verified | ")
+        .append(verifiedFields)
+        .append("/")
+        .append(totalFields)
+        .append(" |\n");
     report.append("| Test Blocks Analyzed | ").append(taggedBlocks.size()).append(" unique |\n");
     report.append("| Transaction Types Covered | ").append(txTypes.size()).append(" |\n");
     report
@@ -224,7 +229,7 @@ public class SlowBlockMetricsReportGenerator {
     report.append("| Client | Hyperledger Besu |\n");
     report.append("| Consensus | ").append(nodeType).append(" |\n");
     report.append("| Slow Block Threshold | 0ms (capture ALL blocks) |\n");
-    report.append("| Configuration | `BESU_OPTS=-Dbesu.execution.slowBlockThresholdMs=0` |\n\n");
+    report.append("| Configuration | `--slow-block-threshold=0` |\n\n");
 
     report.append("### Transaction Types Executed\n\n");
 
@@ -255,7 +260,10 @@ public class SlowBlockMetricsReportGenerator {
     report.append("\n");
 
     report.append("### Validation Approach\n\n");
-    report.append("- All ").append(totalFields).append(" metric fields checked for presence in JSON structure\n");
+    report
+        .append("- All ")
+        .append(totalFields)
+        .append(" metric fields checked for presence in JSON structure\n");
     report.append("- Numeric ranges validated (>= 0 for counters, 0-100 for percentages)\n");
     report.append("- String fields validated for expected values (\"warn\", \"Slow block\")\n");
     report.append("- Transaction-specific metrics validated against expected patterns\n\n");
@@ -265,91 +273,115 @@ public class SlowBlockMetricsReportGenerator {
     report.append("## Metric Fields Verification\n\n");
 
     // Group metrics by category
-    appendMetricCategory(report, "Block Info", new String[] {
-        "block/number", "block/hash", "block/gas_used", "block/tx_count"
-    }, new String[] {
-        "integer", "string", "integer", "integer"
-    }, new String[] {
-        "Block height", "0x-prefixed block hash", "Total gas consumed", "Transaction count in block"
-    });
+    appendMetricCategory(
+        report,
+        "Block Info",
+        new String[] {"block/number", "block/hash", "block/gas_used", "block/tx_count"},
+        new String[] {"integer", "string", "integer", "integer"},
+        new String[] {
+          "Block height",
+          "0x-prefixed block hash",
+          "Total gas consumed",
+          "Transaction count in block"
+        });
 
-    appendMetricCategory(report, "Timing Metrics", new String[] {
-        "timing/execution_ms", "timing/state_read_ms", "timing/state_hash_ms",
-        "timing/commit_ms", "timing/total_ms"
-    }, new String[] {
-        "float", "float", "float", "float", "float"
-    }, new String[] {
-        "EVM execution time", "State read time", "State hash computation time",
-        "Commit time", "Total processing time"
-    });
+    appendMetricCategory(
+        report,
+        "Timing Metrics",
+        new String[] {
+          "timing/execution_ms",
+          "timing/state_read_ms",
+          "timing/state_hash_ms",
+          "timing/commit_ms",
+          "timing/total_ms"
+        },
+        new String[] {"float", "float", "float", "float", "float"},
+        new String[] {
+          "EVM execution time",
+          "State read time",
+          "State hash computation time",
+          "Commit time",
+          "Total processing time"
+        });
 
-    appendMetricCategory(report, "Throughput", new String[] {
-        "throughput/mgas_per_sec"
-    }, new String[] {
-        "float"
-    }, new String[] {
-        "Megagas per second throughput"
-    });
+    appendMetricCategory(
+        report,
+        "Throughput",
+        new String[] {"throughput/mgas_per_sec"},
+        new String[] {"float"},
+        new String[] {"Megagas per second throughput"});
 
-    appendMetricCategory(report, "State Reads", new String[] {
-        "state_reads/accounts", "state_reads/storage_slots",
-        "state_reads/code", "state_reads/code_bytes"
-    }, new String[] {
-        "integer", "integer", "integer", "integer"
-    }, new String[] {
-        "Account reads", "Storage slot reads", "Code contract reads", "Code bytes read"
-    });
+    appendMetricCategory(
+        report,
+        "State Reads",
+        new String[] {
+          "state_reads/accounts", "state_reads/storage_slots",
+          "state_reads/code", "state_reads/code_bytes"
+        },
+        new String[] {"integer", "integer", "integer", "integer"},
+        new String[] {
+          "Account reads", "Storage slot reads", "Code contract reads", "Code bytes read"
+        });
 
-    appendMetricCategory(report, "State Writes", new String[] {
-        "state_writes/accounts", "state_writes/storage_slots",
-        "state_writes/code", "state_writes/code_bytes",
-        "state_writes/eip7702_delegations_set", "state_writes/eip7702_delegations_cleared"
-    }, new String[] {
-        "integer", "integer", "integer", "integer", "integer", "integer"
-    }, new String[] {
-        "Account writes", "Storage slot writes", "Code contract writes", "Code bytes written",
-        "EIP-7702 delegations set", "EIP-7702 delegations cleared"
-    });
+    appendMetricCategory(
+        report,
+        "State Writes",
+        new String[] {
+          "state_writes/accounts", "state_writes/storage_slots",
+          "state_writes/code", "state_writes/code_bytes",
+          "state_writes/eip7702_delegations_set", "state_writes/eip7702_delegations_cleared"
+        },
+        new String[] {"integer", "integer", "integer", "integer", "integer", "integer"},
+        new String[] {
+          "Account writes",
+          "Storage slot writes",
+          "Code contract writes",
+          "Code bytes written",
+          "EIP-7702 delegations set",
+          "EIP-7702 delegations cleared"
+        });
 
-    appendMetricCategory(report, "Cache Statistics (Account)", new String[] {
-        "cache/account/hits", "cache/account/misses", "cache/account/hit_rate"
-    }, new String[] {
-        "integer", "integer", "float"
-    }, new String[] {
-        "Account cache hits", "Account cache misses", "Account cache hit rate %"
-    });
+    appendMetricCategory(
+        report,
+        "Cache Statistics (Account)",
+        new String[] {"cache/account/hits", "cache/account/misses", "cache/account/hit_rate"},
+        new String[] {"integer", "integer", "float"},
+        new String[] {"Account cache hits", "Account cache misses", "Account cache hit rate %"});
 
-    appendMetricCategory(report, "Cache Statistics (Storage)", new String[] {
-        "cache/storage/hits", "cache/storage/misses", "cache/storage/hit_rate"
-    }, new String[] {
-        "integer", "integer", "float"
-    }, new String[] {
-        "Storage cache hits", "Storage cache misses", "Storage cache hit rate %"
-    });
+    appendMetricCategory(
+        report,
+        "Cache Statistics (Storage)",
+        new String[] {"cache/storage/hits", "cache/storage/misses", "cache/storage/hit_rate"},
+        new String[] {"integer", "integer", "float"},
+        new String[] {"Storage cache hits", "Storage cache misses", "Storage cache hit rate %"});
 
-    appendMetricCategory(report, "Cache Statistics (Code)", new String[] {
-        "cache/code/hits", "cache/code/misses", "cache/code/hit_rate"
-    }, new String[] {
-        "integer", "integer", "float"
-    }, new String[] {
-        "Code cache hits", "Code cache misses", "Code cache hit rate %"
-    });
+    appendMetricCategory(
+        report,
+        "Cache Statistics (Code)",
+        new String[] {"cache/code/hits", "cache/code/misses", "cache/code/hit_rate"},
+        new String[] {"integer", "integer", "float"},
+        new String[] {"Code cache hits", "Code cache misses", "Code cache hit rate %"});
 
-    appendMetricCategory(report, "Unique Counts", new String[] {
-        "unique/accounts", "unique/storage_slots", "unique/contracts"
-    }, new String[] {
-        "integer", "integer", "integer"
-    }, new String[] {
-        "Unique accounts accessed", "Unique storage slots accessed", "Unique contracts accessed"
-    });
+    appendMetricCategory(
+        report,
+        "Unique Counts",
+        new String[] {"unique/accounts", "unique/storage_slots", "unique/contracts"},
+        new String[] {"integer", "integer", "integer"},
+        new String[] {
+          "Unique accounts accessed", "Unique storage slots accessed", "Unique contracts accessed"
+        });
 
-    appendMetricCategory(report, "EVM Opcodes", new String[] {
-        "evm/sload", "evm/sstore", "evm/calls", "evm/creates"
-    }, new String[] {
-        "integer", "integer", "integer", "integer"
-    }, new String[] {
-        "SLOAD opcodes executed", "SSTORE opcodes executed", "CALL opcodes executed", "CREATE/CREATE2 opcodes executed"
-    });
+    appendMetricCategory(
+        report,
+        "EVM Opcodes",
+        new String[] {"evm/sload", "evm/sstore", "evm/calls", "evm/creates"},
+        new String[] {"integer", "integer", "integer", "integer"},
+        new String[] {
+          "SLOAD opcodes executed",
+          "SSTORE opcodes executed",
+          "CALL opcodes executed",
+          "CREATE/CREATE2 opcodes executed"
+        });
   }
 
   private void appendMetricCategory(
@@ -358,7 +390,12 @@ public class SlowBlockMetricsReportGenerator {
       final String[] fields,
       final String[] types,
       final String[] descriptions) {
-    report.append("### ").append(categoryName).append(" (").append(fields.length).append(" fields)\n\n");
+    report
+        .append("### ")
+        .append(categoryName)
+        .append(" (")
+        .append(fields.length)
+        .append(" fields)\n\n");
     report.append("| Field | Type | Description | Sample Value | Status |\n");
     report.append("|-------|------|-------------|--------------|--------|\n");
 
@@ -434,7 +471,9 @@ public class SlowBlockMetricsReportGenerator {
     }
 
     // Block number is always verified
-    if (field.equals("block/number") || field.equals("block/gas_used") || field.equals("block/tx_count")) {
+    if (field.equals("block/number")
+        || field.equals("block/gas_used")
+        || field.equals("block/tx_count")) {
       return "VERIFIED";
     }
 
@@ -520,11 +559,15 @@ public class SlowBlockMetricsReportGenerator {
     report.append("### Why Certain Metrics Show Zero\n\n");
     report.append("| Metric | Observed Value | Reason |\n");
     report.append("|--------|----------------|--------|\n");
-    report.append("| eip7702_delegations_set | 0 | EIP-7702 requires Prague fork; test uses pre-Prague genesis |\n");
+    report.append(
+        "| eip7702_delegations_set | 0 | EIP-7702 requires Prague fork; test uses pre-Prague genesis |\n");
     report.append("| eip7702_delegations_cleared | 0 | Same as above |\n");
-    report.append("| state_read_ms | 0.0 | Sub-millisecond precision; QBFT blocks execute very fast |\n");
-    report.append("| state_hash_ms | 0.0 | State hashing time negligible for small state changes |\n");
-    report.append("| cache_hit_rate | 0.0-100.0 | Depends on cache state; cold cache shows 0%, warmed shows higher |\n");
+    report.append(
+        "| state_read_ms | 0.0 | Sub-millisecond precision; QBFT blocks execute very fast |\n");
+    report.append(
+        "| state_hash_ms | 0.0 | State hashing time negligible for small state changes |\n");
+    report.append(
+        "| cache_hit_rate | 0.0-100.0 | Depends on cache state; cold cache shows 0%, warmed shows higher |\n");
     report.append("\n");
 
     report.append("### Metrics That Require Specific Transactions\n\n");
@@ -557,10 +600,13 @@ public class SlowBlockMetricsReportGenerator {
     report.append("## Implementation Notes\n\n");
 
     report.append("### Besu-Specific Details\n\n");
-    report.append("1. **Slow Block Logging**: Enabled via JVM property `-Dbesu.execution.slowBlockThresholdMs=N`\n");
+    report.append(
+        "1. **Slow Block Logging**: Enabled via JVM property `-Dbesu.execution.slowBlockThresholdMs=N`\n");
     report.append("2. **Output Format**: Logs are written as JSON objects to stdout/stderr\n");
-    report.append("3. **Metric Collection**: Metrics collected during `BlockProcessor.processBlock()`\n");
-    report.append("4. **Cache Statistics**: From `WorldStateKeyValueStorage` cache layer (3 separate caches)\n\n");
+    report.append(
+        "3. **Metric Collection**: Metrics collected during `BlockProcessor.processBlock()`\n");
+    report.append(
+        "4. **Cache Statistics**: From `WorldStateKeyValueStorage` cache layer (3 separate caches)\n\n");
 
     report.append("### Comparison with Other Clients\n\n");
     report.append("| Aspect | Besu | Reth | Geth |\n");

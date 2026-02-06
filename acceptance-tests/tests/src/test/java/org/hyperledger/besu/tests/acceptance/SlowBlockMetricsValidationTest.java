@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
@@ -46,9 +45,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end acceptance test for validating slow block metrics. This test sends various
- * transaction types to a local Besu node, captures slow block logs, and validates that all JSON
- * fields are correctly populated.
+ * End-to-end acceptance test for validating slow block metrics. This test sends various transaction
+ * types to a local Besu node, captures slow block logs, and validates that all JSON fields are
+ * correctly populated.
  *
  * <p>The test uses a QBFT node (BFT consensus) with a threshold of 0ms to ensure ALL blocks are
  * logged as slow blocks. QBFT is used instead of dev mode because it automatically produces blocks,
@@ -85,11 +84,9 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
     // Create a QBFT node with:
     // - BFT consensus that automatically produces blocks
     // - 0ms slow block threshold (log ALL blocks as slow)
-    // We use a config modifier to add the environment variable for slow block threshold
+    // We use a config modifier to add the CLI option for slow block threshold
     final UnaryOperator<BesuNodeConfigurationBuilder> configModifier =
-        builder ->
-            builder.environment(
-                Map.of("BESU_OPTS", "-Dbesu.execution.slowBlockThresholdMs=0"));
+        builder -> builder.addCliOption("--slow-block-threshold", "0");
 
     devNode = besu.createQbftNode("qbft-metrics-node", configModifier);
 
@@ -129,9 +126,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
     List<JsonNode> slowBlocks = parseSlowBlockLogs(consoleOutput);
 
     // Assertions
-    assertThat(slowBlocks)
-        .as("Should capture at least one slow block log")
-        .isNotEmpty();
+    assertThat(slowBlocks).as("Should capture at least one slow block log").isNotEmpty();
 
     // Validate fields in the last slow block
     JsonNode lastBlock = slowBlocks.get(slowBlocks.size() - 1);
@@ -226,9 +221,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
     return taggedBlocks;
   }
 
-  /**
-   * Generate a comprehensive markdown report with expected vs actual analysis for all metrics.
-   */
+  /** Generate a comprehensive markdown report with expected vs actual analysis for all metrics. */
   private void generateComprehensiveReport(final List<TaggedBlock> taggedBlocks)
       throws IOException {
     SlowBlockMetricsReportGenerator generator =
@@ -264,9 +257,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
   }
 
   private void printReport(
-      final List<JsonNode> slowBlocks,
-      final JsonNode lastBlock,
-      final List<String> missingFields) {
+      final List<JsonNode> slowBlocks, final JsonNode lastBlock, final List<String> missingFields) {
     StringBuilder report = new StringBuilder();
 
     report.append("\n");
@@ -292,13 +283,21 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
       report.append(String.format("Block number: %s%n", lastBlock.at("/block/number").asText()));
       report.append(String.format("Gas used: %s%n", lastBlock.at("/block/gas_used").asText()));
       report.append(String.format("Tx count: %s%n", lastBlock.at("/block/tx_count").asText()));
-      report.append(String.format("Execution time: %s ms%n", lastBlock.at("/timing/execution_ms").asText()));
-      report.append(String.format("Account reads: %s%n", lastBlock.at("/state_reads/accounts").asText()));
-      report.append(String.format("Account writes: %s%n", lastBlock.at("/state_writes/accounts").asText()));
-      report.append(String.format("Storage reads: %s%n", lastBlock.at("/state_reads/storage_slots").asText()));
-      report.append(String.format("Storage writes: %s%n", lastBlock.at("/state_writes/storage_slots").asText()));
+      report.append(
+          String.format("Execution time: %s ms%n", lastBlock.at("/timing/execution_ms").asText()));
+      report.append(
+          String.format("Account reads: %s%n", lastBlock.at("/state_reads/accounts").asText()));
+      report.append(
+          String.format("Account writes: %s%n", lastBlock.at("/state_writes/accounts").asText()));
+      report.append(
+          String.format(
+              "Storage reads: %s%n", lastBlock.at("/state_reads/storage_slots").asText()));
+      report.append(
+          String.format(
+              "Storage writes: %s%n", lastBlock.at("/state_writes/storage_slots").asText()));
       report.append(String.format("Code reads: %s%n", lastBlock.at("/state_reads/code").asText()));
-      report.append(String.format("Code writes: %s%n", lastBlock.at("/state_writes/code").asText()));
+      report.append(
+          String.format("Code writes: %s%n", lastBlock.at("/state_writes/code").asText()));
       report.append(String.format("SLOAD: %s%n", lastBlock.at("/evm/sload").asText()));
       report.append(String.format("SSTORE: %s%n", lastBlock.at("/evm/sstore").asText()));
       report.append(String.format("CALLS: %s%n", lastBlock.at("/evm/calls").asText()));

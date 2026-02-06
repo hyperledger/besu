@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
-import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -71,7 +71,8 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
    *     Negative values disable logging, zero logs all blocks.
    * @param delegate the tracer to delegate calls to
    */
-  public SlowBlockTracer(final long slowBlockThresholdMs, final BlockAwareOperationTracer delegate) {
+  public SlowBlockTracer(
+      final long slowBlockThresholdMs, final BlockAwareOperationTracer delegate) {
     this.slowBlockThresholdMs = slowBlockThresholdMs;
     this.delegate = delegate;
   }
@@ -84,7 +85,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   public boolean isEnabled() {
     return slowBlockThresholdMs >= 0;
   }
-
 
   @Override
   public void traceStartBlock(
@@ -116,7 +116,8 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final Set<Address> selfDestructs,
       final long timeNs) {
     // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
-    delegate.traceEndTransaction(worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+    delegate.traceEndTransaction(
+        worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
   }
 
   @Override
@@ -182,15 +183,13 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       accountCacheNode.put("hits", stats.getAccountCacheHits());
       accountCacheNode.put("misses", stats.getAccountCacheMisses());
       accountCacheNode.put(
-          "hit_rate",
-          calculateHitRate(stats.getAccountCacheHits(), stats.getAccountCacheMisses()));
+          "hit_rate", calculateHitRate(stats.getAccountCacheHits(), stats.getAccountCacheMisses()));
 
       final ObjectNode storageCacheNode = cacheNode.putObject("storage");
       storageCacheNode.put("hits", stats.getStorageCacheHits());
       storageCacheNode.put("misses", stats.getStorageCacheMisses());
       storageCacheNode.put(
-          "hit_rate",
-          calculateHitRate(stats.getStorageCacheHits(), stats.getStorageCacheMisses()));
+          "hit_rate", calculateHitRate(stats.getStorageCacheHits(), stats.getStorageCacheMisses()));
 
       final ObjectNode codeCacheNode = cacheNode.putObject("code");
       codeCacheNode.put("hits", stats.getCodeCacheHits());

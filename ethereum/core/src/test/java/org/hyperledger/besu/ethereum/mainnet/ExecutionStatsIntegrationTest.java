@@ -61,6 +61,7 @@ import org.web3j.abi.datatypes.generated.Uint256;
  * Transaction → EVM → World State → ExecutionStats.
  *
  * <p>Metrics Coverage Matrix (code_r = code reads when contract code is loaded for execution):
+ *
  * <pre>
  * | Test                              | accounts_r | storage_r | code_r | accounts_w | storage_w | code_w | sload | sstore | calls |
  * |-----------------------------------|------------|-----------|--------|------------|-----------|--------|-------|--------|-------|
@@ -281,9 +282,7 @@ class ExecutionStatsIntegrationTest {
     collectStats();
 
     // Then: SLOAD and storage reads should be tracked
-    assertThat(stats.getSloadCount())
-        .as("getSlot1 should execute SLOAD")
-        .isGreaterThanOrEqualTo(1);
+    assertThat(stats.getSloadCount()).as("getSlot1 should execute SLOAD").isGreaterThanOrEqualTo(1);
 
     assertThat(stats.getStorageReads())
         .as("getSlot1 should read from storage")
@@ -403,9 +402,7 @@ class ExecutionStatsIntegrationTest {
 
     // Then: Cache section should exist with all required fields per geth parity spec
     JsonNode cacheNode = root.path("cache");
-    assertThat(cacheNode.isMissingNode())
-        .as("JSON should contain 'cache' section")
-        .isFalse();
+    assertThat(cacheNode.isMissingNode()).as("JSON should contain 'cache' section").isFalse();
 
     // Account cache stats
     assertThat(cacheNode.path("account").path("hits").asInt())
@@ -444,7 +441,9 @@ class ExecutionStatsIntegrationTest {
         .isLessThan(89.0);
 
     System.out.println("\n=== Cache Statistics JSON Test ===");
-    System.out.println("JSON cache section: " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(cacheNode));
+    System.out.println(
+        "JSON cache section: "
+            + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(cacheNode));
   }
 
   // ========================================================================
@@ -473,18 +472,18 @@ class ExecutionStatsIntegrationTest {
     // since CONTRACT_ADDRESS already exists with code that we can use.
 
     // Use a contract deployment which triggers CREATE tracking
-    Bytes initCodeWithCreate = Bytes.fromHexString(
-        // This init code creates a child contract
-        // PUSH1 0 (size for child - empty runtime)
-        // PUSH1 0 (offset)
-        // PUSH1 0 (value)
-        // CREATE
-        // POP (discard result)
-        // PUSH1 0 (return size)
-        // PUSH1 0 (return offset)
-        // RETURN
-        "0x6000600060006000f0506000600060003960006000f3"
-    );
+    Bytes initCodeWithCreate =
+        Bytes.fromHexString(
+            // This init code creates a child contract
+            // PUSH1 0 (size for child - empty runtime)
+            // PUSH1 0 (offset)
+            // PUSH1 0 (value)
+            // CREATE
+            // POP (discard result)
+            // PUSH1 0 (return size)
+            // PUSH1 0 (return offset)
+            // RETURN
+            "0x6000600060006000f0506000600060003960006000f3");
 
     Transaction deployWithCreate =
         Transaction.builder()
@@ -574,8 +573,11 @@ class ExecutionStatsIntegrationTest {
     System.out.println("\n=== EIP-7702 Delegation Tracking Test ===");
     System.out.println("Delegations set: " + stats.getEip7702DelegationsSet());
     System.out.println("Delegations cleared: " + stats.getEip7702DelegationsCleared());
-    System.out.println("JSON state_writes section: " +
-        mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root.path("state_writes")));
+    System.out.println(
+        "JSON state_writes section: "
+            + mapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(root.path("state_writes")));
   }
 
   // ========================================================================
@@ -661,9 +663,7 @@ class ExecutionStatsIntegrationTest {
 
     for (String path : requiredPaths) {
       JsonNode node = root.at("/" + path);
-      assertThat(node.isMissingNode())
-          .as("Field '%s' should exist in JSON output", path)
-          .isFalse();
+      assertThat(node.isMissingNode()).as("Field '%s' should exist in JSON output", path).isFalse();
     }
 
     System.out.println("\n=== All " + requiredPaths.length + " required JSON fields validated ===");
@@ -845,8 +845,7 @@ class ExecutionStatsIntegrationTest {
     // transferTo(address payable recipient, uint256 amount)
     List<Type> inputParameters =
         Arrays.<Type>asList(
-            new org.web3j.abi.datatypes.Address(recipient.toHexString()),
-            new Uint256(amount));
+            new org.web3j.abi.datatypes.Address(recipient.toHexString()), new Uint256(amount));
     Function function = new Function("transferTo", inputParameters, List.of());
     Bytes payload = Bytes.fromHexString(FunctionEncoder.encode(function));
 

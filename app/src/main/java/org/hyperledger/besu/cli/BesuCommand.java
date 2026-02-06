@@ -1996,8 +1996,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     // Set system property from CLI flag for slow block threshold
     if (metricsOptions.getSlowBlockThresholdMs() >= 0) {
-      System.setProperty("besu.execution.slowBlockThresholdMs", 
-                        String.valueOf(metricsOptions.getSlowBlockThresholdMs()));
+      System.setProperty(
+          "besu.execution.slowBlockThresholdMs",
+          String.valueOf(metricsOptions.getSlowBlockThresholdMs()));
     }
 
     instantiateSignatureAlgorithmFactory();

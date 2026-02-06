@@ -15,10 +15,13 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.EvmOperationCounters;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -26,6 +29,7 @@ import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -40,12 +44,15 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * <p>This tracer is designed to be composed with other tracers using TracerAggregator.
  */
-public class ExecutionMetricsTracer implements BlockAwareOperationTracer {
+public class ExecutionMetricsTracer implements BlockAwareOperationTracer, OperationTracer {
 
   private ExecutionStats executionStats;
+  private final org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer evmMetricsTracer;
 
   /** Creates a new ExecutionMetricsTracer. */
-  public ExecutionMetricsTracer() {}
+  public ExecutionMetricsTracer() {
+    this.evmMetricsTracer = new org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer();
+  }
 
   @Override
   public void traceStartBlock(
@@ -56,7 +63,7 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer {
     executionStats = new ExecutionStats();
     executionStats.startExecution();
     ExecutionStatsHolder.set(executionStats);
-    EvmOperationCounters.reset();
+    evmMetricsTracer.reset();
   }
 
   @Override
@@ -68,7 +75,7 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer {
     executionStats = new ExecutionStats();
     executionStats.startExecution();
     ExecutionStatsHolder.set(executionStats);
-    EvmOperationCounters.reset();
+    evmMetricsTracer.reset();
   }
 
   @Override
@@ -91,17 +98,41 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer {
   public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
     if (executionStats != null) {
       try {
-        // Collect EVM operation counters
-        executionStats.collectEvmCounters();
+        // Collect EVM operation counters from tracer instead of static counters
+        collectEvmMetricsFromTracer();
         // End execution timing
         executionStats.endExecution();
       } finally {
         // Clean up thread-local state
         ExecutionStatsHolder.clear();
-        EvmOperationCounters.clear();
         executionStats = null;
       }
     }
+  }
+
+  /** Collect EVM metrics from the internal ExecutionMetricsTracer. */
+  private void collectEvmMetricsFromTracer() {
+    final var metrics = evmMetricsTracer.getMetrics();
+
+    // Set EVM operation counts
+    executionStats.setSloadCount(metrics.getSloadCount());
+    executionStats.setSstoreCount(metrics.getSstoreCount());
+    executionStats.setCallCount(metrics.getCallCount());
+    executionStats.setCreateCount(metrics.getCreateCount());
+
+    // Set state access counts
+    executionStats.setAccountReads(metrics.getAccountReads());
+    executionStats.setStorageReads(metrics.getStorageReads());
+    executionStats.setCodeReads(metrics.getCodeReads());
+    executionStats.setCodeBytesRead(metrics.getCodeBytesRead());
+    executionStats.setAccountWrites(metrics.getAccountWrites());
+    executionStats.setStorageWrites(metrics.getStorageWrites());
+    executionStats.setCodeWrites(metrics.getCodeWrites());
+    executionStats.setCodeBytesWritten(metrics.getCodeBytesWritten());
+
+    // Set EIP-7702 delegation counts
+    executionStats.setEip7702DelegationsSet(metrics.getEip7702DelegationsSet());
+    executionStats.setEip7702DelegationsCleared(metrics.getEip7702DelegationsCleared());
   }
 
   @Override
@@ -117,5 +148,24 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer {
    */
   public ExecutionStats getExecutionStats() {
     return executionStats;
+  }
+
+  // OperationTracer methods - delegate to internal EVM metrics tracer
+
+  @Override
+  public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
+    evmMetricsTracer.tracePostExecution(frame, operationResult);
+  }
+
+  @Override
+  public void traceAccountCreationResult(
+      final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
+    evmMetricsTracer.traceAccountCreationResult(frame, haltReason);
+  }
+
+  @Override
+  public void tracePrecompileCall(
+      final MessageFrame frame, final long gasRequirement, final Bytes output) {
+    evmMetricsTracer.tracePrecompileCall(frame, gasRequirement, output);
   }
 }

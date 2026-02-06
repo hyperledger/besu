@@ -47,8 +47,7 @@ public enum TransactionType {
   EIP7702_DELEGATION_SET("EIP-7702 Delegation Set", "Setting code delegation for an account"),
 
   /** EIP-7702 delegation clear transaction */
-  EIP7702_DELEGATION_CLEAR(
-      "EIP-7702 Delegation Clear", "Clearing code delegation from an account");
+  EIP7702_DELEGATION_CLEAR("EIP-7702 Delegation Clear", "Clearing code delegation from an account");
 
   private final String displayName;
   private final String description;

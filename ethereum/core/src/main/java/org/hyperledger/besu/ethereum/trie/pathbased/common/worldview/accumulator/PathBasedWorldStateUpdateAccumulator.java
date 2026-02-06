@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedAccount;
@@ -30,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -414,8 +414,6 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
         storageToUpdate.remove(deletedAddress);
       }
       accountValue.setUpdated(null);
-      // Track account write for cross-client execution metrics (account deleted)
-      EvmOperationCounters.incrementAccountWrites();
     }
 
     // Note: Use sequential stream, not parallel, because metrics tracking uses ThreadLocal

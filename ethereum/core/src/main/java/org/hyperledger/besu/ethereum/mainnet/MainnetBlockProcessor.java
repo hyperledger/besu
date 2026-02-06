@@ -67,9 +67,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule,
-        balConfiguration,
-        metricsSystem,
-        metricsConfiguration);
+        balConfiguration);
   }
 
   @Override
