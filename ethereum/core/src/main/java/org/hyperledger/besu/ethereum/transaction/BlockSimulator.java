@@ -380,24 +380,23 @@ public class BlockSimulator {
         transactionMetricsTracers.add(transactionMetricsTracer);
       }
 
-      // Compose operation tracers using TracerAggregator
+      // Compose operation tracers using TracerAggregator, starting with the provided
+      // operationTracer
       final TracerAggregator finalOperationTracer;
       if (isTraceTransfers && transactionMetricsTracer != null) {
-        // Compose both tracers
+        // Compose all three tracers: operationTracer + EthTransferLogOperationTracer +
+        // ExecutionMetricsTracer
         finalOperationTracer =
             TracerAggregator.combining(
-                OperationTracer.NO_TRACING,
-                new EthTransferLogOperationTracer(),
-                transactionMetricsTracer);
+                operationTracer, new EthTransferLogOperationTracer(), transactionMetricsTracer);
       } else if (isTraceTransfers) {
         finalOperationTracer =
-            TracerAggregator.combining(
-                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer());
+            TracerAggregator.combining(operationTracer, new EthTransferLogOperationTracer());
       } else if (transactionMetricsTracer != null) {
         finalOperationTracer =
-            TracerAggregator.combining(OperationTracer.NO_TRACING, transactionMetricsTracer);
+            TracerAggregator.combining(operationTracer, transactionMetricsTracer);
       } else {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING);
+        finalOperationTracer = TracerAggregator.combining(operationTracer);
       }
 
       long gasLimit =
