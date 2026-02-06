@@ -129,7 +129,6 @@ public abstract class AbstractOperation implements Operation {
    * @return the existing or newly created {@link MutableAccount}
    */
   protected MutableAccount getOrCreateAccount(final Address address, final MessageFrame frame) {
-    // Note: account read tracking is done in WorldUpdater.getOrCreate()
     final MutableAccount account = frame.getWorldUpdater().getOrCreate(address);
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(address));
     return account;
@@ -144,7 +143,6 @@ public abstract class AbstractOperation implements Operation {
    * @return the {@link MutableAccount} for the sender
    */
   protected MutableAccount getSenderAccount(final MessageFrame frame) {
-    // Note: account read tracking is done in WorldUpdater.getSenderAccount()
     final MutableAccount account = frame.getWorldUpdater().getSenderAccount(frame);
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     return account;
