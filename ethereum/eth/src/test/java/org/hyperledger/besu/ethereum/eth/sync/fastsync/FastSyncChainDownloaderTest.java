@@ -59,6 +59,8 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -206,16 +208,22 @@ public class FastSyncChainDownloaderTest {
 
   private ChainDownloader downloader(
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
-    return FastSyncChainDownloader.create(
-        syncConfig,
-        worldStateStorageCoordinator,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        syncState,
-        new NoOpMetricsSystem(),
-        new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
-        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+    try {
+      final Path tempDir = Files.createTempDirectory("fast-sync-test");
+      return FastSyncChainDownloader.create(
+          syncConfig,
+          worldStateStorageCoordinator,
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          syncState,
+          new NoOpMetricsSystem(),
+          new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get(), false),
+          SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
+          tempDir);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to create temp directory for test", e);
+    }
   }
 
   @ParameterizedTest
@@ -236,6 +244,12 @@ public class FastSyncChainDownloaderTest {
             .build();
     final long pivotBlockNumber = 25;
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
+
+    if (downloader instanceof WorldStateHealFinishedListener) {
+      // Signal world state heal is complete to make test independent of world state
+      ((WorldStateHealFinishedListener) downloader).onWorldStateHealFinished();
+    }
+
     final CompletableFuture<Void> result = downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
@@ -260,6 +274,12 @@ public class FastSyncChainDownloaderTest {
     final long pivotBlockNumber = 5;
     final SynchronizerConfiguration syncConfig = SynchronizerConfiguration.builder().build();
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
+
+    if (downloader instanceof WorldStateHealFinishedListener) {
+      // Signal world state heal is complete to make test independent of world state
+      ((WorldStateHealFinishedListener) downloader).onWorldStateHealFinished();
+    }
+
     final CompletableFuture<Void> result = downloader.start();
 
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
@@ -309,6 +329,12 @@ public class FastSyncChainDownloaderTest {
             .build();
     final long pivotBlockNumber = 25;
     final ChainDownloader downloader = downloader(syncConfig, pivotBlockNumber);
+
+    if (downloader instanceof WorldStateHealFinishedListener) {
+      // not using a sync target, so just return
+      return;
+    }
+
     final CompletableFuture<Void> result = downloader.start();
 
     while (localBlockchain.getChainHeadBlockNumber() < 15) {

@@ -40,6 +40,7 @@
 - Update assertj to v3.27.7 [#9710](https://github.com/hyperledger/besu/pull/9710)
 
 ### Bug fixes
+- Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 
 ## 26.1.0-RC1
 

@@ -88,7 +88,7 @@ public class FullSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final int singleHeaderBufferSize = headerRequestSize * downloaderParallelism;
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),

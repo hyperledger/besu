@@ -89,6 +89,22 @@ public interface Operation {
     }
 
     /**
+     * Instantiates a new Operation result for soft failure without gas available for child call
+     *
+     * @param gasCost The Gas Cost
+     * @param pcIncrement the increment counter
+     * @param softFailureReason Soft failure reason
+     */
+    public OperationResult(
+        final long gasCost, final int pcIncrement, final SoftFailureReason softFailureReason) {
+      this.gasCost = gasCost;
+      this.pcIncrement = pcIncrement;
+      this.softFailureReason = softFailureReason;
+      this.haltReason = null;
+      this.gasAvailableForChildCall = OptionalLong.empty();
+    }
+
+    /**
      * Gets gas cost.
      *
      * @return the gas cost
