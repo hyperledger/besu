@@ -332,11 +332,8 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
-    // Create execution metrics tracer for the entire block if requested
-    ExecutionMetricsTracer blockExecutionMetricsTracer = null;
-    if (collectExecutionMetrics) {
-      blockExecutionMetricsTracer = new ExecutionMetricsTracer();
-    }
+    // Collect per-transaction metrics if requested
+    final List<ExecutionMetricsTracer> transactionMetricsTracers = new ArrayList<>();
 
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
@@ -345,17 +342,24 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
 
+      // Create separate ExecutionMetricsTracer for each transaction (thread-safe)
+      ExecutionMetricsTracer transactionMetricsTracer = null;
+      if (collectExecutionMetrics) {
+        transactionMetricsTracer = new ExecutionMetricsTracer();
+        transactionMetricsTracers.add(transactionMetricsTracer);
+      }
+
       // Compose operation tracers using TracerAggregator
       final TracerAggregator finalOperationTracer;
-      if (isTraceTransfers && blockExecutionMetricsTracer != null) {
+      if (isTraceTransfers && transactionMetricsTracer != null) {
         // Compose both tracers
         finalOperationTracer =
             TracerAggregator.combining(
-                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer(), blockExecutionMetricsTracer);
+                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer(), transactionMetricsTracer);
       } else if (isTraceTransfers) {
         finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, new EthTransferLogOperationTracer());
-      } else if (blockExecutionMetricsTracer != null) {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, blockExecutionMetricsTracer);
+      } else if (transactionMetricsTracer != null) {
+        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, transactionMetricsTracer);
       } else {
         finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING);
       }
@@ -414,9 +418,13 @@ public class BlockSimulator {
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
 
-    // Set the execution metrics tracer if it was collected
-    if (blockExecutionMetricsTracer != null) {
-      blockStateCallSimulationResult.setExecutionMetricsTracer(blockExecutionMetricsTracer);
+    // Aggregate per-transaction execution metrics if collected
+    if (!transactionMetricsTracers.isEmpty()) {
+      ExecutionMetricsTracer aggregatedTracer = new ExecutionMetricsTracer();
+      for (ExecutionMetricsTracer transactionTracer : transactionMetricsTracers) {
+        aggregatedTracer.getMetrics().merge(transactionTracer.copyMetrics());
+      }
+      blockStateCallSimulationResult.setExecutionMetricsTracer(aggregatedTracer);
     }
 
     return blockStateCallSimulationResult;
