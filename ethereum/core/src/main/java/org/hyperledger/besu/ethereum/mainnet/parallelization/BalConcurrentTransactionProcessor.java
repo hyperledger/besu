@@ -125,7 +125,11 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       blockUpdater.commit();
 
       // TODO: We should pass transaction accumulator
-      ctxBuilder.transactionAccumulator(blockUpdater).transactionProcessingResult(result);
+      ctxBuilder
+          .transactionAccumulator(blockUpdater)
+          .transactionProcessingResult(result)
+          .backgroundTracer(
+              null); // BalConcurrentTransactionProcessor doesn't use background tracers
 
       return ctxBuilder.build();
     } finally {

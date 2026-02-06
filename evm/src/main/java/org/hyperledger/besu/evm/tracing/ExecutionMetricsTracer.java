@@ -465,4 +465,15 @@ public class ExecutionMetricsTracer implements OperationTracer {
     copy.merge(metrics);
     return copy;
   }
+
+  /**
+   * Merge metrics from another ExecutionMetricsTracer into this tracer. This method is used during
+   * parallel execution consolidation to combine metrics from background execution with the main
+   * block tracer.
+   *
+   * @param other the ExecutionMetricsTracer to merge metrics from
+   */
+  public void mergeFrom(final ExecutionMetricsTracer other) {
+    this.metrics.merge(other.metrics);
+  }
 }
