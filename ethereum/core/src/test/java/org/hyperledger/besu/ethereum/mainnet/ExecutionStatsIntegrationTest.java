@@ -768,7 +768,6 @@ class ExecutionStatsIntegrationTest {
     // This simulates block finalization where account/storage writes are tracked
     worldState.rootHash();
     stats.endExecution();
-    stats.collectEvmCounters();
   }
 
   private void printStats(final String testName) {
