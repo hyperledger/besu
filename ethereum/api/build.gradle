@@ -135,8 +135,10 @@ tasks.register('generateTestBlockchain') {
   dependsOn(configurations.testResourceGeneration)
   dependsOn(processTestResources)
   doLast {
-    if(!dataPath.exists()) {
-      mkdir(dataPath)
+    if(!file(blocksBin).exists()) {
+      if(!dataPath.exists()) {
+        mkdir(dataPath)
+      }
 
       javaexec {
         main = 'org.hyperledger.besu.Besu'
