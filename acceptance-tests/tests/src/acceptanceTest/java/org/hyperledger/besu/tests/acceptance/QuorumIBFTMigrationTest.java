@@ -56,14 +56,14 @@ public class QuorumIBFTMigrationTest extends AcceptanceTestBase {
         new ProcessBuilder(
             "../../build/install/besu/bin/besu",
             "--genesis-file",
-            "src/test/resources/qbft/migration-ibft1/qbft-migration.json",
+            "src/acceptanceTest/resources/qbft/migration-ibft1/qbft-migration.json",
             "--data-path",
             dataPath.toString(),
             "--data-storage-format",
             "FOREST",
             "blocks",
             "import",
-            "src/test/resources/qbft/migration-ibft1/ibft.blocks");
+            "src/acceptanceTest/resources/qbft/migration-ibft1/ibft.blocks");
 
     processBuilder.directory(new File(System.getProperty("user.dir")));
     processBuilder.inheritIO(); // This will redirect the output to the console

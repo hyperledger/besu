@@ -1336,7 +1336,8 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   ]
 
   startParameter.projectProperties = [
-    'besuVersion': calculateVersion()
+    'besuVersion': calculateVersion(),
+    'invokeByEncloserProject': true
   ]
 
   doFirst {
