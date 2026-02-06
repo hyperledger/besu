@@ -75,7 +75,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         worldStateStorageKeyValueStorage.getTrieLogStorage());
   }
 
-  private boolean isClosedGet() {
+  protected boolean isClosedGet() {
     if (isClosed.get()) {
       Throwable t = new Throwable("Attempting to access closed worldstate");
       LOG.warn(t.getMessage(), t);

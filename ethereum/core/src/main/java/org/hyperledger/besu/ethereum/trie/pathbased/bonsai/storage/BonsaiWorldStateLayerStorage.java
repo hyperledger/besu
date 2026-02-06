@@ -103,6 +103,9 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
+    if (isClosedGet()) {
+      return Optional.empty();
+    }
     final byte[] key = accountHash.getBytes().toArrayUnsafe();
 
     // Level 1: Check layer
@@ -116,28 +119,13 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         ACCOUNT_INFO_STATE,
         key,
         getCurrentVersion(),
-        () -> parentWorldStateStorage.getAccount(accountHash));
-  }
-
-  @Override
-  public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
-    final byte[] key =
-        Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
-            .toArrayUnsafe();
-
-    // Level 1: Check layer
-    final Optional<byte[]> layerResult = getFromLayerOnly(ACCOUNT_STORAGE_STORAGE, key);
-    if (layerResult != null) {
-      return layerResult.map(Bytes::wrap);
-    }
-
-    // Level 2 & 3: Check cache, then parent
-    return cacheManager.getFromCacheOrStorage(
-        ACCOUNT_STORAGE_STORAGE,
-        key,
-        getCurrentVersion(),
-        () -> parentWorldStateStorage.getStorageValueByStorageSlotKey(accountHash, storageSlotKey));
+        () ->
+            getFlatDbStrategy()
+                .getFlatAccount(
+                    this::getWorldStateRootHash,
+                    this::getAccountStateTrieNode,
+                    accountHash,
+                    composedWorldStateStorage));
   }
 
   @Override
@@ -145,6 +133,9 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
+    if (isClosedGet()) {
+      return Optional.empty();
+    }
     final byte[] key =
         Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
             .toArrayUnsafe();
@@ -161,14 +152,22 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
         key,
         getCurrentVersion(),
         () ->
-            parentWorldStateStorage.getStorageValueByStorageSlotKey(
-                storageRootSupplier, accountHash, storageSlotKey));
+            getFlatDbStrategy()
+                .getFlatStorageValueByStorageSlotKey(
+                    this::getWorldStateRootHash,
+                    storageRootSupplier,
+                    (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                    accountHash,
+                    storageSlotKey,
+                    composedWorldStateStorage));
   }
 
   @Override
   public List<Optional<byte[]>> getMultipleKeys(
       final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
-
+    if (isClosedGet()) {
+      return new ArrayList<>();
+    }
     // Level 1: Get from layer (without fallback)
     final List<Optional<byte[]>> layerResults = getMultipleFromLayerOnly(segmentIdentifier, keys);
 
