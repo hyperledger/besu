@@ -206,7 +206,7 @@ public abstract class MainnetProtocolSpecs {
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : MainnetBlockProcessor::new)
+                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
         .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
@@ -312,7 +312,8 @@ public abstract class MainnetProtocolSpecs {
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
                             protocolSchedule,
-                            balConfig)))
+                            balConfig,
+                            metricsSystem)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
 
@@ -331,7 +332,7 @@ public abstract class MainnetProtocolSpecs {
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : MainnetBlockProcessor::new)
+                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
         .hardforkId(DAO_RECOVERY_TRANSITION);
   }
 
@@ -1217,12 +1218,9 @@ public abstract class MainnetProtocolSpecs {
         .blockAccessListFactory(
             new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
-        // EIP-7778: Block gas accounting without refunds
+        // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
-        // EIP-7778: Receipt factory with gasSpent field
-        .transactionReceiptFactory(new AmsterdamTransactionReceiptFactory(enableRevertReason))
-        // EIP-7778: Receipt decoder strategy for mandatory gasSpent field
-        .receiptDecoderStrategy(TransactionReceiptDecoderStrategy.AMSTERDAM)
+        .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)
         .hardforkId(AMSTERDAM);
   }
 
@@ -1361,32 +1359,6 @@ public abstract class MainnetProtocolSpecs {
           transactionType,
           result.isSuccessful() ? 1 : 0,
           gasUsed,
-          result.getLogs(),
-          revertReasonEnabled ? result.getRevertReason() : Optional.empty());
-    }
-  }
-
-  /**
-   * Transaction receipt factory for Amsterdam+ forks (EIP-7778). Creates receipts with gasSpent
-   * field populated. In Amsterdam+, cumulativeGasUsed is pre-refund (for block accounting), while
-   * gasSpent is post-refund (what users pay).
-   */
-  static class AmsterdamTransactionReceiptFactory extends PostFrontierTransactionReceiptFactory {
-
-    public AmsterdamTransactionReceiptFactory(final boolean revertReasonEnabled) {
-      super(revertReasonEnabled);
-    }
-
-    @Override
-    public TransactionReceipt create(
-        final TransactionType transactionType,
-        final TransactionProcessingResult result,
-        final long gasUsed) {
-      return new TransactionReceipt(
-          transactionType,
-          result.isSuccessful() ? 1 : 0,
-          gasUsed, // cumulativeGasUsed - now pre-refund in Amsterdam+
-          result.getGasSpent(), // gasSpent - post-refund (what user pays)
           result.getLogs(),
           revertReasonEnabled ? result.getRevertReason() : Optional.empty());
     }

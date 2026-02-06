@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
@@ -27,18 +28,24 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
-  private static final String CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG =
-      "--Xchain-pruning-blocks-retained-limit";
+  private static final String CHAIN_PRUNING_BALS_RETAINED_FLAG = "--Xchain-pruning-bals-retained";
+  private static final String CHAIN_PRUNING_RETAINED_MINIMUM_FLAG =
+      "--Xchain-pruning-retained-minimum";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
   private static final String PRE_MERGE_PRUNING_QUANTITY_FLAG = "--Xpre-merge-pruning-quantity";
 
+  private static final long WSP_EPOCHS_PER_WINDOW =
+      3533L; // 3533 epochs in the Weak Subjectivity Period time window
+  private static final long SLOTS_PER_EPOCH = 32L;
+
   /**
-   * The "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT" field sets the minimum limit for the
-   * "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED" value. For most networks, the default value of this
-   * limit is the safest. Reducing this value requires careful consideration and understanding of
-   * the potential implications. Lowering this limit may have unintended side effects.
+   * The "CHAIN_DATA_PRUNING_MIN_RETAINED_LIMIT" field sets the minimum retained limit for chain
+   * data pruning values. For most networks, the default value of this limit is the safest. Reducing
+   * this value requires careful consideration and understanding of the potential implications.
+   * Lowering this limit may have unintended side effects.
    */
-  public static final long CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT = 7200;
+  public static final long CHAIN_DATA_PRUNING_RETAINED_MINIMUM =
+      WSP_EPOCHS_PER_WINDOW * SLOTS_PER_EPOCH;
 
   /** The constant DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY. */
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
@@ -50,35 +57,44 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       hidden = true,
       names = {CHAIN_PRUNING_ENABLED_FLAG},
       description =
-          "Enable the chain pruner to actively prune old chain data (default: ${DEFAULT-VALUE})")
-  private final Boolean chainDataPruningEnabled = Boolean.FALSE;
+          "Enable the chain pruner to actively prune old chain data. Options: ALL (blocks and BALs), BAL (only BALs), NONE (disabled) (default: ${DEFAULT-VALUE})")
+  private final ChainPruningStrategy chainPruningStrategy = ChainPruningStrategy.BAL;
 
   @CommandLine.Option(
       hidden = true,
       names = {CHAIN_PRUNING_BLOCKS_RETAINED_FLAG},
       description =
           "The number of recent blocks for which to keep the chain data. Should be >= "
-              + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
+              + CHAIN_DATA_PRUNING_RETAINED_MINIMUM
               + " (default: ${DEFAULT-VALUE}). Unused if --history-expiry-prune is enabled")
-  private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
+  private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
 
   @CommandLine.Option(
       hidden = true,
-      names = {CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG},
+      names = {CHAIN_PRUNING_BALS_RETAINED_FLAG},
       description =
-          "Allows setting the limit below which no more blocks can be pruned. This prevents setting a value lower than this for "
+          "The number of recent blocks for which to keep block access lists. Must be >= "
+              + CHAIN_DATA_PRUNING_RETAINED_MINIMUM
+              + ". Defaults to "
               + CHAIN_PRUNING_BLOCKS_RETAINED_FLAG
-              + ". This flag should be used with caution as reducing the limit may have unintended side effects."
+              + " when not specified.")
+  private Long chainDataPruningBalsRetained;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {CHAIN_PRUNING_RETAINED_MINIMUM_FLAG},
+      description =
+          "Allows setting the limit below which no more data can be pruned. This prevents setting a retained value lower than this limit."
+              + " This flag should be used with caution as reducing the limit may have unintended side effects."
               + " (default: ${DEFAULT-VALUE}). Unused if --history-expiry-prune is enabled")
-  private final Long chainDataPruningBlocksRetainedLimit =
-      CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
+  private final Long chainDataPruningRetainedMinimum = CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
 
   @CommandLine.Option(
       hidden = true,
       names = {CHAIN_PRUNING_FREQUENCY_FLAG},
       description =
           "The number of blocks added to the chain between two pruning operations. Must be non-negative (default: ${DEFAULT-VALUE})")
-  private final PositiveNumber chainDataPruningBlocksFrequency =
+  private final PositiveNumber chainDataPruningFrequency =
       PositiveNumber.fromInt(DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY);
 
   @CommandLine.Option(
@@ -102,12 +118,12 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   }
 
   /**
-   * Gets chain data pruning enabled.
+   * Gets chain pruning strategy.
    *
-   * @return the chain data pruning enabled
+   * @return the chain pruning strategy
    */
-  public Boolean getChainDataPruningEnabled() {
-    return chainDataPruningEnabled;
+  public ChainPruningStrategy getChainPruningStrategy() {
+    return chainPruningStrategy;
   }
 
   /**
@@ -120,21 +136,33 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   }
 
   /**
-   * Get the configured number of retained blocks for chain pruning.
+   * Gets number of block access list retained.
    *
-   * @return the number of retained blocks
+   * @return the number of bals retained
    */
-  public Long getChainDataPruningBlocksRetainedLimit() {
-    return chainDataPruningBlocksRetainedLimit;
+  public Long getChainDataPruningBalsRetained() {
+    return chainDataPruningBalsRetained == null
+        ? chainDataPruningBlocksRetained
+        : chainDataPruningBalsRetained;
+  }
+
+  /**
+   * Get the configured retained limit for chain data pruning.
+   *
+   * @return the retained limit
+   */
+  public Long getChainDataPruningRetainedMinimum() {
+    return chainDataPruningRetainedMinimum;
   }
 
   @Override
   public ChainPrunerConfiguration toDomainObject() {
     return new ChainPrunerConfiguration(
-        chainDataPruningEnabled,
-        chainDataPruningBlocksRetained,
-        chainDataPruningBlocksRetainedLimit,
-        chainDataPruningBlocksFrequency.getValue(),
+        chainPruningStrategy,
+        getChainDataPruningBlocksRetained(),
+        getChainDataPruningBalsRetained(),
+        chainDataPruningRetainedMinimum,
+        chainDataPruningFrequency.getValue(),
         preMergePruningBlocksQuantity.getValue());
   }
 
@@ -142,13 +170,15 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   public List<String> getCLIOptions() {
     return Arrays.asList(
         CHAIN_PRUNING_ENABLED_FLAG,
-        chainDataPruningEnabled.toString(),
+        chainPruningStrategy.toString(),
         CHAIN_PRUNING_BLOCKS_RETAINED_FLAG,
-        chainDataPruningBlocksRetained.toString(),
-        CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG,
-        chainDataPruningBlocksRetainedLimit.toString(),
+        getChainDataPruningBlocksRetained().toString(),
+        CHAIN_PRUNING_BALS_RETAINED_FLAG,
+        getChainDataPruningBalsRetained().toString(),
+        CHAIN_PRUNING_RETAINED_MINIMUM_FLAG,
+        chainDataPruningRetainedMinimum.toString(),
         CHAIN_PRUNING_FREQUENCY_FLAG,
-        chainDataPruningBlocksFrequency.toString(),
+        chainDataPruningFrequency.toString(),
         PRE_MERGE_PRUNING_QUANTITY_FLAG,
         preMergePruningBlocksQuantity.toString());
   }
