@@ -1389,7 +1389,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             miningParametersSupplier.get(),
             besuController.getTransactionSimulator(),
             besuController.getProtocolSchedule(),
-            besuController.getProtocolContext().getBlockchain()));
+            besuController.getProtocolContext().getBlockchain(),
+            metricsConfiguration.isExecutionMetricsEnabled()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
