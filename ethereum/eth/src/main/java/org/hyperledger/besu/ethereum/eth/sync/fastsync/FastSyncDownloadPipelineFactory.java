@@ -153,16 +153,12 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             .getPivotBlockHeader()
             .orElseThrow(
                 () -> new InvalidConfigurationException("Pivot block header not available."));
-    final Checkpoint checkpoint =
-        syncState
-            .getCheckpoint()
-            .orElseThrow(() -> new InvalidConfigurationException("Checkpoint not available."));
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
             protocolContext,
             ethContext,
             syncState,
-            checkpoint.blockNumber(),
+            BlockHeader.GENESIS_BLOCK_NUMBER,
             pivotBlockHeader.getNumber(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
