@@ -1010,13 +1010,13 @@ task dockerUploadRelease {
   doLast {
     for (def architecture in archs) {
 
-      exec {
+      project.exec {
         def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      exec {
+      project.exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -1024,14 +1024,14 @@ task dockerUploadRelease {
       }
 
 
-      exec {
+      project.exec {
         def archImage = "${image}-${architecture}"
         def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-      exec {
+      project.exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
         executable shell
@@ -1047,7 +1047,7 @@ task manifestDocker {
     "arm64",
     "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
   doLast {
-    exec {
+    project.exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${image}-${arch}' " }
       def cmd = "docker manifest create '${image}' ${targets}"
@@ -1055,7 +1055,7 @@ task manifestDocker {
       executable shell
       args "-c", cmd
     }
-    exec {
+    project.exec {
       def cmd = "docker manifest push '${image}'"
       println "Executing '${cmd}'"
       executable shell
@@ -1070,7 +1070,7 @@ task manifestDockerRelease {
 
   doLast {
 
-    exec {
+    project.exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
       def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
@@ -1078,7 +1078,7 @@ task manifestDockerRelease {
       executable shell
       args "-c", cmd
     }
-    exec {
+    project.exec {
       def cmd = "docker manifest push '${baseTag}'"
       println "Executing '${cmd}'"
       executable shell
