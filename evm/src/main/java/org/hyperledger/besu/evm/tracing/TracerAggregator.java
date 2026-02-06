@@ -15,15 +15,14 @@
 package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -212,17 +211,6 @@ public class TracerAggregator implements OperationTracer {
       }
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public List<Log> getLogs() {
-    // Collect logs from all tracers
-    final List<Log> allLogs = new ArrayList<>();
-    for (final OperationTracer tracer : tracers) {
-      final List<Log> logs = tracer.getLogs();
-      allLogs.addAll(logs);
-    }
-    return allLogs;
   }
 
   /**

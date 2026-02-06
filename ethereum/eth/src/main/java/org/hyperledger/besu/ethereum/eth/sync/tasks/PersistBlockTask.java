@@ -225,7 +225,7 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
                 block.getBody().getOmmers().size(),
                 block.getHeader().getGasUsed(),
                 (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                block.getHash().toHexString(),
+                block.getHash().getBytes().toHexString(),
                 timeInS,
                 ethContext.getEthPeers().peerCount()));
         break;

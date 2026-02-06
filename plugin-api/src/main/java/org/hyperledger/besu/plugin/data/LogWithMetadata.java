@@ -16,11 +16,11 @@ package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogTopic;
 
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** A Log entry from a transaction execution. */
 public interface LogWithMetadata {
@@ -37,7 +37,7 @@ public interface LogWithMetadata {
    *
    * @return The list, possibly zero length, of log topics.
    */
-  List<? extends Bytes32> getTopics();
+  List<LogTopic> getTopics();
 
   /**
    * The data, of possibly unlimited length, for this log entry.

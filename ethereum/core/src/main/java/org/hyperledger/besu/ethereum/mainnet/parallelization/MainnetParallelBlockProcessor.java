@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
@@ -73,7 +74,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule,
-        balConfiguration);
+        balConfiguration,
+        metricsSystem);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
@@ -131,12 +133,23 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final Blockchain blockchain,
       final MutableWorldState worldState,
       final Block block) {
+    return processBlock(protocolContext, blockchain, worldState, block, Optional.empty());
+  }
+
+  @Override
+  public BlockProcessingResult processBlock(
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList) {
     final BlockProcessingResult blockProcessingResult =
         super.processBlock(
             protocolContext,
             blockchain,
             worldState,
             block,
+            blockAccessList,
             new ParallelTransactionPreprocessing(transactionProcessor, executor, balConfiguration));
 
     if (blockProcessingResult.isFailed()) {
@@ -148,7 +161,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       if (worldState instanceof BonsaiWorldState) {
         ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
       }
-      return super.processBlock(protocolContext, blockchain, worldState, block);
+      return super.processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
     }
     return blockProcessingResult;
   }

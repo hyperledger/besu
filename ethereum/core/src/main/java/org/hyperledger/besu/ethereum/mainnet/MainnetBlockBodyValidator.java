@@ -15,15 +15,16 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -51,14 +52,16 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final List<TransactionReceipt> receipts,
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode) {
+      final BodyValidationMode bodyValidationMode,
+      final OptionalLong cumulativeBlockGasUsed) {
     if (bodyValidationMode == BodyValidationMode.NONE) {
       return true;
     }
 
     if (bodyValidationMode == BodyValidationMode.LIGHT
         || bodyValidationMode == BodyValidationMode.FULL) {
-      if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
+      if (!validateBodyLight(
+          context, block, receipts, ommerValidationMode, cumulativeBlockGasUsed)) {
         return false;
       }
     }
@@ -76,18 +79,23 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 transactionsRoot = BodyValidation.transactionsRoot(body.getTransactions());
-    if (!validateTransactionsRoot(header, header.getTransactionsRoot(), transactionsRoot)) {
+    final Bytes32 transactionsRoot =
+        Bytes32.wrap(BodyValidation.transactionsRoot(body.getTransactions()).getBytes());
+    if (!validateTransactionsRoot(
+        header, Bytes32.wrap(header.getTransactionsRoot().getBytes()), transactionsRoot)) {
       return false;
     }
 
-    final Bytes32 receiptsRoot = BodyValidation.receiptsRoot(receipts);
-    if (!validateReceiptsRoot(header, header.getReceiptsRoot(), receiptsRoot)) {
+    final Bytes32 receiptsRoot = Bytes32.wrap(BodyValidation.receiptsRoot(receipts).getBytes());
+    if (!validateReceiptsRoot(
+        header, Bytes32.wrap(header.getReceiptsRoot().getBytes()), receiptsRoot)) {
       return false;
     }
 
     if (!validateStateRoot(
-        block.getHeader(), block.getHeader().getStateRoot(), worldStateRootHash)) {
+        block.getHeader(),
+        Bytes32.wrap(block.getHeader().getStateRoot().getBytes()),
+        Bytes32.wrap(worldStateRootHash.getBytes()))) {
       LOG.warn("Invalid block RLP : {}", block.toRlp().toHexString());
       receipts.forEach(
           receipt ->
@@ -102,13 +110,23 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
-      final HeaderValidationMode ommerValidationMode) {
+      final HeaderValidationMode ommerValidationMode,
+      final OptionalLong cumulativeBlockGasUsed) {
 
     final BlockHeader header = block.getHeader();
 
-    final long gasUsed =
-        receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
-    if (!validateGasUsed(header, header.getGasUsed(), gasUsed)) {
+    // Use the protocol-specific gas validation strategy
+    final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+    final BlockGasUsedValidator gasValidator = protocolSpec.getBlockGasUsedValidator();
+    if (!gasValidator.validate(header, receipts, cumulativeBlockGasUsed)) {
+      final long receiptGasUsed =
+          receipts.isEmpty() ? 0 : receipts.get(receipts.size() - 1).getCumulativeGasUsed();
+      LOG.warn(
+          "Invalid block {}: gas used mismatch (header={}, receipts={}, blockGas={})",
+          header.toLogString(),
+          header.getGasUsed(),
+          receiptGasUsed,
+          cumulativeBlockGasUsed.orElse(-1));
       return false;
     }
 
@@ -154,20 +172,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private static boolean validateGasUsed(
-      final BlockHeader header, final long expected, final long actual) {
-    if (expected != actual) {
-      LOG.warn(
-          "Invalid block {}: gas used mismatch (expected={}, actual={})",
-          header.toLogString(),
-          expected,
-          actual);
-      return false;
-    }
-
-    return true;
-  }
-
   private boolean validateReceiptsRoot(
       final BlockHeader header, final Bytes32 expected, final Bytes32 actual) {
     if (!expected.equals(actual)) {
@@ -203,8 +207,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
 
-    final Bytes32 ommerHash = BodyValidation.ommersHash(body.getOmmers());
-    if (!validateOmmersHash(header, header.getOmmersHash(), ommerHash)) {
+    final Bytes32 ommerHash = Bytes32.wrap(BodyValidation.ommersHash(body.getOmmers()).getBytes());
+    if (!validateOmmersHash(header, Bytes32.wrap(header.getOmmersHash().getBytes()), ommerHash)) {
       return false;
     }
 

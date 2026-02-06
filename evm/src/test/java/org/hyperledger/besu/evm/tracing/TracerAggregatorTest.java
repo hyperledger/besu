@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -217,27 +217,6 @@ public class TracerAggregatorTest {
     final TracerAggregator aggregator = new TracerAggregator(tracer1, tracer2, tracer3);
 
     assertThat(aggregator.getTraceFrames()).isSameAs(expectedFrames);
-  }
-
-  @Test
-  void shouldReturnLogsFromAllTracers() {
-    final OperationTracer tracer1 = mock(OperationTracer.class);
-    final OperationTracer tracer2 = mock(OperationTracer.class);
-    final OperationTracer tracer3 = mock(OperationTracer.class);
-
-    final Log log1 = mock(Log.class);
-    final Log log2 = mock(Log.class);
-    final Log log3 = mock(Log.class);
-
-    when(tracer1.getLogs()).thenReturn(Arrays.asList(log1));
-    when(tracer2.getLogs()).thenReturn(Arrays.asList(log2, log3));
-    when(tracer3.getLogs()).thenReturn(Collections.emptyList());
-
-    final TracerAggregator aggregator = new TracerAggregator(tracer1, tracer2, tracer3);
-
-    final List<Log> result = aggregator.getLogs();
-    assertThat(result).hasSize(3);
-    assertThat(result).containsExactly(log1, log2, log3);
   }
 
   @Test

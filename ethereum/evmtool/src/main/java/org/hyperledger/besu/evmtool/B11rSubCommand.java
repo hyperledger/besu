@@ -253,7 +253,7 @@ public class B11rSubCommand implements Runnable {
 
     final ObjectNode resultObject = objectMapper.createObjectNode();
     resultObject.put("rlp", rlpOut.encoded().toHexString());
-    resultObject.put("hash", newHeader.getHash().toHexString());
+    resultObject.put("hash", newHeader.getHash().getBytes().toHexString());
     var writer = objectMapper.writerWithDefaultPrettyPrinter();
     try {
       var resultString = writer.writeValueAsString(resultObject);

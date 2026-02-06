@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.transaction;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -119,5 +120,9 @@ public class BlockSimulationResult {
 
   public Optional<ExecutionMetricsTracer> getExecutionMetricsTracer() {
     return executionMetricsTracer;
+  }
+
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockStateCallSimulationResult.getBlockAccessList();
   }
 }

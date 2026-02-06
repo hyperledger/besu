@@ -60,16 +60,11 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
@@ -77,7 +72,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -133,8 +127,23 @@ public class BlockSimulator {
    */
   public List<BlockSimulationResult> process(
       final BlockHeader header, final BlockSimulationParameter blockSimulationParameter) {
+    return process(header, blockSimulationParameter, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param header The block header for all simulations.
+   * @param blockSimulationParameter The BlockSimulationParameter containing the block state calls.
+   * @param operationTracer The operation tracer to use during simulation.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
+  public List<BlockSimulationResult> process(
+      final BlockHeader header,
+      final BlockSimulationParameter blockSimulationParameter,
+      final OperationTracer operationTracer) {
     try (final MutableWorldState ws = getWorldState(header)) {
-      return process(header, blockSimulationParameter, ws);
+      return process(header, blockSimulationParameter, ws, operationTracer);
     } catch (IllegalArgumentException | BlockStateCallException e) {
       throw e;
     } catch (final Exception e) {
@@ -154,6 +163,23 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockSimulationParameter simulationParameter,
       final MutableWorldState worldState) {
+    return process(blockHeader, simulationParameter, worldState, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param blockHeader The block header for all simulations.
+   * @param simulationParameter The BlockSimulationParameter containing the block state calls.
+   * @param worldState The initial MutableWorldState to start with.
+   * @param operationTracer The operation tracer to use during simulation.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
+  public List<BlockSimulationResult> process(
+      final BlockHeader blockHeader,
+      final BlockSimulationParameter simulationParameter,
+      final MutableWorldState worldState,
+      final OperationTracer operationTracer) {
     int countStateCalls = simulationParameter.getBlockStateCalls().size();
     List<BlockSimulationResult> results = new ArrayList<>(countStateCalls);
 
@@ -179,7 +205,8 @@ public class BlockSimulator {
               simulationParameter.isCollectExecutionMetrics(),
               simulationParameter::getFakeSignature,
               blockHashCache,
-              simulationCumulativeGasUsed);
+              simulationCumulativeGasUsed,
+              operationTracer);
       results.add(result);
       BlockHeader resultBlockHeader = result.getBlock().getHeader();
       blockHashCache.put(resultBlockHeader.getNumber(), resultBlockHeader.getHash());
@@ -195,6 +222,7 @@ public class BlockSimulator {
    * @param baseBlockHeader The block header for the simulation.
    * @param blockStateCall The BlockStateCall to process.
    * @param ws The MutableWorldState to use for the simulation.
+   * @param operationTracer The operation tracer to use
    * @return A BlockSimulationResult from processing the BlockStateCall.
    */
   private BlockSimulationResult processBlockStateCall(
@@ -207,7 +235,8 @@ public class BlockSimulator {
       final boolean collectExecutionMetrics,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
-      final long simulationCumulativeGasUsed) {
+      final long simulationCumulativeGasUsed,
+      final OperationTracer operationTracer) {
 
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     ProtocolSpec protocolSpec =
@@ -267,7 +296,8 @@ public class BlockSimulator {
             blockHashLookup,
             signatureSupplier,
             simulationCumulativeGasUsed,
-            blockAccessListBuilder);
+            blockAccessListBuilder,
+            operationTracer);
 
     Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
@@ -316,7 +346,8 @@ public class BlockSimulator {
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
       final long simulationCumulativeGasUsed,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final OperationTracer operationTracer) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
@@ -349,19 +380,23 @@ public class BlockSimulator {
         transactionMetricsTracers.add(transactionMetricsTracer);
       }
 
-      // Compose operation tracers using TracerAggregator
+      // Compose operation tracers using TracerAggregator, starting with the provided
+      // operationTracer
       final TracerAggregator finalOperationTracer;
       if (isTraceTransfers && transactionMetricsTracer != null) {
-        // Compose both tracers
+        // Compose all three tracers: operationTracer + EthTransferLogOperationTracer +
+        // ExecutionMetricsTracer
         finalOperationTracer =
             TracerAggregator.combining(
-                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer(), transactionMetricsTracer);
+                operationTracer, new EthTransferLogOperationTracer(), transactionMetricsTracer);
       } else if (isTraceTransfers) {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, new EthTransferLogOperationTracer());
+        finalOperationTracer =
+            TracerAggregator.combining(operationTracer, new EthTransferLogOperationTracer());
       } else if (transactionMetricsTracer != null) {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, transactionMetricsTracer);
+        finalOperationTracer =
+            TracerAggregator.combining(operationTracer, transactionMetricsTracer);
       } else {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING);
+        finalOperationTracer = TracerAggregator.combining(operationTracer);
       }
 
       long gasLimit =
@@ -466,10 +501,7 @@ public class BlockSimulator {
             .buildBlockHeader();
 
     Block block =
-        new Block(
-            finalBlockHeader,
-            new BlockBody(
-                transactions, List.of(), Optional.of(List.of()), simResult.getBlockAccessList()));
+        new Block(finalBlockHeader, new BlockBody(transactions, List.of(), Optional.of(List.of())));
 
     if (returnTrieLog && ws instanceof PathBasedWorldState) {
       // if requested and path-based worldstate, return result with trielog and serializer:
@@ -677,5 +709,4 @@ public class BlockSimulator {
     }
     return blockHeader.getGasLimit();
   }
-
 }

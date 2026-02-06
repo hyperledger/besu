@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
@@ -56,6 +57,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
   protected final Optional<Long> cancunMilestone;
+  protected final Optional<Long> amsterdamMilestone;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
@@ -67,6 +69,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     this.mergeCoordinator = mergeCoordinator;
     cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
+    amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
   }
 
   protected ValidationResult<RpcErrorType> validateParameter(
@@ -218,7 +221,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
                     finalWithdrawals,
-                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot())));
+                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot()),
+                    Optional.ofNullable(payloadAttributes.getSlotNumber())));
 
     payloadId.ifPresent(
         pid ->
@@ -294,7 +298,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             .setMessage(message)
             .addArgument(payloadAttributes::getTimestamp)
             .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
-            .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
+            .addArgument(
+                () -> payloadAttributes.getSuggestedFeeRecipient().getBytes().toHexString());
     if (payloadAttributes.getWithdrawals() != null) {
       message += ", withdrawals: {}";
       builder =
@@ -319,7 +324,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       final Hash safeBlockHash, final Hash finalizedBlockHash, final BlockHeader newBlock) {
     Optional<BlockHeader> maybeFinalizedBlock = Optional.empty();
 
-    if (!finalizedBlockHash.isZero()) {
+    if (!finalizedBlockHash.getBytes().isZero()) {
       maybeFinalizedBlock = protocolContext.getBlockchain().getBlockHeader(finalizedBlockHash);
 
       // if the finalized block hash is not zero, we always need to have its block, because we
@@ -338,8 +343,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     // Once we have at least one finalized block, the transition block has either been finalized
     // directly
     // or through one of its descendants.
-    if (safeBlockHash.isZero()) {
-      return finalizedBlockHash.isZero();
+    if (safeBlockHash.getBytes().isZero()) {
+      return finalizedBlockHash.getBytes().isZero();
     }
 
     final Optional<BlockHeader> maybeSafeBlock =

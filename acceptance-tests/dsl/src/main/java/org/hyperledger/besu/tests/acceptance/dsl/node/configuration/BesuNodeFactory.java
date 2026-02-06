@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -90,7 +91,8 @@ public class BesuNodeFactory {
         config.getKeyPair(),
         config.isStrictTxReplayProtectionEnabled(),
         config.getEnvironment(),
-        config.storageImplementation());
+        config.storageImplementation(),
+        config.getPluginConfiguration());
   }
 
   public BesuNode createArchiveNode(final String name) throws IOException {
@@ -548,6 +550,7 @@ public class BesuNodeFactory {
   public BesuNode createQbftPluginsNode(
       final String name,
       final List<String> plugins,
+      final PluginConfiguration pluginConfiguration,
       final List<String> extraCLIOptions,
       final String... extraRpcApis)
       throws IOException {
@@ -567,6 +570,7 @@ public class BesuNodeFactory {
             .jsonRpcTxPool()
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftLondonGenesisConfig)
             .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+            .pluginConfiguration(pluginConfiguration)
             .build());
   }
 

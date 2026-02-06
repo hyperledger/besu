@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 
 import org.hyperledger.besu.crypto.KeyPair;
@@ -25,18 +26,21 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
+import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
@@ -113,6 +117,28 @@ public class BlockDataGenerator {
   }
 
   /**
+   * Wrapper class to return both Block and its generated BlockAccessList. This ensures that the BAL
+   * hash in the header matches the actual BAL data.
+   */
+  public static class BlockWithAccessList {
+    private final Block block;
+    private final Optional<BlockAccessList> blockAccessList;
+
+    public BlockWithAccessList(final Block block, final Optional<BlockAccessList> blockAccessList) {
+      this.block = block;
+      this.blockAccessList = blockAccessList;
+    }
+
+    public Block getBlock() {
+      return block;
+    }
+
+    public Optional<BlockAccessList> getBlockAccessList() {
+      return blockAccessList;
+    }
+  }
+
+  /**
    * Generates a sequence of blocks with some accounts and account storage pre-populated with random
    * data.
    */
@@ -161,6 +187,105 @@ public class BlockDataGenerator {
     }
 
     return seq;
+  }
+
+  /**
+   * Generates a sequence of blocks with BlockAccessList, returning BlockWithAccessList objects.
+   * This method ensures that generated BAL hashes match the header balHash field.
+   *
+   * @param count number of blocks to generate
+   * @param nextBlock starting block number
+   * @param parent parent block hash
+   * @param worldStateArchive world state archive for state management
+   * @param accountsToSetup accounts to setup in the world state
+   * @param storageKeys storage keys to populate
+   * @return list of BlockWithAccessList containing blocks and their associated BALs
+   */
+  public List<BlockWithAccessList> blockSequenceWithAccessList(
+      final int count,
+      final long nextBlock,
+      final Hash parent,
+      final WorldStateArchive worldStateArchive,
+      final List<Address> accountsToSetup,
+      final List<UInt256> storageKeys) {
+    final List<BlockWithAccessList> seq = new ArrayList<>(count);
+
+    final MutableWorldState worldState = worldStateArchive.getWorldState();
+
+    long nextBlockNumber = nextBlock;
+    Hash parentHash = parent;
+
+    for (int i = 0; i < count; i++) {
+      final WorldUpdater stateUpdater = worldState.updater();
+      if (i == 0) {
+        // Set up some accounts
+        accountsToSetup.forEach(stateUpdater::createAccount);
+        stateUpdater.commit();
+      } else {
+        // Mutate accounts
+        accountsToSetup.forEach(
+            hash -> {
+              final MutableAccount a = stateUpdater.getAccount(hash);
+              a.incrementNonce();
+              a.setBalance(Wei.of(positiveLong()));
+              storageKeys.forEach(key -> a.setStorageValue(key, UInt256.ONE));
+            });
+        stateUpdater.commit();
+      }
+      final BlockOptions options =
+          blockOptionsSupplier
+              .get()
+              .setBlockNumber(nextBlockNumber)
+              .setParentHash(parentHash)
+              .setStateRoot(worldState.rootHash());
+      final BlockWithAccessList next = blockWithAccessList(options);
+      seq.add(next);
+      parentHash = next.getBlock().getHash();
+      nextBlockNumber = nextBlockNumber + 1L;
+      worldState.persist(null);
+    }
+
+    return seq;
+  }
+
+  /**
+   * Generates a sequence of blocks with BlockAccessList starting from a previous block.
+   *
+   * @param previousBlock the block to build upon
+   * @param count number of blocks to generate
+   * @return list of BlockWithAccessList
+   */
+  public List<BlockWithAccessList> blockSequenceWithAccessList(
+      final Block previousBlock, final int count) {
+    final WorldStateArchive worldState = createInMemoryWorldStateArchive();
+    final Hash parentHash = previousBlock.getHeader().getHash();
+    final long blockNumber = previousBlock.getHeader().getNumber() + 1;
+    return blockSequenceWithAccessList(
+        count,
+        blockNumber,
+        parentHash,
+        worldState,
+        Collections.emptyList(),
+        Collections.emptyList());
+  }
+
+  /**
+   * Generates a sequence of blocks with BlockAccessList starting from genesis.
+   *
+   * @param count number of blocks to generate
+   * @return list of BlockWithAccessList
+   */
+  public List<BlockWithAccessList> blockSequenceWithAccessList(final int count) {
+    final WorldStateArchive worldState = createInMemoryWorldStateArchive();
+    final long blockNumber = BlockHeader.GENESIS_BLOCK_NUMBER;
+    final Hash parentHash = Hash.ZERO;
+    return blockSequenceWithAccessList(
+        count,
+        blockNumber,
+        parentHash,
+        worldState,
+        Collections.emptyList(),
+        Collections.emptyList());
   }
 
   public List<Account> createRandomAccounts(final MutableWorldState worldState, final int count) {
@@ -244,15 +369,39 @@ public class BlockDataGenerator {
   }
 
   public Block block(final BlockOptions options) {
-    final long blockNumber = options.getBlockNumber(positiveLong());
-    final BlockBody body =
-        blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER ? BlockBody.empty() : body(options);
-    final BlockHeader header = header(blockNumber, body, options);
-    return new Block(header, body);
+    return blockWithAccessList(options).getBlock();
   }
 
   public Block block() {
     return block(new BlockOptions());
+  }
+
+  /**
+   * Creates a block with its associated BlockAccessList if generation is enabled. This method
+   * generates the BAL before creating the header to ensure the balHash in the header matches the
+   * actual BAL hash.
+   *
+   * @param options block generation options
+   * @return BlockWithAccessList containing the block and optional BAL
+   */
+  public BlockWithAccessList blockWithAccessList(final BlockOptions options) {
+    final long blockNumber = options.getBlockNumber(positiveLong());
+    final BlockBody body =
+        blockNumber == BlockHeader.GENESIS_BLOCK_NUMBER ? BlockBody.empty() : body(options);
+
+    Optional<BlockAccessList> generatedBal = Optional.empty();
+
+    // Generate BAL before creating header if enabled
+    if (options.shouldGenerateBlockAccessList()) {
+      final BlockAccessList bal =
+          options.getBlockAccessList().orElseGet(() -> blockAccessList(1 + random.nextInt(5)));
+      generatedBal = Optional.of(bal);
+      // Set the balHash in options so it's included in the header
+      options.setBalHash(Hash.wrap(keccak256(RLP.encode(bal::writeTo))));
+    }
+
+    final BlockHeader header = header(blockNumber, body, options);
+    return new BlockWithAccessList(new Block(header, body), generatedBal);
   }
 
   public BlockOptions nextBlockOptions(final Block afterBlock) {
@@ -283,6 +432,7 @@ public class BlockDataGenerator {
     final int gasLimit = random.nextInt() & Integer.MAX_VALUE;
     final int gasUsed = Math.max(0, gasLimit - 1);
     final long blockNonce = random.nextLong();
+
     final BlockHeaderBuilder blockHeaderBuilder =
         BlockHeaderBuilder.create()
             .parentHash(options.getParentHash(hash()))
@@ -305,9 +455,12 @@ public class BlockDataGenerator {
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
             .requestsHash(options.getRequestsHash(null))
-            .balHash(options.getBalHash(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    // Set balHash from options (already calculated if BAL was generated)
+    blockHeaderBuilder.balHash(options.getBalHash(null));
+
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
     return blockHeaderBuilder.buildBlockHeader();
   }
@@ -339,7 +492,6 @@ public class BlockDataGenerator {
   }
 
   private TransactionType transactionType() {
-    // TODO: when TransactionType.EIP4844 is fully supported, revert this.
     return transactionType(
         TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559);
   }
@@ -376,7 +528,6 @@ public class BlockDataGenerator {
       case ACCESS_LIST -> accessListTransaction(payload, to);
       case BLOB -> blobTransaction(payload, to);
       case DELEGATE_CODE -> null;
-        // no default, all types accounted for.
     };
   }
 
@@ -629,6 +780,109 @@ public class BlockDataGenerator {
         signatureAlgorithm.createPublicKey(publicKeyValue));
   }
 
+  /**
+   * Generates a random BlockAccessList with a specified number of account changes.
+   *
+   * @param accountCount the number of accounts to include
+   * @return a BlockAccessList with random data
+   */
+  public BlockAccessList blockAccessList(final int accountCount) {
+    final List<BlockAccessList.AccountChanges> accountChanges = new ArrayList<>(accountCount);
+
+    for (int i = 0; i < accountCount; i++) {
+      accountChanges.add(accountChanges());
+    }
+
+    return new BlockAccessList(accountChanges);
+  }
+
+  /**
+   * Generates a random BlockAccessList with 1-5 account changes.
+   *
+   * @return a BlockAccessList with random data
+   */
+  public BlockAccessList blockAccessList() {
+    return blockAccessList(1 + random.nextInt(5));
+  }
+
+  /**
+   * Generates a single AccountChanges with random data.
+   *
+   * @return an AccountChanges with random storage changes, reads, balance, nonce, and code changes
+   */
+  private BlockAccessList.AccountChanges accountChanges() {
+    final Address address = address();
+    final int storageChangeCount = random.nextInt(4);
+    final int storageReadCount = random.nextInt(3);
+    final int balanceChangeCount = random.nextInt(3) + 1;
+    final int nonceChangeCount = random.nextInt(3) + 1;
+    final int codeChangeCount = random.nextInt(2);
+
+    final List<BlockAccessList.SlotChanges> storageChanges = new ArrayList<>();
+    for (int i = 0; i < storageChangeCount; i++) {
+      storageChanges.add(slotChanges(i));
+    }
+
+    final List<BlockAccessList.SlotRead> storageReads = new ArrayList<>();
+    for (int i = 0; i < storageReadCount; i++) {
+      storageReads.add(new BlockAccessList.SlotRead(storageSlotKey()));
+    }
+
+    final List<BlockAccessList.BalanceChange> balanceChanges = new ArrayList<>();
+    for (int i = 0; i < balanceChangeCount; i++) {
+      balanceChanges.add(new BlockAccessList.BalanceChange(i, Wei.of(positiveLong())));
+    }
+
+    final List<BlockAccessList.NonceChange> nonceChanges = new ArrayList<>();
+    for (int i = 0; i < nonceChangeCount; i++) {
+      nonceChanges.add(new BlockAccessList.NonceChange(i, positiveLong()));
+    }
+
+    final List<BlockAccessList.CodeChange> codeChanges = new ArrayList<>();
+    for (int i = 0; i < codeChangeCount; i++) {
+      codeChanges.add(new BlockAccessList.CodeChange(i, bytesValue(10, 100)));
+    }
+
+    return new BlockAccessList.AccountChanges(
+        address, storageChanges, storageReads, balanceChanges, nonceChanges, codeChanges);
+  }
+
+  /**
+   * Generates SlotChanges with random storage modifications.
+   *
+   * @param txIndex the transaction index for these changes
+   * @return SlotChanges with random data
+   */
+  private BlockAccessList.SlotChanges slotChanges(final int txIndex) {
+    final StorageSlotKey slot = storageSlotKey();
+    final int changeCount = 1 + random.nextInt(3);
+    final List<BlockAccessList.StorageChange> changes = new ArrayList<>();
+
+    for (int i = 0; i < changeCount; i++) {
+      changes.add(new BlockAccessList.StorageChange(txIndex + i, uint256()));
+    }
+
+    return new BlockAccessList.SlotChanges(slot, changes);
+  }
+
+  /**
+   * Generates a random StorageSlotKey.
+   *
+   * @return a StorageSlotKey with a random UInt256 value
+   */
+  private StorageSlotKey storageSlotKey() {
+    return new StorageSlotKey(uint256());
+  }
+
+  /**
+   * Generates an empty BlockAccessList.
+   *
+   * @return an empty BlockAccessList
+   */
+  public BlockAccessList emptyBlockAccessList() {
+    return new BlockAccessList(Collections.emptyList());
+  }
+
   public static class BlockOptions {
     private OptionalLong blockNumber = OptionalLong.empty();
     private Optional<Hash> parentHash = Optional.empty();
@@ -658,6 +912,9 @@ public class BlockDataGenerator {
     private Optional<Hash> balHash = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
+
+    private Optional<BlockAccessList> blockAccessList = Optional.empty();
+    private boolean generateBlockAccessList = false;
 
     public static BlockOptions create() {
       return new BlockOptions();
@@ -742,6 +999,14 @@ public class BlockDataGenerator {
 
     public boolean hasOmmers() {
       return hasOmmers;
+    }
+
+    public Optional<BlockAccessList> getBlockAccessList() {
+      return blockAccessList;
+    }
+
+    public boolean shouldGenerateBlockAccessList() {
+      return generateBlockAccessList;
     }
 
     public BlockOptions addTransaction(final Transaction... tx) {
@@ -885,6 +1150,56 @@ public class BlockDataGenerator {
 
     public BlockOptions setMaxFeePerBlobGas(final Optional<Wei> maxFeePerBlobGas) {
       this.maybeMaxFeePerBlobGas = Optional.of(maxFeePerBlobGas);
+      return this;
+    }
+
+    public BlockOptions setBlockAccessList(final BlockAccessList blockAccessList) {
+      this.blockAccessList = Optional.of(blockAccessList);
+      this.generateBlockAccessList = false;
+      return this;
+    }
+
+    public BlockOptions setEmptyBlockAccessList() {
+      this.blockAccessList = Optional.of(new BlockAccessList(Collections.emptyList()));
+      this.generateBlockAccessList = false;
+      return this;
+    }
+
+    public BlockOptions clearBlockAccessList() {
+      this.blockAccessList = Optional.empty();
+      this.generateBlockAccessList = false;
+      return this;
+    }
+
+    /**
+     * Enables automatic BAL generation when creating the block. The balHash will be automatically
+     * calculated and set in the header.
+     *
+     * @return this BlockOptions for chaining
+     */
+    public BlockOptions withGeneratedBlockAccessList() {
+      this.generateBlockAccessList = true;
+      return this;
+    }
+
+    /**
+     * Enables automatic BAL generation with a specific number of accounts.
+     *
+     * @param accountCount the number of accounts to generate in the BAL
+     * @return this BlockOptions for chaining
+     */
+    public BlockOptions withGeneratedBlockAccessList(final int accountCount) {
+      this.generateBlockAccessList = true;
+      return this;
+    }
+
+    /**
+     * Disables automatic BAL generation.
+     *
+     * @return this BlockOptions for chaining
+     */
+    public BlockOptions withoutGeneratedBlockAccessList() {
+      this.generateBlockAccessList = false;
       return this;
     }
   }

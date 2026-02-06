@@ -40,7 +40,8 @@ public class BftConditions {
   }
 
   public List<BesuNode> validators(final BesuNode[] nodes) {
-    final Comparator<BesuNode> compareByAddress = Comparator.comparing(BesuNode::getAddress);
+    final Comparator<BesuNode> compareByAddress =
+        Comparator.comparing(node -> node.getAddress().getBytes());
     List<BesuNode> besuNodes = Arrays.asList(nodes);
     besuNodes.sort(compareByAddress);
     return besuNodes;

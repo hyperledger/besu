@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '7.0.3'
-  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'com.github.jk1.dependency-license-report' version '3.0.1'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.3' apply false
   id 'net.ltgt.errorprone' version '4.2.0'
@@ -58,13 +58,12 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
 
 group = 'org.hyperledger.besu'
 
-defaultTasks 'build', 'checkLicense', 'javadoc'
+defaultTasks 'build', 'javadoc'
 
 def buildAliases = [
   'dev': [
     'spotlessApply',
     'build',
-    'checkLicense',
     'javadoc'
   ],
   'build': ['spotlessCheck', 'build']
@@ -187,7 +186,7 @@ configure(allprojects - project(':platform')) {
     def ethExecSpecTestsRepo = ivy {
       url = 'https://github.com'
       patternLayout {
-        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+        artifact '/[organisation]/[module]/releases/download/[revision]/[classifier].[ext]'
       }
       metadataSources {
         artifact()
@@ -814,10 +813,10 @@ task autocomplete(type: JavaExec) {
 
 def archiveBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
 
-installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
+installDist { dependsOn untunedStartScripts, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -827,7 +826,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -1325,7 +1324,7 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   tasks = [
     'clean',
     'compileJava',
-    'installDist'
+    'distZip'
   ]
 
   startParameter.projectProperties = [
@@ -1337,6 +1336,22 @@ tasks.register('buildDetachedTestPlugins', GradleBuild) {
   }
 }
 
+tasks.register('buildDetachedOutdatedTestPlugins', GradleBuild) {
+  group = 'build'
+  dependsOn 'prepareDetachedTestPlugins'
+
+  dir = file('acceptance-tests/detached-outdated-test-plugins')
+  tasks = [
+    'clean',
+    'compileJava',
+    'distZip'
+  ]
+
+  doFirst {
+    println "Building detached-outdated-test-plugins project"
+  }
+}
+
 tasks.register('printVersion') {
   group = 'help'
   description = 'Prints the calculated version'
@@ -1344,7 +1359,6 @@ tasks.register('printVersion') {
     println "Besu version: " + calculateVersion()
   }
 }
-
 
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions

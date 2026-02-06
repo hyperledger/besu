@@ -17,8 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState.BestBlock;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
@@ -32,7 +30,10 @@ public interface ProtocolsResult {
     final BestBlock bestBlock = ethPeer.chainState().getBestBlock();
     return ImmutableProtocolsResult.builder()
         .difficulty(Quantity.create(bestBlock.getTotalDifficulty()))
-        .head(Objects.requireNonNullElse(bestBlock.getHash(), Bytes.EMPTY).toHexString())
+        .head(
+            bestBlock.getHash() != null
+                ? bestBlock.getHash().getBytes().toHexString()
+                : Bytes.EMPTY.toHexString())
         .version(ethPeer.getLastProtocolVersion())
         .build();
   }

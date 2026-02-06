@@ -86,10 +86,10 @@ public abstract class PathBasedWorldState
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(
-                worldStateKeyValueStorage.getWorldStateRootHash().orElse(getEmptyTrieHash())));
-    this.worldStateBlockHash =
-        Hash.wrap(
-            Bytes32.wrap(worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
+                worldStateKeyValueStorage
+                    .getWorldStateRootHash()
+                    .orElse(getEmptyTrieHash().getBytes())));
+    this.worldStateBlockHash = worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO);
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
     this.worldStateConfig = worldStateConfig;
@@ -243,7 +243,10 @@ public abstract class PathBasedWorldState
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
+            .put(
+                TRIE_BRANCH_STORAGE,
+                WORLD_BLOCK_HASH_KEY,
+                blockHeader.getHash().getBytes().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
@@ -252,7 +255,10 @@ public abstract class PathBasedWorldState
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
+          .put(
+              TRIE_BRANCH_STORAGE,
+              WORLD_ROOT_HASH_KEY,
+              calculatedRootHash.getBytes().toArrayUnsafe());
 
       stateUpdater
           .getWorldStateTransaction()
@@ -305,7 +311,7 @@ public abstract class PathBasedWorldState
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
-    return Hash.wrap(worldStateRootHash);
+    return worldStateRootHash;
   }
 
   protected static final KeyValueStorageTransaction noOpTx =
