@@ -117,8 +117,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, fastSyncState),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
