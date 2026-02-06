@@ -42,14 +42,10 @@ public final class Shift256Operations {
    * @return {@code true} if the shift amount is >= 256, {@code false} otherwise
    */
   public static boolean isShiftOverflow(final Bytes shiftAmount) {
-    final int n = shiftAmount.size();
-    if (n == 0) {
-      return false;
-    }
+    final byte[] a = shiftAmount.toArrayUnsafe();
+    final int n = a.length;
     for (int i = 0; i < n - 1; i++) {
-      if (shiftAmount.get(i) != 0) {
-        return true;
-      }
+      if (a[i] != 0) return true;
     }
     return false;
   }
