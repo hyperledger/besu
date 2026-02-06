@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.datatypes.Log;
 
 import java.util.List;
 import java.util.Optional;

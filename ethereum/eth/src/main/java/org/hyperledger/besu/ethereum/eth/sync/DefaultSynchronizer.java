@@ -100,10 +100,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
         protocolSchedule,
-        syncConfig,
         protocolContext.getBlockchain(),
-        this::calculateTrailingPeerRequirements,
-        metricsSystem);
+        this::calculateTrailingPeerRequirements);
 
     if (syncConfig.getSyncMode() == SyncMode.SNAP
         || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
@@ -378,7 +376,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
           if (this.protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateProvider) {
             ((BonsaiWorldStateProvider) this.protocolContext.getWorldStateArchive())
                 .prepareStateHealing(
-                    org.hyperledger.besu.datatypes.Address.wrap(address), location);
+                    org.hyperledger.besu.datatypes.Address.wrap(address.getBytes()), location);
           }
           this.syncState.markAccountToRepair(maybeAccountToRepair);
         });

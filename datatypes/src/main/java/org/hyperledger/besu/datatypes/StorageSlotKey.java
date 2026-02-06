@@ -89,12 +89,12 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
       return false;
     }
     StorageSlotKey that = (StorageSlotKey) o;
-    return Objects.equals(slotHash, that.slotHash);
+    return Objects.equals(slotHash.getBytes(), that.slotHash.getBytes());
   }
 
   @Override
   public int hashCode() {
-    return slotHash.hashCode();
+    return slotHash.getBytes().hashCode();
   }
 
   @Override
@@ -106,6 +106,6 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
 
   @Override
   public int compareTo(@NotNull final StorageSlotKey other) {
-    return this.slotHash.compareTo(other.slotHash);
+    return this.slotHash.getBytes().compareTo(other.slotHash.getBytes());
   }
 }

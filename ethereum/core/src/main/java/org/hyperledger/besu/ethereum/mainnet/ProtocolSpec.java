@@ -91,6 +91,8 @@ public class ProtocolSpec {
 
   private final Optional<BlockAccessListFactory> blockAccessListFactory;
   private final StateRootCommitterFactory stateRootCommitterFactory;
+  private final BlockGasAccountingStrategy blockGasAccountingStrategy;
+  private final BlockGasUsedValidator blockGasUsedValidator;
 
   /**
    * Creates a new protocol specification instance.
@@ -124,6 +126,8 @@ public class ProtocolSpec {
    * @param slotDuration the slot duration
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
+   * @param blockGasAccountingStrategy the strategy for calculating block gas usage
+   * @param blockGasUsedValidator the strategy for validating block gas used
    */
   public ProtocolSpec(
       final HardforkId hardforkId,
@@ -157,7 +161,9 @@ public class ProtocolSpec {
       final boolean isReplayProtectionSupported,
       final Optional<TransactionPoolPreProcessor> transactionPoolPreProcessor,
       final Optional<BlockAccessListFactory> blockAccessListFactory,
-      final StateRootCommitterFactory stateRootCommitterFactory) {
+      final StateRootCommitterFactory stateRootCommitterFactory,
+      final BlockGasAccountingStrategy blockGasAccountingStrategy,
+      final BlockGasUsedValidator blockGasUsedValidator) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -190,6 +196,8 @@ public class ProtocolSpec {
     this.transactionPoolPreProcessor = transactionPoolPreProcessor;
     this.blockAccessListFactory = blockAccessListFactory;
     this.stateRootCommitterFactory = stateRootCommitterFactory;
+    this.blockGasAccountingStrategy = blockGasAccountingStrategy;
+    this.blockGasUsedValidator = blockGasUsedValidator;
   }
 
   /**
@@ -425,5 +433,23 @@ public class ProtocolSpec {
 
   public StateRootCommitterFactory getStateRootCommitterFactory() {
     return stateRootCommitterFactory;
+  }
+
+  /**
+   * Returns the strategy for calculating block gas usage.
+   *
+   * @return the block gas accounting strategy
+   */
+  public BlockGasAccountingStrategy getBlockGasAccountingStrategy() {
+    return blockGasAccountingStrategy;
+  }
+
+  /**
+   * Returns the strategy for validating block gas used.
+   *
+   * @return the block gas used validator
+   */
+  public BlockGasUsedValidator getBlockGasUsedValidator() {
+    return blockGasUsedValidator;
   }
 }

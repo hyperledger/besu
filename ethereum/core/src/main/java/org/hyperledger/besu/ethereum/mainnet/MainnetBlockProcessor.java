@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -58,8 +57,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem,
-      final MetricsConfiguration metricsConfiguration) {
+      final MetricsSystem metricsSystem) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -67,7 +65,8 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule,
-        balConfiguration);
+        balConfiguration,
+        metricsSystem);
   }
 
   @Override
@@ -92,7 +91,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
             "Block processing error: ommer block number {} more than {} generations. Block {}",
             ommerHeader.getNumber(),
             MAX_GENERATION,
-            header.getHash().toHexString());
+            header.getHash().getBytes().toHexString());
         return false;
       }
 
@@ -105,5 +104,36 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
     updater.commit();
 
     return true;
+  }
+
+  public static final class MainnetBlockProcessorBuilder
+      implements ProtocolSpecBuilder.BlockProcessorBuilder {
+
+    private final MetricsSystem metricsSystem;
+
+    public MainnetBlockProcessorBuilder(final MetricsSystem metricsSystem) {
+      this.metricsSystem = metricsSystem;
+    }
+
+    @Override
+    public BlockProcessor apply(
+        final MainnetTransactionProcessor transactionProcessor,
+        final TransactionReceiptFactory transactionReceiptFactory,
+        final Wei blockReward,
+        final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+        final boolean skipZeroBlockRewards,
+        final ProtocolSchedule protocolSchedule,
+        final BalConfiguration balConfiguration) {
+
+      return new MainnetBlockProcessor(
+          transactionProcessor,
+          transactionReceiptFactory,
+          blockReward,
+          miningBeneficiaryCalculator,
+          skipZeroBlockRewards,
+          protocolSchedule,
+          balConfiguration,
+          metricsSystem);
+    }
   }
 }

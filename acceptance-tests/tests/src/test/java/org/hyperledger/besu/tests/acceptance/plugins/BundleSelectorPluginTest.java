@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
@@ -35,7 +36,11 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
-            List.of("--plugin-bundle-test-enabled=true", "--plugin-bundle-size=2"));
+            PluginConfiguration.DEFAULT,
+            List.of(
+                "--plugin-bundle-test-enabled=true",
+                "--plugin-bundle-size=2",
+                "--plugin-block-txs-selection-max-time=75"));
     cluster.start(node);
 
     assertEventSequence("SELECTED:0", "SELECTED:1");
@@ -47,10 +52,12 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-bundle-test-enabled=true",
                 "--plugin-bundle-size=2",
-                "--plugin-bundle-failing-nonce=0"));
+                "--plugin-bundle-failing-nonce=0",
+                "--plugin-block-txs-selection-max-time=75"));
     cluster.start(node);
 
     // since the first tx of the bundle fails, the following are not even tried, so we only expect
@@ -64,10 +71,12 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-bundle-test-enabled=true",
                 "--plugin-bundle-size=2",
-                "--plugin-bundle-failing-nonce=1"));
+                "--plugin-bundle-failing-nonce=1",
+                "--plugin-block-txs-selection-max-time=75"));
     cluster.start(node);
 
     // since the last tx of the bundle fails, the first was initially selected, but eventually not
@@ -81,10 +90,12 @@ public class BundleSelectorPluginTest extends AcceptanceTestBase {
         besu.createQbftPluginsNode(
             "node",
             Collections.singletonList("testPlugins"),
+            PluginConfiguration.DEFAULT,
             List.of(
                 "--plugin-bundle-test-enabled=true",
                 "--plugin-bundle-size=3",
-                "--plugin-bundle-failing-nonce=1"));
+                "--plugin-bundle-failing-nonce=1",
+                "--plugin-block-txs-selection-max-time=75"));
     cluster.start(node);
 
     // since the last tx of the bundle fails, the first was initially selected, but eventually not

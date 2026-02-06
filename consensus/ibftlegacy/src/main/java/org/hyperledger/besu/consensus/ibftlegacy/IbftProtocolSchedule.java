@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -50,12 +51,14 @@ public class IbftProtocolSchedule {
    * @param config the config
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
+   * @param metricsSystem the metrics system
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MetricsSystem metricsSystem) {
     final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
     final long blockPeriod = ibftConfig.getBlockPeriodSeconds();
 
@@ -69,7 +72,7 @@ public class IbftProtocolSchedule {
             new BadBlockManager(),
             false,
             BalConfiguration.DEFAULT,
-            null)
+            metricsSystem)
         .createProtocolSchedule();
   }
 

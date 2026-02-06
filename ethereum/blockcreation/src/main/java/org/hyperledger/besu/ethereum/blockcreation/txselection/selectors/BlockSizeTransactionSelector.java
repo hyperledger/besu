@@ -75,8 +75,14 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
       final TransactionProcessingResult processingResult) {
+    // EIP-7778: Use the protocol-specific gas accounting strategy
+    // Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
+    // Amsterdam+: estimateGasUsedByTransaction (pre-refund, prevents block gas limit circumvention)
     final long gasUsedByTransaction =
-        evaluationContext.getTransaction().getGasLimit() - processingResult.getGasRemaining();
+        context
+            .protocolSpec()
+            .getBlockGasAccountingStrategy()
+            .calculateBlockGas(evaluationContext.getTransaction(), processingResult);
     setWorkingState(getWorkingState() + gasUsedByTransaction);
 
     return TransactionSelectionResult.SELECTED;

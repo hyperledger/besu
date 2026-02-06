@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_D
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -114,8 +116,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, fastSyncState),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -141,10 +142,12 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final DownloadSyncBodiesStep downloadSyncBodiesStep =
         new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
     final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
-        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncConfig, metricsSystem);
+        new DownloadSyncReceiptsStep(
+            protocolSchedule,
+            ethContext,
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
-            protocolSchedule,
             protocolContext,
             ethContext,
             fastSyncState.getPivotBlockHeader().get(),

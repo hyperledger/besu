@@ -51,7 +51,7 @@ public record AccessListEntry(Address address, List<Bytes32> storageKeys) {
    */
   @JsonProperty("address")
   public String getAddressString() {
-    return address.toHexString();
+    return address.getBytes().toHexString();
   }
 
   /**

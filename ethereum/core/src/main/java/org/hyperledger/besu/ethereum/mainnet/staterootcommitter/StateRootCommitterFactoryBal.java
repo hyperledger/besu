@@ -42,8 +42,7 @@ public final class StateRootCommitterFactoryBal implements StateRootCommitterFac
     }
 
     if (maybeBal.isEmpty()) {
-      throw new IllegalStateException(
-          "No BAL present in the block, falling back to synchronous state root computation");
+      return new StateRootCommitterImplSync();
     }
 
     // This is temporary workaround to not launch state root pre-computation in Forest mode

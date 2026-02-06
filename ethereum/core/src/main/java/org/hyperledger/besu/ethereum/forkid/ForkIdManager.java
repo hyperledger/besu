@@ -160,7 +160,7 @@ public class ForkIdManager {
    * @return boolean
    */
   public boolean peerCheck(final Bytes32 peerGenesisHash) {
-    return !peerGenesisHash.equals(genesisHash);
+    return !peerGenesisHash.equals(genesisHash.getBytes());
   }
 
   private boolean isHashKnown(final Bytes forkHash) {
@@ -189,7 +189,7 @@ public class ForkIdManager {
 
   private long createForkIds() {
     final CRC32 crc = new CRC32();
-    crc.update(genesisHash.toArray());
+    crc.update(genesisHash.getBytes().toArray());
     genesisHashCrc = getCurrentCrcHash(crc);
     final List<Bytes> forkHashes = new ArrayList<>(List.of(genesisHashCrc));
     blockNumberForks.forEach(

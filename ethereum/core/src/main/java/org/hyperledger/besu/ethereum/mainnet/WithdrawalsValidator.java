@@ -96,17 +96,4 @@ public interface WithdrawalsValidator {
       return true;
     }
   }
-
-  class NotApplicableWithdrawals implements WithdrawalsValidator {
-
-    @Override
-    public boolean validateWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
-      return true;
-    }
-
-    @Override
-    public boolean validateWithdrawalsRoot(final Block block) {
-      return true;
-    }
-  }
 }
