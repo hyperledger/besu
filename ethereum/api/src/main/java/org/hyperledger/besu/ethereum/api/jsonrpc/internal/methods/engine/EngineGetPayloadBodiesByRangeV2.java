@@ -42,9 +42,8 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineGetPayloadBodiesByRangeV2 extends ExecutionEngineJsonRpcMethod {
+public class EngineGetPayloadBodiesByRangeV2 extends AbstractEngineGetPayloadBodiesV2 {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV2.class);
-  private static final int MAX_REQUEST_BLOCKS = 1024;
   private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV2(
@@ -116,7 +115,7 @@ public class EngineGetPayloadBodiesByRangeV2 extends ExecutionEngineJsonRpcMetho
     final List<Optional<Hash>> blockHashes =
         LongStream.range(startBlockNumber, endExclusiveBlockNumber)
             .mapToObj(blockchain::getBlockHashByNumber)
-            .collect(Collectors.toList());
+            .toList();
 
     final List<Optional<String>> blockAccessLists =
         blockHashes.stream()
@@ -134,21 +133,5 @@ public class EngineGetPayloadBodiesByRangeV2 extends ExecutionEngineJsonRpcMetho
         blockResultFactory.payloadBodiesCompleteV2(blockBodies, blockAccessLists);
 
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV2);
-  }
-
-  protected int getMaxRequestBlocks() {
-    return MAX_REQUEST_BLOCKS;
-  }
-
-  private Optional<String> getBlockAccessList(final Blockchain blockchain, final Hash blockHash) {
-    return blockchain
-        .getBlockAccessList(blockHash)
-        .map(EngineGetPayloadBodiesByRangeV2::encodeBlockAccessList);
-  }
-
-  private static String encodeBlockAccessList(final BlockAccessList blockAccessList) {
-    final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    blockAccessList.writeTo(output);
-    return output.encoded().toHexString();
   }
 }
