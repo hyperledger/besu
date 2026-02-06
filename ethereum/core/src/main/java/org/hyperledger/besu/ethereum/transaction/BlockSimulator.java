@@ -60,16 +60,11 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
 import java.util.ArrayList;
@@ -77,7 +72,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -392,11 +386,16 @@ public class BlockSimulator {
         // Compose both tracers
         finalOperationTracer =
             TracerAggregator.combining(
-                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer(), transactionMetricsTracer);
+                OperationTracer.NO_TRACING,
+                new EthTransferLogOperationTracer(),
+                transactionMetricsTracer);
       } else if (isTraceTransfers) {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, new EthTransferLogOperationTracer());
+        finalOperationTracer =
+            TracerAggregator.combining(
+                OperationTracer.NO_TRACING, new EthTransferLogOperationTracer());
       } else if (transactionMetricsTracer != null) {
-        finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING, transactionMetricsTracer);
+        finalOperationTracer =
+            TracerAggregator.combining(OperationTracer.NO_TRACING, transactionMetricsTracer);
       } else {
         finalOperationTracer = TracerAggregator.combining(OperationTracer.NO_TRACING);
       }
@@ -711,5 +710,4 @@ public class BlockSimulator {
     }
     return blockHeader.getGasLimit();
   }
-
 }

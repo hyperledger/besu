@@ -167,7 +167,8 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
 
   @CommandLine.Option(
       names = {"--enable-execution-metrics"},
-      description = "Enable detailed execution metrics collection for transaction processing (default: ${DEFAULT-VALUE})")
+      description =
+          "Enable detailed execution metrics collection for transaction processing (default: ${DEFAULT-VALUE})")
   private Boolean isExecutionMetricsEnabled = false;
 
   /**

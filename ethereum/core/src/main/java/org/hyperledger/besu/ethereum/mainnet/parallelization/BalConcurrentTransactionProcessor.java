@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
@@ -105,10 +104,11 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
 
       // Use the operation tracer from the block processing context if available
       // (which may contain ExecutionMetricsTracer), otherwise use NO_TRACING
-      final OperationTracer operationTracer = blockProcessingContext != null
-          ? blockProcessingContext.getOperationTracer()
-          : OperationTracer.NO_TRACING;
-      
+      final OperationTracer operationTracer =
+          blockProcessingContext != null
+              ? blockProcessingContext.getOperationTracer()
+              : OperationTracer.NO_TRACING;
+
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               txUpdater,
