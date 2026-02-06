@@ -192,7 +192,7 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
             segmentIdentifier,
             missingKeys,
             getCurrentVersion(),
-            keysToFetch -> parentWorldStateStorage.getMultipleKeys(segmentIdentifier, keysToFetch));
+            keysToFetch -> composedWorldStateStorage.multiget(segmentIdentifier, keysToFetch));
 
     // Merge results
     final List<Optional<byte[]>> finalResults = new ArrayList<>(layerResults);
