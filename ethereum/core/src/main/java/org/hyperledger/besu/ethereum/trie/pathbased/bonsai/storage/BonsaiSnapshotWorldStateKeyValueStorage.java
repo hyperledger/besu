@@ -20,9 +20,12 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -31,6 +34,16 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Snapshot of Bonsai world state storage.
+ *
+ * <p>This class: - Extends BonsaiWorldStateKeyValueStorage and inherits its cacheManager - Captures
+ * snapshot version when created - Delegates all reads to parent storage (through super calls) -
+ * Provides cache info to layers via inherited cacheManager and getSnapshotVersion()
+ *
+ * <p>The snapshot itself NEVER reads from cache - it's just a carrier of cache metadata for layers
+ * that will be created from it.
+ */
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
     implements PathBasedSnapshotWorldStateKeyValueStorage, StorageSubscriber {
 
@@ -44,7 +57,11 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
       final SnappedKeyValueStorage segmentedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(
-        parentWorldStateStorage.flatDbStrategyProvider, segmentedWorldStateStorage, trieLogStorage);
+        parentWorldStateStorage.flatDbStrategyProvider,
+        segmentedWorldStateStorage,
+        trieLogStorage,
+        parentWorldStateStorage.cacheManager);
+
     this.parentWorldStateStorage = parentWorldStateStorage;
     this.subscribeParentId = parentWorldStateStorage.subscribe(this);
   }
@@ -58,7 +75,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         worldStateStorageKeyValueStorage.getTrieLogStorage());
   }
 
-  private boolean isClosedGet() {
+  protected boolean isClosedGet() {
     if (isClosed.get()) {
       Throwable t = new Throwable("Attempting to access closed worldstate");
       LOG.warn(t.getMessage(), t);
@@ -74,6 +91,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
         getFlatDbStrategy(),
         composedWorldStateStorage);
   }
+
+  // All read methods just delegate to parent (via super) - NO cache reading
 
   @Override
   public Optional<Bytes> getAccount(final Hash accountHash) {
@@ -147,32 +166,34 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
+  public List<Optional<byte[]>> getMultipleKeys(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    return isClosedGet() ? new ArrayList<>() : super.getMultipleKeys(segmentIdentifier, keys);
+  }
+
+  @Override
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return !isClosedGet() && super.isWorldStateAvailable(rootHash, blockHash);
   }
 
   @Override
   public void clear() {
-    // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
 
   @Override
   public void clearFlatDatabase() {
-    // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
 
   @Override
   public void clearTrieLog() {
-    // snapshot storage does not implement clear
     throw new StorageException("Snapshot storage does not implement clear");
   }
 
   @Override
   public void onCloseStorage() {
     try {
-      // when the parent storage clears, close regardless of subscribers
       doClose();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -182,7 +203,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   @Override
   public void onClearStorage() {
     try {
-      // when the parent storage clears, close regardless of subscribers
       doClose();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -191,7 +211,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public void onClearFlatDatabaseStorage() {
-    // when the parent storage clears, close regardless of subscribers
     try {
       doClose();
     } catch (Exception e) {
@@ -201,7 +220,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
 
   @Override
   public void onClearTrieLog() {
-    // when the parent storage clears, close regardless of subscribers
     try {
       doClose();
     } catch (Exception e) {

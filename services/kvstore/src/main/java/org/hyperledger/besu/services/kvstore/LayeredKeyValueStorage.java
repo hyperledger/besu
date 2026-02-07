@@ -24,8 +24,11 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -99,6 +102,44 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
+      throws StorageException {
+    List<Optional<byte[]>> results =
+        new ArrayList<>(Collections.nCopies(keys.size(), Optional.empty()));
+    List<Integer> missingIndices = new ArrayList<>();
+    List<byte[]> missingKeys = new ArrayList<>();
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+          hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+
+      for (int i = 0; i < keys.size(); i++) {
+        final byte[] key = keys.get(i);
+        final Optional<byte[]> localValue = segmentMap.get(Bytes.wrap(key));
+        if (localValue != null) {
+          results.set(i, localValue);
+        } else {
+          missingIndices.add(i);
+          missingKeys.add(key);
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+
+    if (!missingIndices.isEmpty()) {
+      List<Optional<byte[]>> parentResults = parent.multiget(segment, missingKeys);
+      for (int j = 0; j < missingIndices.size(); j++) {
+        results.set(missingIndices.get(j), parentResults.get(j));
+      }
+    }
+
+    return results;
   }
 
   @Override
