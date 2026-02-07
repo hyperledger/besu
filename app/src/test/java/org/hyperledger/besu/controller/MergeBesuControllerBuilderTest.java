@@ -130,7 +130,6 @@ public class MergeBesuControllerBuilderTest {
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
-    when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     lenient().when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     lenient()
