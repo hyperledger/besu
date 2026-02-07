@@ -42,7 +42,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EngineGetPayloadBodiesByHashV2Test extends AbstractEngineGetPayloadBodiesV2Test {
+public class EngineGetPayloadBodiesByHashV2Test extends AbstractEngineGetPayloadBodiesTest {
 
   public EngineGetPayloadBodiesByHashV2Test() {
     super(EngineGetPayloadBodiesByHashV2::new);

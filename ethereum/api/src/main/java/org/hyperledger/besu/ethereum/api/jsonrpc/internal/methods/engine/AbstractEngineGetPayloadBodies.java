@@ -26,11 +26,11 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
-public abstract class AbstractEngineGetPayloadBodiesV2 extends ExecutionEngineJsonRpcMethod {
+public abstract class AbstractEngineGetPayloadBodies extends ExecutionEngineJsonRpcMethod {
   protected static final int MAX_REQUEST_BLOCKS = 1024;
   protected final BlockResultFactory blockResultFactory;
 
-  protected AbstractEngineGetPayloadBodiesV2(
+  protected AbstractEngineGetPayloadBodies(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final BlockResultFactory blockResultFactory,
@@ -46,7 +46,7 @@ public abstract class AbstractEngineGetPayloadBodiesV2 extends ExecutionEngineJs
   protected Optional<String> getBlockAccessList(final Blockchain blockchain, final Hash blockHash) {
     return blockchain
         .getBlockAccessList(blockHash)
-        .map(AbstractEngineGetPayloadBodiesV2::encodeBlockAccessList);
+        .map(AbstractEngineGetPayloadBodies::encodeBlockAccessList);
   }
 
   protected static String encodeBlockAccessList(final BlockAccessList blockAccessList) {

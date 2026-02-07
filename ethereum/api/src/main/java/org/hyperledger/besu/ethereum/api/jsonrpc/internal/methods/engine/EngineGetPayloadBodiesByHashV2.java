@@ -38,7 +38,7 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineGetPayloadBodiesByHashV2 extends AbstractEngineGetPayloadBodiesV2 {
+public class EngineGetPayloadBodiesByHashV2 extends AbstractEngineGetPayloadBodies {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByHashV2.class);
 
   public EngineGetPayloadBodiesByHashV2(

@@ -39,7 +39,7 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineGetPayloadBodiesByRangeV2 extends AbstractEngineGetPayloadBodiesV2 {
+public class EngineGetPayloadBodiesByRangeV2 extends AbstractEngineGetPayloadBodies {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV2.class);
 
   public EngineGetPayloadBodiesByRangeV2(

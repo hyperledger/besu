@@ -45,28 +45,28 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public abstract class AbstractEngineGetPayloadBodiesV2Test {
+public abstract class AbstractEngineGetPayloadBodiesTest {
 
   private final MethodFactory methodFactory;
 
   protected static final Vertx vertx = Vertx.vertx();
   protected static final BlockResultFactory blockResultFactory = new BlockResultFactory();
 
-  protected AbstractEngineGetPayloadBodiesV2 method;
+  protected AbstractEngineGetPayloadBodies method;
   @Mock protected ProtocolContext protocolContext;
   @Mock protected EngineCallListener engineCallListener;
   @Mock protected org.hyperledger.besu.ethereum.chain.MutableBlockchain blockchain;
 
   @FunctionalInterface
   interface MethodFactory {
-    AbstractEngineGetPayloadBodiesV2 create(
+    AbstractEngineGetPayloadBodies create(
         final Vertx vertx,
         final ProtocolContext protocolContext,
         final BlockResultFactory ethPeers,
         final EngineCallListener engineCallListener);
   }
 
-  public AbstractEngineGetPayloadBodiesV2Test(final MethodFactory methodFactory) {
+  public AbstractEngineGetPayloadBodiesTest(final MethodFactory methodFactory) {
     this.methodFactory = methodFactory;
   }
 
