@@ -41,15 +41,13 @@ import org.slf4j.LoggerFactory;
 
 public class EngineGetPayloadBodiesByRangeV2 extends AbstractEngineGetPayloadBodiesV2 {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV2.class);
-  private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.blockResultFactory = blockResultFactory;
+    super(vertx, protocolContext, blockResultFactory, engineCallListener);
   }
 
   @Override
