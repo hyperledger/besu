@@ -100,19 +100,30 @@ public abstract class AbstractMessageProcessor {
   protected abstract void codeSuccess(MessageFrame frame, final OperationTracer operationTracer);
 
   private void clearAccumulatedStateBesidesGasAndOutput(final MessageFrame frame) {
-    ArrayList<Address> addresses =
-        frame.getWorldUpdater().getTouchedAccounts().stream()
-            .filter(AccountState::isEmpty)
-            .map(Account::getAddress)
-            .filter(forceDeleteAccountsWhenEmpty::contains)
-            .collect(Collectors.toCollection(ArrayList::new));
+    final var worldUpdater = frame.getWorldUpdater();
+    final var touchedAccounts = worldUpdater.getTouchedAccounts();
 
-    // Clear any pending changes.
-    frame.getWorldUpdater().revert();
+    if (!touchedAccounts.isEmpty() && !forceDeleteAccountsWhenEmpty.isEmpty()) {
+      // Full path: find empty accounts that need force-deletion
+      ArrayList<Address> addresses =
+          touchedAccounts.stream()
+              .filter(AccountState::isEmpty)
+              .map(Account::getAddress)
+              .filter(forceDeleteAccountsWhenEmpty::contains)
+              .collect(Collectors.toCollection(ArrayList::new));
 
-    // Force delete any requested accounts and commit the changes.
-    ((Collection<Address>) addresses).forEach(h -> frame.getWorldUpdater().deleteAccount(h));
-    frame.getWorldUpdater().commit();
+      // Clear any pending changes.
+      worldUpdater.revert();
+
+      // Force delete any requested accounts and commit the changes.
+      ((Collection<Address>) addresses).forEach(worldUpdater::deleteAccount);
+      worldUpdater.commit();
+    } else {
+      // Fast path: no touched accounts or no force-delete targets.
+      // Just revert and commit without the stream pipeline overhead.
+      worldUpdater.revert();
+      worldUpdater.commit();
+    }
 
     frame.clearLogs();
     frame.clearGasRefund();
