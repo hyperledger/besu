@@ -24,14 +24,14 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLaye
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -66,39 +66,35 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
   }
 
   /**
-   * Get value from layer only (no fallback to parent or cache). Returns null if key not present in
-   * layer.
+   * Get value from layer with cache support.
+   *
+   * @param segment the segment identifier
+   * @param key the key
+   * @param cacheFunction function to retrieve from cache given persistent storage
+   * @return optional value as Bytes
    */
-  private Optional<byte[]> getFromLayerOnly(final SegmentIdentifier segment, final byte[] key) {
-    final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
-        getComposedWorldStateStorage().getHashValueStore().get(segment);
-    if (segmentMap == null) {
-      return null; // Segment not modified in layer
-    }
-    return segmentMap.get(Bytes.wrap(key)); // null if key not in layer
+  private Optional<Bytes> getWithCache(
+      final SegmentIdentifier segment,
+      final byte[] key,
+      final Function<SegmentedKeyValueStorage, Optional<byte[]>> cacheFunction) {
+
+    return getComposedWorldStateStorage().get(segment, key, cacheFunction).map(Bytes::wrap);
   }
 
-  /** Get multiple values from layer only. Returns null for keys not present in layer. */
-  private List<Optional<byte[]>> getMultipleFromLayerOnly(
-      final SegmentIdentifier segment, final List<byte[]> keys) {
-    final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
-        getComposedWorldStateStorage().getHashValueStore().get(segment);
-    final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
+  /**
+   * Get multiple values from layer with cache support.
+   *
+   * @param segment the segment identifier
+   * @param keys the list of keys
+   * @param cacheFunction function to retrieve from cache given persistent storage
+   * @return list of optional values
+   */
+  private List<Optional<byte[]>> multigetWithCache(
+      final SegmentIdentifier segment,
+      final List<byte[]> keys,
+      final Function<SegmentedKeyValueStorage, List<Optional<byte[]>>> cacheFunction) {
 
-    if (segmentMap == null) {
-      // Segment not modified in layer - all keys are missing
-      for (int i = 0; i < keys.size(); i++) {
-        results.add(null);
-      }
-      return results;
-    }
-
-    // Check each key in layer
-    for (byte[] key : keys) {
-      results.add(segmentMap.get(Bytes.wrap(key))); // null if not in layer
-    }
-
-    return results;
+    return getComposedWorldStateStorage().multiget(segment, keys, cacheFunction);
   }
 
   @Override
@@ -106,26 +102,27 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
     if (isClosedGet()) {
       return Optional.empty();
     }
+
     final byte[] key = accountHash.getBytes().toArrayUnsafe();
 
-    // Level 1: Check layer
-    final Optional<byte[]> layerResult = getFromLayerOnly(ACCOUNT_INFO_STATE, key);
-    if (layerResult != null) {
-      return layerResult.map(Bytes::wrap);
-    }
-
-    // Level 2 & 3: Check cache, then parent
-    return cacheManager.getFromCacheOrStorage(
+    return getWithCache(
         ACCOUNT_INFO_STATE,
         key,
-        getCurrentVersion(),
-        () ->
-            getFlatDbStrategy()
-                .getFlatAccount(
-                    this::getWorldStateRootHash,
-                    this::getAccountStateTrieNode,
-                    accountHash,
-                    composedWorldStateStorage));
+        persistentStorage -> {
+          Optional<Bytes> result =
+              cacheManager.getFromCacheOrStorage(
+                  ACCOUNT_INFO_STATE,
+                  key,
+                  getCurrentVersion(),
+                  () ->
+                      getFlatDbStrategy()
+                          .getFlatAccount(
+                              this::getWorldStateRootHash,
+                              this::getAccountStateTrieNode,
+                              accountHash,
+                              persistentStorage));
+          return result.map(Bytes::toArrayUnsafe);
+        });
   }
 
   @Override
@@ -133,74 +130,55 @@ public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyVal
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
+
     if (isClosedGet()) {
       return Optional.empty();
     }
+
     final byte[] key =
         Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
             .toArrayUnsafe();
 
-    // Level 1: Check layer
-    final Optional<byte[]> layerResult = getFromLayerOnly(ACCOUNT_STORAGE_STORAGE, key);
-    if (layerResult != null) {
-      return layerResult.map(Bytes::wrap);
-    }
-
-    // Level 2 & 3: Check cache, then parent
-    return cacheManager.getFromCacheOrStorage(
+    return getWithCache(
         ACCOUNT_STORAGE_STORAGE,
         key,
-        getCurrentVersion(),
-        () ->
-            getFlatDbStrategy()
-                .getFlatStorageValueByStorageSlotKey(
-                    this::getWorldStateRootHash,
-                    storageRootSupplier,
-                    (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
-                    accountHash,
-                    storageSlotKey,
-                    composedWorldStateStorage));
+        persistentStorage -> {
+          Optional<Bytes> result =
+              cacheManager.getFromCacheOrStorage(
+                  ACCOUNT_STORAGE_STORAGE,
+                  key,
+                  getCurrentVersion(),
+                  () ->
+                      getFlatDbStrategy()
+                          .getFlatStorageValueByStorageSlotKey(
+                              this::getWorldStateRootHash,
+                              storageRootSupplier,
+                              (location, hash) ->
+                                  getAccountStorageTrieNode(accountHash, location, hash),
+                              accountHash,
+                              storageSlotKey,
+                              persistentStorage));
+          return result.map(Bytes::toArrayUnsafe);
+        });
   }
 
   @Override
   public List<Optional<byte[]>> getMultipleKeys(
       final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+
     if (isClosedGet()) {
-      return new ArrayList<>();
-    }
-    // Level 1: Get from layer (without fallback)
-    final List<Optional<byte[]>> layerResults = getMultipleFromLayerOnly(segmentIdentifier, keys);
-
-    // Find keys missing from layer
-    final List<byte[]> missingKeys = new ArrayList<>();
-    final List<Integer> missingIndices = new ArrayList<>();
-
-    for (int i = 0; i < keys.size(); i++) {
-      if (layerResults.get(i) == null) {
-        missingKeys.add(keys.get(i));
-        missingIndices.add(i);
-      }
+      return List.of();
     }
 
-    if (missingKeys.isEmpty()) {
-      return layerResults;
-    }
-
-    // Level 2 & 3: Get missing keys from cache/parent
-    final List<Optional<byte[]>> cachedResults =
-        cacheManager.getMultipleFromCacheOrStorage(
-            segmentIdentifier,
-            missingKeys,
-            getCurrentVersion(),
-            keysToFetch -> composedWorldStateStorage.multiget(segmentIdentifier, keysToFetch));
-
-    // Merge results
-    final List<Optional<byte[]>> finalResults = new ArrayList<>(layerResults);
-    for (int i = 0; i < missingIndices.size(); i++) {
-      finalResults.set(missingIndices.get(i), cachedResults.get(i));
-    }
-
-    return finalResults;
+    return multigetWithCache(
+        segmentIdentifier,
+        keys,
+        persistentStorage ->
+            cacheManager.getMultipleFromCacheOrStorage(
+                segmentIdentifier,
+                keys,
+                getCurrentVersion(),
+                keysToFetch -> persistentStorage.multiget(segmentIdentifier, keysToFetch)));
   }
 
   @Override
