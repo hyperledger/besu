@@ -234,6 +234,14 @@ public class NodeRecordManager {
       // If primary is IPv6, the IP_V6 field is already checked by primaryAddressMatches.
       return !primaryIsIpv4 || record.get(EnrField.IP_V6) == null;
     }
+
+    // Only validate ipv6Endpoint fields when primary is IPv4 (dual-stack).
+    // When primary is IPv6, ipv6Endpoint is ignored during ENR creation,
+    // so we should not validate against it.
+    if (!primaryIsIpv4) {
+      return true;
+    }
+
     final HostEndpoint ipv6 = ipv6Endpoint.orElseThrow();
     return ipv6AddressBytes.get().equals(record.get(EnrField.IP_V6))
         && Integer.valueOf(ipv6.discoveryPort()).equals(record.get(EnrField.UDP_V6))
