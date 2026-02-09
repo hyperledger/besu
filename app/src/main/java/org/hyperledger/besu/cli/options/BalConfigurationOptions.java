@@ -92,6 +92,12 @@ public class BalConfigurationOptions {
           "Enable sorting optimization during BAL prefetch operations (default: ${DEFAULT-VALUE}).")
   boolean balPreFetchSortingEnabled = true;
 
+  @CommandLine.Option(
+      names = {"--Xbal-prefetch-batch-size"},
+      hidden = true,
+      description = "Enable custom BAL prefetch batch size (default: ${DEFAULT-VALUE}).")
+  int balPreFetchBatch = 100;
+
   /**
    * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
    *
@@ -107,6 +113,7 @@ public class BalConfigurationOptions {
         .isBalStateRootTrusted(balTrustStateRoot)
         .isBalPreFetchReadingEnabled(balPreFetchReadingEnabled)
         .isBalPreFetchSortingEnabled(balPreFetchSortingEnabled)
+        .balPreFetchBatchSize(balPreFetchBatch)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .balProcessingTimeout(Duration.ofMillis(balProcessingTimeoutMs))
         .build();
