@@ -79,6 +79,19 @@ public class BalConfigurationOptions {
       description = "Timeout in milliseconds when waiting for BAL transaction processing results.")
   private long balProcessingTimeoutMs = Duration.ofSeconds(1).toMillis();
 
+  @CommandLine.Option(
+      names = {"--Xbal-prefetch-reading-enabled"},
+      hidden = true,
+      description = "Enable prefetching of state data based on BAL read operations.")
+  boolean balPreFetchReadingEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--Xbal-prefetch-sorting-enabled"},
+      hidden = true,
+      description =
+          "Enable sorting optimization during BAL prefetch operations (default: ${DEFAULT-VALUE}).")
+  boolean balPreFetchSortingEnabled = true;
+
   /**
    * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
    *
@@ -92,6 +105,8 @@ public class BalConfigurationOptions {
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .isBalStateRootTrusted(balTrustStateRoot)
+        .isBalPreFetchReadingEnabled(balPreFetchReadingEnabled)
+        .isBalPreFetchSortingEnabled(balPreFetchSortingEnabled)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .balProcessingTimeout(Duration.ofMillis(balProcessingTimeoutMs))
         .build();
