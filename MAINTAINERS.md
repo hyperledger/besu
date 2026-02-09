@@ -43,8 +43,8 @@
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
-| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Frank Li         | frankisawesome   | frankliawesome   |
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
