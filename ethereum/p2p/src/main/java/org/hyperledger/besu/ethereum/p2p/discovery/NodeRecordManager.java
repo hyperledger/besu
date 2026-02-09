@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeer
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.util.NetworkUtility;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -126,9 +127,19 @@ public class NodeRecordManager {
    */
   public void initializeLocalNode(final HostEndpoint primary, final Optional<HostEndpoint> ipv6) {
 
-    final String resolvedHost = natService.queryExternalIPAddress(primary.host());
+    // Only resolve through NAT if primary is IPv4.
+    // Current NAT services (UPnP, NAT-PMP) only support IPv4.
+    final String resolvedHost;
+    if (NetworkUtility.isIpV4Address(primary.host())) {
+      resolvedHost = natService.queryExternalIPAddress(primary.host());
+    } else {
+      resolvedHost = primary.host();
+    }
+
     this.primaryEndpoint =
         new HostEndpoint(resolvedHost, primary.discoveryPort(), primary.tcpPort());
+
+    // IPv6 endpoint is used as-is. Current NAT services only support IPv4.
     this.ipv6Endpoint = ipv6;
 
     final DiscoveryPeerV4 self =
