@@ -20,14 +20,10 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -43,11 +39,11 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private static final long UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL =
       Duration.ofMinutes(7).toMillis();
   private final ProtocolContext protocolContext;
-  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
   private final GenesisConfigOptions genesisConfig;
   private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
+  private final SingleBlockHeaderDownloader headerDownloader;
 
   private volatile long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
   private volatile long lastPivotBlockChange = System.currentTimeMillis();
@@ -63,17 +59,18 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
       final EthContext ethContext,
       final GenesisConfigOptions genesisConfig,
       final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
-      final Runnable cleanupAction) {
+      final Runnable cleanupAction,
+      final SingleBlockHeaderDownloader headerDownloader) {
     this.protocolContext = protocolContext;
-    this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.genesisConfig = genesisConfig;
     this.forkchoiceStateSupplier = forkchoiceStateSupplier;
     this.cleanupAction = cleanupAction;
+    this.headerDownloader = headerDownloader;
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock() {
+  public CompletableFuture<FastSyncState> selectNewPivotBlock() {
     final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     final var now = System.currentTimeMillis();
 
@@ -87,7 +84,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         lastPivotBlockChange = now;
         inFallbackMode = false;
         fallbackBlockHash = maybeForkchoice.get().getHeadBlockHash();
-        return Optional.of(selectLastSafeBlockAsPivot(safeBlockHash));
+        return selectLastSafeBlockAsPivot(safeBlockHash);
       }
 
       // otherwise verify if we need to fallback to a previous head block
@@ -95,14 +92,11 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
         lastPivotBlockChange = now;
         inFallbackMode = true;
         lastFallbackBlockHash = fallbackBlockHash;
-        final var fallbackPivot = selectFallbackBlockAsPivot(fallbackBlockHash);
-        fallbackBlockHash = maybeForkchoice.get().getHeadBlockHash();
-        return Optional.of(fallbackPivot);
+        return selectFallbackBlockAsPivot(fallbackBlockHash);
       }
 
       // if not enough time has passed the return again the previous value
-      return Optional.of(
-          selectLastSafeBlockAsPivot(inFallbackMode ? lastFallbackBlockHash : lastSafeBlockHash));
+      return selectLastSafeBlockAsPivot(inFallbackMode ? lastFallbackBlockHash : lastSafeBlockHash);
     }
 
     if (lastNoFcuReceivedInfoLog + NO_FCU_RECEIVED_LOGGING_THRESHOLD < now) {
@@ -111,7 +105,8 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
           "Waiting for consensus client, this may be because your consensus client is still syncing");
     }
     LOG.debug("No finalized block hash announced yet");
-    return Optional.empty();
+    return CompletableFuture.failedFuture(
+        new RuntimeException("No finalized block hash announced yet"));
   }
 
   @Override
@@ -120,17 +115,22 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     return CompletableFuture.completedFuture(null);
   }
 
-  private FastSyncState selectLastSafeBlockAsPivot(final Hash safeHash) {
+  private CompletableFuture<FastSyncState> selectLastSafeBlockAsPivot(final Hash safeHash) {
     LOG.debug("Returning safe block hash {} as pivot", safeHash);
-    return new FastSyncState(safeHash, true);
+    return headerDownloader
+        .downloadBlockHeader(safeHash)
+        .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
-  private FastSyncState selectFallbackBlockAsPivot(final Hash fallbackBlockHash) {
+  private CompletableFuture<FastSyncState> selectFallbackBlockAsPivot(
+      final Hash fallbackBlockHash) {
     LOG.debug(
         "Safe block not changed in the last {} min, using a previous head block {} as fallback",
         UNCHANGED_PIVOT_BLOCK_FALLBACK_INTERVAL / 60,
         fallbackBlockHash);
-    return new FastSyncState(fallbackBlockHash, true);
+    return headerDownloader
+        .downloadBlockHeader(fallbackBlockHash)
+        .thenApply(blockHeader -> new FastSyncState(blockHeader, true));
   }
 
   @Override
@@ -165,7 +165,9 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                                 return ethContext
                                     .getEthPeers()
                                     .waitForPeer((peer) -> true)
-                                    .thenCompose(unused -> downloadBlockHeader(headBlockHash))
+                                    .thenCompose(
+                                        unused ->
+                                            headerDownloader.downloadBlockHeader(headBlockHash))
                                     .thenApply(
                                         blockHeader -> {
                                           maybeCachedHeadBlockHeader = Optional.of(blockHeader);
@@ -182,41 +184,5 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                             }))
             .orElse(0L),
         localChainHeight);
-  }
-
-  private CompletableFuture<BlockHeader> downloadBlockHeader(final Hash hash) {
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(
-            () -> {
-              GetHeadersFromPeerTask task =
-                  new GetHeadersFromPeerTask(
-                      hash,
-                      0,
-                      1,
-                      0,
-                      GetHeadersFromPeerTask.Direction.FORWARD,
-                      ethContext.getEthPeers().peerCount(),
-                      protocolSchedule);
-              PeerTaskExecutorResult<List<BlockHeader>> taskResult =
-                  ethContext.getPeerTaskExecutor().execute(task);
-              if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-                  || taskResult.result().isEmpty()) {
-                return CompletableFuture.failedFuture(
-                    new RuntimeException("Unable to retrieve header"));
-              }
-              return CompletableFuture.completedFuture(taskResult.result().get().getFirst());
-            })
-        .whenComplete(
-            (blockHeader, throwable) -> {
-              if (throwable != null) {
-                LOG.debug("Error downloading block header by hash {}", hash);
-              } else {
-                LOG.atDebug()
-                    .setMessage("Successfully downloaded block header by hash {}")
-                    .addArgument(blockHeader::toLogString)
-                    .log();
-              }
-            });
   }
 }

@@ -228,6 +228,7 @@ public final class GenesisState {
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
         .balHash(isAmsterdamAtGenesis(genesis) ? Hash.EMPTY_BAL_HASH : null)
+        .slotNumber(isAmsterdamAtGenesis(genesis) ? parseSlotNumber(genesis) : null)
         .buildBlockHeader();
   }
 
@@ -288,6 +289,11 @@ public final class GenesisState {
   private static Bytes32 parseParentBeaconBlockRoot(final GenesisConfig genesis) {
     return withNiceErrorMessage(
         "parentBeaconBlockRoot", genesis.getParentBeaconBlockRoot(), Bytes32::fromHexString);
+  }
+
+  private static long parseSlotNumber(final GenesisConfig genesis) {
+    return withNiceErrorMessage(
+        "slotNumber", genesis.getSlotNumber(), GenesisState::parseUnsignedLong);
   }
 
   private static long parseUnsignedLong(final String value) {

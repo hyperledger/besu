@@ -57,17 +57,4 @@ public interface TransactionReceipt {
    * @return the ABI-encoded revert reason for the failed transaction (if applicable)
    */
   Optional<Bytes> getRevertReason();
-
-  /**
-   * Returns the gas spent by this transaction (post-refund, what the user pays). This field is only
-   * present for Amsterdam+ (EIP-7778) receipts.
-   *
-   * <p>In Amsterdam+, cumulativeGasUsed represents pre-refund gas (for block accounting), while
-   * gasSpent represents post-refund gas (what users actually pay).
-   *
-   * @return the gas spent if present (Amsterdam+), otherwise empty (pre-Amsterdam)
-   */
-  default Optional<Long> getGasSpent() {
-    return Optional.empty();
-  }
 }

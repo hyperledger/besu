@@ -72,13 +72,11 @@ public class SyncTransactionReceiptDecoderTest {
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
-    Assertions.assertEquals(
-        Bytes.of(TransactionType.FRONTIER.getSerializedType()),
-        syncTransactionReceipt.getTransactionTypeCode());
-    Assertions.assertEquals(stateRoot.getBytes(), syncTransactionReceipt.getStatusOrStateRoot());
-    Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
-    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.getBloomFilter());
+    Assertions.assertTrue(syncTransactionReceipt.isFormattedForRootCalculation());
+    Assertions.assertNull(syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertNull(syncTransactionReceipt.getStatusOrStateRoot());
+    Assertions.assertNull(syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertNull(syncTransactionReceipt.getBloomFilter());
   }
 
   @Test
@@ -106,6 +104,7 @@ public class SyncTransactionReceiptDecoderTest {
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
+    Assertions.assertFalse(syncTransactionReceipt.isFormattedForRootCalculation());
     Assertions.assertEquals(
         Bytes.of(TransactionType.FRONTIER.getEthSerializedType()),
         syncTransactionReceipt.getTransactionTypeCode());
@@ -147,12 +146,10 @@ public class SyncTransactionReceiptDecoderTest {
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
-    Assertions.assertEquals(
-        Bytes.of(transactionType.getSerializedType()),
-        syncTransactionReceipt.getTransactionTypeCode());
-    Assertions.assertEquals(stateRoot.getBytes(), syncTransactionReceipt.getStatusOrStateRoot());
-    Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
-    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.getBloomFilter());
+    Assertions.assertTrue(syncTransactionReceipt.isFormattedForRootCalculation());
+    Assertions.assertNull(syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertNull(syncTransactionReceipt.getStatusOrStateRoot());
+    Assertions.assertNull(syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertNull(syncTransactionReceipt.getBloomFilter());
   }
 }

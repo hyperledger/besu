@@ -87,34 +87,6 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
         metricsSystem);
   }
 
-  public static AbstractGetHeadersFromPeerTask endingAtHash(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final Hash lastHash,
-      final long lastBlockNumber,
-      final int segmentLength,
-      final MetricsSystem metricsSystem) {
-    return new GetHeadersFromPeerByHashTask(
-        protocolSchedule,
-        ethContext,
-        lastHash,
-        lastBlockNumber,
-        segmentLength,
-        0,
-        true,
-        metricsSystem);
-  }
-
-  public static AbstractGetHeadersFromPeerTask forSingleHash(
-      final ProtocolSchedule protocolSchedule,
-      final EthContext ethContext,
-      final Hash hash,
-      final long minimumRequiredBlockNumber,
-      final MetricsSystem metricsSystem) {
-    return new GetHeadersFromPeerByHashTask(
-        protocolSchedule, ethContext, hash, minimumRequiredBlockNumber, 1, 0, false, metricsSystem);
-  }
-
   @Override
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(

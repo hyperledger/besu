@@ -302,6 +302,16 @@ class GenesisConfigTest {
   }
 
   @Test
+  void shouldGetSlotNumber() {
+    assertThat(configWithProperty("slotnumber", "0x10").getSlotNumber()).isEqualTo("0x10");
+  }
+
+  @Test
+  void shouldDefaultSlotNumberToZero() {
+    assertThat(EMPTY_CONFIG.getSlotNumber()).isEqualTo("0x0");
+  }
+
+  @Test
   void shouldGetAllocations() {
     final GenesisConfig config =
         fromConfig(
@@ -467,7 +477,6 @@ class GenesisConfigTest {
     assertThat(config.getConfigOptions().getChainId()).hasValue(BigInteger.valueOf(1337));
     assertThat(config.getConfigOptions().getContractSizeLimit()).hasValue(2147483647);
     assertThat(config.getConfigOptions().getEvmStackSize()).isNotPresent();
-    assertThat(config.getConfigOptions().getEcip1017EraRounds()).isNotPresent();
   }
 
   @Test

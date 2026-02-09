@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
@@ -56,6 +57,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
   protected final Optional<Long> cancunMilestone;
+  protected final Optional<Long> amsterdamMilestone;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
@@ -67,6 +69,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     this.mergeCoordinator = mergeCoordinator;
     cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
+    amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
   }
 
   protected ValidationResult<RpcErrorType> validateParameter(
@@ -126,7 +129,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         mergeCoordinator.getOrSyncHeadByHash(
             forkChoice.getHeadBlockHash(), forkChoice.getFinalizedBlockHash());
 
-    if (maybeNewHead.isEmpty()) {
+    if (maybeNewHead.isEmpty() || mergeContext.get().isSyncing()) {
       return syncingResponse(requestId, forkChoice);
     }
 
@@ -191,10 +194,6 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       return new JsonRpcSuccessResponse(requestId, parameterValidationResult);
     }
 
-    if (mergeContext.get().isSyncing()) {
-      return syncingResponse(requestId, forkChoice);
-    }
-
     maybePayloadAttributes.ifPresentOrElse(
         this::logPayload, () -> LOG.debug("Payload attributes are null"));
 
@@ -218,7 +217,8 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
                     payloadAttributes.getPrevRandao(),
                     payloadAttributes.getSuggestedFeeRecipient(),
                     finalWithdrawals,
-                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot())));
+                    Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot()),
+                    Optional.ofNullable(payloadAttributes.getSlotNumber())));
 
     payloadId.ifPresent(
         pid ->
