@@ -260,10 +260,13 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         .filter(
             addr -> NetworkUtility.isIpV4Address(addr) || NetworkUtility.INADDR_ANY.equals(addr))
         .findFirst()
-        .orElse(addresses.get(0));
+        .orElse(addresses.getFirst());
   }
 
   private static Optional<String> classifyIpv6(final List<String> addresses) {
+    if (addresses.size() < 2) {
+      return Optional.empty();
+    }
     return addresses.stream()
         .filter(
             addr ->

@@ -185,6 +185,8 @@ public class NodeRecordManager {
     final int listeningPort = enode.getListeningPort().orElse(0);
     final List<Bytes> forkId = forkIdSupplier.get();
 
+    final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
+
     final Optional<Bytes> ipv6AddressBytes =
         advertisedAddressIpv6.map(addr -> Bytes.of(InetAddresses.forString(addr).getAddress()));
 
@@ -194,11 +196,10 @@ public class NodeRecordManager {
             .filter(
                 record ->
                     nodeId.equals(record.get(EnrField.PKEY_SECP256K1))
-                        && ipAddressBytes.equals(record.get(EnrField.IP_V4))
-                        && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP))
-                        && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP))
+                        && primaryAddressMatches(
+                            record, ipAddressBytes, discoveryPort, listeningPort, primaryIsIpv4)
                         && forkId.equals(record.get(FORK_ID_ENR_FIELD))
-                        && ipv6FieldsMatch(record, ipv6AddressBytes))
+                        && ipv6FieldsMatch(record, ipv6AddressBytes, primaryIsIpv4))
             // Otherwise, create a new ENR with an incremented sequence number,
             // sign it with the local node key, and persist it to disk.
             .orElseGet(
@@ -215,9 +216,30 @@ public class NodeRecordManager {
     localNode.get().setNodeRecord(nodeRecord);
   }
 
-  private boolean ipv6FieldsMatch(final NodeRecord record, final Optional<Bytes> ipv6AddressBytes) {
+  private boolean primaryAddressMatches(
+      final NodeRecord record,
+      final Bytes ipAddressBytes,
+      final int discoveryPort,
+      final int listeningPort,
+      final boolean primaryIsIpv4) {
+    if (primaryIsIpv4) {
+      return ipAddressBytes.equals(record.get(EnrField.IP_V4))
+          && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP))
+          && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP));
+    }
+    return ipAddressBytes.equals(record.get(EnrField.IP_V6))
+        && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP_V6))
+        && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP_V6));
+  }
+
+  private boolean ipv6FieldsMatch(
+      final NodeRecord record,
+      final Optional<Bytes> ipv6AddressBytes,
+      final boolean primaryIsIpv4) {
     if (ipv6AddressBytes.isEmpty()) {
-      return record.get(EnrField.IP_V6) == null;
+      // No separate IPv6 configured. If primary is IPv4, IP_V6 should be absent.
+      // If primary is IPv6, the IP_V6 field is already checked by primaryAddressMatches.
+      return !primaryIsIpv4 || record.get(EnrField.IP_V6) == null;
     }
     return ipv6AddressBytes.get().equals(record.get(EnrField.IP_V6))
         && Integer.valueOf(discoveryPortIpv6).equals(record.get(EnrField.UDP_V6))
@@ -237,17 +259,27 @@ public class NodeRecordManager {
 
     final SignatureAlgorithm signatureAlgorithm = SIGNATURE_ALGORITHM.get();
 
+    final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
+
     final List<EnrField> fields = new ArrayList<>();
     fields.add(new EnrField(EnrField.ID, IdentitySchema.V4));
     fields.add(
         new EnrField(
             signatureAlgorithm.getCurveName(),
             signatureAlgorithm.compressPublicKey(signatureAlgorithm.createPublicKey(nodeId))));
-    fields.add(new EnrField(EnrField.IP_V4, ipAddressBytes));
-    fields.add(new EnrField(EnrField.TCP, listeningPort));
-    fields.add(new EnrField(EnrField.UDP, discoveryPort));
     fields.add(new EnrField(FORK_ID_ENR_FIELD, Collections.singletonList(forkId)));
 
+    if (primaryIsIpv4) {
+      fields.add(new EnrField(EnrField.IP_V4, ipAddressBytes));
+      fields.add(new EnrField(EnrField.TCP, listeningPort));
+      fields.add(new EnrField(EnrField.UDP, discoveryPort));
+    } else {
+      fields.add(new EnrField(EnrField.IP_V6, ipAddressBytes));
+      fields.add(new EnrField(EnrField.TCP_V6, listeningPort));
+      fields.add(new EnrField(EnrField.UDP_V6, discoveryPort));
+    }
+
+    // Add separate IPv6 fields only for dual-stack (primary is IPv4 + secondary IPv6)
     ipv6AddressBytes.ifPresent(
         ipv6Bytes -> {
           fields.add(new EnrField(EnrField.IP_V6, ipv6Bytes));
