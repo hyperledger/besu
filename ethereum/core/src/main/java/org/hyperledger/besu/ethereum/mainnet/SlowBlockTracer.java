@@ -34,17 +34,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A tracer that logs slow blocks using execution metrics from ExecutionMetricsTracer.
+ * A standalone tracer that logs slow blocks using execution metrics from ExecutionStatsHolder.
  *
  * <p>This tracer does not collect metrics itself - it relies on ExecutionMetricsTracer being
- * present in the tracer composition to provide execution statistics. Blocks exceeding the
- * configured threshold are logged in a standardized JSON format.
+ * present in the tracer composition to populate ExecutionStatsHolder with execution statistics.
+ * Blocks exceeding the configured threshold are logged in a standardized JSON format.
  *
  * <p>The tracer uses a dedicated "SlowBlock" logger, allowing operators to route slow block output
  * to a separate file/sink via logback configuration.
  *
- * <p>This tracer is designed to be used with TracerAggregator to compose it with
- * ExecutionMetricsTracer.
+ * <p>This tracer only implements {@link #traceEndBlock} as it only needs to check for slow blocks
+ * at the end of block processing. All other tracer methods are no-ops.
  */
 public class SlowBlockTracer implements BlockAwareOperationTracer {
 
@@ -52,29 +52,15 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
   private final long slowBlockThresholdMs;
-  private final BlockAwareOperationTracer delegate;
 
   /**
-   * Creates a new SlowBlockTracer with no delegate.
+   * Creates a new SlowBlockTracer.
    *
    * @param slowBlockThresholdMs the threshold in milliseconds beyond which blocks are logged.
    *     Negative values disable logging, zero logs all blocks.
    */
   public SlowBlockTracer(final long slowBlockThresholdMs) {
-    this(slowBlockThresholdMs, BlockAwareOperationTracer.NO_TRACING);
-  }
-
-  /**
-   * Creates a new SlowBlockTracer that wraps another tracer.
-   *
-   * @param slowBlockThresholdMs the threshold in milliseconds beyond which blocks are logged.
-   *     Negative values disable logging, zero logs all blocks.
-   * @param delegate the tracer to delegate calls to
-   */
-  public SlowBlockTracer(
-      final long slowBlockThresholdMs, final BlockAwareOperationTracer delegate) {
     this.slowBlockThresholdMs = slowBlockThresholdMs;
-    this.delegate = delegate;
   }
 
   /**
@@ -92,8 +78,7 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final BlockHeader blockHeader,
       final BlockBody blockBody,
       final Address miningBeneficiary) {
-    // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
-    delegate.traceStartBlock(worldView, blockHeader, blockBody, miningBeneficiary);
+    // No action needed - SlowBlockTracer only checks blocks at the end
   }
 
   @Override
@@ -101,8 +86,7 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final WorldView worldView,
       final ProcessableBlockHeader processableBlockHeader,
       final Address miningBeneficiary) {
-    // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
-    delegate.traceStartBlock(worldView, processableBlockHeader, miningBeneficiary);
+    // No action needed - SlowBlockTracer only checks blocks at the end
   }
 
   @Override
@@ -115,16 +99,11 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
-    // Delegate all tracing - ExecutionMetricsTracer will handle metrics collection
-    delegate.traceEndTransaction(
-        worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
+    // No action needed - SlowBlockTracer only checks blocks at the end
   }
 
   @Override
   public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
-    // Delegate first to ensure ExecutionMetricsTracer completes its work
-    delegate.traceEndBlock(blockHeader, blockBody);
-
     // Check for slow blocks using ExecutionStats from thread-local storage
     if (isEnabled()) {
       final ExecutionStats executionStats = ExecutionStatsHolder.get();
