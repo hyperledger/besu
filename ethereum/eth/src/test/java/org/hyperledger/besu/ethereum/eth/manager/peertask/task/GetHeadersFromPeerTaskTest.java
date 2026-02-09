@@ -127,6 +127,33 @@ public class GetHeadersFromPeerTaskTest {
   }
 
   @Test
+  public void testGetPeerRequirementFilterOnlyRequiresStartingBlockForForwardRequests() {
+    ProtocolSchedule protocolSchedule = Mockito.mock(ProtocolSchedule.class);
+    Mockito.when(protocolSchedule.anyMatch(Mockito.any())).thenReturn(false);
+
+    // Request 200 headers starting at block 5 in FORWARD direction
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(5, 200, 0, Direction.FORWARD, protocolSchedule);
+
+    // Peer with height 4 should fail (doesn't have starting block)
+    EthPeer peerBelowStartingBlock = mockPeer(4);
+    Assertions.assertFalse(
+        task.getPeerRequirementFilter()
+            .test(EthPeerImmutableAttributes.from(peerBelowStartingBlock)));
+
+    // Peer with height 5 should succeed (has starting block, even though it doesn't have all 200)
+    EthPeer peerAtStartingBlock = mockPeer(5);
+    Assertions.assertTrue(
+        task.getPeerRequirementFilter().test(EthPeerImmutableAttributes.from(peerAtStartingBlock)));
+
+    // Peer with height 100 should succeed (has starting block and more, but not all 200)
+    EthPeer peerWithPartialRange = mockPeer(100);
+    Assertions.assertTrue(
+        task.getPeerRequirementFilter()
+            .test(EthPeerImmutableAttributes.from(peerWithPartialRange)));
+  }
+
+  @Test
   public void testValidateResultForEmptyResult() {
     GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(5, 1, 0, Direction.FORWARD, null);
     Assertions.assertEquals(
