@@ -266,21 +266,21 @@ public class NodeRecordManager {
       fields.add(new EnrField(EnrField.IP_V4, ipAddressBytes));
       fields.add(new EnrField(EnrField.TCP, listeningPort));
       fields.add(new EnrField(EnrField.UDP, discoveryPort));
+
+      // Add separate IPv6 fields only for dual-stack (primary is IPv4 + secondary IPv6)
+      ipv6Endpoint.ifPresent(
+          ipv6 -> {
+            fields.add(
+                new EnrField(
+                    EnrField.IP_V6, Bytes.of(InetAddresses.forString(ipv6.host()).getAddress())));
+            fields.add(new EnrField(EnrField.TCP_V6, ipv6.tcpPort()));
+            fields.add(new EnrField(EnrField.UDP_V6, ipv6.discoveryPort()));
+          });
     } else {
       fields.add(new EnrField(EnrField.IP_V6, ipAddressBytes));
       fields.add(new EnrField(EnrField.TCP_V6, listeningPort));
       fields.add(new EnrField(EnrField.UDP_V6, discoveryPort));
     }
-
-    // Add separate IPv6 fields only for dual-stack (primary is IPv4 + secondary IPv6)
-    ipv6Endpoint.ifPresent(
-        ipv6 -> {
-          fields.add(
-              new EnrField(
-                  EnrField.IP_V6, Bytes.of(InetAddresses.forString(ipv6.host()).getAddress())));
-          fields.add(new EnrField(EnrField.TCP_V6, ipv6.tcpPort()));
-          fields.add(new EnrField(EnrField.UDP_V6, ipv6.discoveryPort()));
-        });
 
     final NodeRecord record = factory.createFromValues(sequence, fields);
 
