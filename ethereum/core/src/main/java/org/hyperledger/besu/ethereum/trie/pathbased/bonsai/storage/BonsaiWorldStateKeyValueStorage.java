@@ -104,11 +104,12 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       final BonsaiFlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage,
-      final CacheManager cacheManager) {
+      final CacheManager cacheManager,
+      final long cacheVersion) {
     super(composedWorldStateStorage, trieLogStorage);
     this.flatDbStrategyProvider = flatDbStrategyProvider;
     this.cacheManager = cacheManager;
-    this.cacheVersion = cacheManager.getCurrentVersion();
+    this.cacheVersion = cacheVersion;
   }
 
   private static CacheManager createCacheManager(
