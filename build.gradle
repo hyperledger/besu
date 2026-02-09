@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '7.0.3'
-  id 'com.github.jk1.dependency-license-report' version '2.9'
+  id 'com.github.jk1.dependency-license-report' version '3.0.1'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.3' apply false
   id 'net.ltgt.errorprone' version '4.2.0'
@@ -58,13 +58,12 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
 
 group = 'org.hyperledger.besu'
 
-defaultTasks 'build', 'checkLicense', 'javadoc'
+defaultTasks 'build', 'javadoc'
 
 def buildAliases = [
   'dev': [
     'spotlessApply',
     'build',
-    'checkLicense',
     'javadoc'
   ],
   'build': ['spotlessCheck', 'build']
@@ -209,6 +208,9 @@ configure(allprojects - project(':platform')) {
     // for validation annotations like @NotNull
     implementation 'jakarta.validation:jakarta.validation-api'
 
+    // Gradle 9 requires junit-platform-launcher on test runtime classpath
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
@@ -236,7 +238,7 @@ configure(allprojects - project(':platform')) {
     java {
       // This path needs to be relative to each project
       target 'src/**/*.java'
-      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**', '**/build/generated/**'
       removeUnusedImports()
       googleJavaFormat('1.25.2')
       importOrder 'org.hyperledger', 'java', ''
@@ -814,10 +816,10 @@ task autocomplete(type: JavaExec) {
 
 def archiveBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
 
-installDist { dependsOn checkLicense, untunedStartScripts, evmToolStartScripts }
+installDist { dependsOn untunedStartScripts, evmToolStartScripts }
 
 distTar {
-  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -827,7 +829,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicense, autocomplete, untunedStartScripts, evmToolStartScripts
+  dependsOn autocomplete, untunedStartScripts, evmToolStartScripts
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
@@ -874,7 +876,7 @@ tasks.register("dockerDistUntar") {
   }
 }
 
-task distDocker {
+task distDockerCopy {
   dependsOn dockerDistUntar
   inputs.dir("build/docker-besu/")
   def dockerBuildDir = "build/docker-besu/"
@@ -885,26 +887,31 @@ task distDocker {
       from file("${projectDir}/docker/pyroscope.properties")
       into(dockerBuildDir)
     }
-    exec {
-      def image = "${dockerImageName}:${dockerBuildVersion}"
-
-      println "Docker Build Version: $dockerBuildVersion"
-      println "Docker Organization Name: $dockerOrgName"
-      println "Docker Artifact Name: $dockerArtifactName"
-      println "Docker Image Name: $dockerImageName"
-      println "Building docker image name ${image}"
-
-      def dockerPlatform = ""
-      if (project.hasProperty('docker-platform')){
-        dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
-        println "Building for platform ${project.getProperty('docker-platform')}"
-      }
-      def gitDetails = getGitCommitDetails(7)
-      executable shell
-      workingDir dockerBuildDir
-      args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
-    }
   }
+}
+
+task distDocker(type: Exec) {
+  dependsOn distDockerCopy
+  def dockerBuildDir = "build/docker-besu/"
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doFirst {
+    println "Docker Build Version: $dockerBuildVersion"
+    println "Docker Organization Name: $dockerOrgName"
+    println "Docker Artifact Name: $dockerArtifactName"
+    println "Docker Image Name: $dockerImageName"
+    println "Building docker image name ${image}"
+  }
+
+  executable shell
+  workingDir dockerBuildDir
+
+  def dockerPlatform = ""
+  if (project.hasProperty('docker-platform')){
+    dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+  }
+  def gitDetails = getGitCommitDetails(7)
+  args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
 }
 
 tasks.register("downloadGossBinaries") {
@@ -971,7 +978,7 @@ tasks.register("testDocker", Exec) {
   args "-c", "./test.sh ${image}"
 }
 
-task dockerUpload {
+task dockerUpload(type: Exec) {
   dependsOn distDocker
   def architecture = System.getenv('architecture')
   def image = "${dockerImageName}:${dockerBuildVersion}"
@@ -985,99 +992,98 @@ task dockerUpload {
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
 
-  doLast {
-    exec {
-      def archVariantImage = "${image}-${architecture}"
-      def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
-      println "Executing '${cmd}'"
-      executable shell
-      args "-c", cmd
-    }
+  def archVariantImage = "${image}-${architecture}"
+  def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
+
+  doFirst {
+    println "Executing '${cmd}'"
+  }
+
+  executable shell
+  args "-c", cmd
+}
+
+task dockerUploadReleaseArm64(type: Exec) {
+  def architecture = "arm64"
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doFirst {
+    def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+    println "Executing '${cmd}'"
+    commandLine shell, "-c", cmd
+  }
+}
+
+task dockerUploadReleaseAmd64(type: Exec) {
+  def architecture = "amd64"
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doFirst {
+    def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}' && docker push '${dockerImageName}:latest-${architecture}'"
+    println "Executing '${cmd}'"
+    commandLine shell, "-c", cmd
   }
 }
 
 task dockerUploadRelease {
-  def archs = ["arm64", "amd64"]
-  def image = "${dockerImageName}:${dockerBuildVersion}"
-
-  doLast {
-    for (def architecture in archs) {
-
-      exec {
-        def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}'"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-      exec {
-        def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-
-
-      exec {
-        def archImage = "${image}-${architecture}"
-        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-      exec {
-        def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-    }
-  }
+  dependsOn dockerUploadReleaseArm64, dockerUploadReleaseAmd64
 }
 
-task manifestDocker {
+task manifestDockerCreate(type: Exec) {
   def image = "${dockerImageName}:${dockerBuildVersion}"
   def archs = [
     "arm64",
     "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
-  doLast {
-    exec {
-      def targets = ""
-      archs.forEach { arch -> targets += "'${image}-${arch}' " }
-      def cmd = "docker manifest create '${image}' ${targets}"
-      println "Executing '${cmd}'"
-      executable shell
-      args "-c", cmd
-    }
-    exec {
-      def cmd = "docker manifest push '${image}'"
-      println "Executing '${cmd}'"
-      executable shell
-      args "-c", cmd
-    }
+  doFirst {
+    def targets = ""
+    archs.forEach { arch -> targets += "'${image}-${arch}' " }
+    def cmd = "docker manifest create '${image}' ${targets}"
+    println "Executing '${cmd}'"
+    commandLine shell, "-c", cmd
+  }
+}
+
+task manifestDockerPush(type: Exec) {
+  dependsOn manifestDockerCreate
+  def image = "${dockerImageName}:${dockerBuildVersion}"
+
+  doFirst {
+    def cmd = "docker manifest push '${image}'"
+    println "Executing '${cmd}'"
+    commandLine shell, "-c", cmd
+  }
+}
+
+task manifestDocker {
+  dependsOn manifestDockerPush
+}
+
+task manifestDockerReleaseCreate(type: Exec) {
+  def archs = ["arm64", "amd64"]
+  def baseTag = "${dockerImageName}:latest"
+
+  doFirst {
+    def targets = ""
+    archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
+    def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
+    println "Executing '${cmd}'"
+    commandLine shell, "-c", cmd
+  }
+}
+
+task manifestDockerReleasePush(type: Exec) {
+  dependsOn manifestDockerReleaseCreate
+  def baseTag = "${dockerImageName}:latest"
+
+  doFirst {
+    def cmd = "docker manifest push '${baseTag}'"
+    println "Executing '${cmd}'"
+    commandLine shell, "-c", cmd
   }
 }
 
 task manifestDockerRelease {
-  def archs = ["arm64", "amd64"]
-  def baseTag = "${dockerImageName}:latest";
-
-  doLast {
-
-    exec {
-      def targets = ""
-      archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-      def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
-      println "Executing '${cmd}'"
-      executable shell
-      args "-c", cmd
-    }
-    exec {
-      def cmd = "docker manifest push '${baseTag}'"
-      println "Executing '${cmd}'"
-      executable shell
-      args "-c", cmd
-    }
-  }
+  dependsOn manifestDockerReleasePush
 }
 
 def sep = Pattern.quote(File.separator)

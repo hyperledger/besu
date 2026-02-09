@@ -75,6 +75,7 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
+  integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
   testSupportImplementation 'org.mockito:mockito-core'
 }
