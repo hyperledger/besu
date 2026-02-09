@@ -9,7 +9,6 @@
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
-| Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
@@ -39,6 +38,7 @@
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
+| Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
