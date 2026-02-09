@@ -37,9 +37,11 @@ import org.apache.tuweni.bytes.MutableBytes;
  */
 public class RangeManager {
 
-  public static final Hash MIN_RANGE = Hash.wrap(Bytes32.ZERO);
-  public static final Hash MAX_RANGE =
-      Hash.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  public static final Bytes32 MIN_RANGE = Bytes32.wrap(Hash.wrap(Bytes32.ZERO).getBytes());
+  public static final Bytes32 MAX_RANGE =
+      Bytes32.wrap(
+          Hash.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+              .getBytes());
 
   private RangeManager() {}
 
@@ -128,7 +130,7 @@ public class RangeManager {
     } else {
       final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
       for (Bytes proof : proofs) {
-        proofsEntries.put(Hash.hash(proof), proof);
+        proofsEntries.put(Bytes32.wrap(Hash.hash(proof).getBytes()), proof);
       }
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           new StoredMerklePatriciaTrie<>(

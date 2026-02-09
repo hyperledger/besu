@@ -15,9 +15,11 @@
 package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.hyperledger.besu.cli.options.ChainPruningOptions.CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
 import static org.hyperledger.besu.config.NetworkDefinition.CLASSIC;
 import static org.hyperledger.besu.config.NetworkDefinition.DEV;
 import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
@@ -91,7 +93,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -142,6 +147,15 @@ public class BesuCommandTest extends CommandTestAbstract {
     "enode://" + VALID_NODE_ID + "@192.168.0.2:4567",
     "enode://" + VALID_NODE_ID + "@192.168.0.3:4567"
   };
+
+  public static final List<EnodeURL> EPHEMERY_BOOT_NODES =
+      Collections.unmodifiableList(
+          Stream.of(
+                  "enode://50a54ecbd2175497640bcf46a25bbe9bb4fae51d7cc2a29ef4947a7ee17496cf39a699b7fe6b703ed0feb9dbaae7e44fc3827fcb7435ca9ac6de4daa4d983b3d@137.74.203.240:30303",
+                  "enode://0f2c301a9a3f9fa2ccfa362b79552c052905d8c2982f707f46cd29ece5a9e1c14ecd06f4ac951b228f059a43c6284a1a14fce709e8976cac93b50345218bf2e9@135.181.140.168:30343")
+              .map(EnodeURLImpl::fromString)
+              .collect(toList()));
+
   private static final String DNS_DISCOVERY_URL =
       "enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org";
   private static final JsonObject VALID_GENESIS_WITH_DISCOVERY_OPTIONS =
@@ -2763,6 +2777,111 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void chainPruningNoneModeSkipsValidation() {
+    parseCommand(
+        "--Xchain-pruning-enabled=NONE",
+        "--Xchain-pruning-blocks-retained=-1", // Invalid but should be ignored
+        "--Xchain-pruning-bals-retained=-1"); // Invalid but should be ignored
+
+    // Should not throw exception since mode is NONE
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void chainPruningBlocksRetainedMustBeGreaterThanOrEqualToRetainedLimit() {
+    parseCommand(
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=1000",
+        "--Xchain-pruning-retained-minimum=2000");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xchain-pruning-blocks-retained must be >= 2000");
+  }
+
+  @Test
+  public void chainPruningBalsRetainedMustBeGreaterThanOrEqualToRetainedLimit() {
+    parseCommand(
+        "--Xchain-pruning-enabled=BAL",
+        "--Xchain-pruning-bals-retained=1000",
+        "--Xchain-pruning-retained-minimum=2000");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--Xchain-pruning-bals-retained must be >= 2000");
+  }
+
+  @Test
+  public void chainPruningBlocksRetainedCannotBeLessThanBalsRetainedInAllMode() {
+    // BALs retained < blocks retained is INVALID
+    parseCommand(
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=1000",
+        "--Xchain-pruning-bals-retained=2000",
+        "--Xchain-pruning-retained-minimum=500");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains(
+            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained when pruning mode is ALL");
+  }
+
+  @Test
+  public void chainPruningBlocksRetainedCanBeGreaterThanBalsRetainedInAllMode() {
+    // BALs retained > blocks retained is VALID
+    parseCommand(
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=2000",
+        "--Xchain-pruning-bals-retained=1000",
+        "--Xchain-pruning-retained-minimum=500");
+
+    // Should succeed - we keep more BALs than blocks
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void chainPruningBlocksRetainedCanBeGreaterThanBalsRetainedInBalMode() {
+    // In BAL mode, blocks are never pruned (Long.MAX_VALUE)
+    // BALs retained can be any value >= retained limit
+    parseCommand(
+        "--Xchain-pruning-enabled=BAL",
+        "--Xchain-pruning-blocks-retained=" + Long.MAX_VALUE,
+        "--Xchain-pruning-bals-retained=1000",
+        "--Xchain-pruning-retained-minimum=500");
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void chainPruningBalsRetainedEqualToBlocksRetainedInAllModeSucceeds() {
+    // Equal is valid (minimum case)
+    parseCommand(
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void chainPruningAllModeWithValidValuesSucceeds() {
+    parseCommand(
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=" + (CHAIN_DATA_PRUNING_RETAINED_MINIMUM + 100),
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
+        "--Xchain-pruning-retained-minimum=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void chainPruningBalModeWithValidValuesSucceeds() {
+    parseCommand(
+        "--Xchain-pruning-enabled=BAL",
+        "--Xchain-pruning-bals-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
+        "--Xchain-pruning-retained-minimum=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   void chainPruningEnabledWithPOAShouldFailWhenChainPruningBlocksRetainedValueLessThanEpochLength()
       throws IOException {
     JsonObject genesis = GENESIS_VALID_JSON;
@@ -2773,11 +2892,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--genesis-file",
         genesisFileQBFT.toString(),
-        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=7200",
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xchain-pruning-blocks-retained(7200) must be >= epochlength(25000) for QBFT");
+        .contains(
+            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
     commandErrorOutput.reset();
 
     // for IBFT2
@@ -2787,11 +2907,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--genesis-file",
         genesisFileIBFT.toString(),
-        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=7200",
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xchain-pruning-blocks-retained(7200) must be >= epochlength(20000) for IBFT2");
+        .contains(
+            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
     commandErrorOutput.reset();
 
     // for Clique
@@ -2801,50 +2922,56 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand(
         "--genesis-file",
         genesisFileClique.toString(),
-        "--Xchain-pruning-enabled=true",
+        "--Xchain-pruning-enabled=ALL",
         "--Xchain-pruning-blocks-retained=7200",
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xchain-pruning-blocks-retained(7200) must be >= epochlength(10000) for Clique");
+            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
   }
 
   @Test
   void chainPruningEnabledWithPOA() throws IOException {
     JsonObject genesis = GENESIS_VALID_JSON;
     // for QBFT
-    genesis.getJsonObject("config").put("qbft", new JsonObject().put("epochlength", 25000));
+    genesis
+        .getJsonObject("config")
+        .put("qbft", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
     final Path genesisFileForQBFT = createFakeGenesisFile(genesis);
     parseCommand(
         "--genesis-file",
         genesisFileForQBFT.toString(),
-        "--Xchain-pruning-enabled=true",
-        "--Xchain-pruning-blocks-retained=25000",
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     // for IBFT2
-    genesis.getJsonObject("config").put("ibft2", new JsonObject().put("epochlength", 20000));
+    genesis
+        .getJsonObject("config")
+        .put("ibft2", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
     genesis.getJsonObject("config").remove("qbft");
     final Path genesisFileIBFT = createFakeGenesisFile(genesis);
     parseCommand(
         "--genesis-file",
         genesisFileIBFT.toString(),
-        "--Xchain-pruning-enabled=true",
-        "--Xchain-pruning-blocks-retained=20000",
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     // for Clique
-    genesis.getJsonObject("config").put("clique", new JsonObject().put("epochlength", 10000));
+    genesis
+        .getJsonObject("config")
+        .put("clique", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
     genesis.getJsonObject("config").remove("ibft2");
     final Path genesisFileClique = createFakeGenesisFile(genesis);
     parseCommand(
         "--genesis-file",
         genesisFileClique.toString(),
-        "--Xchain-pruning-enabled=true",
-        "--Xchain-pruning-blocks-retained=10000",
+        "--Xchain-pruning-enabled=ALL",
+        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -3016,5 +3143,30 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     // Verify that the logger does NOT warn about duplication
     verify(mockLogger, never()).warn(contains("bootnodes"));
+  }
+
+  @Test
+  public void networkEphemeryTest() {
+    parseCommand("--network", "ephemery");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+
+    assertThat(networkArg.getValue().networkId())
+        .isEqualTo(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get());
+
+    Map<String, String> overrides = new HashMap<>();
+
+    overrides.put("chainId", "39438151");
+    overrides.put("timestamp", String.valueOf(Instant.now().getEpochSecond()));
+    networkArg.getValue().genesisConfig().withOverrides(overrides);
+
+    assertThat(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get())
+        .isEqualTo("39438151");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -40,7 +41,7 @@ public interface PendingTransactions {
   TransactionAddedResult addTransaction(
       PendingTransaction transaction, Optional<Account> maybeSenderAccount);
 
-  void selectTransactions(TransactionSelector selector);
+  void selectTransactions(PendingTransactionsSelector selector);
 
   long maxSize();
 
@@ -75,7 +76,8 @@ public interface PendingTransactions {
   Optional<Transaction> restoreBlob(Transaction transaction);
 
   @FunctionalInterface
-  interface TransactionSelector {
-    TransactionSelectionResult evaluateTransaction(PendingTransaction pendingTransaction);
+  interface PendingTransactionsSelector {
+    Map<PendingTransaction, TransactionSelectionResult> evaluatePendingTransactions(
+        List<PendingTransaction> candidatePendingTransactions);
   }
 }

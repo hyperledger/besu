@@ -39,8 +39,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @Option(
       names = {DATA_STORAGE_FORMAT},
       description =
-          "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
-      arity = "1")
+          "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).")
   private DataStorageFormat dataStorageFormat = DataStorageFormat.BONSAI;
 
   @Option(
@@ -52,7 +51,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @CommandLine.Option(
       names = {"--history-expiry-prune"},
       description =
-          "Convenience option to enable online history pruning and configure BlobDB garbage collection settings (default: ${DEFAULT-VALUE}). \"--Xhistory-expiry-prune\" is deprecated and will be removed in a future release. Use \"--history-expiry-prune\" instead.")
+          "Convenience option to enable online history pruning and configure BlobDB garbage collection settings (default: ${DEFAULT-VALUE}). \"--history-expiry-prune\" is deprecated and will be removed in a future release.")
   private Boolean historyExpiryPrune = false;
 
   /**

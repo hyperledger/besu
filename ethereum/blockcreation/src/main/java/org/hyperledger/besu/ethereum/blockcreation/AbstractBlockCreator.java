@@ -154,6 +154,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         Optional.empty(),
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         timestamp,
         true,
         parentHeader);
@@ -177,6 +178,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         maybeWithdrawals,
         Optional.empty(),
         Optional.empty(),
+        Optional.empty(),
         timestamp,
         true,
         parentHeader);
@@ -188,6 +190,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<Bytes32> maybePrevRandao,
       final Optional<Bytes32> maybeParentBeaconBlockRoot,
+      final Optional<Long> maybeSlotNumber,
       final long timestamp,
       final boolean rewardCoinbase,
       final BlockHeader parentHeader) {
@@ -206,7 +209,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   miningConfiguration,
                   timestamp,
                   maybePrevRandao,
-                  maybeParentBeaconBlockRoot)
+                  maybeParentBeaconBlockRoot,
+                  maybeSlotNumber)
               .buildProcessableBlockHeader();
 
       final Address miningBeneficiary =
@@ -345,13 +349,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
-          new BlockBody(
-              transactionResults.getSelectedTransactions(), ommers, withdrawals, blockAccessList);
+          new BlockBody(transactionResults.getSelectedTransactions(), ommers, withdrawals);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
       timings.register("blockAssembled");
-      return new BlockCreationResult(block, transactionResults, timings);
+      return new BlockCreationResult(block, transactionResults, timings, blockAccessList);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException | StorageException ex) {
@@ -517,7 +520,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final SealableBlockHeader sealableBlockHeader);
 
   @FunctionalInterface
-  protected interface MiningBeneficiaryCalculator {
+  public interface MiningBeneficiaryCalculator {
     Address getMiningBeneficiary(long blockTimestamp, ProcessableBlockHeader parentHeader);
   }
 }

@@ -71,8 +71,8 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
 
     out.writeLongScalar(nonce);
     out.writeUInt256Scalar(balance);
-    out.writeBytes(storageRoot);
-    out.writeBytes(codeHash);
+    out.writeBytes(storageRoot.getBytes());
+    out.writeBytes(codeHash.getBytes());
     out.endList();
   }
 
@@ -84,13 +84,13 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
     Bytes32 storageRoot;
     Bytes32 codeHash;
     if (in.nextIsNull()) {
-      storageRoot = Hash.EMPTY_TRIE_HASH;
+      storageRoot = Bytes32.wrap(Hash.EMPTY_TRIE_HASH.getBytes());
       in.skipNext();
     } else {
       storageRoot = in.readBytes32();
     }
     if (in.nextIsNull()) {
-      codeHash = Hash.EMPTY;
+      codeHash = Bytes32.wrap(Hash.EMPTY.getBytes());
       in.skipNext();
     } else {
       codeHash = in.readBytes32();
