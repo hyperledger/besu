@@ -16,6 +16,8 @@ package org.hyperledger.besu.tests.acceptance.bft;
 
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.util.stream.Stream;
@@ -51,10 +53,24 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     final BesuNode validator3 = nodeFactory.createBonsaiNodeFixedPort(besu, "validator3");
     final BesuNode validator4 = nodeFactory.createBonsaiNodeFixedPort(besu, "validator4");
 
-    // Configure validators with specified sync mode
+    // Enable snap server on validators 1-3 so they can serve world state data
+    // This is required for SNAP/CHECKPOINT sync modes to work
+    final SnapSyncConfiguration snapServerEnabledConfig =
+        ImmutableSnapSyncConfiguration.builder().isSnapServerEnabled(true).build();
+    final SynchronizerConfiguration fullSyncWithSnapServer =
+        SynchronizerConfiguration.builder()
+            .syncMode(SyncMode.FULL)
+            .syncMinimumPeerCount(1)
+            .snapSyncConfiguration(snapServerEnabledConfig)
+            .build();
+
+    validator1.setSynchronizerConfiguration(fullSyncWithSnapServer);
+    validator2.setSynchronizerConfiguration(fullSyncWithSnapServer);
+    validator3.setSynchronizerConfiguration(fullSyncWithSnapServer);
+
+    // Configure validator4 with the test's specified sync mode (FULL/SNAP/CHECKPOINT)
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().syncMode(syncMode).syncMinimumPeerCount(1).build();
-
     validator4.setSynchronizerConfiguration(syncConfig);
 
     // Start first three validators

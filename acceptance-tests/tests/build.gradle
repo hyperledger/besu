@@ -107,9 +107,10 @@ compileTestJava.dependsOn ':buildDetachedTestPlugins'
 
 // FKA acceptanceTestNotPrivacy
 task acceptanceTest(type: Test) {
+  testClassesDirs = testing.suites.test.sources.output.classesDirs
+  classpath = testing.suites.test.sources.runtimeClasspath
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   exclude '**/bftsoak/**'
-
   useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
@@ -135,6 +136,8 @@ task acceptanceTest(type: Test) {
 }
 
 task acceptanceTestBftSoak(type: Test) {
+  testClassesDirs = testing.suites.test.sources.output.classesDirs
+  classpath = testing.suites.test.sources.runtimeClasspath
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/bftsoak/**'
 

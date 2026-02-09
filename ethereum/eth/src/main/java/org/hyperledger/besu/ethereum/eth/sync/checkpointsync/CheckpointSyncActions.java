@@ -21,11 +21,14 @@ import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import java.nio.file.Path;
 
 public class CheckpointSyncActions extends FastSyncActions {
   public CheckpointSyncActions(
@@ -36,7 +39,9 @@ public class CheckpointSyncActions extends FastSyncActions {
       final EthContext ethContext,
       final SyncState syncState,
       final PivotBlockSelector pivotBlockSelector,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final FastSyncStateStorage fastSyncStateStorage,
+      final Path fastSyncDataDirectory) {
     super(
         syncConfig,
         worldStateStorageCoordinator,
@@ -45,7 +50,9 @@ public class CheckpointSyncActions extends FastSyncActions {
         ethContext,
         syncState,
         pivotBlockSelector,
-        metricsSystem);
+        metricsSystem,
+        fastSyncStateStorage,
+        fastSyncDataDirectory);
   }
 
   @Override
