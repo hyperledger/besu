@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -219,8 +220,12 @@ public class BalPrefetcher {
       futures.add(
           CompletableFuture.runAsync(
               () -> {
-                worldState.getWorldStateStorage().getMultipleKeys(segment, keys);
-                LOG.debug("Prefetch: fetched {} {} keys in single batch", keys.size(), segmentName);
+                final List<Optional<byte[]>> multipleKeys =
+                    worldState.getWorldStateStorage().getMultipleKeys(segment, keys);
+                LOG.debug(
+                    "Prefetch: fetched {} {} keys in single batch",
+                    multipleKeys.size(),
+                    segmentName);
               },
               fetchExecutor));
     } else {
@@ -233,13 +238,14 @@ public class BalPrefetcher {
         futures.add(
             CompletableFuture.runAsync(
                 () -> {
-                  worldState.getWorldStateStorage().getMultipleKeys(segment, batch);
+                  final List<Optional<byte[]>> multipleKeys =
+                      worldState.getWorldStateStorage().getMultipleKeys(segment, batch);
                   LOG.trace(
                       "Prefetch: fetched {} batch {}/{} ({} keys)",
                       segmentName,
                       batchNumber + 1,
                       batchCount,
-                      batch.size());
+                      multipleKeys.size());
                 },
                 fetchExecutor));
       }
