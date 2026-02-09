@@ -170,6 +170,24 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   /**
+   * Extracts the ExecutionMetricsTracer from the block-level tracer for use in parallel processing.
+   *
+   * @param blockTracer the block-level tracer that may contain an ExecutionMetricsTracer
+   * @return the ExecutionMetricsTracer if found, null otherwise
+   */
+  private ExecutionMetricsTracer extractExecutionMetricsTracer(
+      final BlockAwareOperationTracer blockTracer) {
+    if (blockTracer instanceof BlockAwareTracerAggregator) {
+      return ((BlockAwareTracerAggregator) blockTracer)
+          .findTracer(ExecutionMetricsTracer.class)
+          .orElse(null);
+    } else if (blockTracer instanceof ExecutionMetricsTracer) {
+      return (ExecutionMetricsTracer) blockTracer;
+    }
+    return null;
+  }
+
+  /**
    * Processes the block with no privateMetadata and no preprocessor.
    *
    * @param protocolContext the current context of the protocol
@@ -292,6 +310,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                               calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
               .orElse(Wei.ZERO);
 
+      // Extract ExecutionMetricsTracer from block tracer for parallel processing
+      final ExecutionMetricsTracer blockExecutionMetricsTracer =
+          extractExecutionMetricsTracer(blockTracer);
+
       final Optional<PreprocessingContext> preProcessingContext =
           preprocessingBlockFunction.run(
               protocolContext,
@@ -301,7 +323,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               blobGasPrice,
               blockAccessListBuilder,
-              blockAccessList);
+              blockAccessList,
+              blockExecutionMetricsTracer);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -653,7 +676,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
         final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-        final Optional<BlockAccessList> maybeBlockBal);
+        final Optional<BlockAccessList> maybeBlockBal,
+        final ExecutionMetricsTracer blockExecutionMetricsTracer);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -666,7 +690,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
           final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-          final Optional<BlockAccessList> maybeBlockBal) {
+          final Optional<BlockAccessList> maybeBlockBal,
+          final ExecutionMetricsTracer blockExecutionMetricsTracer) {
         return Optional.empty();
       }
     }

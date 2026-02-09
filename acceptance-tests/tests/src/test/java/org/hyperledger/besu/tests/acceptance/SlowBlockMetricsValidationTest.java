@@ -86,7 +86,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
     // - 0ms slow block threshold (log ALL blocks as slow)
     // We use a config modifier to add the CLI option for slow block threshold
     final UnaryOperator<BesuNodeConfigurationBuilder> configModifier =
-        builder -> builder.addCliOption("--slow-block-threshold", "0");
+        builder -> builder.extraCLIOptions(List.of("--slow-block-threshold", "0"));
 
     devNode = besu.createQbftNode("qbft-metrics-node", configModifier);
 

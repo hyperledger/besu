@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ExecutionMetricsTracer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
@@ -55,7 +56,8 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
       final BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-      final Optional<BlockAccessList> maybeBlockBal) {
+      final Optional<BlockAccessList> maybeBlockBal,
+      final ExecutionMetricsTracer blockExecutionMetricsTracer) {
     if (!(protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
       return Optional.empty();
     }
@@ -67,7 +69,9 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
           new BalConcurrentTransactionProcessor(
               transactionProcessor, maybeBlockBal.get(), balConfiguration);
     } else {
-      parallelProcessor = new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
+      parallelProcessor =
+          new ParallelizedConcurrentTransactionProcessor(
+              transactionProcessor, blockExecutionMetricsTracer);
     }
 
     parallelProcessor.runAsyncBlock(

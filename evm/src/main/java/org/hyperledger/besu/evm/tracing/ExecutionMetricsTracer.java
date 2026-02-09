@@ -116,58 +116,128 @@ public class ExecutionMetricsTracer implements OperationTracer {
     }
 
     // Getters for all metrics
+    /**
+     * Returns the number of SLOAD operations executed.
+     *
+     * @return the number of SLOAD operations executed
+     */
     public int getSloadCount() {
       return sloadCount;
     }
 
+    /**
+     * Returns the number of SSTORE operations executed.
+     *
+     * @return the number of SSTORE operations executed
+     */
     public int getSstoreCount() {
       return sstoreCount;
     }
 
+    /**
+     * Returns the number of CALL operations executed.
+     *
+     * @return the number of CALL operations executed
+     */
     public int getCallCount() {
       return callCount;
     }
 
+    /**
+     * Returns the number of CREATE operations executed.
+     *
+     * @return the number of CREATE operations executed
+     */
     public int getCreateCount() {
       return createCount;
     }
 
+    /**
+     * Returns the number of account reads performed.
+     *
+     * @return the number of account reads performed
+     */
     public int getAccountReads() {
       return accountReads;
     }
 
+    /**
+     * Returns the number of storage reads performed.
+     *
+     * @return the number of storage reads performed
+     */
     public int getStorageReads() {
       return storageReads;
     }
 
+    /**
+     * Returns the number of code reads performed.
+     *
+     * @return the number of code reads performed
+     */
     public int getCodeReads() {
       return codeReads;
     }
 
+    /**
+     * Returns the number of code bytes read.
+     *
+     * @return the number of code bytes read
+     */
     public int getCodeBytesRead() {
       return codeBytesRead;
     }
 
+    /**
+     * Returns the number of account writes performed.
+     *
+     * @return the number of account writes performed
+     */
     public int getAccountWrites() {
       return accountWrites;
     }
 
+    /**
+     * Returns the number of storage writes performed.
+     *
+     * @return the number of storage writes performed
+     */
     public int getStorageWrites() {
       return storageWrites;
     }
 
+    /**
+     * Returns the number of code writes performed.
+     *
+     * @return the number of code writes performed
+     */
     public int getCodeWrites() {
       return codeWrites;
     }
 
+    /**
+     * Returns the number of code bytes written.
+     *
+     * @return the number of code bytes written
+     */
     public int getCodeBytesWritten() {
       return codeBytesWritten;
     }
 
+    /**
+     * Returns the number of EIP-7702 delegations set.
+     *
+     * @return the number of EIP-7702 delegations set
+     */
     public int getEip7702DelegationsSet() {
       return eip7702DelegationsSet;
     }
 
+    /**
+     * Returns the number of EIP-7702 delegations cleared.
+     *
+     * @return the number of EIP-7702 delegations cleared
+     */
     public int getEip7702DelegationsCleared() {
       return eip7702DelegationsCleared;
     }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ExecutionMetricsTracer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -54,16 +54,22 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
   private final TransactionCollisionDetector transactionCollisionDetector;
 
+  private final ExecutionMetricsTracer blockExecutionMetricsTracer;
+
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
    * processor is responsible for the individual processing of transactions.
    *
    * @param transactionProcessor The transaction processor for processing individual transactions.
+   * @param blockExecutionMetricsTracer The block-level execution metrics tracer for metrics
+   *     aggregation.
    */
   public ParallelizedConcurrentTransactionProcessor(
-      final MainnetTransactionProcessor transactionProcessor) {
+      final MainnetTransactionProcessor transactionProcessor,
+      final ExecutionMetricsTracer blockExecutionMetricsTracer) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
+    this.blockExecutionMetricsTracer = blockExecutionMetricsTracer;
   }
 
   @VisibleForTesting
@@ -72,6 +78,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       final TransactionCollisionDetector transactionCollisionDetector) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = transactionCollisionDetector;
+    this.blockExecutionMetricsTracer = null;
   }
 
   @Override
@@ -102,8 +109,11 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
                   BlockAccessListBuilder.createTransactionAccessLocationTracker(
                       transactionLocation));
 
-      // Create execution metrics tracer for parallel transaction
-      final ExecutionMetricsTracer parallelMetricsTracer = new ExecutionMetricsTracer();
+      // Create execution metrics tracer for parallel transaction only if block tracer is available
+      // and metrics collection is enabled. Use EVM-level tracer for parallel execution.
+      final boolean metricsEnabled = blockExecutionMetricsTracer != null;
+      final org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer parallelMetricsTracer =
+          metricsEnabled ? new org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer() : null;
 
       // Create aggregated tracer for reward tracking and metrics collection
       final OperationTracer aggregatedTracer =
@@ -128,13 +138,15 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
               contextBuilder.miningBeneficiaryReward(miningReward);
             }
 
-            // Delegate OperationTracer methods to ExecutionMetricsTracer
+            // Delegate OperationTracer methods to ExecutionMetricsTracer if metrics are enabled
             @Override
             public void tracePostExecution(
                 final org.hyperledger.besu.evm.frame.MessageFrame frame,
                 final org.hyperledger.besu.evm.operation.Operation.OperationResult
                     operationResult) {
-              parallelMetricsTracer.tracePostExecution(frame, operationResult);
+              if (parallelMetricsTracer != null) {
+                parallelMetricsTracer.tracePostExecution(frame, operationResult);
+              }
             }
 
             @Override
@@ -142,7 +154,9 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
                 final org.hyperledger.besu.evm.frame.MessageFrame frame,
                 final java.util.Optional<org.hyperledger.besu.evm.frame.ExceptionalHaltReason>
                     haltReason) {
-              parallelMetricsTracer.traceAccountCreationResult(frame, haltReason);
+              if (parallelMetricsTracer != null) {
+                parallelMetricsTracer.traceAccountCreationResult(frame, haltReason);
+              }
             }
 
             @Override
@@ -150,7 +164,9 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
                 final org.hyperledger.besu.evm.frame.MessageFrame frame,
                 final long gasRequirement,
                 final org.apache.tuweni.bytes.Bytes output) {
-              parallelMetricsTracer.tracePrecompileCall(frame, gasRequirement, output);
+              if (parallelMetricsTracer != null) {
+                parallelMetricsTracer.tracePrecompileCall(frame, gasRequirement, output);
+              }
             }
           };
 
@@ -244,8 +260,12 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
       if (transactionProcessingResult.isSuccessful() && !hasCollision) {
-        // No conflicts - we can merge the parallel execution metrics tracer with the block's tracer
-        mergeParallelExecutionMetrics(parallelizedTransactionContext);
+        // No conflicts - merge the parallel execution metrics tracer with the block's tracer
+        if (blockExecutionMetricsTracer != null
+            && parallelizedTransactionContext.executionMetricsTracer() != null) {
+          blockExecutionMetricsTracer.mergeFrom(
+              parallelizedTransactionContext.executionMetricsTracer());
+        }
         final MutableAccount miningBeneficiaryAccount =
             blockAccumulator.getOrCreate(miningBeneficiary);
         Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
@@ -290,23 +310,19 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
   }
 
   /**
-   * Merges parallel execution metrics with the main block tracer. This method is called when
-   * parallel execution succeeded without conflicts. The metrics collected during parallel execution
-   * can be merged with the block's main tracer.
+   * Static method to merge parallel execution metrics into the block-level ExecutionMetricsTracer.
+   * This method should be called from the block processor when a parallel transaction commits
+   * successfully without conflicts.
    *
-   * @param parallelizedTransactionContext the context containing parallel execution results
+   * @param blockTracer the block-level ExecutionMetricsTracer to merge into
+   * @param parallelContext the parallel transaction context containing metrics to merge
    */
-  private void mergeParallelExecutionMetrics(
-      final ParallelizedTransactionContext parallelizedTransactionContext) {
-    // Verify that we have execution metrics from parallel execution
-    if (parallelizedTransactionContext.executionMetricsTracer() != null) {
-      // TODO: Implement proper merging with block-level ExecutionMetricsTracer
-      // This would require access to the block's main ExecutionMetricsTracer instance
-      // The actual merging should happen at the MainnetParallelBlockProcessor level
-      // where both the block tracer and parallel context are available
-
-      // The metrics collected during parallel execution are preserved in the context
-      // and can be retrieved via parallelizedTransactionContext.executionMetricsTracer()
+  public static void mergeParallelMetricsIntoBlockTracer(
+      final ExecutionMetricsTracer blockTracer,
+      final ParallelizedTransactionContext parallelContext) {
+    if (blockTracer != null && parallelContext.executionMetricsTracer() != null) {
+      // Merge the parallel transaction's metrics into the block tracer
+      blockTracer.mergeFrom(parallelContext.executionMetricsTracer());
     }
   }
 }

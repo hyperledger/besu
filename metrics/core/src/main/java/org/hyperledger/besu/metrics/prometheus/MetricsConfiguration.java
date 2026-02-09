@@ -256,10 +256,20 @@ public class MetricsConfiguration {
     return idleTimeout;
   }
 
+  /**
+   * Returns whether execution metrics collection is enabled.
+   *
+   * @return true if execution metrics are enabled, false otherwise
+   */
   public boolean isExecutionMetricsEnabled() {
     return executionMetricsEnabled;
   }
 
+  /**
+   * Returns the slow block threshold in milliseconds.
+   *
+   * @return the slow block threshold in milliseconds
+   */
   public long getSlowBlockThresholdMs() {
     return slowBlockThresholdMs;
   }

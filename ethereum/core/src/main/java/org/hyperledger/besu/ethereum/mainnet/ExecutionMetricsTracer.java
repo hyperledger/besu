@@ -148,6 +148,19 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer, Operat
     return executionStats;
   }
 
+  /**
+   * Merges metrics from a parallel transaction's ExecutionMetricsTracer into this block-level
+   * tracer. This is called when parallel execution succeeded without conflicts.
+   *
+   * @param parallelTracer the parallel transaction's ExecutionMetricsTracer to merge from
+   */
+  public void mergeFrom(
+      final org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer parallelTracer) {
+    if (parallelTracer != null && evmMetricsTracer != null) {
+      evmMetricsTracer.mergeFrom(parallelTracer);
+    }
+  }
+
   // OperationTracer methods - delegate to internal EVM metrics tracer
 
   @Override
