@@ -55,8 +55,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -67,8 +65,8 @@ import org.junit.jupiter.api.Test;
 public class PeerDiscoveryAgentV4Test {
 
   private static final int BROADCAST_TCP_PORT = 30303;
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
   private PeerDiscoveryTestHelper helper;
   private PacketPackage packetPackage;
 
@@ -98,14 +96,10 @@ public class PeerDiscoveryAgentV4Test {
   @Test
   public void testNodeRecordCreated() {
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createPrivateKey(
-                        Bytes32.fromHexString(
-                            "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+        SIGNATURE_ALGORITHM.createKeyPair(
+            SIGNATURE_ALGORITHM.createPrivateKey(
+                Bytes32.fromHexString(
+                    "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
     final MockPeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(
             helper
@@ -132,14 +126,10 @@ public class PeerDiscoveryAgentV4Test {
   @Test
   public void testNodeRecordCreatedUpdatesDiscoveryPeer() {
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createPrivateKey(
-                        Bytes32.fromHexString(
-                            "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+        SIGNATURE_ALGORITHM.createKeyPair(
+            SIGNATURE_ALGORITHM.createPrivateKey(
+                Bytes32.fromHexString(
+                    "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
     final MockPeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(
             helper
@@ -157,14 +147,10 @@ public class PeerDiscoveryAgentV4Test {
   @Test
   public void testNodeRecordNotUpdatedIfNoPeerDiscovery() {
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createPrivateKey(
-                        Bytes32.fromHexString(
-                            "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
+        SIGNATURE_ALGORITHM.createKeyPair(
+            SIGNATURE_ALGORITHM.createPrivateKey(
+                Bytes32.fromHexString(
+                    "0xb71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")));
     final MockPeerDiscoveryAgent agent =
         helper.startDiscoveryAgent(
             helper
