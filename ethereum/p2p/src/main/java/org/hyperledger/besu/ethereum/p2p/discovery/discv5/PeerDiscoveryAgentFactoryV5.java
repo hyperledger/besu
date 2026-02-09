@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
@@ -133,12 +134,9 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   private NodeRecord initializeLocalNodeRecord() {
     final DiscoveryConfiguration disc = config.getDiscovery();
     nodeRecordManager.initializeLocalNode(
-        disc.getAdvertisedHost(),
-        disc.getBindPort(),
-        disc.getBindPort(),
-        disc.getAdvertisedHostIpv6(),
-        disc.getBindPortIpv6(),
-        disc.getBindPortIpv6());
+        new HostEndpoint(disc.getAdvertisedHost(), disc.getBindPort(), disc.getBindPort()),
+        disc.getAdvertisedHostIpv6()
+            .map(host -> new HostEndpoint(host, disc.getBindPortIpv6(), disc.getBindPortIpv6())));
 
     return nodeRecordManager
         .getLocalNode()

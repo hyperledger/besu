@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeer
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,10 +70,8 @@ public class NodeRecordManager {
   private final NatService natService;
 
   private Optional<DiscoveryPeerV4> localNode = Optional.empty();
-  private String advertisedAddress;
-  private Optional<String> advertisedAddressIpv6 = Optional.empty();
-  private int discoveryPortIpv6 = 30404;
-  private int tcpPortIpv6 = 30404;
+  private HostEndpoint primaryEndpoint;
+  private Optional<HostEndpoint> ipv6Endpoint = Optional.empty();
 
   /**
    * Creates a new {@link NodeRecordManager}.
@@ -103,8 +100,7 @@ public class NodeRecordManager {
   /**
    * Returns the locally initialized discovery peer, if present.
    *
-   * <p>The local node is only available after {@link #initializeLocalNode(String, int, int)} has
-   * been invoked.
+   * <p>The local node is only available after {@code initializeLocalNode} has been invoked.
    *
    * @return an {@link Optional} containing the local {@link DiscoveryPeerV4}, or empty if
    *     uninitialized
@@ -114,43 +110,34 @@ public class NodeRecordManager {
   }
 
   /**
-   * Initializes the local discovery peer and creates or updates the corresponding ENR.
+   * Initializes the local discovery peer with optional IPv6 dual-stack support.
    *
-   * <p>The advertised host may be overridden if the {@link NatService} detects an external address.
-   * Once initialized, the local node record is immediately synchronized to disk.
+   * <p>The primary endpoint's advertised host may be overridden if the {@link NatService} detects
+   * an external address. Once initialized, the local node record is immediately synchronized to
+   * disk.
    *
-   * <p>This method must be called before any discovery operations that rely on the local ENR.
+   * <p>When {@code ipv6} is present, the resulting ENR will contain both IPv4 ({@code ip}/{@code
+   * tcp}/{@code udp}) and IPv6 ({@code ip6}/{@code tcp6}/{@code udp6}) fields. When absent, only
+   * the primary address fields are populated — either IPv4 or IPv6 depending on the type of the
+   * primary host.
    *
-   * @param advertisedHost the configured advertised host or IP address
-   * @param discoveryPort the UDP discovery port
-   * @param tcpPort the TCP listening port
+   * @param primary the primary network endpoint (IPv4 or IPv6)
+   * @param ipv6 an optional secondary IPv6 endpoint for dual-stack operation
    */
-  public void initializeLocalNode(
-      final String advertisedHost, final int discoveryPort, final int tcpPort) {
-    initializeLocalNode(
-        advertisedHost, discoveryPort, tcpPort, Optional.empty(), discoveryPort, tcpPort);
-  }
+  public void initializeLocalNode(final HostEndpoint primary, final Optional<HostEndpoint> ipv6) {
 
-  public void initializeLocalNode(
-      final String advertisedHost,
-      final int discoveryPort,
-      final int tcpPort,
-      final Optional<String> advertisedHostIpv6,
-      final int discoveryPortIpv6,
-      final int tcpPortIpv6) {
-
-    this.advertisedAddress = natService.queryExternalIPAddress(advertisedHost);
-    this.advertisedAddressIpv6 = advertisedHostIpv6;
-    this.discoveryPortIpv6 = discoveryPortIpv6;
-    this.tcpPortIpv6 = tcpPortIpv6;
+    final String resolvedHost = natService.queryExternalIPAddress(primary.host());
+    this.primaryEndpoint =
+        new HostEndpoint(resolvedHost, primary.discoveryPort(), primary.tcpPort());
+    this.ipv6Endpoint = ipv6;
 
     final DiscoveryPeerV4 self =
         DiscoveryPeerV4.fromEnode(
             EnodeURLImpl.builder()
                 .nodeId(nodeId)
-                .ipAddress(advertisedAddress)
-                .listeningPort(tcpPort)
-                .discoveryPort(discoveryPort)
+                .ipAddress(resolvedHost)
+                .listeningPort(primary.tcpPort())
+                .discoveryPort(primary.discoveryPort())
                 .build());
 
     this.localNode = Optional.of(self);
@@ -174,21 +161,17 @@ public class NodeRecordManager {
     final Optional<NodeRecord> existingRecord =
         variablesStorage.getLocalEnrSeqno().map(factory::fromBytes);
 
-    final Bytes ipAddressBytes = Bytes.of(InetAddresses.forString(advertisedAddress).getAddress());
+    final Bytes ipAddressBytes =
+        Bytes.of(InetAddresses.forString(primaryEndpoint.host()).getAddress());
 
-    final EnodeURL enode =
-        localNode
-            .map(DiscoveryPeerV4::getEnodeURL)
-            .orElseThrow(() -> new IllegalStateException("Local node must be initialized"));
-
-    final int discoveryPort = enode.getDiscoveryPort().orElse(0);
-    final int listeningPort = enode.getListeningPort().orElse(0);
+    final int discoveryPort = primaryEndpoint.discoveryPort();
+    final int listeningPort = primaryEndpoint.tcpPort();
     final List<Bytes> forkId = forkIdSupplier.get();
 
     final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
 
     final Optional<Bytes> ipv6AddressBytes =
-        advertisedAddressIpv6.map(addr -> Bytes.of(InetAddresses.forString(addr).getAddress()));
+        ipv6Endpoint.map(ep -> Bytes.of(InetAddresses.forString(ep.host()).getAddress()));
 
     // Reuse the existing ENR if all relevant fields are unchanged.
     final NodeRecord nodeRecord =
@@ -210,8 +193,7 @@ public class NodeRecordManager {
                         ipAddressBytes,
                         discoveryPort,
                         listeningPort,
-                        forkId,
-                        ipv6AddressBytes));
+                        forkId));
 
     localNode.get().setNodeRecord(nodeRecord);
   }
@@ -241,9 +223,10 @@ public class NodeRecordManager {
       // If primary is IPv6, the IP_V6 field is already checked by primaryAddressMatches.
       return !primaryIsIpv4 || record.get(EnrField.IP_V6) == null;
     }
+    final HostEndpoint ipv6 = ipv6Endpoint.orElseThrow();
     return ipv6AddressBytes.get().equals(record.get(EnrField.IP_V6))
-        && Integer.valueOf(discoveryPortIpv6).equals(record.get(EnrField.UDP_V6))
-        && Integer.valueOf(tcpPortIpv6).equals(record.get(EnrField.TCP_V6));
+        && Integer.valueOf(ipv6.discoveryPort()).equals(record.get(EnrField.UDP_V6))
+        && Integer.valueOf(ipv6.tcpPort()).equals(record.get(EnrField.TCP_V6));
   }
 
   private NodeRecord createAndPersistNodeRecord(
@@ -252,8 +235,7 @@ public class NodeRecordManager {
       final Bytes ipAddressBytes,
       final int discoveryPort,
       final int listeningPort,
-      final List<Bytes> forkId,
-      final Optional<Bytes> ipv6AddressBytes) {
+      final List<Bytes> forkId) {
 
     final UInt64 sequence = existingRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
 
@@ -280,11 +262,13 @@ public class NodeRecordManager {
     }
 
     // Add separate IPv6 fields only for dual-stack (primary is IPv4 + secondary IPv6)
-    ipv6AddressBytes.ifPresent(
-        ipv6Bytes -> {
-          fields.add(new EnrField(EnrField.IP_V6, ipv6Bytes));
-          fields.add(new EnrField(EnrField.TCP_V6, tcpPortIpv6));
-          fields.add(new EnrField(EnrField.UDP_V6, discoveryPortIpv6));
+    ipv6Endpoint.ifPresent(
+        ipv6 -> {
+          fields.add(
+              new EnrField(
+                  EnrField.IP_V6, Bytes.of(InetAddresses.forString(ipv6.host()).getAddress())));
+          fields.add(new EnrField(EnrField.TCP_V6, ipv6.tcpPort()));
+          fields.add(new EnrField(EnrField.UDP_V6, ipv6.discoveryPort()));
         });
 
     final NodeRecord record = factory.createFromValues(sequence, fields);
