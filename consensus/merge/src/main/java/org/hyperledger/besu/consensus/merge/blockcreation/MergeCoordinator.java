@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -250,7 +251,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -278,23 +280,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
-    final Block emptyBlock =
-        mergeBlockCreator
-            .createBlock(
-                Optional.of(Collections.emptyList()),
-                prevRandao,
-                timestamp,
-                withdrawals,
-                parentBeaconBlockRoot,
-                parentHeader)
-            .getBlock();
+    final BlockCreationResult emptyBlockResult =
+        mergeBlockCreator.createBlock(
+            Optional.of(Collections.emptyList()),
+            prevRandao,
+            timestamp,
+            withdrawals,
+            parentBeaconBlockRoot,
+            slotNumber,
+            parentHeader);
+    final Block emptyBlock = emptyBlockResult.getBlock();
 
-    BlockProcessingResult result = validateProposedBlock(emptyBlock);
+    BlockProcessingResult result =
+        validateProposedBlock(emptyBlock, emptyBlockResult.getBlockAccessList());
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
+              emptyBlockResult.getBlockAccessList(),
               result.getRequests(),
               BlockCreationTiming.EMPTY));
       LOG.info(
@@ -319,6 +323,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         mergeBlockCreator,
         withdrawals,
         parentBeaconBlockRoot,
+        slotNumber,
         parentHeader);
 
     return payloadIdentifier;
@@ -421,6 +426,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final MergeBlockCreator mergeBlockCreator,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber,
       final BlockHeader parentHeader) {
 
     final Supplier<BlockCreationResult> blockCreator =
@@ -431,6 +437,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 timestamp,
                 withdrawals,
                 parentBeaconBlockRoot,
+                slotNumber,
                 parentHeader);
 
     LOG.debug(
@@ -539,13 +546,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final long startedAt) {
     final var bestBlock = blockCreationResult.getBlock();
-    final var resultBest = validateProposedBlock(bestBlock);
+    final var resultBest =
+        validateProposedBlock(bestBlock, blockCreationResult.getBlockAccessList());
     if (resultBest.isSuccessful()) {
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
+              blockCreationResult.getBlockAccessList(),
               resultBest.getRequests(),
               blockCreationResult.getBlockCreationTimings()));
       LOG.atDebug()
@@ -635,6 +644,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult validateBlock(final Block block) {
+    return validateBlock(block, Optional.empty());
+  }
+
+  private BlockProcessingResult validateBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -644,12 +658,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                blockAccessList,
                 false);
 
     return validationResult;
   }
 
-  private BlockProcessingResult validateProposedBlock(final Block block) {
+  private BlockProcessingResult validateProposedBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -659,6 +675,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                blockAccessList,
                 false,
                 false);
 
@@ -667,9 +684,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult rememberBlock(final Block block) {
+    return rememberBlock(block, Optional.empty());
+  }
+
+  @Override
+  public BlockProcessingResult rememberBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     LOG.atDebug().setMessage("Remember block {}").addArgument(block::toLogString).log();
     final var chain = protocolContext.getBlockchain();
-    final var validationResult = validateBlock(block);
+    final var validationResult = validateBlock(block, blockAccessList);
     validationResult
         .getYield()
         .ifPresentOrElse(

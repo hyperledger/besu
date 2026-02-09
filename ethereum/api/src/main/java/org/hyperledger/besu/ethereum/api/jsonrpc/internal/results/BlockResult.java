@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalP
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +59,7 @@ import org.apache.tuweni.bytes.Bytes32;
   "withdrawals",
   "requestsHash",
   "balHash",
-  "blockAccessList"
+  "slotNumber"
 })
 public class BlockResult implements JsonRpcResult {
 
@@ -94,7 +93,7 @@ public class BlockResult implements JsonRpcResult {
   private final String parentBeaconBlockRoot;
   private final String requestsHash;
   private final String balHash;
-  private final Optional<BlockAccessListResult> blockAccessList;
+  private final String slotNumber;
 
   public BlockResult(
       final BlockHeader header,
@@ -102,15 +101,7 @@ public class BlockResult implements JsonRpcResult {
       final List<JsonNode> ommers,
       final Difficulty totalDifficulty,
       final int size) {
-    this(
-        header,
-        transactions,
-        ommers,
-        totalDifficulty,
-        size,
-        false,
-        Optional.empty(),
-        Optional.empty());
+    this(header, transactions, ommers, totalDifficulty, size, false, Optional.empty());
   }
 
   public BlockResult(
@@ -120,8 +111,7 @@ public class BlockResult implements JsonRpcResult {
       final Difficulty totalDifficulty,
       final int size,
       final boolean includeCoinbase,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<BlockAccessList> blockAccessList) {
+      final Optional<List<Withdrawal>> withdrawals) {
     this.number = Quantity.create(header.getNumber());
     this.hash = header.getHash().toString();
     this.mixHash = header.getMixHash().toString();
@@ -156,7 +146,7 @@ public class BlockResult implements JsonRpcResult {
         header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     this.requestsHash = header.getRequestsHash().map(Hash::toString).orElse(null);
     this.balHash = header.getBalHash().map(Hash::toString).orElse(null);
-    this.blockAccessList = blockAccessList.map(BlockAccessListResult::fromBlockAccessList);
+    this.slotNumber = header.getOptionalSlotNumber().map(Quantity::create).orElse(null);
   }
 
   @JsonGetter(value = "number")
@@ -305,8 +295,8 @@ public class BlockResult implements JsonRpcResult {
     return balHash;
   }
 
-  @JsonGetter(value = "blockAccessList")
-  public Optional<BlockAccessListResult> getBlockAccessList() {
-    return blockAccessList;
+  @JsonGetter(value = "slotNumber")
+  public String getSlotNumber() {
+    return slotNumber;
   }
 }

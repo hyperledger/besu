@@ -20,14 +20,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.EpochCalculator;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,23 +36,10 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
 
   private final PoWMinerExecutor executor;
 
-  private final Cache<String, Long> sealerHashRate;
-
-  private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
-
   public PoWMiningCoordinator(
-      final Blockchain blockchain,
-      final PoWMinerExecutor executor,
-      final SyncState syncState,
-      final int remoteSealersLimit,
-      final long remoteSealersTimeToLive) {
+      final Blockchain blockchain, final PoWMinerExecutor executor, final SyncState syncState) {
     super(blockchain, executor, syncState);
     this.executor = executor;
-    this.sealerHashRate =
-        CacheBuilder.newBuilder()
-            .maximumSize(remoteSealersLimit)
-            .expireAfterWrite(remoteSealersTimeToLive, TimeUnit.MINUTES)
-            .build();
   }
 
   @Override
@@ -78,61 +58,8 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
   }
 
   @Override
-  public Optional<Long> hashesPerSecond() {
-    if (sealerHashRate.size() <= 0) {
-      return localHashesPerSecond();
-    } else {
-      return remoteHashesPerSecond();
-    }
-  }
-
-  private Optional<Long> remoteHashesPerSecond() {
-    return Optional.of(sealerHashRate.asMap().values().stream().mapToLong(Long::longValue).sum());
-  }
-
-  private Optional<Long> localHashesPerSecond() {
-    final Optional<Long> currentHashesPerSecond =
-        currentRunningMiner.flatMap(PoWBlockMiner::getHashesPerSecond);
-
-    if (currentHashesPerSecond.isPresent()) {
-      cachedHashesPerSecond = currentHashesPerSecond;
-      return currentHashesPerSecond;
-    } else {
-      return cachedHashesPerSecond;
-    }
-  }
-
-  @Override
-  public boolean submitHashRate(final String id, final Long hashrate) {
-    if (hashrate == 0) {
-      return false;
-    }
-    LOG.info("Hashrate submitted id {} hashrate {}", id, hashrate);
-    sealerHashRate.put(id, hashrate);
-    return true;
-  }
-
-  @Override
   public void changeTargetGasLimit(final Long targetGasLimit) {
     executor.changeTargetGasLimit(targetGasLimit);
-  }
-
-  @Override
-  public Optional<PoWSolverInputs> getWorkDefinition() {
-    return currentRunningMiner.flatMap(PoWBlockMiner::getWorkDefinition);
-  }
-
-  @Override
-  public boolean submitWork(final PoWSolution solution) {
-    synchronized (this) {
-      return currentRunningMiner.map(miner -> miner.submitWork(solution)).orElse(false);
-    }
-  }
-
-  @Override
-  protected void haltMiner(final PoWBlockMiner miner) {
-    miner.cancel();
-    miner.getHashesPerSecond().ifPresent(val -> cachedHashesPerSecond = Optional.of(val));
   }
 
   @Override

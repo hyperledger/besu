@@ -60,6 +60,17 @@ public class BytesScalarTest {
   }
 
   @Test
+  public void parseValueTestInvalidString() {
+    assertThatThrownBy(
+            () ->
+                scalar
+                    .getCoercing()
+                    .parseValue(
+                        "not_hexadecimal", GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isInstanceOf(CoercingParseLiteralException.class);
+  }
+
+  @Test
   public void serializeTest() {
     final String result =
         (String)

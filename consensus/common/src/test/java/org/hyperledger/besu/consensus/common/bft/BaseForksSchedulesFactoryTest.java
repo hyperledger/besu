@@ -59,7 +59,7 @@ public abstract class BaseForksSchedulesFactoryTest<
                 BftFork.FORK_BLOCK_KEY,
                 1,
                 BftFork.MINING_BENEFICIARY_KEY,
-                beneficiaryAddress.toHexString()));
+                beneficiaryAddress.getBytes().toHexString()));
     final ObjectNode forkWithNoBeneficiary =
         JsonUtil.objectNodeFromMap(
             Map.of(BftFork.FORK_BLOCK_KEY, 2, BftFork.MINING_BENEFICIARY_KEY, ""));
@@ -91,7 +91,7 @@ public abstract class BaseForksSchedulesFactoryTest<
                 BftFork.FORK_BLOCK_KEY,
                 2,
                 BftFork.MINING_BENEFICIARY_KEY,
-                beneficiaryAddress2.toUnprefixedHexString()));
+                beneficiaryAddress2.getBytes().toUnprefixedHexString()));
 
     final GenesisConfigOptions genesisConfigOptions =
         createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
@@ -129,7 +129,7 @@ public abstract class BaseForksSchedulesFactoryTest<
               BftFork.FORK_BLOCK_KEY,
               7,
               BftFork.MINING_BENEFICIARY_KEY,
-              beneficiaryAddress2.toUnprefixedHexString()))
+              beneficiaryAddress2.getBytes().toUnprefixedHexString()))
     };
 
     final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(qbftConfigOptions, forks);

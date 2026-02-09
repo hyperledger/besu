@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugTraceTransactionStepFactory;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -30,9 +29,6 @@ public class DebugGethTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySp
   public void setup() throws Exception {
     setupBonsaiBlockchain();
     startService();
-
-    // Enable extra tracers for this test
-    DebugTraceTransactionStepFactory.enableExtraTracers = true;
   }
 
   @Override
@@ -51,7 +47,8 @@ public class DebugGethTraceJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySp
         new String[] {
           "debug-geth/specs/prestate-tracer/diff-mode-true",
           "debug-geth/specs/prestate-tracer/diff-mode-false",
-          "debug-geth/specs/call-tracer"
+          "debug-geth/specs/call-tracer",
+          "debug-geth/specs/4byte-tracer"
         });
   }
 

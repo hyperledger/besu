@@ -23,13 +23,13 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,9 +78,9 @@ public class TransactionLogBloomCacherTest {
 
   private static void writeThreeEntries(final LogsBloomFilter filter, final RandomAccessFile file)
       throws IOException {
-    file.write(filter.toArray());
-    file.write(filter.toArray());
-    file.write(filter.toArray());
+    file.write(filter.getBytes().toArray());
+    file.write(filter.getBytes().toArray());
+    file.write(filter.getBytes().toArray());
   }
 
   @SuppressWarnings({"unchecked", "ReturnValueIgnored"})
@@ -101,8 +102,9 @@ public class TransactionLogBloomCacherTest {
             0L,
             Bytes.EMPTY,
             null,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0L,
+            null,
             null,
             null,
             null,
@@ -169,7 +171,7 @@ public class TransactionLogBloomCacherTest {
         blockHeaders.get(4), Optional.empty(), Optional.of(logBloom));
 
     for (int i = 0; i < 5; i++) {
-      assertThat(blockHeaders.get(i).getLogsBloom().toArray())
+      assertThat(blockHeaders.get(i).getLogsBloom().getBytes().toArray())
           .containsExactly(readLogBloomCache(logBloom, i));
     }
 
@@ -211,7 +213,7 @@ public class TransactionLogBloomCacherTest {
         firstBranch.get(4), Optional.empty(), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
     for (int i = 0; i < 5; i++) {
-      assertThat(firstBranch.get(i).getLogsBloom().toArray())
+      assertThat(firstBranch.get(i).getLogsBloom().getBytes().toArray())
           .containsExactly(readLogBloomCache(logBloom, i));
     }
 
@@ -226,7 +228,7 @@ public class TransactionLogBloomCacherTest {
         forkBranch.get(4), Optional.of(firstBranch.get(1)), Optional.of(logBloom));
     assertThat(logBloom.length()).isEqualTo(BLOOM_BITS_LENGTH * 5);
     for (int i = 0; i < 5; i++) {
-      assertThat(forkBranch.get(i).getLogsBloom().toArray())
+      assertThat(forkBranch.get(i).getLogsBloom().getBytes().toArray())
           .containsExactly(readLogBloomCache(logBloom, i));
     }
 
@@ -277,8 +279,9 @@ public class TransactionLogBloomCacherTest {
             0,
             Bytes.EMPTY,
             null,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
+            null,
             null,
             null,
             null,

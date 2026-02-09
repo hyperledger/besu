@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
@@ -44,7 +45,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchi
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -59,6 +59,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
@@ -146,8 +147,9 @@ public class ArchiverTests {
             0,
             Bytes.of(0x00),
             Wei.ZERO,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
+            null,
             null,
             null,
             null,
@@ -747,7 +749,7 @@ public class ArchiverTests {
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000096").toArrayUnsafe()),
         out.encoded().toArrayUnsafe());
     out = new BytesValueRLPOutput();
@@ -755,7 +757,7 @@ public class ArchiverTests {
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000097").toArrayUnsafe()),
         out.encoded().toArrayUnsafe());
     out = new BytesValueRLPOutput();
@@ -763,7 +765,7 @@ public class ArchiverTests {
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000098").toArrayUnsafe()),
         out.encoded().toArrayUnsafe());
     tx.commit();
@@ -872,7 +874,7 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000096").toArrayUnsafe())))
         .isTrue();
     assertThat(
@@ -881,7 +883,7 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000097").toArrayUnsafe())))
         .isTrue();
     assertThat(
@@ -890,7 +892,7 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000098").toArrayUnsafe())))
         .isTrue();
   }
@@ -953,29 +955,29 @@ public class ArchiverTests {
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
-            slotKey.getSlotHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
+            slotKey.getSlotHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000096").toArrayUnsafe()),
         Bytes.fromHexString("0x0123").toArrayUnsafe());
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
-            slotKey.getSlotHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
+            slotKey.getSlotHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000097").toArrayUnsafe()),
         Bytes.fromHexString("0x0234").toArrayUnsafe());
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
-            slotKey.getSlotHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
+            slotKey.getSlotHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000098").toArrayUnsafe()),
         Bytes.fromHexString("0x0345").toArrayUnsafe());
     tx.put(
         KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE,
         Arrays.concatenate(
-            address.addressHash().toArrayUnsafe(),
-            slotKey.getSlotHash().toArrayUnsafe(),
+            address.addressHash().getBytes().toArrayUnsafe(),
+            slotKey.getSlotHash().getBytes().toArrayUnsafe(),
             Bytes.fromHexString("0x0000000000000099").toArrayUnsafe()),
         Bytes.fromHexString("0x0456").toArrayUnsafe());
     tx.commit();
@@ -1099,8 +1101,8 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
-                        slotKey.getSlotHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
+                        slotKey.getSlotHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000096").toArrayUnsafe())))
         .isTrue();
     assertThat(
@@ -1109,8 +1111,8 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
-                        slotKey.getSlotHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
+                        slotKey.getSlotHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000097").toArrayUnsafe())))
         .isTrue();
     assertThat(
@@ -1119,8 +1121,8 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
-                        slotKey.getSlotHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
+                        slotKey.getSlotHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000098").toArrayUnsafe())))
         .isTrue();
     assertThat(
@@ -1129,8 +1131,8 @@ public class ArchiverTests {
                 .containsKey(
                     KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE,
                     Arrays.concatenate(
-                        address.addressHash().toArrayUnsafe(),
-                        slotKey.getSlotHash().toArrayUnsafe(),
+                        address.addressHash().getBytes().toArrayUnsafe(),
+                        slotKey.getSlotHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000099").toArrayUnsafe())))
         .isTrue();
   }

@@ -24,8 +24,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class QbftValidatorContractConfigFactory {
   private static final String BALANCE = "0";
   // This is compiled from
@@ -53,7 +51,7 @@ public class QbftValidatorContractConfigFactory {
     final List<String> addresses =
         validators.stream()
             .map(RunnableNode::getAddress)
-            .map(Bytes::toUnprefixedHexString)
+            .map(addr -> addr.getBytes().toUnprefixedHexString())
             .map(hex -> (padZero(0) + hex).substring(hex.length()))
             .collect(toList());
 

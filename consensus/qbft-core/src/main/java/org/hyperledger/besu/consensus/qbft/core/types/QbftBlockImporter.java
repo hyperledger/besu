@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+
+import java.util.Optional;
+
 /** Imports a block into the chain. */
 public interface QbftBlockImporter {
 
@@ -21,7 +25,8 @@ public interface QbftBlockImporter {
    * Import a block into the chain.
    *
    * @param block to import
+   * @param blockAccessList block access list
    * @return true if the block was successfully imported, false otherwise
    */
-  boolean importBlock(QbftBlock block);
+  boolean importBlock(QbftBlock block, Optional<BlockAccessList> blockAccessList);
 }

@@ -31,6 +31,7 @@ public class EnginePayloadAttributesParameter {
   final Address suggestedFeeRecipient;
   final List<WithdrawalParameter> withdrawals;
   private final Bytes32 parentBeaconBlockRoot;
+  private final Long slotNumber;
 
   @JsonCreator
   public EnginePayloadAttributesParameter(
@@ -38,13 +39,15 @@ public class EnginePayloadAttributesParameter {
       @JsonProperty("prevRandao") final String prevRandao,
       @JsonProperty("suggestedFeeRecipient") final String suggestedFeeRecipient,
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
-      @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot) {
+      @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
+      @JsonProperty("slotNumber") final String slotNumber) {
     this.timestamp = Long.decode(timestamp);
     this.prevRandao = Bytes32.fromHexString(prevRandao);
     this.suggestedFeeRecipient = Address.fromHexString(suggestedFeeRecipient);
     this.withdrawals = withdrawals;
     this.parentBeaconBlockRoot =
         parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
+    this.slotNumber = slotNumber == null ? null : Long.decode(slotNumber);
   }
 
   public Long getTimestamp() {
@@ -67,12 +70,16 @@ public class EnginePayloadAttributesParameter {
     return withdrawals;
   }
 
+  public Long getSlotNumber() {
+    return slotNumber;
+  }
+
   public String serialize() {
     final JsonObject json =
         new JsonObject()
             .put("timestamp", timestamp)
             .put("prevRandao", prevRandao.toHexString())
-            .put("suggestedFeeRecipient", suggestedFeeRecipient.toHexString());
+            .put("suggestedFeeRecipient", suggestedFeeRecipient.getBytes().toHexString());
     if (withdrawals != null) {
       json.put(
           "withdrawals",
@@ -80,6 +87,9 @@ public class EnginePayloadAttributesParameter {
     }
     if (parentBeaconBlockRoot != null) {
       json.put("parentBeaconBlockRoot", parentBeaconBlockRoot.toHexString());
+    }
+    if (slotNumber != null) {
+      json.put("slotNumber", slotNumber);
     }
     return json.encode();
   }

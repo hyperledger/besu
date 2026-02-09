@@ -1,0 +1,46 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0xb",
+      {
+        "tracer": "prestateTracer",
+        "tracerConfig": {
+          "diffMode": true
+        }
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x7b1ba6854c6f32f55a088598ace59150133f7db9f52d27b4474737abd970ae52",
+        "result": {
+          "post": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0x58f68d8"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xffffffffffffffffffffffffffffffffffc4708bf",
+              "nonce": 8
+            }
+          },
+          "pre": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0x5380078"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xffffffffffffffffffffffffffffffffffc9e711f",
+              "nonce": 7
+            }
+          }
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}

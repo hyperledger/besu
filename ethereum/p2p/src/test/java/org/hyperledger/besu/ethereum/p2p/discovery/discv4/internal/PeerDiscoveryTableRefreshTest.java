@@ -25,8 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryTestHelper;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.DaggerPacketPackage;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.packet.Packet;
@@ -63,9 +61,9 @@ public class PeerDiscoveryTableRefreshTest {
   @Test
   public void tableRefreshSingleNode() {
     final List<NodeKey> nodeKeys = PeerDiscoveryTestHelper.generateNodeKeys(2);
-    final List<DiscoveryPeer> peers = helper.createDiscoveryPeers(nodeKeys);
-    final DiscoveryPeer localPeer = peers.get(0);
-    final DiscoveryPeer remotePeer = peers.get(1);
+    final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(nodeKeys);
+    final DiscoveryPeerV4 localPeer = peers.get(0);
+    final DiscoveryPeerV4 remotePeer = peers.get(1);
     final NodeKey localKeyPair = nodeKeys.get(0);
     final NodeKey remoteKeyPair = nodeKeys.get(1);
 

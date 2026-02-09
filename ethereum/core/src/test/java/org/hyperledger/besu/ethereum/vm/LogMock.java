@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
