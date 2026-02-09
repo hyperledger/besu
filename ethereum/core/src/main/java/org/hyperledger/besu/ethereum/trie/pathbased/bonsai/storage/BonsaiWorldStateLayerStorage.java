@@ -36,17 +36,6 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * Layered world state storage with integrated cache reading.
- *
- * <p>This is the ONLY storage component that reads from cache.
- *
- * <p>Read strategy (3 levels): 1. Check layer's in-memory changes (most recent, uncommitted) 2. If
- * not in layer, check cache (using version from snapshot) 3. If not in cache, check parent storage
- *
- * <p>The layer avoids LayeredKeyValueStorage's automatic fallback to parent, allowing cache
- * interception between layer and parent.
- */
 @SuppressWarnings("DoNotReturnNullOptionals")
 public class BonsaiWorldStateLayerStorage extends BonsaiSnapshotWorldStateKeyValueStorage
     implements PathBasedLayeredWorldStateKeyValueStorage, StorageSubscriber {

@@ -146,8 +146,8 @@ public class SnapServerTest {
             storage,
             new InMemoryKeyValueStorage(),
             new VersionedCacheManager(
-                100_000, // accountCacheSize
-                1_000_000, // storageCacheSize
+                100, // accountCacheSize
+                100, // storageCacheSize
                 noopMetrics),
             0);
 

@@ -54,16 +54,6 @@ import java.util.function.Supplier;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * Bonsai world state storage with integrated cache maintenance.
- *
- * <p>Cache behavior: - BonsaiWorldStateKeyValueStorage: Maintains cache (writes only), doesn't read
- * from it - BonsaiSnapshotWorldStateStorage: Carries cache info, doesn't use it -
- * BonsaiCachedWorldStateLayerStorage: Only component that reads from cache
- *
- * <p>Version semantics: - Version 0: Initial state - Version 1+: Each commit increments version for
- * all modified values
- */
 public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
 
