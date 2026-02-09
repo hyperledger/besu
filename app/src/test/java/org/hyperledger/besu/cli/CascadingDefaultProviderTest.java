@@ -126,13 +126,13 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEqualTo(nodes);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEqualTo(nodes);
 
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
             .setGenesisConfig(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
-            .setBootNodes(nodes)
+            .setEnodeBootNodes(nodes)
             .setDnsDiscoveryUrl(null)
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));

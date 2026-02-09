@@ -129,6 +129,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
@@ -2021,7 +2022,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
-    final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes();
+    final List<EnodeURL> enodeURIs = ethNetworkConfig.enodeBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
@@ -2513,7 +2514,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (p2PDiscoveryOptions.bootNodes == null) {
-        builder.setBootNodes(new ArrayList<>());
+        builder.setEnodeBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
     }
@@ -2553,7 +2554,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Optional<List<String>> bootNodesFromGenesis =
           genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent()) {
-        listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+        if (bootNodesFromGenesis.get().getFirst().startsWith("enr:")) {
+          builder.setEnrBootNodes(
+              bootNodesFromGenesis.get().stream().map(EthereumNodeRecord::fromEnr).toList());
+        } else {
+          listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+        }
       }
     }
     if (listBootNodes != null) {
@@ -2561,7 +2567,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
-      builder.setBootNodes(listBootNodes);
+      builder.setEnodeBootNodes(listBootNodes);
     }
     return builder.build();
   }

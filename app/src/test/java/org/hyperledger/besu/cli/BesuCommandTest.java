@@ -251,7 +251,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
 
@@ -344,7 +344,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getExtraData())
         .isEqualTo(BesuVersionUtils.versionForExtraData());
     assertThat(ethNetworkArg.getValue().networkId()).isEqualTo(1);
-    assertThat(ethNetworkArg.getValue().bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
+    assertThat(ethNetworkArg.getValue().enodeBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
 
   // Testing each option
@@ -402,7 +402,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toAbsolutePath().toString());
 
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEmpty();
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -537,7 +537,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
   }
@@ -556,7 +556,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
+    assertThat(config.enodeBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
     verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
@@ -573,7 +573,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEqualTo(SEPOLIA_BOOTSTRAP_NODES);
+    assertThat(config.enodeBootNodes()).isEqualTo(SEPOLIA_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(SEPOLIA_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(11155111));
   }
@@ -589,7 +589,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
+    assertThat(config.enodeBootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(HOODI_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(560048));
   }
@@ -605,7 +605,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2022));
   }
@@ -621,7 +621,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2023));
   }
@@ -703,7 +703,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue().genesisConfig())
         .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
-    assertThat(networkArg.getValue().bootNodes()).isEmpty();
+    assertThat(networkArg.getValue().enodeBootNodes()).isEmpty();
     assertThat(networkArg.getValue().networkId()).isEqualTo(GENESIS_CONFIG_TEST_CHAINID);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -883,7 +883,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(DNS_DISCOVERY_URL);
 
-    assertThat(config.bootNodes())
+    assertThat(config.enodeBootNodes())
         .extracting(bootnode -> bootnode.toURI().toString())
         .containsExactly(VALID_ENODE_STRINGS);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -922,7 +922,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).extracting(EnodeURL::toURI).containsExactly(bootnode);
+    assertThat(config.enodeBootNodes()).extracting(EnodeURL::toURI).containsExactly(bootnode);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -956,7 +956,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEmpty();
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1026,7 +1026,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes())
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes())
         .isEqualTo(
             Stream.of(VALID_ENODE_STRINGS)
                 .map(EnodeURLImpl::fromString)
@@ -2091,7 +2091,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().bootNodes())
+    assertThat(networkArg.getValue().enodeBootNodes())
         .isEqualTo(
             Stream.of(VALID_ENODE_STRINGS)
                 .map(EnodeURLImpl::fromString)

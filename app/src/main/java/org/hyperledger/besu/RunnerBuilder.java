@@ -628,10 +628,10 @@ public class RunnerBuilder {
             .setAdvertisedHost(p2pAdvertisedHost);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
-      if (ethNetworkConfig.bootNodes() == null) {
-        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).bootNodes();
+      if (ethNetworkConfig.enodeBootNodes() == null) {
+        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).enodeBootNodes();
       } else {
-        bootstrap = ethNetworkConfig.bootNodes();
+        bootstrap = ethNetworkConfig.enodeBootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
       discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(

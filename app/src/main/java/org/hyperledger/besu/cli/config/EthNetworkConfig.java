@@ -17,6 +17,7 @@ package org.hyperledger.besu.cli.config;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.NetworkDefinition;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
@@ -25,24 +26,25 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * The Eth network config.
  *
  * @param genesisConfig Genesis Config File
  * @param networkId Network Id
- * @param bootNodes Boot Nodes
+ * @param enodeBootNodes Enode Boot Nodes
+ * @param enrBootNodes ENR Boot Nodes
  * @param dnsDiscoveryUrl DNS Discovery URL
  */
 public record EthNetworkConfig(
     GenesisConfig genesisConfig,
     BigInteger networkId,
-    List<EnodeURL> bootNodes,
+    List<EnodeURL> enodeBootNodes,
+    List<EthereumNodeRecord> enrBootNodes,
     String dnsDiscoveryUrl) {
 
   /**
@@ -50,14 +52,16 @@ public record EthNetworkConfig(
    *
    * @param genesisConfig the genesis config
    * @param networkId the network id
-   * @param bootNodes the boot nodes
+   * @param enodeBootNodes the Enode boot nodes
+   * @param enrBootNodes the ENR boot nodes
    * @param dnsDiscoveryUrl the dns discovery url
    */
   @SuppressWarnings(
       "MethodInputParametersMustBeFinal") // needed since record constructors are not yet supported
   public EthNetworkConfig {
     Objects.requireNonNull(genesisConfig);
-    Objects.requireNonNull(bootNodes);
+    Objects.requireNonNull(enodeBootNodes);
+    Objects.requireNonNull(enrBootNodes);
   }
 
   /**
@@ -72,17 +76,21 @@ public record EthNetworkConfig(
     final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
         genesisConfigOptions.getDiscoveryOptions().getBootNodes();
-    final List<EnodeURL> bootNodes =
-        rawBootNodes
-            .map(
-                strings ->
-                    strings.stream().map(EnodeURLImpl::fromString).collect(Collectors.toList()))
-            .orElse(Collections.emptyList());
+    final List<EnodeURL> enodeBootNodes = new ArrayList<>();
+    final List<EthereumNodeRecord> enrBootNodes = new ArrayList<>();
+    if (rawBootNodes.isPresent()) {
+      if (rawBootNodes.get().getFirst().startsWith("enr:")) {
+        enrBootNodes.addAll(rawBootNodes.get().stream().map(EthereumNodeRecord::fromEnr).toList());
+      } else {
+        enodeBootNodes.addAll(rawBootNodes.get().stream().map(EnodeURLImpl::fromString).toList());
+      }
+    }
 
     return new EthNetworkConfig(
         genesisConfig,
         networkDefinition.getNetworkId(),
-        bootNodes,
+        enodeBootNodes,
+        enrBootNodes,
         genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
   }
 
@@ -111,7 +119,8 @@ public record EthNetworkConfig(
     private String dnsDiscoveryUrl;
     private GenesisConfig genesisConfig;
     private BigInteger networkId;
-    private List<EnodeURL> bootNodes;
+    private List<EnodeURL> enodeBootNodes;
+    private List<EthereumNodeRecord> enrBootNodes;
 
     /**
      * Instantiates a new Builder.
@@ -121,7 +130,8 @@ public record EthNetworkConfig(
     public Builder(final EthNetworkConfig ethNetworkConfig) {
       this.genesisConfig = ethNetworkConfig.genesisConfig;
       this.networkId = ethNetworkConfig.networkId;
-      this.bootNodes = ethNetworkConfig.bootNodes;
+      this.enodeBootNodes = ethNetworkConfig.enodeBootNodes;
+      this.enrBootNodes = ethNetworkConfig.enrBootNodes;
       this.dnsDiscoveryUrl = ethNetworkConfig.dnsDiscoveryUrl;
     }
 
@@ -150,11 +160,22 @@ public record EthNetworkConfig(
     /**
      * Sets boot nodes.
      *
-     * @param bootNodes the boot nodes
+     * @param enodeBootNodes the boot nodes
      * @return this builder
      */
-    public Builder setBootNodes(final List<EnodeURL> bootNodes) {
-      this.bootNodes = bootNodes;
+    public Builder setEnodeBootNodes(final List<EnodeURL> enodeBootNodes) {
+      this.enodeBootNodes = enodeBootNodes;
+      return this;
+    }
+
+    /**
+     * Sets ENR boot nodes.
+     *
+     * @param enrBootNodes the boot nodes
+     * @return this builder
+     */
+    public Builder setEnrBootNodes(final List<EthereumNodeRecord> enrBootNodes) {
+      this.enrBootNodes = enrBootNodes;
       return this;
     }
 
@@ -175,7 +196,8 @@ public record EthNetworkConfig(
      * @return the eth network config
      */
     public EthNetworkConfig build() {
-      return new EthNetworkConfig(genesisConfig, networkId, bootNodes, dnsDiscoveryUrl);
+      return new EthNetworkConfig(
+          genesisConfig, networkId, enodeBootNodes, enrBootNodes, dnsDiscoveryUrl);
     }
   }
 }

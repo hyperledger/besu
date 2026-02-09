@@ -168,7 +168,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         node.getConfiguration().getBootnodes().stream().map(EnodeURLImpl::fromURI).toList();
 
     final EthNetworkConfig.Builder networkConfigBuilder = component.ethNetworkConfigBuilder();
-    networkConfigBuilder.setBootNodes(bootnodes);
+    networkConfigBuilder.setEnodeBootNodes(bootnodes);
     node.getConfiguration()
         .getGenesisConfig()
         .map(GenesisConfig::fromConfig)
