@@ -42,9 +42,9 @@
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
+| Frank Li         | frankisawesome   | frankliawesome   |
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Gabriel Fukushima| gfukushima       | gfukushima       |
-| Frank Li         | frankisawesome   | frankliawesome   |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
