@@ -20,6 +20,7 @@ import org.hyperledger.besu.util.NetworkUtility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DiscoveryConfiguration {
@@ -34,6 +35,9 @@ public class DiscoveryConfiguration {
   private boolean discoveryV5Enabled = false;
   private boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
   private boolean includeBootnodesOnPeerRefresh = true;
+  private Optional<String> bindHostIpv6 = Optional.empty();
+  private int bindPortIpv6 = 30404;
+  private Optional<String> advertisedHostIpv6 = Optional.empty();
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -142,6 +146,37 @@ public class DiscoveryConfiguration {
     return filterOnEnrForkId;
   }
 
+  public Optional<String> getBindHostIpv6() {
+    return bindHostIpv6;
+  }
+
+  public DiscoveryConfiguration setBindHostIpv6(final Optional<String> bindHostIpv6) {
+    this.bindHostIpv6 = bindHostIpv6;
+    return this;
+  }
+
+  public int getBindPortIpv6() {
+    return bindPortIpv6;
+  }
+
+  public DiscoveryConfiguration setBindPortIpv6(final int bindPortIpv6) {
+    this.bindPortIpv6 = bindPortIpv6;
+    return this;
+  }
+
+  public Optional<String> getAdvertisedHostIpv6() {
+    return advertisedHostIpv6;
+  }
+
+  public DiscoveryConfiguration setAdvertisedHostIpv6(final Optional<String> advertisedHostIpv6) {
+    this.advertisedHostIpv6 = advertisedHostIpv6;
+    return this;
+  }
+
+  public boolean isDualStackEnabled() {
+    return bindHostIpv6.isPresent();
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (o == this) {
@@ -154,16 +189,28 @@ public class DiscoveryConfiguration {
     return enabled == that.enabled
         && bindPort == that.bindPort
         && bucketSize == that.bucketSize
+        && bindPortIpv6 == that.bindPortIpv6
         && Objects.equals(bindHost, that.bindHost)
         && Objects.equals(advertisedHost, that.advertisedHost)
         && Objects.equals(bootnodes, that.bootnodes)
-        && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL);
+        && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL)
+        && Objects.equals(bindHostIpv6, that.bindHostIpv6)
+        && Objects.equals(advertisedHostIpv6, that.advertisedHostIpv6);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        enabled, bindHost, bindPort, advertisedHost, bucketSize, bootnodes, dnsDiscoveryURL);
+        enabled,
+        bindHost,
+        bindPort,
+        advertisedHost,
+        bucketSize,
+        bootnodes,
+        dnsDiscoveryURL,
+        bindHostIpv6,
+        bindPortIpv6,
+        advertisedHostIpv6);
   }
 
   @Override
@@ -189,6 +236,12 @@ public class DiscoveryConfiguration {
         + discoveryV5Enabled
         + ", isFilterOnEnrForkIdEnabled="
         + filterOnEnrForkId
+        + ", bindHostIpv6="
+        + bindHostIpv6
+        + ", bindPortIpv6="
+        + bindPortIpv6
+        + ", advertisedHostIpv6="
+        + advertisedHostIpv6
         + '}';
   }
 }

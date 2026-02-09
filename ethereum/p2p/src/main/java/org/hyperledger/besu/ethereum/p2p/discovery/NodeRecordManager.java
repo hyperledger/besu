@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -71,6 +72,9 @@ public class NodeRecordManager {
 
   private Optional<DiscoveryPeerV4> localNode = Optional.empty();
   private String advertisedAddress;
+  private Optional<String> advertisedAddressIpv6 = Optional.empty();
+  private int discoveryPortIpv6 = 30404;
+  private int tcpPortIpv6 = 30404;
 
   /**
    * Creates a new {@link NodeRecordManager}.
@@ -123,8 +127,22 @@ public class NodeRecordManager {
    */
   public void initializeLocalNode(
       final String advertisedHost, final int discoveryPort, final int tcpPort) {
+    initializeLocalNode(
+        advertisedHost, discoveryPort, tcpPort, Optional.empty(), discoveryPort, tcpPort);
+  }
+
+  public void initializeLocalNode(
+      final String advertisedHost,
+      final int discoveryPort,
+      final int tcpPort,
+      final Optional<String> advertisedHostIpv6,
+      final int discoveryPortIpv6,
+      final int tcpPortIpv6) {
 
     this.advertisedAddress = natService.queryExternalIPAddress(advertisedHost);
+    this.advertisedAddressIpv6 = advertisedHostIpv6;
+    this.discoveryPortIpv6 = discoveryPortIpv6;
+    this.tcpPortIpv6 = tcpPortIpv6;
 
     final DiscoveryPeerV4 self =
         DiscoveryPeerV4.fromEnode(
@@ -167,6 +185,9 @@ public class NodeRecordManager {
     final int listeningPort = enode.getListeningPort().orElse(0);
     final List<Bytes> forkId = forkIdSupplier.get();
 
+    final Optional<Bytes> ipv6AddressBytes =
+        advertisedAddressIpv6.map(addr -> Bytes.of(InetAddresses.forString(addr).getAddress()));
+
     // Reuse the existing ENR if all relevant fields are unchanged.
     final NodeRecord nodeRecord =
         existingRecord
@@ -176,7 +197,8 @@ public class NodeRecordManager {
                         && ipAddressBytes.equals(record.get(EnrField.IP_V4))
                         && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP))
                         && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP))
-                        && forkId.equals(record.get(FORK_ID_ENR_FIELD)))
+                        && forkId.equals(record.get(FORK_ID_ENR_FIELD))
+                        && ipv6FieldsMatch(record, ipv6AddressBytes))
             // Otherwise, create a new ENR with an incremented sequence number,
             // sign it with the local node key, and persist it to disk.
             .orElseGet(
@@ -187,49 +209,53 @@ public class NodeRecordManager {
                         ipAddressBytes,
                         discoveryPort,
                         listeningPort,
-                        forkId));
+                        forkId,
+                        ipv6AddressBytes));
 
     localNode.get().setNodeRecord(nodeRecord);
   }
 
-  /**
-   * Creates, signs, and persists a new {@link NodeRecord}.
-   *
-   * <p>The sequence number is derived from the existing record (if present) and incremented by one.
-   * The record is signed according to the ENR specification using the local node key and written to
-   * persistent storage.
-   *
-   * @param factory the {@link NodeRecordFactory} used to construct the record
-   * @param existingRecord the previously persisted ENR, if any
-   * @param ipAddressBytes the IPv4 address encoded for the ENR
-   * @param discoveryPort the UDP discovery port
-   * @param listeningPort the TCP listening port
-   * @param forkId the current fork ID for the chain head
-   * @return the newly created and persisted {@link NodeRecord}
-   */
+  private boolean ipv6FieldsMatch(final NodeRecord record, final Optional<Bytes> ipv6AddressBytes) {
+    if (ipv6AddressBytes.isEmpty()) {
+      return record.get(EnrField.IP_V6) == null;
+    }
+    return ipv6AddressBytes.get().equals(record.get(EnrField.IP_V6))
+        && Integer.valueOf(discoveryPortIpv6).equals(record.get(EnrField.UDP_V6))
+        && Integer.valueOf(tcpPortIpv6).equals(record.get(EnrField.TCP_V6));
+  }
+
   private NodeRecord createAndPersistNodeRecord(
       final NodeRecordFactory factory,
       final Optional<NodeRecord> existingRecord,
       final Bytes ipAddressBytes,
       final int discoveryPort,
       final int listeningPort,
-      final List<Bytes> forkId) {
+      final List<Bytes> forkId,
+      final Optional<Bytes> ipv6AddressBytes) {
 
     final UInt64 sequence = existingRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
 
     final SignatureAlgorithm signatureAlgorithm = SIGNATURE_ALGORITHM.get();
 
-    final NodeRecord record =
-        factory.createFromValues(
-            sequence,
-            new EnrField(EnrField.ID, IdentitySchema.V4),
-            new EnrField(
-                signatureAlgorithm.getCurveName(),
-                signatureAlgorithm.compressPublicKey(signatureAlgorithm.createPublicKey(nodeId))),
-            new EnrField(EnrField.IP_V4, ipAddressBytes),
-            new EnrField(EnrField.TCP, listeningPort),
-            new EnrField(EnrField.UDP, discoveryPort),
-            new EnrField(FORK_ID_ENR_FIELD, Collections.singletonList(forkId)));
+    final List<EnrField> fields = new ArrayList<>();
+    fields.add(new EnrField(EnrField.ID, IdentitySchema.V4));
+    fields.add(
+        new EnrField(
+            signatureAlgorithm.getCurveName(),
+            signatureAlgorithm.compressPublicKey(signatureAlgorithm.createPublicKey(nodeId))));
+    fields.add(new EnrField(EnrField.IP_V4, ipAddressBytes));
+    fields.add(new EnrField(EnrField.TCP, listeningPort));
+    fields.add(new EnrField(EnrField.UDP, discoveryPort));
+    fields.add(new EnrField(FORK_ID_ENR_FIELD, Collections.singletonList(forkId)));
+
+    ipv6AddressBytes.ifPresent(
+        ipv6Bytes -> {
+          fields.add(new EnrField(EnrField.IP_V6, ipv6Bytes));
+          fields.add(new EnrField(EnrField.TCP_V6, tcpPortIpv6));
+          fields.add(new EnrField(EnrField.UDP_V6, discoveryPortIpv6));
+        });
+
+    final NodeRecord record = factory.createFromValues(sequence, fields);
 
     record.setSignature(
         nodeKey.sign(Hash.keccak256(record.serializeNoSignature())).encodedBytes().slice(0, 64));

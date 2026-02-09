@@ -1989,7 +1989,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
-            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+            hostsAllowlist, p2PDiscoveryConfig.p2pHost(), unstableRPCOptions.getHttpTimeoutSec());
     logger.info("RPC HTTP JSON-RPC config: {}", jsonRpcConfiguration);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
@@ -2005,7 +2005,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
-            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+            hostsAllowlist, p2PDiscoveryConfig.p2pHost(), unstableRPCOptions.getHttpTimeoutSec());
 
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
@@ -2213,7 +2213,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfigurationBuilder
         .host(
             Strings.isNullOrEmpty(metricsOptions.getMetricsHost())
-                ? p2PDiscoveryOptions.p2pHost
+                ? p2PDiscoveryConfig.p2pHost()
                 : metricsOptions.getMetricsHost())
         .pushHost(
             Strings.isNullOrEmpty(metricsOptions.getMetricsPushHost())
@@ -2413,6 +2413,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
+            .p2pAdvertisedHostIpv6(p2PDiscoveryConfig.p2pHostIpv6())
+            .p2pListenInterfaceIpv6(p2PDiscoveryConfig.p2pInterfaceIpv6())
+            .p2pListenPortIpv6(p2PDiscoveryConfig.p2pPortIpv6())
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)

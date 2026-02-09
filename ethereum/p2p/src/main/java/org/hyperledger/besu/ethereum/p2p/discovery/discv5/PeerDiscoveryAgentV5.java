@@ -72,6 +72,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
+  private final boolean supportsIpv6;
 
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
@@ -91,13 +92,15 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
+   * @param supportsIpv6 whether the local node supports IPv6 dual-stack discovery
    */
   public PeerDiscoveryAgentV5(
       final MutableDiscoverySystem discoverySystem,
       final NetworkingConfiguration config,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
-      final RlpxAgent rlpxAgent) {
+      final RlpxAgent rlpxAgent,
+      final boolean supportsIpv6) {
 
     this.discoverySystem =
         Objects.requireNonNull(discoverySystem, "discoverySystem must not be null");
@@ -106,6 +109,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
     this.rlpxAgent = Objects.requireNonNull(rlpxAgent, "rlpxAgent must not be null");
+    this.supportsIpv6 = supportsIpv6;
   }
 
   /**
@@ -188,7 +192,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return discoverySystem.streamLiveNodes().map(DiscoveryPeerFactory::fromNodeRecord);
+    return discoverySystem
+        .streamLiveNodes()
+        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, supportsIpv6));
   }
 
   /**
@@ -239,7 +245,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
-    return discoverySystem.lookupNode(peerId.getId()).map(DiscoveryPeerFactory::fromNodeRecord);
+    return discoverySystem
+        .lookupNode(peerId.getId())
+        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, supportsIpv6));
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */
@@ -286,7 +294,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     final List<DiscoveryPeer> candidates =
         Stream.concat(newPeers.stream(), knownPeers)
             .distinct()
-            .map(DiscoveryPeerFactory::fromNodeRecord)
+            .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, supportsIpv6))
             .filter(DiscoveryPeer::isReadyForConnections)
             .filter(peer -> peer.getForkId().map(forkIdManager::peerCheck).orElse(true))
             .toList();

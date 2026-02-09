@@ -92,22 +92,37 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       arity = "0..*")
   public final List<String> bootNodes = null;
 
-  /** The IP the node advertises to peers for P2P communication. */
+  /** The IP address(es) the node advertises to peers for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
       names = {"--p2p-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})")
-  public String p2pHost = autoDiscoverDefaultIP().getHostAddress();
+      description =
+          "IP address(es) this node advertises to its peers. "
+              + "One or two values (one IPv4 + one IPv6) (default: ${DEFAULT-VALUE})",
+      arity = "1..2",
+      split = ",")
+  public List<String> p2pHost = List.of(autoDiscoverDefaultIP().getHostAddress());
 
-  /** The network interface address on which this node listens for P2P communication. */
+  /** The network interface address(es) on which this node listens for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
       names = {"--p2p-interface"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       description =
-          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})")
-  public String p2pInterface = NetworkUtility.INADDR_ANY;
+          "Network interface address(es) to listen on. "
+              + "One or two values (one IPv4 + one IPv6) (default: ${DEFAULT-VALUE})",
+      arity = "1..2",
+      split = ",")
+  public List<String> p2pInterface = List.of(NetworkUtility.INADDR_ANY);
+
+  /** The IPv6 P2P port. */
+  @CommandLine.Option(
+      names = {"--p2p-port-ipv6"},
+      paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
+      description =
+          "Port on which to listen for IPv6 P2P communication (default: ${DEFAULT-VALUE})")
+  public final Integer p2pPortIpv6 = 30404;
 
   /** The port on which this node listens for P2P communication. */
   @CommandLine.Option(
@@ -215,12 +230,20 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
 
   @Override
   public P2PDiscoveryConfiguration toDomainObject() {
+    final String primaryHost = classifyIpv4(p2pHost);
+    final Optional<String> ipv6Host = classifyIpv6(p2pHost);
+    final String primaryInterface = classifyIpv4(p2pInterface);
+    final Optional<String> ipv6Interface = classifyIpv6(p2pInterface);
+
     return new P2PDiscoveryConfiguration(
         p2pEnabled,
         peerDiscoveryEnabled,
-        p2pHost,
-        p2pInterface,
+        primaryHost,
+        primaryInterface,
         p2pPort,
+        ipv6Host,
+        ipv6Interface,
+        p2pPortIpv6,
         maxPeers,
         isLimitRemoteWireConnectionsEnabled,
         maxRemoteConnectionsPercentage,
@@ -230,6 +253,24 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         poaDiscoveryRetryBootnodes,
         bootNodes,
         discoveryDnsUrl);
+  }
+
+  private static String classifyIpv4(final List<String> addresses) {
+    return addresses.stream()
+        .filter(
+            addr -> NetworkUtility.isIpV4Address(addr) || NetworkUtility.INADDR_ANY.equals(addr))
+        .findFirst()
+        .orElse(addresses.get(0));
+  }
+
+  private static Optional<String> classifyIpv6(final List<String> addresses) {
+    return addresses.stream()
+        .filter(
+            addr ->
+                NetworkUtility.isIpV6Address(addr)
+                    || NetworkUtility.INADDR6_ANY.equals(addr)
+                    || NetworkUtility.INADDR6_NONE.equals(addr))
+        .findFirst();
   }
 
   /**
@@ -246,20 +287,51 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
 
   private void validateP2PInterface(
       final CommandLine commandLine, final NetworkInterfaceChecker networkInterfaceChecker) {
-    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
-    try {
-      if (!networkInterfaceChecker.isNetworkInterfaceAvailable(p2pInterface)) {
-        throw new CommandLine.ParameterException(commandLine, failMessage);
+    for (final String iface : p2pInterface) {
+      final String failMessage = "The provided --p2p-interface is not available: " + iface;
+      try {
+        if (!networkInterfaceChecker.isNetworkInterfaceAvailable(iface)) {
+          throw new CommandLine.ParameterException(commandLine, failMessage);
+        }
+      } catch (final UnknownHostException | SocketException e) {
+        throw new CommandLine.ParameterException(commandLine, failMessage, e);
       }
-    } catch (final UnknownHostException | SocketException e) {
-      throw new CommandLine.ParameterException(commandLine, failMessage, e);
     }
+    validateDualStackList(commandLine, p2pInterface, "--p2p-interface");
   }
 
   private void validateP2PHost(final CommandLine commandLine) {
-    final String failMessage = "The provided --p2p-host is invalid: " + p2pHost;
-    if (!InetAddresses.isInetAddress(p2pHost)) {
-      throw new CommandLine.ParameterException(commandLine, failMessage);
+    for (final String host : p2pHost) {
+      final String failMessage = "The provided --p2p-host is invalid: " + host;
+      if (!InetAddresses.isInetAddress(host)) {
+        throw new CommandLine.ParameterException(commandLine, failMessage);
+      }
+    }
+    validateDualStackList(commandLine, p2pHost, "--p2p-host");
+  }
+
+  private static void validateDualStackList(
+      final CommandLine commandLine, final List<String> values, final String optionName) {
+    if (values.size() == 2) {
+      final boolean hasIpv4 =
+          values.stream()
+              .anyMatch(
+                  addr ->
+                      NetworkUtility.isIpV4Address(addr) || NetworkUtility.INADDR_ANY.equals(addr));
+      final boolean hasIpv6 =
+          values.stream()
+              .anyMatch(
+                  addr ->
+                      NetworkUtility.isIpV6Address(addr)
+                          || NetworkUtility.INADDR6_ANY.equals(addr)
+                          || NetworkUtility.INADDR6_NONE.equals(addr));
+      if (!hasIpv4 || !hasIpv6) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "When two values are provided for "
+                + optionName
+                + ", one must be IPv4 and one must be IPv6.");
+      }
     }
   }
 

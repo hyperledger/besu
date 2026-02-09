@@ -165,6 +165,9 @@ public class RunnerBuilder {
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
+  private Optional<String> p2pAdvertisedHostIpv6 = Optional.empty();
+  private Optional<String> p2pListenInterfaceIpv6 = Optional.empty();
+  private int p2pListenPortIpv6 = 30404;
   private NatMethod natMethod = NatMethod.AUTO;
   private boolean natMethodFallbackEnabled;
   private EthNetworkConfig ethNetworkConfig;
@@ -295,6 +298,21 @@ public class RunnerBuilder {
    */
   public RunnerBuilder p2pListenPort(final int p2pListenPort) {
     this.p2pListenPort = p2pListenPort;
+    return this;
+  }
+
+  public RunnerBuilder p2pAdvertisedHostIpv6(final Optional<String> p2pAdvertisedHostIpv6) {
+    this.p2pAdvertisedHostIpv6 = p2pAdvertisedHostIpv6;
+    return this;
+  }
+
+  public RunnerBuilder p2pListenInterfaceIpv6(final Optional<String> p2pListenInterfaceIpv6) {
+    this.p2pListenInterfaceIpv6 = p2pListenInterfaceIpv6;
+    return this;
+  }
+
+  public RunnerBuilder p2pListenPortIpv6(final int p2pListenPortIpv6) {
+    this.p2pListenPortIpv6 = p2pListenPortIpv6;
     return this;
   }
 
@@ -626,6 +644,12 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setAdvertisedHost(p2pAdvertisedHost);
+    p2pListenInterfaceIpv6.ifPresent(
+        iface -> {
+          discoveryConfiguration.setBindHostIpv6(p2pListenInterfaceIpv6);
+          discoveryConfiguration.setBindPortIpv6(p2pListenPortIpv6);
+          discoveryConfiguration.setAdvertisedHostIpv6(p2pAdvertisedHostIpv6);
+        });
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {

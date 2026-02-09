@@ -342,6 +342,9 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pAdvertisedHostIpv6(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenInterfaceIpv6(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenPortIpv6(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
