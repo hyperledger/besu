@@ -59,7 +59,6 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Suppliers;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -74,17 +73,15 @@ import org.slf4j.LoggerFactory;
  */
 public class TransactionSimulator {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionSimulator.class);
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   // Dummy signature for transactions to not fail being processed.
   private static final SECPSignature FAKE_SIGNATURE =
-      SIGNATURE_ALGORITHM
-          .get()
-          .createSignature(
-              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
-              SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
-              (byte) 0);
+      SIGNATURE_ALGORITHM.createSignature(
+          SIGNATURE_ALGORITHM.getHalfCurveOrder(),
+          SIGNATURE_ALGORITHM.getHalfCurveOrder(),
+          (byte) 0);
 
   // TODO: Identify a better default from account to use, such as the registered
   // coinbase or an account currently unlocked by the client.

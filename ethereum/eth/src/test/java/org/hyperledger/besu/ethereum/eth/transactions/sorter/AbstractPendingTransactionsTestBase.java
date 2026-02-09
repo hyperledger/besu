@@ -65,8 +65,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.junit.jupiter.api.Test;
 
 public abstract class AbstractPendingTransactionsTestBase {
@@ -74,10 +72,10 @@ public abstract class AbstractPendingTransactionsTestBase {
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final int MAX_TRANSACTIONS_LARGE_POOL = 15;
   private static final float LIMITED_TRANSACTIONS_BY_SENDER_PERCENTAGE = 0.8f;
-  protected static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  protected static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
-  protected static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  protected static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  protected static final KeyPair KEYS1 = SIGNATURE_ALGORITHM.generateKeyPair();
+  protected static final KeyPair KEYS2 = SIGNATURE_ALGORITHM.generateKeyPair();
   protected static final String ADDED_COUNTER = "transactions_added_total";
   protected static final String REMOVED_COUNTER = "transactions_removed_total";
   protected static final String REMOTE = "remote";
@@ -172,7 +170,7 @@ public abstract class AbstractPendingTransactionsTestBase {
   @Test
   public void shouldDropOldestTransactionWhenLimitExceeded() {
     final Transaction oldestTransaction =
-        transactionWithNonceSenderAndGasPrice(0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L);
+        transactionWithNonceSenderAndGasPrice(0, SIGNATURE_ALGORITHM.generateKeyPair(), 10L);
     final Account oldestSender = mock(Account.class);
     when(oldestSender.getNonce()).thenReturn(0L);
     senderLimitedTransactions.addTransaction(
@@ -182,8 +180,7 @@ public abstract class AbstractPendingTransactionsTestBase {
       when(sender.getNonce()).thenReturn((long) i);
       senderLimitedTransactions.addTransaction(
           createRemotePendingTransaction(
-              transactionWithNonceSenderAndGasPrice(
-                  i, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10L)),
+              transactionWithNonceSenderAndGasPrice(i, SIGNATURE_ALGORITHM.generateKeyPair(), 10L)),
           Optional.of(sender));
     }
     assertThat(senderLimitedTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
@@ -887,7 +884,7 @@ public abstract class AbstractPendingTransactionsTestBase {
                   final Account randomSender = mock(Account.class);
                   final Transaction lowPriceTx =
                       transactionWithNonceSenderAndGasPrice(
-                          0, SIGNATURE_ALGORITHM.get().generateKeyPair(), 10);
+                          0, SIGNATURE_ALGORITHM.generateKeyPair(), 10);
                   transactions.addTransaction(
                       createRemotePendingTransaction(lowPriceTx), Optional.of(randomSender));
                   return lowPriceTx;
