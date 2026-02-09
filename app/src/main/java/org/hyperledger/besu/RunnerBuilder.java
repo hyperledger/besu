@@ -301,16 +301,34 @@ public class RunnerBuilder {
     return this;
   }
 
+  /**
+   * Add P2P Advertise host for IPv6
+   *
+   * @param p2pAdvertisedHostIpv6 Optional host name
+   * @return current instance of RunnerBuilder
+   */
   public RunnerBuilder p2pAdvertisedHostIpv6(final Optional<String> p2pAdvertisedHostIpv6) {
     this.p2pAdvertisedHostIpv6 = p2pAdvertisedHostIpv6;
     return this;
   }
 
+  /**
+   * Add IPV6 P2P Host name/IP address for P2P to listen to.
+   *
+   * @param p2pListenInterfaceIpv6 Optional host name/IP address
+   * @return current instance of RunnerBuilder
+   */
   public RunnerBuilder p2pListenInterfaceIpv6(final Optional<String> p2pListenInterfaceIpv6) {
     this.p2pListenInterfaceIpv6 = p2pListenInterfaceIpv6;
     return this;
   }
 
+  /**
+   * Add IPV6 Port for P2P
+   *
+   * @param p2pListenPortIpv6 IPV6 P2P Port
+   * @return current instance of RunnerBuilder
+   */
   public RunnerBuilder p2pListenPortIpv6(final int p2pListenPortIpv6) {
     this.p2pListenPortIpv6 = p2pListenPortIpv6;
     return this;
