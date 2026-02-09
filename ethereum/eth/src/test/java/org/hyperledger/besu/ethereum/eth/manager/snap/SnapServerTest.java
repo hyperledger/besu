@@ -148,7 +148,8 @@ public class SnapServerTest {
             new VersionedCacheManager(
                 100_000, // accountCacheSize
                 1_000_000, // storageCacheSize
-                noopMetrics));
+                noopMetrics),
+            0);
 
     storageCoordinator = new WorldStateStorageCoordinator(inMemoryStorage);
     storageTrie =
