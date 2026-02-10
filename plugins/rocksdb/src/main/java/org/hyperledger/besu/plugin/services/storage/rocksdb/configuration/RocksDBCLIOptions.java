@@ -37,6 +37,9 @@ public class RocksDBCLIOptions {
   /** The default value indicating whether read caching is enabled for snapshot access. */
   public static final boolean DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS = false;
 
+  /** The default value indicating whether to use separate database per column. */
+  public static final boolean DEFAULT_USE_SEPARATE_DATABASE_PER_COLUMN = false;
+
   /** The constant MAX_OPEN_FILES_FLAG. */
   public static final String MAX_OPEN_FILES_FLAG = "--Xplugin-rocksdb-max-open-files";
 
@@ -65,6 +68,10 @@ public class RocksDBCLIOptions {
   /** Key name for configuring blob_garbage_collection_force_threshold */
   public static final String BLOB_GARBAGE_COLLECTION_FORCE_THRESHOLD =
       "--Xplugin-rocksdb-blob-garbage-collection-force-threshold";
+
+  /** Key name for using separate database per column */
+  public static final String USE_SEPARATE_DATABASE_PER_COLUMN =
+      "--Xplugin-rocksdb-separate-database-per-column";
 
   /** The Max open files. */
   @CommandLine.Option(
@@ -144,6 +151,15 @@ public class RocksDBCLIOptions {
       description = "Blob garbage collection force threshold (default: ${DEFAULT-VALUE})")
   Optional<Double> blobGarbageCollectionForceThreshold = Optional.empty();
 
+  /** Use separate database per column */
+  @CommandLine.Option(
+      names = {USE_SEPARATE_DATABASE_PER_COLUMN},
+      hidden = true,
+      paramLabel = "<BOOLEAN>",
+      description =
+          "Use separate RocksDB instance per column instead of column families (default: ${DEFAULT-VALUE})")
+  boolean useSeparateDatabasePerColumn = false;
+
   private RocksDBCLIOptions() {}
 
   /**
@@ -171,6 +187,7 @@ public class RocksDBCLIOptions {
     options.isBlockchainGarbageCollectionEnabled = config.isBlockchainGarbageCollectionEnabled();
     options.blobGarbageCollectionAgeCutoff = config.getBlobGarbageCollectionAgeCutoff();
     options.blobGarbageCollectionForceThreshold = config.getBlobGarbageCollectionForceThreshold();
+    options.useSeparateDatabasePerColumn = config.useSeparateDatabasePerColumn();
     return options;
   }
 
@@ -188,7 +205,8 @@ public class RocksDBCLIOptions {
         enableReadCacheForSnapshots,
         isBlockchainGarbageCollectionEnabled,
         blobGarbageCollectionAgeCutoff,
-        blobGarbageCollectionForceThreshold);
+        blobGarbageCollectionForceThreshold,
+        useSeparateDatabasePerColumn);
   }
 
   /**
@@ -223,6 +241,7 @@ public class RocksDBCLIOptions {
         .add("isBlockchainGarbageCollectionEnabled", isBlockchainGarbageCollectionEnabled)
         .add("blobGarbageCollectionAgeCutoff", blobGarbageCollectionAgeCutoff)
         .add("blobGarbageCollectionForceThreshold", blobGarbageCollectionForceThreshold)
+        .add("useSeparateDatabasePerColumn", useSeparateDatabasePerColumn)
         .toString();
   }
 

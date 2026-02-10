@@ -156,4 +156,19 @@ public interface WorldUpdater extends MutableWorldView {
   default void markTransactionBoundary() {
     // default is to ignore
   }
+
+  /**
+   * Hint to prefetch a storage value into the underlying cache (e.g. RocksDB block cache) without
+   * writing to the accumulator's storageToUpdate map. This is safe for speculative prefetching
+   * during EVM execution: it does not affect the state root or gas accounting.
+   *
+   * <p>Default implementation is a no-op. Overridden in path-based accumulators to trigger a
+   * read-only fetch from the underlying world state.
+   *
+   * @param address the contract address
+   * @param slotKey the storage slot key to prefetch
+   */
+  default void prefetchStorage(final Address address, final org.apache.tuweni.units.bigints.UInt256 slotKey) {
+    // default is no-op
+  }
 }
