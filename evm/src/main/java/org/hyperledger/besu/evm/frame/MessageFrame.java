@@ -1677,7 +1677,10 @@ public class MessageFrame {
               eip7928AccessList);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
-      messageFrame.warmUpAddress(contract);
+      // contract already warmed via parentMessageFrame when parent exists
+      if (parentMessageFrame == null) {
+        messageFrame.warmUpAddress(contract);
+      }
       for (Address a : eip2930AccessListWarmAddresses) {
         messageFrame.warmUpAddress(a);
       }
