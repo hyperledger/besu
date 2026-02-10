@@ -61,7 +61,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
-import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
@@ -71,6 +70,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromSafeBlock;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.SingleBlockHeaderDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -1078,13 +1078,17 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
+      final SingleBlockHeaderDownloader headerDownloader =
+          new SingleBlockHeaderDownloader(ethContext, protocolSchedule);
+
       return new PivotSelectorFromSafeBlock(
           protocolContext,
           protocolSchedule,
           ethContext,
           genesisConfigOptions,
           unverifiedForkchoiceSupplier,
-          unsubscribeForkchoiceListener);
+          unsubscribeForkchoiceListener,
+          headerDownloader);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return new PivotSelectorFromPeers(ethContext, syncConfig, syncState);
@@ -1365,14 +1369,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
-    }
-
-    final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
-    // setup classic validator
-    if (classicBlock.isPresent()) {
-      validators.add(
-          new ClassicForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
