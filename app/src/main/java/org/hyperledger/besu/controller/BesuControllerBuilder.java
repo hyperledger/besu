@@ -61,7 +61,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
-import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
@@ -1370,14 +1369,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
-    }
-
-    final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
-    // setup classic validator
-    if (classicBlock.isPresent()) {
-      validators.add(
-          new ClassicForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, classicBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
