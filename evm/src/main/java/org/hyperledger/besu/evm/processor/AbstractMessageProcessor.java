@@ -111,11 +111,11 @@ public abstract class AbstractMessageProcessor {
     } else {
       // Full path: find empty accounts that need force-deletion
       ArrayList<Address> addresses =
-              touchedAccounts.stream()
-                      .filter(AccountState::isEmpty)
-                      .map(Account::getAddress)
-                      .filter(forceDeleteAccountsWhenEmpty::contains)
-                      .collect(Collectors.toCollection(ArrayList::new));
+          touchedAccounts.stream()
+              .filter(AccountState::isEmpty)
+              .map(Account::getAddress)
+              .filter(forceDeleteAccountsWhenEmpty::contains)
+              .collect(Collectors.toCollection(ArrayList::new));
 
       // Clear any pending changes.
       worldUpdater.revert();
