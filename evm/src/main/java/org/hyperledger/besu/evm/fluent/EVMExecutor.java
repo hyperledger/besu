@@ -91,8 +91,7 @@ public class EVMExecutor {
                 evmSpec.getEvm(),
                 evmSpec.isRequireDeposit(),
                 evmSpec.getContractValidationRules(),
-                evmSpec.getInitialNonce(),
-                evmSpec.getForceCommitAddresses()));
+                evmSpec.getInitialNonce()));
   }
 
   /**

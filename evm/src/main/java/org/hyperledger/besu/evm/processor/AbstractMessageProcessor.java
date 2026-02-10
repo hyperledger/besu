@@ -25,7 +25,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -69,7 +69,7 @@ public abstract class AbstractMessageProcessor {
 
   // List of addresses to force delete when they are touched but empty
   // when the state changes in the message are were not meant to be committed.
-  private final Collection<? super Address> forceDeleteAccountsWhenEmpty;
+  private final Set<? super Address> forceDeleteAccountsWhenEmpty;
   final EVM evm;
 
   /**
@@ -78,7 +78,7 @@ public abstract class AbstractMessageProcessor {
    * @param evm the evm
    * @param forceDeleteAccountsWhenEmpty the force delete accounts when empty
    */
-  AbstractMessageProcessor(final EVM evm, final Collection<Address> forceDeleteAccountsWhenEmpty) {
+  AbstractMessageProcessor(final EVM evm, final Set<Address> forceDeleteAccountsWhenEmpty) {
     this.evm = evm;
     this.forceDeleteAccountsWhenEmpty = forceDeleteAccountsWhenEmpty;
   }
@@ -121,7 +121,7 @@ public abstract class AbstractMessageProcessor {
       worldUpdater.revert();
 
       // Force delete any requested accounts and commit the changes.
-      ((Collection<Address>) addresses).forEach(worldUpdater::deleteAccount);
+      addresses.forEach(worldUpdater::deleteAccount);
       worldUpdater.commit();
     }
 
