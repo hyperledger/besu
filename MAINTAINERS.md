@@ -9,7 +9,6 @@
 | Name             | Github           | LFID             |
 | ---------------- | ---------------- | ---------------- |
 | Ameziane Hamlat   | ahamlat         | ahamlat          |
-| Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Daniel Lehrner   | daniellehrner    | daniellehrner    |
 | Diego López León | diega            | diega            |
 | Fabio Di Fabio   | fab-10           | fab-10           |
@@ -18,7 +17,6 @@
 | Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
-| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Luis Pinto       | lu-pinto         | lu-pinto         |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
@@ -39,13 +37,15 @@
 | Antony Denyer    | antonydenyer     | antonydenyer     |
 | Antoine Toulme   | atoulme          | atoulme          |
 | Byron Gravenorst | bgravenorst      | bgravenorst      |
+| Chaminda Divitotawela | cdivitotawela    | cdivitotawela    |
 | Chris Hare       | CjHare           | cjhare           |
 | David Mechler    | davemec          | davemec          |
 | Edward Evans     | EdJoJob          | EdJoJob          |
 | Edward Mack      | edwardmack       | mackcom          | 
-| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Frank Li         | frankisawesome   | frankliawesome   |
+| Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
+| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
 | Meredith Baxter  | mbaxter          | mbaxter          |
