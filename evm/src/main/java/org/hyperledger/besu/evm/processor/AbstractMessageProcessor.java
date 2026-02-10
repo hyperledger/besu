@@ -103,25 +103,25 @@ public abstract class AbstractMessageProcessor {
     final var worldUpdater = frame.getWorldUpdater();
     final var touchedAccounts = worldUpdater.getTouchedAccounts();
 
-    if (!touchedAccounts.isEmpty() && !forceDeleteAccountsWhenEmpty.isEmpty()) {
+    if (touchedAccounts.isEmpty() || forceDeleteAccountsWhenEmpty.isEmpty()) {
+      // Fast path: no touched accounts or no force-delete targets.
+      // Just revert and commit without the stream pipeline overhead.
+      worldUpdater.revert();
+      worldUpdater.commit();
+    } else {
       // Full path: find empty accounts that need force-deletion
       ArrayList<Address> addresses =
-          touchedAccounts.stream()
-              .filter(AccountState::isEmpty)
-              .map(Account::getAddress)
-              .filter(forceDeleteAccountsWhenEmpty::contains)
-              .collect(Collectors.toCollection(ArrayList::new));
+              touchedAccounts.stream()
+                      .filter(AccountState::isEmpty)
+                      .map(Account::getAddress)
+                      .filter(forceDeleteAccountsWhenEmpty::contains)
+                      .collect(Collectors.toCollection(ArrayList::new));
 
       // Clear any pending changes.
       worldUpdater.revert();
 
       // Force delete any requested accounts and commit the changes.
       ((Collection<Address>) addresses).forEach(worldUpdater::deleteAccount);
-      worldUpdater.commit();
-    } else {
-      // Fast path: no touched accounts or no force-delete targets.
-      // Just revert and commit without the stream pipeline overhead.
-      worldUpdater.revert();
       worldUpdater.commit();
     }
 
