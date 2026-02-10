@@ -23,8 +23,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -109,6 +112,47 @@ class CheckpointSyncDownloadPipelineFactoryTest {
     final BlockHeader result = downloadPipelineFactory.getCommonAncestor(syncTarget);
 
     assertThat(result).isEqualTo(commonAncestor);
+  }
+
+  @Test
+  void shouldUseNoneValidationWhenSourceIsTrusted() throws Exception {
+    when(fastSyncState.isSourceTrusted()).thenReturn(true);
+
+    var factory =
+        new CheckpointSyncDownloadPipelineFactory(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            fastSyncState,
+            new NoOpMetricsSystem());
+
+    assertThat(getDownloadHeaderValidation(factory).getValidationModeForNextBlock())
+        .isEqualTo(HeaderValidationMode.NONE);
+  }
+
+  @Test
+  void shouldUseDetachedValidationWhenSourceIsNotTrusted() throws Exception {
+    when(fastSyncState.isSourceTrusted()).thenReturn(false);
+
+    var factory =
+        new CheckpointSyncDownloadPipelineFactory(
+            syncConfig,
+            protocolSchedule,
+            protocolContext,
+            ethContext,
+            fastSyncState,
+            new NoOpMetricsSystem());
+
+    assertThat(getDownloadHeaderValidation(factory).getValidationModeForNextBlock())
+        .isNotEqualTo(HeaderValidationMode.NONE);
+  }
+
+  private ValidationPolicy getDownloadHeaderValidation(
+      final CheckpointSyncDownloadPipelineFactory factory) throws Exception {
+    var field = FastSyncDownloadPipelineFactory.class.getDeclaredField("downloadHeaderValidation");
+    field.setAccessible(true);
+    return (ValidationPolicy) field.get(factory);
   }
 
   @Test
