@@ -88,17 +88,17 @@ class DebugAccountAtTest {
   }
 
   @Test
-  void testBlockNotFoundResponse() {
+  void shouldReturnNullWhenBlockNotFound() {
     Mockito.when(blockchainQueries.getBlockHeaderByHash(any())).thenReturn(Optional.empty());
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO.getBytes().toHexString(), 0, Address.ZERO.getBytes().toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
 
-    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    Assertions.assertThat(((JsonRpcErrorResponse) response).getErrorType())
-        .isEqualByComparingTo(RpcErrorType.BLOCK_NOT_FOUND);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
   }
 
   @Test
@@ -106,7 +106,8 @@ class DebugAccountAtTest {
     setupMockBlock();
     Mockito.when(blockWithMetadata.getTransactions()).thenReturn(Collections.emptyList());
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO.getBytes().toHexString(), 0, Address.ZERO.getBytes().toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -122,7 +123,10 @@ class DebugAccountAtTest {
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), -1, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {
+          Hash.ZERO.getBytes().toHexString(), -1, Address.ZERO.getBytes().toHexString()
+        };
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -138,7 +142,8 @@ class DebugAccountAtTest {
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 2, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO.getBytes().toHexString(), 2, Address.ZERO.getBytes().toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -163,7 +168,8 @@ class DebugAccountAtTest {
     Mockito.when(blockWithMetadata.getTransactions())
         .thenReturn(Collections.singletonList(transactionWithMetadata));
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO.getBytes().toHexString(), 0, Address.ZERO.getBytes().toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcResponse response = debugAccountAt.response(request);
@@ -187,7 +193,8 @@ class DebugAccountAtTest {
     setupMockTransaction();
     setupMockBlock();
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO.getBytes().toHexString(), 0, Address.ZERO.getBytes().toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
 
@@ -226,7 +233,8 @@ class DebugAccountAtTest {
     Mockito.when(account.getBalance()).thenReturn(balance);
     Mockito.when(account.getCodeHash()).thenReturn(codeHash);
 
-    final Object[] params = new Object[] {Hash.ZERO.toHexString(), 0, Address.ZERO.toHexString()};
+    final Object[] params =
+        new Object[] {Hash.ZERO.getBytes().toHexString(), 0, Address.ZERO.getBytes().toHexString()};
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_accountAt", params));
     final JsonRpcSuccessResponse response =
@@ -236,7 +244,7 @@ class DebugAccountAtTest {
     Assertions.assertThat(result.getCode()).isEqualTo(codeString);
     Assertions.assertThat(result.getNonce()).isEqualTo("0x" + Long.toHexString(nonce));
     Assertions.assertThat(result.getBalance()).isEqualTo(balanceString);
-    Assertions.assertThat(result.getCodehash()).isEqualTo(codeHash.toHexString());
+    Assertions.assertThat(result.getCodehash()).isEqualTo(codeHash.getBytes().toHexString());
   }
 
   private void setupMockAccount() {

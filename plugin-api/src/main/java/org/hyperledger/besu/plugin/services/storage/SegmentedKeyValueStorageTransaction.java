@@ -52,4 +52,7 @@ public interface SegmentedKeyValueStorageTransaction {
 
   /** Reset the transaction to a state prior to any operations being queued. */
   void rollback();
+
+  /** close the transaction */
+  void close();
 }

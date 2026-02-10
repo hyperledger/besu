@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.util.List;
@@ -29,19 +29,9 @@ public class NetworkDeprecationMessage {
    * @param network the network
    * @return the deprecation message for specified network
    */
-  public static String generate(final NetworkName network) {
+  public static String generate(final NetworkDefinition network) {
     if (network.getDeprecationDate().isEmpty()) {
       throw new AssertionError("Deprecation date is not set. Cannot print a deprecation message");
-    }
-
-    // ETC support deprecated in besu
-    if (network.name().equals("CLASSIC") || network.name().equals("MORDOR")) {
-      return FramedLogMessage.generateCentered(
-          List.of(
-              "Besu support for ETC "
-                  + network.normalize()
-                  + " is deprecated as of "
-                  + network.getDeprecationDate().get()));
     }
 
     // network is being shutdown

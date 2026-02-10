@@ -69,9 +69,6 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   private static final String INVALID_BLOCK_ACCESS_LIST_ENCODING = "0xzz";
   private static final String INVALID_BLOCK_ACCESS_LIST_RLP = "0x01";
 
-  private final ScheduledProtocolSpec.Hardfork amsterdamHardfork =
-      new ScheduledProtocolSpec.Hardfork("Amsterdam", 80);
-
   @BeforeEach
   @Override
   public void before() {
@@ -104,7 +101,7 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
   }
 
   @Override
-  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterFutureEipsMilestone() {
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAtOrAfterAmsterdamMilestone() {
     final BlockHeader header =
         setupValidPayload(
             new BlockProcessingResult(
@@ -226,7 +223,8 @@ public class EngineNewPayloadV5Test extends EngineNewPayloadV4Test {
         .parentBeaconBlockRoot(
             maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
         .balHash(BodyValidation.balHash(BLOCK_ACCESS_LIST))
-        .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS));
+        .requestsHash(BodyValidation.requestsHash(VALID_REQUESTS))
+        .slotNumber(1L);
   }
 
   @Override

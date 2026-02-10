@@ -75,6 +75,11 @@ public class AccountTransactions {
     return createFrontierBuilder(sender, recipient, Amount.ether(amount)).nonce(nonce).build();
   }
 
+  public TransferTransaction createTransfer(
+      final Account sender, final Account recipient, final Amount amount, final BigInteger nonce) {
+    return createFrontierBuilder(sender, recipient, amount).nonce(nonce).build();
+  }
+
   public TransferTransaction create1559Transfer(
       final Account recipient, final int amount, final long chainId) {
     return create1559Builder(

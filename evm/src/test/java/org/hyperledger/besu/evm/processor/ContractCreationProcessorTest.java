@@ -15,15 +15,12 @@
 package org.hyperledger.besu.evm.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.EOFTestConstants.EOF_CREATE_CONTRACT;
-import static org.hyperledger.besu.evm.EOFTestConstants.INNER_CONTRACT;
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.COMPLETED_SUCCESS;
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.EXCEPTIONAL_HALT;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
-import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -91,113 +88,6 @@ class ContractCreationProcessorTest
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
-  }
-
-  @Test
-  void shouldThrowAnExceptionWhenCodeContractFormatInvalidPostEOF() {
-    processor =
-        new ContractCreationProcessor(
-            evm,
-            true,
-            Collections.singletonList(EOFValidationCodeRule.from(evm)),
-            1,
-            Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("EF00010101010101");
-    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
-    messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
-
-    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
-    assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
-    assertThat(messageFrame.getExceptionalHaltReason())
-        .contains(ExceptionalHaltReason.INVALID_CODE);
-  }
-
-  @Test
-  void eofValidationShouldAllowLegacyDeployFromLegacyInit() {
-    processor =
-        new ContractCreationProcessor(
-            evm,
-            true,
-            Collections.singletonList(EOFValidationCodeRule.from(evm)),
-            1,
-            Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("0101010101010101");
-    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
-    messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
-
-    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
-    assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
-  }
-
-  @Test
-  void eofValidationShouldAllowEOFCode() {
-    processor =
-        new ContractCreationProcessor(
-            evm,
-            true,
-            Collections.singletonList(EOFValidationCodeRule.from(evm)),
-            1,
-            Collections.emptyList());
-    final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(evm.wrapCode(EOF_CREATE_CONTRACT)).build();
-    messageFrame.setOutputData(INNER_CONTRACT);
-    messageFrame.setGasRemaining(10600L);
-
-    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
-    assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
-  }
-
-  @Test
-  void prefixValidationShouldPreventEOFCode() {
-    processor =
-        new ContractCreationProcessor(
-            evm, true, Collections.singletonList(PrefixCodeRule.of()), 1, Collections.emptyList());
-    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
-    messageFrame.setOutputData(INNER_CONTRACT);
-    messageFrame.setGasRemaining(10600L);
-
-    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
-    assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
-  }
-
-  @Test
-  void eofValidationShouldPreventLegacyDeployFromEOFInit() {
-    processor =
-        new ContractCreationProcessor(
-            evm,
-            true,
-            Collections.singletonList(EOFValidationCodeRule.from(evm)),
-            1,
-            Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("6030602001");
-    final Bytes initCode = EOF_CREATE_CONTRACT;
-    final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(evm.wrapCodeForCreation(initCode)).build();
-    messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
-
-    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
-    assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
-  }
-
-  @Test
-  void eofValidationPreventsEOFDeployFromLegacyInit() {
-    processor =
-        new ContractCreationProcessor(
-            evm,
-            true,
-            Collections.singletonList(EOFValidationCodeRule.from(evm)),
-            1,
-            Collections.emptyList());
-    final Bytes contractCode = EOF_CREATE_CONTRACT;
-    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
-    messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(10600L);
-
-    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
-    assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
 
   @Test

@@ -158,8 +158,6 @@ metrics-push-interval=42
 metrics-push-prometheus-job="besu-everything"
 
 # Mining
-miner-enabled=false
-miner-coinbase="0x0000000000000000000000000000000000000002"
 miner-extra-data="0x444F4E27542050414E4943202120484F444C2C20484F444C2C20484F444C2021"
 min-gas-price=1
 min-priority-fee=0
@@ -167,8 +165,6 @@ min-block-occupancy-ratio=0.7
 block-txs-selection-max-time=5000
 poa-block-txs-selection-max-time=75
 plugin-block-txs-selection-max-time=50
-Xminer-remote-sealers-limit=1000
-Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
 
 # Permissioning
@@ -225,6 +221,7 @@ bonsai-limit-trie-logs-enabled=true
 bonsai-trie-logs-pruning-window-size=100_000
 receipt-compaction-enabled=true
 bonsai-parallel-tx-processing-enabled=false
+bonsai-parallel-state-root-computation-enabled=false
 
 # feature flags
 Xsecp256k1-native-enabled=false
@@ -243,6 +240,7 @@ Xevm-jumpdest-cache-weight-kb=32000
 Xplugins-external-enabled=true
 plugins=["none"]
 plugin-continue-on-error=false
+plugins-verification-mode="none"
 
 # snapsync
 snapsync-synchronizer-transaction-indexing-enabled=true

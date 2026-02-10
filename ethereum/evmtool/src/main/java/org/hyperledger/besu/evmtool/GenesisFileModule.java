@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -108,8 +108,8 @@ public class GenesisFileModule {
     return genesisState.getBlock();
   }
 
-  static GenesisFileModule createGenesisModule(final NetworkName networkName) {
-    return createGenesisModule(EthNetworkConfig.jsonConfig(networkName));
+  static GenesisFileModule createGenesisModule(final NetworkDefinition networkDefinition) {
+    return createGenesisModule(EthNetworkConfig.jsonConfig(networkDefinition));
   }
 
   static GenesisFileModule createGenesisModule(final File genesisFile) throws IOException {

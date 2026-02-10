@@ -388,6 +388,11 @@ public class SegmentedInMemoryKeyValueStorage
 
     @Override
     public void rollback() {
+      close();
+    }
+
+    @Override
+    public void close() {
       updatedValues.clear();
       removedKeys.clear();
     }
@@ -415,6 +420,32 @@ public class SegmentedInMemoryKeyValueStorage
                                 entry.getKey().toHexString(),
                                 Bytes.wrap(entry.getValue().get()).toHexString()));
               });
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Merge this storage's data to a SegmentedKeyValueStorageTransaction. This provides atomic
+   * merging of all data from this storage to the target transaction.
+   *
+   * @param otherTransaction the transaction to merge data into
+   */
+  public void mergeTo(final SegmentedKeyValueStorageTransaction otherTransaction) {
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      hashValueStore.forEach(
+          (segmentIdentifier, entries) -> {
+            entries.forEach(
+                (key, value) -> {
+                  if (value.isPresent()) {
+                    otherTransaction.put(segmentIdentifier, key.toArrayUnsafe(), value.get());
+                  } else {
+                    otherTransaction.remove(segmentIdentifier, key.toArrayUnsafe());
+                  }
+                });
+          });
     } finally {
       lock.unlock();
     }

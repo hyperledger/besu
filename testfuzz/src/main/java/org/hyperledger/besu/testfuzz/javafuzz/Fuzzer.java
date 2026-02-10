@@ -160,7 +160,6 @@ public class Fuzzer {
 
     Map<String, Integer> hitMap = new HashMap<>();
     // preload some values so we don't get false hits in coverage we don't care about.
-    hitMap.put("org/hyperledger/besu/testfuzz/EofContainerSubCommand", 100);
     hitMap.put("org/hyperledger/besu/testfuzz/Fuzzer", 100);
     hitMap.put("org/hyperledger/besu/testfuzz/Fuzzer$HitCounter", 100);
     hitMap.put("org/hyperledger/besu/testfuzz/InternalClient", 100);

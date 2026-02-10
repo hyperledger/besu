@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,15 +63,18 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       applyForStrategy(
           updater,
           onBonsai -> {
-            onBonsai.saveWorldState(header.getHash(), header.getStateRoot(), rootNodeData);
+            onBonsai.saveWorldState(
+                header.getHash().getBytes(),
+                Bytes32.wrap(header.getStateRoot().getBytes()),
+                rootNodeData);
           },
           onForest -> {
-            onForest.saveWorldState(header.getStateRoot(), rootNodeData);
+            onForest.saveWorldState(Bytes32.wrap(header.getStateRoot().getBytes()), rootNodeData);
           });
       updater.commit();
 
       internalFuture.complete(null);
-      // THere are no more inputs to process so make sure we wake up any threads waiting to dequeue
+      // There are no more inputs to process so make sure we wake up any threads waiting to dequeue
       // so they can give up waiting.
       notifyAll();
 

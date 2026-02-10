@@ -111,8 +111,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     // PoA consensus mines by default, get consensus-specific mining parameters for
     // TransitionCoordinator:
-    MiningConfiguration transitionMiningConfiguration =
-        preMergeBesuControllerBuilder.getMiningParameterOverrides(miningConfiguration);
+    preMergeBesuControllerBuilder.overrideMiningConfiguration(miningConfiguration);
 
     // construct a transition backward sync context
     BackwardSyncContext transitionBackwardsSyncContext =
@@ -131,6 +130,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
+                // special case: we need to disable mining during transition
                 ImmutableMiningConfiguration.builder()
                     .from(miningConfiguration)
                     .mutableInitValues(
@@ -144,7 +144,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule,
                 protocolContext,
                 transactionPool,
-                transitionMiningConfiguration,
+                miningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
                 ethProtocolManager.ethContext().getScheduler()),

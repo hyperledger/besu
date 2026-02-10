@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.MalformedRlpFromPeerException;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
@@ -30,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,12 +95,18 @@ public class GetReceiptsFromPeerTask
 
   @Override
   public Map<BlockHeader, List<TransactionReceipt>> processResponse(final MessageData messageData)
-      throws InvalidPeerTaskResponseException {
+      throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException();
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
-    final List<List<TransactionReceipt>> receiptsByBlock = receiptsMessage.receipts();
+    final List<List<TransactionReceipt>> receiptsByBlock;
+    try {
+      receiptsByBlock = receiptsMessage.receipts();
+    } catch (RLPException e) {
+      // indicates a malformed or unexpected RLP result from the peer
+      throw new MalformedRlpFromPeerException(e, messageData.getData());
+    }
     // take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent
     // calls to processResponse
     final Map<BlockHeader, List<TransactionReceipt>> receiptsByHeader =

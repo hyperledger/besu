@@ -3,13 +3,103 @@
 ## Unreleased
 
 ### Breaking Changes
+- ETC Classic support in Besu is removed. This includes all ETC related hardforks including Mordor and Spiral. [#9671](https://github.com/hyperledger/besu/pull/9671)
+- **Chain pruning CLI options have been redesigned with new behavior:** [#9637](https://github.com/hyperledger/besu/pull/9637)
+  - `--Xchain-pruning-enabled` now accepts three strategy values instead of boolean:
+    - `ALL` - prunes both blocks and BALs (replaces the old `--Xchain-pruning-enabled=true`)
+    - `BAL` - prunes only BALs, keeps all blocks forever (new mode, **now the default**)
+    - `NONE` - disables all pruning (replaces the old `--Xchain-pruning-enabled=false`)
+  - `--Xchain-pruning-blocks-retained` behavior changes:
+    - In `ALL` mode: controls block retention (previously the only mode)
+    - In `BAL` mode: has no effect as blocks are never pruned
+    - Default value changed from `7200` to `113056` blocks (Weak Subjectivity Period: 3533 epochs × 32 slots)
+  - New flag `--Xchain-pruning-bals-retained` sets the number of BALs to retain:
+    - Defaults to the value of `--Xchain-pruning-blocks-retained` when not specified
+    - Must be >= `113056` (configurable via `--Xchain-pruning-retained-minimum`)
+    - In `ALL` mode: should typically be less than or equal to `--Xchain-pruning-blocks-retained`
+    - In `BAL` mode: controls BAL retention independently
+  - `--Xchain-pruning-frequency` now controls both block and BAL pruning operations (previously only controlled block pruning)
+  - Renamed `--Xchain-pruning-blocks-retained-limit` to `--Xchain-pruning-retained-minimum` (applies to both blocks and BALs)
+    - New default value: `113056` blocks (3533 epochs × 32 slots, based on Weak Subjectivity Period)
+    - Previous default: `7200` blocks
+
+### Upcoming Breaking Changes
+- RPC changes to enhance compatibility with other ELs
+  - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
+  - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - ETC (Ethereum Classic) network support
+    - Proof of Work consensus (PoW)
+    - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+    - Fast Sync
+
+### Additions and Improvements
+- Improve performance of snap sync chain download [#9510](https://github.com/hyperledger/besu/pull/9510) and [#9621](https://github.com/hyperledger/besu/pull/9621)
+- Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
+- Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9642](https://github.com/hyperledger/besu/pull/9642). Thanks to [@JukLee0ira](https://github.com/JukLee0ira).
+- Update assertj to v3.27.7 [#9710](https://github.com/hyperledger/besu/pull/9710)
+
+### Bug fixes
+- Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
+
+## 26.1.0-RC1
+
+### Breaking Changes
+- Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
+- RPC changes to enhance compatibility with other ELs
+  - RPCs using filter parameter including `eth_getLogs` and `trace_filter` return an error if `fromBlock` is greater than `toBlock`, or if `toBlock` extends beyond chain head (previously returned an empty list) [#9604](https://github.com/hyperledger/besu/pull/9604)
+- Plugin API changes to BlockHeader, Log, LogWithMetadata, TransactionProcessingResult and TransactionReceipt to use specific types for LogsBloomFilter, LogTopic and Log [#9556](https://github.com/hyperledger/besu/pull/9556)
+    
+### Upcoming Breaking Changes
+- RPC changes to enhance compatibility with other ELs
+  - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
+  - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
+- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+    - ETC (Ethereum Classic) network support
+    - Proof of Work consensus (PoW)
+    - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+    - Fast Sync
+- `--history-expiry-prune` is deprecated and will be removed in a future release
+  
+### Additions and Improvements
+- Performance
+  - Optimise ADD Opcode: ADD 86% faster, using new UInt256 implementation [#9477](https://github.com/hyperledger/besu/pull/9477)
+  - Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
+  - Improved `getBlobsV2` by disabling HTTP response compression for engine API, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
+  - Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
+  - Parallelize state root computation for Bonsai [#9576](https://github.com/hyperledger/besu/pull/9576)
+- Update to Netty 4.2.9.Final [#9587](https://github.com/hyperledger/besu/pull/9587)
+- Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
+- Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)
+- Verify plugins on start [#9601](https://github.com/hyperledger/besu/pull/9601)
+- Add EIP-7778 to Amsterdam [#9664](https://github.com/hyperledger/besu/pull/9664)
+- Treat EndOfRLPException as invalid packet in peer discovery, meaning you will no longer see these exceptions, unless you enable DEBUG logs [#9597](https://github.com/hyperledger/besu/pull/9597)
+
+### Bug fixes
+- Fix promotion to prioritized layer for gas price fee markets [#9635](https://github.com/hyperledger/besu/pull/9635)
+- Fix callTracer to properly capture nested calls and populate revertReason field when transactions revert [#9651](https://github.com/hyperledger/besu/pull/9651)
+- Enhance payload selection with tx count and creation time tiebreakers [#9657](https://github.com/hyperledger/besu/pull/9657)
+- Fix mining beneficiary for BFT networks when set to zero address [#9679](https://github.com/hyperledger/besu/pull/9679)
+
+[PR_9462]: https://github.com/hyperledger/besu/pull/9642
+
+##  25.12.0
+
+### Breaking Changes
 - Remove these deprecated CLI options [#9385](https://github.com/hyperledger/besu/pull/9385)
   - Remove`--Xbonsai-parallel-tx-processing-enabled` deprecated since 25.7.0. Use `--bonsai-parallel-tx-processing-enabled` instead.
   - Remove `--Xsnapsync-server-enabled` deprecated since 25.7.0. Use `--snapsync-server-enabled` instead.
   - Remove `--Xsnapsync-synchronizer-pre-merge-headers-only-enabled` deprecated since 25.7.0. Use `--snapsync-synchronizer-pre-checkpoint-headers-only-enabled` instead.
   - Remove `--Xhistory-expiry-prune` deprecated since 25.7.0. Use `--history-expiry-prune` instead.
-- Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
-- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
+- RPC changes to enhance compatibility with other ELs
+  - Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
+  - eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
+  - Return null result if block not found for `debug_accountAt`, `debug_setHead`, `eth_call`, `eth_getBlockReceipts`, `eth_getProof`, `eth_simulateV1`, `eth_getBalance`, `eth_getCode`, `eth_getStorageAt`, `eth_getTransactionCount` [#9303](https://github.com/hyperledger/besu/pull/9303)
+- Remove PoW specific RPCs: `eth_getMinerDataByBlockHash`, `eth_getMinerDataByBlockNumber`, `miner_setCoinbase`, `miner_setEtherbase` [#9481](https://github.com/hyperledger/besu/pull/9481), `eth_coinbase` [#9487](https://github.com/hyperledger/besu/pull/9487)
+- Remove PoW CLI options: `--miner-enabled`, `--miner-coinbase` [#9486](https://github.com/hyperledger/besu/pull/9486)
 
 ### Upcoming Breaking Changes
 - ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
@@ -17,18 +107,28 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - ETC (Ethereum Classic) network support
   - Proof of Work consensus (PoW)
+  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
   - Fast Sync
 
 ### Additions and Improvements
 - Update to vertx 4.5.22 [#9375](https://github.com/hyperledger/besu/pull/9375)
 - Add `opcodes` optional parameter to RPC methods: `debug_standardTraceBlockToFile`, `debug_standardTraceBadBlockToFile`, `debug_traceBlockByNumber`, `debug_traceBlockByHash`, `debug_traceTransaction`, `debug_traceBlock`, `debug_traceCall` for tracing specified opcodes [#9335](https://github.com/hyperledger/besu/pull/9335)
-- Use error code 3 for execution reverted [#9365](https://github.com/hyperledger/besu/pull/9365)
-- eth_createAccessList now returns success result if execution reverted [#9358](https://github.com/hyperledger/besu/pull/9358)
 - Use Eclipse Temurin OpenJDK JRE in Besu docker image [#9392](https://github.com/hyperledger/besu/pull/9392)
 - Performance: 5-6x faster toFastHex calculation for engine_getBlobsV2 [#9426](https://github.com/hyperledger/besu/pull/9426)
+- Performance: Optimise `engine_getPayload*` methods and `engine_getBlobsV2` [#9445](https://github.com/hyperledger/besu/pull/9445)
+- Add Linea named networks for `linea_mainnet` and `linea_sepolia` [#9436](https://github.com/hyperledger/besu/pull/9436), [#9518](https://github.com/hyperledger/besu/pull/9518)
+- Add `eth_subscribe` and `eth_unsubscribe` support to IPC service [#9504](https://github.com/hyperledger/besu/pull/9504)
+- Add experimental `callTracer` tracer option to `debug_trace*` methods. Enabled using `--Xenable-extra-debug-tracers=true` option. Issue [#8326][issue_8326] implemented via PR [#8960][PR_8960] and [#9072][PR_9072].
+- Remove EOF [#9559](https://github.com/hyperledger/besu/pull/9559)
 
 ### Bug fixes
+- Fix non-deterministic sub-protocol registration during IBFT2 to QBFT consensus migration [#9516](https://github.com/hyperledger/besu/pull/9516)
 - Fix loss of colored output in terminal when using `--color-enabled=true` option [#8908](https://github.com/hyperledger/besu/issues/8908)
+- Fix an issue where Besu does not support `0x80` as transaction type when decoding eth/69 receipts [#9520](https://github.com/hyperledger/besu/issues/9520)
+
+[issue_8326]: https://github.com/hyperledger/besu/issues/8326
+[PR_9072]: https://github.com/hyperledger/besu/pull/9072
+[PR_8960]: https://github.com/hyperledger/besu/pull/8960
 
 ## 25.11.0
 

@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -92,6 +93,7 @@ public class BackwardSyncStepTest {
 
   private MutableBlockchain localBlockchain;
   private MutableBlockchain remoteBlockchain;
+  private RespondingEthPeer peer;
   @Mock private PeerTaskExecutor peerTaskExecutor;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;
@@ -102,17 +104,19 @@ public class BackwardSyncStepTest {
   public void setup() {
     headersStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     blocksStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     chainStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+            hash -> hash.getBytes().toArrayUnsafe(),
+            new HashConvertor(),
+            new InMemoryKeyValueStorage());
     sessionDataStorage =
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),
@@ -147,13 +151,11 @@ public class BackwardSyncStepTest {
             .setPeerTaskExecutor(peerTaskExecutor)
             .build();
 
-    // building the peer also inserts it into the EthPeers, which is necessary so we have a peer to
-    // use
-    RespondingEthPeer.builder()
-        .ethProtocolManager(ethProtocolManager)
-        .estimatedHeight(REMOTE_HEIGHT)
-        .build();
-
+    peer =
+        RespondingEthPeer.builder()
+            .ethProtocolManager(ethProtocolManager)
+            .estimatedHeight(REMOTE_HEIGHT)
+            .build();
     EthContext ethContext = ethProtocolManager.ethContext();
     when(context.getEthContext()).thenReturn(ethContext);
 
@@ -168,16 +170,24 @@ public class BackwardSyncStepTest {
   public void shouldFindHeaderWhenRequested() throws Exception {
     final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT + 3);
     when(context.getBatchSize()).thenReturn(5);
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     BackwardSyncStep step = spy(new BackwardSyncStep(context, backwardChain));
+
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
 
     final CompletableFuture<Void> future =
         step.executeAsync(backwardChain.getFirstAncestorHeader().orElseThrow());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
     future.get();
   }
 
   @Test
   public void shouldFindHashToSync() {
     final BackwardChain backwardChain = createBackwardChain(REMOTE_HEIGHT - 4, REMOTE_HEIGHT);
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     BackwardSyncStep step = new BackwardSyncStep(context, backwardChain);
     final Hash hash =
         step.possibleRestoreOldNodes(backwardChain.getFirstAncestorHeader().orElseThrow());
@@ -186,11 +196,17 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldRequestHeaderWhenAsked() throws Exception {
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
+
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     final BlockHeader blockHeader = future.get().get(0);
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
@@ -198,6 +214,8 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldNotRequestHeaderIfAlreadyPresent() throws Exception {
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(LOCAL_HEIGHT);
 
@@ -212,13 +230,19 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldRequestHeaderBeforeCurrentHeight() throws Exception {
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     extendBlockchain(REMOTE_HEIGHT + 1, context.getProtocolContext().getBlockchain());
 
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
+    final RespondingEthPeer.Responder responder =
+        RespondingEthPeer.blockchainResponder(remoteBlockchain);
+
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     final BlockHeader blockHeader = future.get().get(0);
     assertThat(blockHeader).isEqualTo(lookingForBlock.getHeader());
@@ -226,6 +250,8 @@ public class BackwardSyncStepTest {
 
   @Test
   public void shouldThrowWhenResponseIsEmptyWhenRequestingHeader() {
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     Mockito.reset(peerTaskExecutor);
     when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
         .thenReturn(
@@ -238,14 +264,19 @@ public class BackwardSyncStepTest {
     BackwardSyncStep step = new BackwardSyncStep(context, createBackwardChain(REMOTE_HEIGHT - 1));
     final Block lookingForBlock = getBlockByNumber(REMOTE_HEIGHT - 2);
 
+    final RespondingEthPeer.Responder responder = RespondingEthPeer.emptyResponder();
+
     final CompletableFuture<List<BlockHeader>> future =
         step.requestHeaders(lookingForBlock.getHeader().getHash());
+    peer.respondWhileOtherThreadsWork(responder, () -> !future.isDone());
 
     assertThatThrownBy(future::get).cause().isInstanceOf(RuntimeException.class);
   }
 
   @Test
   public void shouldSaveHeaderDelegatesProperly() {
+    when(context.getSynchronizerConfiguration())
+        .thenReturn(SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build());
     final BackwardChain chain = Mockito.mock(BackwardChain.class);
     final BlockHeader header = Mockito.mock(BlockHeader.class);
 

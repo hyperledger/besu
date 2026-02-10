@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -68,12 +69,13 @@ public class BesuNodeConfiguration {
   private final List<String> staticNodes;
   private final boolean isDnsEnabled;
   private final List<String> runCommand;
-  private final NetworkName network;
+  private final NetworkDefinition network;
   private final Optional<KeyPair> keyPair;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
   private final SynchronizerConfiguration synchronizerConfiguration;
   private final Optional<KeyValueStorageFactory> storageFactory;
+  private final PluginConfiguration pluginConfiguration;
 
   BesuNodeConfiguration(
       final String name,
@@ -91,7 +93,7 @@ public class BesuNodeConfiguration {
       final DataStorageConfiguration dataStorageConfiguration,
       final Optional<String> keyFilePath,
       final boolean devMode,
-      final NetworkName network,
+      final NetworkDefinition network,
       final GenesisConfigurationProvider genesisConfigProvider,
       final boolean p2pEnabled,
       final int p2pPort,
@@ -111,7 +113,8 @@ public class BesuNodeConfiguration {
       final boolean strictTxReplayProtectionEnabled,
       final Map<String, String> environment,
       final SynchronizerConfiguration synchronizerConfiguration,
-      final Optional<KeyValueStorageFactory> storageFactory) {
+      final Optional<KeyValueStorageFactory> storageFactory,
+      final PluginConfiguration pluginConfiguration) {
     this.name = name;
     this.miningConfiguration = miningConfiguration;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -148,6 +151,7 @@ public class BesuNodeConfiguration {
     this.environment = environment;
     this.synchronizerConfiguration = synchronizerConfiguration;
     this.storageFactory = storageFactory;
+    this.pluginConfiguration = pluginConfiguration;
   }
 
   public String getName() {
@@ -270,7 +274,7 @@ public class BesuNodeConfiguration {
     return runCommand;
   }
 
-  public NetworkName getNetwork() {
+  public NetworkDefinition getNetwork() {
     return network;
   }
 
@@ -292,5 +296,9 @@ public class BesuNodeConfiguration {
 
   public Optional<KeyValueStorageFactory> storageImplementation() {
     return storageFactory;
+  }
+
+  public PluginConfiguration getPluginConfiguration() {
+    return pluginConfiguration;
   }
 }

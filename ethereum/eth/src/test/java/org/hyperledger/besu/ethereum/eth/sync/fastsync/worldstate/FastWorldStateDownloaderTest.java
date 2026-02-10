@@ -332,7 +332,9 @@ class FastWorldStateDownloaderTest {
 
     // Seed local storage with some contract values
     final Map<Bytes32, Bytes> knownCode = new HashMap<>();
-    accounts.subList(0, 5).forEach(a -> knownCode.put(a.getCodeHash(), a.getCode()));
+    accounts
+        .subList(0, 5)
+        .forEach(a -> knownCode.put(Bytes32.wrap(a.getCodeHash().getBytes()), a.getCode()));
     final ForestWorldStateKeyValueStorage.Updater localStorageUpdater = localStorage.updater();
     knownCode.forEach((bytes32, code) -> localStorageUpdater.putCode(code));
     localStorageUpdater.commit();
@@ -359,6 +361,7 @@ class FastWorldStateDownloaderTest {
             .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
+            .map(hash -> Bytes32.wrap(hash.getBytes()))
             .collect(Collectors.toList());
     assertThat(requestedHashes).isNotEmpty();
     assertThat(Collections.disjoint(requestedHashes, knownCode.keySet())).isTrue();
@@ -460,7 +463,8 @@ class FastWorldStateDownloaderTest {
     verify(taskCollection, never()).remove();
     verify(taskCollection, never()).add(any(NodeDataRequest.class));
     // Target world state should not be available
-    assertThat(localStorage.isWorldStateAvailable(header.getStateRoot())).isFalse();
+    assertThat(localStorage.isWorldStateAvailable(Bytes32.wrap(header.getStateRoot().getBytes())))
+        .isFalse();
   }
 
   @Test
@@ -497,7 +501,8 @@ class FastWorldStateDownloaderTest {
 
     // Seed local storage with some trie node values
     final Map<Bytes32, Bytes> allNodes =
-        collectTrieNodesToBeRequestedAfterRoot(remoteStorage, remoteWorldState.rootHash(), 5);
+        collectTrieNodesToBeRequestedAfterRoot(
+            remoteStorage, Bytes32.wrap(remoteWorldState.rootHash().getBytes()), 5);
     final Set<Bytes32> knownNodes = new HashSet<>();
     final Set<Bytes32> unknownNodes = new HashSet<>();
     assertThat(allNodes).isNotEmpty(); // Sanity check
@@ -537,6 +542,7 @@ class FastWorldStateDownloaderTest {
             .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
+            .map(hash -> Bytes32.wrap(hash.getBytes()))
             .collect(Collectors.toList());
     assertThat(requestedHashes)
         .isNotEmpty()
@@ -590,13 +596,14 @@ class FastWorldStateDownloaderTest {
     final List<Bytes32> storageRootHashes =
         new StoredMerklePatriciaTrie<>(
                 (location, hash) -> remoteStorage.getNodeData(hash),
-                remoteWorldState.rootHash(),
+                Bytes32.wrap(remoteWorldState.rootHash().getBytes()),
                 Function.identity(),
                 Function.identity())
             .entriesFrom(Bytes32.ZERO, 5).values().stream()
                 .map(RLP::input)
                 .map(PmtStateTrieAccountValue::readFrom)
                 .map(PmtStateTrieAccountValue::getStorageRoot)
+                .map(hash -> Bytes32.wrap(hash.getBytes()))
                 .collect(Collectors.toList());
     final Map<Bytes32, Bytes> allTrieNodes = new HashMap<>();
     final Set<Bytes32> knownNodes = new HashSet<>();
@@ -638,7 +645,7 @@ class FastWorldStateDownloaderTest {
 
     respondUntilDone(peers, responder, result);
     // World state should be available by the time the result is complete
-    assertThat(localStorage.isWorldStateAvailable(stateRoot)).isTrue();
+    assertThat(localStorage.isWorldStateAvailable(Bytes32.wrap(stateRoot.getBytes()))).isTrue();
 
     // Check that unknown trie nodes were requested
     final List<Bytes32> requestedHashes =
@@ -646,6 +653,7 @@ class FastWorldStateDownloaderTest {
             .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
+            .map(hash -> Bytes32.wrap(hash.getBytes()))
             .collect(Collectors.toList());
     assertThat(requestedHashes)
         .isNotEmpty()
@@ -758,7 +766,8 @@ class FastWorldStateDownloaderTest {
     // Add some nodes to the taskCollection
     final InMemoryTasksPriorityQueues<NodeDataRequest> taskCollection =
         spy(new InMemoryTasksPriorityQueues<>());
-    List<Bytes32> queuedHashes = getFirstSetOfChildNodeRequests(remoteStorage, stateRoot);
+    List<Bytes32> queuedHashes =
+        getFirstSetOfChildNodeRequests(remoteStorage, Bytes32.wrap(stateRoot.getBytes()));
     assertThat(queuedHashes).isNotEmpty(); // Sanity check
     for (Bytes32 bytes32 : queuedHashes) {
       taskCollection.add(new AccountTrieNodeDataRequest(Hash.wrap(bytes32), Optional.empty()));
@@ -789,7 +798,7 @@ class FastWorldStateDownloaderTest {
 
     CompletableFuture<Void> result = downloader.run(null, new FastSyncState(header, false));
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
-    assertThat(localStorage.isWorldStateAvailable(stateRoot)).isTrue();
+    assertThat(localStorage.isWorldStateAvailable(Bytes32.wrap(stateRoot.getBytes()))).isTrue();
 
     // Check that already enqueued trie nodes were requested
     final List<Bytes32> requestedHashes =
@@ -797,6 +806,7 @@ class FastWorldStateDownloaderTest {
             .filter(m -> m.getCode() == EthProtocolMessages.GET_NODE_DATA)
             .map(GetNodeDataMessage::readFrom)
             .flatMap(m -> StreamSupport.stream(m.hashes().spliterator(), true))
+            .map(hash -> Bytes32.wrap(hash.getBytes()))
             .collect(Collectors.toList());
     assertThat(requestedHashes).isNotEmpty().containsAll(queuedHashes);
 
@@ -968,7 +978,8 @@ class FastWorldStateDownloaderTest {
     assertAccountsMatch(localWorldState, accounts);
 
     // We shouldn't have any extra data locally
-    assertThat(localStorage.contains(otherHeader.getStateRoot())).isFalse();
+    assertThat(localStorage.contains(Bytes32.wrap(otherHeader.getStateRoot().getBytes())))
+        .isFalse();
     for (final Account otherAccount : otherAccounts) {
       assertThat(localWorldState.get(otherAccount.getAddress())).isNull();
     }

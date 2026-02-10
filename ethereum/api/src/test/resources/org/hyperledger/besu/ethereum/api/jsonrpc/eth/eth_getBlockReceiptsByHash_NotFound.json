@@ -8,12 +8,9 @@
     ]
   },
   "response": {
-  "jsonrpc": "2.0",
-  "id": 303,
-  "error" : {
-    "code" : -32000,
-    "message" : "Block not found"
-  }
-},
+    "jsonrpc": "2.0",
+    "id": 303,
+    "result": null
+  },
 "statusCode": 200
 }

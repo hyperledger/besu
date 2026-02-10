@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.HardforkId.ClassicHardforkId.MYSTIQUE;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.FRONTIER;
@@ -188,18 +187,6 @@ public class DefaultProtocolScheduleTest {
     final ProtocolSchedule schedule = builder.createProtocolSchedule();
 
     assertThat(schedule.getByBlockHeader(header(99, 8881L)).getHardforkId()).isEqualTo(LONDON);
-  }
-
-  @Test
-  public void getByBlockHeader_getLatestBlockNumberForkWhenNoTimestampForks() {
-    config.magneto(0);
-    config.mystique(100);
-    final ProtocolSchedule schedule = builder.createProtocolSchedule();
-
-    assertThat(schedule.getByBlockHeader(header(100, Long.MAX_VALUE)).getHardforkId())
-        .isEqualTo(MYSTIQUE);
-    assertThat(schedule.getByBlockHeader(header(200, Long.MAX_VALUE)).getHardforkId())
-        .isEqualTo(MYSTIQUE);
   }
 
   @Test

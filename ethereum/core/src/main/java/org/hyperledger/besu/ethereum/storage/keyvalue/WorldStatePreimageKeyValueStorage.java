@@ -71,7 +71,7 @@ public class WorldStatePreimageKeyValueStorage implements WorldStatePreimageStor
     @Override
     public WorldStatePreimageStorage.Updater putAccountTrieKeyPreimage(
         final Bytes32 trieKey, final Address preimage) {
-      transaction.put(trieKey.toArrayUnsafe(), preimage.toArrayUnsafe());
+      transaction.put(trieKey.toArrayUnsafe(), preimage.getBytes().toArrayUnsafe());
       return this;
     }
 

@@ -147,4 +147,19 @@ public class TransactionReceiptTest {
             true);
     assertThat(copy).isEqualTo(receipt);
   }
+
+  @Test
+  public void decodeEth69WithEmptyStringForType() {
+    String encodedReceiptWith0x00AsType =
+        "0xf85800808844e52a8ce6476327f84be494fccc2c35f0b84609e5f12c55dd85aba8d5d9bef7c08d72e5900112b81927ba5bb5f67ee594b4049bf0e4aed78db15d7bf2fc0c34e9a99de4efc08e8137ad659878f9e93df1f658367a";
+    String encodedReceiptWith0x80AsType =
+        "0xf85880808844e52a8ce6476327f84be494fccc2c35f0b84609e5f12c55dd85aba8d5d9bef7c08d72e5900112b81927ba5bb5f67ee594b4049bf0e4aed78db15d7bf2fc0c34e9a99de4efc08e8137ad659878f9e93df1f658367a";
+    final TransactionReceipt with0x00 =
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(Bytes.fromHexString(encodedReceiptWith0x00AsType)), false);
+    final TransactionReceipt with0x80 =
+        TransactionReceiptDecoder.readFrom(
+            RLP.input(Bytes.fromHexString(encodedReceiptWith0x80AsType)), false);
+    assertThat(with0x00).isEqualTo(with0x80);
+  }
 }

@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
@@ -37,11 +38,11 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,6 +73,10 @@ class MainnetBlockBodyValidatorTest {
 
     lenient().when(protocolSpec.getRequestsValidator()).thenReturn(requestValidator);
     lenient().when(requestValidator.validate(any())).thenReturn(true);
+
+    lenient()
+        .when(protocolSpec.getBlockGasUsedValidator())
+        .thenReturn(BlockGasUsedValidator.FRONTIER);
   }
 
   @Test
@@ -95,7 +100,11 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    NONE,
+                    OptionalLong.empty()))
         .isTrue();
   }
 
@@ -119,7 +128,11 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    NONE,
+                    OptionalLong.empty()))
         .isFalse();
   }
 
@@ -143,7 +156,11 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    NONE,
+                    OptionalLong.empty()))
         .isFalse();
   }
 
@@ -184,7 +201,7 @@ class MainnetBlockBodyValidatorTest {
                 NONE,
                 BodyValidationMode.LIGHT))
         .isTrue();
-    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any(), any());
     verify(bodyValidatorSpy, never()).validateBodyRoots(any(), any(), any());
   }
 
@@ -205,7 +222,7 @@ class MainnetBlockBodyValidatorTest {
                 BodyValidationMode.ROOT_ONLY))
         .isTrue();
 
-    verify(bodyValidatorSpy, never()).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, never()).validateBodyLight(any(), any(), any(), any(), any());
     verify(bodyValidatorSpy, times(1)).validateBodyRoots(any(), any(), any());
   }
 
@@ -225,7 +242,7 @@ class MainnetBlockBodyValidatorTest {
                 NONE,
                 BodyValidationMode.FULL))
         .isTrue();
-    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any());
+    verify(bodyValidatorSpy, times(1)).validateBodyLight(any(), any(), any(), any(), any());
     verify(bodyValidatorSpy, times(1)).validateBodyRoots(any(), any(), any());
   }
 

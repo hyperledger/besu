@@ -291,7 +291,9 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Stream<Transaction> sortedBySenderAndNonce(final Collection<Transaction> transactions) {
     return transactions.stream()
-        .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
+        .sorted(
+            Comparator.comparing((Transaction tx) -> tx.getSender().getBytes())
+                .thenComparing(Transaction::getNonce));
   }
 
   private boolean isPriorityTransaction(final Transaction transaction, final boolean isLocal) {
@@ -566,7 +568,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void selectTransactions(
-      final PendingTransactions.TransactionSelector transactionSelector) {
+      final PendingTransactions.PendingTransactionsSelector transactionSelector) {
     pendingTransactions.selectTransactions(transactionSelector);
   }
 

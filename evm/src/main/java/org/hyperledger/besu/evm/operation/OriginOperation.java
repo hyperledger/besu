@@ -33,7 +33,7 @@ public class OriginOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getOriginatorAddress());
+    frame.pushStackItem(frame.getOriginatorAddress().getBytes());
 
     return successResponse;
   }

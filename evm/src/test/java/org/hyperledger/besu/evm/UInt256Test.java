@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -23,6 +24,8 @@ import java.util.Random;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class UInt256Test {
   static final int SAMPLE_SIZE = 300;
@@ -366,5 +369,278 @@ public class UInt256Test {
       }
       assertThat(remainder).isEqualTo(expected);
     }
+  }
+
+  @Test
+  void testFromBytesBE_emptyArray() {
+    UInt256 result = UInt256.fromBytesBE(new byte[0]);
+    assertThat(result).isEqualTo(UInt256.ZERO);
+    assertThat(result.isZero()).isTrue();
+  }
+
+  @Test
+  void testFromBytesBE_singleZeroByte() {
+    UInt256 result = UInt256.fromBytesBE(new byte[] {0});
+    assertThat(result).isEqualTo(UInt256.ZERO);
+    assertThat(result.intValue()).isEqualTo(0);
+  }
+
+  @Test
+  void testFromBytesBE_singleByte() {
+    UInt256 result = UInt256.fromBytesBE(new byte[] {0x42});
+    assertThat(result.intValue()).isEqualTo(0x42);
+    assertThat(result.longValue()).isEqualTo(0x42L);
+  }
+
+  @Test
+  void testFromBytesBE_twoBytesFF() {
+    UInt256 result = UInt256.fromBytesBE(new byte[] {(byte) 0xFF, (byte) 0xFF});
+    assertThat(result.intValue()).isEqualTo(0xFFFF);
+    assertThat(result.longValue()).isEqualTo(0xFFFFL);
+  }
+
+  @Test
+  void testFromBytesBE_fourBytes() {
+    UInt256 result = UInt256.fromBytesBE(new byte[] {0x01, 0x02, 0x03, 0x04});
+    assertThat(result.intValue()).isEqualTo(0x01020304);
+  }
+
+  @Test
+  void testFromBytesBE_eightBytes() {
+    UInt256 result =
+        UInt256.fromBytesBE(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+    assertThat(result.longValue()).isEqualTo(0x0102030405060708L);
+  }
+
+  @Test
+  void testFromBytesBE_exactly32Bytes_allZeros() {
+    byte[] bytes = new byte[32]; // all zeros
+    UInt256 result = UInt256.fromBytesBE(bytes);
+    assertThat(result).isEqualTo(UInt256.ZERO);
+    assertThat(result.isZero()).isTrue();
+  }
+
+  @Test
+  void testFromBytesBE_exactly32Bytes_allOnes() {
+    byte[] bytes = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      bytes[i] = (byte) 0xFF;
+    }
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    // Should be MAX_UINT256 (2^256 - 1)
+    byte[] resultBytes = result.toBytesBE();
+    assertArrayEquals(bytes, resultBytes);
+  }
+
+  @Test
+  void testFromBytesBE_exactly32Bytes_one() {
+    byte[] bytes = new byte[32];
+    bytes[31] = 0x01; // least significant byte
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    assertThat(result.intValue()).isEqualTo(1);
+    assertThat(result.longValue()).isEqualTo(1L);
+  }
+
+  @Test
+  void testFromBytesBE_exactly32Bytes_pattern() {
+    byte[] bytes = new byte[32];
+    // Create pattern: 0x0102030405060708...1F20
+    for (int i = 0; i < 32; i++) {
+      bytes[i] = (byte) (i + 1);
+    }
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    // Verify round-trip
+    byte[] resultBytes = result.toBytesBE();
+    assertArrayEquals(bytes, resultBytes);
+  }
+
+  @Test
+  void testFromBytesBE_exactly32Bytes_highBitSet() {
+    byte[] bytes = new byte[32];
+    bytes[0] = (byte) 0x80; // high bit set (but still unsigned)
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    // Verify it's treated as unsigned (not negative)
+    byte[] resultBytes = result.toBytesBE();
+    assertArrayEquals(bytes, resultBytes);
+  }
+
+  @Test
+  void testFromBytesBE_roundTrip_variousLengths() {
+    for (int len = 1; len <= 32; len++) {
+      byte[] original = new byte[len];
+      for (int i = 0; i < len; i++) {
+        original[i] = (byte) (i + 1);
+      }
+
+      UInt256 value = UInt256.fromBytesBE(original);
+      byte[] result = value.toBytesBE();
+
+      // Result is always 32 bytes, so compare with left-padded original
+      byte[] expected = new byte[32];
+      System.arraycopy(original, 0, expected, 32 - len, len);
+
+      assertArrayEquals(expected, result, "Failed for length " + len);
+    }
+  }
+
+  @Test
+  void testFromBytesBE_leadingZeros() {
+    // Leading zeros should be handled correctly
+    byte[] bytes = new byte[] {0x00, 0x00, 0x00, 0x01, 0x02, 0x03};
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    assertThat(result.intValue()).isEqualTo(0x010203);
+  }
+
+  @Test
+  void testFromBytesBE_maxInt() {
+    byte[] bytes = new byte[] {0x7F, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    assertThat(result.intValue()).isEqualTo(Integer.MAX_VALUE);
+  }
+
+  @Test
+  void testFromBytesBE_maxLong() {
+    byte[] bytes =
+        new byte[] {
+          0x7F,
+          (byte) 0xFF,
+          (byte) 0xFF,
+          (byte) 0xFF,
+          (byte) 0xFF,
+          (byte) 0xFF,
+          (byte) 0xFF,
+          (byte) 0xFF
+        };
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    assertThat(result.longValue()).isEqualTo(Long.MAX_VALUE);
+  }
+
+  @Test
+  void testFromBytesBE_unsignedIntMax() {
+    // 0xFFFFFFFF as unsigned = 4294967295
+    byte[] bytes = new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    assertThat(result.longValue()).isEqualTo(0xFFFFFFFFL);
+  }
+
+  @Test
+  void testFromBytesBE_unsignedLongMax() {
+    // 0xFFFFFFFFFFFFFFFF as unsigned
+    byte[] bytes =
+        new byte[] {
+          (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+          (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF
+        };
+    UInt256 result = UInt256.fromBytesBE(bytes);
+
+    // When converted back to long, should get the bit pattern
+    assertThat(result.longValue()).isEqualTo(-1L); // all bits set
+  }
+
+  @Test
+  void testFromBytesBE_boundaryValues() {
+    // Test 1, 2, 3, 4, 8, 16, 32 bytes
+    int[] lengths = {1, 2, 3, 4, 8, 16, 32};
+
+    for (int len : lengths) {
+      byte[] bytes = new byte[len];
+      bytes[len - 1] = (byte) 0xFF; // set last byte
+
+      UInt256 result = UInt256.fromBytesBE(bytes);
+      assertThat(result.intValue() & 0xFF).isEqualTo(0xFF);
+    }
+  }
+
+  @Test
+  void testFromBytesBE_comparisonWithBigInteger() {
+    byte[] bytes =
+        new byte[] {0x12, 0x34, 0x56, 0x78, (byte) 0x9A, (byte) 0xBC, (byte) 0xDE, (byte) 0xF0};
+
+    UInt256 result = UInt256.fromBytesBE(bytes);
+    java.math.BigInteger expected = new java.math.BigInteger(1, bytes);
+
+    assertThat(result.toBigInteger()).isEqualTo(expected);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 127, 128, 255, 256, 65535, 65536, Integer.MAX_VALUE})
+  void testFromBytesBE_knownIntegers(final int value) {
+    // Convert int to bytes (big-endian)
+    byte[] bytes = new byte[4];
+    bytes[0] = (byte) (value >>> 24);
+    bytes[1] = (byte) (value >>> 16);
+    bytes[2] = (byte) (value >>> 8);
+    bytes[3] = (byte) value;
+
+    UInt256 result = UInt256.fromBytesBE(bytes);
+    assertThat(result.intValue()).isEqualTo(value);
+  }
+
+  @Test
+  void testFromBytesBE_powerOfTwo() {
+    // Test 2^8, 2^16, 2^32, 2^64, 2^128, 2^255
+
+    // 2^8 = 256
+    byte[] bytes8 = new byte[] {0x01, 0x00};
+    assertThat(UInt256.fromBytesBE(bytes8).intValue()).isEqualTo(256);
+
+    // 2^16 = 65536
+    byte[] bytes16 = new byte[] {0x01, 0x00, 0x00};
+    assertThat(UInt256.fromBytesBE(bytes16).intValue()).isEqualTo(65536);
+
+    // 2^32
+    byte[] bytes32 = new byte[] {0x01, 0x00, 0x00, 0x00, 0x00};
+    assertThat(UInt256.fromBytesBE(bytes32).longValue()).isEqualTo(0x100000000L);
+  }
+
+  @Test
+  void testFromBytesBE_alternatingPattern() {
+    // 0xAA pattern
+    byte[] bytesAA = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      bytesAA[i] = (byte) 0xAA;
+    }
+    UInt256 resultAA = UInt256.fromBytesBE(bytesAA);
+    assertArrayEquals(bytesAA, resultAA.toBytesBE());
+
+    // 0x55 pattern
+    byte[] bytes55 = new byte[32];
+    for (int i = 0; i < 32; i++) {
+      bytes55[i] = (byte) 0x55;
+    }
+    UInt256 result55 = UInt256.fromBytesBE(bytes55);
+    assertArrayEquals(bytes55, result55.toBytesBE());
+  }
+
+  @Test
+  void testFromBytesBE_consistency() {
+    // Verify same bytes always produce same result
+    byte[] bytes = new byte[] {0x01, 0x02, 0x03, 0x04, 0x05};
+
+    UInt256 result1 = UInt256.fromBytesBE(bytes);
+    UInt256 result2 = UInt256.fromBytesBE(bytes);
+
+    assertThat(result1).isEqualTo(result2);
+    assertThat(result1.hashCode()).isEqualTo(result2.hashCode());
+  }
+
+  @Test
+  void testFromBytesBE_differentLengthsSameValue() {
+    // Leading zeros should not affect value
+    byte[] bytes1 = new byte[] {0x01, 0x02, 0x03};
+    byte[] bytes2 = new byte[] {0x00, 0x00, 0x01, 0x02, 0x03};
+
+    UInt256 result1 = UInt256.fromBytesBE(bytes1);
+    UInt256 result2 = UInt256.fromBytesBE(bytes2);
+
+    assertThat(result1).isEqualTo(result2);
   }
 }

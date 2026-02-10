@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -86,10 +85,10 @@ public abstract class PathBasedWorldState
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(
-                worldStateKeyValueStorage.getWorldStateRootHash().orElse(getEmptyTrieHash())));
-    this.worldStateBlockHash =
-        Hash.wrap(
-            Bytes32.wrap(worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
+                worldStateKeyValueStorage
+                    .getWorldStateRootHash()
+                    .orElse(getEmptyTrieHash().getBytes())));
+    this.worldStateBlockHash = worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO);
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
     this.worldStateConfig = worldStateConfig;
@@ -140,6 +139,10 @@ public abstract class PathBasedWorldState
   private boolean isModifyingHeadWorldState(
       final WorldStateKeyValueStorage worldStateKeyValueStorage) {
     return !(worldStateKeyValueStorage instanceof PathBasedSnapshotWorldStateKeyValueStorage);
+  }
+
+  public boolean isStorageFrozen() {
+    return isStorageFrozen;
   }
 
   /**
@@ -210,8 +213,6 @@ public abstract class PathBasedWorldState
         .addArgument(maybeBlockHeader)
         .log();
 
-    final PathBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
-
     boolean success = false;
 
     final PathBasedWorldStateKeyValueStorage.Updater stateUpdater =
@@ -230,14 +231,17 @@ public abstract class PathBasedWorldState
         verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(accumulator, calculatedRootHash, blockHeader, this);
             };
         cacheWorldState =
             () -> cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
+            .put(
+                TRIE_BRANCH_STORAGE,
+                WORLD_BLOCK_HASH_KEY,
+                blockHeader.getHash().getBytes().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
@@ -246,7 +250,10 @@ public abstract class PathBasedWorldState
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
+          .put(
+              TRIE_BRANCH_STORAGE,
+              WORLD_ROOT_HASH_KEY,
+              calculatedRootHash.getBytes().toArrayUnsafe());
 
       stateUpdater
           .getWorldStateTransaction()
@@ -283,7 +290,7 @@ public abstract class PathBasedWorldState
   }
 
   @Override
-  public WorldUpdater updater() {
+  public PathBasedWorldStateUpdateAccumulator<?> updater() {
     return accumulator;
   }
 
@@ -293,7 +300,7 @@ public abstract class PathBasedWorldState
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
-    return Hash.wrap(worldStateRootHash);
+    return worldStateRootHash;
   }
 
   protected static final KeyValueStorageTransaction noOpTx =
@@ -316,6 +323,11 @@ public abstract class PathBasedWorldState
 
         @Override
         public void rollback() {
+          // no-op
+        }
+
+        @Override
+        public void close() {
           // no-op
         }
       };
@@ -341,6 +353,11 @@ public abstract class PathBasedWorldState
 
         @Override
         public void rollback() {
+          // no-op
+        }
+
+        @Override
+        public void close() {
           // no-op
         }
       };
@@ -417,7 +434,7 @@ public abstract class PathBasedWorldState
   @Override
   public abstract Optional<Bytes> getCode(@NotNull final Address address, final Hash codeHash);
 
-  protected abstract Hash calculateRootHash(
+  public abstract Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater);
 

@@ -24,6 +24,7 @@ import java.math.BigInteger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class BlockOverridesParameterTest {
@@ -44,7 +45,8 @@ public class BlockOverridesParameterTest {
           "blobBaseFee": "0x4a817c800",
           "stateRoot": "0xce92856dbb957e101d5393e9c68dbeef1ac0d63853a98f146112d614dd6748f0",
           "difficulty": "1000000000000",
-          "mixHash": "0xd9b793d34b9e642d2ee44b5a517c45dc39bae4fe14bfe41e3970645de8775471"
+          "mixHash": "0xd9b793d34b9e642d2ee44b5a517c45dc39bae4fe14bfe41e3970645de8775471",
+          "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000001"
         }
         """;
 
@@ -59,8 +61,10 @@ public class BlockOverridesParameterTest {
                 "0x6a7fd27f1bc68551be2aaade72274f9234e1d473b77451bce237b7cb2c2f3b80"));
     assertThat(param.getMixHashOrPrevRandao())
         .contains(
-            Hash.fromHexString(
-                "0xd9b793d34b9e642d2ee44b5a517c45dc39bae4fe14bfe41e3970645de8775471"));
+            Bytes32.wrap(
+                Hash.fromHexString(
+                        "0xd9b793d34b9e642d2ee44b5a517c45dc39bae4fe14bfe41e3970645de8775471")
+                    .getBytes()));
     assertThat(param.getGasLimit()).contains(44912026L);
     assertThat(param.getFeeRecipient())
         .contains(Address.fromHexString("0x4838b106fce9647bdf1e7877bf73ce8b0bad5f97"));
@@ -71,5 +75,11 @@ public class BlockOverridesParameterTest {
             Hash.fromHexString(
                 "0xce92856dbb957e101d5393e9c68dbeef1ac0d63853a98f146112d614dd6748f0"));
     assertThat(param.getDifficulty()).contains(new BigInteger("1000000000000"));
+    assertThat(param.getParentBeaconBlockRoot())
+        .contains(
+            Bytes32.wrap(
+                Hash.fromHexString(
+                        "0x0000000000000000000000000000000000000000000000000000000000000001")
+                    .getBytes()));
   }
 }

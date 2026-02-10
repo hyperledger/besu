@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evmtool.StateTestSubCommand.COMMAND_NAME;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StreamingOperationTracer;
@@ -278,8 +278,9 @@ public class StateTestSubCommand implements Runnable {
         final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
         final WorldUpdater worldStateUpdater = worldState.updater();
         final Stopwatch timer = Stopwatch.createStarted();
-        // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
-        final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
+        // EIP-4844: use excessBlobGas from block header for correct blob gas price calculation
+        final BlobGas excessBlobGas = blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO);
+        final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
         final TransactionProcessingResult result =
             processor.processTransaction(
                 worldStateUpdater,
@@ -292,19 +293,24 @@ public class StateTestSubCommand implements Runnable {
                 TransactionValidationParams.processingBlock(),
                 blobGasPrice);
         timer.stop();
-        if (shouldClearEmptyAccounts(spec.getFork())) {
-          final Account coinbase =
-              worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-          if (coinbase != null && coinbase.isEmpty()) {
-            worldStateUpdater.deleteAccount(coinbase.getAddress());
+        // Only touch coinbase and commit state changes if the transaction was valid.
+        // When transaction fails validation (e.g., insufficient balance), we should not
+        // modify state at all - matching geth's behavior for consensus compatibility.
+        if (!result.isInvalid()) {
+          if (shouldClearEmptyAccounts(spec.getFork())) {
+            final Account coinbase =
+                worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+            if (coinbase != null && coinbase.isEmpty()) {
+              worldStateUpdater.deleteAccount(coinbase.getAddress());
+            }
+            final Account sender = worldStateUpdater.getAccount(transaction.getSender());
+            if (sender != null && sender.isEmpty()) {
+              worldStateUpdater.deleteAccount(sender.getAddress());
+            }
           }
-          final Account sender = worldStateUpdater.getAccount(transaction.getSender());
-          if (sender != null && sender.isEmpty()) {
-            worldStateUpdater.deleteAccount(sender.getAddress());
-          }
+          worldStateUpdater.commit();
+          worldState.persist(blockHeader);
         }
-        worldStateUpdater.commit();
-        worldState.persist(blockHeader);
 
         summaryLine.put("output", result.getOutput().toUnprefixedHexString());
         final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
@@ -328,10 +334,10 @@ public class StateTestSubCommand implements Runnable {
         summaryLine.put("d", spec.getDataIndex());
         summaryLine.put("g", spec.getGasIndex());
         summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("stateRoot", worldState.rootHash().toHexString());
+        summaryLine.put("stateRoot", worldState.rootHash().getBytes().toHexString());
         final List<Log> logs = result.getLogs();
         final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
-        summaryLine.put("postLogsHash", actualLogsHash.toHexString());
+        summaryLine.put("postLogsHash", actualLogsHash.getBytes().toHexString());
         summaryLine.put(
             "pass",
             spec.getExpectException() == null

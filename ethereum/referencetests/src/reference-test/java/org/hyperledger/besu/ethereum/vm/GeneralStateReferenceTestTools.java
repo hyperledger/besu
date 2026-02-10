@@ -26,10 +26,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.DelegatingBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.SoftAssertions;
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 import org.slf4j.Logger;
@@ -109,9 +109,6 @@ public class GeneralStateReferenceTestTools {
     // Don't do time-consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
-
-    // EOF tests are written against an older version of the spec
-    params.ignore("/stEOF/");
 
     // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
     params.ignore("/stEIP2537/");
@@ -243,7 +240,7 @@ public class GeneralStateReferenceTestTools {
               if (!storageEntries.isEmpty()) {
                 accountJson.set("storage", storageJson);
               }
-              worldStateJson.set(account.getAddress().map(DelegatingBytes::toHexString).orElse(Bytes.EMPTY.toHexString()), accountJson);
+              worldStateJson.set(account.getAddress().map(BytesHolder::getBytes).map(Bytes::toHexString).orElse(Bytes.EMPTY.toHexString()), accountJson);
             });
     LOG.error("Calculated world state: \n{}", worldStateJson.toPrettyString());
   }

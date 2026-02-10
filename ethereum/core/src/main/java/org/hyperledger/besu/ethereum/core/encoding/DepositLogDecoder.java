@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.ethereum.mainnet.requests.InvalidDepositLogLayoutException;
-import org.hyperledger.besu.evm.log.Log;
 
 import java.math.BigInteger;
 

@@ -113,6 +113,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -897,7 +898,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     selector.buildTransactionListForBlock();
 
-    @SuppressWarnings("unchecked")
     ArgumentCaptor<TransactionEvaluationContext> argumentCaptor =
         ArgumentCaptor.forClass(TransactionEvaluationContext.class);
 
@@ -1265,7 +1265,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     transactionPool.addRemoteTransactions(List.of(tx));
 
     selector.get().buildTransactionListForBlock();
-    assertThat(tecIsCancelled).isTrue();
+    await().atMost(Duration.ofMillis(500)).until(tecIsCancelled::get);
   }
 
   private void internalBlockSelectionTimeoutSimulation(
@@ -1539,7 +1539,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsExactlyInAnyOrderEntriesOf(expectedEntries);
 
     assertThat(transactionPool.getTransactionByHash(lateTx.getHash()).isEmpty())
-        .isEqualTo(isLongProcessingTxDropped ? true : false);
+        .isEqualTo(isLongProcessingTxDropped);
   }
 
   private static Stream<Arguments>
@@ -1856,7 +1856,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
           SignatureAlgorithmFactory.getInstance().createPrivateKey(BigInteger.valueOf(seed));
       final var publicKey = SignatureAlgorithmFactory.getInstance().createPublicKey(privateKey);
       this.keyPair = new KeyPair(privateKey, publicKey);
-      this.address = Address.extract(Hash.hash(publicKey.getEncodedBytes()));
+      this.address =
+          Address.extract(Bytes32.wrap(Hash.hash(publicKey.getEncodedBytes()).getBytes()));
     }
 
     public KeyPair keyPair() {

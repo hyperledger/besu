@@ -48,7 +48,8 @@ public final class ReferenceTestMergeBlockCreator {
       final Bytes32 random,
       final long timestamp,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber) {
 
     return new MergeBlockCreator(
             miningConfiguration,
@@ -64,6 +65,7 @@ public final class ReferenceTestMergeBlockCreator {
             withdrawals,
             Optional.of(random),
             parentBeaconBlockRoot,
+            slotNumber,
             timestamp,
             true,
             parentHeader)

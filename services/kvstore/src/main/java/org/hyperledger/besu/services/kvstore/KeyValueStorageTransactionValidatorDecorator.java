@@ -69,4 +69,12 @@ public class KeyValueStorageTransactionValidatorDecorator implements KeyValueSto
     active = false;
     transaction.rollback();
   }
+
+  @Override
+  public void close() {
+    checkState(active, "Cannot close a completed transaction.");
+    checkState(!isClosed.get(), "Cannot invoke close() on a closed storage.");
+    active = false;
+    transaction.close();
+  }
 }

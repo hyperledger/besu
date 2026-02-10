@@ -59,13 +59,13 @@ public class IbftLegacyBesuControllerBuilder extends BesuControllerBuilder {
       final MiningConfiguration miningConfiguration,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager) {
-    return new NoopMiningCoordinator(miningConfiguration);
+    return new NoopMiningCoordinator();
   }
 
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolSchedule.create(
-        genesisConfigOptions, isRevertReasonEnabled, evmConfiguration);
+        genesisConfigOptions, isRevertReasonEnabled, evmConfiguration, metricsSystem);
   }
 
   @Override

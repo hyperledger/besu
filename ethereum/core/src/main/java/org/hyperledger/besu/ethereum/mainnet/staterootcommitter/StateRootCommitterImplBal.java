@@ -18,7 +18,11 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedLayeredWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 
 import java.time.Duration;
@@ -31,15 +35,18 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 final class StateRootCommitterImplBal implements StateRootCommitter {
+
   private static final Logger LOG = LoggerFactory.getLogger(StateRootCommitterImplBal.class);
 
-  private final CompletableFuture<Hash> balRootFuture;
+  private final CompletableFuture<BalRootComputation> balRootFuture;
   private final BalConfiguration balConfiguration;
-  private final StateRootCommitterImplSync computeAndCommitRoot = new StateRootCommitterImplSync();
+  private final StateRootCommitterImplSync syncCommitter = new StateRootCommitterImplSync();
 
   StateRootCommitterImplBal(
-      final CompletableFuture<Hash> balRootFuture, final BalConfiguration balConfiguration) {
+      final CompletableFuture<BalRootComputation> balRootFuture,
+      final BalConfiguration balConfiguration) {
     this.balRootFuture = balRootFuture;
     this.balConfiguration = balConfiguration;
   }
@@ -50,34 +57,18 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
       final WorldStateKeyValueStorage.Updater stateUpdater,
       final BlockHeader blockHeader,
       final WorldStateConfig cfg) {
-    final Hash computed =
-        computeAndCommitRoot.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
 
     final Duration balRootTimeout = balConfiguration.getBalStateRootTimeout();
 
-    if (balConfiguration.isBalLenientOnStateRootMismatch()) {
-      final Optional<Hash> maybeBalRoot = waitForBalRootLenient(balRootTimeout);
-      if (maybeBalRoot.isEmpty()) {
-        LOG.warn(
-            "BAL root unavailable (lenient mode); proceeding with computed state root {}",
-            computed);
-        return computed;
-      }
-
-      final Hash balRoot = maybeBalRoot.get();
-      if (!computed.equals(balRoot)) {
-        LOG.error("BAL root mismatch: computed {} vs BAL {}", computed, balRoot);
-      }
-      return computed;
-    } else {
-      final Hash balRoot = waitForBalRootStrict(balRootTimeout);
-      if (!computed.equals(balRoot)) {
-        final String msg =
-            String.format("BAL root mismatch: computed %s vs BAL %s", computed, balRoot);
-        throw new IllegalStateException(msg);
-      }
-      return computed;
+    if (balConfiguration.isBalStateRootTrusted()) {
+      return computeWithTrustedBalRoot(
+          (PathBasedWorldState) worldState,
+          (PathBasedWorldStateKeyValueStorage.Updater) stateUpdater,
+          blockHeader,
+          balRootTimeout);
     }
+
+    return computeWithBalVerification(worldState, stateUpdater, blockHeader, cfg, balRootTimeout);
   }
 
   @Override
@@ -85,7 +76,88 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     balRootFuture.cancel(true);
   }
 
-  private Hash waitForBalRootStrict(final Duration balRootTimeout) {
+  private Hash computeWithTrustedBalRoot(
+      final PathBasedWorldState worldState,
+      final PathBasedWorldStateKeyValueStorage.Updater stateUpdater,
+      final BlockHeader blockHeader,
+      final Duration balRootTimeout) {
+
+    final BalRootComputation balComputation = waitForBalRootStrict(balRootTimeout);
+    final Hash balStateRoot = balComputation.root();
+
+    if (!blockHeader.getStateRoot().equals(balStateRoot)) {
+      throw new IllegalStateException("BAL-computed root does not match block header state root");
+    }
+    importBalStateChanges(worldState, stateUpdater, balComputation);
+
+    return balStateRoot;
+  }
+
+  private Hash computeWithBalVerification(
+      final MutableWorldState worldState,
+      final WorldStateKeyValueStorage.Updater stateUpdater,
+      final BlockHeader blockHeader,
+      final WorldStateConfig cfg,
+      final Duration balRootTimeout) {
+
+    final Hash computedRoot =
+        syncCommitter.computeRootAndCommit(worldState, stateUpdater, blockHeader, cfg);
+
+    if (balConfiguration.isBalLenientOnStateRootMismatch()) {
+      return handleBalLenientMode(computedRoot, balRootTimeout);
+    } else {
+      return handleBalStrictMode(computedRoot, balRootTimeout);
+    }
+  }
+
+  private Hash handleBalLenientMode(final Hash computedRoot, final Duration balRootTimeout) {
+    final Optional<BalRootComputation> maybeBalRoot = waitForBalRootLenient(balRootTimeout);
+
+    if (maybeBalRoot.isEmpty()) {
+      LOG.warn(
+          "BAL root unavailable (lenient mode); proceeding with computed state root {}",
+          computedRoot);
+      return computedRoot;
+    }
+
+    final Hash balRoot = maybeBalRoot.get().root();
+    if (!computedRoot.equals(balRoot)) {
+      LOG.error("BAL root mismatch: computed {} vs BAL {}", computedRoot, balRoot);
+    }
+
+    return computedRoot;
+  }
+
+  private Hash handleBalStrictMode(final Hash computedRoot, final Duration balRootTimeout) {
+    final Hash balRoot = waitForBalRootStrict(balRootTimeout).root();
+
+    if (!computedRoot.equals(balRoot)) {
+      final String errorMessage =
+          String.format("BAL root mismatch: computed %s vs BAL %s", computedRoot, balRoot);
+      throw new IllegalStateException(errorMessage);
+    }
+
+    return computedRoot;
+  }
+
+  private void importBalStateChanges(
+      final PathBasedWorldState worldState,
+      final PathBasedWorldStateKeyValueStorage.Updater stateUpdater,
+      final BalRootComputation balComputation) {
+
+    final PathBasedWorldStateUpdateAccumulator balAccumulator = balComputation.accumulator();
+    final PathBasedWorldStateUpdateAccumulator blockAccumulator = worldState.updater();
+
+    blockAccumulator.importStateChangesFromSource(balAccumulator);
+
+    final PathBasedLayeredWorldStateKeyValueStorage balStateUpdater =
+        (PathBasedLayeredWorldStateKeyValueStorage) balAccumulator.getWorldStateStorage();
+    if (!worldState.isStorageFrozen()) {
+      balStateUpdater.mergeTo(stateUpdater.getWorldStateTransaction());
+    }
+  }
+
+  private BalRootComputation waitForBalRootStrict(final Duration balRootTimeout) {
     try {
       return getWithConfiguredTimeout(balRootTimeout);
     } catch (final TimeoutException e) {
@@ -100,7 +172,7 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     }
   }
 
-  private Optional<Hash> waitForBalRootLenient(final Duration balRootTimeout) {
+  private Optional<BalRootComputation> waitForBalRootLenient(final Duration balRootTimeout) {
     try {
       return Optional.of(getWithConfiguredTimeout(balRootTimeout));
     } catch (final TimeoutException e) {
@@ -118,7 +190,7 @@ final class StateRootCommitterImplBal implements StateRootCommitter {
     }
   }
 
-  private Hash getWithConfiguredTimeout(final Duration balRootTimeout)
+  private BalRootComputation getWithConfiguredTimeout(final Duration balRootTimeout)
       throws InterruptedException, ExecutionException, TimeoutException {
     if (balRootTimeout.isNegative()) {
       return balRootFuture.join();

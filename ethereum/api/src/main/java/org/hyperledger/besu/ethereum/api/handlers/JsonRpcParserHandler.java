@@ -18,17 +18,62 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.function.BiConsumer;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 public class JsonRpcParserHandler {
 
+  private static final JsonFactory JSON_FACTORY = new JsonFactory();
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(JSON_FACTORY);
+
   private JsonRpcParserHandler() {}
+
+  public static Handler<Buffer> ipcHandler(
+      final BiConsumer<JsonObject, JsonArray> onParsed, final Runnable onError) {
+
+    return buffer -> {
+      if (buffer.length() == 0) {
+        onError.run();
+        return;
+      }
+
+      try (ByteArrayInputStream inputStream = new ByteArrayInputStream(buffer.getBytes());
+          JsonParser parser = JSON_FACTORY.createParser(inputStream)) {
+
+        // Read multiple JSON objects from the stream, similar to Go's json.Decoder
+        while (parser.nextToken() != null) {
+          JsonToken token = parser.currentToken();
+
+          if (token == JsonToken.START_OBJECT) {
+            // Parse JSON object
+            JsonObject obj = new JsonObject(OBJECT_MAPPER.readTree(parser).toString());
+            onParsed.accept(obj, null);
+          } else if (token == JsonToken.START_ARRAY) {
+            // Parse JSON array
+            JsonArray arr = new JsonArray(OBJECT_MAPPER.readTree(parser).toString());
+            onParsed.accept(null, arr);
+          }
+        }
+      } catch (IOException e) {
+        onError.run();
+      }
+    };
+  }
 
   public static Handler<RoutingContext> handler() {
     return ctx -> {

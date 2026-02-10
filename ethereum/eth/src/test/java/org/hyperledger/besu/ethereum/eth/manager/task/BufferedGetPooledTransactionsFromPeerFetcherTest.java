@@ -78,7 +78,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   public void setup() {
     metricsSystem = new StubMetricsSystem();
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
-    transactionTracker = new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
+    transactionTracker =
+        new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers, ethScheduler);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
     ScheduledFuture<?> mock = mock(ScheduledFuture.class);

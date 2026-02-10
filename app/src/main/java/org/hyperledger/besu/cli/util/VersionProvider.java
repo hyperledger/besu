@@ -39,7 +39,8 @@ public class VersionProvider implements CommandLine.IVersionProvider {
     // the PluginVersionsProvider has registered plugins and their versions by this time.
     return Stream.concat(
             Stream.of(BesuVersionUtils.version()),
-            pluginVersionsProvider.getPluginVersions().stream())
+            pluginVersionsProvider.getPluginVersions().entrySet().stream()
+                .map(e -> e.getKey() + "/" + e.getValue()))
         .toArray(String[]::new);
   }
 }

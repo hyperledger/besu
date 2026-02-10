@@ -17,7 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
 
-import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -83,7 +84,7 @@ public class BesuNodeConfigurationBuilder {
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
-  private NetworkName network = null;
+  private NetworkDefinition network = null;
   private boolean secp256K1Native = true;
   private boolean altbn128Native = true;
   private final List<String> plugins = new ArrayList<>();
@@ -97,6 +98,7 @@ public class BesuNodeConfigurationBuilder {
   private Map<String, String> environment = new HashMap<>();
   private SynchronizerConfiguration synchronizerConfiguration;
   private Optional<KeyValueStorageFactory> storageImplementation = Optional.empty();
+  private PluginConfiguration pluginConfiguration;
 
   public BesuNodeConfigurationBuilder() {
     // Check connections more frequently during acceptance tests to cut down on
@@ -265,7 +267,7 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder network(final NetworkName network) {
+  public BesuNodeConfigurationBuilder network(final NetworkDefinition network) {
     this.network = network;
     return this;
   }
@@ -462,6 +464,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder pluginConfiguration(
+      final PluginConfiguration pluginConfiguration) {
+    this.pluginConfiguration = pluginConfiguration;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     if (name == null) {
       throw new IllegalStateException("Name is required");
@@ -503,6 +511,7 @@ public class BesuNodeConfigurationBuilder {
         strictTxReplayProtectionEnabled,
         environment,
         synchronizerConfiguration,
-        storageImplementation);
+        storageImplementation,
+        pluginConfiguration);
   }
 }

@@ -53,10 +53,6 @@ public class EvmSpecTest {
     EvmSpec cancunEVM = EvmSpec.cancun(EvmConfiguration.DEFAULT);
     assertThat(cancunEVM.getChainId()).contains(defaultChainId);
 
-    EvmSpec cancunEOFEVM =
-        EvmSpec.cancunEOF(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
-    assertThat(cancunEOFEVM.getChainId()).contains(defaultChainId);
-
     EvmSpec pragueEVM = EvmSpec.prague(defaultChainId.toBigInteger(), EvmConfiguration.DEFAULT);
     assertThat(pragueEVM.getChainId()).contains(defaultChainId);
 

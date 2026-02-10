@@ -19,8 +19,6 @@ import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.code.CodeFactory;
-import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -32,12 +30,16 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
+import org.hyperledger.besu.evm.operation.AddOperationOptimized;
 import org.hyperledger.besu.evm.operation.AndOperation;
+import org.hyperledger.besu.evm.operation.AndOperationOptimized;
 import org.hyperledger.besu.evm.operation.ByteOperation;
 import org.hyperledger.besu.evm.operation.ChainIdOperation;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
+import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
@@ -52,10 +54,12 @@ import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.NotOperation;
+import org.hyperledger.besu.evm.operation.NotOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
+import org.hyperledger.besu.evm.operation.OrOperationOptimized;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -67,9 +71,11 @@ import org.hyperledger.besu.evm.operation.SModOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
+import org.hyperledger.besu.evm.operation.SwapNOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
+import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
@@ -93,12 +99,12 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
-  private final CodeFactory codeFactory;
   private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
 
   // Optimized operation flags
   private final boolean enableShanghai;
+  private final boolean enableAmsterdam;
   private final boolean enableOsaka;
 
   private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
@@ -123,12 +129,8 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
     this.jumpDestOnlyCodeCache = new JumpDestOnlyCodeCache(evmConfiguration);
 
-    codeFactory =
-        new CodeFactory(
-            evmSpecVersion.maxEofVersion,
-            evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
-
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
+    enableAmsterdam = EvmSpecVersion.AMSTERDAM.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
   }
 
@@ -139,15 +141,6 @@ public class EVM {
    */
   public GasCalculator getGasCalculator() {
     return gasCalculator;
-  }
-
-  /**
-   * Gets max eof version.
-   *
-   * @return the max eof version
-   */
-  public int getMaxEOFVersion() {
-    return evmSpecVersion.maxEofVersion;
   }
 
   /**
@@ -238,7 +231,10 @@ public class EVM {
         result =
             switch (opcode) {
               case 0x00 -> StopOperation.staticOperation(frame);
-              case 0x01 -> AddOperation.staticOperation(frame);
+              case 0x01 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AddOperationOptimized.staticOperation(frame)
+                      : AddOperation.staticOperation(frame);
               case 0x02 -> MulOperation.staticOperation(frame);
               case 0x03 -> SubOperation.staticOperation(frame);
               case 0x04 -> DivOperation.staticOperation(frame);
@@ -267,10 +263,22 @@ public class EVM {
               case 0x12 -> SLtOperation.staticOperation(frame);
               case 0x13 -> SGtOperation.staticOperation(frame);
               case 0x15 -> IsZeroOperation.staticOperation(frame);
-              case 0x16 -> AndOperation.staticOperation(frame);
-              case 0x17 -> OrOperation.staticOperation(frame);
-              case 0x18 -> XorOperation.staticOperation(frame);
-              case 0x19 -> NotOperation.staticOperation(frame);
+              case 0x16 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? AndOperationOptimized.staticOperation(frame)
+                      : AndOperation.staticOperation(frame);
+              case 0x17 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? OrOperationOptimized.staticOperation(frame)
+                      : OrOperation.staticOperation(frame);
+              case 0x18 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? XorOperationOptimized.staticOperation(frame)
+                      : XorOperation.staticOperation(frame);
+              case 0x19 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? NotOperationOptimized.staticOperation(frame)
+                      : NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x1e ->
                   enableOsaka
@@ -351,6 +359,18 @@ public class EVM {
                   0x9e,
                   0x9f ->
                   SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
+              case 0xe6 -> // DUPN (EIP-8024)
+                  enableAmsterdam
+                      ? DupNOperation.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0xe7 -> // SWAPN (EIP-8024)
+                  enableAmsterdam
+                      ? SwapNOperation.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0xe8 -> // EXCHANGE (EIP-8024)
+                  enableAmsterdam
+                      ? ExchangeOperation.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
               default -> { // unoptimized operations
                 frame.setCurrentOperation(currentOperation);
                 yield currentOperation.execute(frame, this);
@@ -402,40 +422,10 @@ public class EVM {
 
     Code result = jumpDestOnlyCodeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = wrapCode(codeBytes);
+      result = new Code(codeBytes);
       jumpDestOnlyCodeCache.put(codeHash, result);
     }
 
     return result;
-  }
-
-  /**
-   * Wraps code bytes into the correct Code object
-   *
-   * @param codeBytes the code bytes
-   * @return the wrapped code
-   */
-  public Code wrapCode(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes);
-  }
-
-  /**
-   * Wraps code for creation. Allows dangling data, which is not allowed in a transaction.
-   *
-   * @param codeBytes the code bytes
-   * @return the wrapped code
-   */
-  public Code wrapCodeForCreation(final Bytes codeBytes) {
-    return codeFactory.createCode(codeBytes, true);
-  }
-
-  /**
-   * Parse the EOF Layout of a byte-stream. No Code or stack validation is performed.
-   *
-   * @param bytes the bytes to parse
-   * @return an EOF layout represented by they byte-stream.
-   */
-  public EOFLayout parseEOF(final Bytes bytes) {
-    return EOFLayout.parseEOF(bytes, true);
   }
 }

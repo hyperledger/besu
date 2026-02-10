@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.options.storage;
 
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_PARALLEL_STATE_ROOT_COMPUTATION;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_PARALLEL_TX_PROCESSING;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.MINIMUM_TRIE_LOG_RETENTION_LIMIT;
@@ -46,8 +47,7 @@ public class PathBasedExtraStorageOptions
       description =
           "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
               + LIMIT_TRIE_LOGS_ENABLED
-              + " it will also be used as the number of layers of trie logs to retain.",
-      arity = "1")
+              + " it will also be used as the number of layers of trie logs to retain.")
   private Long maxLayersToLoad = DEFAULT_MAX_LAYERS_TO_LOAD;
 
   /** The bonsai limit trie logs enabled option name */
@@ -60,6 +60,10 @@ public class PathBasedExtraStorageOptions
   /** The bonsai parallel tx processing enabled option name. */
   public static final String PARALLEL_TX_PROCESSING_ENABLED =
       "--bonsai-parallel-tx-processing-enabled";
+
+  /** The bonsai parallel state root computation enabled option name. */
+  public static final String PARALLEL_STATE_ROOT_COMPUTATION_ENABLED =
+      "--bonsai-parallel-state-root-computation-enabled";
 
   @Option(
       names = {LIMIT_TRIE_LOGS_ENABLED},
@@ -81,6 +85,13 @@ public class PathBasedExtraStorageOptions
       description =
           "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")
   private Boolean isParallelTxProcessingEnabled = DEFAULT_PARALLEL_TX_PROCESSING;
+
+  @Option(
+      names = {PARALLEL_STATE_ROOT_COMPUTATION_ENABLED},
+      arity = "1",
+      description =
+          "Enables parallel computation of state root hash to optimize performance. Will be ignored if --data-storage-format is not bonsai (default: ${DEFAULT-VALUE})")
+  private Boolean isParallelStateRootComputationEnabled = DEFAULT_PARALLEL_STATE_ROOT_COMPUTATION;
 
   @CommandLine.ArgGroup(validate = false)
   private final PathBasedExtraStorageOptions.Unstable unstableOptions = new Unstable();
@@ -175,6 +186,8 @@ public class PathBasedExtraStorageOptions
         domainObject.getUnstable().getCodeStoredByCodeHashEnabled();
     dataStorageOptions.isParallelTxProcessingEnabled =
         domainObject.getParallelTxProcessingEnabled();
+    dataStorageOptions.isParallelStateRootComputationEnabled =
+        domainObject.getParallelStateRootComputationEnabled();
 
     return dataStorageOptions;
   }
@@ -186,6 +199,7 @@ public class PathBasedExtraStorageOptions
         .limitTrieLogsEnabled(limitTrieLogsEnabled)
         .trieLogPruningWindowSize(trieLogPruningWindowSize)
         .parallelTxProcessingEnabled(isParallelTxProcessingEnabled)
+        .parallelStateRootComputationEnabled(isParallelStateRootComputationEnabled)
         .unstable(
             ImmutablePathBasedExtraStorageConfiguration.PathBasedUnstable.builder()
                 .fullFlatDbEnabled(unstableOptions.fullFlatDbEnabled)
