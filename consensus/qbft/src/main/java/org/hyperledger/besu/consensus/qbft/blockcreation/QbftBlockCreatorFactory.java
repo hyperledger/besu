@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 /** Supports contract based voters and validators in extra data */
 public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOptions> {
@@ -69,7 +70,15 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
 
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-    if (forksSchedule.getFork(parentHeader.getNumber() + 1L).getValue().isValidatorContractMode()) {
+
+    ScheduledProtocolSpec specForNextBlock = protocolSchedule.getNextProtocolSpecByBlockHeader(parentHeader);
+    if (specForNextBlock.getScheduleType() == ScheduledProtocolSpec.ScheduleType.BLOCK) {
+      System.out.println("It's block based*");
+    } else {
+      System.out.println("It's time based*");
+    }
+
+    if (forksSchedule.getFork(parentHeader.getNumber() + 1L, parentHeader.getTimestamp(), specForNextBlock.getScheduleType()).getValue().isValidatorContractMode()) {
       // vote and validators will come from contract instead of block
       final BftExtraData extraData =
           new BftExtraData(

@@ -69,7 +69,27 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
     // the requested level will be the most appropriate spec
     for (final ScheduledProtocolSpec spec : protocolSpecs) {
       if (spec.isOnOrAfterMilestoneBoundary(blockHeader)) {
+        // System.out.println("Getting protocol spec by block header. Next protocol spec = " + spec.spec().getEvm().getEvmVersion().getName());
         return spec.spec();
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public ScheduledProtocolSpec getNextProtocolSpecByBlockHeader(final ProcessableBlockHeader blockHeader) {
+    checkArgument(
+            !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+            protocolSpecs.last().fork().milestone() == 0,
+            "There must be a milestone starting from block 0");
+
+    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
+    // the requested level will be the most appropriate spec
+    for (final ScheduledProtocolSpec spec : protocolSpecs) {
+      if (spec.isOnOrAfterMilestoneBoundary(blockHeader)) {
+        //System.out.println("Getting protocol spec by block header. Next protocol spec = " + spec.spec().getEvm().getEvmVersion().getName());
+        return spec;
       }
     }
     return null;

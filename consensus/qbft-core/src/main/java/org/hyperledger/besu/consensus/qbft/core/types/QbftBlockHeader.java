@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.core.types;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 /** Represents a block header in the context of the QBFT consensus mechanism. */
 public interface QbftBlockHeader {
@@ -47,4 +48,11 @@ public interface QbftBlockHeader {
    * @return the hash.
    */
   Hash getHash();
+
+  /**
+   * Returns the underlying plugin header
+   *
+   * @return the header.
+   */
+  BlockHeader getHeader();
 }

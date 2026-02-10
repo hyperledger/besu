@@ -37,6 +37,7 @@ import java.time.Clock;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,7 +81,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
     final long EXPECTED_DELAY = 10_000L;
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,
@@ -115,7 +116,7 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 300;
     final long EXPECTED_DELAY = 500;
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,
@@ -165,7 +166,7 @@ public class BlockTimerTest {
     final long NOW_MILLIS = 515_000L;
     final long BLOCK_TIME_STAMP = 500;
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,
@@ -201,7 +202,7 @@ public class BlockTimerTest {
     final long NOW_MILLIS = 520_000L;
     final long BLOCK_TIME_STAMP = 500L;
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,
@@ -237,7 +238,7 @@ public class BlockTimerTest {
     final long NOW_MILLIS = 500_000L;
     final long BLOCK_TIME_STAMP = 500L;
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,
@@ -271,7 +272,7 @@ public class BlockTimerTest {
     final long NOW_MILLIS = 500_000L;
     final long BLOCK_TIME_STAMP = 500L;
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,
@@ -313,7 +314,7 @@ public class BlockTimerTest {
             bftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
         .thenReturn(mockedFuture);
 
-    when(mockForksSchedule.getFork(anyLong()))
+    when(mockForksSchedule.getFork(anyLong(), 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .thenReturn(
             new ForkSpec<>(
                 0,

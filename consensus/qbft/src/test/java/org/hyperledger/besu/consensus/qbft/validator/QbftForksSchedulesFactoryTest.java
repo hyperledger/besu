@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.junit.jupiter.api.Test;
 
 public class QbftForksSchedulesFactoryTest
@@ -74,7 +75,7 @@ public class QbftForksSchedulesFactoryTest
 
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
-    assertThat(forksSchedule.getFork(0))
+    assertThat(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .usingRecursiveComparison()
         .isEqualTo(new ForkSpec<>(0, configOptions));
 
@@ -89,8 +90,8 @@ public class QbftForksSchedulesFactoryTest
             new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
     final ForkSpec<QbftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
-    assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
-    assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).usingRecursiveComparison().isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
 
   @Test
@@ -136,7 +137,7 @@ public class QbftForksSchedulesFactoryTest
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
 
-    assertThat(forksSchedule.getFork(1).getValue().getValidatorContractAddress()).isEmpty();
+    assertThat(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK).getValue().getValidatorContractAddress()).isEmpty();
   }
 
   @Test

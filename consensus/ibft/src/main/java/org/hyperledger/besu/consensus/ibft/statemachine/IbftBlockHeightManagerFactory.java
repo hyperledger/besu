@@ -20,6 +20,8 @@ import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +34,7 @@ public class IbftBlockHeightManagerFactory {
   private final BftFinalState finalState;
   private final MessageValidatorFactory messageValidatorFactory;
   private final MessageFactory messageFactory;
+  private final ProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Ibft block height manager factory.
@@ -45,11 +48,13 @@ public class IbftBlockHeightManagerFactory {
       final BftFinalState finalState,
       final IbftRoundFactory roundFactory,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory) {
+      final MessageFactory messageFactory,
+      final ProtocolSchedule protocolSchedule) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
+    this.protocolSchedule = protocolSchedule;
   }
 
   /**
@@ -80,6 +85,16 @@ public class IbftBlockHeightManagerFactory {
   }
 
   private BaseIbftBlockHeightManager createFullBlockHeightManager(final BlockHeader parentHeader) {
+
+
+
+    ScheduledProtocolSpec specForNextBlock = protocolSchedule.getNextProtocolSpecByBlockHeader(parentHeader);
+    if (specForNextBlock.getScheduleType() == ScheduledProtocolSpec.ScheduleType.BLOCK) {
+      System.out.println("It's block based*");
+    } else {
+      System.out.println("It's time based*");
+    }
+
     return new IbftBlockHeightManager(
         parentHeader,
         finalState,
@@ -90,6 +105,7 @@ public class IbftBlockHeightManagerFactory {
         roundFactory,
         finalState.getClock(),
         messageValidatorFactory,
-        messageFactory);
+        messageFactory,
+        specForNextBlock.getScheduleType());
   }
 }

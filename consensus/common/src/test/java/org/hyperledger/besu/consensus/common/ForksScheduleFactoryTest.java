@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 import java.util.List;
 import java.util.Map;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -77,9 +78,9 @@ public class ForksScheduleFactoryTest {
 
     final ForksSchedule<BftConfigOptions> schedule =
         ForksScheduleFactory.create(genesisConfigOptions, List.of(fork1, fork2), specCreator);
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(new ForkSpec<>(1, configOptions1));
-    assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
+    assertThat(schedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(new ForkSpec<>(1, configOptions1));
+    assertThat(schedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(new ForkSpec<>(2, configOptions2));
   }
 
   private MutableBftConfigOptions createBftConfigOptions(

@@ -595,7 +595,7 @@ public class TestContextBuilder {
                 messageValidatorFactory,
                 messageFactory,
                 qbftValidatorProvider,
-                validatorModeTransitionLogger),
+                validatorModeTransitionLogger, protocolSchedule),
             gossiper,
             duplicateMessageTracker,
             futureMessageBuffer,

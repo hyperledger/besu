@@ -22,6 +22,10 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorModeTransitio
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +41,7 @@ public class QbftBlockHeightManagerFactory {
   private final QbftValidatorProvider validatorProvider;
   private final QbftValidatorModeTransitionLogger validatorModeTransitionLogger;
   private boolean isEarlyRoundChangeEnabled = false;
+  private final ProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Qbft block height manager factory.
@@ -54,13 +59,15 @@ public class QbftBlockHeightManagerFactory {
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
       final QbftValidatorProvider validatorProvider,
-      final QbftValidatorModeTransitionLogger validatorModeTransitionLogger) {
+      final QbftValidatorModeTransitionLogger validatorModeTransitionLogger,
+      final ProtocolSchedule protocolSchedule) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
     this.validatorProvider = validatorProvider;
     this.validatorModeTransitionLogger = validatorModeTransitionLogger;
+    this.protocolSchedule = protocolSchedule;
   }
 
   /**
@@ -107,6 +114,29 @@ public class QbftBlockHeightManagerFactory {
     QbftBlockHeightManager qbftBlockHeightManager;
     RoundChangeManager roundChangeManager;
 
+    /*Object thing = protocolSchedule.getNextProtocolSpec(parentHeader.getTimestamp()).get();
+    if (thing instanceof ScheduledProtocolSpec.TimestampProtocolSpec) {
+      System.out.println("It's time based!");
+    } else if (thing instanceof ScheduledProtocolSpec.BlockNumberProtocolSpec) {
+      System.out.println("It's block based!");
+    }*/
+
+    //ProcessableBlockHeader theHeader = new org.hyperledger.besu.ethereum.core.ProcessableBlockHeader(parentHeader.getNumber(), parentHeader.getTimestamp());
+    //protocolSchedule.getLatestProtocolSpec().get().isOnMilestoneBoundary(theHeader);
+   /* if (protocolSchedule.getNextProtocolSpec(parentHeader.getTimestamp()).get().getScheduleType() == ScheduledProtocolSpec.ScheduleType.BLOCK) {
+      System.out.println("It's block based!");
+    } else {
+      System.out.println("It's time based!");
+    }*/
+
+    ScheduledProtocolSpec specForNextBlock = protocolSchedule.getNextProtocolSpecByBlockHeader(parentHeader.getHeader());
+    if (specForNextBlock.getScheduleType() == ScheduledProtocolSpec.ScheduleType.BLOCK) {
+      System.out.println("It's block based*");
+    } else {
+      System.out.println("It's time based*");
+    }
+
+
     if (isEarlyRoundChangeEnabled) {
       roundChangeManager =
           new RoundChangeManager(
@@ -125,7 +155,7 @@ public class QbftBlockHeightManagerFactory {
               messageValidatorFactory,
               messageFactory,
               validatorProvider,
-              true);
+              specForNextBlock.getScheduleType());
     } else {
       roundChangeManager =
           new RoundChangeManager(
@@ -142,7 +172,8 @@ public class QbftBlockHeightManagerFactory {
               finalState.getClock(),
               messageValidatorFactory,
               messageFactory,
-              validatorProvider);
+              validatorProvider,
+              specForNextBlock.getScheduleType());
     }
 
     return qbftBlockHeightManager;

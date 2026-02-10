@@ -17,6 +17,7 @@ package org.hyperledger.besu.consensus.qbft.core.validation;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 public class QbftBlockHeaderTestFixture {
 
@@ -66,6 +67,9 @@ public class QbftBlockHeaderTestFixture {
       public Address getCoinbase() {
         return coinbase;
       }
+
+      @Override
+      public BlockHeader getHeader() { return null; };
     };
   }
 }

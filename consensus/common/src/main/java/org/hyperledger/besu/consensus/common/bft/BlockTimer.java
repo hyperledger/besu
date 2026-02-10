@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,14 +85,26 @@ public class BlockTimer {
    * @param headerTimestamp The timestamp from the of the chain head header
    */
   public synchronized void startTimer(
-      final ConsensusRoundIdentifier round, final Supplier<Long> headerTimestamp) {
+          final ConsensusRoundIdentifier round, final Supplier<Long> headerTimestamp, final ScheduledProtocolSpec.ScheduleType currentProtocolScheduleType) {
     cancelTimer();
 
     final long expiryTime;
+    int currentBlockPeriodSeconds =
+            forksSchedule.getFork(round.getSequenceNumber(), headerTimestamp.get(), currentProtocolScheduleType).getValue().getBlockPeriodSeconds();
+
+
+    final int nextBlockPeriodSeconds =
+            forksSchedule.getFork(round.getSequenceNumber(), headerTimestamp.get() + currentBlockPeriodSeconds, currentProtocolScheduleType).getValue().getBlockPeriodSeconds();
+
+    // If the block period seconds change between the current block and the next one we need to produce this block on the longer of the two values,
+    // otherwise block validation will fail (blocks produced too close together)
+    if (nextBlockPeriodSeconds > currentBlockPeriodSeconds) {
+      currentBlockPeriodSeconds = nextBlockPeriodSeconds;
+    }
 
     // Experimental option for test scenarios only. Not for production use.
     final long blockPeriodMilliseconds =
-        forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodMilliseconds();
+        forksSchedule.getFork(round.getSequenceNumber(), headerTimestamp.get(), currentProtocolScheduleType).getValue().getBlockPeriodMilliseconds();
     if (blockPeriodMilliseconds > 0) {
       // Experimental mode for setting < 1 second block periods e.g. for CI/CD pipelines
       // running tests against Besu
@@ -101,13 +114,13 @@ public class BlockTimer {
           blockPeriodMilliseconds);
     } else {
       // absolute time when the timer is supposed to expire
-      final int currentBlockPeriodSeconds =
-          forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
       final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
       expiryTime = headerTimestamp.get() * 1_000 + minimumTimeBetweenBlocksMillis;
     }
 
-    setBlockTimes(round);
+    final int emptyBlockPeriodSeconds =
+            forksSchedule.getFork(round.getSequenceNumber(), headerTimestamp.get(), currentProtocolScheduleType).getValue().getEmptyBlockPeriodSeconds();
+    setBlockTimes(currentBlockPeriodSeconds, emptyBlockPeriodSeconds);
 
     startTimer(round, expiryTime);
   }
@@ -168,11 +181,9 @@ public class BlockTimer {
     }
   }
 
-  private synchronized void setBlockTimes(final ConsensusRoundIdentifier round) {
-    final BftConfigOptions currentConfigOptions =
-        forksSchedule.getFork(round.getSequenceNumber()).getValue();
-    this.blockPeriodSeconds = currentConfigOptions.getBlockPeriodSeconds();
-    this.emptyBlockPeriodSeconds = currentConfigOptions.getEmptyBlockPeriodSeconds();
+  private synchronized void setBlockTimes(final int blockPeriodSeconds, final int emptyBlockPeriodSeconds) {
+    this.blockPeriodSeconds = blockPeriodSeconds;
+    this.emptyBlockPeriodSeconds = emptyBlockPeriodSeconds;
   }
 
   /**

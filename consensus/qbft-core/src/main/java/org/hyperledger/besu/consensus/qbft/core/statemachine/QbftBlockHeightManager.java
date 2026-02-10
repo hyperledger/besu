@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.FutureRoundProposalMessageValidator;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
@@ -95,7 +96,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final Clock clock,
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
-      final QbftValidatorProvider validatorProvider) {
+      final QbftValidatorProvider validatorProvider,
+      final ScheduledProtocolSpec.ScheduleType protocolSpecType) {
     this.parentHeader = parentHeader;
     this.roundFactory = qbftRoundFactory;
     this.validatorProvider = validatorProvider;
@@ -121,7 +123,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(nextBlockHeight, 0);
 
-    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader::getTimestamp);
+    finalState.getBlockTimer().startTimer(roundIdentifier, parentHeader::getTimestamp, protocolSpecType);
   }
 
   /**
@@ -147,6 +149,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
       final QbftValidatorProvider validatorProvider,
+      final ScheduledProtocolSpec.ScheduleType protocolSpecType,
       final boolean isEarlyRoundChangeEnabled) {
     this(
         parentHeader,
@@ -156,7 +159,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         clock,
         messageValidatorFactory,
         messageFactory,
-        validatorProvider);
+        validatorProvider,
+        protocolSpecType);
     this.isEarlyRoundChangeEnabled = isEarlyRoundChangeEnabled;
   }
 

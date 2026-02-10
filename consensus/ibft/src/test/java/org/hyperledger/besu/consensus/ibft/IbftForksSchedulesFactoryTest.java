@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.junit.jupiter.api.Test;
 
 public class IbftForksSchedulesFactoryTest
@@ -56,7 +57,7 @@ public class IbftForksSchedulesFactoryTest
 
     final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
-    assertThat(forksSchedule.getFork(0))
+    assertThat(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .usingRecursiveComparison()
         .isEqualTo(new ForkSpec<>(0, configOptions));
 
@@ -69,8 +70,8 @@ public class IbftForksSchedulesFactoryTest
             new JsonBftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
     final ForkSpec<BftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
-    assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
-    assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).usingRecursiveComparison().isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
 
   @Override

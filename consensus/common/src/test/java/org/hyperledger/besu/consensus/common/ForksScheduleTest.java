@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Address;
 import java.util.List;
 import java.util.Optional;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.junit.jupiter.api.Test;
 
 public class ForksScheduleTest {
@@ -36,8 +37,8 @@ public class ForksScheduleTest {
 
     final ForksSchedule<BftConfigOptions> schedule =
         new ForksSchedule<>(List.of(forkSpec1, genesisForkSpec));
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(genesisForkSpec);
   }
 
   @Test
@@ -56,13 +57,13 @@ public class ForksScheduleTest {
     final ForksSchedule<BftConfigOptions> schedule =
         new ForksSchedule<>(List.of(genesisForkSpec, forkSpec1, forkSpec2, forkSpec3, forkSpec4));
 
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(forkSpec1);
-    assertThat(schedule.getFork(2)).isEqualTo(forkSpec2);
-    assertThat(schedule.getFork(3)).isEqualTo(forkSpec3);
-    assertThat(schedule.getFork(3).getValue().getMiningBeneficiary()).isEqualTo(miningBeneficiary3);
-    assertThat(schedule.getFork(4)).isEqualTo(forkSpec4);
-    assertThat(schedule.getFork(4).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(schedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(forkSpec1);
+    assertThat(schedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(forkSpec2);
+    assertThat(schedule.getFork(3, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(forkSpec3);
+    assertThat(schedule.getFork(3, 0, ScheduledProtocolSpec.ScheduleType.BLOCK).getValue().getMiningBeneficiary()).isEqualTo(miningBeneficiary3);
+    assertThat(schedule.getFork(4, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)).isEqualTo(forkSpec4);
+    assertThat(schedule.getFork(4, 0, ScheduledProtocolSpec.ScheduleType.BLOCK).getValue().getMiningBeneficiary()).isEmpty();
   }
 
   private ForkSpec<BftConfigOptions> createForkSpecWithMiningBeneficiary(
