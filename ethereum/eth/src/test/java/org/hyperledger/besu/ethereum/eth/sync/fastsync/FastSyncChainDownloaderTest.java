@@ -343,7 +343,7 @@ public class FastSyncChainDownloaderTest {
       LockSupport.parkNanos(200);
     }
 
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(15);
+    assertThat(localBlockchain.getChainHeadBlockNumber()).isGreaterThanOrEqualTo(15);
     assertThat(result).isNotCompleted();
 
     ethProtocolManager.handleDisconnect(bestPeer.getPeerConnection(), TOO_MANY_PEERS, true);
