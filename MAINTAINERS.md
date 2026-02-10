@@ -17,7 +17,6 @@
 | Gabriel Fukushima| gfukushima       | gfukushima       |
 | Justin Florentine| jflo             | RoboCopsGoneMad  |
 | Jason Frame      | jframe           | jframe           |
-| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Luis Pinto       | lu-pinto         | lu-pinto         |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
 | Sally MacFarlane | macfarla         | macfarla         |
@@ -46,6 +45,7 @@
 | Frank Li         | frankisawesome   | frankliawesome   |
 | Jiri Peinlich    | gezero           | JiriPeinlich     |
 | Ivaylo Kirilov   | iikirilov        | iikirilov        |
+| Joshua Fernandes | joshuafernandes  | joshuafernandes  |
 | Madeline Murray  | MadelineMurray   | madelinemurray   |
 | Mark Terry       | mark-terry       | m.terry          |
 | Meredith Baxter  | mbaxter          | mbaxter          |
