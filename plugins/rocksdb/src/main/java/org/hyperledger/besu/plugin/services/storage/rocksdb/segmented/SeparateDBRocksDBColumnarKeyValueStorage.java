@@ -98,6 +98,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
   protected final RocksDBConfiguration configuration;
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
+  private final org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration perColumnConfig;
 
   /** Map of RocksDB instances per segment */
   private final Map<SegmentIdentifier, TransactionDB> databases = new HashMap<>();
@@ -110,6 +111,12 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
 
   /** Map of statistics per segment */
   private final Map<SegmentIdentifier, Statistics> segmentStats = new HashMap<>();
+
+  /** Map of row caches per segment (if enabled) */
+  private final Map<SegmentIdentifier, org.rocksdb.Cache> segmentRowCaches = new HashMap<>();
+  
+  /** Map of block caches per segment */
+  private final Map<SegmentIdentifier, org.rocksdb.Cache> segmentBlockCaches = new HashMap<>();
 
   /**
    * Instantiates a new Separate DB RocksDB columnar key value storage.
@@ -132,6 +139,9 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
     this.configuration = configuration;
     this.metricsSystem = metricsSystem;
     this.rocksDBMetricsFactory = rocksDBMetricsFactory;
+    
+    // Initialize per-column configuration with recommended defaults
+    this.perColumnConfig = initializePerColumnConfig();
 
     try {
       // Create a separate database for each segment
@@ -150,6 +160,16 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
   }
 
   /**
+   * Initializes per-column configuration with optimized defaults.
+   *
+   * @return the per-column configuration
+   */
+  private org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration initializePerColumnConfig() {
+    LOG.info("Initializing optimized per-column RocksDB configuration");
+    return org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration.OptimizedConfigs.createRecommendedConfig();
+  }
+
+  /**
    * Creates a separate RocksDB database for a specific segment.
    *
    * @param segment the segment identifier
@@ -164,6 +184,16 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
     LOG.info(
         "Creating separate RocksDB instance for segment '{}' at {}", segment.getName(), dbPath);
 
+    // Get column-specific configuration
+    org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration.ColumnConfig columnConfig = 
+        perColumnConfig.getConfigForSegment(segment);
+    
+    LOG.info("Segment '{}' optimized config: cache={}MB, maxFiles={}, threads={}", 
+        segment.getName(),
+        columnConfig.getCacheCapacity() / (1024 * 1024),
+        columnConfig.getMaxOpenFiles(),
+        columnConfig.getBackgroundThreadCount());
+
     // Create the directory if it doesn't exist
     try {
       java.nio.file.Files.createDirectories(segmentPath);
@@ -175,11 +205,11 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
     Statistics stats = new Statistics();
     segmentStats.put(segment, stats);
 
-    DBOptions dbOptions = createDBOptions(stats);
+    DBOptions dbOptions = createDBOptions(segment, stats, columnConfig);
     TransactionDBOptions txOptions = new TransactionDBOptions();
 
     // Create column family options for the default column family
-    ColumnFamilyOptions cfOptions = createColumnFamilyOptions(segment);
+    ColumnFamilyOptions cfOptions = createColumnFamilyOptions(segment, columnConfig);
 
     // Create column family descriptor for default column
     ColumnFamilyDescriptor defaultCfDescriptor =
@@ -204,70 +234,116 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
   }
 
   /**
-   * Creates DBOptions for a segment database.
+   * Creates DBOptions for a segment database with column-specific configuration.
    *
+   * @param segment the segment identifier
    * @param stats the statistics object
+   * @param columnConfig the column-specific configuration
    * @return configured DBOptions
    */
-  private DBOptions createDBOptions(final Statistics stats) {
+  private DBOptions createDBOptions(
+      final SegmentIdentifier segment,
+      final Statistics stats,
+      final org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration.ColumnConfig columnConfig) {
     DBOptions options = new DBOptions();
     options
         .setCreateIfMissing(true)
-        .setMaxOpenFiles(configuration.getMaxOpenFiles())
+        .setMaxOpenFiles(columnConfig.getMaxOpenFiles())
         .setStatistics(stats)
         .setCreateMissingColumnFamilies(true)
         .setLogFileTimeToRoll(TIME_TO_ROLL_LOG_FILE)
         .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
-        .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()))
+        .setEnv(Env.getDefault().setBackgroundThreads(columnConfig.getBackgroundThreadCount()))
         .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
         .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE);
+    
+    // Configure row cache if specified
+    columnConfig.getRowCacheSize().ifPresent(rowCacheSize -> {
+      LOG.info("Enabling row cache for segment '{}' with size {}MB", 
+          segment.getName(), rowCacheSize / (1024 * 1024));
+      org.rocksdb.Cache rowCache = new org.rocksdb.LRUCache(rowCacheSize);
+      segmentRowCaches.put(segment, rowCache);
+      options.setRowCache(rowCache);
+    });
+    
     return options;
   }
 
   /**
-   * Creates ColumnFamilyOptions for a segment.
+   * Creates ColumnFamilyOptions for a segment with column-specific configuration.
    *
    * @param segment the segment identifier
+   * @param columnConfig the column-specific configuration
    * @return configured ColumnFamilyOptions
    */
-  private ColumnFamilyOptions createColumnFamilyOptions(final SegmentIdentifier segment) {
-    BlockBasedTableConfig tableConfig = createBlockBasedTableConfig(segment);
+  private ColumnFamilyOptions createColumnFamilyOptions(
+      final SegmentIdentifier segment,
+      final org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration.ColumnConfig columnConfig) {
+    BlockBasedTableConfig tableConfig = createBlockBasedTableConfig(segment, columnConfig);
 
     ColumnFamilyOptions options =
         new ColumnFamilyOptions()
             .setTtl(0)
             .setCompressionType(CompressionType.LZ4_COMPRESSION)
-            .setTableFormatConfig(tableConfig)
-            .setLevelCompactionDynamicLevelBytes(true);
+            .setTableFormatConfig(tableConfig);
+
+    // Note: Row cache is configured via BlockBasedTableConfig, not here
+
+    // Apply write buffer size if specified
+    columnConfig.getWriteBufferSize()
+        .ifPresent(options::setWriteBufferSize);
+
+    // Apply max write buffer number if specified
+    columnConfig.getMaxWriteBufferNumber()
+        .ifPresent(options::setMaxWriteBufferNumber);
+
+    // Apply level compaction dynamic level bytes if specified (expects boolean)
+    columnConfig.getLevelCompactionDynamicLevelBytes()
+        .ifPresent(dynLevel -> options.setLevelCompactionDynamicLevelBytes(dynLevel > 0));
+
+    // Apply target file size base if specified
+    columnConfig.getTargetFileSizeBase()
+        .ifPresent(size -> options.setTargetFileSizeBase((long) size));
 
     // Configure BlobDB for segments with static data
     if (segment.containsStaticData()) {
       configureBlobDB(segment, options);
     }
 
+    LOG.debug("Created ColumnFamilyOptions for segment '{}' with cache={}, writeBuffer={}, rowCache={}", 
+        segment.getName(), 
+        columnConfig.getCacheCapacity(),
+        columnConfig.getWriteBufferSize().orElse(0),
+        columnConfig.getRowCacheSize().orElse(0L));
+
     return options;
   }
 
   /**
-   * Creates BlockBasedTableConfig for a segment.
+   * Creates BlockBasedTableConfig for a segment with column-specific configuration.
    *
    * @param segment the segment identifier
+   * @param columnConfig the column-specific configuration
    * @return configured BlockBasedTableConfig
    */
-  private BlockBasedTableConfig createBlockBasedTableConfig(final SegmentIdentifier segment) {
-    final LRUCache cache =
-        new LRUCache(
-            configuration.isHighSpec() && segment.isEligibleToHighSpecFlag()
-                ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC
-                : configuration.getCacheCapacity());
+  private BlockBasedTableConfig createBlockBasedTableConfig(
+      final SegmentIdentifier segment,
+      final org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.PerColumnConfiguration.ColumnConfig columnConfig) {
+    final org.rocksdb.Cache blockCache = new LRUCache(columnConfig.getCacheCapacity());
+    segmentBlockCaches.put(segment, blockCache);
 
-    return new BlockBasedTableConfig()
+    BlockBasedTableConfig tableConfig = new BlockBasedTableConfig()
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
-        .setBlockCache(cache)
+        .setBlockCache(blockCache)
         .setFilterPolicy(new BloomFilter(10, false))
         .setPartitionFilters(true)
         .setCacheIndexAndFilterBlocks(false)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
+
+    LOG.debug("Created BlockBasedTableConfig for segment '{}' with blockCache={}MB", 
+        segment.getName(), columnConfig.getCacheCapacity() / (1024 * 1024));
+
+    return tableConfig;
   }
 
   /**
@@ -528,12 +604,20 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
 
       // Close all databases
       databases.values().forEach(TransactionDB::close);
+      
+      // Close all block caches
+      segmentBlockCaches.values().forEach(org.rocksdb.Cache::close);
+      
+      // Close all row caches
+      segmentRowCaches.values().forEach(org.rocksdb.Cache::close);
 
       // Clear collections
       databases.clear();
       defaultColumnHandles.clear();
       segmentMetrics.clear();
       segmentStats.clear();
+      segmentBlockCaches.clear();
+      segmentRowCaches.clear();
 
       tryDeleteOptions.close();
       readOptions.close();
