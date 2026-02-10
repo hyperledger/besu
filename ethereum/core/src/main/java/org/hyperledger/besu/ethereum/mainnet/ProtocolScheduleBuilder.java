@@ -166,33 +166,6 @@ public class ProtocolScheduleBuilder {
               protocolSchedule.putBlockNumberMilestone(daoBlockNumber + 10, originalProtocolSpec);
             });
 
-    // specs for classic network
-    config
-        .getClassicForkBlock()
-        .ifPresent(
-            classicBlockNumber -> {
-              final BuilderMapEntry previousSpecBuilder =
-                  builders.floorEntry(classicBlockNumber).getValue();
-              final ProtocolSpec originalProtocolSpec =
-                  getProtocolSpec(
-                      protocolSchedule,
-                      previousSpecBuilder.builder(),
-                      previousSpecBuilder.modifier());
-              addProtocolSpec(
-                  protocolSchedule,
-                  MilestoneType.BLOCK_NUMBER,
-                  classicBlockNumber,
-                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config,
-                      evmConfiguration,
-                      isParallelTxProcessingEnabled,
-                      balConfiguration,
-                      metricsSystem),
-                  Function.identity());
-              protocolSchedule.putBlockNumberMilestone(
-                  classicBlockNumber + 1, originalProtocolSpec);
-            });
-
     LOG.info("Protocol schedule created with milestones: {}", protocolSchedule.listMilestones());
   }
 

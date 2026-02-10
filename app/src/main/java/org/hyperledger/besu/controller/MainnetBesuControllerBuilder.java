@@ -36,7 +36,7 @@ import java.util.Optional;
 /** The Mainnet besu controller builder. */
 public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
-  private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
+  private final EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
 
   /** Default constructor. */
   public MainnetBesuControllerBuilder() {}
@@ -102,9 +102,6 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    genesisConfigOptions
-        .getThanosBlockNumber()
-        .ifPresent(
-            activationBlock -> epochCalculator = new EpochCalculator.Ecip1099EpochCalculator());
+    // No special preparation needed for mainnet
   }
 }
