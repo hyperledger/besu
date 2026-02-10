@@ -22,6 +22,8 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
@@ -51,7 +53,6 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.LRUCache;
-import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -66,16 +67,17 @@ import org.slf4j.LoggerFactory;
 
 /**
  * RocksDB Columnar storage with separate database instance per column.
- * 
- * <p>Instead of using column families within a single RocksDB instance, this implementation
- * creates a separate RocksDB database for each segment/column. This provides better isolation
- * and independent configuration per segment.
+ *
+ * <p>Instead of using column families within a single RocksDB instance, this implementation creates
+ * a separate RocksDB database for each segment/column. This provides better isolation and
+ * independent configuration per segment.
  */
-public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyValueStorage {
+public class SeparateDBRocksDBColumnarKeyValueStorage
+    implements SegmentedKeyValueStorage, SnappableKeyValueStorage {
 
   private static final Logger LOG =
       LoggerFactory.getLogger(SeparateDBRocksDBColumnarKeyValueStorage.class);
-  
+
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
@@ -92,20 +94,20 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   private final WriteOptions tryDeleteOptions =
       new WriteOptions().setNoSlowdown(true).setIgnoreMissingColumnFamilies(true);
   private final ReadOptions readOptions = new ReadOptions().setVerifyChecksums(false);
-  
+
   protected final RocksDBConfiguration configuration;
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
-  
+
   /** Map of RocksDB instances per segment */
   private final Map<SegmentIdentifier, TransactionDB> databases = new HashMap<>();
-  
+
   /** Map of default column handles per segment */
   private final Map<SegmentIdentifier, ColumnFamilyHandle> defaultColumnHandles = new HashMap<>();
-  
+
   /** Map of metrics per segment */
   private final Map<SegmentIdentifier, RocksDBMetrics> segmentMetrics = new HashMap<>();
-  
+
   /** Map of statistics per segment */
   private final Map<SegmentIdentifier, Statistics> segmentStats = new HashMap<>();
 
@@ -153,15 +155,14 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
    * @param segment the segment identifier
    * @throws RocksDBException if database creation fails
    */
-  private void createDatabaseForSegment(final SegmentIdentifier segment)
-      throws RocksDBException {
-    
+  private void createDatabaseForSegment(final SegmentIdentifier segment) throws RocksDBException {
+
     // Create a subdirectory for this segment using the segment name
     Path segmentPath = configuration.getDatabaseDir().resolve(segment.getName());
     String dbPath = segmentPath.toString();
-    
-    LOG.info("Creating separate RocksDB instance for segment '{}' at {}", 
-        segment.getName(), dbPath);
+
+    LOG.info(
+        "Creating separate RocksDB instance for segment '{}' at {}", segment.getName(), dbPath);
 
     // Create the directory if it doesn't exist
     try {
@@ -173,33 +174,32 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
     // Create options for this segment's database
     Statistics stats = new Statistics();
     segmentStats.put(segment, stats);
-    
+
     DBOptions dbOptions = createDBOptions(stats);
     TransactionDBOptions txOptions = new TransactionDBOptions();
-    
+
     // Create column family options for the default column family
     ColumnFamilyOptions cfOptions = createColumnFamilyOptions(segment);
-    
+
     // Create column family descriptor for default column
-    ColumnFamilyDescriptor defaultCfDescriptor = 
+    ColumnFamilyDescriptor defaultCfDescriptor =
         new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfOptions);
-    
-    java.util.List<ColumnFamilyDescriptor> cfDescriptors = 
-        java.util.List.of(defaultCfDescriptor);
+
+    java.util.List<ColumnFamilyDescriptor> cfDescriptors = java.util.List.of(defaultCfDescriptor);
     java.util.List<ColumnFamilyHandle> cfHandles = new java.util.ArrayList<>();
-    
+
     // Open the database
-    TransactionDB db = RocksDBOpener.openTransactionDBWithWarning(
-        dbOptions, txOptions, dbPath, cfDescriptors, cfHandles);
-    
+    TransactionDB db =
+        RocksDBOpener.openTransactionDBWithWarning(
+            dbOptions, txOptions, dbPath, cfDescriptors, cfHandles);
+
     databases.put(segment, db);
     defaultColumnHandles.put(segment, cfHandles.get(0));
-    
+
     // Initialize metrics for this segment
-    RocksDBMetrics metrics = rocksDBMetricsFactory.create(
-        metricsSystem, configuration, db, stats);
+    RocksDBMetrics metrics = rocksDBMetricsFactory.create(metricsSystem, configuration, db, stats);
     segmentMetrics.put(segment, metrics);
-    
+
     LOG.debug("Successfully created RocksDB instance for segment '{}'", segment.getName());
   }
 
@@ -232,18 +232,19 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
    */
   private ColumnFamilyOptions createColumnFamilyOptions(final SegmentIdentifier segment) {
     BlockBasedTableConfig tableConfig = createBlockBasedTableConfig(segment);
-    
-    ColumnFamilyOptions options = new ColumnFamilyOptions()
-        .setTtl(0)
-        .setCompressionType(CompressionType.LZ4_COMPRESSION)
-        .setTableFormatConfig(tableConfig)
-        .setLevelCompactionDynamicLevelBytes(true);
-    
+
+    ColumnFamilyOptions options =
+        new ColumnFamilyOptions()
+            .setTtl(0)
+            .setCompressionType(CompressionType.LZ4_COMPRESSION)
+            .setTableFormatConfig(tableConfig)
+            .setLevelCompactionDynamicLevelBytes(true);
+
     // Configure BlobDB for segments with static data
     if (segment.containsStaticData()) {
       configureBlobDB(segment, options);
     }
-    
+
     return options;
   }
 
@@ -254,11 +255,12 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
    * @return configured BlockBasedTableConfig
    */
   private BlockBasedTableConfig createBlockBasedTableConfig(final SegmentIdentifier segment) {
-    final LRUCache cache = new LRUCache(
-        configuration.isHighSpec() && segment.isEligibleToHighSpecFlag()
-            ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC
-            : configuration.getCacheCapacity());
-    
+    final LRUCache cache =
+        new LRUCache(
+            configuration.isHighSpec() && segment.isEligibleToHighSpecFlag()
+                ? ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC
+                : configuration.getCacheCapacity());
+
     return new BlockBasedTableConfig()
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
         .setBlockCache(cache)
@@ -274,15 +276,13 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
    * @param segment the segment identifier
    * @param options the column family options to configure
    */
-  private void configureBlobDB(
-      final SegmentIdentifier segment, 
-      final ColumnFamilyOptions options) {
+  private void configureBlobDB(final SegmentIdentifier segment, final ColumnFamilyOptions options) {
     options
         .setEnableBlobFiles(true)
         .setEnableBlobGarbageCollection(segment.isStaticDataGarbageCollectionEnabled())
         .setMinBlobSize(100)
         .setBlobCompressionType(CompressionType.LZ4_COMPRESSION);
-    
+
     if (configuration.getBlobGarbageCollectionAgeCutoff().isPresent()) {
       options.setBlobGarbageCollectionAgeCutoff(
           configuration.getBlobGarbageCollectionAgeCutoff().get());
@@ -302,8 +302,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   private TransactionDB getDatabase(final SegmentIdentifier segment) {
     TransactionDB db = databases.get(segment);
     if (db == null) {
-      throw new IllegalArgumentException(
-          "No database found for segment: " + segment.getName());
+      throw new IllegalArgumentException("No database found for segment: " + segment.getName());
     }
     return db;
   }
@@ -332,8 +331,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   private RocksDBMetrics getMetrics(final SegmentIdentifier segment) {
     RocksDBMetrics metrics = segmentMetrics.get(segment);
     if (metrics == null) {
-      throw new IllegalArgumentException(
-          "No metrics found for segment: " + segment.getName());
+      throw new IllegalArgumentException("No metrics found for segment: " + segment.getName());
     }
     return metrics;
   }
@@ -342,8 +340,8 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   public Optional<byte[]> get(final SegmentIdentifier segment, final byte[] key)
       throws StorageException {
     throwIfClosed();
-    
-    try (final OperationTimer.TimingContext ignored = 
+
+    try (final OperationTimer.TimingContext ignored =
         getMetrics(segment).getReadLatency().startTimer()) {
       TransactionDB db = getDatabase(segment);
       ColumnFamilyHandle handle = getColumnHandle(segment);
@@ -357,10 +355,10 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segment, final Bytes key) throws StorageException {
     throwIfClosed();
-    
+
     TransactionDB db = getDatabase(segment);
     ColumnFamilyHandle handle = getColumnHandle(segment);
-    
+
     try (final RocksIterator rocksIterator = db.newIterator(handle)) {
       rocksIterator.seekForPrev(key.toArrayUnsafe());
       return Optional.of(rocksIterator)
@@ -370,13 +368,13 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   }
 
   @Override
-  public Optional<NearestKeyValue> getNearestAfter(
-      final SegmentIdentifier segment, final Bytes key) throws StorageException {
+  public Optional<NearestKeyValue> getNearestAfter(final SegmentIdentifier segment, final Bytes key)
+      throws StorageException {
     throwIfClosed();
-    
+
     TransactionDB db = getDatabase(segment);
     ColumnFamilyHandle handle = getColumnHandle(segment);
-    
+
     try (final RocksIterator rocksIterator = db.newIterator(handle)) {
       rocksIterator.seek(key.toArrayUnsafe());
       return Optional.of(rocksIterator)
@@ -388,7 +386,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   @Override
   public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segment) {
     throwIfClosed();
-    
+
     TransactionDB db = getDatabase(segment);
     ColumnFamilyHandle handle = getColumnHandle(segment);
     final RocksIterator rocksIterator = db.newIterator(handle);
@@ -400,7 +398,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segment, final byte[] startKey) {
     throwIfClosed();
-    
+
     TransactionDB db = getDatabase(segment);
     ColumnFamilyHandle handle = getColumnHandle(segment);
     final RocksIterator rocksIterator = db.newIterator(handle);
@@ -412,7 +410,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   public Stream<Pair<byte[], byte[]>> streamFromKey(
       final SegmentIdentifier segment, final byte[] startKey, final byte[] endKey) {
     throwIfClosed();
-    
+
     final Bytes endKeyBytes = Bytes.wrap(endKey);
     TransactionDB db = getDatabase(segment);
     ColumnFamilyHandle handle = getColumnHandle(segment);
@@ -426,7 +424,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   @Override
   public Stream<byte[]> streamKeys(final SegmentIdentifier segment) {
     throwIfClosed();
-    
+
     TransactionDB db = getDatabase(segment);
     ColumnFamilyHandle handle = getColumnHandle(segment);
     final RocksIterator rocksIterator = db.newIterator(handle);
@@ -437,7 +435,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   @Override
   public boolean tryDelete(final SegmentIdentifier segment, final byte[] key) {
     throwIfClosed();
-    
+
     try {
       TransactionDB db = getDatabase(segment);
       ColumnFamilyHandle handle = getColumnHandle(segment);
@@ -473,11 +471,11 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   @Override
   public void clear(final SegmentIdentifier segment) {
     throwIfClosed();
-    
+
     try {
       TransactionDB db = getDatabase(segment);
       ColumnFamilyHandle handle = getColumnHandle(segment);
-      
+
       // Delete all keys in this segment
       // We cannot drop the DEFAULT column family, so we iterate and delete all keys
       try (final RocksIterator iterator = db.newIterator(handle)) {
@@ -495,28 +493,48 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
   @Override
   public SegmentedKeyValueStorageTransaction startTransaction() throws StorageException {
     throwIfClosed();
-    
+
     return new SegmentedKeyValueStorageTransactionValidatorDecorator(
         new SeparateDBRocksDBTransaction(), this.closed::get);
+  }
+
+  /**
+   * Take snapshot of the storage.
+   *
+   * <p>Creates a snapshot across all segment databases. This provides a consistent point-in-time
+   * view of all data across all segments.
+   *
+   * @return the snapshot
+   * @throws StorageException if snapshot creation fails
+   */
+  @Override
+  public SnappedKeyValueStorage takeSnapshot() throws StorageException {
+    throwIfClosed();
+
+    return new SeparateDBRocksDBSnapshot(
+        databases,
+        defaultColumnHandles,
+        segmentMetrics,
+        configuration.isReadCacheEnabledForSnapshots());
   }
 
   @Override
   public void close() {
     if (closed.compareAndSet(false, true)) {
       LOG.info("Closing {} separate RocksDB instances", databases.size());
-      
+
       // Close all column handles
       defaultColumnHandles.values().forEach(ColumnFamilyHandle::close);
-      
+
       // Close all databases
       databases.values().forEach(TransactionDB::close);
-      
+
       // Clear collections
       databases.clear();
       defaultColumnHandles.clear();
       segmentMetrics.clear();
       segmentStats.clear();
-      
+
       tryDeleteOptions.close();
       readOptions.close();
     }
@@ -534,27 +552,27 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
     }
   }
 
-  /**
-   * Transaction implementation for separate database architecture.
-   */
+  /** Transaction implementation for separate database architecture. */
   private class SeparateDBRocksDBTransaction implements SegmentedKeyValueStorageTransaction {
-    
+
     private final Map<SegmentIdentifier, org.rocksdb.Transaction> transactions = new HashMap<>();
     private final Map<SegmentIdentifier, WriteOptions> writeOptions = new HashMap<>();
-    
+
     SeparateDBRocksDBTransaction() {
       // Transactions are created lazily per segment when needed
     }
-    
+
     private org.rocksdb.Transaction getTransaction(final SegmentIdentifier segment) {
-      return transactions.computeIfAbsent(segment, seg -> {
-        WriteOptions wo = new WriteOptions();
-        wo.setIgnoreMissingColumnFamilies(true);
-        writeOptions.put(seg, wo);
-        return getDatabase(seg).beginTransaction(wo);
-      });
+      return transactions.computeIfAbsent(
+          segment,
+          seg -> {
+            WriteOptions wo = new WriteOptions();
+            wo.setIgnoreMissingColumnFamilies(true);
+            writeOptions.put(seg, wo);
+            return getDatabase(seg).beginTransaction(wo);
+          });
     }
-    
+
     @Override
     public void put(final SegmentIdentifier segment, final byte[] key, final byte[] value) {
       try {
@@ -565,7 +583,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
         throw new StorageException(e);
       }
     }
-    
+
     @Override
     public void remove(final SegmentIdentifier segment, final byte[] key) {
       try {
@@ -576,7 +594,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
         throw new StorageException(e);
       }
     }
-    
+
     @Override
     public void commit() throws StorageException {
       try {
@@ -590,7 +608,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
         close();
       }
     }
-    
+
     @Override
     public void rollback() {
       try {
@@ -604,7 +622,7 @@ public class SeparateDBRocksDBColumnarKeyValueStorage implements SegmentedKeyVal
         close();
       }
     }
-    
+
     @Override
     public void close() {
       transactions.values().forEach(org.rocksdb.Transaction::close);

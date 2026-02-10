@@ -37,7 +37,6 @@ import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksD
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.OptimisticRocksDBColumnarKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.SeparateDBRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.TransactionDBRocksDBColumnarKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
@@ -157,7 +156,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       // version. Introducing intermediate booleans that represent database properties and
       // dispatching
       // creation logic based on them is error-prone.
-      
+
       // Check if we should use separate databases per column
       if (rocksDBConfiguration.useSeparateDatabasePerColumn()) {
         LOG.info("Using separate RocksDB instance per column");

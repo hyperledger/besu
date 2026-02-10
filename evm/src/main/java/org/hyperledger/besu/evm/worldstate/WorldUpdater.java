@@ -168,7 +168,8 @@ public interface WorldUpdater extends MutableWorldView {
    * @param address the contract address
    * @param slotKey the storage slot key to prefetch
    */
-  default void prefetchStorage(final Address address, final org.apache.tuweni.units.bigints.UInt256 slotKey) {
+  default void prefetchStorage(
+      final Address address, final org.apache.tuweni.units.bigints.UInt256 slotKey) {
     // default is no-op
   }
 }
