@@ -90,7 +90,7 @@ testing {
             dependsOn(rootProject.installDist)
             setSystemProperties(getSystemProperties())
             systemProperty 'acctests.runBesuAsProcess', 'true'
-            systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+            systemProperty 'java.security.properties', "${buildDir}/resources/acceptanceTest/acceptanceTesting.security"
             def javaProjects = rootProject.subprojects - project(':platform')
             mustRunAfter javaProjects.test
             description = 'Runs ALL Besu acceptance tests (excluding bftsoak).'
