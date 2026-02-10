@@ -291,6 +291,29 @@ public class PerColumnConfiguration {
     }
     
     /**
+     * Configuration for ultra-fast read columns (e.g., ACCOUNT_INFO_STATE, TRIE_BRANCH_STORAGE).
+     * 
+     * <p>Optimized for maximum read performance (both cold and hot reads):
+     * - Moderate block cache (1 GB)
+     * - Small row cache for hot keys (256 MB)
+     * - Cache index/filter blocks in memory (critical for cold reads)
+     * - Bloom filters (skip unnecessary disk reads)
+     * - More open files for OS page cache
+     */
+    public static ColumnConfig forUltraFastReadColumn() {
+      return new ColumnConfig.Builder()
+          .cacheCapacity(1_073_741_824L)  // 1 GB block cache (réduit de 2 GB)
+          .rowCacheSize(256 * 1024 * 1024L)   // 256 MB row cache (hot keys seulement)
+          .maxOpenFiles(4096)  // Plus de fichiers ouverts = OS page cache
+          .backgroundThreadCount(6)  // Plus de threads pour compaction
+          .enableCompression(true)
+          .writeBufferSize(32 * 1024 * 1024)  // 32 MB write buffer (minimal)
+          .maxWriteBufferNumber(2)
+          .targetFileSizeBase(64 * 1024 * 1024)  // 64 MB target file size
+          .build();
+    }
+    
+    /**
      * Configuration for balanced columns (e.g., ACCOUNT_INFO_STATE).
      * 
      * <p>Balanced between reads and writes.
@@ -355,10 +378,12 @@ public class PerColumnConfiguration {
       
       // Read-heavy columns (state queries, RPC calls)
       config.setColumnConfig("WORLD_STATE", forReadHeavyColumn());
-      config.setColumnConfig("ACCOUNT_INFO_STATE", forReadHeavyColumn());
       config.setColumnConfig("CODE_STORAGE", forReadHeavyColumn());
-      config.setColumnConfig("ACCOUNT_STORAGE_STORAGE", forReadHeavyColumn());
-      config.setColumnConfig("TRIE_BRANCH_STORAGE", forReadHeavyColumn());
+      
+      // ULTRA-FAST READ columns (hot path critiques pour performance)
+      config.setColumnConfig("ACCOUNT_INFO_STATE", forUltraFastReadColumn());
+      config.setColumnConfig("ACCOUNT_STORAGE_STORAGE", forUltraFastReadColumn());
+      config.setColumnConfig("TRIE_BRANCH_STORAGE", forUltraFastReadColumn());
       
       // Small/metadata columns
       config.setColumnConfig("VARIABLES", forSmallColumn());

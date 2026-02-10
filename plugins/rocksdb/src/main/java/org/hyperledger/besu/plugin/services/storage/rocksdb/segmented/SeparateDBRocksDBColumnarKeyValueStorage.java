@@ -284,7 +284,10 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
     ColumnFamilyOptions options =
         new ColumnFamilyOptions()
             .setTtl(0)
-            .setCompressionType(CompressionType.LZ4_COMPRESSION)
+            .setCompressionType(
+                columnConfig.isCompressionEnabled() 
+                    ? CompressionType.LZ4_COMPRESSION 
+                    : CompressionType.NO_COMPRESSION)
             .setTableFormatConfig(tableConfig);
 
     // Note: Row cache is configured via BlockBasedTableConfig, not here
@@ -332,18 +335,36 @@ public class SeparateDBRocksDBColumnarKeyValueStorage
     final org.rocksdb.Cache blockCache = new LRUCache(columnConfig.getCacheCapacity());
     segmentBlockCaches.put(segment, blockCache);
 
+    // Cache index and filter blocks for faster cold reads (critique pour première lecture)
+    boolean cacheIndexAndFilter = isReadHeavySegment(segment);
+
     BlockBasedTableConfig tableConfig = new BlockBasedTableConfig()
         .setFormatVersion(ROCKSDB_FORMAT_VERSION)
         .setBlockCache(blockCache)
         .setFilterPolicy(new BloomFilter(10, false))
         .setPartitionFilters(true)
-        .setCacheIndexAndFilterBlocks(false)
+        .setCacheIndexAndFilterBlocks(cacheIndexAndFilter)  // Active pour colonnes read-heavy
+        .setPinL0FilterAndIndexBlocksInCache(cacheIndexAndFilter)  // Pin en cache pour cold reads
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
 
-    LOG.debug("Created BlockBasedTableConfig for segment '{}' with blockCache={}MB", 
-        segment.getName(), columnConfig.getCacheCapacity() / (1024 * 1024));
+    LOG.debug("Created BlockBasedTableConfig for segment '{}' with blockCache={}MB, cacheIndexFilter={}", 
+        segment.getName(), 
+        columnConfig.getCacheCapacity() / (1024 * 1024),
+        cacheIndexAndFilter);
 
     return tableConfig;
+  }
+  
+  /**
+   * Determines if a segment is read-heavy (needs index/filter caching for cold reads).
+   */
+  private boolean isReadHeavySegment(final SegmentIdentifier segment) {
+    String name = segment.getName();
+    return name.equals("ACCOUNT_INFO_STATE") ||
+           name.equals("ACCOUNT_STORAGE_STORAGE") ||
+           name.equals("TRIE_BRANCH_STORAGE") ||
+           name.equals("WORLD_STATE") ||
+           name.equals("CODE_STORAGE");
   }
 
   /**
