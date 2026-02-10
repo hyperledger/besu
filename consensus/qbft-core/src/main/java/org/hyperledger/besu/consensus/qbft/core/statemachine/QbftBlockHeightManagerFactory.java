@@ -21,6 +21,8 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftFinalState;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorModeTransitionLogger;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.core.validation.MessageValidatorFactory;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ public class QbftBlockHeightManagerFactory {
   private final QbftValidatorProvider validatorProvider;
   private final QbftValidatorModeTransitionLogger validatorModeTransitionLogger;
   private boolean isEarlyRoundChangeEnabled = false;
+  private final ProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Qbft block height manager factory.
@@ -54,13 +57,15 @@ public class QbftBlockHeightManagerFactory {
       final MessageValidatorFactory messageValidatorFactory,
       final MessageFactory messageFactory,
       final QbftValidatorProvider validatorProvider,
-      final QbftValidatorModeTransitionLogger validatorModeTransitionLogger) {
+      final QbftValidatorModeTransitionLogger validatorModeTransitionLogger,
+      final ProtocolSchedule protocolSchedule) {
     this.roundFactory = roundFactory;
     this.finalState = finalState;
     this.messageValidatorFactory = messageValidatorFactory;
     this.messageFactory = messageFactory;
     this.validatorProvider = validatorProvider;
     this.validatorModeTransitionLogger = validatorModeTransitionLogger;
+    this.protocolSchedule = protocolSchedule;
   }
 
   /**
@@ -106,6 +111,8 @@ public class QbftBlockHeightManagerFactory {
 
     QbftBlockHeightManager qbftBlockHeightManager;
     RoundChangeManager roundChangeManager;
+    ScheduledProtocolSpec specForNextBlock =
+        protocolSchedule.getNextProtocolSpecByBlockHeader(parentHeader.getHeader());
 
     if (isEarlyRoundChangeEnabled) {
       roundChangeManager =
@@ -125,7 +132,7 @@ public class QbftBlockHeightManagerFactory {
               messageValidatorFactory,
               messageFactory,
               validatorProvider,
-              true);
+              specForNextBlock.getScheduleType());
     } else {
       roundChangeManager =
           new RoundChangeManager(
@@ -142,7 +149,8 @@ public class QbftBlockHeightManagerFactory {
               finalState.getClock(),
               messageValidatorFactory,
               messageFactory,
-              validatorProvider);
+              validatorProvider,
+              specForNextBlock.getScheduleType());
     }
 
     return qbftBlockHeightManager;

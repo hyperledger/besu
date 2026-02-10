@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BaseForksSchedulesFactoryTest;
 import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ public class IbftForksSchedulesFactoryTest
 
     final ForksSchedule<BftConfigOptions> forksSchedule =
         IbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
-    assertThat(forksSchedule.getFork(0))
+    assertThat(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
         .usingRecursiveComparison()
         .isEqualTo(new ForkSpec<>(0, configOptions));
 
@@ -69,8 +70,12 @@ public class IbftForksSchedulesFactoryTest
             new JsonBftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
     final ForkSpec<BftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
-    assertThat(forksSchedule.getFork(1)).usingRecursiveComparison().isEqualTo(expectedFork);
-    assertThat(forksSchedule.getFork(2)).usingRecursiveComparison().isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedFork);
   }
 
   @Override

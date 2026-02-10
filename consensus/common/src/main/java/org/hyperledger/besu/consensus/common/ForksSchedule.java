@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,9 +50,17 @@ public class ForksSchedule<C> {
    * @param blockNumber the block number
    * @return the fork
    */
-  public ForkSpec<C> getFork(final long blockNumber) {
+  public ForkSpec<C> getFork(
+      final long blockNumber,
+      final long timestampSeconds,
+      final ScheduledProtocolSpec.ScheduleType currentProtocolScheduleType) {
     for (final ForkSpec<C> f : forks) {
-      if (blockNumber >= f.getBlock()) {
+      if (currentProtocolScheduleType == ScheduledProtocolSpec.ScheduleType.BLOCK
+          && blockNumber >= f.getBlock()) {
+        return f;
+      }
+      if (currentProtocolScheduleType == ScheduledProtocolSpec.ScheduleType.TIME
+          && timestampSeconds >= f.getBlock()) {
         return f;
       }
     }

@@ -46,6 +46,8 @@ public interface ProtocolSchedule {
     return getByBlockHeader(nextBlockHeader);
   }
 
+  ScheduledProtocolSpec getNextProtocolSpecByBlockHeader(final ProcessableBlockHeader blockHeader);
+
   Optional<ScheduledProtocolSpec> getNextProtocolSpec(final long currentTime);
 
   Optional<ScheduledProtocolSpec> getLatestProtocolSpec();
