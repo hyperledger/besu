@@ -490,15 +490,19 @@ public class ConfigurationOverviewBuilder {
     if (!chainPruningStrategy.equals(ChainPruningStrategy.NONE)) {
       final StringBuilder chainPruningString = new StringBuilder();
 
-      if (chainPruningStrategy.equals(ChainPruningStrategy.ALL)){
-        chainPruningString.append("Chain and BAL pruning enabled (retained ")
-        .append("BALs: ").append(chainPruningBalsRetained)
-                .append("; Blocks: ").append(chainPruningBlocksRetained);;
+      if (chainPruningStrategy.equals(ChainPruningStrategy.ALL)) {
+        chainPruningString
+            .append("Chain and BAL pruning enabled (retained ")
+            .append("BALs: ")
+            .append(chainPruningBalsRetained)
+            .append("; Blocks: ")
+            .append(chainPruningBlocksRetained);
+        ;
 
       } else if (chainPruningStrategy.equals(ChainPruningStrategy.BAL)) {
-        chainPruningString.append("BAL pruning enabled (retained BALs: ")
-                .append(chainPruningBalsRetained);
-
+        chainPruningString
+            .append("BAL pruning enabled (retained BALs: ")
+            .append(chainPruningBalsRetained);
       }
       chainPruningString.append(")");
       lines.add(chainPruningString.toString());
