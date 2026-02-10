@@ -39,6 +39,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
 
   private final Set<EthPeer> triedPeers = new HashSet<>();
   private final Set<EthPeer> failedPeers = new HashSet<>();
+  private Optional<Comparator<EthPeerImmutableAttributes>> peerComparator = Optional.empty();
 
   protected AbstractRetryingSwitchingPeerTask(
       final EthContext ethContext,
@@ -100,6 +101,10 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             });
   }
 
+  public void setPeerComparator(final Comparator<EthPeerImmutableAttributes> peerComparator) {
+    this.peerComparator = Optional.of(peerComparator);
+  }
+
   @Override
   protected void handleTaskError(final Throwable error) {
     if (isPeerFailure(error)) {
@@ -129,7 +134,8 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   protected Optional<EthPeer> nextPeerToTry() {
     return getEthContext()
         .getEthPeers()
-        .streamBestPeers()
+        .streamBestPeers(
+            peerComparator.orElse(getEthContext().getEthPeers().getBestPeerComparator()))
         .filter((peer) -> isSuitablePeer(peer) && !triedPeers.contains(peer.ethPeer()))
         .map(EthPeerImmutableAttributes::ethPeer)
         .findFirst();

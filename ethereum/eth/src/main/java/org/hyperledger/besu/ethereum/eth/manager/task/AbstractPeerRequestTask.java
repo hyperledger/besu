@@ -42,6 +42,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   private final String protocolName;
   private final int requestCode;
   private volatile PendingPeerRequest responseStream;
+  private long startTimeNanos;
 
   protected AbstractPeerRequestTask(
       final EthContext ethContext,
@@ -64,6 +65,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     responseStream = sendRequest();
     responseStream.then(
         stream -> {
+          startTimeNanos = System.nanoTime();
           // Start the timeout now that the request has actually been sent
           ethContext.getScheduler().failAfterTimeout(promise, timeout);
 
@@ -108,6 +110,9 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       final Optional<R> result = processResponse(streamClosed, message, peer);
       result.ifPresent(
           r -> {
+            final double durationMs = (System.nanoTime() - startTimeNanos) / 1_000_000.0;
+            peer.recordLatency(durationMs);
+            peer.recordThroughput(message.getSize(), durationMs);
             promise.complete(r);
             peer.recordUsefulResponse();
           });
