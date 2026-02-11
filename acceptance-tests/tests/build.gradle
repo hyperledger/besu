@@ -27,142 +27,116 @@ solidity {
   evmVersion = 'london'
 }
 
-dependencies {
-  api 'org.slf4j:slf4j-api'
+testing {
+  suites {
+    acceptanceTest(JvmTestSuite) {
+      useJUnitJupiter()
+      dependencies {
+        annotationProcessor project()
+        implementation project()
 
-  implementation project(':crypto:algorithms')
-  implementation project(':ethereum:eth')
+        implementation project(':acceptance-tests:dsl')
+        implementation project(':acceptance-tests:tests:shanghai')
+        implementation project(':config')
+        implementation project(':crypto:algorithms')
+        implementation project(':datatypes')
+        implementation project(':ethereum:api')
+        implementation project(':ethereum:core')
+        implementation project(':ethereum:eth')
+        implementation project(':ethereum:permissioning')
+        implementation project(':ethereum:p2p')
+        implementation project(':metrics:core')
+        implementation project(':plugins:rocksdb')
+        implementation project(':plugin-api')
 
-  testImplementation project(':acceptance-tests:dsl')
-  testImplementation files("${rootProject.projectDir}/acceptance-tests/detached-test-plugins/build/libs/testPlugins.jar")
-  testImplementation project(':app')
-  testImplementation project(':config')
-  testImplementation project(':consensus:clique')
-  testImplementation project(':datatypes')
-  testImplementation project(':ethereum:api')
-  testImplementation project(':ethereum:core')
-  testImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  testImplementation project(':ethereum:eth')
-  testImplementation project(':ethereum:p2p')
-  testImplementation project(':ethereum:permissioning')
-  testImplementation project(':ethereum:rlp')
-  testImplementation project(':metrics:core')
-  testImplementation project(':plugin-api')
-  testImplementation project(':testutil')
-  testImplementation project(':util')
-  implementation project(':plugins:rocksdb')
+        implementation files("${rootProject.projectDir}/acceptance-tests/detached-test-plugins/build/libs/testPlugins.jar")
 
-  testImplementation 'commons-io:commons-io'
-  testImplementation 'io.grpc:grpc-all'
-  testImplementation 'io.grpc:grpc-core'
-  testImplementation 'io.grpc:grpc-netty'
-  testImplementation 'io.grpc:grpc-stub'
-  testImplementation 'io.opentelemetry:opentelemetry-extension-trace-propagators'
-  testImplementation 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0'
-  testImplementation 'io.netty:netty-all'
-  testImplementation 'io.opentelemetry:opentelemetry-api'
-  testImplementation 'io.opentelemetry:opentelemetry-exporter-otlp'
-  testImplementation 'io.opentelemetry.proto:opentelemetry-proto'
-  testImplementation 'io.opentelemetry:opentelemetry-sdk'
-  testImplementation 'io.opentelemetry:opentelemetry-sdk-trace'
-  testImplementation 'io.opentracing.contrib:opentracing-okhttp3'
-  testImplementation 'io.opentracing:opentracing-api'
-  testImplementation 'io.opentracing:opentracing-util'
-  testImplementation 'io.vertx:vertx-core'
-  testImplementation 'org.apache.commons:commons-compress'
-  testImplementation 'org.apache.logging.log4j:log4j-core'
-  testImplementation 'io.consensys.tuweni:tuweni-crypto'
-  testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.awaitility:awaitility'
-  testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.web3j:abi'
-  testImplementation 'org.web3j:besu'
-  testImplementation 'org.web3j:core'
-  testImplementation 'com.google.dagger:dagger'
-  testAnnotationProcessor 'com.google.dagger:dagger-compiler'
-  testImplementation project(path: ':acceptance-tests:tests:shanghai')
-}
+        implementation 'commons-io:commons-io'
+        implementation 'com.google.guava:guava'
+        implementation 'com.google.protobuf:protobuf-java'
+        implementation 'io.grpc:grpc-all'
+        implementation 'io.opentelemetry:opentelemetry-extension-trace-propagators'
+        implementation 'io.opentelemetry:opentelemetry-sdk'
+        implementation 'io.opentelemetry.instrumentation:opentelemetry-okhttp-3.0'
+        implementation 'io.opentelemetry.proto:opentelemetry-proto'
+        implementation 'jakarta.validation:jakarta.validation-api'
+        implementation 'org.apache.commons:commons-compress'
+        implementation 'org.assertj:assertj-core'
+        implementation 'org.awaitility:awaitility'
+        implementation 'org.junit.jupiter:junit-jupiter'
+        implementation 'org.web3j:abi'
+        implementation 'org.web3j:core'
+      }
 
-test.enabled = false
+      sourceSets {
+        acceptanceTest {
+          resources {
+            srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/distributions"
+            srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/dependency-conflict-1/build/distributions"
+            srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/dependency-conflict-2/build/distributions"
+            srcDirs "${rootDir}/acceptance-tests/detached-outdated-test-plugins/build/distributions"
+            srcDirs "${rootDir}/acceptance-tests/catalogless-test-plugins/build/libs"
+          }
+        }
+      }
 
-sourceSets {
-  test {
-    resources {
-      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/build/distributions"
-      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/dependency-conflict-1/build/distributions"
-      srcDirs "${rootDir}/acceptance-tests/detached-test-plugins/dependency-conflict-2/build/distributions"
-      srcDirs "${rootDir}/acceptance-tests/detached-outdated-test-plugins/build/distributions"
-      srcDirs "${rootDir}/acceptance-tests/catalogless-test-plugins/build/libs"
+      targets {
+        all {
+          testTask.configure {
+            inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+
+            exclude '**/bftsoak/**'
+
+            dependsOn(rootProject.installDist)
+            setSystemProperties(getSystemProperties())
+            systemProperty 'acctests.runBesuAsProcess', 'true'
+            systemProperty 'java.security.properties', "${buildDir}/resources/acceptanceTest/acceptanceTesting.security"
+            def javaProjects = rootProject.subprojects - project(':platform')
+            mustRunAfter javaProjects.test
+            description = 'Runs ALL Besu acceptance tests (excluding bftsoak).'
+            group = 'verification'
+
+            jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+            testLogging {
+              exceptionFormat = 'full'
+              showStackTraces = true
+              showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+              showExceptions = true
+              showCauses = true
+            }
+
+            doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+          }
+        }
+
+        acceptanceTestBftSoak {
+          testTask.configure {
+            include '**/bftsoak/**'
+
+            // Set to any time > 60 minutes to run the soak test for longer
+            // systemProperty 'acctests.soakTimeMins', '120'
+            description = 'Runs BFT soak test.'
+
+            testLogging {
+              showStandardStreams = true
+            }
+          }
+        }
+      }
     }
   }
 }
 
-processTestResources.dependsOn(
+// Add testSupportArtifacts dependency to acceptanceTest suite
+dependencies {
+  acceptanceTestImplementation rootProject.project(':ethereum:core').configurations.named('testSupportArtifacts').get().allArtifacts.files
+}
+
+processAcceptanceTestResources.dependsOn(
   ':buildDetachedTestPlugins',
   ':buildDetachedOutdatedTestPlugins',
   ':acceptance-tests:catalogless-test-plugins:jar'
   )
 
-compileTestJava.dependsOn ':buildDetachedTestPlugins'
-
-// FKA acceptanceTestNotPrivacy
-task acceptanceTest(type: Test) {
-  testClassesDirs = testing.suites.test.sources.output.classesDirs
-  classpath = testing.suites.test.sources.runtimeClasspath
-  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  exclude '**/bftsoak/**'
-  useJUnitPlatform {}
-
-  dependsOn(rootProject.installDist)
-  setSystemProperties(test.getSystemProperties())
-  systemProperty 'acctests.runBesuAsProcess', 'true'
-  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  def javaProjects = rootProject.subprojects - project(':platform')
-  mustRunAfter javaProjects.test
-  description = 'Runs ALL Besu acceptance tests (excluding bftsoak).'
-  group = 'verification'
-
-  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
-
-  testLogging {
-    exceptionFormat = 'full'
-    showStackTraces = true
-    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
-    showExceptions = true
-    showCauses = true
-  }
-
-  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
-}
-
-task acceptanceTestBftSoak(type: Test) {
-  testClassesDirs = testing.suites.test.sources.output.classesDirs
-  classpath = testing.suites.test.sources.runtimeClasspath
-  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  include '**/bftsoak/**'
-
-  useJUnitPlatform {}
-
-  dependsOn(rootProject.installDist)
-  setSystemProperties(test.getSystemProperties())
-  systemProperty 'acctests.runBesuAsProcess', 'true'
-  // Set to any time > 60 minutes to run the soak test for longer
-  // systemProperty 'acctests.soakTimeMins', '120'
-  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  def javaProjects = rootProject.subprojects - project(':platform')
-  mustRunAfter javaProjects.test
-  description = 'Runs BFT soak test.'
-  group = 'verification'
-
-  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
-
-  testLogging {
-    exceptionFormat = 'full'
-    showStackTraces = true
-    showStandardStreams = true
-    showExceptions = true
-    showCauses = true
-  }
-
-  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
-}
+compileAcceptanceTestJava.dependsOn ':buildDetachedTestPlugins'
