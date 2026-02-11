@@ -29,9 +29,7 @@ import javax.annotation.Nullable;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * Decodes Frontier-era transaction receipts from RLP.
- *
- * <p>This decoder handles pre-Amsterdam receipts which do not include the gasSpent field.
+ * Decodes transaction receipts from RLP.
  *
  * <pre>
  * (eth/68): receipt = {legacy-receipt, typed-receipt} with typed-receipt = tx-type || rlp(legacy-receipt)
@@ -46,15 +44,12 @@ import org.apache.tuweni.bytes.Bytes;
  *
  * (eth/69): receipt = [tx-type, post-state-or-status, cumulative-gas, logs]
  * </pre>
- *
- * <p>This class also provides protected utility methods for decoding receipt components that can be
- * reused by fork-specific decoders (e.g., AmsterdamTransactionReceiptDecoder).
  */
-public class FrontierTransactionReceiptDecoder {
+public class TransactionReceiptDecoder {
 
   /**
-   * Container for decoded receipt fields that are common across all receipt formats. This record
-   * holds the intermediate decoding state before the final TransactionReceipt is constructed.
+   * Container for decoded receipt fields. This record holds the intermediate decoding state before
+   * the final TransactionReceipt is constructed.
    *
    * @param transactionType the transaction type (FRONTIER for legacy receipts)
    * @param statusOrStateRoot the RLP input containing either status code or state root
@@ -63,7 +58,7 @@ public class FrontierTransactionReceiptDecoder {
    * @param logs the list of logs
    * @param input the RLP input positioned after logs (for reading optional fields)
    */
-  protected record ReceiptComponents(
+  private record ReceiptComponents(
       TransactionType transactionType,
       RLPInput statusOrStateRoot,
       long cumulativeGas,
@@ -93,18 +88,18 @@ public class FrontierTransactionReceiptDecoder {
     final ReceiptComponents components = decodeTypedReceiptComponents(rlpInput);
     Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
     components.input().leaveList();
-    return createReceipt(components, Optional.empty(), revertReason);
+    return createReceipt(components, revertReason);
   }
 
   /**
    * Decodes a typed receipt (EIP-2718+) up to and including logs, returning the components needed
    * to construct the final receipt. The returned RLPInput is positioned after logs, ready to read
-   * optional fields (gasSpent, revertReason).
+   * optional fields (revertReason).
    *
    * @param rlpInput the RLP input positioned at the start of a typed receipt
    * @return the decoded receipt components
    */
-  protected static ReceiptComponents decodeTypedReceiptComponents(final RLPInput rlpInput) {
+  private static ReceiptComponents decodeTypedReceiptComponents(final RLPInput rlpInput) {
     RLPInput input = rlpInput;
     final Bytes typedTransactionReceiptBytes = input.readBytes();
     TransactionType transactionType =
@@ -199,13 +194,13 @@ public class FrontierTransactionReceiptDecoder {
         decodeLegacyReceiptComponents(
             input, statusOrStateRootRlpInput, cumulativeGasRlpInput, bloomFilter);
     Optional<Bytes> revertReason = readMaybeRevertReason(components.input(), revertReasonAllowed);
-    return createReceipt(components, Optional.empty(), revertReason);
+    return createReceipt(components, revertReason);
   }
 
   /**
    * Decodes a legacy receipt (pre-EIP-2718) up to and including logs, returning the components
    * needed to construct the final receipt. The returned RLPInput is positioned after logs, ready to
-   * read optional fields (gasSpent, revertReason).
+   * read optional fields (revertReason).
    *
    * @param input the RLP input positioned at the logs list
    * @param statusOrStateRootRlpInput the already-read status/state root RLP input
@@ -213,7 +208,7 @@ public class FrontierTransactionReceiptDecoder {
    * @param bloomFilter the bloom filter (may be null if compacted)
    * @return the decoded receipt components
    */
-  protected static ReceiptComponents decodeLegacyReceiptComponents(
+  private static ReceiptComponents decodeLegacyReceiptComponents(
       final RLPInput input,
       final RLPInput statusOrStateRootRlpInput,
       final RLPInput cumulativeGasRlpInput,
@@ -237,53 +232,8 @@ public class FrontierTransactionReceiptDecoder {
       final List<Log> logs,
       final LogsBloomFilter bloomFilter,
       final Optional<Bytes> revertReason) {
-    return createReceipt(
-        transactionType,
-        statusOrStateRoot,
-        cumulativeGas,
-        logs,
-        bloomFilter,
-        revertReason,
-        Optional.empty());
-  }
-
-  /**
-   * Creates a transaction receipt from decoded components and optional fields.
-   *
-   * @param components the decoded receipt components
-   * @param gasSpent the optional gasSpent field (EIP-7778, Amsterdam+)
-   * @param revertReason the optional revert reason (Besu-specific extension)
-   * @return the constructed TransactionReceipt
-   */
-  protected static TransactionReceipt createReceipt(
-      final ReceiptComponents components,
-      final Optional<Long> gasSpent,
-      final Optional<Bytes> revertReason) {
-    return createReceipt(
-        components.transactionType(),
-        components.statusOrStateRoot(),
-        components.cumulativeGas(),
-        components.logs(),
-        components.bloomFilter(),
-        revertReason,
-        gasSpent);
-  }
-
-  private static TransactionReceipt createReceipt(
-      final TransactionType transactionType,
-      final RLPInput statusOrStateRoot,
-      final long cumulativeGas,
-      final List<Log> logs,
-      final LogsBloomFilter bloomFilter,
-      final Optional<Bytes> revertReason,
-      final Optional<Long> gasSpent) {
     if (statusOrStateRoot.raw().size() == 1) {
       final int status = statusOrStateRoot.readIntScalar();
-      if (gasSpent.isPresent()) {
-        // EIP-7778 Amsterdam+ receipt with gasSpent
-        return new TransactionReceipt(
-            transactionType, status, cumulativeGas, gasSpent.get(), logs, revertReason);
-      }
       return new TransactionReceipt(
           transactionType, status, cumulativeGas, logs, bloomFilter, revertReason);
     } else {
@@ -294,22 +244,38 @@ public class FrontierTransactionReceiptDecoder {
   }
 
   /**
+   * Creates a transaction receipt from decoded components and optional fields.
+   *
+   * @param components the decoded receipt components
+   * @param revertReason the optional revert reason (Besu-specific extension)
+   * @return the constructed TransactionReceipt
+   */
+  private static TransactionReceipt createReceipt(
+      final ReceiptComponents components, final Optional<Bytes> revertReason) {
+    return createReceipt(
+        components.transactionType(),
+        components.statusOrStateRoot(),
+        components.cumulativeGas(),
+        components.logs(),
+        components.bloomFilter(),
+        revertReason);
+  }
+
+  /**
    * Reads the optional revert reason field from the RLP input if present and allowed.
    *
-   * @param input the RLP input positioned after logs (and gasSpent if present)
+   * @param input the RLP input positioned after logs
    * @param revertReasonAllowed whether revert reason is allowed in this context
    * @return the revert reason bytes, or empty if not present or not allowed
    */
-  protected static Optional<Bytes> readMaybeRevertReason(
+  private static Optional<Bytes> readMaybeRevertReason(
       final RLPInput input, final boolean revertReasonAllowed) {
     if (input.isEndOfCurrentList()) {
       return Optional.empty();
     }
     if (!revertReasonAllowed) {
-      // Don't read, leave for gasSpent parsing
       return Optional.empty();
     }
-    // Read the revert reason bytes
     return Optional.of(input.readBytes());
   }
 
@@ -320,7 +286,7 @@ public class FrontierTransactionReceiptDecoder {
    * @param input the RLP input to check
    * @return true if the next element is not a bloom filter
    */
-  protected static boolean isNextNotBloomFilter(final RLPInput input) {
+  private static boolean isNextNotBloomFilter(final RLPInput input) {
     return input.nextIsList() || input.nextSize() != LogsBloomFilter.BYTE_SIZE;
   }
 }

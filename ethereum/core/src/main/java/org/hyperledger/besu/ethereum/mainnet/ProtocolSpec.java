@@ -92,7 +92,7 @@ public class ProtocolSpec {
   private final Optional<BlockAccessListFactory> blockAccessListFactory;
   private final StateRootCommitterFactory stateRootCommitterFactory;
   private final BlockGasAccountingStrategy blockGasAccountingStrategy;
-  private final TransactionReceiptDecoderStrategy receiptDecoderStrategy;
+  private final BlockGasUsedValidator blockGasUsedValidator;
 
   /**
    * Creates a new protocol specification instance.
@@ -127,8 +127,7 @@ public class ProtocolSpec {
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
    * @param blockGasAccountingStrategy the strategy for calculating block gas usage
-   * @param receiptDecoderStrategy the strategy for decoding transaction receipts (nullable for
-   *     backward compatibility - if null, defaults to PRE_AMSTERDAM)
+   * @param blockGasUsedValidator the strategy for validating block gas used
    */
   public ProtocolSpec(
       final HardforkId hardforkId,
@@ -164,7 +163,7 @@ public class ProtocolSpec {
       final Optional<BlockAccessListFactory> blockAccessListFactory,
       final StateRootCommitterFactory stateRootCommitterFactory,
       final BlockGasAccountingStrategy blockGasAccountingStrategy,
-      final TransactionReceiptDecoderStrategy receiptDecoderStrategy) {
+      final BlockGasUsedValidator blockGasUsedValidator) {
     this.hardforkId = hardforkId;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -198,7 +197,7 @@ public class ProtocolSpec {
     this.blockAccessListFactory = blockAccessListFactory;
     this.stateRootCommitterFactory = stateRootCommitterFactory;
     this.blockGasAccountingStrategy = blockGasAccountingStrategy;
-    this.receiptDecoderStrategy = receiptDecoderStrategy;
+    this.blockGasUsedValidator = blockGasUsedValidator;
   }
 
   /**
@@ -446,13 +445,11 @@ public class ProtocolSpec {
   }
 
   /**
-   * Returns the strategy for decoding transaction receipts.
+   * Returns the strategy for validating block gas used.
    *
-   * @return the receipt decoder strategy, defaulting to PRE_AMSTERDAM if not explicitly set
+   * @return the block gas used validator
    */
-  public TransactionReceiptDecoderStrategy getReceiptDecoderStrategy() {
-    return receiptDecoderStrategy != null
-        ? receiptDecoderStrategy
-        : TransactionReceiptDecoderStrategy.FRONTIER;
+  public BlockGasUsedValidator getBlockGasUsedValidator() {
+    return blockGasUsedValidator;
   }
 }

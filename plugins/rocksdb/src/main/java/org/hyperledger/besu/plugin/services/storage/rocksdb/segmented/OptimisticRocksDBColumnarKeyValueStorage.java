@@ -101,6 +101,7 @@ public class OptimisticRocksDBColumnarKeyValueStorage extends RocksDBColumnarKey
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
+    writeOptions.setSync(true);
     return new SegmentedKeyValueStorageTransactionValidatorDecorator(
         new RocksDBWriteBatch(this::safeColumnHandle, db, writeOptions, this.metrics),
         this.closed::get);
