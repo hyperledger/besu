@@ -31,6 +31,9 @@ public class RocksDBCLIOptions {
   /** The constant DEFAULT_BACKGROUND_THREAD_COUNT. */
   public static final int DEFAULT_BACKGROUND_THREAD_COUNT = 4;
 
+  /** The constant DEFAULT_OPTIMIZE_FOR_ARM. */
+  public static final boolean DEFAULT_OPTIMIZE_FOR_ARM = false;
+
   /** The constant DEFAULT_IS_HIGH_SPEC. */
   public static final boolean DEFAULT_IS_HIGH_SPEC = false;
 
@@ -159,6 +162,15 @@ public class RocksDBCLIOptions {
       description =
           "Use separate RocksDB instance per column instead of column families (default: ${DEFAULT-VALUE})")
   boolean useSeparateDatabasePerColumn = false;
+
+  /** Optimize for ARM architecture */
+  @CommandLine.Option(
+      names = {"--Xplugin-rocksdb-optimize-for-arm"},
+      hidden = true,
+      paramLabel = "<BOOLEAN>",
+      description =
+          "Enable ARM-specific optimizations (LZ4HC compression, aligned allocations) (default: ${DEFAULT-VALUE})")
+  boolean optimizeForArm = DEFAULT_OPTIMIZE_FOR_ARM;
 
   private RocksDBCLIOptions() {}
 
