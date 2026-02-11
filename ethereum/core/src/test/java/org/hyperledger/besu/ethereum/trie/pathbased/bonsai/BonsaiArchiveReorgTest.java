@@ -548,12 +548,11 @@ public class BonsaiArchiveReorgTest {
 
   /**
    * Tests that paired rollback/rollforward during a reorg correctly handles storage slot creation
-   * when archive context (WORLD_BLOCK_NUMBER_KEY) needs to be updated. This test reproduces the
-   * scenario from the bug where storage reads during rollforward were using the wrong block
-   * context.
+   * when archive context needs to be updated. This test reproduces the scenario from a bug where
+   * storage reads during rollforward were using the wrong block context.
    *
-   * <p>Bug scenario: During paired rollback/rollforward, if WORLD_BLOCK_NUMBER_KEY isn't updated
-   * after rollbacks complete, subsequent storage reads during rollforward will use the wrong block
+   * <p>Bug scenario: During paired rollback/rollforward, if the ephemeral archive context isn't
+   * correctly maintained, subsequent storage reads during rollforward will use the wrong block
    * context, causing "Expected to create slot, but the slot exists" errors.
    *
    * <p>This test creates a reorg with storage slot changes, ensuring the archive context is
@@ -606,22 +605,21 @@ public class BonsaiArchiveReorgTest {
 
   /**
    * Tests multiple rollforwards followed by a paired rollback/rollforward operation. This
-   * reproduces the issue where WORLD_BLOCK_NUMBER_KEY was not updated after rollforwards, causing
-   * the subsequent rollback to read from the wrong block context.
+   * reproduces a scenario where archive context needs to be correctly maintained across
+   * rollforwards and subsequent rollbacks.
    *
    * <p>Log sequence that this test reproduces:
    *
    * <pre>
    * Rollforward 0x67238e14...  (applies block changes, creates storage slots)
    * Rollforward 0x0bdee358...  (applies more changes)
-   * [WORLD_BLOCK_NUMBER_KEY not updated - BUG]
+   * [Context must be correctly maintained]
    * Paired Rollback 0x70b8bb69...  (tries to roll back)
    * ERROR: Expected to update storage value, but the slot does not exist
    * </pre>
    *
-   * <p>Without the fix, the rollback will throw IllegalStateException during the rollback because
-   * it reads storage using stale WORLD_BLOCK_NUMBER_KEY (from before the rollforwards), causing
-   * "slot does not exist" errors.
+   * <p>With ephemeral context, each world state gets its own context-safe copy, preventing stale
+   * context issues. This test verifies reorgs work correctly with the ephemeral approach.
    */
   @Test
   void shouldHandleRollforwardThenPairedRollbackRollforward() {
@@ -641,15 +639,13 @@ public class BonsaiArchiveReorgTest {
 
     // Critical part: Get historical world state at block 2
     // This triggers rollforwards from persisted state → block 2
-    // After this, WORLD_BLOCK_NUMBER_KEY should be updated, but without the fix it's not
+    // With ephemeral context, each world state gets a context-safe copy
     BlockHeader block2Header = blockchain.getBlockByNumber(2L).orElseThrow().getHeader();
-    getHistoricalWorldState(block2Header); // Triggers rollforwards, context should update
+    getHistoricalWorldState(block2Header); // Triggers rollforwards with isolated context
 
     // Now do a reorg from genesis with a different transfer amount to ACCOUNT_A
     // This triggers: Rollback from head → genesis, then Rollforward to new block 1
-    // Without the fix: rollback tries to read with stale WORLD_BLOCK_NUMBER_KEY →
-    // IllegalStateException
-    // With the fix: WORLD_BLOCK_NUMBER_KEY was updated after rollforwards → SUCCESS
+    // With ephemeral context: each operation gets isolated context → SUCCESS
     reorgFromWithTransfer(genesisHeader, ACCOUNT_A, TWO_ETH);
 
     // Verify the reorg succeeded - if we get here without IllegalStateException, the fix worked!

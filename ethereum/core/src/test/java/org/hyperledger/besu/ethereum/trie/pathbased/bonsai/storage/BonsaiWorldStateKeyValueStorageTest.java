@@ -79,9 +79,10 @@ public class BonsaiWorldStateKeyValueStorageTest {
     Function<byte[], byte[]> flatDBKey = (key) -> key; // No-op
 
     // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
+    // With ephemeral context, when no context is set, it defaults to MIN_BLOCK_SUFFIX (0)
     Function<byte[], byte[]> flatDBArchiveKey =
         (key) ->
-            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
+            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(0).toArrayUnsafe());
 
     return Stream.of(
         Arguments.of(FlatDbMode.FULL, flatDBKey),
