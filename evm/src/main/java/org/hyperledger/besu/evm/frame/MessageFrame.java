@@ -1631,7 +1631,7 @@ public class MessageFrame {
       TxValues newTxValues;
 
       if (parentMessageFrame == null) {
-        HashSet<Address> warmedUpAddresses = new HashSet<>(Address.SIZE);
+        HashSet<Address> warmedUpAddresses = new HashSet<>();
         warmedUpAddresses.add(contract);
         newTxValues =
             new TxValues(
@@ -1647,8 +1647,8 @@ public class MessageFrame {
                 miningBeneficiary,
                 versionedHashes,
                 UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new HashSet<>(Address.SIZE)),
-                UndoSet.of(new HashSet<>(Address.SIZE)),
+                UndoSet.of(new HashSet<>()),
+                UndoSet.of(new HashSet<>()),
                 new UndoScalar<>(0L));
         updater = worldUpdater;
         newStatic = isStatic;
