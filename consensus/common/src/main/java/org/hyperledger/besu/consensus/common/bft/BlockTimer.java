@@ -17,7 +17,6 @@ package org.hyperledger.besu.consensus.common.bft;
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.events.BlockTimerExpiry;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.time.Clock;
 import java.util.Optional;
@@ -85,23 +84,18 @@ public class BlockTimer {
    * @param headerTimestamp The timestamp from the of the chain head header
    */
   public synchronized void startTimer(
-      final ConsensusRoundIdentifier round,
-      final Supplier<Long> headerTimestamp,
-      final ScheduledProtocolSpec.ScheduleType currentProtocolScheduleType) {
+      final ConsensusRoundIdentifier round, final Supplier<Long> headerTimestamp) {
     cancelTimer();
 
     final long expiryTime;
     int currentBlockPeriodSeconds =
         forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get(), currentProtocolScheduleType)
+            .getFork(round.getSequenceNumber(), headerTimestamp.get())
             .getValue()
             .getBlockPeriodSeconds();
     final int nextBlockPeriodSeconds =
         forksSchedule
-            .getFork(
-                round.getSequenceNumber(),
-                headerTimestamp.get() + currentBlockPeriodSeconds,
-                currentProtocolScheduleType)
+            .getFork(round.getSequenceNumber(), headerTimestamp.get() + currentBlockPeriodSeconds)
             .getValue()
             .getBlockPeriodSeconds();
 
@@ -115,7 +109,7 @@ public class BlockTimer {
     // Experimental option for test scenarios only. Not for production use.
     final long blockPeriodMilliseconds =
         forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get(), currentProtocolScheduleType)
+            .getFork(round.getSequenceNumber(), headerTimestamp.get())
             .getValue()
             .getBlockPeriodMilliseconds();
     if (blockPeriodMilliseconds > 0) {
@@ -133,7 +127,7 @@ public class BlockTimer {
 
     final int emptyBlockPeriodSeconds =
         forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get(), currentProtocolScheduleType)
+            .getFork(round.getSequenceNumber(), headerTimestamp.get())
             .getValue()
             .getEmptyBlockPeriodSeconds();
     setBlockTimes(currentBlockPeriodSeconds, emptyBlockPeriodSeconds);

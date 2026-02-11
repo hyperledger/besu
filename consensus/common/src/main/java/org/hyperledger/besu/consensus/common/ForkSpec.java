@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.common;
 
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
+
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -28,6 +30,7 @@ public class ForkSpec<C> {
   public static final Comparator<ForkSpec<?>> COMPARATOR = Comparator.comparing(ForkSpec::getBlock);
 
   private final long block;
+  private final ScheduledProtocolSpec.ScheduleType forkType;
   private final C value;
 
   /**
@@ -39,6 +42,9 @@ public class ForkSpec<C> {
   public ForkSpec(final long block, final C value) {
     this.block = block;
     this.value = value;
+
+    // MRW TODO - allow fork spec to specify this
+    this.forkType = ScheduledProtocolSpec.ScheduleType.BLOCK;
   }
 
   /**
@@ -48,6 +54,15 @@ public class ForkSpec<C> {
    */
   public long getBlock() {
     return block;
+  }
+
+  /**
+   * Gets the fork type (block number or timestamp).
+   *
+   * @return the fork type
+   */
+  public ScheduledProtocolSpec.ScheduleType getForkType() {
+    return forkType;
   }
 
   /**

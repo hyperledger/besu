@@ -48,19 +48,17 @@ public class ForksSchedule<C> {
    * Gets fork.
    *
    * @param blockNumber the block number
+   * @param blockTimestamp the block timestamp
    * @return the fork
    */
-  public ForkSpec<C> getFork(
-      final long blockNumber,
-      final long timestampSeconds,
-      final ScheduledProtocolSpec.ScheduleType currentProtocolScheduleType) {
+  public ForkSpec<C> getFork(final long blockNumber, final long blockTimestamp) {
     for (final ForkSpec<C> f : forks) {
-      if (currentProtocolScheduleType == ScheduledProtocolSpec.ScheduleType.BLOCK
+      if (f.getForkType() == ScheduledProtocolSpec.ScheduleType.BLOCK
           && blockNumber >= f.getBlock()) {
         return f;
       }
-      if (currentProtocolScheduleType == ScheduledProtocolSpec.ScheduleType.TIME
-          && timestampSeconds >= f.getBlock()) {
+      if (f.getForkType() == ScheduledProtocolSpec.ScheduleType.TIME
+          && blockTimestamp >= f.getBlock()) {
         return f;
       }
     }

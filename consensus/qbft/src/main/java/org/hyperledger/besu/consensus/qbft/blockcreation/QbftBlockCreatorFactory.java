@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -70,15 +69,8 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
 
   @Override
   public Bytes createExtraData(final int round, final BlockHeader parentHeader) {
-
-    ScheduledProtocolSpec specForNextBlock =
-        protocolSchedule.getNextProtocolSpecByBlockHeader(parentHeader);
-
     if (forksSchedule
-        .getFork(
-            parentHeader.getNumber() + 1L,
-            parentHeader.getTimestamp(),
-            specForNextBlock.getScheduleType())
+        .getFork(parentHeader.getNumber() + 1L, parentHeader.getTimestamp())
         .getValue()
         .isValidatorContractMode()) {
       // vote and validators will come from contract instead of block

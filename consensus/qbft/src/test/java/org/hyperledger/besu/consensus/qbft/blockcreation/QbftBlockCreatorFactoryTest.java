@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableIn
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
@@ -64,8 +63,7 @@ public class QbftBlockCreatorFactoryTest {
     qbftConfigOptions.setValidatorContractAddress(Optional.of("1"));
     final ForkSpec<QbftConfigOptions> spec = new ForkSpec<>(0, qbftConfigOptions);
     final ForksSchedule<QbftConfigOptions> forksSchedule = mock(ForksSchedule.class);
-    when(forksSchedule.getFork(anyLong(), anyLong(), ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(spec);
+    when(forksSchedule.getFork(anyLong(), anyLong())).thenReturn(spec);
 
     qbftBlockCreatorFactory =
         new QbftBlockCreatorFactory(

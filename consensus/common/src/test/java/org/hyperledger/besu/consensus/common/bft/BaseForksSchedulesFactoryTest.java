@@ -24,7 +24,6 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Map;
 import java.util.Optional;
@@ -43,15 +42,9 @@ public abstract class BaseForksSchedulesFactoryTest<
     final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(configOptions);
 
     final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
-    assertThat(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedForkSpec);
-    assertThat(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedForkSpec);
-    assertThat(forksSchedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedForkSpec);
+    assertThat(forksSchedule.getFork(0, 0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
+    assertThat(forksSchedule.getFork(1, 0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
+    assertThat(forksSchedule.getFork(2, 0)).usingRecursiveComparison().isEqualTo(expectedForkSpec);
   }
 
   @Test
@@ -75,24 +68,10 @@ public abstract class BaseForksSchedulesFactoryTest<
         createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
     final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
 
-    assertThat(
-            forksSchedule
-                .getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
-    assertThat(
-            forksSchedule
-                .getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(0, 0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(1, 0).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress);
-    assertThat(
-            forksSchedule
-                .getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
+    assertThat(forksSchedule.getFork(2, 0).getValue().getMiningBeneficiary()).isEmpty();
   }
 
   @Test
@@ -118,23 +97,10 @@ public abstract class BaseForksSchedulesFactoryTest<
         createGenesisConfig(qbftConfigOptions, forkWithBeneficiary, forkWithNoBeneficiary);
     final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
 
-    assertThat(
-            forksSchedule
-                .getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(0, 0).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress);
-    assertThat(
-            forksSchedule
-                .getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
-    assertThat(
-            forksSchedule
-                .getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(1, 0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(2, 0).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress2);
   }
 
@@ -169,59 +135,19 @@ public abstract class BaseForksSchedulesFactoryTest<
     final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(qbftConfigOptions, forks);
     final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
 
-    assertThat(
-            forksSchedule
-                .getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(0, 0).getValue().getMiningBeneficiary())
         .contains(initialBeneficiaryAddress);
-    assertThat(
-            forksSchedule
-                .getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(1, 0).getValue().getMiningBeneficiary())
         .contains(initialBeneficiaryAddress);
-    assertThat(
-            forksSchedule
-                .getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(2, 0).getValue().getMiningBeneficiary())
         .contains(initialBeneficiaryAddress);
-    assertThat(
-            forksSchedule
-                .getFork(3, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
-    assertThat(
-            forksSchedule
-                .getFork(4, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
-    assertThat(
-            forksSchedule
-                .getFork(5, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
-    assertThat(
-            forksSchedule
-                .getFork(6, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
-        .isEmpty();
-    assertThat(
-            forksSchedule
-                .getFork(7, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(3, 0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(4, 0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(5, 0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(6, 0).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(forksSchedule.getFork(7, 0).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress2);
-    assertThat(
-            forksSchedule
-                .getFork(8, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getMiningBeneficiary())
+    assertThat(forksSchedule.getFork(8, 0).getValue().getMiningBeneficiary())
         .contains(beneficiaryAddress2);
   }
 

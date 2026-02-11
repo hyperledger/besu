@@ -34,7 +34,6 @@ import org.hyperledger.besu.consensus.ibft.validation.FutureRoundProposalMessage
 import org.hyperledger.besu.consensus.ibft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 
 import java.time.Clock;
@@ -94,8 +93,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
       final IbftRoundFactory ibftRoundFactory,
       final Clock clock,
       final MessageValidatorFactory messageValidatorFactory,
-      final MessageFactory messageFactory,
-      final ScheduledProtocolSpec.ScheduleType currentProtocolSpecType) {
+      final MessageFactory messageFactory) {
     this.parentHeader = parentHeader;
     this.roundFactory = ibftRoundFactory;
     this.blockTimer = finalState.getBlockTimer();
@@ -119,8 +117,7 @@ public class IbftBlockHeightManager implements BaseIbftBlockHeightManager {
 
     currentRound = roundFactory.createNewRound(parentHeader, 0);
     if (finalState.isLocalNodeProposerForRound(currentRound.getRoundIdentifier())) {
-      blockTimer.startTimer(
-          currentRound.getRoundIdentifier(), parentHeader::getTimestamp, currentProtocolSpecType);
+      blockTimer.startTimer(currentRound.getRoundIdentifier(), parentHeader::getTimestamp);
     }
   }
 

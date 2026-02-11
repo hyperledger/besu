@@ -27,7 +27,6 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -54,10 +53,8 @@ public class ValidatorModeTransitionLoggerTest {
     final ForkSpec<BftConfigOptions> forkSpecB =
         new ForkSpec<>(1, createQbftConfigOptionsForBlockHeader());
 
-    when(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(forkSpecA);
-    when(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(forkSpecB);
+    when(forksSchedule.getFork(0, 0)).thenReturn(forkSpecA);
+    when(forksSchedule.getFork(1, 0)).thenReturn(forkSpecB);
 
     qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
@@ -71,10 +68,8 @@ public class ValidatorModeTransitionLoggerTest {
     final ForkSpec<BftConfigOptions> contractForkSpecB =
         new ForkSpec<>(1, createQbftConfigOptionsForContract("0x0"));
 
-    when(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(contractForkSpecA);
-    when(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(contractForkSpecB);
+    when(forksSchedule.getFork(0, 0)).thenReturn(contractForkSpecA);
+    when(forksSchedule.getFork(1, 0)).thenReturn(contractForkSpecB);
 
     qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
@@ -88,10 +83,8 @@ public class ValidatorModeTransitionLoggerTest {
     final ForkSpec<BftConfigOptions> contractForkSpecB =
         new ForkSpec<>(1, createQbftConfigOptionsForContract("0x1"));
 
-    when(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(contractForkSpecA);
-    when(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(contractForkSpecB);
+    when(forksSchedule.getFork(0, 0)).thenReturn(contractForkSpecA);
+    when(forksSchedule.getFork(1, 0)).thenReturn(contractForkSpecB);
 
     qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
@@ -107,10 +100,8 @@ public class ValidatorModeTransitionLoggerTest {
     final ForkSpec<BftConfigOptions> blockForkSpec =
         new ForkSpec<>(1, createQbftConfigOptionsForBlockHeader());
 
-    when(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(contractForkSpec);
-    when(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(blockForkSpec);
+    when(forksSchedule.getFork(0, 0)).thenReturn(contractForkSpec);
+    when(forksSchedule.getFork(1, 0)).thenReturn(blockForkSpec);
 
     qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 
@@ -126,10 +117,8 @@ public class ValidatorModeTransitionLoggerTest {
     final ForkSpec<BftConfigOptions> contractForkSpec =
         new ForkSpec<>(1, createQbftConfigOptionsForContract("0x0"));
 
-    when(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(blockForkSpec);
-    when(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .thenReturn(contractForkSpec);
+    when(forksSchedule.getFork(0, 0)).thenReturn(blockForkSpec);
+    when(forksSchedule.getFork(1, 0)).thenReturn(contractForkSpec);
 
     qbftTransitionNotifier.logTransitionChange(blockHeader(0));
 

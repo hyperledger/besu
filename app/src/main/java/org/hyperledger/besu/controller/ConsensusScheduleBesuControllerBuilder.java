@@ -154,7 +154,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         new ForksSchedule<>(miningCoordinatorForkSpecs);
 
     return new MigratingMiningCoordinator(
-        miningCoordinatorSchedule, protocolContext.getBlockchain());
+        miningCoordinatorSchedule, protocolContext.getBlockchain(), protocolSchedule);
   }
 
   @Override

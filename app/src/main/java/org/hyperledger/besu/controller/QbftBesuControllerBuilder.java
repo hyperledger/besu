@@ -97,7 +97,6 @@ import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.Subscribers;
@@ -301,8 +300,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             messageFactory,
             qbftValidatorProvider,
             new QbftValidatorModeTransitionLoggerAdaptor(
-                new ValidatorModeTransitionLogger(qbftForksSchedule)),
-            protocolSchedule);
+                new ValidatorModeTransitionLogger(qbftForksSchedule)));
 
     qbftBlockHeightManagerFactory.isEarlyRoundChangeEnabled(isEarlyRoundChangeEnabled);
 
@@ -335,23 +333,14 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
         .getBlockchain()
         .observeBlockAdded(
             o -> {
-              ScheduledProtocolSpec scheduledSpec =
-                  protocolSchedule.getNextProtocolSpecByBlockHeader(o.getHeader());
-
               miningConfiguration.setBlockPeriodSeconds(
                   qbftForksSchedule
-                      .getFork(
-                          o.getHeader().getNumber() + 1,
-                          o.getHeader().getTimestamp(),
-                          scheduledSpec.getScheduleType())
+                      .getFork(o.getHeader().getNumber() + 1, o.getHeader().getTimestamp())
                       .getValue()
                       .getBlockPeriodSeconds());
               miningConfiguration.setEmptyBlockPeriodSeconds(
                   qbftForksSchedule
-                      .getFork(
-                          o.getHeader().getNumber() + 1,
-                          o.getHeader().getTimestamp(),
-                          scheduledSpec.getScheduleType())
+                      .getFork(o.getHeader().getNumber() + 1, o.getHeader().getTimestamp())
                       .getValue()
                       .getEmptyBlockPeriodSeconds());
             });

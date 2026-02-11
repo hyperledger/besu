@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -50,6 +51,7 @@ public class MigratingMiningCoordinatorTest {
 
   @Mock private BftMiningCoordinator coordinator1;
   @Mock private BftMiningCoordinator coordinator2;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
   @Mock private BlockHeader blockHeader;
   @Mock private BlockBody blockBody;
@@ -76,7 +78,7 @@ public class MigratingMiningCoordinatorTest {
   @Test
   public void startShouldRegisterThisCoordinatorAsObserver() {
     final MigratingMiningCoordinator coordinator =
-        new MigratingMiningCoordinator(coordinatorSchedule, blockchain);
+        new MigratingMiningCoordinator(coordinatorSchedule, blockchain, protocolSchedule);
 
     coordinator.start();
 
@@ -89,7 +91,9 @@ public class MigratingMiningCoordinatorTest {
     lenient().when(blockchain.observeBlockAdded(delegateCoordinator)).thenReturn(1L);
     final MigratingMiningCoordinator coordinator =
         new MigratingMiningCoordinator(
-            createCoordinatorSchedule(delegateCoordinator, coordinator2), blockchain);
+            createCoordinatorSchedule(delegateCoordinator, coordinator2),
+            blockchain,
+            protocolSchedule);
 
     coordinator.start();
     verify(blockchain).observeBlockAdded(coordinator);
@@ -110,7 +114,7 @@ public class MigratingMiningCoordinatorTest {
   @Test
   public void stopShouldUnregisterThisCoordinatorAsObserver() {
     final MigratingMiningCoordinator coordinator =
-        new MigratingMiningCoordinator(coordinatorSchedule, blockchain);
+        new MigratingMiningCoordinator(coordinatorSchedule, blockchain, protocolSchedule);
     when(blockchain.observeBlockAdded(coordinator)).thenReturn(1L);
 
     coordinator.start();
@@ -125,7 +129,8 @@ public class MigratingMiningCoordinatorTest {
     coordinatorSchedule = createCoordinatorSchedule(mockMiningCoordinator, coordinator2);
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
-    new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
+    new MigratingMiningCoordinator(coordinatorSchedule, blockchain, protocolSchedule)
+        .onBlockAdded(blockEvent);
 
     verifyNoInteractions(mockMiningCoordinator);
   }
@@ -194,7 +199,8 @@ public class MigratingMiningCoordinatorTest {
       final MiningCoordinator expectedInactiveCoordinator) {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(blockHeight);
 
-    methodUnderTest.accept(new MigratingMiningCoordinator(coordinatorSchedule, blockchain));
+    methodUnderTest.accept(
+        new MigratingMiningCoordinator(coordinatorSchedule, blockchain, protocolSchedule));
 
     methodUnderTest.accept(verify(expectedActiveCoordinator));
     verifyNoInteractions(expectedInactiveCoordinator);
@@ -214,7 +220,7 @@ public class MigratingMiningCoordinatorTest {
       throws InterruptedException {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(blockHeight);
 
-    new MigratingMiningCoordinator(coordinatorSchedule, blockchain).awaitStop();
+    new MigratingMiningCoordinator(coordinatorSchedule, blockchain, protocolSchedule).awaitStop();
 
     verify(expectedActiveCoordinator).awaitStop();
     verifyNoInteractions(expectedInactiveCoordinator);
@@ -234,7 +240,8 @@ public class MigratingMiningCoordinatorTest {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(blockHeight);
     when(blockHeader.getNumber()).thenReturn(blockHeight);
 
-    new MigratingMiningCoordinator(coordinatorSchedule, blockchain).onBlockAdded(blockEvent);
+    new MigratingMiningCoordinator(coordinatorSchedule, blockchain, protocolSchedule)
+        .onBlockAdded(blockEvent);
 
     verify(expectedActiveCoordinator).onBlockAdded(blockEvent);
     verifyNoInteractions(expectedInactiveCoordinator);

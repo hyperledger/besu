@@ -33,7 +33,6 @@ import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -75,7 +74,7 @@ public class QbftForksSchedulesFactoryTest
 
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
-    assertThat(forksSchedule.getFork(0, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
+    assertThat(forksSchedule.getFork(0, 0))
         .usingRecursiveComparison()
         .isEqualTo(new ForkSpec<>(0, configOptions));
 
@@ -90,12 +89,8 @@ public class QbftForksSchedulesFactoryTest
             new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(forkOptions)));
 
     final ForkSpec<QbftConfigOptions> expectedFork = new ForkSpec<>(1, expectedForkConfig);
-    assertThat(forksSchedule.getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedFork);
-    assertThat(forksSchedule.getFork(2, 0, ScheduledProtocolSpec.ScheduleType.BLOCK))
-        .usingRecursiveComparison()
-        .isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(1, 0)).usingRecursiveComparison().isEqualTo(expectedFork);
+    assertThat(forksSchedule.getFork(2, 0)).usingRecursiveComparison().isEqualTo(expectedFork);
   }
 
   @Test
@@ -141,12 +136,7 @@ public class QbftForksSchedulesFactoryTest
     final ForksSchedule<QbftConfigOptions> forksSchedule =
         QbftForksSchedulesFactory.create(createGenesisConfig(configOptions, fork));
 
-    assertThat(
-            forksSchedule
-                .getFork(1, 0, ScheduledProtocolSpec.ScheduleType.BLOCK)
-                .getValue()
-                .getValidatorContractAddress())
-        .isEmpty();
+    assertThat(forksSchedule.getFork(1, 0).getValue().getValidatorContractAddress()).isEmpty();
   }
 
   @Test
