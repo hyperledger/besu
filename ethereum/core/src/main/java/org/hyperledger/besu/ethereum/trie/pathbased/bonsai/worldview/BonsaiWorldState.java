@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.Path
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -113,7 +114,9 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
   @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
-    return (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;
+    // return a worldStateStorage with a clone of the bonsai context, to prevent context change side
+    // effects
+    return ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).getContextSafeCopy();
   }
 
   @Override
@@ -476,5 +479,13 @@ public class BonsaiWorldState extends PathBasedWorldState {
   @Override
   public CodeCache codeCache() {
     return codeCache;
+  }
+
+  @Override
+  protected void prePersist(final BlockHeader blockHeader) {
+    // update the bonsai context with the current block before we persist to storage
+    ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage)
+        .getFlatDbStrategy()
+        .updateBlockContext(blockHeader);
   }
 }

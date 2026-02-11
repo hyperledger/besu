@@ -14,23 +14,24 @@
  */
 package org.hyperledger.besu.tests.acceptance.bonsaiarchive;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Convert.toWei;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.WaitUtils;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
-import org.junit.jupiter.api.Test;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.utils.Convert;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.web3j.utils.Convert.toWei;
+import org.junit.jupiter.api.Test;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.utils.Convert;
 
 public class BonsaiArchiveAcceptanceTest extends AcceptanceTestBase {
 
