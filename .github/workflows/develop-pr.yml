@@ -7,8 +7,6 @@ on:
       - release-*
       - verkle
       - performance
-env:
-  registry: docker.io
 
 jobs:
   hadolint:
@@ -81,4 +79,4 @@ jobs:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
           cache-disabled: true
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME}} -Prelease.releaseVersion=develop
+          arguments: testDocker -PdockerOrgName=${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME}} -Prelease.releaseVersion=develop
