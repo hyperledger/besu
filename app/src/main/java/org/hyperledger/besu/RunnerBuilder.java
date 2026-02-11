@@ -73,6 +73,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
@@ -195,6 +196,7 @@ public class RunnerBuilder {
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
   private boolean poaDiscoveryRetryBootnodes = true;
+  private IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
   private TransactionValidatorServiceImpl transactionValidatorService;
 
   /** Instantiates a new Runner builder. */
@@ -637,6 +639,18 @@ public class RunnerBuilder {
   }
 
   /**
+   * Set IP version preference for outbound P2P connections
+   *
+   * @param outboundIpVersionPreference the IP version preference
+   * @return the runner builder
+   */
+  public RunnerBuilder outboundIpVersionPreference(
+      final IpVersionPreference outboundIpVersionPreference) {
+    this.outboundIpVersionPreference = outboundIpVersionPreference;
+    return this;
+  }
+
+  /**
    * Set the transaction validator service.
    *
    * @param transactionValidatorService the transaction validator service
@@ -668,6 +682,7 @@ public class RunnerBuilder {
           discoveryConfiguration.setBindPortIpv6(p2pListenPortIpv6);
           discoveryConfiguration.setAdvertisedHostIpv6(p2pAdvertisedHostIpv6);
         });
+    discoveryConfiguration.setOutboundIpVersionPreference(outboundIpVersionPreference);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {

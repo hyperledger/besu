@@ -18,6 +18,7 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -133,6 +134,22 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       description =
           "Port on which to listen for IPv6 P2P communication (default: ${DEFAULT-VALUE})")
   public final Integer p2pPortIpv6 = 30404;
+
+  /**
+   * IP version preference for outbound peer connections. This determines which address to use when
+   * connecting to peers that advertise both IPv4 and IPv6 addresses.
+   */
+  @CommandLine.Option(
+      names = {"--p2p-outbound-ip-version"},
+      paramLabel = "<ipv4_preferred|ipv6_preferred|ipv4_only|ipv6_only>",
+      description =
+          "IP version preference for outbound P2P connections when peers advertise both IPv4 and IPv6 addresses. "
+              + "IPV4_PREFERRED: prefer IPv4, fallback to IPv6 if IPv4 unavailable (default). "
+              + "IPV6_PREFERRED: prefer IPv6, fallback to IPv4 if IPv6 unavailable. "
+              + "IPV4_ONLY: only use IPv4, never use IPv6. "
+              + "IPV6_ONLY: only use IPv6, never use IPv4. "
+              + "(default: ${DEFAULT-VALUE})")
+  public final IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
 
   /** The port on which this node listens for P2P communication. */
   @CommandLine.Option(
@@ -257,7 +274,8 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         allowedSubnets,
         poaDiscoveryRetryBootnodes,
         bootNodes,
-        discoveryDnsUrl);
+        discoveryDnsUrl,
+        outboundIpVersionPreference);
   }
 
   /**

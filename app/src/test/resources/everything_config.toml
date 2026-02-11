@@ -42,6 +42,7 @@ p2p-interface="0.0.0.0"
 p2p-interface-ipv6="::"
 p2p-port=1234
 p2p-port-ipv6=30404
+p2p-outbound-ip-version="ipv4_preferred"
 max-peers=42
 remote-connections-limit-enabled=true
 remote-connections-max-percentage=60

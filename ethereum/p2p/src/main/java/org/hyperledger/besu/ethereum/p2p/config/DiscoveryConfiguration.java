@@ -38,6 +38,7 @@ public class DiscoveryConfiguration {
   private Optional<String> bindHostIpv6 = Optional.empty();
   private int bindPortIpv6 = 30404;
   private Optional<String> advertisedHostIpv6 = Optional.empty();
+  private IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -177,6 +178,16 @@ public class DiscoveryConfiguration {
     return bindHostIpv6.isPresent();
   }
 
+  public IpVersionPreference getOutboundIpVersionPreference() {
+    return outboundIpVersionPreference;
+  }
+
+  public DiscoveryConfiguration setOutboundIpVersionPreference(
+      final IpVersionPreference outboundIpVersionPreference) {
+    this.outboundIpVersionPreference = outboundIpVersionPreference;
+    return this;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (o == this) {
@@ -195,7 +206,8 @@ public class DiscoveryConfiguration {
         && Objects.equals(bootnodes, that.bootnodes)
         && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL)
         && Objects.equals(bindHostIpv6, that.bindHostIpv6)
-        && Objects.equals(advertisedHostIpv6, that.advertisedHostIpv6);
+        && Objects.equals(advertisedHostIpv6, that.advertisedHostIpv6)
+        && Objects.equals(outboundIpVersionPreference, that.outboundIpVersionPreference);
   }
 
   @Override
@@ -210,7 +222,8 @@ public class DiscoveryConfiguration {
         dnsDiscoveryURL,
         bindHostIpv6,
         bindPortIpv6,
-        advertisedHostIpv6);
+        advertisedHostIpv6,
+        outboundIpVersionPreference);
   }
 
   @Override
@@ -242,6 +255,8 @@ public class DiscoveryConfiguration {
         + bindPortIpv6
         + ", advertisedHostIpv6="
         + advertisedHostIpv6
+        + ", outboundIpVersionPreference="
+        + outboundIpVersionPreference
         + '}';
   }
 }

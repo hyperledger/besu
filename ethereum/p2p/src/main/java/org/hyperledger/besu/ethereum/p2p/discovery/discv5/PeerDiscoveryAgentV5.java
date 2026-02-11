@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
@@ -72,7 +73,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
-  private final boolean supportsIpv6;
+  private final IpVersionPreference ipVersionPreference;
 
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
@@ -92,7 +93,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
-   * @param supportsIpv6 whether the local node supports IPv6 dual-stack discovery
+   * @param ipVersionPreference IP version preference for outbound connections
    */
   public PeerDiscoveryAgentV5(
       final MutableDiscoverySystem discoverySystem,
@@ -100,7 +101,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
-      final boolean supportsIpv6) {
+      final IpVersionPreference ipVersionPreference) {
 
     this.discoverySystem =
         Objects.requireNonNull(discoverySystem, "discoverySystem must not be null");
@@ -109,7 +110,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
     this.rlpxAgent = Objects.requireNonNull(rlpxAgent, "rlpxAgent must not be null");
-    this.supportsIpv6 = supportsIpv6;
+    this.ipVersionPreference =
+        Objects.requireNonNull(ipVersionPreference, "ipVersionPreference must not be null");
   }
 
   /**
@@ -194,7 +196,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
     return discoverySystem
         .streamLiveNodes()
-        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, supportsIpv6));
+        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, ipVersionPreference));
   }
 
   /**
@@ -247,7 +249,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   public Optional<Peer> getPeer(final PeerId peerId) {
     return discoverySystem
         .lookupNode(peerId.getId())
-        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, supportsIpv6));
+        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, ipVersionPreference));
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */
@@ -294,7 +296,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     final List<DiscoveryPeer> candidates =
         Stream.concat(newPeers.stream(), knownPeers)
             .distinct()
-            .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, supportsIpv6))
+            .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, ipVersionPreference))
             .filter(DiscoveryPeer::isReadyForConnections)
             .filter(peer -> peer.getForkId().map(forkIdManager::peerCheck).orElse(true))
             .toList();

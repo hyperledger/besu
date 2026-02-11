@@ -122,7 +122,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         forkIdManager,
         nodeRecordManager,
         rlpxAgent,
-        disc.isDualStackEnabled());
+        disc.getOutboundIpVersionPreference());
   }
 
   /**

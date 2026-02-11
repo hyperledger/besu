@@ -16,9 +16,11 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,6 +42,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -70,6 +73,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ip);
@@ -92,6 +96,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     parseCommand("--p2p-host", host);
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -111,6 +116,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
