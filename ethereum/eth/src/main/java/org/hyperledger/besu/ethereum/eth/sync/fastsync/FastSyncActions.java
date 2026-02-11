@@ -26,7 +26,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -170,6 +172,22 @@ public class FastSyncActions {
 
   public ChainDownloader createChainDownloader(
       final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
+
+    if (syncConfig.getSyncMode() == SyncMode.SNAP
+        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+      return SnapSyncChainDownloader.create(
+          syncConfig,
+          worldStateStorageCoordinator,
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          syncState,
+          metricsSystem,
+          currentState,
+          syncDurationMetrics,
+          fastSyncDataDirectory);
+    }
+
     return FastSyncChainDownloader.create(
         syncConfig,
         worldStateStorageCoordinator,

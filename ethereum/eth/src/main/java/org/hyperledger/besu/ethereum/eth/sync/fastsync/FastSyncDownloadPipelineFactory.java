@@ -117,8 +117,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, fastSyncState),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -148,16 +147,18 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             ethContext,
             new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+    final BlockHeader pivotBlockHeader =
+        fastSyncState
+            .getPivotBlockHeader()
+            .orElseThrow(
+                () -> new InvalidConfigurationException("Pivot block header not available."));
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
             protocolContext,
             ethContext,
             syncState,
             BlockHeader.GENESIS_BLOCK_NUMBER,
-            fastSyncState
-                .getPivotBlockHeader()
-                .orElseThrow(
-                    () -> new InvalidConfigurationException("Pivot block header not available.")),
+            pivotBlockHeader.getNumber(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(

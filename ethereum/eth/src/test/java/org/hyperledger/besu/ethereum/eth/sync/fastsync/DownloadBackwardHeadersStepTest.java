@@ -191,7 +191,7 @@ public class DownloadBackwardHeadersStepTest {
 
     assertThatThrownBy(() -> result.get())
         .hasCauseInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Failed to download headers starting from block 100");
+        .hasMessageContaining("Failed to download 10 headers starting from block 100");
   }
 
   @Test

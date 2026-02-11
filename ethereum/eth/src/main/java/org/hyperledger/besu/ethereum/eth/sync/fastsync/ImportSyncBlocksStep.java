@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -51,13 +50,13 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
       final EthContext ethContext,
       final SyncState syncState,
       final long startBlock,
-      final BlockHeader pivotHeader,
+      final long pivotHeaderNumber,
       final boolean transactionIndexingEnabled) {
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
     this.syncState = syncState;
     this.startBlock = startBlock;
-    this.pivotHeaderNumber = pivotHeader.getNumber();
+    this.pivotHeaderNumber = pivotHeaderNumber;
     this.transactionIndexingEnabled = transactionIndexingEnabled;
   }
 

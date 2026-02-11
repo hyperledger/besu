@@ -419,6 +419,9 @@ public class FastSyncActionsTest {
                 blockchain.getBlockHashByNumber(3L).get(),
                 blockchain.getBlockHashByNumber(2L).get()));
 
+    final SingleBlockHeaderDownloader headerDownloader =
+        new SingleBlockHeaderDownloader(ethContext, blockchainSetupUtil.getProtocolSchedule());
+
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
@@ -428,7 +431,8 @@ public class FastSyncActionsTest {
                 ethContext,
                 genesisConfig,
                 () -> finalizedEvent,
-                () -> {}));
+                () -> {},
+                headerDownloader));
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =

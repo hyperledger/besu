@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
-  public static final long MILLISECONDS_PER_SECOND = 1000L;
 
   private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
@@ -99,34 +98,31 @@ public class DownloadBackwardHeadersStep
       final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
       if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
         if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
-          throw new RuntimeException("Failed to download headers starting from block 100");
+          throw new RuntimeException(
+              "Failed to download "
+                  + headersToRequest
+                  + " headers starting from block "
+                  + startBlockNumber);
         }
         // wait for a peer to become available before retrying
         ethContext.getEthPeers().waitForPeer(__ -> true);
       } else {
         final Optional<List<BlockHeader>> optionalBlockHeaderList = result.result();
         final List<BlockHeader> resultBlockHeaders = optionalBlockHeaderList.orElseGet(List::of);
-        if (!headers.isEmpty()) { // we need to check continuation of parent hash / block hash
-          if (optionalBlockHeaderList.isPresent()) {
-            if (!resultBlockHeaders.isEmpty()) {
-              if (!resultBlockHeaders
-                  .getFirst()
-                  .getHash()
-                  .equals(headers.getLast().getParentHash())) {
-                throw new IllegalStateException(
-                    "Parent hash of last header does not match first header");
-              }
-            }
-          }
+        if (!headers.isEmpty() // check the parent hash and block hash match
+            && !resultBlockHeaders.isEmpty()
+            && !resultBlockHeaders.getFirst().getHash().equals(headers.getLast().getParentHash())) {
+          throw new IllegalStateException("Parent hash of last header does not match first header");
         }
         headers.addAll(resultBlockHeaders);
       }
     } while (headers.size() < headersToRequest);
-    LOG.debug(
-        "Downloaded {} headers: blocks {} to {}",
-        headers.size(),
-        headers.getFirst().getNumber(),
-        headers.getLast().getNumber());
+    LOG.atTrace()
+        .setMessage("Downloaded {} headers: blocks {} to {}")
+        .addArgument(headers.size())
+        .addArgument(headers.getFirst().getNumber())
+        .addArgument(headers.getLast().getNumber())
+        .log();
 
     return CompletableFuture.completedFuture(headers);
   }

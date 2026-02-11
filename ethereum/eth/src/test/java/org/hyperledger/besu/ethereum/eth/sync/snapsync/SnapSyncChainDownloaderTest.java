@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.SingleBlockHeaderDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -53,6 +54,7 @@ public class SnapSyncChainDownloaderTest {
   @Mock private SyncDurationMetrics syncDurationMetrics;
   @Mock private MutableBlockchain blockchain;
   @Mock private EthScheduler scheduler;
+  @Mock private SingleBlockHeaderDownloader headerDownloader;
 
   @TempDir private Path tempDir;
 
@@ -89,7 +91,8 @@ public class SnapSyncChainDownloaderTest {
                     syncState,
                     syncDurationMetrics,
                     pivotBlockHeader,
-                    chainSyncStateStorage))
+                    chainSyncStateStorage,
+                    headerDownloader))
         .doesNotThrowAnyException();
   }
 
@@ -104,7 +107,8 @@ public class SnapSyncChainDownloaderTest {
             syncState,
             syncDurationMetrics,
             pivotBlockHeader,
-            chainSyncStateStorage);
+            chainSyncStateStorage,
+            headerDownloader);
 
     // Verify cancel completes successfully even when no pipeline is running
     assertThatCode(downloader::cancel).doesNotThrowAnyException();
@@ -121,7 +125,8 @@ public class SnapSyncChainDownloaderTest {
             syncState,
             syncDurationMetrics,
             pivotBlockHeader,
-            chainSyncStateStorage);
+            chainSyncStateStorage,
+            headerDownloader);
 
     BlockHeader newPivot = new BlockHeaderTestFixture().number(2000).buildHeader();
 
@@ -140,7 +145,8 @@ public class SnapSyncChainDownloaderTest {
             syncState,
             syncDurationMetrics,
             pivotBlockHeader,
-            chainSyncStateStorage);
+            chainSyncStateStorage,
+            headerDownloader);
 
     // Verify world state heal signal is accepted without error
     assertThatCode(downloader::onWorldStateHealFinished).doesNotThrowAnyException();
@@ -166,7 +172,8 @@ public class SnapSyncChainDownloaderTest {
             syncState,
             syncDurationMetrics,
             pivotBlockHeader,
-            chainSyncStateStorage);
+            chainSyncStateStorage,
+            headerDownloader);
 
     assertThat(downloader).isNotNull();
 

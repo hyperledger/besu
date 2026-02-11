@@ -74,7 +74,8 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         protocolSchedule,
-        balConfiguration);
+        balConfiguration,
+        metricsSystem);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
