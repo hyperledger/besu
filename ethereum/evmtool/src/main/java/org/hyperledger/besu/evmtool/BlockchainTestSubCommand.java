@@ -57,6 +57,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -255,7 +256,7 @@ public class BlockchainTestSubCommand implements Runnable {
       return test.matches(regex);
     }
     // Simple substring match (case-insensitive)
-    return test.toLowerCase().contains(testName.toLowerCase());
+    return test.toLowerCase(Locale.ROOT).contains(testName.toLowerCase(Locale.ROOT));
   }
 
   private void traceTestSpecs(
