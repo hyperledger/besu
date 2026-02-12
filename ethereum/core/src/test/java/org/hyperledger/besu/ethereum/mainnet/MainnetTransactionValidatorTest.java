@@ -253,6 +253,45 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   }
 
   @Test
+  public void shouldRejectTransactionWithMaxNonceWhenFutureNonceNotAllowed() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .nonce(Account.MAX_NONCE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+
+    assertThat(
+            validator.validate(
+                transaction, Optional.empty(), Optional.empty(), processingBlockParams))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_OVERFLOW));
+  }
+
+  @Test
+  public void shouldAcceptTransactionWithMaxNonceWhenFutureNonceIsAllowed() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .nonce(Account.MAX_NONCE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+
+    assertThat(
+            validator.validate(
+                transaction,
+                Optional.empty(),
+                Optional.empty(),
+                TransactionValidationParams.transactionSimulatorAllowFutureNonce()))
+        .isEqualTo(ValidationResult.valid());
+  }
+  
+  @Test
   public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
     final TransactionValidator validator =
         createTransactionValidator(
