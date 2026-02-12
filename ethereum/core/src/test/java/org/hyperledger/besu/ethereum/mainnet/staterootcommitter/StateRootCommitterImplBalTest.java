@@ -404,9 +404,10 @@ class StateRootCommitterImplBalTest {
 
     final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
 
-    assertThatThrownBy(() -> factory.forBlock(protocolContext, blockHeader, Optional.empty()))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("No BAL present in the block");
+    final StateRootCommitter committer =
+        factory.forBlock(protocolContext, blockHeader, Optional.empty());
+
+    assertThat(committer).isInstanceOf(StateRootCommitterImplSync.class);
   }
 
   @Test

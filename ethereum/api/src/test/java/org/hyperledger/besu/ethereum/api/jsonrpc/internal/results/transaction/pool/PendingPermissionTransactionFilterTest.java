@@ -103,7 +103,7 @@ public class PendingPermissionTransactionFilterTest {
     assertThat(filteredList.size()).isEqualTo(expectedListOfTransactionHash.size());
     for (Transaction trx : filteredList) {
       assertThat(expectedListOfTransactionHash)
-          .contains(String.valueOf(trx.getHash().toBigInteger()));
+          .contains(String.valueOf(trx.getHash().getBytes().toBigInteger()));
     }
   }
 

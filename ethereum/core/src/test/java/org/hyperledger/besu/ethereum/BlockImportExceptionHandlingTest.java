@@ -163,6 +163,7 @@ class BlockImportExceptionHandlingTest {
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY),
+            any(),
             any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -200,6 +201,7 @@ class BlockImportExceptionHandlingTest {
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY),
+            any(),
             any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -269,6 +271,7 @@ class BlockImportExceptionHandlingTest {
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY),
+            any(),
             any()))
         .thenThrow(new StorageException("database problem"));
     assertThat(badBlockManager.getBadBlocks()).isEmpty();

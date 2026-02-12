@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class CommitTest {
@@ -46,7 +47,8 @@ public class CommitTest {
                 .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 0));
 
     final SignedData<CommitPayload> signedCommitPayload =
-        SignedData.create(commitPayload, nodeKey.sign(commitPayload.hashForSignature()));
+        SignedData.create(
+            commitPayload, nodeKey.sign(Bytes32.wrap(commitPayload.hashForSignature().getBytes())));
 
     final Commit commitMsg = new Commit(signedCommitPayload);
 

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -43,6 +44,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,28 +66,32 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
-      final Optional<Long> maxLayersToLoad,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final ServiceManager pluginContext) {
     this(
         worldStateKeyValueStorage,
         blockchain,
+        pathBasedExtraStorageConfiguration,
         new TrieLogManager(
             blockchain,
             worldStateKeyValueStorage,
-            maxLayersToLoad.orElse(PathBasedCachedWorldStorageManager.RETAINED_LAYERS),
+            pathBasedExtraStorageConfiguration.getMaxLayersToLoad(),
             pluginContext));
   }
 
   public PathBasedWorldStateProvider(
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
+      final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration,
       final TrieLogManager trieLogManager) {
-
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.worldStateConfig = WorldStateConfig.newBuilder().build();
-    ;
+    this.worldStateConfig =
+        WorldStateConfig.newBuilder()
+            .parallelStateRootComputationEnabled(
+                pathBasedExtraStorageConfiguration.getParallelStateRootComputationEnabled())
+            .build();
   }
 
   protected void provideCachedWorldStorageManager(
@@ -122,7 +128,8 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
     return cachedWorldStorageManager.contains(blockHash)
         || headWorldState.blockHash().equals(blockHash)
-        || worldStateKeyValueStorage.isWorldStateAvailable(rootHash, blockHash);
+        || worldStateKeyValueStorage.isWorldStateAvailable(
+            Bytes32.wrap(rootHash.getBytes()), blockHash);
   }
 
   /**
@@ -327,7 +334,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
           throw re;
         }
         throw new MerkleTrieException(
-            "invalid", Optional.of(Address.ZERO), Hash.EMPTY, Bytes.EMPTY);
+            "invalid", Optional.of(Address.ZERO), Bytes32.wrap(Hash.EMPTY.getBytes()), Bytes.EMPTY);
       }
     }
   }
@@ -374,7 +381,8 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
                 ws.getWorldStateRootHash(), accountAddress, accountStorageKeys));
       }
     } catch (Exception ex) {
-      LOG.error("failed proof query for " + blockHeader.getBlockHash().toShortHexString(), ex);
+      LOG.error(
+          "failed proof query for " + blockHeader.getBlockHash().getBytes().toShortHexString(), ex);
     }
     return Optional.empty();
   }

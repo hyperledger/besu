@@ -221,6 +221,7 @@ bonsai-limit-trie-logs-enabled=true
 bonsai-trie-logs-pruning-window-size=100_000
 receipt-compaction-enabled=true
 bonsai-parallel-tx-processing-enabled=false
+bonsai-parallel-state-root-computation-enabled=false
 
 # feature flags
 Xsecp256k1-native-enabled=false
@@ -239,6 +240,7 @@ Xevm-jumpdest-cache-weight-kb=32000
 Xplugins-external-enabled=true
 plugins=["none"]
 plugin-continue-on-error=false
+plugins-verification-mode="none"
 
 # snapsync
 snapsync-synchronizer-transaction-indexing-enabled=true

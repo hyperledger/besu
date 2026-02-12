@@ -59,7 +59,7 @@ public class BlobHashOperation extends AbstractOperation {
       int versionedHashIndex = trimmedIndex.toInt();
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
         VersionedHash requested = versionedHashes.get(versionedHashIndex);
-        frame.pushStackItem(requested.toBytes());
+        frame.pushStackItem(requested.getBytes());
       } else {
         frame.pushStackItem(Bytes.EMPTY);
       }

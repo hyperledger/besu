@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.ethereum.mainnet.BlockGasAccountingStrategy;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager;
@@ -74,6 +75,10 @@ class BlockSizeTransactionSelectorTest {
     miningConfiguration = MiningConfiguration.newDefault();
     when(blockSelectionContext.pendingBlockHeader().getGasLimit()).thenReturn(BLOCK_GAS_LIMIT);
     when(blockSelectionContext.miningConfiguration()).thenReturn(miningConfiguration);
+    // Use FRONTIER strategy (gasLimit - gasRemaining) for backward compatibility with existing
+    // tests
+    when(blockSelectionContext.protocolSpec().getBlockGasAccountingStrategy())
+        .thenReturn(BlockGasAccountingStrategy.FRONTIER);
 
     selectorsStateManager = new SelectorsStateManager();
     selector = new BlockSizeTransactionSelector(blockSelectionContext, selectorsStateManager);
@@ -283,5 +288,73 @@ class BlockSizeTransactionSelectorTest {
     final var txProcessingResult = mock(TransactionProcessingResult.class);
     when(txProcessingResult.getGasRemaining()).thenReturn(remainingGas);
     return txProcessingResult;
+  }
+
+  /**
+   * Tests EIP-7778 gas accounting strategy. With EIP-7778, block gas is calculated using pre-refund
+   * gas (estimateGasUsedByTransaction) instead of post-refund gas (gasLimit - gasRemaining). This
+   * prevents block gas limit circumvention through SSTORE refunds.
+   */
+  @Test
+  void eip7778StrategyUsesPreRefundGasForBlockAccounting() {
+    // Reconfigure with EIP-7778 strategy
+    when(blockSelectionContext.protocolSpec().getBlockGasAccountingStrategy())
+        .thenReturn(BlockGasAccountingStrategy.EIP7778);
+    selector = new BlockSizeTransactionSelector(blockSelectionContext, selectorsStateManager);
+
+    // Create a transaction with gas limit 50,000
+    final long txGasLimit = 50_000L;
+    final var tx = createPendingTransaction(txGasLimit);
+
+    // Simulate SSTORE refund scenario:
+    // - Pre-refund gas used: 40,000 (estimateGasUsedByTransaction)
+    // EIP-7778 uses only estimateGasUsedByTransaction, not gasRemaining
+    final long preRefundGasUsed = 40_000L;
+
+    final var txProcessingResult = mock(TransactionProcessingResult.class);
+    when(txProcessingResult.getEstimateGasUsedByTransaction()).thenReturn(preRefundGasUsed);
+
+    final var txEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), tx, null, null, null, NEVER_CANCELLED);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext, txProcessingResult);
+
+    // EIP-7778: Should use pre-refund gas (40,000), NOT post-refund (30,000)
+    assertThat(selector.getWorkingState())
+        .as("EIP-7778 should use pre-refund gas for block accounting")
+        .isEqualTo(preRefundGasUsed);
+  }
+
+  /**
+   * Verifies FRONTIER strategy uses post-refund gas (legacy behavior), contrasting with EIP-7778.
+   */
+  @Test
+  void frontierStrategyUsesPostRefundGasForBlockAccounting() {
+    // Use FRONTIER strategy (already set in setup, but explicit for clarity)
+    when(blockSelectionContext.protocolSpec().getBlockGasAccountingStrategy())
+        .thenReturn(BlockGasAccountingStrategy.FRONTIER);
+    selector = new BlockSizeTransactionSelector(blockSelectionContext, selectorsStateManager);
+
+    final long txGasLimit = 50_000L;
+    final var tx = createPendingTransaction(txGasLimit);
+
+    // Same scenario as above
+    final long postRefundGasRemaining = 20_000L;
+    final long expectedPostRefundUsed = txGasLimit - postRefundGasRemaining; // 30,000
+
+    final var txProcessingResult = mock(TransactionProcessingResult.class);
+    when(txProcessingResult.getGasRemaining()).thenReturn(postRefundGasRemaining);
+
+    final var txEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), tx, null, null, null, NEVER_CANCELLED);
+    selectorsStateManager.blockSelectionStarted();
+    evaluateAndAssertSelected(txEvaluationContext, txProcessingResult);
+
+    // FRONTIER: Should use post-refund gas (30,000)
+    assertThat(selector.getWorkingState())
+        .as("FRONTIER should use post-refund gas for block accounting")
+        .isEqualTo(expectedPostRefundUsed);
   }
 }
