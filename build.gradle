@@ -661,6 +661,10 @@ subprojects {
         // Force debug symbols of stack traces to the profiler
         jvmArgs.addAll("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints")
       }
+      var gcProfiler = _strCmdArg('gcProfiler')
+      if (gcProfiler != null) {
+        profilers.add('gc')
+      }
       duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
     }
 

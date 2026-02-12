@@ -57,13 +57,13 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = Bytes32.leftPad(frame.popStackItem());
-    final byte[] valueBytes = value.toArrayUnsafe();
+    final Bytes value = frame.popStackItem();
+    byte[] valueBytes = value.toArrayUnsafe();
     if (Arrays.equals(valueBytes, ALL_ONES_BYTES)) {
       frame.pushStackItem(ALL_ONES);
       return sarSuccess;
     }
-
+    valueBytes = Bytes32.leftPad(value).toArrayUnsafe();
     final byte[] shiftBytes = shiftAmount.toArrayUnsafe();
     final boolean negative = (valueBytes[0] & 0x80) != 0;
 
