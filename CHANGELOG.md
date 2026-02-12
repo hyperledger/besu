@@ -35,6 +35,7 @@
     - Fast Sync
 
 ### Additions and Improvements
+- Support substring and glob matching for `--test-name` in `block-test` evmtool subcommand [#9790](https://github.com/hyperledger/besu/pull/9790)
 - Improve performance of snap sync chain download [#9510](https://github.com/hyperledger/besu/pull/9510) and [#9621](https://github.com/hyperledger/besu/pull/9621)
 - Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 - Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9642](https://github.com/hyperledger/besu/pull/9642). Thanks to [@JukLee0ira](https://github.com/JukLee0ira).

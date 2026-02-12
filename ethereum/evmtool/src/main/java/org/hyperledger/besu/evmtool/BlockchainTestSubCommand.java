@@ -251,11 +251,7 @@ public class BlockchainTestSubCommand implements Runnable {
     if (testName.contains("*") || testName.contains("?")) {
       // Convert glob pattern to regex: * -> .*, ? -> .
       final String regex =
-          "(?i)"
-              + testName
-                  .replace(".", "\\.")
-                  .replace("*", ".*")
-                  .replace("?", ".");
+          "(?i)" + testName.replace(".", "\\.").replace("*", ".*").replace("?", ".");
       return test.matches(regex);
     }
     // Simple substring match (case-insensitive)
