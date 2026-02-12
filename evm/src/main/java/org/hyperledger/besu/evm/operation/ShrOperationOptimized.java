@@ -58,9 +58,14 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = Bytes32.leftPad(frame.popStackItem());
+    Bytes value = frame.popStackItem();
+    if (value.isZero()) {
+      frame.pushStackItem(ZERO_32);
+      return shrSuccess;
+    }
+    value = Bytes32.leftPad(value);
 
-    // Detect shift >= 256 cheaply (check high bytes)
+    // shift >= 256, push All 0s
     if (isShiftOverflow(shiftAmount)) {
       frame.pushStackItem(ZERO_32);
       return shrSuccess;

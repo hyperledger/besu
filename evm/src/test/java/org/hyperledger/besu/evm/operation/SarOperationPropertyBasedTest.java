@@ -65,20 +65,15 @@ public class SarOperationPropertyBasedTest {
 
   @Provide
   Arbitrary<byte[]> negativeValues() {
-    // Generate values with sign bit set (first byte >= 0x80)
     return Arbitraries.bytes()
-        .array(byte[].class)
-        .ofMinSize(1)
-        .ofMaxSize(32)
-        .map(
-            bytes -> {
-              if (bytes.length > 0) {
-                // Ensure sign bit is set by ORing with 0x80
-                bytes[0] = (byte) (bytes[0] | 0x80);
-              }
+            .array(byte[].class)
+            .ofSize(32)
+            .map(bytes -> {
+              bytes[0] = (byte) (bytes[0] | 0x80); // set sign bit of 256-bit word
               return bytes;
             });
   }
+
 
   @Provide
   Arbitrary<byte[]> positiveValues() {

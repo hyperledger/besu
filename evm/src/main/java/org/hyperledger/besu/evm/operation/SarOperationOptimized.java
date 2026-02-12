@@ -54,10 +54,15 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = Bytes32.leftPad(frame.popStackItem());
+    Bytes value = frame.popStackItem();
+    if (value.equals(ALL_ONES)) {
+      frame.pushStackItem(ALL_ONES);
+      return sarSuccess;
+    }
+    value = Bytes32.leftPad(value);
     final boolean negative = (value.get(0) & 0x80) != 0;
 
-    // detect shift >= 256 cheaply (check high bytes)
+    // shift >= 256, push All 1s if negative, All 0s otherwise
     if (isShiftOverflow(shiftAmount)) {
       frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
       return sarSuccess;
