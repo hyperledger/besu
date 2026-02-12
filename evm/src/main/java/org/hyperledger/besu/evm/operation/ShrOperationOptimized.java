@@ -100,9 +100,10 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
     final byte[] out = new byte[32];
 
     // Shift right: bytes move to higher indices (towards index 31)
-    for (int i = 31; i >= 0; i--) {
+    // Bytes below shiftBytes are guaranteed zero (already from new byte[32])
+    for (int i = 31; i >= shiftBytes; i--) {
       final int src = i - shiftBytes;
-      final int hi = (src >= 0) ? (in[src] & 0xFF) : 0;
+      final int hi = in[src] & 0xFF;
       if (shiftBits == 0) {
         out[i] = (byte) hi;
       } else {

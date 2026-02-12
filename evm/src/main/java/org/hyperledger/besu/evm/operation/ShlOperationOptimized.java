@@ -100,9 +100,11 @@ public class ShlOperationOptimized extends AbstractFixedCostOperation {
     final byte[] out = new byte[32];
 
     // Shift left: bytes move to lower indices (towards index 0)
-    for (int i = 0; i < 32; i++) {
+    // Bytes at index >= (32 - shiftBytes) are guaranteed zero (already from new byte[32])
+    final int limit = 32 - shiftBytes;
+    for (int i = 0; i < limit; i++) {
       final int src = i + shiftBytes;
-      final int lo = (src < 32) ? (in[src] & 0xFF) : 0;
+      final int lo = in[src] & 0xFF;
       if (shiftBits == 0) {
         out[i] = (byte) lo;
       } else {

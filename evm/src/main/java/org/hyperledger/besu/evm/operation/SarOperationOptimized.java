@@ -103,9 +103,15 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
 
     final byte[] out = new byte[32];
 
-    for (int i = 31; i >= 0; i--) {
+    // Pre-fill sign-extended bytes (indices below shiftBytes are fully sign-extended)
+    if (negative && shiftBytes > 0) {
+      Arrays.fill(out, 0, shiftBytes, (byte) 0xFF);
+    }
+
+    // Only iterate bytes that receive shifted data from the input
+    for (int i = 31; i >= shiftBytes; i--) {
       final int src = i - shiftBytes;
-      final int hi = (src >= 0) ? (in[src] & 0xFF) : fill;
+      final int hi = in[src] & 0xFF;
       if (shiftBits == 0) {
         out[i] = (byte) hi;
       } else {
