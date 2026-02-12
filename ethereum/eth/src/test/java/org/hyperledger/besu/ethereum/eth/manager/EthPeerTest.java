@@ -86,19 +86,6 @@ public class EthPeerTest {
   }
 
   @Test
-  public void getReceiptsStream() throws PeerNotConnected {
-    final ResponseStreamSupplier getStream =
-        (peer) -> peer.getReceipts(asList(gen.hash(), gen.hash()));
-    final MessageData targetMessage =
-        ReceiptsMessage.create(
-            singletonList(gen.receipts(gen.block())),
-            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
-    final MessageData otherMessage = BlockHeadersMessage.create(asList(gen.header(), gen.header()));
-
-    messageStream(getStream, targetMessage, otherMessage);
-  }
-
-  @Test
   public void getNodeDataStream() throws PeerNotConnected {
     final ResponseStreamSupplier getStream =
         (peer) -> peer.getNodeData(asList(gen.hash(), gen.hash()));
@@ -119,7 +106,7 @@ public class EthPeerTest {
     assertThat(peer.hasAvailableRequestCapacity()).isTrue();
     assertThat(peer.outstandingRequests()).isEqualTo(1);
 
-    peer.getReceipts(asList(gen.hash(), gen.hash()));
+    peer.getHeadersByHash(gen.hash(), 4, 1, false);
     assertThat(peer.hasAvailableRequestCapacity()).isTrue();
     assertThat(peer.outstandingRequests()).isEqualTo(2);
 
@@ -146,10 +133,6 @@ public class EthPeerTest {
 
     clock.stepMillis(10_000);
     peer.getBodies(asList(gen.hash(), gen.hash()));
-    assertThat(peer.getLastRequestTimestamp()).isEqualTo(clock.millis());
-
-    clock.stepMillis(10_000);
-    peer.getReceipts(asList(gen.hash(), gen.hash()));
     assertThat(peer.getLastRequestTimestamp()).isEqualTo(clock.millis());
 
     clock.stepMillis(10_000);
@@ -186,15 +169,6 @@ public class EthPeerTest {
                 bodiesClosedCount.incrementAndGet();
               }
             });
-    // Receipts stream
-    final AtomicInteger receiptsClosedCount = new AtomicInteger(0);
-    peer.getReceipts(asList(gen.hash(), gen.hash()))
-        .then(
-            (closed, msg, p) -> {
-              if (closed) {
-                receiptsClosedCount.incrementAndGet();
-              }
-            });
     // NodeData stream
     final AtomicInteger nodeDataClosedCount = new AtomicInteger(0);
     peer.getNodeData(asList(gen.hash(), gen.hash()))
@@ -208,14 +182,12 @@ public class EthPeerTest {
     // Sanity check
     assertThat(headersClosedCount.get()).isEqualTo(0);
     assertThat(bodiesClosedCount.get()).isEqualTo(0);
-    assertThat(receiptsClosedCount.get()).isEqualTo(0);
     assertThat(nodeDataClosedCount.get()).isEqualTo(0);
 
     // Disconnect and check
     peer.handleDisconnect();
     assertThat(headersClosedCount.get()).isEqualTo(1);
     assertThat(bodiesClosedCount.get()).isEqualTo(1);
-    assertThat(receiptsClosedCount.get()).isEqualTo(1);
     assertThat(nodeDataClosedCount.get()).isEqualTo(1);
   }
 

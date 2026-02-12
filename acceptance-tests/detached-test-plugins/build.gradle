@@ -61,9 +61,13 @@ def preparePlugins = tasks.register('preparePlugins', GradleBuild) {
   tasks = ['prepareDetachedTestPlugins']
 }
 
+def isInvokedByEncloserProject = project.hasProperty('invokeByEncloserProject') && project.property('invokeByEncloserProject').toBoolean()
+
 allprojects {
   tasks.withType(JavaCompile).configureEach {
-    dependsOn preparePlugins
+    if (!isInvokedByEncloserProject) {
+      dependsOn preparePlugins
+    }
   }
 }
 

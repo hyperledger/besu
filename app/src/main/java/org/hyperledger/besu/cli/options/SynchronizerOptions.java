@@ -38,6 +38,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-downloader-change-target-threshold-by-td";
   private static final String DOWNLOADER_HEADER_REQUEST_SIZE_FLAG =
       "--Xsynchronizer-downloader-header-request-size";
+  private static final String DOWNLOADER_BODIES_REQUEST_SIZE_FLAG =
+      "--Xsynchronizer-downloader-bodies-request-size";
   private static final String DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG =
       "--Xsynchronizer-downloader-checkpoint-timeouts-permitted";
   private static final String DOWNLOADER_CHECKPOINT_RETRIES_FLAG =
@@ -46,6 +48,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-downloader-chain-segment-size";
   private static final String DOWNLOADER_PARALLELISM_FLAG =
       "--Xsynchronizer-downloader-parallelism";
+  private static final String HEADER_DOWNLOAD_PARALLELISM_FACTOR_FLAG =
+      "--Xsynchronizer-header-download-parallelism-factor";
   private static final String TRANSACTIONS_PARALLELISM_FLAG =
       "--Xsynchronizer-transactions-parallelism";
   private static final String COMPUTATION_PARALLELISM_FLAG =
@@ -144,6 +148,14 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
 
   @CommandLine.Option(
+      names = DOWNLOADER_BODIES_REQUEST_SIZE_FLAG,
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description = "Number of bodies to request per packet (default: ${DEFAULT-VALUE})")
+  private int downloaderBodiesRequestSize =
+      SynchronizerConfiguration.DEFAULT_DOWNLOADER_BODIES_REQUEST_SIZE;
+
+  @CommandLine.Option(
       names = {DOWNLOADER_CHECKPOINT_RETRIES_FLAG, DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG},
       hidden = true,
       paramLabel = "<INTEGER>",
@@ -166,6 +178,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = "<INTEGER>",
       description = "Number of threads to provide to chain downloader (default: ${DEFAULT-VALUE})")
   private int downloaderParallelism = SynchronizerConfiguration.DEFAULT_DOWNLOADER_PARALLELISM;
+
+  @CommandLine.Option(
+      names = HEADER_DOWNLOAD_PARALLELISM_FACTOR_FLAG,
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description =
+          "Parallelism factor for header downloads relative to downloader parallelism (default: ${DEFAULT-VALUE})")
+  private int headerDownloadParallelismFactor =
+      SynchronizerConfiguration.DEFAULT_HEADER_DOWNLOAD_PARALLELISM_FACTOR;
 
   @CommandLine.Option(
       names = TRANSACTIONS_PARALLELISM_FLAG,
@@ -412,9 +433,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getDownloaderChangeTargetThresholdByHeight();
     options.downloaderChangeTargetThresholdByTd = config.getDownloaderChangeTargetThresholdByTd();
     options.downloaderHeaderRequestSize = config.getDownloaderHeaderRequestSize();
+    options.downloaderBodiesRequestSize = config.getDownloaderBodiesRequestSize();
     options.downloaderCheckpointRetries = config.getDownloaderCheckpointRetries();
     options.downloaderChainSegmentSize = config.getDownloaderChainSegmentSize();
     options.downloaderParallelism = config.getDownloaderParallelism();
+    options.headerDownloadParallelismFactor = config.getHeaderDownloadParallelismFactor();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
     options.fastSyncPivotDistance = config.getSyncPivotDistance();
@@ -457,9 +480,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderChangeTargetThresholdByHeight(downloaderChangeTargetThresholdByHeight);
     builder.downloaderChangeTargetThresholdByTd(downloaderChangeTargetThresholdByTd);
     builder.downloaderHeadersRequestSize(downloaderHeaderRequestSize);
+    builder.downloaderBodiesRequestSize(downloaderBodiesRequestSize);
     builder.downloaderCheckpointRetries(downloaderCheckpointRetries);
     builder.downloaderChainSegmentSize(downloaderChainSegmentSize);
     builder.downloaderParallelism(downloaderParallelism);
+    builder.headerDownloadParallelismFactor(headerDownloadParallelismFactor);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
     builder.syncPivotDistance(fastSyncPivotDistance);
@@ -503,12 +528,16 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(downloaderChangeTargetThresholdByTd),
             DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
             OptionParser.format(downloaderHeaderRequestSize),
+            DOWNLOADER_BODIES_REQUEST_SIZE_FLAG,
+            OptionParser.format(downloaderBodiesRequestSize),
             DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
             OptionParser.format(downloaderCheckpointRetries),
             DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
             OptionParser.format(downloaderChainSegmentSize),
             DOWNLOADER_PARALLELISM_FLAG,
             OptionParser.format(downloaderParallelism),
+            HEADER_DOWNLOAD_PARALLELISM_FACTOR_FLAG,
+            OptionParser.format(headerDownloadParallelismFactor),
             TRANSACTIONS_PARALLELISM_FLAG,
             OptionParser.format(transactionsParallelism),
             COMPUTATION_PARALLELISM_FLAG,

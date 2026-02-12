@@ -70,6 +70,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
   private final SyncDurationMetrics syncDurationMetrics;
 
+  private volatile SnapSyncChainDownloader chainDownloader;
+
   public SnapWorldStateDownloader(
       final EthContext ethContext,
       final SnapSyncStatePersistenceManager snapContext,
@@ -114,6 +116,17 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final SnapWorldDownloadState state = this.downloadState.get();
       return state != null ? getter.apply(state) : 0;
     };
+  }
+
+  /**
+   * Sets the chain downloader that should be wired to the world download state. This method should
+   * be called before run() to establish the bidirectional reference between the chain downloader
+   * and world state downloader.
+   *
+   * @param chainDownloader the chain downloader to wire up
+   */
+  public void setChainDownloader(final SnapSyncChainDownloader chainDownloader) {
+    this.chainDownloader = chainDownloader;
   }
 
   @Override
@@ -203,6 +216,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               ethContext,
               fastSyncActions,
               snapSyncState,
+              fastSyncActions.getFastSyncStateStorage(),
+              fastSyncActions.getChainDownloaderListener(),
               snapSyncConfiguration.getPivotBlockWindowValidity(),
               snapSyncConfiguration.getPivotBlockDistanceBeforeCaching());
 
@@ -239,6 +254,13 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .build();
 
       newDownloadState.setPivotBlockSelector(dynamicPivotBlockManager);
+
+      // Wire up bidirectional reference if chain downloader was provided
+      if (chainDownloader != null) {
+        chainDownloader.setWorldDownloadState(newDownloadState);
+        newDownloadState.setWorldStateHealFinishedListener(chainDownloader);
+        LOG.debug("Wired bidirectional references between chain and world state downloaders");
+      }
 
       return newDownloadState.startDownload(downloadProcess, ethContext.getScheduler());
     }
