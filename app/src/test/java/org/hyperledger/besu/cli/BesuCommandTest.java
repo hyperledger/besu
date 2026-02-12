@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.hyperledger.besu.cli.options.ChainPruningOptions.CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
-import static org.hyperledger.besu.config.NetworkDefinition.CLASSIC;
 import static org.hyperledger.besu.config.NetworkDefinition.DEV;
 import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
 import static org.hyperledger.besu.config.NetworkDefinition.EXPERIMENTAL_EIPS;
@@ -30,7 +29,6 @@ import static org.hyperledger.besu.config.NetworkDefinition.HOODI;
 import static org.hyperledger.besu.config.NetworkDefinition.LINEA_SEPOLIA;
 import static org.hyperledger.besu.config.NetworkDefinition.LUKSO;
 import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
-import static org.hyperledger.besu.config.NetworkDefinition.MORDOR;
 import static org.hyperledger.besu.config.NetworkDefinition.SEPOLIA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_BOOTSTRAP_NODES;
@@ -2010,38 +2008,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void classicValuesAreUsed() {
-    parseCommand("--network", "classic");
-
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
-    verify(mockControllerBuilder).build();
-
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(CLASSIC));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void mordorValuesAreUsed() {
-    parseCommand("--network", "mordor");
-
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
-    verify(mockControllerBuilder).build();
-
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(MORDOR));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void sepoliaValuesCanBeOverridden() {
     networkValuesCanBeOverridden("sepolia");
   }
@@ -2064,16 +2030,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void devValuesCanBeOverridden() {
     networkValuesCanBeOverridden("dev");
-  }
-
-  @Test
-  public void classicValuesCanBeOverridden() {
-    networkValuesCanBeOverridden("classic");
-  }
-
-  @Test
-  public void mordorValuesCanBeOverridden() {
-    networkValuesCanBeOverridden("mordor");
   }
 
   private void networkValuesCanBeOverridden(final String network) {

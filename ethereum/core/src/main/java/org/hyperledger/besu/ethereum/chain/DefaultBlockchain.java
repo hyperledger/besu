@@ -92,7 +92,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
 
-  private Difficulty difficultyForSyncing = Difficulty.ZERO;
+  private Difficulty difficultyForSyncing = null;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -751,7 +751,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       difficultyForSyncing = blockHeader.getDifficulty();
-    } else if (difficultyForSyncing.equals(Difficulty.ZERO)) {
+    } else if (difficultyForSyncing == null) {
       final Difficulty parentTotalDifficulty =
           blockchainStorage
               .getTotalDifficulty(blockHeader.getParentHash())
