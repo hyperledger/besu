@@ -320,9 +320,7 @@ public class ShiftOperationsPerformanceTest {
   }
 
   private void printResults(
-      final String testName,
-      final PerformanceResult original,
-      final PerformanceResult optimized) {
+      final String testName, final PerformanceResult original, final PerformanceResult optimized) {
 
     double speedup = original.nsPerOp() / optimized.nsPerOp();
     double percentFaster = (1 - optimized.nsPerOp() / original.nsPerOp()) * 100;

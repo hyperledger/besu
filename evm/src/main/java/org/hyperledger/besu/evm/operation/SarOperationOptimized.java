@@ -72,8 +72,7 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
       frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
       return sarSuccess;
     }
-    final int shift =
-        shiftBytes.length == 0 ? 0 : (shiftBytes[shiftBytes.length - 1] & 0xFF);
+    final int shift = shiftBytes.length == 0 ? 0 : (shiftBytes[shiftBytes.length - 1] & 0xFF);
 
     frame.pushStackItem(sar256(valueBytes, shift, negative));
     return sarSuccess;

@@ -662,7 +662,7 @@ subprojects {
         jvmArgs.addAll("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints")
       }
       var gcProfiler = _strCmdArg('gcProfiler')
-      if (gcProfiler != null) {
+      if (gcProfiler != null && gcProfiler.toBoolean()) {
         profilers.add('gc')
       }
       duplicateClassesStrategy = DuplicatesStrategy.INCLUDE

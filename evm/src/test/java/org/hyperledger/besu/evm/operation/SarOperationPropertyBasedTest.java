@@ -66,14 +66,14 @@ public class SarOperationPropertyBasedTest {
   @Provide
   Arbitrary<byte[]> negativeValues() {
     return Arbitraries.bytes()
-            .array(byte[].class)
-            .ofSize(32)
-            .map(bytes -> {
+        .array(byte[].class)
+        .ofSize(32)
+        .map(
+            bytes -> {
               bytes[0] = (byte) (bytes[0] | 0x80); // set sign bit of 256-bit word
               return bytes;
             });
   }
-
 
   @Provide
   Arbitrary<byte[]> positiveValues() {
@@ -246,8 +246,7 @@ public class SarOperationPropertyBasedTest {
 
     // Both should return all ones for negative value with large shift
     final Bytes32 allOnes =
-        Bytes32.fromHexString(
-            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     assertThat(Bytes32.leftPad(optimizedResult)).isEqualTo(allOnes);
     assertThat(Bytes32.leftPad(originalResult)).isEqualTo(allOnes);
   }
@@ -272,8 +271,7 @@ public class SarOperationPropertyBasedTest {
 
     // -1 in two's complement (all bits set)
     final Bytes value =
-        Bytes.fromHexString(
-            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     final Bytes shiftBytes = Bytes.of(shift);
 
     final Bytes originalResult = runSarOperation(shiftBytes, value);
@@ -289,8 +287,7 @@ public class SarOperationPropertyBasedTest {
 
     // MIN_VALUE: 0x8000...0000 (only sign bit set)
     final Bytes value =
-        Bytes.fromHexString(
-            "0x8000000000000000000000000000000000000000000000000000000000000000");
+        Bytes.fromHexString("0x8000000000000000000000000000000000000000000000000000000000000000");
     final Bytes shift = Bytes.of(255);
 
     final Bytes originalResult = runSarOperation(shift, value);
@@ -298,8 +295,7 @@ public class SarOperationPropertyBasedTest {
 
     // SAR of MIN_VALUE by 255 should be all ones (-1)
     final Bytes32 allOnes =
-        Bytes32.fromHexString(
-            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        Bytes32.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     assertThat(Bytes32.leftPad(optimizedResult)).isEqualTo(allOnes);
     assertThat(Bytes32.leftPad(originalResult)).isEqualTo(allOnes);
   }
@@ -309,8 +305,7 @@ public class SarOperationPropertyBasedTest {
 
     // MAX_VALUE: 0x7fff...ffff (all bits except sign bit set)
     final Bytes value =
-        Bytes.fromHexString(
-            "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        Bytes.fromHexString("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     final Bytes shift = Bytes.of(255);
 
     final Bytes originalResult = runSarOperation(shift, value);

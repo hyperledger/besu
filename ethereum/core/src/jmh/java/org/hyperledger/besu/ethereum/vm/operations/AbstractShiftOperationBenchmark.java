@@ -48,13 +48,11 @@ public abstract class AbstractShiftOperationBenchmark extends BinaryOperationBen
 
   /** All bits set (32 bytes of 0xFF). */
   protected static final Bytes ALL_BITS =
-      Bytes.fromHexString(
-          "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+      Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   /** Max positive value (sign bit not set). */
   protected static final Bytes POSITIVE_VALUE =
-      Bytes.fromHexString(
-          "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+      Bytes.fromHexString("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   @Param({
     "SHIFT_0",
