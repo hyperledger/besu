@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.debug;
 
 import org.hyperledger.besu.datatypes.StateOverrideMap;
-import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.util.Map;
@@ -33,16 +32,11 @@ public record TraceOptions(
     Map<String, Object> tracerConfig,
     StateOverrideMap stateOverrides) {
   /**
-   * Default tracer configuration for RPC API methods. All disable* options default to false per the
-   * API documentation, meaning storage, memory, and stack are all traced by default.
+   * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is
+   * specified.
    */
   public static final TraceOptions DEFAULT =
-      new TraceOptions(
-          TracerType.OPCODE_TRACER,
-          OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-              .traceMemory(true)
-              .build(),
-          Map.of());
+      new TraceOptions(TracerType.OPCODE_TRACER, OpCodeTracerConfig.DEFAULT, Map.of());
 
   /**
    * Constructor for TraceOptions. The default tracer (opcode) options are specified by

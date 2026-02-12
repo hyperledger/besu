@@ -50,13 +50,13 @@ public class TransactionTraceParamsTest {
   }
 
   @Test
-  public void defaultsShouldHaveAllTracingEnabled() {
-    // Per the API docs, all disable* booleans default to false,
-    // meaning storage, memory, and stack are all traced by default.
+  public void defaultsShouldMatchOpCodeTracerConfigDefaults() {
+    // TraceOptions.DEFAULT should use OpCodeTracerConfig.DEFAULT directly.
+    // Memory tracing is off by default for performance reasons.
     final OpCodeTracerConfig defaultConfig = TraceOptions.DEFAULT.opCodeTracerConfig();
 
     assertThat(defaultConfig.traceStorage()).isTrue();
-    assertThat(defaultConfig.traceMemory()).isTrue();
+    assertThat(defaultConfig.traceMemory()).isFalse();
     assertThat(defaultConfig.traceStack()).isTrue();
   }
 }
