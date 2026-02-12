@@ -54,7 +54,7 @@ public class TimeoutHandler {
                             timeoutOptions.getTimeoutMillis(),
                             t -> {
                               ctx.fail(timeoutOptions.getErrorCode());
-                              ctx.response().close();
+                              ctx.request().connection().close();
                             });
                 ctx.addBodyEndHandler(v -> ctx.vertx().cancelTimer(tid));
               });
