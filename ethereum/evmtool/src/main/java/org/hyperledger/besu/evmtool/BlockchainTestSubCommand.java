@@ -100,7 +100,8 @@ public class BlockchainTestSubCommand implements Runnable {
 
   @Option(
       names = {"--test-name"},
-      description = "Limit execution to one named test.")
+      description =
+          "Limit execution to tests whose name contains the given substring, or matches a glob pattern (using * and ?).")
   private String testName = null;
 
   @Option(
@@ -229,7 +230,7 @@ public class BlockchainTestSubCommand implements Runnable {
             .filter(
                 entry -> {
                   final String test = entry.getKey();
-                  if (testName != null && !testName.equals(test)) {
+                  if (testName != null && !matchesTestName(test)) {
                     parentCommand.out.println("Skipping test: " + test);
                     return false;
                   }
@@ -244,6 +245,21 @@ public class BlockchainTestSubCommand implements Runnable {
       filteredTests.forEach(
           (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
     }
+  }
+
+  private boolean matchesTestName(final String test) {
+    if (testName.contains("*") || testName.contains("?")) {
+      // Convert glob pattern to regex: * -> .*, ? -> .
+      final String regex =
+          "(?i)"
+              + testName
+                  .replace(".", "\\.")
+                  .replace("*", ".*")
+                  .replace("?", ".");
+      return test.matches(regex);
+    }
+    // Simple substring match (case-insensitive)
+    return test.toLowerCase().contains(testName.toLowerCase());
   }
 
   private void traceTestSpecs(
