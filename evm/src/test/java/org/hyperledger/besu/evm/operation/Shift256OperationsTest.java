@@ -42,41 +42,41 @@ class Shift256OperationsTest {
 
   @Test
   void isShiftOverflow_empty_returnsFalse() {
-    assertThat(isShiftOverflow(Bytes.EMPTY)).isFalse();
+    assertThat(isShiftOverflow(Bytes.EMPTY.toArrayUnsafe())).isFalse();
   }
 
   @Test
   void isShiftOverflow_singleByte_returnsFalse() {
-    assertThat(isShiftOverflow(Bytes.of(0))).isFalse();
-    assertThat(isShiftOverflow(Bytes.of(1))).isFalse();
-    assertThat(isShiftOverflow(Bytes.of(128))).isFalse();
-    assertThat(isShiftOverflow(Bytes.of(255))).isFalse();
+    assertThat(isShiftOverflow(Bytes.of(0).toArrayUnsafe())).isFalse();
+    assertThat(isShiftOverflow(Bytes.of(1).toArrayUnsafe())).isFalse();
+    assertThat(isShiftOverflow(Bytes.of(128).toArrayUnsafe())).isFalse();
+    assertThat(isShiftOverflow(Bytes.of(255).toArrayUnsafe())).isFalse();
   }
 
   @Test
   void isShiftOverflow_multiByteWithZeroPrefix_returnsFalse() {
-    assertThat(isShiftOverflow(Bytes.of(0, 0, 42))).isFalse();
-    assertThat(isShiftOverflow(Bytes.of(0, 0, 0, 0, 200))).isFalse();
+    assertThat(isShiftOverflow(Bytes.of(0, 0, 42).toArrayUnsafe())).isFalse();
+    assertThat(isShiftOverflow(Bytes.of(0, 0, 0, 0, 200).toArrayUnsafe())).isFalse();
   }
 
   @Test
   void isShiftOverflow_256_returnsTrue() {
     // 0x0100 = 256
-    assertThat(isShiftOverflow(Bytes.fromHexString("0x0100"))).isTrue();
+    assertThat(isShiftOverflow(Bytes.fromHexString("0x0100").toArrayUnsafe())).isTrue();
   }
 
   @Test
   void isShiftOverflow_nonZeroHighByte_returnsTrue() {
-    assertThat(isShiftOverflow(Bytes.of(1, 0))).isTrue();
-    assertThat(isShiftOverflow(Bytes.of(0, 1, 0))).isTrue();
-    assertThat(isShiftOverflow(Bytes.fromHexString("0x010000000000"))).isTrue();
+    assertThat(isShiftOverflow(Bytes.of(1, 0).toArrayUnsafe())).isTrue();
+    assertThat(isShiftOverflow(Bytes.of(0, 1, 0).toArrayUnsafe())).isTrue();
+    assertThat(isShiftOverflow(Bytes.fromHexString("0x010000000000").toArrayUnsafe())).isTrue();
   }
 
   @Test
   void isShiftOverflow_largeValue_returnsTrue() {
     // Large shift amount should overflow
-    assertThat(isShiftOverflow(Bytes.fromHexString("0xff00"))).isTrue();
-    assertThat(isShiftOverflow(Bytes.fromHexString("0x0200"))).isTrue(); // 512
+    assertThat(isShiftOverflow(Bytes.fromHexString("0xff00").toArrayUnsafe())).isTrue();
+    assertThat(isShiftOverflow(Bytes.fromHexString("0x0200").toArrayUnsafe())).isTrue(); // 512
   }
 
   // endregion

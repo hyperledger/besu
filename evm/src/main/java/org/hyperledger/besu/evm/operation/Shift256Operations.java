@@ -29,6 +29,9 @@ public final class Shift256Operations {
   /** All ones (0xFF repeated 32 times). */
   public static final Bytes ALL_ONES = Bytes.repeat((byte) 0xFF, 32);
 
+  /** Raw byte array of ALL_ONES for use with {@code Arrays.equals} (JVM intrinsic). */
+  static final byte[] ALL_ONES_BYTES = ALL_ONES.toArrayUnsafe();
+
   private Shift256Operations() {
     // Utility class - prevent instantiation
   }
@@ -38,14 +41,12 @@ public final class Shift256Operations {
    *
    * <p>If any byte except the last byte is non-zero, the value is >= 256.
    *
-   * @param shiftAmount the shift amount as a stack value
+   * @param shiftBytes the raw byte array of the shift amount
    * @return {@code true} if the shift amount is >= 256, {@code false} otherwise
    */
-  public static boolean isShiftOverflow(final Bytes shiftAmount) {
-    final byte[] a = shiftAmount.toArrayUnsafe();
-    final int n = a.length;
-    for (int i = 0; i < n - 1; i++) {
-      if (a[i] != 0) return true;
+  public static boolean isShiftOverflow(final byte[] shiftBytes) {
+    for (int i = 0; i < shiftBytes.length - 1; i++) {
+      if (shiftBytes[i] != 0) return true;
     }
     return false;
   }

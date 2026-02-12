@@ -58,22 +58,24 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     final Bytes shiftAmount = frame.popStackItem();
-    Bytes value = frame.popStackItem();
+    final Bytes value = frame.popStackItem();
     if (value.isZero()) {
       frame.pushStackItem(ZERO_32);
       return shrSuccess;
     }
-    value = Bytes32.leftPad(value);
+
+    final byte[] valueBytes = Bytes32.leftPad(value).toArrayUnsafe();
+    final byte[] shiftBytes = shiftAmount.toArrayUnsafe();
 
     // shift >= 256, push All 0s
-    if (isShiftOverflow(shiftAmount)) {
+    if (isShiftOverflow(shiftBytes)) {
       frame.pushStackItem(ZERO_32);
       return shrSuccess;
     }
 
-    final int shift = shiftAmount.isEmpty() ? 0 : (shiftAmount.get(shiftAmount.size() - 1) & 0xFF);
+    final int shift = shiftBytes.length == 0 ? 0 : (shiftBytes[shiftBytes.length - 1] & 0xFF);
 
-    frame.pushStackItem(shr256(value, shift));
+    frame.pushStackItem(shr256(valueBytes, shift));
     return shrSuccess;
   }
 
@@ -83,20 +85,19 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
    * <p>The shift amount is in the range {@code [0..255]} and is assumed to have been validated by
    * the caller. For shift values >= 256, zero is returned by the caller.
    *
-   * @param value32 a 32-byte value
+   * @param in the raw 32-byte array of the input value
    * @param shift the right shift amount in bits (0–255)
    * @return the shifted 256-bit value
    */
-  private static Bytes shr256(final Bytes value32, final int shift) {
+  private static Bytes shr256(final byte[] in, final int shift) {
     if (shift == 0) {
-      return value32;
+      return Bytes.wrap(in);
     }
 
     final int shiftBytes = shift >>> 3; // /8
     final int shiftBits = shift & 7; // %8
 
     final byte[] out = new byte[32];
-    final byte[] in = value32.toArrayUnsafe();
 
     // Shift right: bytes move to higher indices (towards index 31)
     for (int i = 31; i >= 0; i--) {
