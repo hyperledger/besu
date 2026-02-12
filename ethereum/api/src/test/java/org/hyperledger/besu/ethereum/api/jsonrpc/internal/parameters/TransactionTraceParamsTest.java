@@ -28,21 +28,16 @@ public class TransactionTraceParamsTest {
 
   @Test
   public void emptyOptionsObjectShouldMatchDefaultTraceOptions() throws Exception {
-    // Demonstrates that passing {} should be equivalent to passing no options at all.
-    // TraceOptions.DEFAULT has: traceStorage=true, traceMemory=false, traceStack=true
+    // Passing {} should be equivalent to passing no options at all.
+    // All disable* fields default to false, so all tracing is enabled by default.
     final OpCodeTracerConfig defaultConfig = TraceOptions.DEFAULT.opCodeTracerConfig();
 
     // Parse an empty JSON options object — simulates debug_traceTransaction(hash, {})
     final TransactionTraceParams emptyParams = MAPPER.readValue("{}", TransactionTraceParams.class);
     final OpCodeTracerConfig emptyParamsConfig = emptyParams.traceOptions().opCodeTracerConfig();
 
-    // These should be identical, but currently traceMemory differs:
-    // DEFAULT has traceMemory=false, but empty {} produces traceMemory=true
     assertThat(emptyParamsConfig.traceMemory())
-        .describedAs(
-            "traceMemory should match DEFAULT when no disableMemory is specified. "
-                + "DEFAULT=%s, empty options=%s",
-            defaultConfig.traceMemory(), emptyParamsConfig.traceMemory())
+        .describedAs("traceMemory should match DEFAULT")
         .isEqualTo(defaultConfig.traceMemory());
 
     assertThat(emptyParamsConfig.traceStorage())
@@ -52,5 +47,16 @@ public class TransactionTraceParamsTest {
     assertThat(emptyParamsConfig.traceStack())
         .describedAs("traceStack should match DEFAULT")
         .isEqualTo(defaultConfig.traceStack());
+  }
+
+  @Test
+  public void defaultsShouldHaveAllTracingEnabled() {
+    // Per the API docs, all disable* booleans default to false,
+    // meaning storage, memory, and stack are all traced by default.
+    final OpCodeTracerConfig defaultConfig = TraceOptions.DEFAULT.opCodeTracerConfig();
+
+    assertThat(defaultConfig.traceStorage()).isTrue();
+    assertThat(defaultConfig.traceMemory()).isTrue();
+    assertThat(defaultConfig.traceStack()).isTrue();
   }
 }
