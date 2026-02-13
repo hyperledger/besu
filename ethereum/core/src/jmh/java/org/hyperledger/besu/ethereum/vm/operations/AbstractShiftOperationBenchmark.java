@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomValue;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -46,14 +48,6 @@ public abstract class AbstractShiftOperationBenchmark extends BinaryOperationBen
     FULL_RANDOM
   }
 
-  /** All bits set (32 bytes of 0xFF). */
-  protected static final Bytes ALL_BITS =
-      Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
-  /** Max positive value (sign bit not set). */
-  protected static final Bytes POSITIVE_VALUE =
-      Bytes.fromHexString("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
   @Param({
     "SHIFT_0",
     "SHIFT_1",
@@ -80,32 +74,32 @@ public abstract class AbstractShiftOperationBenchmark extends BinaryOperationBen
       switch (scenario) {
         case SHIFT_0:
           aPool[i] = Bytes.of(0);
-          bPool[i] = getValueForCase(scenario);
+          bPool[i] = randomValue(random);
           break;
 
         case SHIFT_1:
           aPool[i] = Bytes.of(1);
-          bPool[i] = getValueForCase(scenario);
+          bPool[i] = randomValue(random);
           break;
 
         case SHIFT_128:
           aPool[i] = Bytes.of(128);
-          bPool[i] = getValueForCase(scenario);
+          bPool[i] = randomValue(random);
           break;
 
         case SHIFT_255:
           aPool[i] = Bytes.of(255);
-          bPool[i] = getValueForCase(scenario);
+          bPool[i] = randomValue(random);
           break;
 
         case OVERFLOW_SHIFT_256:
           aPool[i] = Bytes.fromHexString("0x0100"); // 256
-          bPool[i] = getValueForCase(scenario);
+          bPool[i] = randomValue(random);
           break;
 
         case OVERFLOW_LARGE_SHIFT:
           aPool[i] = Bytes.fromHexString("0x010000000000"); // > 4 bytes
-          bPool[i] = getValueForCase(scenario);
+          bPool[i] = randomValue(random);
           break;
 
         case FULL_RANDOM:
@@ -120,18 +114,5 @@ public abstract class AbstractShiftOperationBenchmark extends BinaryOperationBen
       }
     }
     index = 0;
-  }
-
-  /**
-   * Returns the value to use for the given test case.
-   *
-   * <p>Subclasses can override this to use different values for specific cases (e.g., SAR uses
-   * negative values to test sign extension).
-   *
-   * @param scenario the test case
-   * @return the value to use
-   */
-  protected Bytes getValueForCase(final Case scenario) {
-    return ALL_BITS;
   }
 }

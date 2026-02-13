@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomNegativeValue;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomPositiveValue;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomValue;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -34,6 +38,8 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
     SHIFT_0,
     /** Negative number (ALL_BITS) with shift=1 - tests sign extension OR path. */
     NEGATIVE_SHIFT_1,
+    /** value with all bits to 1 with shift=1 * */
+    ALL_BITS_SHIFT_1,
     /** Positive number with shift=1 - no sign extension needed. */
     POSITIVE_SHIFT_1,
     /** Negative number with medium shift. */
@@ -52,14 +58,11 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
   protected static final Bytes ALL_BITS =
       Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-  /** Max positive value (sign bit not set). */
-  protected static final Bytes POSITIVE_VALUE =
-      Bytes.fromHexString("0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
   @Param({
     "SHIFT_0",
     "NEGATIVE_SHIFT_1",
     "POSITIVE_SHIFT_1",
+    "ALL_BITS_SHIFT_1",
     "NEGATIVE_SHIFT_128",
     "POSITIVE_SHIFT_128",
     "OVERFLOW_SHIFT_256",
@@ -83,41 +86,47 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
       switch (scenario) {
         case SHIFT_0:
           aPool[i] = Bytes.of(0);
-          bPool[i] = ALL_BITS;
+          bPool[i] = randomValue(random);
           break;
 
         case NEGATIVE_SHIFT_1:
+          // shiftAmount = 0x1, value = 0xfff...fff (negative, tests OR path)
+          aPool[i] = Bytes.of(1);
+          bPool[i] = randomNegativeValue(random);
+          break;
+
+        case ALL_BITS_SHIFT_1:
           // shiftAmount = 0x1, value = 0xfff...fff (negative, tests OR path)
           aPool[i] = Bytes.of(1);
           bPool[i] = ALL_BITS;
           break;
 
         case POSITIVE_SHIFT_1:
-          // shiftAmount = 0x1, value = 0x7ff...fff (positive, no sign extension)
+          // shiftAmount = 0x1, random positive value (no sign extension)
           aPool[i] = Bytes.of(1);
-          bPool[i] = POSITIVE_VALUE;
+          bPool[i] = randomPositiveValue(random);
           break;
 
         case NEGATIVE_SHIFT_128:
           aPool[i] = Bytes.of(128);
-          bPool[i] = ALL_BITS;
+          bPool[i] = randomNegativeValue(random);
           break;
 
         case POSITIVE_SHIFT_128:
           aPool[i] = Bytes.of(128);
-          bPool[i] = POSITIVE_VALUE;
+          bPool[i] = randomPositiveValue(random);
           break;
 
         case OVERFLOW_SHIFT_256:
           // Shift of exactly 256 - overflow path
           aPool[i] = Bytes.fromHexString("0x0100"); // 256
-          bPool[i] = ALL_BITS;
+          bPool[i] = randomValue(random);
           break;
 
         case OVERFLOW_LARGE_SHIFT:
           // Shift amount > 4 bytes - overflow path
           aPool[i] = Bytes.fromHexString("0x010000000000"); // > 4 bytes
-          bPool[i] = ALL_BITS;
+          bPool[i] = randomValue(random);
           break;
 
         case FULL_RANDOM:
