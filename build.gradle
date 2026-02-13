@@ -656,6 +656,7 @@ subprojects {
       excludes = _strListCmdArg('excludes', [])
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
+      zip64.set(true)
       jvmArgs = [
         '-XX:+EnableDynamicAgentLoading'
       ]
@@ -665,6 +666,10 @@ subprojects {
         ]
         // Force debug symbols of stack traces to the profiler
         jvmArgs.addAll("-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints")
+      }
+      var gcProfiler = _strCmdArg('gcProfiler')
+      if (gcProfiler != null && gcProfiler.toBoolean()) {
+        profilers.add('gc')
       }
       duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
     }
