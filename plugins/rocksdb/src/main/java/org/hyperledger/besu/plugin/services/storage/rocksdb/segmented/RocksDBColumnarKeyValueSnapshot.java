@@ -77,7 +77,10 @@ public class RocksDBColumnarKeyValueSnapshot
     this.columnFamilyMapper = columnFamilyMapper;
     this.snapshot = new RocksDBSnapshot(db);
     this.readOptions =
-        new ReadOptions().setVerifyChecksums(false).setSnapshot(snapshot.getSnapshot());
+        new ReadOptions()
+            .setAsyncIo(true)
+            .setVerifyChecksums(false)
+            .setSnapshot(snapshot.getSnapshot());
   }
 
   @Override
