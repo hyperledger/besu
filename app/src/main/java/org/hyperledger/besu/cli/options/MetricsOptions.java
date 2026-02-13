@@ -60,7 +60,9 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
         .pushHost(getMetricsPushHost())
         .pushPort(getMetricsPushPort())
         .pushInterval(getMetricsPushInterval())
-        .prometheusJob(getMetricsPrometheusJob());
+        .prometheusJob(getMetricsPrometheusJob())
+        .executionMetricsEnabled(getSlowBlockThresholdMs() >= 0)
+        .slowBlockThresholdMs(getSlowBlockThresholdMs());
     return builder;
   }
 
@@ -88,6 +90,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
     metricsOptions.metricsPushHost = config.getPushHost();
     metricsOptions.metricsPushPort = config.getPushPort();
     metricsOptions.metricsPushInterval = config.getPushInterval();
+    metricsOptions.slowBlockThresholdMs = config.getSlowBlockThresholdMs();
 
     return metricsOptions;
   }
@@ -162,6 +165,13 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
       names = {"--metrics-push-prometheus-job"},
       description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})")
   private String metricsPrometheusJob = "besu-client";
+
+  @CommandLine.Option(
+      names = {"--slow-block-threshold"},
+      paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
+      description =
+          "Threshold in milliseconds for logging slow blocks with execution metrics. Negative values disable (default: ${DEFAULT-VALUE}), 0 logs all blocks with metrics, positive values log only blocks exceeding the threshold")
+  private Long slowBlockThresholdMs = -1L;
 
   /**
    * Returns a newly created {@link MetricsOptions} with default values.
@@ -268,6 +278,15 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
    */
   public String getMetricsPrometheusJob() {
     return metricsPrometheusJob;
+  }
+
+  /**
+   * Returns the slow block threshold in milliseconds.
+   *
+   * @return the slow block threshold in milliseconds, negative values disable logging
+   */
+  public Long getSlowBlockThresholdMs() {
+    return slowBlockThresholdMs;
   }
 
   /**

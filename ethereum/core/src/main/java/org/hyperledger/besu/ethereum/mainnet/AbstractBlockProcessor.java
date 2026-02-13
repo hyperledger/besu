@@ -152,7 +152,39 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   });
     }
 
-    return blockImportTracerProvider.getBlockImportTracer(header);
+    BlockAwareOperationTracer baseTracer = blockImportTracerProvider.getBlockImportTracer(header);
+
+    // Compose execution metrics and slow block tracers using BlockAwareTracerAggregator
+    // System property is set from CLI --slow-block-threshold flag
+    final long slowBlockThresholdMs = Long.getLong("besu.execution.slowBlockThresholdMs", -1L);
+    if (slowBlockThresholdMs >= 0) {
+      // Create ExecutionMetricsTracer for metrics collection
+      final ExecutionMetricsTracer executionMetricsTracer = new ExecutionMetricsTracer();
+      // Create SlowBlockTracer for logging (reuses ExecutionMetricsTracer's metrics)
+      final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(slowBlockThresholdMs);
+      // Compose tracers using BlockAwareTracerAggregator
+      return BlockAwareTracerAggregator.combining(
+          baseTracer, executionMetricsTracer, slowBlockTracer);
+    }
+    return baseTracer;
+  }
+
+  /**
+   * Extracts the ExecutionMetricsTracer from the block-level tracer for use in parallel processing.
+   *
+   * @param blockTracer the block-level tracer that may contain an ExecutionMetricsTracer
+   * @return the ExecutionMetricsTracer if found, null otherwise
+   */
+  private ExecutionMetricsTracer extractExecutionMetricsTracer(
+      final BlockAwareOperationTracer blockTracer) {
+    if (blockTracer instanceof BlockAwareTracerAggregator) {
+      return ((BlockAwareTracerAggregator) blockTracer)
+          .findTracer(ExecutionMetricsTracer.class)
+          .orElse(null);
+    } else if (blockTracer instanceof ExecutionMetricsTracer) {
+      return (ExecutionMetricsTracer) blockTracer;
+    }
+    return null;
   }
 
   /**
@@ -278,6 +310,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                               calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
               .orElse(Wei.ZERO);
 
+      // Extract ExecutionMetricsTracer from block tracer for parallel processing
+      final ExecutionMetricsTracer blockExecutionMetricsTracer =
+          extractExecutionMetricsTracer(blockTracer);
+
       final Optional<PreprocessingContext> preProcessingContext =
           preprocessingBlockFunction.run(
               protocolContext,
@@ -287,7 +323,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               blobGasPrice,
               blockAccessListBuilder,
-              blockAccessList);
+              blockAccessList,
+              blockExecutionMetricsTracer);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -364,6 +401,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 worldState,
                 cumulativeReceiptGasUsed);
         receipts.add(transactionReceipt);
+
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           parallelizedTxFound = true;
@@ -372,6 +410,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           nbParallelTx++;
         }
       }
+
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {
         final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
@@ -516,7 +555,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
       blockTracer.traceEndBlock(blockHeader, blockBody);
-
       try {
         worldState.persist(blockHeader, stateRootCommitter);
       } catch (MerkleTrieException e) {
@@ -638,7 +676,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
         final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-        final Optional<BlockAccessList> maybeBlockBal);
+        final Optional<BlockAccessList> maybeBlockBal,
+        final ExecutionMetricsTracer blockExecutionMetricsTracer);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -651,7 +690,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
           final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-          final Optional<BlockAccessList> maybeBlockBal) {
+          final Optional<BlockAccessList> maybeBlockBal,
+          final ExecutionMetricsTracer blockExecutionMetricsTracer) {
         return Optional.empty();
       }
     }
