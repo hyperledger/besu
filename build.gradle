@@ -644,6 +644,10 @@ subprojects {
         "\t-PasyncProfilerOptions=<asyncProfilerOptions>\tOptions to pass on to the Async profiler separated by ';'. Default is to produce a flamegraph with all other default profiler options.\n"
     }
 
+    tasks.named("jmhJar") {
+      zip64 = true
+    }
+
     jmh {
       jmhVersion = '1.37'
       fork = 3
