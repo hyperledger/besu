@@ -373,7 +373,7 @@ public class BlockDataGenerator {
   }
 
   public Block block() {
-    return block(new BlockOptions());
+    return block(blockOptionsSupplier.get());
   }
 
   /**
@@ -477,10 +477,11 @@ public class BlockDataGenerator {
         ommers.add(ommer());
       }
     }
-    final List<Transaction> defaultTxs = new ArrayList<>();
+    final List<Transaction> defaultTxs = new ArrayList<>(options.transactionCount());
     if (options.hasTransactions()) {
-      defaultTxs.add(transaction(options.getTransactionTypes()));
-      defaultTxs.add(transaction(options.getTransactionTypes()));
+      for (int i = 0; i < options.transactionCount(); i++) {
+        defaultTxs.add(transaction(options.getTransactionTypes()));
+      }
     }
 
     return new BlockBody(
@@ -901,6 +902,7 @@ public class BlockDataGenerator {
     private Optional<Long> timestamp = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
+    private int transactionsCount = 2;
     private TransactionType[] transactionTypes = {
       TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
     };
@@ -995,6 +997,10 @@ public class BlockDataGenerator {
 
     public boolean hasTransactions() {
       return hasTransactions;
+    }
+
+    public int transactionCount() {
+      return transactionsCount;
     }
 
     public boolean hasOmmers() {
@@ -1093,6 +1099,11 @@ public class BlockDataGenerator {
 
     public BlockOptions hasTransactions(final boolean hasTransactions) {
       this.hasTransactions = hasTransactions;
+      return this;
+    }
+
+    public BlockOptions transactionCount(final int transactionCount) {
+      this.transactionsCount = transactionCount;
       return this;
     }
 

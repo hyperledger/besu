@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
@@ -32,51 +32,32 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
-public class GetSyncReceiptsFromPeerTask
-    implements PeerTask<Map<BlockHeader, List<SyncTransactionReceipt>>> {
+public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTransactionReceipt>>> {
 
-  private final Collection<BlockHeader> blockHeaders;
-  private final Map<BlockHeader, List<SyncTransactionReceipt>> receiptsByBlockHeader =
-      new HashMap<>();
-  private final Map<Hash, List<BlockHeader>> headersByReceiptsRoot = new HashMap<>();
+  private final List<SyncBlock> requestedBlocks;
+  private final List<BlockHeader> requestedHeaders;
   private final long requiredBlockchainHeight;
   private final boolean isPoS;
   private final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder;
 
   public GetSyncReceiptsFromPeerTask(
-      final Collection<BlockHeader> blockHeaders,
+      final List<SyncBlock> blocks,
       final ProtocolSchedule protocolSchedule,
       final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder) {
-    this.blockHeaders = new ArrayList<>(blockHeaders);
-
-    // pre-fill any headers with an empty receipts root into the result map
-    this.blockHeaders.stream()
-        .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
-        .forEach(header -> receiptsByBlockHeader.put(header, Collections.emptyList()));
-    this.blockHeaders.removeAll(receiptsByBlockHeader.keySet());
-
-    // group headers by their receipts root hash to reduce total number of receipts hashes requested
-    // for
-    this.blockHeaders.forEach(
-        header ->
-            headersByReceiptsRoot
-                .computeIfAbsent(header.getReceiptsRoot(), key -> new ArrayList<>())
-                .add(header));
+    this.requestedBlocks = blocks;
+    this.requestedHeaders = blocks.stream().map(SyncBlock::getHeader).toList();
 
     // calculate the minimum required blockchain height a peer will need to be able to fulfil this
     // request
     requiredBlockchainHeight =
-        this.blockHeaders.stream()
+        requestedHeaders.stream()
             .mapToLong(BlockHeader::getNumber)
             .max()
             .orElse(BlockHeader.GENESIS_BLOCK_NUMBER);
@@ -92,62 +73,22 @@ public class GetSyncReceiptsFromPeerTask
 
   @Override
   public MessageData getRequestMessage() {
-    // Since we have to match up the data by receipt root, we only need to request receipts
-    // for one of the headers with each unique receipt root.
-    final List<Hash> blockHashes =
-        headersByReceiptsRoot.values().stream()
-            .map(headers -> headers.getFirst().getHash())
-            .toList();
-    return GetReceiptsMessage.create(blockHashes);
+    return GetReceiptsMessage.create(requestedHeaders.stream().map(BlockHeader::getHash).toList());
   }
 
   @Override
-  public Map<BlockHeader, List<SyncTransactionReceipt>> processResponse(
-      final MessageData messageData)
+  public List<List<SyncTransactionReceipt>> processResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
     if (messageData == null) {
-      throw new InvalidPeerTaskResponseException();
+      throw new InvalidPeerTaskResponseException("Null message data");
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
-    final List<List<SyncTransactionReceipt>> receiptsByBlock;
     try {
-      receiptsByBlock = receiptsMessage.syncReceipts();
+      return receiptsMessage.syncReceipts();
     } catch (RLPException e) {
       // indicates a malformed or unexpected RLP result from the peer
       throw new MalformedRlpFromPeerException(e, messageData.getData());
     }
-    // take a copy of the pre-filled receiptsByBlockHeader, to ensure idempotency of subsequent
-    // calls to processResponse
-    final Map<BlockHeader, List<SyncTransactionReceipt>> receiptsByHeader =
-        new HashMap<>(receiptsByBlockHeader);
-    if (!blockHeaders.isEmpty()) {
-      if (receiptsByBlock.isEmpty() || receiptsByBlock.size() > blockHeaders.size()) {
-        throw new InvalidPeerTaskResponseException();
-      }
-
-      for (final List<SyncTransactionReceipt> receiptsInBlock : receiptsByBlock) {
-        final List<BlockHeader> blockHeaders =
-            headersByReceiptsRoot.get(
-                Util.getRootFromListOfBytes(
-                    receiptsInBlock.stream()
-                        .map(
-                            (r) -> {
-                              Bytes rlp =
-                                  r.isFormattedForRootCalculation()
-                                      ? r.getRlpBytes()
-                                      : syncTransactionReceiptEncoder.encodeForRootCalculation(r);
-                              r.clearSubVariables();
-                              return rlp;
-                            })
-                        .toList()));
-        if (blockHeaders == null) {
-          // Contains receipts that we didn't request, so mustn't be the response we're looking for.
-          throw new InvalidPeerTaskResponseException();
-        }
-        blockHeaders.forEach(header -> receiptsByHeader.put(header, receiptsInBlock));
-      }
-    }
-    return receiptsByHeader;
   }
 
   @Override
@@ -157,11 +98,56 @@ public class GetSyncReceiptsFromPeerTask
 
   @Override
   public PeerTaskValidationResponse validateResult(
-      final Map<BlockHeader, List<SyncTransactionReceipt>> result) {
+      final List<List<SyncTransactionReceipt>> result) {
+    if (!requestedBlocks.isEmpty()) {
+      if (result.isEmpty()) {
+        return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
+      }
+
+      if (result.size() > requestedBlocks.size()) {
+        return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
+      }
+
+      for (int i = 0; i < result.size(); i++) {
+        final var requestedReceipts = requestedBlocks.get(i);
+        final var receivedReceiptsForBlock = result.get(i);
+
+        // verify that the receipts count is within bounds for every received block
+        if (receivedReceiptsForBlock.size() > requestedReceipts.getBody().getTransactionCount()) {
+          return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
+        }
+
+        // ensure the calculated receipts root matches the one in the requested block header
+        if (!receiptsRootMatches(requestedReceipts.getHeader(), receivedReceiptsForBlock)) {
+          return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
+        }
+      }
+    }
+
     return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 
-  public Collection<BlockHeader> getBlockHeaders() {
-    return blockHeaders;
+  private boolean receiptsRootMatches(
+      final BlockHeader blockHeader, final List<SyncTransactionReceipt> receipts) {
+    final var calculatedReceiptsRoot =
+        Util.getRootFromListOfBytes(
+            receipts.stream()
+                .map(
+                    (r) -> {
+                      Bytes rlp =
+                          r.isFormattedForRootCalculation()
+                              ? r.getRlpBytes()
+                              : syncTransactionReceiptEncoder.encodeForRootCalculation(r);
+                      r.clearSubVariables();
+                      return rlp;
+                    })
+                .toList());
+
+    return calculatedReceiptsRoot.getBytes().equals(blockHeader.getReceiptsRoot().getBytes());
+  }
+
+  @VisibleForTesting
+  public List<SyncBlock> getRequestedBlocks() {
+    return requestedBlocks;
   }
 }
