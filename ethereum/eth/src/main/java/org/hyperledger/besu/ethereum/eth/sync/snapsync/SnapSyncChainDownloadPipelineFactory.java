@@ -14,34 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.DETACHED_ONLY;
-import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.LIGHT_DETACHED_ONLY;
-
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BackwardBlockNumberSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.BlockHeaderSource;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadAndStoreBodiesAndReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadBackwardHeadersStep;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.DownloadSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncValidationPolicy;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportHeadersStep;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.ImportSyncBlocksStep;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
@@ -60,8 +48,6 @@ public class SnapSyncChainDownloadPipelineFactory {
   protected final EthContext ethContext;
   protected final FastSyncState fastSyncState;
   protected final MetricsSystem metricsSystem;
-  protected final FastSyncValidationPolicy detachedValidationPolicy;
-  protected final ValidationPolicy downloadHeaderValidation;
 
   public SnapSyncChainDownloadPipelineFactory(
       final SynchronizerConfiguration syncConfig,
@@ -76,24 +62,6 @@ public class SnapSyncChainDownloadPipelineFactory {
     this.ethContext = ethContext;
     this.fastSyncState = fastSyncState;
     this.metricsSystem = metricsSystem;
-    final LabelledMetric<Counter> fastSyncValidationCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.SYNCHRONIZER,
-            "fast_sync_validation_mode",
-            "Number of blocks validated using light vs full validation during fast sync",
-            "validationMode");
-    detachedValidationPolicy =
-        new FastSyncValidationPolicy(
-            this.syncConfig.getFastSyncFullValidationRate(),
-            LIGHT_DETACHED_ONLY,
-            DETACHED_ONLY,
-            fastSyncValidationCounter);
-    final ValidationPolicy noneValidationPolicy = () -> HeaderValidationMode.NONE;
-    downloadHeaderValidation =
-        fastSyncState.isSourceTrusted() ? noneValidationPolicy : detachedValidationPolicy;
-    if (fastSyncState.isSourceTrusted()) {
-      LOG.trace("Pivot block is from trusted source, skipping header validation");
-    }
   }
 
   /**
@@ -139,7 +107,7 @@ public class SnapSyncChainDownloadPipelineFactory {
     return PipelineBuilder.createPipelineFrom(
             "backwardHeaderSource",
             headerSource,
-            downloaderParallelism,
+            downloaderParallelism * 2,
             metricsSystem.createLabelledCounter(
                 BesuMetricCategory.SYNCHRONIZER,
                 "backward_header_download_pipeline_processed_total",
@@ -184,23 +152,17 @@ public class SnapSyncChainDownloadPipelineFactory {
     final BlockHeaderSource headerSource =
         new BlockHeaderSource(blockchain, anchorBlock, pivotHeaderNumber, bodiesRequestSize);
 
-    final DownloadSyncBodiesStep downloadBodiesStep =
-        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
-
-    final DownloadSyncReceiptsStep downloadReceiptsStep =
-        new DownloadSyncReceiptsStep(
+    final DownloadAndStoreBodiesAndReceiptsStep downloadAndStoreBodiesAndReceiptsStep =
+        new DownloadAndStoreBodiesAndReceiptsStep(
             protocolSchedule,
             ethContext,
-            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+            blockchain,
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled(),
+            metricsSystem);
 
-    final ImportSyncBlocksStep importBlocksStep =
-        new ImportSyncBlocksStep(
-            protocolContext,
-            ethContext,
-            syncState,
-            anchorBlock,
-            pivotHeader.getNumber(),
-            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
+    final StoreTTDAndSetChainHeadStep storeTTDAndSetChainHead =
+        new StoreTTDAndSetChainHeadStep(
+            protocolContext, ethContext, syncState, anchorBlock, pivotHeader);
 
     return PipelineBuilder.createPipelineFrom(
             "forwardHeaderSource",
@@ -214,8 +176,10 @@ public class SnapSyncChainDownloadPipelineFactory {
                 "action"),
             true,
             "forwardBodiesReceipts")
-        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
-        .andFinishWith("importBlocks", importBlocksStep);
+        .thenProcessAsyncOrdered(
+            "downloadAndStoreBodiesAndReceipts",
+            downloadAndStoreBodiesAndReceiptsStep,
+            downloaderParallelism)
+        .andFinishWith("storeTTDAndSetChainHead", storeTTDAndSetChainHead);
   }
 }

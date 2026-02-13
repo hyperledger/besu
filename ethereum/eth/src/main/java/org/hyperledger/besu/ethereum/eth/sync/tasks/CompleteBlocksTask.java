@@ -83,6 +83,7 @@ public class CompleteBlocksTask extends AbstractCompleteBlocksTask<Block> {
     if (incompleteHeaders.isEmpty()) {
       return completedFuture(Collections.emptyList());
     }
+    LOG.atTrace().setMessage("Stefan {}").addArgument(assignedPeer.isEmpty()).log(); // TODO: remove
     LOG.debug(
         "Requesting bodies to complete {} blocks, starting with {}.",
         incompleteHeaders.size(),
@@ -92,7 +93,7 @@ public class CompleteBlocksTask extends AbstractCompleteBlocksTask<Block> {
           final GetBodiesFromPeerTask task =
               GetBodiesFromPeerTask.forHeaders(
                   protocolSchedule, ethContext, incompleteHeaders, metricsSystem);
-          assignedPeer.ifPresent(task::assignPeer);
+          //          assignedPeer.ifPresent(task::assignPeer);
           return task.run().thenApply(AbstractPeerTask.PeerTaskResult::getResult);
         });
   }
