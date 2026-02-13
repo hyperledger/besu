@@ -75,6 +75,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -115,7 +116,6 @@ import java.util.function.Supplier;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -637,8 +637,8 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    protected Vertx createVertx(final VertxOptions vertxOptions) {
-      vertx = super.createVertx(vertxOptions);
+    protected Vertx createVertx(final MetricsSystem metricsSystem) {
+      vertx = super.createVertx(metricsSystem);
       return vertx;
     }
 

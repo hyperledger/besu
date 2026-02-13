@@ -112,7 +112,9 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               ethContext,
               syncState,
               pivotBlockSelector,
-              metricsSystem);
+              metricsSystem,
+              fastSyncStateStorage,
+              fastSyncDataDirectory);
     } else {
       if (!syncState.isResyncNeeded()) {
         LOG.info(
@@ -129,7 +131,9 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
               ethContext,
               syncState,
               pivotBlockSelector,
-              metricsSystem);
+              metricsSystem,
+              fastSyncStateStorage,
+              fastSyncDataDirectory);
     }
 
     final SnapSyncProcessState snapSyncState =
