@@ -126,6 +126,63 @@ public class EthPeersTest {
   }
 
   @Test
+  public void comparesPeersByLatency() {
+    final EthPeer peerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+    final EthPeer peerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+
+    peerA.recordLatency(100.0);
+    peerB.recordLatency(200.0);
+
+    final EthPeerImmutableAttributes attrA = EthPeerImmutableAttributes.from(peerA);
+    final EthPeerImmutableAttributes attrB = EthPeerImmutableAttributes.from(peerB);
+
+    // Smaller latency is better, so attrA > attrB in LOW_LATENCY comparator
+    assertThat(EthPeers.BY_LOW_LATENCY.compare(attrA, attrB)).isGreaterThan(0);
+    assertThat(EthPeers.BY_LOW_LATENCY.compare(attrB, attrA)).isLessThan(0);
+
+    // Peer with unknown latency should be worse than any known latency
+    final EthPeer peerC =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+    final EthPeerImmutableAttributes attrC = EthPeerImmutableAttributes.from(peerC);
+    assertThat(EthPeers.BY_LOW_LATENCY.compare(attrA, attrC)).isGreaterThan(0);
+  }
+
+  @Test
+  public void comparesPeersByThroughput() {
+    final EthPeer peerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+    final EthPeer peerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+
+    peerA.recordThroughput(2000, 1000.0); // 2000 bytes/s
+    peerB.recordThroughput(1000, 1000.0); // 1000 bytes/s
+
+    final EthPeerImmutableAttributes attrA = EthPeerImmutableAttributes.from(peerA);
+    final EthPeerImmutableAttributes attrB = EthPeerImmutableAttributes.from(peerB);
+
+    // Larger throughput is better
+    assertThat(EthPeers.BY_HIGH_THROUGHPUT.compare(attrA, attrB)).isGreaterThan(0);
+    assertThat(EthPeers.BY_HIGH_THROUGHPUT.compare(attrB, attrA)).isLessThan(0);
+  }
+
+  @Test
+  public void shouldStreamBestPeersWithCustomComparator() {
+    final EthPeer peerA =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+    final EthPeer peerB =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+
+    peerA.recordLatency(200.0);
+    peerB.recordLatency(100.0);
+
+    // BY_LOW_LATENCY reversed should put peerB first
+    assertThat(ethPeers.streamBestPeers(EthPeers.BY_LOW_LATENCY).findFirst())
+        .contains(EthPeerImmutableAttributes.from(peerB));
+  }
+
+  @Test
   public void shouldExecutePeerRequestImmediatelyWhenPeerIsAvailable() throws Exception {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
 
