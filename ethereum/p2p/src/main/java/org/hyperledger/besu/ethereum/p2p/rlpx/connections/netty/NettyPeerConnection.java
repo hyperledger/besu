@@ -44,6 +44,7 @@ final class NettyPeerConnection extends AbstractPeerConnection {
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
       final LabelledMetric<Counter> outboundMessagesCounter,
+      final LabelledMetric<Counter> outboundBytesCounter,
       final boolean inboundInitiated) {
     super(
         peer,
@@ -54,6 +55,7 @@ final class NettyPeerConnection extends AbstractPeerConnection {
         multiplexer,
         connectionEventDispatcher,
         outboundMessagesCounter,
+        outboundBytesCounter,
         inboundInitiated);
 
     this.ctx = ctx;
