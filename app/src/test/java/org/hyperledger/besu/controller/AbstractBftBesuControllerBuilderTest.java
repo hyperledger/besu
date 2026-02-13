@@ -27,6 +27,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -49,7 +50,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -64,6 +64,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Range;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -100,9 +101,9 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
     lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
@@ -189,7 +190,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             0,
             protocolContext.getBlockchain().getChainHead().getBlockHeader().getExtraData(),
             Wei.ZERO,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
             null,
             null,
@@ -197,6 +198,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             null,
             null,
             null,
+            null, // slotNumber
             getBlockHeaderFunctions());
     final Block block1 = new Block(header1, BlockBody.empty());
 

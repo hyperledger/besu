@@ -723,6 +723,7 @@ public class RunnerBuilder {
             .metricsSystem(metricsSystem)
             .allConnectionsSupplier(ethPeers::streamAllConnections)
             .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
+            .maxPeers(ethPeers.getMaxPeers())
             .build();
 
     final NetworkBuilder activeNetwork =

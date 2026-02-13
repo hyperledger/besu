@@ -85,7 +85,7 @@ class TransactionCollisionDetectorTest {
     return new BonsaiAccount(
         worldState,
         address,
-        Hash.hash(Address.ZERO),
+        Hash.hash(Address.ZERO.getBytes()),
         0,
         Wei.ONE,
         Hash.EMPTY_TRIE_HASH,

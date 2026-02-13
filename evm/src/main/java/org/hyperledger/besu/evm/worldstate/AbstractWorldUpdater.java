@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.worldstate;
 
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
@@ -23,6 +22,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -47,8 +47,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
 
   /** The Deleted accounts. */
-  protected Set<Address> deletedAccounts =
-      Collections.synchronizedSet(new BytesTrieSet<>(Address.SIZE));
+  protected Set<Address> deletedAccounts = Collections.synchronizedSet(new HashSet<>(Address.SIZE));
 
   /**
    * Instantiates a new Abstract world updater.

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -65,7 +66,9 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   @BeforeEach
   public void setUp() {
-    transactionTracker = new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
+    transactionTracker =
+        new PeerTransactionTracker(
+            TransactionPoolConfiguration.DEFAULT, ethPeers, new DeterministicEthScheduler());
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     final Transaction tx = mock(Transaction.class);
     pendingTransactions = mock(PendingTransactions.class);

@@ -95,24 +95,25 @@ public class VariablesKeyValueStorage implements VariablesStorage {
 
     @Override
     public void setChainHead(final Hash blockHash) {
-      setVariable(CHAIN_HEAD_HASH, blockHash);
+      setVariable(CHAIN_HEAD_HASH, blockHash.getBytes());
     }
 
     @Override
     public void setForkHeads(final Collection<Hash> forkHeadHashes) {
       final Bytes data =
-          RLP.encode(o -> o.writeList(forkHeadHashes, (val, out) -> out.writeBytes(val)));
+          RLP.encode(
+              o -> o.writeList(forkHeadHashes, (val, out) -> out.writeBytes(val.getBytes())));
       setVariable(FORK_HEADS, data);
     }
 
     @Override
     public void setFinalized(final Hash blockHash) {
-      setVariable(FINALIZED_BLOCK_HASH, blockHash);
+      setVariable(FINALIZED_BLOCK_HASH, blockHash.getBytes());
     }
 
     @Override
     public void setSafeBlock(final Hash blockHash) {
-      setVariable(SAFE_BLOCK_HASH, blockHash);
+      setVariable(SAFE_BLOCK_HASH, blockHash.getBytes());
     }
 
     @Override
@@ -122,7 +123,7 @@ public class VariablesKeyValueStorage implements VariablesStorage {
 
     @Override
     public void setGenesisStateHash(final Hash genesisStateHash) {
-      setVariable(Keys.GENESIS_STATE_HASH, genesisStateHash);
+      setVariable(Keys.GENESIS_STATE_HASH, genesisStateHash.getBytes());
     }
 
     @Override

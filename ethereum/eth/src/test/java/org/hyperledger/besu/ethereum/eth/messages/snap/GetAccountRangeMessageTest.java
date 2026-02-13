@@ -29,8 +29,8 @@ public final class GetAccountRangeMessageTest {
   @Test
   public void roundTripTest() {
     final Hash rootHash = Hash.wrap(Bytes32.random());
-    final Hash startKeyHash = RangeManager.MIN_RANGE;
-    final Hash endKeyHash = RangeManager.MAX_RANGE;
+    final Bytes32 startKeyHash = RangeManager.MIN_RANGE;
+    final Bytes32 endKeyHash = RangeManager.MAX_RANGE;
 
     // Perform round-trip transformation
     final MessageData initialMessage =
@@ -42,7 +42,7 @@ public final class GetAccountRangeMessageTest {
     // check match originals.
     final GetAccountRangeMessage.Range range = message.range(false);
     Assertions.assertThat(range.worldStateRootHash()).isEqualTo(rootHash);
-    Assertions.assertThat(range.startKeyHash()).isEqualTo(startKeyHash);
+    Assertions.assertThat(range.startKeyHash().getBytes()).isEqualTo(startKeyHash);
     Assertions.assertThat(range.responseBytes()).isEqualTo(AbstractSnapMessageData.SIZE_REQUEST);
   }
 }

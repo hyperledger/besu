@@ -152,6 +152,14 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
   }
 
   @Test
+  public void txWithGasPriceEqualsToMineableMinGasPriceIsPrioritized() {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(createTransaction(0, DEFAULT_MIN_GAS_PRICE, KEYS1));
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(ADDED);
+    assertTransactionPrioritized(lowGasPriceTx);
+  }
+
+  @Test
   public void txWithPriorityBelowCurrentMineableMinGasPriceIsPrioritized() {
     final PendingTransaction lowGasPriceTx =
         createRemotePendingTransaction(

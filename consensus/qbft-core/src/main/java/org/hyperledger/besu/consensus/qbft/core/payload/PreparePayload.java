@@ -59,7 +59,7 @@ public class PreparePayload extends QbftPayload {
   public void writeTo(final RLPOutput rlpOutput) {
     rlpOutput.startList();
     writeConsensusRound(rlpOutput);
-    rlpOutput.writeBytes(digest);
+    rlpOutput.writeBytes(digest.getBytes());
     rlpOutput.endList();
   }
 

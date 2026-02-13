@@ -70,7 +70,7 @@ public class AccountStorageEntry {
    * @return the account storage entry
    */
   public static AccountStorageEntry forKeyAndValue(final UInt256 key, final UInt256 value) {
-    return create(value, Hash.hash(key), key);
+    return create(value, Bytes32.wrap(Hash.hash(key).getBytes()), key);
   }
 
   /**

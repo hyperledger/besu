@@ -88,7 +88,7 @@ public class BonsaiPartialFlatDbStrategy extends BonsaiFlatDbStrategy {
       final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     Optional<Bytes> response =
-        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
+        storage.get(ACCOUNT_INFO_STATE, accountHash.getBytes().toArrayUnsafe()).map(Bytes::wrap);
     if (response.isEmpty()) {
       // after a snapsync/fastsync we only have the trie branches.
       final Optional<Bytes> worldStateRootHash = worldStateRootHashSupplier.get();
@@ -97,7 +97,7 @@ public class BonsaiPartialFlatDbStrategy extends BonsaiFlatDbStrategy {
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity()),
                     Bytes32.wrap(worldStateRootHash.get()))
-                .get(accountHash);
+                .get(accountHash.getBytes());
         if (response.isEmpty()) {
           getAccountMissingMerkleTrieCounter.inc();
         } else {
@@ -124,7 +124,8 @@ public class BonsaiPartialFlatDbStrategy extends BonsaiFlatDbStrategy {
         storage
             .get(
                 ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+                Bytes.concatenate(accountHash.getBytes(), storageSlotKey.getSlotHash().getBytes())
+                    .toArrayUnsafe())
             .map(Bytes::wrap);
     if (response.isEmpty()) {
       final Optional<Hash> storageRoot = storageRootSupplier.get();
@@ -133,8 +134,8 @@ public class BonsaiPartialFlatDbStrategy extends BonsaiFlatDbStrategy {
         response =
             new StoredMerklePatriciaTrie<>(
                     new StoredNodeFactory<>(nodeLoader, Function.identity(), Function.identity()),
-                    storageRoot.get())
-                .get(storageSlotKey.getSlotHash())
+                    Bytes32.wrap(storageRoot.get().getBytes()))
+                .get(storageSlotKey.getSlotHash().getBytes())
                 .map(bytes -> Bytes32.leftPad(RLP.decodeValue(bytes)));
         if (response.isEmpty()) getStorageValueMissingMerkleTrieCounter.inc();
         else getStorageValueMerkleTrieCounter.inc();
