@@ -108,7 +108,7 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
         out[i] = (byte) hi;
       } else {
         final int lo = (src - 1 >= 0) ? (in[src - 1] & 0xFF) : 0;
-        out[i] = (byte) ((hi >>> shiftBits) | ((lo << (8 - shiftBits)) & 0xFF));
+        out[i] = (byte) ((hi >>> shiftBits) | (lo << (8 - shiftBits)));
       }
     }
 
