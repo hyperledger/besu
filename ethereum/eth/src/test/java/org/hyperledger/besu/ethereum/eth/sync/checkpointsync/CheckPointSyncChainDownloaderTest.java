@@ -186,14 +186,15 @@ public class CheckPointSyncChainDownloaderTest {
             (invocationOnMock) -> {
               GetSyncReceiptsFromPeerTask task =
                   invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
-              Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
-                  new HashMap<>();
-              task.getBlockHeaders()
+              List<List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult = new ArrayList<>();
+              task.getRequestedBlocks()
                   .forEach(
-                      (bh) ->
-                          getReceiptsFromPeerTaskResult.put(
-                              bh,
-                              otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
+                      (block) ->
+                          getReceiptsFromPeerTaskResult.add(
+                              otherBlockchain
+                                  .getTxReceipts(block.getHeader().getHash())
+                                  .get()
+                                  .stream()
                                   .map(
                                       (tr) ->
                                           syncTransactionReceiptDecoder.decode(

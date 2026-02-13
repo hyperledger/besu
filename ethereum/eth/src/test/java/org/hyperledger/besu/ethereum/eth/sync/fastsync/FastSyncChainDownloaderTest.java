@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
@@ -63,9 +62,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
@@ -145,14 +142,15 @@ public class FastSyncChainDownloaderTest {
             (invocationOnMock) -> {
               GetSyncReceiptsFromPeerTask task =
                   invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
-              Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
-                  new HashMap<>();
-              task.getBlockHeaders()
+              List<List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult = new ArrayList<>();
+              task.getRequestedBlocks()
                   .forEach(
-                      (bh) ->
-                          getReceiptsFromPeerTaskResult.put(
-                              bh,
-                              otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
+                      (block) ->
+                          getReceiptsFromPeerTaskResult.add(
+                              otherBlockchain
+                                  .getTxReceipts(block.getHeader().getHash())
+                                  .get()
+                                  .stream()
                                   .map(
                                       (tr) ->
                                           syncTransactionReceiptDecoder.decode(

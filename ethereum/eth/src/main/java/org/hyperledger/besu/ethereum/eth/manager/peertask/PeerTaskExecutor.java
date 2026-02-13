@@ -141,7 +141,7 @@ public class PeerTaskExecutor {
               requestSender.sendRequest(peerTaskSubProtocol, requestMessageData, peer);
 
           if (responseMessageData == null) {
-            throw new InvalidPeerTaskResponseException();
+            throw new InvalidPeerTaskResponseException("Null response");
           }
 
           result = peerTask.processResponse(responseMessageData);
@@ -158,7 +158,10 @@ public class PeerTaskExecutor {
           peerTask.postProcessResult(executorResult);
         } else {
           LOG.debug(
-              "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
+              "Invalid response {} found for {} from peer {}",
+              validationResponse,
+              taskClassName,
+              peer.getLoggableId());
           if (validationResponse.recordUselessResponse()) {
             peer.recordUselessResponse(taskClassName);
           }
@@ -212,11 +215,13 @@ public class PeerTaskExecutor {
                 PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
                 List.of(peer));
       }
-      LOG.debug(
-          "Executed peer task against {}, response code {}, retries remaining {}",
-          peer.getLoggableId(),
-          executorResult.responseCode(),
-          retriesRemaining);
+      LOG.atDebug()
+          .setMessage("Executed peer task {} against {}, response code {}, retries remaining {}")
+          .addArgument(taskClassName)
+          .addArgument(peer::getLoggableId)
+          .addArgument(executorResult::responseCode)
+          .addArgument(retriesRemaining)
+          .log();
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED
