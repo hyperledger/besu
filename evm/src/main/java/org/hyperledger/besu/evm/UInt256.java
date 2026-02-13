@@ -610,12 +610,13 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     int res;
     int carry = 1;
     byte[] x = padLeft(a);
+    byte[] out = new byte[BYTESIZE];
     for (int i = 31; i >= 0; i--) {
       res = (~x[i] & 0xFF) + carry;
-      x[i] = (byte) res;
+      out[i] = (byte) res;
       carry = (res >> 8);
     }
-    return x;
+    return out;
   }
 
   private static byte[] sbb(final byte[] a, final byte[] b) {
@@ -763,20 +764,40 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // --------------------------------------------------------------------------
 
   private UInt256 mul64(final UInt256 v) {
-    long lo = u0 * v.u0;
-    long hi = Math.unsignedMultiplyHigh(u0, v.u0);
-    return new UInt256(0, 0, hi, lo);
+    long a = u0;
+
+    // a * v.u0
+    long z0 = a * v.u0;
+    long c = Math.unsignedMultiplyHigh(a, v.u0);
+
+    // a * v.u1 + carry
+    long p = a * v.u1;
+    long z1 = p + c;
+    c = Math.unsignedMultiplyHigh(a, v.u1) + ((Long.compareUnsigned(z1, p) < 0) ? 1L : 0L);
+
+    // a * v.u2 + carry
+    p = a * v.u2;
+    long z2 = p + c;
+    c = Math.unsignedMultiplyHigh(a, v.u2) + ((Long.compareUnsigned(z2, p) < 0) ? 1L : 0L);
+
+    // a * v.u3 + carry (hi overflows 256 bits, discarded)
+    long z3 = a * v.u3 + c;
+
+    return new UInt256(z3, z2, z1, z0);
   }
 
   private UInt256 mul128(final UInt256 v) {
-    long z0;
     UInt256 res;
 
     res = mac128(v.u0, ZERO);
-    z0 = res.u0;
+    long z0 = res.u0;
     res = mac128(v.u1, res);
+    long z1 = res.u0;
+    res = mac128(v.u2, res);
+    long z2 = res.u0;
+    res = mac128(v.u3, res);
 
-    return new UInt256(res.u2, res.u1, res.u0, z0);
+    return new UInt256(res.u0, z2, z1, z0);
   }
 
   private UInt512 mul192(final UInt256 v) {
@@ -786,8 +807,10 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     res = mac192(v.u1, res);
     long z1 = res.u0;
     res = mac192(v.u2, res);
+    long z2 = res.u0;
+    res = mac192(v.u3, res);
 
-    return new UInt512(0, 0, res.u3, res.u2, res.u1, res.u0, z1, z0);
+    return new UInt512(0, res.u3, res.u2, res.u1, res.u0, z2, z1, z0);
   }
 
   private UInt512 mul256(final UInt256 v) {

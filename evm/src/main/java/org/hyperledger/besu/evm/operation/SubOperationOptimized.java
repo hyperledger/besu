@@ -32,7 +32,7 @@ public class SubOperationOptimized extends AbstractFixedCostOperation {
    *
    * @param gasCalculator the gas calculator
    */
-  public SubOperation(final GasCalculator gasCalculator) {
+  public SubOperationOptimized(final GasCalculator gasCalculator) {
     super(0x03, "SUB", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
