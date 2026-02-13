@@ -295,6 +295,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
         .setFilterPolicy(new BloomFilter(10, false))
         .setPartitionFilters(true)
         .setCacheIndexAndFilterBlocks(false)
+        // .setCacheIndexAndFilterBlocks(true)
         .setBlockSize(ROCKSDB_BLOCK_SIZE);
   }
 
@@ -570,5 +571,9 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
     public String forDisplay() {
       return String.format("'%s'(%s)", name, Bytes.of(id).toHexString());
     }
+  }
+
+  public Statistics getStats() {
+    return stats;
   }
 }
