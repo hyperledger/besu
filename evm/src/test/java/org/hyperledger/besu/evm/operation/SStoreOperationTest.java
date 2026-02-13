@@ -22,7 +22,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.Eip8037StateGasCostCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
@@ -87,6 +89,90 @@ class SStoreOperationTest {
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(expectedHalt);
+  }
+
+  @Test
+  void sstoreZeroToNonzeroTracksStateGasWithAmsterdam() {
+    final GasCalculator amsterdamCalc = new AmsterdamGasCalculator();
+    final SStoreOperation operation =
+        new SStoreOperation(amsterdamCalc, SStoreOperation.EIP_1706_MINIMUM);
+
+    final long blockGasLimit = 36_000_000L;
+    final Address address = Address.fromHexString("0x18675309");
+    final ToyWorld toyWorld = new ToyWorld();
+    final WorldUpdater worldStateUpdater = toyWorld.updater();
+
+    final MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .address(address)
+            .worldUpdater(worldStateUpdater)
+            .blockValues(
+                new FakeBlockValues(1337) {
+                  @Override
+                  public long getGasLimit() {
+                    return blockGasLimit;
+                  }
+                })
+            .initialGas(100_000L)
+            .build();
+    worldStateUpdater.getOrCreate(address).setBalance(Wei.of(1));
+    worldStateUpdater.commit();
+
+    // key=1, newValue=42 (0 -> nonzero triggers state gas)
+    frame.pushStackItem(UInt256.valueOf(42));
+    frame.pushStackItem(UInt256.ONE);
+
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getHaltReason()).isNull();
+
+    // State gas: 32 * cpsb(36M) = 32 * 150 = 4_800
+    final long expectedStateGas =
+        32L * new Eip8037StateGasCostCalculator().costPerStateByte(blockGasLimit);
+    assertThat(frame.getStateGasUsed()).isEqualTo(expectedStateGas);
+  }
+
+  @Test
+  void sstoreNonzeroToNonzeroDoesNotTrackStateGas() {
+    final GasCalculator amsterdamCalc = new AmsterdamGasCalculator();
+    final SStoreOperation operation =
+        new SStoreOperation(amsterdamCalc, SStoreOperation.EIP_1706_MINIMUM);
+
+    final long blockGasLimit = 36_000_000L;
+    final Address address = Address.fromHexString("0x18675309");
+    final ToyWorld toyWorld = new ToyWorld();
+
+    // Set up base state with nonzero storage
+    final WorldUpdater baseUpdater = toyWorld.updater();
+    final var baseAccount = baseUpdater.getOrCreate(address);
+    baseAccount.setBalance(Wei.of(1));
+    baseAccount.setStorageValue(UInt256.ONE, UInt256.valueOf(99));
+    baseUpdater.commit();
+
+    // Fresh updater for transaction context
+    final WorldUpdater txUpdater = toyWorld.updater();
+    final MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .address(address)
+            .worldUpdater(txUpdater)
+            .blockValues(
+                new FakeBlockValues(1337) {
+                  @Override
+                  public long getGasLimit() {
+                    return blockGasLimit;
+                  }
+                })
+            .initialGas(100_000L)
+            .build();
+
+    // key=1, newValue=42 (nonzero -> nonzero, no state gas)
+    frame.pushStackItem(UInt256.valueOf(42));
+    frame.pushStackItem(UInt256.ONE);
+
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getHaltReason()).isNull();
+
+    // No state gas for nonzero -> nonzero
+    assertThat(frame.getStateGasUsed()).isEqualTo(0L);
   }
 
   @Test

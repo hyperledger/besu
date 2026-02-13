@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import com.google.common.collect.HashBasedTable;
@@ -806,6 +807,82 @@ public class MessageFrame {
    */
   public long getGasRefund() {
     return txValues.gasRefunds().get();
+  }
+
+  /**
+   * Increment the state gas used (EIP-8037). This is NOT undone on revert since consumed gas is
+   * consumed regardless of execution outcome.
+   *
+   * @param amount The amount of state gas to add
+   */
+  public void incrementStateGasUsed(final long amount) {
+    txValues.stateGasUsed().addAndGet(amount);
+  }
+
+  /**
+   * Return the accumulated state gas used (EIP-8037).
+   *
+   * @return accumulated state gas used
+   */
+  public long getStateGasUsed() {
+    return txValues.stateGasUsed().get();
+  }
+
+  /**
+   * Gets the state gas reservoir (EIP-8037).
+   *
+   * @return the state gas reservoir amount
+   */
+  public long getStateGasReservoir() {
+    return txValues.stateGasReservoir().get();
+  }
+
+  /**
+   * Sets the state gas reservoir (EIP-8037).
+   *
+   * @param amount the amount to set the reservoir to
+   */
+  public void setStateGasReservoir(final long amount) {
+    txValues.stateGasReservoir().set(amount);
+  }
+
+  /**
+   * Increments the state gas reservoir (EIP-8037). Used for state gas refunds.
+   *
+   * @param amount the amount to add to the reservoir
+   */
+  public void incrementStateGasReservoir(final long amount) {
+    txValues.stateGasReservoir().addAndGet(amount);
+  }
+
+  /**
+   * Consumes state gas: draws from the reservoir first, then from gasRemaining. Also increments
+   * stateGasUsed. Returns false if insufficient total gas (reservoir + gasRemaining).
+   *
+   * @param amount the amount of state gas to consume
+   * @return true if the gas was successfully consumed, false if insufficient gas
+   */
+  public boolean consumeStateGas(final long amount) {
+    final long reservoir = txValues.stateGasReservoir().get();
+    if (reservoir >= amount) {
+      txValues.stateGasReservoir().addAndGet(-amount);
+    } else {
+      // Overflow goes to gasRemaining
+      final long overflow = amount - reservoir;
+      if (gasRemaining < overflow) {
+        return false;
+      }
+      txValues.stateGasReservoir().set(0L);
+      gasRemaining -= overflow;
+    }
+    txValues.stateGasUsed().addAndGet(amount);
+    return true;
+  }
+
+  /** Clears both gasRemaining and the state gas reservoir. Used on exceptional halt. */
+  public void clearAllGas() {
+    this.gasRemaining = 0L;
+    txValues.stateGasReservoir().set(0L);
   }
 
   /**
@@ -1647,7 +1724,9 @@ public class MessageFrame {
                 UndoTable.of(HashBasedTable.create()),
                 UndoSet.of(new HashSet<>(Address.SIZE)),
                 UndoSet.of(new HashSet<>(Address.SIZE)),
-                new UndoScalar<>(0L));
+                new UndoScalar<>(0L),
+                new AtomicLong(0L),
+                new AtomicLong(0L));
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

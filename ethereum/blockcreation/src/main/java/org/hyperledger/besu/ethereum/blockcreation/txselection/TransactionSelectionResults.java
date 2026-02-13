@@ -52,12 +52,15 @@ public class TransactionSelectionResults {
   // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
   private long cumulativeGasUsed = 0;
   private long cumulativeReceiptGasUsed = 0;
+  // EIP-8037: Track cumulative state gas used for multidimensional gas metering
+  private long cumulativeStateGasUsed = 0;
 
   void updateSelected(
       final Transaction transaction,
       final TransactionReceipt receipt,
       final long blockGasUsed,
-      final long receiptGasUsed) {
+      final long receiptGasUsed,
+      final long stateGasUsed) {
     selectedTransactions.add(transaction);
     transactionsByType
         .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
@@ -65,6 +68,7 @@ public class TransactionSelectionResults {
     receipts.add(receipt);
     cumulativeGasUsed += blockGasUsed;
     cumulativeReceiptGasUsed += receiptGasUsed;
+    cumulativeStateGasUsed += stateGasUsed;
     LOG.atTrace()
         .setMessage(
             "New selected transaction {}, total transactions {}, cumulative block gas {}, cumulative receipt gas {}")
@@ -98,6 +102,10 @@ public class TransactionSelectionResults {
 
   public long getCumulativeReceiptGasUsed() {
     return cumulativeReceiptGasUsed;
+  }
+
+  public long getCumulativeStateGasUsed() {
+    return cumulativeStateGasUsed;
   }
 
   public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {

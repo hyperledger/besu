@@ -196,6 +196,18 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       if (invalidReason.isEmpty()) {
         frame.decrementRemainingGas(depositFee);
 
+        // EIP-8037: Charge state gas for code deposit (cpsb * codeSize)
+        if (!evm.getGasCalculator()
+            .stateGasCostCalculator()
+            .chargeCodeDepositStateGas(frame, contractCode.size())) {
+          LOG.trace("Contract creation error: insufficient state gas for code deposit");
+          frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+          operationTracer.traceAccountCreationResult(
+              frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          return;
+        }
+
         // Finalize contract creation, setting the contract code.
         final MutableAccount contract =
             frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
