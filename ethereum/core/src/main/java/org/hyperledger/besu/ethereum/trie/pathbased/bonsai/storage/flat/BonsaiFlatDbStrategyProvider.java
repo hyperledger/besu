@@ -99,4 +99,21 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
       return new BonsaiPartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
     }
   }
+
+  /**
+   * Create a new provider with a context-safe clone of the current flat DB strategy. This is used
+   * to create isolated copies for concurrent access.
+   *
+   * @param composedWorldStateStorage the storage to use
+   * @return a new BonsaiFlatDbStrategyProvider with a cloned strategy
+   */
+  public BonsaiFlatDbStrategyProvider cloneWithContextSafeFlatDbStrategy(
+      final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final BonsaiFlatDbStrategyProvider clonedProvider =
+        new BonsaiFlatDbStrategyProvider(metricsSystem, dataStorageConfiguration);
+    // Clone the current strategy with context safety
+    clonedProvider.flatDbStrategy = getFlatDbStrategy(composedWorldStateStorage).contextSafeClone();
+    clonedProvider.flatDbMode = this.flatDbMode;
+    return clonedProvider;
+  }
 }

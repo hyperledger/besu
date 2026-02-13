@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -239,5 +240,27 @@ public abstract class FlatDbStrategy {
                 () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
     pairStream.close();
     return collected;
+  }
+
+  /**
+   * Update the block context for strategies that need it (like archive mode). Default
+   * implementation is a no-op.
+   *
+   * @param blockHeader the block header to set as context
+   */
+  public void updateBlockContext(final BlockHeader blockHeader) {
+    // default no-op for strategies that do not care about bonsai context
+  }
+
+  /**
+   * Create a context-safe clone of this strategy. Strategies that maintain mutable context should
+   * override this. Default implementation returns this instance (no cloning needed for stateless
+   * strategies).
+   *
+   * @return a context-safe clone or this instance
+   */
+  public FlatDbStrategy contextSafeClone() {
+    // FlatDBStrategies that care about bonsai context changes should override this
+    return this;
   }
 }

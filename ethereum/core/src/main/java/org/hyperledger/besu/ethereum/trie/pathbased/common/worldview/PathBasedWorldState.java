@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -204,6 +203,15 @@ public abstract class PathBasedWorldState
     }
   }
 
+  /**
+   * Hook called before persist operation. Subclasses can override to set up context.
+   *
+   * @param blockHeader the block header being persisted
+   */
+  protected void prePersist(final BlockHeader blockHeader) {
+    // Default: no-op
+  }
+
   @Override
   public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
 
@@ -212,6 +220,11 @@ public abstract class PathBasedWorldState
         .setMessage("Persist world state for block {}")
         .addArgument(maybeBlockHeader)
         .log();
+
+    // Allow subclasses to set up context before persist
+    if (blockHeader != null) {
+      prePersist(blockHeader);
+    }
 
     boolean success = false;
 
@@ -255,13 +268,6 @@ public abstract class PathBasedWorldState
               WORLD_ROOT_HASH_KEY,
               calculatedRootHash.getBytes().toArrayUnsafe());
 
-      stateUpdater
-          .getWorldStateTransaction()
-          .put(
-              TRIE_BRANCH_STORAGE,
-              WORLD_BLOCK_NUMBER_KEY,
-              Bytes.ofUnsignedLong(blockHeader == null ? 0L : blockHeader.getNumber())
-                  .toArrayUnsafe());
       worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {

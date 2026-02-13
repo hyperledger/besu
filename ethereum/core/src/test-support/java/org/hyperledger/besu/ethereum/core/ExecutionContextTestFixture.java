@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiArchiveInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -58,7 +60,8 @@ public class ExecutionContextTestFixture {
       final ProtocolSchedule protocolSchedule,
       final KeyValueStorage blockchainKeyValueStorage,
       final KeyValueStorage variablesKeyValueStorage,
-      final Optional<DataStorageFormat> dataStorageFormat) {
+      final Optional<DataStorageFormat> dataStorageFormat,
+      final Optional<Long> maxLayersToLoad) {
     final GenesisState genesisState =
         GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache());
     this.genesis = genesisState.getBlock();
@@ -74,9 +77,7 @@ public class ExecutionContextTestFixture {
                 false),
             new NoOpMetricsSystem(),
             0);
-    if (dataStorageFormat.isPresent() && dataStorageFormat.get().equals(DataStorageFormat.BONSAI))
-      this.stateArchive = createBonsaiInMemoryWorldStateArchive(blockchain);
-    else this.stateArchive = createInMemoryWorldStateArchive();
+    stateArchive = createWorldStateArchive(dataStorageFormat, maxLayersToLoad);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext =
         new ProtocolContext.Builder()
@@ -85,6 +86,17 @@ public class ExecutionContextTestFixture {
             .withConsensusContext(new ConsensusContextFixture())
             .build();
     genesisState.writeStateTo(stateArchive.getWorldState());
+  }
+
+  private WorldStateArchive createWorldStateArchive(
+      final Optional<DataStorageFormat> dataStorageFormat, final Optional<Long> maxLayersToLoad) {
+    return switch (dataStorageFormat.orElse(DataStorageFormat.FOREST)) {
+      case BONSAI -> createBonsaiInMemoryWorldStateArchive(blockchain);
+      case X_BONSAI_ARCHIVE ->
+          createBonsaiArchiveInMemoryWorldStateArchive(
+              blockchain, maxLayersToLoad.orElse(DEFAULT_MAX_LAYERS_TO_LOAD));
+      default -> createInMemoryWorldStateArchive();
+    };
   }
 
   public static ExecutionContextTestFixture create() {
@@ -129,6 +141,7 @@ public class ExecutionContextTestFixture {
     private KeyValueStorage blockchainKeyValueStorage;
     private ProtocolSchedule protocolSchedule;
     private Optional<DataStorageFormat> dataStorageFormat = Optional.empty();
+    private Optional<Long> maxLayersToLoad = Optional.empty();
 
     public Builder(final GenesisConfig genesisConfig) {
       this.genesisConfig = genesisConfig;
@@ -151,6 +164,11 @@ public class ExecutionContextTestFixture {
 
     public Builder dataStorageFormat(final DataStorageFormat dataStorageFormat) {
       this.dataStorageFormat = Optional.of(dataStorageFormat);
+      return this;
+    }
+
+    public Builder maxLayersToLoad(final long maxLayersToLoad) {
+      this.maxLayersToLoad = Optional.of(maxLayersToLoad);
       return this;
     }
 
@@ -182,7 +200,8 @@ public class ExecutionContextTestFixture {
           protocolSchedule,
           blockchainKeyValueStorage,
           variablesKeyValueStorage,
-          dataStorageFormat);
+          dataStorageFormat,
+          maxLayersToLoad);
     }
   }
 }
