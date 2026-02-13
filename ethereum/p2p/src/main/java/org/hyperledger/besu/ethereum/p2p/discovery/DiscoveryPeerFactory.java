@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -32,17 +33,39 @@ public class DiscoveryPeerFactory {
   }
 
   public static DiscoveryPeer fromNodeRecord(final NodeRecord nodeRecord) {
+    return fromNodeRecord(nodeRecord, IpVersionPreference.IPV4_PREFERRED);
+  }
+
+  public static DiscoveryPeer fromNodeRecord(
+      final NodeRecord nodeRecord, final IpVersionPreference ipVersionPreference) {
     EthereumNodeRecord enr = EthereumNodeRecord.fromNodeRecord(nodeRecord);
-    return fromEthereumNodeRecord(enr);
+    return fromEthereumNodeRecord(enr, ipVersionPreference);
   }
 
   public static DiscoveryPeer fromEthereumNodeRecord(final EthereumNodeRecord enr) {
-    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr));
+    return fromEthereumNodeRecord(enr, IpVersionPreference.IPV4_PREFERRED);
+  }
+
+  public static DiscoveryPeer fromEthereumNodeRecord(
+      final EthereumNodeRecord enr, final IpVersionPreference ipVersionPreference) {
+    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr, ipVersionPreference));
     peer.setNodeRecord(enr.nodeRecord());
     return peer;
   }
 
-  private static EnodeURL buildEnodeUrl(final EthereumNodeRecord enr) {
+  private static EnodeURL buildEnodeUrl(
+      final EthereumNodeRecord enr, final IpVersionPreference ipVersionPreference) {
+    final boolean hasIpv4 = enr.ip() != null;
+    final boolean hasIpv6 = enr.ipv6().isPresent();
+
+    if (ipVersionPreference.shouldUseIpv6(hasIpv4, hasIpv6)) {
+      return EnodeURLImpl.builder()
+          .ipAddress(enr.ipv6().get())
+          .nodeId(enr.publicKey())
+          .discoveryPort(enr.udpV6())
+          .listeningPort(enr.tcpV6())
+          .build();
+    }
     return EnodeURLImpl.builder()
         .ipAddress(enr.ip())
         .nodeId(enr.publicKey())

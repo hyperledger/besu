@@ -73,6 +73,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
@@ -165,6 +166,9 @@ public class RunnerBuilder {
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
+  private Optional<String> p2pAdvertisedHostIpv6 = Optional.empty();
+  private Optional<String> p2pListenInterfaceIpv6 = Optional.empty();
+  private int p2pListenPortIpv6 = 30404;
   private NatMethod natMethod = NatMethod.AUTO;
   private boolean natMethodFallbackEnabled;
   private EthNetworkConfig ethNetworkConfig;
@@ -192,6 +196,7 @@ public class RunnerBuilder {
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
   private boolean poaDiscoveryRetryBootnodes = true;
+  private IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
   private TransactionValidatorServiceImpl transactionValidatorService;
 
   /** Instantiates a new Runner builder. */
@@ -295,6 +300,39 @@ public class RunnerBuilder {
    */
   public RunnerBuilder p2pListenPort(final int p2pListenPort) {
     this.p2pListenPort = p2pListenPort;
+    return this;
+  }
+
+  /**
+   * Add P2P Advertise host for IPv6
+   *
+   * @param p2pAdvertisedHostIpv6 Optional host name
+   * @return current instance of RunnerBuilder
+   */
+  public RunnerBuilder p2pAdvertisedHostIpv6(final Optional<String> p2pAdvertisedHostIpv6) {
+    this.p2pAdvertisedHostIpv6 = p2pAdvertisedHostIpv6;
+    return this;
+  }
+
+  /**
+   * Add IPV6 P2P Host name/IP address for P2P to listen to.
+   *
+   * @param p2pListenInterfaceIpv6 Optional host name/IP address
+   * @return current instance of RunnerBuilder
+   */
+  public RunnerBuilder p2pListenInterfaceIpv6(final Optional<String> p2pListenInterfaceIpv6) {
+    this.p2pListenInterfaceIpv6 = p2pListenInterfaceIpv6;
+    return this;
+  }
+
+  /**
+   * Add IPV6 Port for P2P
+   *
+   * @param p2pListenPortIpv6 IPV6 P2P Port
+   * @return current instance of RunnerBuilder
+   */
+  public RunnerBuilder p2pListenPortIpv6(final int p2pListenPortIpv6) {
+    this.p2pListenPortIpv6 = p2pListenPortIpv6;
     return this;
   }
 
@@ -601,6 +639,18 @@ public class RunnerBuilder {
   }
 
   /**
+   * Set IP version preference for outbound P2P connections
+   *
+   * @param outboundIpVersionPreference the IP version preference
+   * @return the runner builder
+   */
+  public RunnerBuilder outboundIpVersionPreference(
+      final IpVersionPreference outboundIpVersionPreference) {
+    this.outboundIpVersionPreference = outboundIpVersionPreference;
+    return this;
+  }
+
+  /**
    * Set the transaction validator service.
    *
    * @param transactionValidatorService the transaction validator service
@@ -626,6 +676,13 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setAdvertisedHost(p2pAdvertisedHost);
+    p2pListenInterfaceIpv6.ifPresent(
+        iface -> {
+          discoveryConfiguration.setBindHostIpv6(p2pListenInterfaceIpv6);
+          discoveryConfiguration.setBindPortIpv6(p2pListenPortIpv6);
+          discoveryConfiguration.setAdvertisedHostIpv6(p2pAdvertisedHostIpv6);
+        });
+    discoveryConfiguration.setOutboundIpVersionPreference(outboundIpVersionPreference);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {

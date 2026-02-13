@@ -18,6 +18,7 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -92,22 +93,63 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       arity = "0..*")
   public final List<String> bootNodes = null;
 
-  /** The IP the node advertises to peers for P2P communication. */
+  /** The IP address the node advertises to peers for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
       names = {"--p2p-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})")
+      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
+      arity = "1")
   public String p2pHost = autoDiscoverDefaultIP().getHostAddress();
+
+  /** The IPv6 address the node advertises to peers for P2P communication. */
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--p2p-host-ipv6"},
+      paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
+      description = "IPv6 address this node advertises to its peers (default: none)")
+  public String p2pHostIpv6 = null;
 
   /** The network interface address on which this node listens for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
       names = {"--p2p-interface"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description =
-          "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})")
+      description = "Network interface address to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
   public String p2pInterface = NetworkUtility.INADDR_ANY;
+
+  /** The IPv6 network interface address on which this node listens for P2P communication. */
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--p2p-interface-ipv6"},
+      paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
+      description = "IPv6 network interface address to listen on (default: none)")
+  public String p2pInterfaceIpv6 = null;
+
+  /** The IPv6 P2P port. */
+  @CommandLine.Option(
+      names = {"--p2p-port-ipv6"},
+      paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
+      description =
+          "Port on which to listen for IPv6 P2P communication (default: ${DEFAULT-VALUE})")
+  public final Integer p2pPortIpv6 = 30404;
+
+  /**
+   * IP version preference for outbound peer connections. This determines which address to use when
+   * connecting to peers that advertise both IPv4 and IPv6 addresses.
+   */
+  @CommandLine.Option(
+      names = {"--p2p-outbound-ip-version"},
+      paramLabel = "<ipv4_preferred|ipv6_preferred|ipv4_only|ipv6_only>",
+      description =
+          "IP version preference for outbound P2P connections when peers advertise both IPv4 and IPv6 addresses. "
+              + "IPV4_PREFERRED: prefer IPv4, fallback to IPv6 if IPv4 unavailable (default). "
+              + "IPV6_PREFERRED: prefer IPv6, fallback to IPv4 if IPv6 unavailable. "
+              + "IPV4_ONLY: only use IPv4, never use IPv6. "
+              + "IPV6_ONLY: only use IPv6, never use IPv4. "
+              + "(default: ${DEFAULT-VALUE})")
+  public final IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
 
   /** The port on which this node listens for P2P communication. */
   @CommandLine.Option(
@@ -221,6 +263,9 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         p2pHost,
         p2pInterface,
         p2pPort,
+        Optional.ofNullable(p2pHostIpv6),
+        Optional.ofNullable(p2pInterfaceIpv6),
+        p2pPortIpv6,
         maxPeers,
         isLimitRemoteWireConnectionsEnabled,
         maxRemoteConnectionsPercentage,
@@ -229,7 +274,8 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         allowedSubnets,
         poaDiscoveryRetryBootnodes,
         bootNodes,
-        discoveryDnsUrl);
+        discoveryDnsUrl,
+        outboundIpVersionPreference);
   }
 
   /**
@@ -246,9 +292,22 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
 
   private void validateP2PInterface(
       final CommandLine commandLine, final NetworkInterfaceChecker networkInterfaceChecker) {
-    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
+    validateInterface(commandLine, networkInterfaceChecker, p2pInterface, "--p2p-interface");
+    if (p2pInterfaceIpv6 != null) {
+      validateInterface(
+          commandLine, networkInterfaceChecker, p2pInterfaceIpv6, "--p2p-interface-ipv6");
+      validateIpv6Address(commandLine, p2pInterfaceIpv6, "--p2p-interface-ipv6");
+    }
+  }
+
+  private void validateInterface(
+      final CommandLine commandLine,
+      final NetworkInterfaceChecker networkInterfaceChecker,
+      final String iface,
+      final String optionName) {
+    final String failMessage = "The provided " + optionName + " is not available: " + iface;
     try {
-      if (!networkInterfaceChecker.isNetworkInterfaceAvailable(p2pInterface)) {
+      if (!networkInterfaceChecker.isNetworkInterfaceAvailable(iface)) {
         throw new CommandLine.ParameterException(commandLine, failMessage);
       }
     } catch (final UnknownHostException | SocketException e) {
@@ -257,9 +316,29 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   }
 
   private void validateP2PHost(final CommandLine commandLine) {
-    final String failMessage = "The provided --p2p-host is invalid: " + p2pHost;
-    if (!InetAddresses.isInetAddress(p2pHost)) {
+    validateHost(commandLine, p2pHost, "--p2p-host");
+    if (p2pHostIpv6 != null) {
+      validateHost(commandLine, p2pHostIpv6, "--p2p-host-ipv6");
+      validateIpv6Address(commandLine, p2pHostIpv6, "--p2p-host-ipv6");
+    }
+  }
+
+  private void validateHost(
+      final CommandLine commandLine, final String host, final String optionName) {
+    final String failMessage = "The provided " + optionName + " is invalid: " + host;
+    if (!InetAddresses.isInetAddress(host)) {
       throw new CommandLine.ParameterException(commandLine, failMessage);
+    }
+  }
+
+  private void validateIpv6Address(
+      final CommandLine commandLine, final String address, final String optionName) {
+    if (!NetworkUtility.isIpV6Address(address)
+        && !NetworkUtility.INADDR6_ANY.equals(address)
+        && !NetworkUtility.INADDR6_NONE.equals(address)) {
+      throw new CommandLine.ParameterException(
+          commandLine,
+          "The provided " + optionName + " must be an IPv6 address, but was: " + address);
     }
   }
 
