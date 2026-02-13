@@ -200,22 +200,22 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    if (config.getDiscovery().isDiscoveryV5Enabled()) {
+    if (config.discoveryConfiguration().isDiscoveryV5Enabled()) {
       LOG.warn("Discovery Protocol v5 is not available");
     }
 
-    final String address = config.getDiscovery().getAdvertisedHost();
-    final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
-    final int configuredRlpxPort = config.getRlpx().getBindPort();
+    final String address = config.discoveryConfiguration().getAdvertisedHost();
+    final int configuredDiscoveryPort = config.discoveryConfiguration().getBindPort();
+    final int configuredRlpxPort = config.rlpxConfiguration().getBindPort();
 
-    Optional.ofNullable(config.getDiscovery().getDNSDiscoveryURL())
+    Optional.ofNullable(config.discoveryConfiguration().getDNSDiscoveryURL())
         .ifPresent(
             disco -> {
               // These lists are updated every 12h
               // We retrieve the list every 10 minutes (600000 msec)
               LOG.info("Starting DNS discovery with URL {}", disco);
               config
-                  .getDnsDiscoveryServerOverride()
+                  .dnsDiscoveryServerOverride()
                   .ifPresent(
                       dnsServer ->
                           LOG.info(
@@ -228,7 +228,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       0L,
                       1000L, // start after 1 second
                       600000L,
-                      config.getDnsDiscoveryServerOverride().orElse(null));
+                      config.dnsDiscoveryServerOverride().orElse(null));
 
               // Use Java 21 virtual thread to deploy verticle
               final DeploymentOptions options =
@@ -270,11 +270,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     checkMaintainedConnectionPeers();
 
     // Periodically check maintained connections
-    final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
+    final long checkMaintainedConnectionsSec =
+        config.checkMaintainedConnectionsFrequency().toSeconds();
     peerConnectionScheduler.scheduleWithFixedDelay(
         this::checkMaintainedConnectionPeers, 2, checkMaintainedConnectionsSec, TimeUnit.SECONDS);
     // Periodically initiate outgoing connections to discovered peers
-    final int checkConnectionsSec = config.getInitiateConnectionsFrequencySec();
+    final long checkConnectionsSec = config.initiateConnectionsFrequency().toSeconds();
     peerConnectionScheduler.scheduleWithFixedDelay(
         this::attemptPeerConnections, checkConnectionsSec, checkConnectionsSec, TimeUnit.SECONDS);
   }
@@ -494,7 +495,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private Vertx vertx;
 
-    private NetworkingConfiguration config = NetworkingConfiguration.create();
+    private NetworkingConfiguration config = NetworkingConfiguration.DEFAULT;
     private List<Capability> supportedCapabilities;
     private NodeKey nodeKey;
 
@@ -521,7 +522,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 
       final MutableLocalNode localNode =
-          MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
+          MutableLocalNode.create(
+              config.rlpxConfiguration().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
       final PeerLookup peerLookup = new PeerLookup();
       RlpxAgent rlpxAgent = rlpxAgentFactory.create(localNode, peerPrivileges, peerLookup);

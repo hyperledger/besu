@@ -16,94 +16,48 @@ package org.hyperledger.besu.ethereum.p2p.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Objects;
+import java.time.Duration;
 import java.util.Optional;
 
-public class NetworkingConfiguration {
-  public static final int DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC = 30;
-  public static final int DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC = 60;
-  public static final boolean DEFAULT_FILTER_ON_ENR_FORK_ID = true;
+import org.immutables.value.Value;
 
-  private DiscoveryConfiguration discovery = new DiscoveryConfiguration();
-  private RlpxConfiguration rlpx = new RlpxConfiguration();
-  private int initiateConnectionsFrequencySec = DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
-  private int checkMaintainedConnectionsFrequencySec =
-      DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
-  private Optional<String> dnsDiscoveryServerOverride = Optional.empty();
+@Value.Immutable
+public interface NetworkingConfiguration {
+  Duration DEFAULT_INITIATE_CONNECTIONS_FREQUENCY = Duration.ofSeconds(30);
+  Duration DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY = Duration.ofSeconds(60);
+  boolean DEFAULT_FILTER_ON_ENR_FORK_ID = true;
 
-  public static NetworkingConfiguration create() {
-    return new NetworkingConfiguration();
+  NetworkingConfiguration DEFAULT = ImmutableNetworkingConfiguration.builder().build();
+
+  @Value.Default
+  default DiscoveryConfiguration discoveryConfiguration() {
+    return new DiscoveryConfiguration();
   }
 
-  public DiscoveryConfiguration getDiscovery() {
-    return discovery;
+  @Value.Default
+  default RlpxConfiguration rlpxConfiguration() {
+    return new RlpxConfiguration();
   }
 
-  public NetworkingConfiguration setDiscovery(final DiscoveryConfiguration discovery) {
-    this.discovery = discovery;
-    return this;
+  @Value.Default
+  default Duration initiateConnectionsFrequency() {
+    return DEFAULT_INITIATE_CONNECTIONS_FREQUENCY;
   }
 
-  public RlpxConfiguration getRlpx() {
-    return rlpx;
+  @Value.Default
+  default Duration checkMaintainedConnectionsFrequency() {
+    return DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY;
   }
 
-  public NetworkingConfiguration setRlpx(final RlpxConfiguration rlpx) {
-    this.rlpx = rlpx;
-    return this;
-  }
+  Optional<String> dnsDiscoveryServerOverride();
 
-  public int getInitiateConnectionsFrequencySec() {
-    return initiateConnectionsFrequencySec;
-  }
-
-  public NetworkingConfiguration setInitiateConnectionsFrequency(
-      final int initiateConnectionsFrequency) {
-    checkArgument(initiateConnectionsFrequency > 0);
-    this.initiateConnectionsFrequencySec = initiateConnectionsFrequency;
-    return this;
-  }
-
-  public int getCheckMaintainedConnectionsFrequencySec() {
-    return checkMaintainedConnectionsFrequencySec;
-  }
-
-  public NetworkingConfiguration setDnsDiscoveryServerOverride(
-      final Optional<String> dnsDiscoveryServerOverride) {
-    this.dnsDiscoveryServerOverride = dnsDiscoveryServerOverride;
-    return this;
-  }
-
-  public Optional<String> getDnsDiscoveryServerOverride() {
-    return dnsDiscoveryServerOverride;
-  }
-
-  public NetworkingConfiguration setCheckMaintainedConnectionsFrequency(
-      final int checkMaintainedConnectionsFrequency) {
-    checkArgument(checkMaintainedConnectionsFrequency > 0);
-    this.checkMaintainedConnectionsFrequencySec = checkMaintainedConnectionsFrequency;
-    return this;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof NetworkingConfiguration)) {
-      return false;
-    }
-    final NetworkingConfiguration that = (NetworkingConfiguration) o;
-    return Objects.equals(discovery, that.discovery) && Objects.equals(rlpx, that.rlpx);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(discovery, rlpx);
-  }
-
-  @Override
-  public String toString() {
-    return "NetworkingConfiguration{" + "discovery=" + discovery + ", rlpx=" + rlpx + '}';
+  @Value.Check
+  default void check() {
+    checkArgument(
+        initiateConnectionsFrequency().isPositive(),
+        "initiateConnectionsFrequency must be positive");
+    checkArgument(
+        checkMaintainedConnectionsFrequency().isPositive(),
+        "checkMaintainedConnectionsFrequency must be positive");
   }
 }

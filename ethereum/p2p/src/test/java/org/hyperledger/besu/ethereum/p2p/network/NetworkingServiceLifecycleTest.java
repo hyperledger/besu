@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -56,7 +57,8 @@ public class NetworkingServiceLifecycleTest {
       final int udpPort = enode.getDiscoveryPortOrZero();
       final int tcpPort = enode.getListeningPortOrZero();
 
-      assertThat(enode.getIpAsString()).isEqualTo(config.getDiscovery().getAdvertisedHost());
+      assertThat(enode.getIpAsString())
+          .isEqualTo(config.discoveryConfiguration().getAdvertisedHost());
       assertThat(udpPort).isNotZero();
       assertThat(tcpPort).isNotZero();
       assertThat(service.streamDiscoveredPeers()).hasSize(0);
@@ -66,8 +68,9 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_NullHost() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindHost(null))
+            .build();
     final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
@@ -81,8 +84,9 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_InvalidHost() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"))
+            .build();
     final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
@@ -96,8 +100,9 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_InvalidPort() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindPort(-1))
+            .build();
     final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
@@ -144,7 +149,7 @@ public class NetworkingServiceLifecycleTest {
             final NetworkingConfiguration config = configWithRandomPorts();
             final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
             assertThat(usedPort).isNotZero();
-            config.getDiscovery().setBindPort(usedPort);
+            config.discoveryConfiguration().setBindPort(usedPort);
             try (final P2PNetwork service2 = getP2PNetworkBuilder(config).build()) {
               try {
                 service2.start();

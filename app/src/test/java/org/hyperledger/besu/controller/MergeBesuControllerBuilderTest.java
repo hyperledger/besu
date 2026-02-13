@@ -191,7 +191,7 @@ public class MergeBesuControllerBuilderTest {
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .networkId(networkId)
             .apiConfiguration(ImmutableApiConfiguration.builder().build());

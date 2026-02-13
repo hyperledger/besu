@@ -101,7 +101,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
     this.discoverySystem =
         Objects.requireNonNull(discoverySystem, "discoverySystem must not be null");
-    this.discoveryConfig = Objects.requireNonNull(config, "config must not be null").getDiscovery();
+    this.discoveryConfig =
+        Objects.requireNonNull(config, "config must not be null").discoveryConfiguration();
     this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
