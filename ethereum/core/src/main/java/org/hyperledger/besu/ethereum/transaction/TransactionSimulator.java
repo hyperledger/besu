@@ -48,6 +48,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
@@ -155,7 +156,7 @@ public class TransactionSimulator {
 
       // in order to trace the state diff we need to make sure that
       // the world updater always has a parent
-      if (operationTracer instanceof DebugOperationTracer) {
+      if (TracerAggregator.hasTracer(operationTracer, DebugOperationTracer.class)) {
         updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
       }
 
@@ -191,6 +192,7 @@ public class TransactionSimulator {
                 chainHeadHeader,
                 miningConfiguration,
                 timestamp,
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty())
             .buildProcessableBlockHeader();
@@ -291,7 +293,7 @@ public class TransactionSimulator {
       }
       // in order to trace the state diff we need to make sure that
       // the world updater always has a parent
-      if (operationTracer instanceof DebugOperationTracer) {
+      if (TracerAggregator.hasTracer(operationTracer, DebugOperationTracer.class)) {
         updater = updater.parentUpdater().isPresent() ? updater : updater.updater();
       }
 

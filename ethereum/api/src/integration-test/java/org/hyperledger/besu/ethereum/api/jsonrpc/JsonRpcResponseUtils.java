@@ -38,6 +38,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.WITHD
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -52,7 +53,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -62,6 +62,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class JsonRpcResponseUtils {
@@ -124,14 +125,15 @@ public class JsonRpcResponseUtils {
             timestamp,
             extraData,
             baseFee,
-            mixHash,
+            Bytes32.wrap(mixHash.getBytes()),
             nonce,
             withdrawalsRoot,
             null, // ToDo 4844: set with the value of blob_gas_used field
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
             requestsHash,
-            null,
+            null, // block access list hash
+            null, // slotNumber
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

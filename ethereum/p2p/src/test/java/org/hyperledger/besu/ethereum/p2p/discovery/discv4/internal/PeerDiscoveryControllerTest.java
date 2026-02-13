@@ -1859,7 +1859,7 @@ public class PeerDiscoveryControllerTest {
 
     for (int i = 0; i < n; i++) {
       template.setInt(template.size() - 4, i);
-      final Bytes32 keccak = Bytes32.leftPad(template.copy());
+      final Bytes32 keccak = Bytes32.leftPad(template);
       final MutableBytes id = MutableBytes.create(64);
       UInt256.valueOf(i).copyTo(id, id.size() - Bytes32.SIZE);
       final DiscoveryPeerV4 peer =

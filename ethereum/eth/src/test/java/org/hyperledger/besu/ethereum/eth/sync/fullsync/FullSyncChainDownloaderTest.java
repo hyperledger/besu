@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -31,19 +30,23 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -52,7 +55,6 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -64,6 +66,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.mockito.Mockito;
 
 public class FullSyncChainDownloaderTest {
 
@@ -78,6 +81,7 @@ public class FullSyncChainDownloaderTest {
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
+  private PeerTaskExecutor peerTaskExecutor;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   static class FullSyncChainDownloaderTestArguments implements ArgumentsProvider {
@@ -97,6 +101,7 @@ public class FullSyncChainDownloaderTest {
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -105,9 +110,28 @@ public class FullSyncChainDownloaderTest {
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+
+    GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer =
+        new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(getHeadersAnswer);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(getHeadersAnswer);
+
+    GetBodiesFromPeerTaskExecutorAnswer getBodiesAnswer =
+        new GetBodiesFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(getBodiesAnswer);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetBodiesFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(getBodiesAnswer);
   }
 
   @AfterEach
@@ -127,7 +151,7 @@ public class FullSyncChainDownloaderTest {
         metricsSystem,
         SyncTerminationCondition.never(),
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-        mock(PeerTaskExecutor.class));
+        peerTaskExecutor);
   }
 
   private ChainDownloader downloader() {
@@ -376,12 +400,6 @@ public class FullSyncChainDownloaderTest {
     // The next message should be for checkpoint headers from the sync target
     Awaitility.waitAtMost(10, TimeUnit.SECONDS)
         .until(() -> bestPeer.peekNextOutgoingRequest().isPresent());
-    final Optional<MessageData> maybeNextMessage = bestPeer.peekNextOutgoingRequest();
-    assertThat(maybeNextMessage).isPresent();
-    final MessageData nextMessage = maybeNextMessage.get().unwrapMessageData().getValue();
-    assertThat(nextMessage.getCode()).isEqualTo(EthProtocolMessages.GET_BLOCK_HEADERS);
-    final GetBlockHeadersMessage headersMessage = GetBlockHeadersMessage.readFrom(nextMessage);
-    assertThat(headersMessage.skip()).isGreaterThan(0);
 
     // Process through the first import
     await()

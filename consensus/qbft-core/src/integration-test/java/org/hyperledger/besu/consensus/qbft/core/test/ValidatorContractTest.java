@@ -516,14 +516,14 @@ public class ValidatorContractTest {
                 QbftFork.VALIDATOR_SELECTION_MODE_KEY,
                 VALIDATOR_SELECTION_MODE.CONTRACT,
                 QbftFork.VALIDATOR_CONTRACT_ADDRESS_KEY,
-                contractAddress.toHexString())));
+                contractAddress.getBytes().toHexString())));
   }
 
   private QbftFork createBlockHeaderFork(final long block, final List<Address> validators) {
 
     final List<TextNode> jsonValidators =
         validators.stream()
-            .map(v -> TextNode.valueOf(v.toHexString()))
+            .map(v -> TextNode.valueOf(v.getBytes().toHexString()))
             .collect(Collectors.toList());
 
     return new QbftFork(

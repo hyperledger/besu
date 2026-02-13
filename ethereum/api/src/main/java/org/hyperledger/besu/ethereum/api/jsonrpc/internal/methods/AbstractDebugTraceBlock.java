@@ -140,7 +140,8 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                               .thenProcess("executeTransaction", executeTransactionStep)
                               .thenProcessAsyncOrdered(
                                   "debugTraceTransactionStep",
-                                  DebugTraceTransactionStepFactory.createAsync(traceOptions),
+                                  DebugTraceTransactionStepFactory.createAsync(
+                                      traceOptions, protocolSpec),
                                   4)
                               .andFinishWith("collect_results", tracesList::add);
 

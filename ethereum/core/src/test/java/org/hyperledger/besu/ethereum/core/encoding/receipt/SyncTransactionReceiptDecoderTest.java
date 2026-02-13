@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.core.encoding.receipt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 import java.util.Optional;
@@ -72,13 +72,11 @@ public class SyncTransactionReceiptDecoderTest {
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
-    Assertions.assertEquals(
-        Bytes.of(TransactionType.FRONTIER.getSerializedType()),
-        syncTransactionReceipt.getTransactionTypeCode());
-    Assertions.assertEquals(stateRoot, syncTransactionReceipt.getStatusOrStateRoot());
-    Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
-    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.getBloomFilter());
+    Assertions.assertTrue(syncTransactionReceipt.isFormattedForRootCalculation());
+    Assertions.assertNull(syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertNull(syncTransactionReceipt.getStatusOrStateRoot());
+    Assertions.assertNull(syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertNull(syncTransactionReceipt.getBloomFilter());
   }
 
   @Test
@@ -106,10 +104,11 @@ public class SyncTransactionReceiptDecoderTest {
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
+    Assertions.assertFalse(syncTransactionReceipt.isFormattedForRootCalculation());
     Assertions.assertEquals(
         Bytes.of(TransactionType.FRONTIER.getEthSerializedType()),
         syncTransactionReceipt.getTransactionTypeCode());
-    Assertions.assertEquals(stateRoot, syncTransactionReceipt.getStatusOrStateRoot());
+    Assertions.assertEquals(stateRoot.getBytes(), syncTransactionReceipt.getStatusOrStateRoot());
     Assertions.assertEquals(
         Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
     Assertions.assertEquals(1, syncTransactionReceipt.getLogs().size());
@@ -117,7 +116,7 @@ public class SyncTransactionReceiptDecoderTest {
     String expectedBloomFilterHex =
         "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000010800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000020";
     Assertions.assertEquals(
-        expectedBloomFilterHex, syncTransactionReceipt.getBloomFilter().toHexString());
+        expectedBloomFilterHex, syncTransactionReceipt.getBloomFilter().getBytes().toHexString());
   }
 
   @Test
@@ -147,12 +146,10 @@ public class SyncTransactionReceiptDecoderTest {
         syncTransactionReceiptDecoder.decode(encodedReceipt);
 
     Assertions.assertEquals(encodedReceipt, syncTransactionReceipt.getRlpBytes());
-    Assertions.assertEquals(
-        Bytes.of(transactionType.getSerializedType()),
-        syncTransactionReceipt.getTransactionTypeCode());
-    Assertions.assertEquals(stateRoot, syncTransactionReceipt.getStatusOrStateRoot());
-    Assertions.assertEquals(
-        Bytes.of((byte) cumulativeGasUsed), syncTransactionReceipt.getCumulativeGasUsed());
-    Assertions.assertEquals(bloomFilter, syncTransactionReceipt.getBloomFilter());
+    Assertions.assertTrue(syncTransactionReceipt.isFormattedForRootCalculation());
+    Assertions.assertNull(syncTransactionReceipt.getTransactionTypeCode());
+    Assertions.assertNull(syncTransactionReceipt.getStatusOrStateRoot());
+    Assertions.assertNull(syncTransactionReceipt.getCumulativeGasUsed());
+    Assertions.assertNull(syncTransactionReceipt.getBloomFilter());
   }
 }

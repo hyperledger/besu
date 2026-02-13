@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginsVerificationMode;
 
 import java.util.List;
 
@@ -113,7 +114,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--plugins and --plugin-continue-on-error option can only be used when --Xplugins-external-enabled is true");
+            "-plugins, --plugin-continue-on-error and --plugins-verification-mode options can only be used when --Xplugins-external-enabled is true");
   }
 
   @Test
@@ -146,6 +147,28 @@ public class PluginsOptionsTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--plugins and --plugin-continue-on-error option can only be used when --Xplugins-external-enabled is true");
+            "-plugins, --plugin-continue-on-error and --plugins-verification-mode options can only be used when --Xplugins-external-enabled is true");
+  }
+
+  @Test
+  public void shouldHaveVerificationModeNoneByDefault() {
+    parseCommand();
+    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().getPluginsVerificationMode())
+        .isEqualTo(PluginsVerificationMode.NONE);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldUseVerificationModeWhenSet() {
+    parseCommand("--plugins-verification-mode=FULL");
+    verify(getBesuPluginContext()).initialize(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().getPluginsVerificationMode())
+        .isEqualTo(PluginsVerificationMode.FULL);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }
