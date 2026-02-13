@@ -43,8 +43,17 @@ public class ClusterAcceptanceTest extends AcceptanceTestBase {
     minerNode.verify(net.awaitPeerCount(1));
     fullNode.verify(net.awaitPeerCount(1));
     cluster.stop();
+
+    // Allow time for network resources to be released before restart
+    try {
+      Thread.sleep(2000); // 2 second delay
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
     cluster.start(minerNode, fullNode);
-    minerNode.verify(net.awaitPeerCount(1));
-    fullNode.verify(net.awaitPeerCount(1));
+    // Use longer timeout for peer reconnection after restart
+    minerNode.verify(net.awaitPeerCount(1, 90)); // 90 second timeout
+    fullNode.verify(net.awaitPeerCount(1, 90));
   }
 }

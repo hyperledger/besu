@@ -282,6 +282,7 @@ dependencies {
   referenceTestImplementation 'org.junit.jupiter:junit-jupiter-params'
 
   referenceTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
+  referenceTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.register('referenceTests', Test) {

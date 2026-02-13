@@ -209,7 +209,10 @@ public abstract class AbstractTestTransactionSelectorPlugin implements BesuPlugi
               .map(org.hyperledger.besu.datatypes.PendingTransaction::getTransaction)
               .map(
                   tx ->
-                      String.join(",", tx.getSender().getBytes().toHexString(), Long.toString(tx.getNonce())))
+                      String.join(
+                          ",",
+                          tx.getSender().getBytes().toHexString(),
+                          Long.toString(tx.getNonce())))
               .collect(Collectors.joining(System.lineSeparator()));
 
       Files.write(callbackFile.toPath(), content.getBytes(StandardCharsets.UTF_8));

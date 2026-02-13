@@ -1,0 +1,92 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x10",
+      {
+        "tracer": "prestateTracer",
+        "tracerConfig": {
+          "diffMode": true
+        }
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0xe8556111060136f3dbc907569cd95aefba870d1c6910a041bac5bf7a665c77ac",
+        "result": {
+          "post": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0xf7240fe3"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xfffffffffffffffffffffffffffffffff0ab261b4",
+              "nonce": 16
+            }
+          },
+          "pre": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0x8241cf5"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xffffffffffffffffffffffffffffffffff9b254a2",
+              "nonce": 15
+            }
+          }
+        }
+      },
+      {
+        "txHash": "0x5d01f0d836692ec7b8af21e612900464b32d35875628c746df07787aa39c435f",
+        "result": {
+          "post": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0x1e62402d1"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xffffffffffffffffffffffffffffffffe1bb26ec6",
+              "nonce": 17
+            }
+          },
+          "pre": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0xf7240fe3"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xfffffffffffffffffffffffffffffffff0ab261b4",
+              "nonce": 16
+            }
+          }
+        }
+      },
+      {
+        "txHash": "0x17c288be76b23bc868ca24b26a11e55165241f297a82a890cff346b90588e0a8",
+        "result": {
+          "post": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0x2d523f5bf"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xffffffffffffffffffffffffffffffffd2cb27bd8",
+              "nonce": 18
+            }
+          },
+          "pre": {
+            "0x71562b71999873db5b286df957af199ec94617f7": {
+              "balance": "0x1e62402d1"
+            },
+            "0xfe3b557e8fb62b89f4916b721be55ceb828dbd73": {
+              "balance": "0xffffffffffffffffffffffffffffffffe1bb26ec6",
+              "nonce": 17
+            }
+          }
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}
