@@ -213,8 +213,7 @@ public class Create2OperationTest {
     final EVM myEVM = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, myEVM);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
-    final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(myEVM, false, List.of(), 0, List.of());
+    final ContractCreationProcessor ccp = new ContractCreationProcessor(myEVM, false, List.of(), 0);
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
