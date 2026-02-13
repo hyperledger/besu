@@ -36,8 +36,8 @@ public class ForksScheduleTest {
 
     final ForksSchedule<BftConfigOptions> schedule =
         new ForksSchedule<>(List.of(forkSpec1, genesisForkSpec));
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(0, 0)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(1, 0)).isEqualTo(genesisForkSpec);
   }
 
   @Test
@@ -56,13 +56,14 @@ public class ForksScheduleTest {
     final ForksSchedule<BftConfigOptions> schedule =
         new ForksSchedule<>(List.of(genesisForkSpec, forkSpec1, forkSpec2, forkSpec3, forkSpec4));
 
-    assertThat(schedule.getFork(0)).isEqualTo(genesisForkSpec);
-    assertThat(schedule.getFork(1)).isEqualTo(forkSpec1);
-    assertThat(schedule.getFork(2)).isEqualTo(forkSpec2);
-    assertThat(schedule.getFork(3)).isEqualTo(forkSpec3);
-    assertThat(schedule.getFork(3).getValue().getMiningBeneficiary()).isEqualTo(miningBeneficiary3);
-    assertThat(schedule.getFork(4)).isEqualTo(forkSpec4);
-    assertThat(schedule.getFork(4).getValue().getMiningBeneficiary()).isEmpty();
+    assertThat(schedule.getFork(0, 0)).isEqualTo(genesisForkSpec);
+    assertThat(schedule.getFork(1, 0)).isEqualTo(forkSpec1);
+    assertThat(schedule.getFork(2, 0)).isEqualTo(forkSpec2);
+    assertThat(schedule.getFork(3, 0)).isEqualTo(forkSpec3);
+    assertThat(schedule.getFork(3, 0).getValue().getMiningBeneficiary())
+        .isEqualTo(miningBeneficiary3);
+    assertThat(schedule.getFork(4, 0)).isEqualTo(forkSpec4);
+    assertThat(schedule.getFork(4, 0).getValue().getMiningBeneficiary()).isEmpty();
   }
 
   private ForkSpec<BftConfigOptions> createForkSpecWithMiningBeneficiary(

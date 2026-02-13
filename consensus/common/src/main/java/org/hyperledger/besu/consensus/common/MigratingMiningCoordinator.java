@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,11 +51,17 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
    */
   public MigratingMiningCoordinator(
       final ForksSchedule<MiningCoordinator> miningCoordinatorSchedule,
-      final Blockchain blockchain) {
+      final Blockchain blockchain,
+      final ProtocolSchedule protocolSchedule) {
     this.miningCoordinatorSchedule = miningCoordinatorSchedule;
     this.blockchain = blockchain;
+
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+
     this.activeMiningCoordinator =
-        this.miningCoordinatorSchedule.getFork(blockchain.getChainHeadBlockNumber() + 1).getValue();
+        this.miningCoordinatorSchedule
+            .getFork(blockchain.getChainHeadBlockNumber() + 1, chainHead.getTimestamp())
+            .getValue();
   }
 
   @Override
@@ -133,8 +140,9 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     final long currentBlock = event.getHeader().getNumber();
+    final long parentTimestamp = event.getHeader().getTimestamp();
     final MiningCoordinator nextMiningCoordinator =
-        miningCoordinatorSchedule.getFork(currentBlock + 1).getValue();
+        miningCoordinatorSchedule.getFork(currentBlock + 1, parentTimestamp).getValue();
 
     if (activeMiningCoordinator != nextMiningCoordinator) {
       LOG.trace(
