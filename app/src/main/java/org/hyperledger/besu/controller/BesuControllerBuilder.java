@@ -741,7 +741,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     }
 
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem);
+        new PeerTaskExecutor(
+            ethPeers,
+            new PeerTaskRequestSender(networkingConfiguration.p2pPeerTaskTimeout()),
+            metricsSystem);
     final EthContext ethContext =
         new EthContext(ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());

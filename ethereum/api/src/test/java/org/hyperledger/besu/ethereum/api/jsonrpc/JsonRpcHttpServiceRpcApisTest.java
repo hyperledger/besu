@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
@@ -282,9 +283,10 @@ public class JsonRpcHttpServiceRpcApisTest {
 
   private P2PNetwork createP2pNetwork() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setRlpx(RlpxConfiguration.create().setBindPort(0))
-            .setDiscovery(DiscoveryConfiguration.create().setBindPort(0));
+        ImmutableNetworkingConfiguration.builder()
+            .rlpxConfiguration(RlpxConfiguration.create().setBindPort(0))
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindPort(0))
+            .build();
 
     final MutableBlockchain blockchain = mock(MutableBlockchain.class);
     final Block genesisBlock = mock(Block.class);

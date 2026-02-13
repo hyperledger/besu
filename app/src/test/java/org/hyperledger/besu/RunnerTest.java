@@ -487,7 +487,7 @@ public final class RunnerTest {
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .randomPeerPriority(Boolean.FALSE)
         .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)

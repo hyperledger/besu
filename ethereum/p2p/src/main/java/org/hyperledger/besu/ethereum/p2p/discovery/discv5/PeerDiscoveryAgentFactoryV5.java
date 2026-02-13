@@ -94,7 +94,9 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
 
     final MutableDiscoverySystem discoverySystem =
         new DiscoverySystemBuilder()
-            .listen(config.getDiscovery().getBindHost(), config.getDiscovery().getBindPort())
+            .listen(
+                config.discoveryConfiguration().getBindHost(),
+                config.discoveryConfiguration().getBindPort())
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
             .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
@@ -115,9 +117,9 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    */
   private NodeRecord initializeLocalNodeRecord() {
     nodeRecordManager.initializeLocalNode(
-        config.getDiscovery().getAdvertisedHost(),
-        config.getDiscovery().getBindPort(),
-        config.getDiscovery().getBindPort());
+        config.discoveryConfiguration().getAdvertisedHost(),
+        config.discoveryConfiguration().getBindPort(),
+        config.discoveryConfiguration().getBindPort());
 
     return nodeRecordManager
         .getLocalNode()
