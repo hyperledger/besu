@@ -21,19 +21,19 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** The Add operation. */
-public class AddOperationOptimized extends AbstractFixedCostOperation {
+/** The Sub (Subtract) operation. */
+public class SubOperationOptimized extends AbstractFixedCostOperation {
 
-  /** The Add operation success result. */
-  static final OperationResult addSuccess = new OperationResult(3, null);
+  /** The Sub operation success result. */
+  static final OperationResult subSuccess = new OperationResult(3, null);
 
   /**
-   * Instantiates a new Add operation.
+   * Instantiates a new Sub operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public AddOperationOptimized(final GasCalculator gasCalculator) {
-    super(0x01, "ADD", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+  public SubOperation(final GasCalculator gasCalculator) {
+    super(0x03, "SUB", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
@@ -43,21 +43,20 @@ public class AddOperationOptimized extends AbstractFixedCostOperation {
   }
 
   /**
-   * Static operation.
+   * Performs Sub operation.
    *
    * @param frame the frame
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
     byte[] b0 = value0.toArrayUnsafe();
     byte[] b1 = value1.toArrayUnsafe();
-    byte[] resultArray = UInt256.add(b0, b1);
-    frame.pushStackItem(Bytes.wrap(resultArray));
+    Bytes resultBytes = Bytes.wrap(UInt256.sub(b0, b1));
 
-    return addSuccess;
+    frame.pushStackItem(resultBytes);
+    return subSuccess;
   }
 }
