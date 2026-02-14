@@ -1,0 +1,54 @@
+{
+  "timestamp": {
+    "seconds": {
+      "$resolver": "timestamp",
+      "epoch": {
+        "unit": "secs",
+        "rounded": true
+      }
+    },
+    "nanos": {
+      "$resolver": "timestamp",
+      "epoch": {
+        "unit": "nanos"
+      }
+    }
+  },
+  "severity": {
+    "$resolver": "level",
+    "field": "name"
+  },
+  "message": {
+    "$resolver": "message",
+    "stringified": true
+  },
+  "logging.googleapis.com/sourceLocation": {
+    "function": {
+      "$resolver": "source",
+      "field": "methodName"
+    },
+    "file": {
+      "$resolver": "source",
+      "field": "fileName"
+    },
+    "line": {
+      "$resolver": "source",
+      "field": "lineNumber"
+    }
+  },
+  "logging.googleapis.com/labels": {
+    "thread": {
+      "$resolver": "thread",
+      "field": "name"
+    },
+    "logger": {
+      "$resolver": "logger",
+      "field": "name"
+    }
+  },
+  "_exception": {
+    "$resolver": "exception",
+    "field": "stackTrace",
+    "stringified": true
+  }
+}
