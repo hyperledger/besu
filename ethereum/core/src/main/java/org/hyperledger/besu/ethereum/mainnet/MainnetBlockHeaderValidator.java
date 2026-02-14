@@ -49,8 +49,6 @@ public final class MainnetBlockHeaderValidator {
   public static final long MAX_GAS_LIMIT = 0x7fffffffffffffffL;
   public static final int TIMESTAMP_TOLERANCE_S = 15;
   public static final int MINIMUM_SECONDS_SINCE_PARENT = 1;
-  public static final Bytes CLASSIC_FORK_BLOCK_HEADER =
-      Bytes.fromHexString("0x94365e3a8c0b35089c1d1195081fe7489b528a84b22199c916180db8b28ade7f");
 
   private MainnetBlockHeaderValidator() {
     // utility class
@@ -71,26 +69,8 @@ public final class MainnetBlockHeaderValidator {
                 "extraData", BlockHeader::getExtraData, DAO_EXTRA_DATA));
   }
 
-  public static BlockHeaderValidator.Builder createClassicValidator() {
-    return createClassicValidator(PoWHasher.ETHASH_LIGHT);
-  }
-
-  public static BlockHeaderValidator.Builder createClassicValidator(final PoWHasher hasher) {
-    return createPgaFeeMarketValidator(hasher)
-        .addRule(
-            new ConstantFieldValidationRule<>(
-                "hash",
-                h -> h.getNumber() == 1920000 ? h.getBlockHash() : CLASSIC_FORK_BLOCK_HEADER,
-                CLASSIC_FORK_BLOCK_HEADER));
-  }
-
   public static boolean validateHeaderForDaoFork(final BlockHeader header) {
     return DAO_EXTRA_DATA.equals(header.getExtraData());
-  }
-
-  public static boolean validateHeaderForClassicFork(final BlockHeader header) {
-    return header.getNumber() != 1_920_000
-        || header.getHash().getBytes().equals(CLASSIC_FORK_BLOCK_HEADER);
   }
 
   static BlockHeaderValidator.Builder createLegacyFeeMarketOmmerValidator() {
