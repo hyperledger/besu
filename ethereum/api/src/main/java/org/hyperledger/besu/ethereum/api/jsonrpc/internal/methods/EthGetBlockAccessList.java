@@ -18,58 +18,63 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockAccessListResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
-public class EthGetBlockAccessListByBlockHash implements JsonRpcMethod {
+public class EthGetBlockAccessList extends AbstractBlockParameterOrBlockHashMethod {
 
-  private final BlockchainQueries blockchainQueries;
-
-  public EthGetBlockAccessListByBlockHash(final BlockchainQueries blockchainQueries) {
-    this.blockchainQueries = blockchainQueries;
+  public EthGetBlockAccessList(final BlockchainQueries blockchainQueries) {
+    super(blockchainQueries);
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ETH_GET_BLOCK_ACCESS_LIST_BY_BLOCK_HASH.getMethodName();
+    return RpcMethod.ETH_GET_BLOCK_ACCESS_LIST.getMethodName();
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Hash blockHash;
+  protected BlockParameterOrBlockHash blockParameterOrBlockHash(
+      final JsonRpcRequestContext request) {
     try {
-      blockHash = requestContext.getRequiredParameter(0, Hash.class);
+      return request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
-          "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
+          "Invalid block or block hash parameters (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
+  }
 
-    final var requestId = requestContext.getRequest().getId();
-    final var maybeHeader = blockchainQueries.getBlockHeaderByHash(blockHash);
+  @Override
+  protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
+    return getBlockAccessListResult(request, blockHash);
+  }
+
+  private Object getBlockAccessListResult(
+      final JsonRpcRequestContext request, final Hash blockHash) {
+    final var maybeHeader = getBlockchainQueries().getBlockHeaderByHash(blockHash);
     if (maybeHeader.isEmpty()) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.BLOCK_NOT_FOUND);
+      return null;
     }
 
     final BlockHeader header = maybeHeader.get();
-    if (!blockchainQueries.isBlockAccessListSupported(header)) {
+    if (!getBlockchainQueries().isBlockAccessListSupported(header)) {
       return new JsonRpcErrorResponse(
-          requestId, RpcErrorType.BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS);
+          request.getRequest().getId(),
+          RpcErrorType.BLOCK_ACCESS_LIST_NOT_AVAILABLE_FOR_PRE_AMSTERDAM_BLOCKS);
     }
 
-    return blockchainQueries
-        .getBlockchain()
-        .getBlockAccessList(blockHash)
-        .<JsonRpcResponse>map(
-            bal ->
-                new JsonRpcSuccessResponse(
-                    requestId, BlockAccessListResult.fromBlockAccessList(bal)))
-        .orElseGet(
-            () -> new JsonRpcErrorResponse(requestId, RpcErrorType.PRUNED_HISTORY_UNAVAILABLE));
+    final var maybeAccessList =
+        getBlockchainQueries().getBlockchain().getBlockAccessList(header.getHash());
+
+    if (maybeAccessList.isEmpty()) {
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), RpcErrorType.PRUNED_HISTORY_UNAVAILABLE);
+    }
+
+    return BlockAccessListResult.fromBlockAccessList(maybeAccessList.get());
   }
 }
