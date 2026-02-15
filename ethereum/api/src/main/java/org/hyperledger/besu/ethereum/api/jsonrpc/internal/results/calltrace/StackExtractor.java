@@ -56,9 +56,11 @@ public final class StackExtractor {
   private static final int CALL_STACK_IN_SIZE_POS = 3; // 3rd from top (for size, after value)
 
   // Stack position constants for CREATE operations
-  // CREATE stack layout: value, offset, size
+  // CREATE stack layout (from top of stack): value, offset, size
+  // When accessed as stack[length-N], this translates to:
+  private static final int CREATE_STACK_VALUE_POS = 1; // Top of stack (stack[length-1])
   private static final int CREATE_STACK_OFFSET_POS = 2; // 2nd from top
-  private static final int CREATE_STACK_SIZE_POS = 1; // 1st from top (top of stack)
+  private static final int CREATE_STACK_SIZE_POS = 3; // 3rd from top
 
   // CREATE2 stack layout: value, offset, size, salt
   private static final int CREATE2_STACK_OFFSET_POS = 3; // 3rd from top
@@ -81,6 +83,22 @@ public final class StackExtractor {
         .getStack()
         .filter(stack -> stack.length >= CALL_STACK_VALUE_OFFSET)
         .map(stack -> Wei.wrap(stack[stack.length - CALL_STACK_VALUE_OFFSET]).toShortHexString())
+        .orElse(ZERO_VALUE);
+  }
+
+  /**
+   * Extracts the value (wei) being transferred in a CREATE or CREATE2 operation.
+   *
+   * <p>Stack layout for CREATE (from top): value, offset, size
+   *
+   * @param frame the trace frame containing the stack
+   * @return the value as a hex string, or "0x0" if not available
+   */
+  public static String extractCreateValue(final TraceFrame frame) {
+    return frame
+        .getStack()
+        .filter(stack -> stack.length >= 3) // CREATE has at least 3 items: value, offset, size
+        .map(stack -> Wei.wrap(stack[stack.length - CREATE_STACK_VALUE_POS]).toShortHexString())
         .orElse(ZERO_VALUE);
   }
 
@@ -129,18 +147,24 @@ public final class StackExtractor {
    *
    * @param frame the trace frame containing stack and memory
    * @param opcode the opcode ("CREATE" or "CREATE2")
+   * @param entered whether the CREATE operation successfully entered (depth increased)
    * @return the initialization code bytes, or empty if extraction fails
    */
-  public static Bytes extractCreateInitCode(final TraceFrame frame, final String opcode) {
-    // Try getMaybeCode() first - this is the preferred source
-    if (frame.getMaybeCode().isPresent()) {
+  public static Bytes extractCreateInitCode(
+      final TraceFrame frame, final String opcode, final boolean entered) {
+    // Only try getMaybeCode() if the CREATE entered successfully
+    // When CREATE doesn't enter (soft failure), getMaybeCode() contains the parent's code, not the
+    // init code
+    if (entered && frame.getMaybeCode().isPresent()) {
       return frame.getMaybeCode().get().getBytes();
     }
 
-    // Fallback to memory extraction
+    // Extract from memory for soft-failed CREATEs or as fallback
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-          "Falling back to memory extraction for CREATE input data at depth {}", frame.getDepth());
+          "Using memory extraction for CREATE input data at depth {} (entered: {})",
+          frame.getDepth(),
+          entered);
     }
 
     return frame
@@ -191,7 +215,9 @@ public final class StackExtractor {
       final TraceFrame frame, final TraceFrame nextTrace, final String opcode) {
 
     if (OpcodeCategory.isCreateOp(opcode)) {
-      return extractCreateInitCode(frame, opcode);
+      // Check if the CREATE entered (depth increased)
+      boolean entered = nextTrace != null && nextTrace.getDepth() > frame.getDepth();
+      return extractCreateInitCode(frame, opcode, entered);
     }
 
     // Prefer callee frame's input data for calls
