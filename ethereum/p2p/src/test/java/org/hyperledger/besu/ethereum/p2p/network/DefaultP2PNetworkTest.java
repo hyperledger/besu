@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,7 +157,7 @@ public final class DefaultP2PNetworkTest {
     final DefaultP2PNetwork network = network();
     network.start();
 
-    final Optional<EnodeURL> maybeSelfEnode = network.getLocalEnode();
+    final Optional<EnodeURLImpl> maybeSelfEnode = network.getLocalEnode();
     final Peer selfPeer = PeerTestHelper.createPeer(maybeSelfEnode.get());
     maintainedPeers.add(selfPeer);
 

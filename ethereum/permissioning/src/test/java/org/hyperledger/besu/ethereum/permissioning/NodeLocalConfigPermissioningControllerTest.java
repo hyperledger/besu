@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
@@ -59,7 +60,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class NodeLocalConfigPermissioningControllerTest {
 
   @Mock private AllowlistPersistor allowlistPersistor;
-  private final List<EnodeURL> bootnodesList = new ArrayList<>();
+  private final List<NodeIdentifier> bootnodesList = new ArrayList<>();
   private NodeLocalConfigPermissioningController controller;
 
   private final String enode1 =

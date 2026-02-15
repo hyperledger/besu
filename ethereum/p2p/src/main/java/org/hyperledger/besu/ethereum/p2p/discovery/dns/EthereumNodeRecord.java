@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 
 import java.net.InetAddress;
 import java.util.Arrays;
@@ -38,7 +39,8 @@ public record EthereumNodeRecord(
     InetAddress ip,
     Optional<Integer> tcp,
     Optional<Integer> udp,
-    NodeRecord nodeRecord) {
+    NodeRecord nodeRecord)
+    implements NodeIdentifier {
 
   /**
    * Creates an EthereumNodeRecord from an ENR string
@@ -156,5 +158,20 @@ public record EthereumNodeRecord(
         && Objects.equals(this.tcp, other.tcp)
         && Objects.equals(this.udp, other.udp)
         && Objects.equals(this.nodeRecord, other.nodeRecord);
+  }
+
+  @Override
+  public InetAddress getInetAddress() {
+    return ip;
+  }
+
+  @Override
+  public Optional<Integer> getTcpListeningPort() {
+    return tcp;
+  }
+
+  @Override
+  public Optional<Integer> getUdpDiscoveryPort() {
+    return udp;
   }
 }

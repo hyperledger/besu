@@ -19,7 +19,6 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +42,7 @@ import java.util.Optional;
 public record EthNetworkConfig(
     GenesisConfig genesisConfig,
     BigInteger networkId,
-    List<EnodeURL> enodeBootNodes,
+    List<EnodeURLImpl> enodeBootNodes,
     List<EthereumNodeRecord> enrBootNodes,
     String dnsDiscoveryUrl) {
 
@@ -76,7 +75,7 @@ public record EthNetworkConfig(
     final GenesisConfigOptions genesisConfigOptions = genesisConfig.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
         genesisConfigOptions.getDiscoveryOptions().getBootNodes();
-    final List<EnodeURL> enodeBootNodes = new ArrayList<>();
+    final List<EnodeURLImpl> enodeBootNodes = new ArrayList<>();
     final List<EthereumNodeRecord> enrBootNodes = new ArrayList<>();
     if (rawBootNodes.isPresent()) {
       if (rawBootNodes.get().getFirst().startsWith("enr:")) {
@@ -119,7 +118,7 @@ public record EthNetworkConfig(
     private String dnsDiscoveryUrl;
     private GenesisConfig genesisConfig;
     private BigInteger networkId;
-    private List<EnodeURL> enodeBootNodes;
+    private List<EnodeURLImpl> enodeBootNodes;
     private List<EthereumNodeRecord> enrBootNodes;
 
     /**
@@ -163,7 +162,7 @@ public record EthNetworkConfig(
      * @param enodeBootNodes the boot nodes
      * @return this builder
      */
-    public Builder setEnodeBootNodes(final List<EnodeURL> enodeBootNodes) {
+    public Builder setEnodeBootNodes(final List<EnodeURLImpl> enodeBootNodes) {
       this.enodeBootNodes = enodeBootNodes;
       return this;
     }

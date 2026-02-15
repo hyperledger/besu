@@ -263,7 +263,7 @@ public class P2PPlainNetworkTest {
       localNetwork.start();
       remoteNetwork.start();
 
-      final EnodeURL localEnode = localNetwork.getLocalEnode().get();
+      final EnodeURLImpl localEnode = localNetwork.getLocalEnode().get();
       final Peer localPeer = DefaultPeer.fromEnodeURL(localEnode);
       final Peer remotePeer = DefaultPeer.fromEnodeURL(remoteNetwork.getLocalEnode().get());
 

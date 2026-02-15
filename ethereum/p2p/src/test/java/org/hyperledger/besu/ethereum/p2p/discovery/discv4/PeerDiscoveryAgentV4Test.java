@@ -80,7 +80,7 @@ public class PeerDiscoveryAgentV4Test {
 
   @Test
   public void createAgentWithInvalidBootnodes() {
-    final EnodeURL invalidBootnode =
+    final EnodeURLImpl invalidBootnode =
         EnodeURLImpl.builder()
             .nodeId(Peer.randomId())
             .ipAddress("127.0.0.1")
@@ -420,7 +420,7 @@ public class PeerDiscoveryAgentV4Test {
     final MockPeerDiscoveryAgent otherNode = helper.startDiscoveryAgent();
     assertThat(otherNode.getAdvertisedPeer().isPresent()).isTrue();
     final DiscoveryPeerV4 remotePeer = otherNode.getAdvertisedPeer().get();
-    final EnodeURL enodeWithDiscoveryDisabled =
+    final EnodeURLImpl enodeWithDiscoveryDisabled =
         EnodeURLImpl.builder()
             .configureFromEnode(remotePeer.getEnodeURL())
             .disableDiscovery()
