@@ -85,6 +85,16 @@ public class EthPeers implements PeerSelector {
   public static final Comparator<EthPeerImmutableAttributes> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeerImmutableAttributes::outstandingRequests)
           .thenComparing(EthPeerImmutableAttributes::lastRequestTimestamp);
+
+  public static final Comparator<EthPeerImmutableAttributes> BY_LOW_LATENCY =
+      Comparator.comparing(
+              (final EthPeerImmutableAttributes p) ->
+                  p.averageLatencyMs() < 0 ? Double.MAX_VALUE : p.averageLatencyMs())
+          .reversed();
+
+  public static final Comparator<EthPeerImmutableAttributes> BY_HIGH_THROUGHPUT =
+      Comparator.comparing(EthPeerImmutableAttributes::averageThroughputBytesPerSecond);
+
   public static final int NODE_ID_LENGTH = 64;
   public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;
 
@@ -373,9 +383,14 @@ public class EthPeers implements PeerSelector {
   }
 
   public Stream<EthPeerImmutableAttributes> streamBestPeers() {
+    return streamBestPeers(getBestPeerComparator());
+  }
+
+  public Stream<EthPeerImmutableAttributes> streamBestPeers(
+      final Comparator<EthPeerImmutableAttributes> comparator) {
     return streamAvailablePeers()
         .filter(EthPeerImmutableAttributes::isFullyValidated)
-        .sorted(getBestPeerComparator().reversed());
+        .sorted(comparator.reversed());
   }
 
   public Optional<EthPeer> bestPeer() {

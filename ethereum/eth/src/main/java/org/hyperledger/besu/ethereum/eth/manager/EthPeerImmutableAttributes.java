@@ -28,6 +28,8 @@ public record EthPeerImmutableAttributes(
     boolean isServingSnap,
     boolean hasAvailableRequestCapacity,
     boolean isInboundInitiated,
+    double averageLatencyMs,
+    double averageThroughputBytesPerSecond,
     EthPeer ethPeer) {
 
   public static EthPeerImmutableAttributes from(final EthPeer peer) {
@@ -43,6 +45,8 @@ public record EthPeerImmutableAttributes(
         peer.isServingSnap(),
         peer.hasAvailableRequestCapacity(),
         peer.getConnection().inboundInitiated(),
+        peer.getAverageLatencyMs(),
+        peer.getAverageThroughputBytesPerSecond(),
         peer);
   }
 }

@@ -392,6 +392,39 @@ public class EthPeerTest {
     assertThat(peer.getReputation().compareTo(peer2.getReputation())).isGreaterThan(0);
   }
 
+  @Test
+  public void shouldRecordLatencyAndThroughput() {
+    final EthPeer peer = createPeer();
+    assertThat(peer.getAverageLatencyMs()).isEqualTo(-1.0);
+    assertThat(peer.getAverageThroughputBytesPerSecond()).isEqualTo(-1.0);
+
+    // First record sets the value
+    peer.recordLatency(100.0);
+    assertThat(peer.getAverageLatencyMs()).isEqualTo(100.0);
+
+    // Second record updates EMA: 0.1 * 200 + 0.9 * 100 = 110
+    peer.recordLatency(200.0);
+    assertThat(peer.getAverageLatencyMs()).isEqualTo(110.0);
+
+    // First record sets throughput
+    // 1000 bytes in 100ms = 10,000 bytes/s
+    peer.recordThroughput(1000, 100.0);
+    assertThat(peer.getAverageThroughputBytesPerSecond()).isEqualTo(10000.0);
+
+    // Second record updates EMA
+    // 2000 bytes in 100ms = 20,000 bytes/s
+    // EMA: 0.1 * 20000 + 0.9 * 10000 = 11000
+    peer.recordThroughput(2000, 100.0);
+    assertThat(peer.getAverageThroughputBytesPerSecond()).isEqualTo(11000.0);
+  }
+
+  @Test
+  public void shouldHandleZeroDurationInThroughput() {
+    final EthPeer peer = createPeer();
+    peer.recordThroughput(1000, 0.0);
+    assertThat(peer.getAverageThroughputBytesPerSecond()).isEqualTo(-1.0);
+  }
+
   private void messageStream(
       final ResponseStreamSupplier getStream,
       final MessageData targetMessage,

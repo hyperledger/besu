@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetAccountRangeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetBytecodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetStorageRangeFromPeerTask;
@@ -92,9 +93,11 @@ public class RequestDataStep {
             ethContext,
             accountDataRequest.getStartKeyHash(),
             accountDataRequest.getEndKeyHash(),
-            blockHeader,
+             blockHeader,
             metricsSystem);
+    ((RetryingGetAccountRangeFromPeerTask) getAccountTask).setPeerComparator(EthPeers.BY_HIGH_THROUGHPUT);
     downloadState.addOutstandingTask(getAccountTask);
+
     return getAccountTask
         .run()
         .orTimeout(10, TimeUnit.SECONDS)
@@ -142,6 +145,8 @@ public class RequestDataStep {
     final EthTask<StorageRangeMessage.SlotRangeData> getStorageRangeTask =
         RetryingGetStorageRangeFromPeerTask.forStorageRange(
             ethContext, accountHashesAsBytes32, minRange, maxRange, blockHeader, metricsSystem);
+    ((RetryingGetStorageRangeFromPeerTask) getStorageRangeTask)
+        .setPeerComparator(EthPeers.BY_HIGH_THROUGHPUT);
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
@@ -203,6 +208,7 @@ public class RequestDataStep {
     final EthTask<Map<Bytes32, Bytes>> getByteCodeTask =
         RetryingGetBytecodeFromPeerTask.forByteCode(
             ethContext, codeHashes, blockHeader, metricsSystem);
+    ((RetryingGetBytecodeFromPeerTask) getByteCodeTask).setPeerComparator(EthPeers.BY_LOW_LATENCY);
     downloadState.addOutstandingTask(getByteCodeTask);
     return getByteCodeTask
         .run()
@@ -249,6 +255,8 @@ public class RequestDataStep {
     final EthTask<Map<Bytes, Bytes>> getTrieNodeFromPeerTask =
         RetryingGetTrieNodeFromPeerTask.forTrieNodes(
             ethContext, message, blockHeader, metricsSystem);
+    ((RetryingGetTrieNodeFromPeerTask) getTrieNodeFromPeerTask)
+        .setPeerComparator(EthPeers.BY_LOW_LATENCY);
     downloadState.addOutstandingTask(getTrieNodeFromPeerTask);
     return getTrieNodeFromPeerTask
         .run()

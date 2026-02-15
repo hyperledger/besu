@@ -94,6 +94,9 @@ public class EthPeer implements Comparable<EthPeer> {
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
 
   private volatile long lastRequestTimestamp = 0;
+  private static final double ALPHA = 0.1;
+  private volatile double averageLatencyMs = -1.0;
+  private volatile double averageThroughputBytesPerSecond = -1.0;
 
   private final Map<String, Map<Integer, RequestManager>> requestManagers;
 
@@ -222,6 +225,33 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordUsefulResponse() {
     reputation.recordUsefulResponse();
+  }
+
+  public void recordLatency(final double latencyMs) {
+    if (averageLatencyMs < 0) {
+      averageLatencyMs = latencyMs;
+    } else {
+      averageLatencyMs = (ALPHA * latencyMs) + ((1.0 - ALPHA) * averageLatencyMs);
+    }
+  }
+
+  public void recordThroughput(final long bytes, final double durationMs) {
+    if (durationMs <= 0) return;
+    double throughput = (bytes * 1000.0) / durationMs;
+    if (averageThroughputBytesPerSecond < 0) {
+      averageThroughputBytesPerSecond = throughput;
+    } else {
+      averageThroughputBytesPerSecond =
+          (ALPHA * throughput) + ((1.0 - ALPHA) * averageThroughputBytesPerSecond);
+    }
+  }
+
+  public double getAverageLatencyMs() {
+    return averageLatencyMs;
+  }
+
+  public double getAverageThroughputBytesPerSecond() {
+    return averageThroughputBytesPerSecond;
   }
 
   public void disconnect(final DisconnectReason reason) {
