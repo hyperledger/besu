@@ -40,13 +40,14 @@
 - Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 - Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9642](https://github.com/hyperledger/besu/pull/9642). Thanks to [@JukLee0ira](https://github.com/JukLee0ira).
 - Update assertj to v3.27.7 [#9710](https://github.com/hyperledger/besu/pull/9710)
+- Update vertx to 4.5.24 [#9645](https://github.com/hyperledger/besu/pull/9645)
 - Add byte-level metrics for P2P message exchange [#9666](https://github.com/hyperledger/besu/pull/9666)
 
 ### Bug fixes
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 - Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
 
-## 26.1.0-RC1
+## 26.1.0
 
 ### Breaking Changes
 - Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
