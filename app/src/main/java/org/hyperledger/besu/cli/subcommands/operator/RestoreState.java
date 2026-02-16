@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli.subcommands.operator;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
-import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.config.JsonUtil;
@@ -32,12 +31,10 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDec
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.PersistVisitor;
-import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
@@ -77,14 +74,14 @@ public class RestoreState implements Runnable {
 
   @ParentCommand private OperatorSubCommand parentCommand;
 
-  private static final int TRIE_NODE_COMMIT_BATCH_SIZE = 100;
+  private static final int COMMIT_BATCH_SIZE = 10_000;
 
   private long targetBlock;
   private long accountCount;
-  private long trieNodeCount;
   private boolean compressed;
   private BesuController besuController;
-  private ForestWorldStateKeyValueStorage.Updater updater;
+  private BonsaiWorldStateKeyValueStorage.Updater updater;
+  private long entryCount;
 
   /** Default Constructor. */
   RestoreState() {}
@@ -165,16 +162,8 @@ public class RestoreState implements Runnable {
     LOG.info("Chain data loaded");
   }
 
-  @SuppressWarnings("UnusedVariable")
   private void restoreAccounts() throws IOException {
     newWorldStateUpdater();
-    int storageBranchCount = 0;
-    int storageExtensionCount = 0;
-    int storageLeafCount = 0;
-
-    final PersistVisitor<Bytes> accountPersistVisitor =
-        new PersistVisitor<>(this::updateAccountState);
-    Node<Bytes> root = accountPersistVisitor.initialRoot();
 
     try (final RollingFileReader reader =
         new RollingFileReader(this::accountFileName, compressed)) {
@@ -189,7 +178,7 @@ public class RestoreState implements Runnable {
         if (length != 3) {
           throw new RuntimeException("Unexpected account length " + length);
         }
-        final Bytes32 trieKey = accountInput.readBytes32();
+        final Bytes32 accountHash = accountInput.readBytes32();
         final Bytes accountRlp = accountInput.readBytes();
         final Bytes code = accountInput.readBytes();
 
@@ -198,19 +187,20 @@ public class RestoreState implements Runnable {
         if (!trieAccount.getCodeHash().equals(Hash.hash(code))) {
           throw new RuntimeException("Code hash doesn't match");
         }
+
+        // write account to flat DB
+        updater.putAccountInfoState(Hash.wrap(accountHash), accountRlp);
+        entryCount++;
+        maybeCommitUpdater();
+
+        // write code
         if (code.size() > 0) {
-          updateCode(code);
+          updater.putCode(Hash.wrap(accountHash), trieAccount.getCodeHash(), code);
+          entryCount++;
+          maybeCommitUpdater();
         }
 
-        final RestoreVisitor<Bytes> accountTrieWriteVisitor =
-            new RestoreVisitor<>(t -> t, accountRlp, accountPersistVisitor);
-
-        root = root.accept(accountTrieWriteVisitor, bytesToPath(trieKey));
-
-        final PersistVisitor<Bytes> storagePersistVisitor =
-            new PersistVisitor<>(this::updateAccountStorage);
-        Node<Bytes> storageRoot = storagePersistVisitor.initialRoot();
-
+        // read and write storage entries
         while (true) {
           final byte[] trieEntry = reader.readBytes();
           final BytesValueRLPInput trieInput =
@@ -222,30 +212,34 @@ public class RestoreState implements Runnable {
           if (len != 2) {
             throw new RuntimeException("Unexpected storage trie entry length " + len);
           }
-          final Bytes32 storageTrieKey = Bytes32.wrap(trieInput.readBytes());
-          final Bytes storageTrieValue = Bytes.wrap(trieInput.readBytes());
-          final RestoreVisitor<Bytes> storageTrieWriteVisitor =
-              new RestoreVisitor<>(t -> t, storageTrieValue, storagePersistVisitor);
-          storageRoot = storageRoot.accept(storageTrieWriteVisitor, bytesToPath(storageTrieKey));
+          final Bytes32 slotHash = Bytes32.wrap(trieInput.readBytes());
+          final Bytes storageValue = Bytes.wrap(trieInput.readBytes());
+
+          updater.putStorageValueBySlotHash(
+              Hash.wrap(accountHash), Hash.wrap(slotHash), storageValue);
+          entryCount++;
+          maybeCommitUpdater();
 
           trieInput.leaveList();
         }
-        storagePersistVisitor.persist(storageRoot);
-        storageBranchCount += storagePersistVisitor.getBranchNodeCount();
-        storageExtensionCount += storagePersistVisitor.getExtensionNodeCount();
-        storageLeafCount += storagePersistVisitor.getLeafNodeCount();
 
         accountInput.leaveList();
       }
     }
-    accountPersistVisitor.persist(root);
+
+    // save world state root from target block header
+    final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
+    final BlockHeader targetHeader =
+        blockchain
+            .getBlockHeader(targetBlock)
+            .orElseThrow(() -> new RuntimeException("Target block header not found"));
+    updater.saveWorldState(
+        targetHeader.getBlockHash().getBytes(),
+        Bytes32.wrap(targetHeader.getStateRoot().getBytes()),
+        Bytes.EMPTY);
+
     updater.commit();
-    LOG.info("Account BranchNodes: {} ", accountPersistVisitor.getBranchNodeCount());
-    LOG.info("Account ExtensionNodes: {} ", accountPersistVisitor.getExtensionNodeCount());
-    LOG.info("Account LeafNodes: {} ", accountPersistVisitor.getLeafNodeCount());
-    LOG.info("Storage BranchNodes: {} ", storageBranchCount);
-    LOG.info("Storage LeafNodes: {} ", storageExtensionCount);
-    LOG.info("Storage ExtensionNodes: {} ", storageLeafCount);
+    LOG.info("Flat DB entries written: {}", entryCount);
     LOG.info("Account data loaded");
   }
 
@@ -253,35 +247,21 @@ public class RestoreState implements Runnable {
     if (updater != null) {
       updater.commit();
     }
-    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
-        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
-            .getWorldStateStorage();
+    final WorldStateArchive worldStateArchive =
+        besuController.getProtocolContext().getWorldStateArchive();
+    if (!(worldStateArchive instanceof BonsaiWorldStateProvider)) {
+      throw new IllegalStateException("x-restore-state only supports Bonsai world state format.");
+    }
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+        (BonsaiWorldStateKeyValueStorage)
+            ((BonsaiWorldStateProvider) worldStateArchive).getWorldStateKeyValueStorage();
     updater = worldStateKeyValueStorage.updater();
   }
 
   private void maybeCommitUpdater() {
-    if (trieNodeCount % TRIE_NODE_COMMIT_BATCH_SIZE == 0) {
+    if (entryCount % COMMIT_BATCH_SIZE == 0) {
       newWorldStateUpdater();
     }
-  }
-
-  private void updateCode(final Bytes code) {
-    maybeCommitUpdater();
-    updater.putCode(code);
-  }
-
-  private void updateAccountState(final Bytes32 key, final Bytes value) {
-    maybeCommitUpdater();
-    // restore by path not supported
-    updater.putAccountStateTrieNode(key, value);
-    trieNodeCount++;
-  }
-
-  private void updateAccountStorage(final Bytes32 key, final Bytes value) {
-    maybeCommitUpdater();
-    // restore by path not supported
-    updater.putAccountStorageTrieNode(key, value);
-    trieNodeCount++;
   }
 
   private BesuController createBesuController() {

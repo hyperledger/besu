@@ -28,27 +28,24 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.trie.Node;
-import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.TrieIterator.State;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.util.io.RollingFileWriter;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -61,6 +58,9 @@ public class StateBackupService {
 
   private static final Logger LOG = LoggerFactory.getLogger(StateBackupService.class);
   private static final Bytes ACCOUNT_END_MARKER;
+  private static final long STREAM_BATCH_SIZE = 1000;
+  private static final Bytes32 MAX_KEY =
+      Bytes32.fromHexString("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
   static {
     final BytesValueRLPOutput endMarker = new BytesValueRLPOutput();
@@ -73,18 +73,17 @@ public class StateBackupService {
   private final Lock submissionLock = new ReentrantLock();
   private final EthScheduler scheduler;
   private final Blockchain blockchain;
-  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
+  private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final BackupStatus backupStatus = new BackupStatus();
 
   private Path backupDir;
-  private RollingFileWriter accountFileWriter;
 
   public StateBackupService(
       final String besuVersion,
       final Blockchain blockchain,
       final Path backupDir,
       final EthScheduler scheduler,
-      final ForestWorldStateKeyValueStorage worldStateKeyValueStorage) {
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
     this.besuVersion = besuVersion;
     this.blockchain = blockchain;
     this.backupDir = backupDir;
@@ -213,76 +212,99 @@ public class StateBackupService {
       backupStatus.currentAccount = null;
       return;
     }
-    final Optional<Bytes> worldStateRoot =
-        worldStateKeyValueStorage.getAccountStateTrieNode(
-            Bytes32.wrap(header.get().getStateRoot().getBytes()));
-    if (worldStateRoot.isEmpty()) {
-      backupStatus.currentAccount = null;
-      return;
-    }
 
     try (final RollingFileWriter accountFileWriter =
         new RollingFileWriter(this::accountFileName, backupStatus.compressed)) {
-      this.accountFileWriter = accountFileWriter;
 
-      final StoredMerklePatriciaTrie<Bytes32, Bytes> accountTrie =
-          new StoredMerklePatriciaTrie<>(
-              (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
-              Bytes32.wrap(header.get().getStateRoot().getBytes()),
-              Function.identity(),
-              Function.identity());
-      accountTrie.visitLeafs(this::visitAccount);
+      Bytes startKeyHash = Bytes32.ZERO;
+      while (true) {
+        final NavigableMap<Bytes32, Bytes> accounts =
+            worldStateKeyValueStorage.streamFlatAccounts(startKeyHash, MAX_KEY, STREAM_BATCH_SIZE);
+
+        if (accounts.isEmpty()) {
+          break;
+        }
+
+        for (final Map.Entry<Bytes32, Bytes> entry : accounts.entrySet()) {
+          final Bytes32 accountHash = entry.getKey();
+          final Bytes accountRlp = entry.getValue();
+
+          backupStatus.currentAccount = accountHash;
+
+          final PmtStateTrieAccountValue account =
+              PmtStateTrieAccountValue.readFrom(new BytesValueRLPInput(accountRlp, false));
+
+          final Bytes code =
+              worldStateKeyValueStorage
+                  .getCode(account.getCodeHash(), Hash.wrap(accountHash))
+                  .orElse(Bytes.EMPTY);
+          backupStatus.codeSize.addAndGet(code.size());
+
+          final BytesValueRLPOutput accountOutput = new BytesValueRLPOutput();
+          accountOutput.startList();
+          accountOutput.writeBytes(accountHash);
+          accountOutput.writeBytes(accountRlp);
+          accountOutput.writeBytes(code);
+          accountOutput.endList();
+
+          accountFileWriter.writeBytes(accountOutput.encoded().toArrayUnsafe());
+
+          // stream storage for this account
+          Bytes storageStartKey = Bytes32.ZERO;
+          while (true) {
+            final NavigableMap<Bytes32, Bytes> storageEntries =
+                worldStateKeyValueStorage.streamFlatStorages(
+                    Hash.wrap(accountHash), storageStartKey, MAX_KEY, STREAM_BATCH_SIZE);
+
+            if (storageEntries.isEmpty()) {
+              break;
+            }
+
+            for (final Map.Entry<Bytes32, Bytes> storageEntry : storageEntries.entrySet()) {
+              final Bytes32 slotHash = storageEntry.getKey();
+              final Bytes storageValue = storageEntry.getValue();
+              backupStatus.currentStorage = slotHash;
+
+              final BytesValueRLPOutput output = new BytesValueRLPOutput();
+              output.startList();
+              output.writeBytes(slotHash);
+              output.writeBytes(storageValue);
+              output.endList();
+
+              accountFileWriter.writeBytes(output.encoded().toArrayUnsafe());
+              backupStatus.storageCount.incrementAndGet();
+            }
+
+            if (storageEntries.size() < STREAM_BATCH_SIZE) {
+              break;
+            }
+            // advance past the last key
+            final BigInteger nextStorageKey =
+                storageEntries.lastKey().toUnsignedBigInteger().add(BigInteger.ONE);
+            if (nextStorageKey.bitLength() > 256) {
+              break;
+            }
+            storageStartKey =
+                Bytes32.leftPad(Bytes.of(nextStorageKey.toByteArray()).trimLeadingZeros());
+          }
+
+          accountFileWriter.writeBytes(ACCOUNT_END_MARKER.toArrayUnsafe());
+          backupStatus.accountCount.incrementAndGet();
+        }
+
+        if (accounts.size() < STREAM_BATCH_SIZE) {
+          break;
+        }
+        // advance past the last key
+        final BigInteger nextKey = accounts.lastKey().toUnsignedBigInteger().add(BigInteger.ONE);
+        if (nextKey.bitLength() > 256) {
+          break;
+        }
+        startKeyHash = Bytes32.leftPad(Bytes.of(nextKey.toByteArray()).trimLeadingZeros());
+      }
+
       backupStatus.currentAccount = null;
     }
-  }
-
-  private TrieIterator.State visitAccount(final Bytes32 nodeKey, final Node<Bytes> node) {
-    if (node.getValue().isEmpty()) {
-      return State.CONTINUE;
-    }
-
-    backupStatus.currentAccount = nodeKey;
-    final Bytes nodeValue = node.getValue().orElse(Hash.EMPTY.getBytes());
-    final PmtStateTrieAccountValue account =
-        PmtStateTrieAccountValue.readFrom(new BytesValueRLPInput(nodeValue, false));
-
-    final Bytes code = worldStateKeyValueStorage.getCode(account.getCodeHash()).orElse(Bytes.EMPTY);
-    backupStatus.codeSize.addAndGet(code.size());
-
-    final BytesValueRLPOutput accountOutput = new BytesValueRLPOutput();
-    accountOutput.startList();
-    accountOutput.writeBytes(nodeKey); // trie hash
-    accountOutput.writeBytes(nodeValue); // account rlp
-    accountOutput.writeBytes(code); // code
-    accountOutput.endList();
-
-    try {
-      accountFileWriter.writeBytes(accountOutput.encoded().toArrayUnsafe());
-    } catch (final IOException ioe) {
-      LOG.error("Failure writing backup", ioe);
-      return State.STOP;
-    }
-
-    // storage is written for each leaf, otherwise the whole trie would have to fit in memory
-    final StoredMerklePatriciaTrie<Bytes32, Bytes> storageTrie =
-        new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
-            Bytes32.wrap(account.getStorageRoot().getBytes()),
-            Function.identity(),
-            Function.identity());
-    storageTrie.visitLeafs(
-        (storageKey, storageValue) ->
-            visitAccountStorage(storageKey, storageValue, accountFileWriter));
-
-    try {
-      accountFileWriter.writeBytes(ACCOUNT_END_MARKER.toArrayUnsafe());
-    } catch (final IOException ioe) {
-      LOG.error("Failure writing backup", ioe);
-      return State.STOP;
-    }
-
-    backupStatus.accountCount.incrementAndGet();
-    return State.CONTINUE;
   }
 
   private void backupChainData() throws IOException {
@@ -321,27 +343,6 @@ public class StateBackupService {
         backupStatus.storedBlock = blockNumber;
       }
     }
-  }
-
-  private TrieIterator.State visitAccountStorage(
-      final Bytes32 nodeKey, final Node<Bytes> node, final RollingFileWriter accountFileWriter) {
-    backupStatus.currentStorage = nodeKey;
-
-    final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    output.startList();
-    output.writeBytes(nodeKey);
-    output.writeBytes(node.getValue().orElse(Bytes.EMPTY));
-    output.endList();
-
-    try {
-      accountFileWriter.writeBytes(output.encoded().toArrayUnsafe());
-    } catch (final IOException ioe) {
-      LOG.error("Failure writing backup", ioe);
-      return State.STOP;
-    }
-
-    backupStatus.storageCount.incrementAndGet();
-    return State.CONTINUE;
   }
 
   public static final class BackupStatus {

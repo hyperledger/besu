@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli.subcommands.operator;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
+import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -23,8 +24,9 @@ import org.hyperledger.besu.ethereum.api.query.StateBackupService;
 import org.hyperledger.besu.ethereum.api.query.StateBackupService.BackupStatus;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.BesuVersionUtils;
 
@@ -60,7 +62,7 @@ public class BackupState implements Runnable {
   @Option(
       names = "--backup-path",
       required = true,
-      paramLabel = MANDATORY_LONG_FORMAT_HELP,
+      paramLabel = MANDATORY_PATH_FORMAT_HELP,
       description = "The path to store the backup files.",
       arity = "1..1")
   private final File backupDir = null;
@@ -84,9 +86,14 @@ public class BackupState implements Runnable {
 
     final BesuController besuController = createBesuController();
     final MutableBlockchain blockchain = besuController.getProtocolContext().getBlockchain();
-    final ForestWorldStateKeyValueStorage forestWorldStateKeyValueStorage =
-        ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
-            .getWorldStateStorage();
+    final WorldStateArchive worldStateArchive =
+        besuController.getProtocolContext().getWorldStateArchive();
+    checkArgument(
+        worldStateArchive instanceof BonsaiWorldStateProvider,
+        "x-backup-state only supports Bonsai world state format.");
+    final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
+        (BonsaiWorldStateKeyValueStorage)
+            ((BonsaiWorldStateProvider) worldStateArchive).getWorldStateKeyValueStorage();
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem());
     try {
       final long targetBlock = Math.min(blockchain.getChainHeadBlockNumber(), this.block);
@@ -96,7 +103,7 @@ public class BackupState implements Runnable {
               blockchain,
               backupDir.toPath(),
               scheduler,
-              forestWorldStateKeyValueStorage);
+              bonsaiWorldStateKeyValueStorage);
       final BackupStatus status = backup.requestBackup(targetBlock, compress, Optional.empty());
 
       final double refValue = Math.pow(2, 256) / 100.0d;
