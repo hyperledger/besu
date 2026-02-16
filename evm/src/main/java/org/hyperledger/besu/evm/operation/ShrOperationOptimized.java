@@ -103,12 +103,12 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
     // Bytes below shiftBytes are guaranteed zero (already from new byte[32])
     for (int i = 31; i >= shiftBytes; i--) {
       final int src = i - shiftBytes;
-      final int hi = in[src] & 0xFF;
+      final int curr = in[src] & 0xFF;
       if (shiftBits == 0) {
-        out[i] = (byte) hi;
+        out[i] = (byte) curr;
       } else {
-        final int lo = (src - 1 >= 0) ? (in[src - 1] & 0xFF) : 0;
-        out[i] = (byte) ((hi >>> shiftBits) | (lo << (8 - shiftBits)));
+        final int prev = (src - 1 >= 0) ? (in[src - 1] & 0xFF) : 0;
+        out[i] = (byte) ((curr >>> shiftBits) | (prev << (8 - shiftBits)));
       }
     }
 
