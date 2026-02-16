@@ -93,9 +93,10 @@ public class RequestDataStep {
             ethContext,
             accountDataRequest.getStartKeyHash(),
             accountDataRequest.getEndKeyHash(),
-             blockHeader,
+            blockHeader,
             metricsSystem);
-    ((RetryingGetAccountRangeFromPeerTask) getAccountTask).setPeerComparator(EthPeers.BY_HIGH_THROUGHPUT);
+    ((RetryingGetAccountRangeFromPeerTask) getAccountTask)
+        .setPeerComparator(EthPeers.BY_HIGH_THROUGHPUT);
     downloadState.addOutstandingTask(getAccountTask);
 
     return getAccountTask
