@@ -61,8 +61,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
         .pushPort(getMetricsPushPort())
         .pushInterval(getMetricsPushInterval())
         .prometheusJob(getMetricsPrometheusJob())
-        .executionMetricsEnabled(getSlowBlockThresholdMs() >= 0)
-        .slowBlockThresholdMs(getSlowBlockThresholdMs());
+        .executionMetricsEnabled(getExecutionMetricsEnabled());
     return builder;
   }
 
@@ -90,7 +89,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
     metricsOptions.metricsPushHost = config.getPushHost();
     metricsOptions.metricsPushPort = config.getPushPort();
     metricsOptions.metricsPushInterval = config.getPushInterval();
-    metricsOptions.slowBlockThresholdMs = config.getSlowBlockThresholdMs();
+    metricsOptions.isExecutionMetricsEnabled = config.isExecutionMetricsEnabled();
 
     return metricsOptions;
   }
@@ -167,10 +166,17 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
   private String metricsPrometheusJob = "besu-client";
 
   @CommandLine.Option(
+      names = {"--enable-execution-metrics"},
+      description =
+          "Enable detailed execution metrics collection for transaction processing (default: ${DEFAULT-VALUE})")
+  private Boolean isExecutionMetricsEnabled = false;
+
+  @CommandLine.Option(
       names = {"--slow-block-threshold"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
-          "Threshold in milliseconds for logging slow blocks with execution metrics. Negative values disable (default: ${DEFAULT-VALUE}), 0 logs all blocks with metrics, positive values log only blocks exceeding the threshold")
+          "Threshold in milliseconds for logging slow blocks. Negative values disable logging, "
+              + "zero logs all blocks (default: ${DEFAULT-VALUE})")
   private Long slowBlockThresholdMs = -1L;
 
   /**
@@ -281,9 +287,19 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
   }
 
   /**
+   * Returns whether execution metrics are enabled.
+   *
+   * @return true if execution metrics are enabled, otherwise false
+   */
+  public Boolean getExecutionMetricsEnabled() {
+    return isExecutionMetricsEnabled;
+  }
+
+  /**
    * Returns the slow block threshold in milliseconds.
    *
-   * @return the slow block threshold in milliseconds, negative values disable logging
+   * @return the slow block threshold in milliseconds. Negative means disabled, zero logs all
+   *     blocks.
    */
   public Long getSlowBlockThresholdMs() {
     return slowBlockThresholdMs;

@@ -46,6 +46,7 @@ public class BlockSimulationParameter {
   private final boolean traceTransfers;
   private final boolean returnFullTransactions;
   private final boolean returnTrieLog;
+  private final boolean collectExecutionMetrics;
   private final SECPSignature fakeSignature;
 
   public BlockSimulationParameter(
@@ -53,7 +54,7 @@ public class BlockSimulationParameter {
       final boolean validation,
       final boolean traceTransfers,
       final boolean returnFullTransactions) {
-    this(blockStateCalls, validation, traceTransfers, returnFullTransactions, false);
+    this(blockStateCalls, validation, traceTransfers, returnFullTransactions, false, false);
   }
 
   public BlockSimulationParameter(
@@ -68,6 +69,24 @@ public class BlockSimulationParameter {
         traceTransfers,
         returnFullTransactions,
         returnTrieLog,
+        false,
+        new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0));
+  }
+
+  public BlockSimulationParameter(
+      final List<? extends BlockStateCall> blockStateCalls,
+      final boolean validation,
+      final boolean traceTransfers,
+      final boolean returnFullTransactions,
+      final boolean returnTrieLog,
+      final boolean collectExecutionMetrics) {
+    this(
+        blockStateCalls,
+        validation,
+        traceTransfers,
+        returnFullTransactions,
+        returnTrieLog,
+        collectExecutionMetrics,
         new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0));
   }
 
@@ -78,12 +97,31 @@ public class BlockSimulationParameter {
       final boolean returnFullTransactions,
       final boolean returnTrieLog,
       final SECPSignature fakeSignature) {
+    this(
+        blockStateCalls,
+        validation,
+        traceTransfers,
+        returnFullTransactions,
+        returnTrieLog,
+        false,
+        fakeSignature);
+  }
+
+  public BlockSimulationParameter(
+      final List<? extends BlockStateCall> blockStateCalls,
+      final boolean validation,
+      final boolean traceTransfers,
+      final boolean returnFullTransactions,
+      final boolean returnTrieLog,
+      final boolean collectExecutionMetrics,
+      final SECPSignature fakeSignature) {
     checkNotNull(blockStateCalls);
     this.blockStateCalls = blockStateCalls;
     this.validation = validation;
     this.traceTransfers = traceTransfers;
     this.returnFullTransactions = returnFullTransactions;
     this.returnTrieLog = returnTrieLog;
+    this.collectExecutionMetrics = collectExecutionMetrics;
     this.fakeSignature = fakeSignature;
   }
 
@@ -105,6 +143,10 @@ public class BlockSimulationParameter {
 
   public boolean isReturnTrieLog() {
     return returnTrieLog;
+  }
+
+  public boolean isCollectExecutionMetrics() {
+    return collectExecutionMetrics;
   }
 
   public SECPSignature getFakeSignature() {
@@ -214,6 +256,7 @@ public class BlockSimulationParameter {
     private boolean traceTransfers = false;
     private boolean returnFullTransactions = false;
     private boolean returnTrieLog = false;
+    private boolean collectExecutionMetrics = false;
     private SECPSignature fakeSignature =
         new SECPSignature(BigInteger.ZERO, BigInteger.ZERO, (byte) 0);
 
@@ -244,6 +287,12 @@ public class BlockSimulationParameter {
       return this;
     }
 
+    public BlockSimulationParameterBuilder collectExecutionMetrics(
+        final boolean collectExecutionMetrics) {
+      this.collectExecutionMetrics = collectExecutionMetrics;
+      return this;
+    }
+
     public BlockSimulationParameterBuilder fakeSignature(final SECPSignature fakeSignature) {
       this.fakeSignature = fakeSignature;
       return this;
@@ -256,6 +305,7 @@ public class BlockSimulationParameter {
           traceTransfers,
           returnFullTransactions,
           returnTrieLog,
+          collectExecutionMetrics,
           fakeSignature);
     }
   }

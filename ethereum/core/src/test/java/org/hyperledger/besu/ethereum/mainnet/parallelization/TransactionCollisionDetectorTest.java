@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -117,7 +118,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected a collision with the modified address");
@@ -146,7 +147,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected a collision with the modified address");
@@ -175,7 +176,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected a collision with the modified address");
@@ -216,7 +217,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected a collision with the modified address");
@@ -256,7 +257,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertFalse(
@@ -275,7 +276,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             miningBeneficiary,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected collision with the mining beneficiary address as sender");
@@ -300,7 +301,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             miningBeneficiary,
-            new ParallelizedTransactionContext(trxUpdater, null, true, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, true, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected collision with the read mining beneficiary address");
@@ -323,7 +324,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertTrue(hasCollision, "Expected a collision with the deleted address");
@@ -350,7 +351,7 @@ class TransactionCollisionDetectorTest {
         collisionDetector.hasCollision(
             transaction,
             Address.ZERO,
-            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, null),
+            new ParallelizedTransactionContext(trxUpdater, null, false, Wei.ZERO, Optional.empty()),
             bonsaiUpdater);
 
     assertFalse(hasCollision, "Expected no collision with the read address");

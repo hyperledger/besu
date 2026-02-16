@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.StateMetricsCollector;
+import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -311,6 +312,22 @@ public class ExecutionStats implements StateMetricsCollector {
    */
   public void setCreateCount(final int count) {
     this.createCount = count;
+  }
+
+  /**
+   * Collects EVM operation counts from an ExecutionMetricsTracer.
+   *
+   * <p>Only EVM opcode-level counters (SLOAD, SSTORE, CALL, CREATE) are collected here. State-layer
+   * metrics flow directly through the {@link StateMetricsCollector} interface.
+   *
+   * @param tracer the EVM metrics tracer to collect from
+   */
+  public void collectMetricsFromTracer(final ExecutionMetricsTracer tracer) {
+    final var metrics = tracer.getMetrics();
+    this.sloadCount = metrics.getSloadCount();
+    this.sstoreCount = metrics.getSstoreCount();
+    this.callCount = metrics.getCallCount();
+    this.createCount = metrics.getCreateCount();
   }
 
   /**

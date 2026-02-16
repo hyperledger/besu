@@ -17,29 +17,30 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public final class ParallelizedTransactionContext {
   private final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
   private final TransactionProcessingResult transactionProcessingResult;
   private final boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
   private final Wei miningBeneficiaryReward;
-  private final ExecutionMetricsTracer executionMetricsTracer;
+  private final Optional<OperationTracer> backgroundTracer;
 
   public ParallelizedTransactionContext(
       final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
       final TransactionProcessingResult transactionProcessingResult,
       final boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
       final Wei miningBeneficiaryReward,
-      final ExecutionMetricsTracer executionMetricsTracer) {
+      final Optional<OperationTracer> backgroundTracer) {
     this.transactionAccumulator = transactionAccumulator;
     this.transactionProcessingResult = transactionProcessingResult;
     this.isMiningBeneficiaryTouchedPreRewardByTransaction =
         isMiningBeneficiaryTouchedPreRewardByTransaction;
     this.miningBeneficiaryReward = miningBeneficiaryReward;
-    this.executionMetricsTracer = executionMetricsTracer;
+    this.backgroundTracer = backgroundTracer;
   }
 
   public PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator() {
@@ -58,8 +59,8 @@ public final class ParallelizedTransactionContext {
     return miningBeneficiaryReward;
   }
 
-  public ExecutionMetricsTracer executionMetricsTracer() {
-    return executionMetricsTracer;
+  public Optional<OperationTracer> backgroundTracer() {
+    return backgroundTracer;
   }
 
   @Override
@@ -72,7 +73,7 @@ public final class ParallelizedTransactionContext {
         && this.isMiningBeneficiaryTouchedPreRewardByTransaction
             == that.isMiningBeneficiaryTouchedPreRewardByTransaction
         && Objects.equals(this.miningBeneficiaryReward, that.miningBeneficiaryReward)
-        && Objects.equals(this.executionMetricsTracer, that.executionMetricsTracer);
+        && Objects.equals(this.backgroundTracer, that.backgroundTracer);
   }
 
   @Override
@@ -82,7 +83,7 @@ public final class ParallelizedTransactionContext {
         transactionProcessingResult,
         isMiningBeneficiaryTouchedPreRewardByTransaction,
         miningBeneficiaryReward,
-        executionMetricsTracer);
+        backgroundTracer);
   }
 
   @Override
@@ -100,9 +101,13 @@ public final class ParallelizedTransactionContext {
         + "miningBeneficiaryReward="
         + miningBeneficiaryReward
         + ", "
-        + "executionMetricsTracer="
-        + executionMetricsTracer
+        + "backgroundTracer="
+        + backgroundTracer
         + ']';
+  }
+
+  public static Builder builder() {
+    return new Builder();
   }
 
   public static class Builder {
@@ -110,7 +115,7 @@ public final class ParallelizedTransactionContext {
     private TransactionProcessingResult transactionProcessingResult;
     private boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
     private Wei miningBeneficiaryReward = Wei.ZERO;
-    private ExecutionMetricsTracer executionMetricsTracer;
+    private Optional<OperationTracer> backgroundTracer = Optional.empty();
 
     public Builder transactionAccumulator(
         final PathBasedWorldStateUpdateAccumulator<?> transactionAccumulator) {
@@ -136,8 +141,8 @@ public final class ParallelizedTransactionContext {
       return this;
     }
 
-    public Builder executionMetricsTracer(final ExecutionMetricsTracer executionMetricsTracer) {
-      this.executionMetricsTracer = executionMetricsTracer;
+    public Builder backgroundTracer(final OperationTracer backgroundTracer) {
+      this.backgroundTracer = Optional.ofNullable(backgroundTracer);
       return this;
     }
 
@@ -147,7 +152,7 @@ public final class ParallelizedTransactionContext {
           transactionProcessingResult,
           isMiningBeneficiaryTouchedPreRewardByTransaction,
           miningBeneficiaryReward,
-          executionMetricsTracer);
+          backgroundTracer);
     }
   }
 }

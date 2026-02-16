@@ -21,10 +21,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ExecutionMetricsTracer;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 
@@ -57,7 +57,7 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
       final Wei blobGasPrice,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder,
       final Optional<BlockAccessList> maybeBlockBal,
-      final ExecutionMetricsTracer blockExecutionMetricsTracer) {
+      final BlockProcessingContext blockProcessingContext) {
     if (!(protocolContext.getWorldStateArchive() instanceof PathBasedWorldStateProvider)) {
       return Optional.empty();
     }
@@ -67,11 +67,11 @@ public class ParallelTransactionPreprocessing implements PreprocessingFunction {
     if (balConfiguration.isPerfectParallelizationEnabled() && maybeBlockBal.isPresent()) {
       parallelProcessor =
           new BalConcurrentTransactionProcessor(
-              transactionProcessor, maybeBlockBal.get(), balConfiguration);
+              transactionProcessor, maybeBlockBal.get(), balConfiguration, blockProcessingContext);
     } else {
       parallelProcessor =
           new ParallelizedConcurrentTransactionProcessor(
-              transactionProcessor, blockExecutionMetricsTracer);
+              transactionProcessor, blockProcessingContext);
     }
 
     parallelProcessor.runAsyncBlock(
