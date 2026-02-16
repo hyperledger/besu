@@ -25,7 +25,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.TransferLogEmitter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -62,7 +62,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce,
-      final Collection<Address> forceCommitAddresses) {
+      final Set<Address> forceCommitAddresses) {
     this(
         evm,
         requireCodeDepositToSucceed,
@@ -90,7 +90,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         requireCodeDepositToSucceed,
         contractValidationRules,
         initialContractNonce,
-        Set.of(),
+        Collections.emptySet(),
         TransferLogEmitter.NOOP);
   }
 
@@ -109,7 +109,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce,
-      final Collection<Address> forceCommitAddresses,
+      final Set<Address> forceCommitAddresses,
       final TransferLogEmitter transferLogEmitter) {
     super(evm, forceCommitAddresses);
     this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
