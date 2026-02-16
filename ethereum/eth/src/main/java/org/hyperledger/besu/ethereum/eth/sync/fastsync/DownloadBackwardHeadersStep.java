@@ -17,20 +17,14 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.sync.HeaderBatchDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.HeaderBatchDownloader.Direction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Downloads block headers in reverse direction (backward from pivot to genesis). Returns headers in
@@ -38,10 +32,9 @@ import org.slf4j.LoggerFactory;
  */
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
-  private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
 
-  private final ProtocolSchedule protocolSchedule;
   private final EthContext ethContext;
+  private final HeaderBatchDownloader headerBatchDownloader;
   private final int headerRequestSize;
   private final long trustAnchorBlockNumber;
 
@@ -59,8 +52,9 @@ public class DownloadBackwardHeadersStep
       final int headerRequestSize,
       final long trustAnchorBlockNumber) {
     if (headerRequestSize < 1) throw new IllegalArgumentException("headerRequestSize must be >= 1");
-    this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
+    this.headerBatchDownloader =
+        new HeaderBatchDownloader(protocolSchedule, ethContext, headerRequestSize);
     this.headerRequestSize = headerRequestSize;
     this.trustAnchorBlockNumber = trustAnchorBlockNumber;
   }
@@ -76,54 +70,11 @@ public class DownloadBackwardHeadersStep
 
     return ethContext
         .getScheduler()
-        .scheduleServiceTask(() -> downloadAllHeaders(startBlockNumber, headersToRequest))
+        .scheduleServiceTask(
+            () ->
+                CompletableFuture.completedFuture(
+                    headerBatchDownloader.downloadHeaders(
+                        startBlockNumber, headersToRequest, Direction.REVERSE)))
         .orTimeout(2L, TimeUnit.MINUTES);
-  }
-
-  private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
-      final Long startBlockNumber, final int headersToRequest) {
-    List<BlockHeader> headers = new ArrayList<>(headersToRequest);
-    do {
-      final GetHeadersFromPeerTask task =
-          new GetHeadersFromPeerTask(
-              startBlockNumber - headers.size(),
-              headersToRequest - headers.size(),
-              0,
-              GetHeadersFromPeerTask.Direction.REVERSE,
-              protocolSchedule);
-
-      final PeerTaskExecutorResult<List<BlockHeader>> result =
-          ethContext.getPeerTaskExecutor().execute(task);
-
-      final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
-      if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
-        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
-          throw new RuntimeException(
-              "Failed to download "
-                  + headersToRequest
-                  + " headers starting from block "
-                  + startBlockNumber);
-        }
-        // wait for a peer to become available before retrying
-        ethContext.getEthPeers().waitForPeer(__ -> true);
-      } else {
-        final Optional<List<BlockHeader>> optionalBlockHeaderList = result.result();
-        final List<BlockHeader> resultBlockHeaders = optionalBlockHeaderList.orElseGet(List::of);
-        if (!headers.isEmpty() // check the parent hash and block hash match
-            && !resultBlockHeaders.isEmpty()
-            && !resultBlockHeaders.getFirst().getHash().equals(headers.getLast().getParentHash())) {
-          throw new IllegalStateException("Parent hash of last header does not match first header");
-        }
-        headers.addAll(resultBlockHeaders);
-      }
-    } while (headers.size() < headersToRequest);
-    LOG.atTrace()
-        .setMessage("Downloaded {} headers: blocks {} to {}")
-        .addArgument(headers.size())
-        .addArgument(headers.getFirst().getNumber())
-        .addArgument(headers.getLast().getNumber())
-        .log();
-
-    return CompletableFuture.completedFuture(headers);
   }
 }
