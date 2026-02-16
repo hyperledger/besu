@@ -105,6 +105,12 @@ public class HeaderBatchDownloader {
           validateContinuity(headers, resultBlockHeaders, direction);
         }
         headers.addAll(resultBlockHeaders);
+        // For FORWARD direction only: if peer returned fewer headers than requested,
+        // we've reached the chain head and should stop. For REVERSE direction, we
+        // always continue until we have exactly the requested count.
+        if (direction == Direction.FORWARD && resultBlockHeaders.size() < headersToRequest) {
+          break;
+        }
       }
     } while (headers.size() < count);
 

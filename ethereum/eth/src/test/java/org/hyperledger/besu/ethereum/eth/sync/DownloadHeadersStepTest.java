@@ -30,8 +30,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeaders;
@@ -44,7 +42,6 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -176,26 +173,8 @@ public class DownloadHeadersStepTest {
     final SyncTargetRange checkpointRange =
         new SyncTargetRange(peer.getEthPeer(), blockchain.getBlockHeader(3).get());
 
-    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
-        .thenAnswer(
-            (invocationOnMock) -> {
-              GetHeadersFromPeerTask task =
-                  invocationOnMock.getArgument(0, GetHeadersFromPeerTask.class);
-              List<BlockHeader> result = new ArrayList<>();
-              for (long i = task.getBlockNumber() + 1; i < task.getMaxHeaders(); i++) {
-                Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(i);
-                if (blockHeader.isPresent()) {
-                  result.add(blockHeader.get());
-                } else {
-                  // we have reached the end of the blockchain, do nothing and break out of the loop
-                  break;
-                }
-              }
-              return new PeerTaskExecutorResult<List<BlockHeader>>(
-                  Optional.of(result),
-                  PeerTaskExecutorResponseCode.SUCCESS,
-                  Collections.emptyList());
-            });
+    // Use the default GetHeadersFromPeerTaskExecutorAnswer which correctly handles the request
+    // The default answer (set in setUp) returns headers starting from the requested block number
 
     final CompletableFuture<RangeHeaders> result = this.downloader.apply(checkpointRange);
 
