@@ -257,7 +257,7 @@ public final class RunnerTest {
               GenesisConfig.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
-              null,
+              Collections.emptyList(),
               "");
 
       runnerBehind =
