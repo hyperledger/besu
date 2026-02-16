@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.StateMetricsCollector;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,8 +25,11 @@ import java.util.Set;
  *
  * <p>Tracks timing breakdowns, state access counts, and unique state access patterns following the
  * cross-client execution metrics specification.
+ *
+ * <p>Implements {@link StateMetricsCollector} so it can be threaded through the world state object
+ * graph for direct metrics collection without ThreadLocal statics.
  */
-public class ExecutionStats {
+public class ExecutionStats implements StateMetricsCollector {
 
   // Timing in nanoseconds
   private long executionStartNanos;
@@ -184,6 +188,7 @@ public class ExecutionStats {
   }
 
   /** Increments code read counter. */
+  @Override
   public void incrementCodeReads() {
     codeReads++;
   }
@@ -193,6 +198,7 @@ public class ExecutionStats {
    *
    * @param bytes the number of bytes read
    */
+  @Override
   public void addCodeBytesRead(final long bytes) {
     codeBytesRead += bytes;
   }
@@ -200,11 +206,13 @@ public class ExecutionStats {
   // State write methods
 
   /** Increments account write counter. */
+  @Override
   public void incrementAccountWrites() {
     accountWrites++;
   }
 
   /** Increments storage write counter. */
+  @Override
   public void incrementStorageWrites() {
     storageWrites++;
   }
@@ -443,11 +451,13 @@ public class ExecutionStats {
   }
 
   /** Increments code cache hit counter. */
+  @Override
   public void incrementCodeCacheHits() {
     codeCacheHits++;
   }
 
   /** Increments code cache miss counter. */
+  @Override
   public void incrementCodeCacheMisses() {
     codeCacheMisses++;
   }

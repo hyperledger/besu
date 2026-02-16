@@ -44,10 +44,11 @@ import org.apache.tuweni.bytes.Bytes;
 public class ExecutionMetricsTracer implements OperationTracer {
 
   /**
-   * Container for execution metrics.
+   * Container for EVM operation metrics.
    *
-   * <p>This class holds all collected execution metrics and provides getters for accessing the
-   * various counters.
+   * <p>This class holds only EVM opcode-level counters (SLOAD, SSTORE, CALL, CREATE). State-layer
+   * metrics (account/storage/code reads and writes, cache stats) are collected via the {@code
+   * StateMetricsCollector} threaded through the world state object graph.
    */
   public static final class ExecutionMetrics {
     // EVM operation counters
@@ -55,20 +56,6 @@ public class ExecutionMetricsTracer implements OperationTracer {
     private int sstoreCount;
     private int callCount;
     private int createCount;
-
-    // State read/write counters
-    private int accountReads;
-    private int storageReads;
-    private int codeReads;
-    private int codeBytesRead;
-    private int accountWrites;
-    private int storageWrites;
-    private int codeWrites;
-    private int codeBytesWritten;
-
-    // EIP-7702 delegation counters
-    private int eip7702DelegationsSet;
-    private int eip7702DelegationsCleared;
 
     /** Creates a new ExecutionMetrics instance with all counters initialized to zero. */
     public ExecutionMetrics() {
@@ -81,16 +68,6 @@ public class ExecutionMetricsTracer implements OperationTracer {
       sstoreCount = 0;
       callCount = 0;
       createCount = 0;
-      accountReads = 0;
-      storageReads = 0;
-      codeReads = 0;
-      codeBytesRead = 0;
-      accountWrites = 0;
-      storageWrites = 0;
-      codeWrites = 0;
-      codeBytesWritten = 0;
-      eip7702DelegationsSet = 0;
-      eip7702DelegationsCleared = 0;
     }
 
     /**
@@ -103,19 +80,8 @@ public class ExecutionMetricsTracer implements OperationTracer {
       this.sstoreCount += other.sstoreCount;
       this.callCount += other.callCount;
       this.createCount += other.createCount;
-      this.accountReads += other.accountReads;
-      this.storageReads += other.storageReads;
-      this.codeReads += other.codeReads;
-      this.codeBytesRead += other.codeBytesRead;
-      this.accountWrites += other.accountWrites;
-      this.storageWrites += other.storageWrites;
-      this.codeWrites += other.codeWrites;
-      this.codeBytesWritten += other.codeBytesWritten;
-      this.eip7702DelegationsSet += other.eip7702DelegationsSet;
-      this.eip7702DelegationsCleared += other.eip7702DelegationsCleared;
     }
 
-    // Getters for all metrics
     /**
      * Returns the number of SLOAD operations executed.
      *
@@ -150,96 +116,6 @@ public class ExecutionMetricsTracer implements OperationTracer {
      */
     public int getCreateCount() {
       return createCount;
-    }
-
-    /**
-     * Returns the number of account reads performed.
-     *
-     * @return the number of account reads performed
-     */
-    public int getAccountReads() {
-      return accountReads;
-    }
-
-    /**
-     * Returns the number of storage reads performed.
-     *
-     * @return the number of storage reads performed
-     */
-    public int getStorageReads() {
-      return storageReads;
-    }
-
-    /**
-     * Returns the number of code reads performed.
-     *
-     * @return the number of code reads performed
-     */
-    public int getCodeReads() {
-      return codeReads;
-    }
-
-    /**
-     * Returns the number of code bytes read.
-     *
-     * @return the number of code bytes read
-     */
-    public int getCodeBytesRead() {
-      return codeBytesRead;
-    }
-
-    /**
-     * Returns the number of account writes performed.
-     *
-     * @return the number of account writes performed
-     */
-    public int getAccountWrites() {
-      return accountWrites;
-    }
-
-    /**
-     * Returns the number of storage writes performed.
-     *
-     * @return the number of storage writes performed
-     */
-    public int getStorageWrites() {
-      return storageWrites;
-    }
-
-    /**
-     * Returns the number of code writes performed.
-     *
-     * @return the number of code writes performed
-     */
-    public int getCodeWrites() {
-      return codeWrites;
-    }
-
-    /**
-     * Returns the number of code bytes written.
-     *
-     * @return the number of code bytes written
-     */
-    public int getCodeBytesWritten() {
-      return codeBytesWritten;
-    }
-
-    /**
-     * Returns the number of EIP-7702 delegations set.
-     *
-     * @return the number of EIP-7702 delegations set
-     */
-    public int getEip7702DelegationsSet() {
-      return eip7702DelegationsSet;
-    }
-
-    /**
-     * Returns the number of EIP-7702 delegations cleared.
-     *
-     * @return the number of EIP-7702 delegations cleared
-     */
-    public int getEip7702DelegationsCleared() {
-      return eip7702DelegationsCleared;
     }
   }
 
@@ -292,64 +168,6 @@ public class ExecutionMetricsTracer implements OperationTracer {
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
     // Precompile calls can be considered as special CALL operations
     // But we may want to track them separately if needed
-  }
-
-  /** Track account read operation. Called directly from state operations. */
-  public void onAccountRead() {
-    metrics.accountReads++;
-  }
-
-  /** Track storage read operation. Called directly from state operations. */
-  public void onStorageRead() {
-    metrics.storageReads++;
-  }
-
-  /** Track code read operation. Called directly from state operations. */
-  public void onCodeRead() {
-    metrics.codeReads++;
-  }
-
-  /**
-   * Track code bytes read. Called directly from state operations.
-   *
-   * @param bytes the number of bytes read
-   */
-  public void onCodeBytesRead(final int bytes) {
-    metrics.codeBytesRead += bytes;
-  }
-
-  /** Track account write operation. Called directly from state operations. */
-  public void onAccountWrite() {
-    metrics.accountWrites++;
-  }
-
-  /** Track storage write operation. Called directly from state operations. */
-  public void onStorageWrite() {
-    metrics.storageWrites++;
-  }
-
-  /** Track code write operation. Called directly from state operations. */
-  public void onCodeWrite() {
-    metrics.codeWrites++;
-  }
-
-  /**
-   * Track code bytes written. Called directly from state operations.
-   *
-   * @param bytes the number of bytes written
-   */
-  public void onCodeBytesWritten(final int bytes) {
-    metrics.codeBytesWritten += bytes;
-  }
-
-  /** Track EIP-7702 delegation set operation. Called directly from delegation service. */
-  public void onEip7702DelegationSet() {
-    metrics.eip7702DelegationsSet++;
-  }
-
-  /** Track EIP-7702 delegation cleared operation. Called directly from delegation service. */
-  public void onEip7702DelegationCleared() {
-    metrics.eip7702DelegationsCleared++;
   }
 
   /**

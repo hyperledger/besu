@@ -67,6 +67,8 @@ public abstract class PathBasedWorldState
   // configuration parameters for the world state.
   protected WorldStateConfig worldStateConfig;
 
+  private StateMetricsCollector stateMetricsCollector = StateMetricsCollector.NOOP;
+
   /*
    * Indicates whether the world state is in "frozen" mode.
    *
@@ -104,6 +106,20 @@ public abstract class PathBasedWorldState
    */
   public void setAccumulator(final PathBasedWorldStateUpdateAccumulator<?> accumulator) {
     this.accumulator = accumulator;
+  }
+
+  /**
+   * Sets the metrics collector for state-layer operations.
+   *
+   * @param collector the collector instance
+   */
+  public void setStateMetricsCollector(final StateMetricsCollector collector) {
+    this.stateMetricsCollector = collector != null ? collector : StateMetricsCollector.NOOP;
+  }
+
+  @Override
+  public StateMetricsCollector getStateMetricsCollector() {
+    return stateMetricsCollector;
   }
 
   /**

@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
@@ -63,6 +64,7 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer, Operat
     executionStats = new ExecutionStats();
     executionStats.startExecution();
     ExecutionStatsHolder.set(executionStats);
+    setCollectorOnWorldState(worldView);
     evmMetricsTracer.reset();
   }
 
@@ -75,6 +77,7 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer, Operat
     executionStats = new ExecutionStats();
     executionStats.startExecution();
     ExecutionStatsHolder.set(executionStats);
+    setCollectorOnWorldState(worldView);
     evmMetricsTracer.reset();
   }
 
@@ -108,29 +111,29 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer, Operat
     }
   }
 
-  /** Collect EVM metrics from the internal ExecutionMetricsTracer. */
+  /**
+   * Collect EVM metrics from the internal ExecutionMetricsTracer.
+   *
+   * <p>Only EVM operation counts (SLOAD, SSTORE, CALL, CREATE) are collected here. State-layer
+   * metrics (account/storage/code reads and writes, cache stats) flow directly through the {@link
+   * org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.StateMetricsCollector} set on the
+   * world state.
+   */
   private void collectEvmMetricsFromTracer() {
     final var metrics = evmMetricsTracer.getMetrics();
 
-    // Set EVM operation counts
+    // Set EVM operation counts (tracked via tracePostExecution in the EVM tracer)
     executionStats.setSloadCount(metrics.getSloadCount());
     executionStats.setSstoreCount(metrics.getSstoreCount());
     executionStats.setCallCount(metrics.getCallCount());
     executionStats.setCreateCount(metrics.getCreateCount());
+  }
 
-    // Set state access counts
-    executionStats.setAccountReads(metrics.getAccountReads());
-    executionStats.setStorageReads(metrics.getStorageReads());
-    executionStats.setCodeReads(metrics.getCodeReads());
-    executionStats.setCodeBytesRead(metrics.getCodeBytesRead());
-    executionStats.setAccountWrites(metrics.getAccountWrites());
-    executionStats.setStorageWrites(metrics.getStorageWrites());
-    executionStats.setCodeWrites(metrics.getCodeWrites());
-    executionStats.setCodeBytesWritten(metrics.getCodeBytesWritten());
-
-    // Set EIP-7702 delegation counts
-    executionStats.setEip7702DelegationsSet(metrics.getEip7702DelegationsSet());
-    executionStats.setEip7702DelegationsCleared(metrics.getEip7702DelegationsCleared());
+  /** Sets the StateMetricsCollector on the world state if it is a PathBasedWorldState. */
+  private void setCollectorOnWorldState(final WorldView worldView) {
+    if (worldView instanceof PathBasedWorldState pws) {
+      pws.setStateMetricsCollector(executionStats);
+    }
   }
 
   @Override

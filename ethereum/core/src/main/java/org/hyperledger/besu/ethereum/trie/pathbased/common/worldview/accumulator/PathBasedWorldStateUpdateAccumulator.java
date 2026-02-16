@@ -26,10 +26,10 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.StateMetricsCollector;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
-import org.hyperledger.besu.evm.EvmOperationCounters;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -416,7 +416,6 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       accountValue.setUpdated(null);
     }
 
-    // Note: Use sequential stream, not parallel, because metrics tracking uses ThreadLocal
     getUpdatedAccounts().stream()
         .forEach(
             tracked -> {
@@ -478,7 +477,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
               }
 
               // Track account write for cross-client execution metrics (account modified)
-              EvmOperationCounters.incrementAccountWrites();
+              getStateMetricsCollector().incrementAccountWrites();
 
               // parallel stream here may cause database corruption
               updatedAccount
@@ -502,7 +501,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                           pendingValue.setUpdated(value);
                         }
                         // Track storage write for cross-client execution metrics
-                        EvmOperationCounters.incrementStorageWrites();
+                        getStateMetricsCollector().incrementStorageWrites();
                       });
 
               updatedAccount.getUpdatedStorage().clear();
@@ -639,6 +638,11 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   @Override
   public PathBasedWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
+  }
+
+  @Override
+  public StateMetricsCollector getStateMetricsCollector() {
+    return wrappedWorldView().getStateMetricsCollector();
   }
 
   public void rollForward(final TrieLog layer) {
