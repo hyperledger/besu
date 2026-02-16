@@ -91,7 +91,7 @@ public class PeerDiscoveryAgentV4Test {
     assertThatThrownBy(
             () -> helper.createDiscoveryAgent(helper.agentBuilder().bootnodes(invalidBootnode)))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid bootnodes")
+        .hasMessageContaining("Invalid enodeBootnodes")
         .hasMessageContaining("Bootnodes must have discovery enabled");
   }
 
@@ -300,7 +300,7 @@ public class PeerDiscoveryAgentV4Test {
     final MockPeerDiscoveryAgent peerDiscoveryAgent2 =
         helper.startDiscoveryAgent(
             helper.agentBuilder().peerPermissions(denylist).bootstrapPeers(peer));
-    peerDiscoveryAgent2.start(BROADCAST_TCP_PORT).join();
+    peerDiscoveryAgent2.start(BROADCAST_TCP_PORT + 1).join();
 
     assertThat(peerDiscoveryAgent2.streamDiscoveredPeers().count()).isEqualTo(1);
 
