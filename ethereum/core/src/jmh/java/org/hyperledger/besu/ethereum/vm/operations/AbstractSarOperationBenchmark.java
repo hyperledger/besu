@@ -44,8 +44,12 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
     POSITIVE_SHIFT_1,
     /** Negative number with medium shift. */
     NEGATIVE_SHIFT_128,
+    /** Negative number with max shift. */
+    NEGATIVE_SHIFT_255,
     /** Positive number with medium shift. */
     POSITIVE_SHIFT_128,
+    /** positive number with max shift. */
+    POSITIVE_SHIFT_255,
     /** Overflow: shift >= 256. */
     OVERFLOW_SHIFT_256,
     /** Overflow: shift amount > 4 bytes. */
@@ -64,7 +68,9 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
     "POSITIVE_SHIFT_1",
     "ALL_BITS_SHIFT_1",
     "NEGATIVE_SHIFT_128",
+    "NEGATIVE_SHIFT_255",
     "POSITIVE_SHIFT_128",
+    "POSITIVE_SHIFT_255",
     "OVERFLOW_SHIFT_256",
     "OVERFLOW_LARGE_SHIFT",
     "FULL_RANDOM"
@@ -112,8 +118,17 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
           bPool[i] = randomNegativeValue(random);
           break;
 
+        case NEGATIVE_SHIFT_255:
+          aPool[i] = Bytes.of(255);
+          bPool[i] = randomNegativeValue(random);
+          break;
+
         case POSITIVE_SHIFT_128:
           aPool[i] = Bytes.of(128);
+          bPool[i] = randomPositiveValue(random);
+          break;
+        case POSITIVE_SHIFT_255:
+          aPool[i] = Bytes.of(255);
           bPool[i] = randomPositiveValue(random);
           break;
 
