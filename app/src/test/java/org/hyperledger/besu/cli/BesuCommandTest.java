@@ -1003,7 +1003,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--bootnodes", bootnodesValue);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
-        "Bootnodes must have discovery enabled. Invalid bootnodes: " + invalidBootnode + ".";
+        "Bootnodes must have discovery enabled. Invalid enodeBootnodes: " + invalidBootnode + ".";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
