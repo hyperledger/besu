@@ -54,7 +54,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,6 +78,7 @@ import org.slf4j.LoggerFactory;
 
 public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
+  public static final long SIXTY_SECONDS_IN_MILLIS = 60_000L;
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -90,7 +90,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final ProcessingBlocksManager processingBlocksManager;
   private final PendingBlocksManager pendingBlocksManager;
-  private final Duration getBlockTimeoutMillis;
   private Optional<Long> onBlockAddedSId = Optional.empty();
   private Optional<Long> newBlockSId;
   private Optional<Long> newBlockHashesSId;
@@ -135,8 +134,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     this.syncState = syncState;
     this.pendingBlocksManager = pendingBlocksManager;
     this.syncState.subscribeTTDReached(this::reactToTTDReachedEvent);
-    this.getBlockTimeoutMillis =
-        Duration.ofMillis(config.getPropagationManagerGetBlockTimeoutMillis());
     this.processingBlocksManager = processingBlocksManager;
   }
 
@@ -549,7 +546,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
                 importOrSavePendingBlock(
                     blockExecutorResult.result().get().getFirst(),
                     blockExecutorResult.ethPeers().getLast().nodeId()))
-        .orTimeout(getBlockTimeoutMillis.toMillis(), TimeUnit.MILLISECONDS);
+        .orTimeout(SIXTY_SECONDS_IN_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private CompletableFuture<BlockHeader> getBlockHeader(

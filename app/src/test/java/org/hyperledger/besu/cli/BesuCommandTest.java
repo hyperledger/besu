@@ -89,7 +89,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
@@ -1156,12 +1155,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncMode_fast() {
-    parseCommand("--sync-mode", "FAST");
+  public void syncMode_checkpoint() {
+    parseCommand("--sync-mode", "CHECKPOINT");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1187,7 +1186,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': 'bogus' is not a valid sync mode. Valid values are: FULL, SNAP");
   }
 
   @Test
@@ -1241,25 +1240,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeers() {
-    parseCommand("--sync-mode", "FAST");
+  public void checkValidDefaultSnapSyncMinPeers() {
+    parseCommand("--sync-mode", "SNAP");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesValidFastSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1278,24 +1265,14 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST", "--sync-min-peers", "11");
+    parseCommand("--sync-mode", "SNAP", "--sync-min-peers", "11");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
-
-    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
-    verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
   }
 
   @Test
@@ -2430,114 +2407,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
     verify(mockLogger)
         .info(argThat(arg -> arg.contains("# Besu version " + BesuVersionUtils.shortVersion())));
-  }
-
-  @Test
-  public void checkpointPostMergeShouldFailWhenGenesisHasNoTTD() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("invalid_post_merge_near_head_checkpoint.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("PoS checkpoint sync requires TTD in the genesis file");
-  }
-
-  @Test
-  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge()
-      throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("valid_pre_merge_checkpoint.json"), StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-    // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
-  }
-
-  @Test
-  public void checkpointPostMergeShouldFailWhenSyncModeIsNotCheckpoint() {
-
-    parseCommand("--sync-mode", "SNAP", "--Xcheckpoint-post-merge-enabled");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode");
-  }
-
-  @Test
-  public void checkpointPostMergeWithPostMergeBlockSucceeds() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkpointPostMergeWithPostMergeBlockTDEqualsTTDSucceeds() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("valid_pos_checkpoint_pos_TD_equals_TTD.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkpointMergeAtGenesisWithGenesisBlockDifficultyZeroFails() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("invalid_post_merge_merge_at_genesis.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
   }
 
   @Test

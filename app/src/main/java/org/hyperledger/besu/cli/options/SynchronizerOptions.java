@@ -54,10 +54,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-transactions-parallelism";
   private static final String COMPUTATION_PARALLELISM_FLAG =
       "--Xsynchronizer-computation-parallelism";
-  private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG =
-      "--Xsynchronizer-fast-sync-pivot-distance";
-  private static final String FULL_VALIDATION_RATE_FLAG =
-      "--Xsynchronizer-fast-sync-full-validation-rate";
+  private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG = "--Xsynchronizer-pivot-distance";
   private static final String WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG =
       "--Xsynchronizer-world-state-hash-count-per-request";
   private static final String WORLD_STATE_REQUEST_PARALLELISM_FLAG =
@@ -90,8 +87,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
-
-  private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   private static final String SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG =
       "--snapsync-synchronizer-pre-checkpoint-headers-only-enabled";
@@ -208,15 +203,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       names = PIVOT_DISTANCE_FROM_HEAD_FLAG,
       hidden = true,
       paramLabel = "<INTEGER>",
-      description =
-          "Distance from initial chain head to fast sync target (default: ${DEFAULT-VALUE})")
-  private int fastSyncPivotDistance = SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
+      description = "Distance from initial chain head to sync target (default: ${DEFAULT-VALUE})")
+  private int pivotDistance = SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
 
-  @CommandLine.Option(
-      names = FULL_VALIDATION_RATE_FLAG,
-      hidden = true,
-      paramLabel = "<FLOAT>",
-      description = "Fraction of headers fast sync will fully validate (default: ${DEFAULT-VALUE})")
+  // Not exposed as CLI option anymore, but used internally
   private float fastSyncFullValidationRate = SynchronizerConfiguration.DEFAULT_FULL_VALIDATION_RATE;
 
   @CommandLine.Option(
@@ -332,13 +322,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
   @CommandLine.Option(
-      names = {CHECKPOINT_POST_MERGE_FLAG},
-      hidden = true,
-      description = "Enable the sync to start from a post-merge block.")
-  private Boolean checkpointPostMergeSyncEnabled =
-      SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
-
-  @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
       hidden = true,
       description =
@@ -440,7 +423,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.headerDownloadParallelismFactor = config.getHeaderDownloadParallelismFactor();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
-    options.fastSyncPivotDistance = config.getSyncPivotDistance();
+    options.pivotDistance = config.getSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
@@ -461,7 +444,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
     options.snapsyncFlatStorageHealedCountPerRequest =
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
-    options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
@@ -487,7 +469,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.headerDownloadParallelismFactor(headerDownloadParallelismFactor);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
-    builder.syncPivotDistance(fastSyncPivotDistance);
+    builder.syncPivotDistance(pivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
     builder.worldStateRequestParallelism(worldStateRequestParallelism);
@@ -506,7 +488,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .isSnapServerEnabled(snapsyncServerEnabled)
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
-    builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
@@ -543,9 +524,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             COMPUTATION_PARALLELISM_FLAG,
             OptionParser.format(computationParallelism),
             PIVOT_DISTANCE_FROM_HEAD_FLAG,
-            OptionParser.format(fastSyncPivotDistance),
-            FULL_VALIDATION_RATE_FLAG,
-            OptionParser.format(fastSyncFullValidationRate),
+            OptionParser.format(pivotDistance),
             WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(worldStateHashCountPerRequest),
             WORLD_STATE_REQUEST_PARALLELISM_FLAG,

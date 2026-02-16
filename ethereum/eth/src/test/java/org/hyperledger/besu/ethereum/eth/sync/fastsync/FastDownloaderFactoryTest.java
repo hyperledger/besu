@@ -158,7 +158,7 @@ public class FastDownloaderFactoryTest {
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
     when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
 
-    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.SNAP);
     FastDownloaderFactory.create(
         pivotBlockSelector,
         syncConfig,
@@ -181,7 +181,7 @@ public class FastDownloaderFactoryTest {
       final DataStorageFormat dataStorageFormat) throws IOException {
     Assumptions.assumeTrue(dataStorageFormat == DataStorageFormat.FOREST);
     setup(dataStorageFormat);
-    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.SNAP);
     final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
     when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
@@ -217,7 +217,7 @@ public class FastDownloaderFactoryTest {
       throws IOException {
     Assumptions.assumeTrue(dataStorageFormat == DataStorageFormat.FOREST);
     setup(dataStorageFormat);
-    when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
+    when(syncConfig.getSyncMode()).thenReturn(SyncMode.SNAP);
     final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
     when(protocolContext.getBlockchain()).thenReturn(mutableBlockchain);
