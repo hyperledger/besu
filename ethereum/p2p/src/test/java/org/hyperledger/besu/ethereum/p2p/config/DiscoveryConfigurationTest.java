@@ -39,7 +39,7 @@ public class DiscoveryConfigurationTest {
 
     assertThatThrownBy(() -> config.setEnodeBootnodes(Collections.singletonList(invalidBootnode)))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid bootnodes")
+        .hasMessageContaining("Invalid enodeBootnodes")
         .hasMessageContaining("Bootnodes must have discovery enabled");
   }
 
@@ -56,7 +56,7 @@ public class DiscoveryConfigurationTest {
 
     assertThatThrownBy(() -> config.setEnodeBootnodes(Collections.singletonList(invalidBootnode)))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid bootnodes")
+        .hasMessageContaining("Invalid enodeBootnodes")
         .hasMessageContaining("Bootnodes must have discovery enabled");
   }
 }
