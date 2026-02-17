@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.ethereum.mainnet.SlowBlockTracer;
 import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
@@ -317,6 +318,13 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
         return createBackgroundTracerAggregator(
             (TracerAggregator) blockTracer, backgroundMetricsTracer);
       }
+    }
+
+    // SlowBlockTracer has mutable counters (tx_count, gas, EVM opcodes) that must not be
+    // shared with the background cache-warming thread, otherwise metrics get doubled.
+    // The background pass doesn't need metrics collection, so skip tracing entirely.
+    if (blockTracer instanceof SlowBlockTracer) {
+      return OperationTracer.NO_TRACING;
     }
 
     // For other tracer types that don't need separate instances, return the original
