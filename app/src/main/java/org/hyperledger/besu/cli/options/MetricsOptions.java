@@ -177,7 +177,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
       description =
           "Threshold in milliseconds for logging slow blocks. Negative values disable logging, "
               + "zero logs all blocks (default: ${DEFAULT-VALUE})")
-  private Long slowBlockThresholdMs = -1L;
+  private Long slowBlockThresholdMs = 500L;
 
   /**
    * Returns a newly created {@link MetricsOptions} with default values.
