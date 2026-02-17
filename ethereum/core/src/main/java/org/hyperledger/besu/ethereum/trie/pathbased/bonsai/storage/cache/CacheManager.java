@@ -32,7 +32,6 @@ public interface CacheManager {
 
   CacheManager EMPTY_CACHE = new CacheManager() {};
 
-
   default long getCurrentVersion() {
     return 0;
   }
@@ -45,8 +44,8 @@ public interface CacheManager {
     // No-op
   }
 
-  default void performMaintenance(){
-   // No-op
+  default void performMaintenance() {
+    // No-op
   }
 
   default Optional<Bytes> getFromCacheOrStorage(

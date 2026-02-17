@@ -94,7 +94,9 @@ public class VersionedCacheManager implements CacheManager, Closeable {
       return drained;
     }
 
-    /** @return the approximate number of pending tasks */
+    /**
+     * @return the approximate number of pending tasks
+     */
     public int getPendingCount() {
       return pendingCount.get();
     }
@@ -120,7 +122,7 @@ public class VersionedCacheManager implements CacheManager, Closeable {
    * @param metricsSystem the metrics system for instrumentation
    */
   public VersionedCacheManager(
-          final long accountCacheSize, final long storageCacheSize, final MetricsSystem metricsSystem) {
+      final long accountCacheSize, final long storageCacheSize, final MetricsSystem metricsSystem) {
     this(accountCacheSize, storageCacheSize, metricsSystem, DEFAULT_DRAIN_THRESHOLD);
   }
 
@@ -133,71 +135,70 @@ public class VersionedCacheManager implements CacheManager, Closeable {
    * @param drainThreshold number of pending maintenance tasks before automatic drain is triggered
    */
   public VersionedCacheManager(
-          final long accountCacheSize,
-          final long storageCacheSize,
-          final MetricsSystem metricsSystem,
-          final int drainThreshold) {
+      final long accountCacheSize,
+      final long storageCacheSize,
+      final MetricsSystem metricsSystem,
+      final int drainThreshold) {
 
     this.maintenanceWorker =
-            Executors.newSingleThreadExecutor(
-                    r -> {
-                      final Thread t = new Thread(r, "cache-maintenance");
-                      t.setDaemon(true);
-                      return t;
-                    });
+        Executors.newSingleThreadExecutor(
+            r -> {
+              final Thread t = new Thread(r, "cache-maintenance");
+              t.setDaemon(true);
+              return t;
+            });
 
-    this.drainExecutor =
-            new ThresholdDrainExecutor(drainThreshold, this::scheduleAsyncMaintenance);
+    this.drainExecutor = new ThresholdDrainExecutor(drainThreshold, this::scheduleAsyncMaintenance);
 
     this.caches = new HashMap<>();
     caches.put(ACCOUNT_INFO_STATE, createCache(accountCacheSize));
     caches.put(ACCOUNT_STORAGE_STORAGE, createCache(storageCacheSize));
 
     this.cacheRequestCounter =
-            metricsSystem.createLabelledCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "bonsai_cache_requests_total",
-                    "Total number of cache requests",
-                    "segment");
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_requests_total",
+            "Total number of cache requests",
+            "segment");
 
     this.cacheHitCounter =
-            metricsSystem.createLabelledCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "bonsai_cache_hits_total",
-                    "Total number of cache hits",
-                    "segment");
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_hits_total",
+            "Total number of cache hits",
+            "segment");
 
     this.cacheMissCounter =
-            metricsSystem.createLabelledCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "bonsai_cache_misses_total",
-                    "Total number of cache misses",
-                    "segment");
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_misses_total",
+            "Total number of cache misses",
+            "segment");
 
     this.cacheInsertCounter =
-            metricsSystem.createLabelledCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "bonsai_cache_inserts_total",
-                    "Total number of cache insertions",
-                    "segment");
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_inserts_total",
+            "Total number of cache insertions",
+            "segment");
 
     this.cacheRemovalCounter =
-            metricsSystem.createLabelledCounter(
-                    BesuMetricCategory.BLOCKCHAIN,
-                    "bonsai_cache_removals_total",
-                    "Total number of cache removals",
-                    "segment");
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_cache_removals_total",
+            "Total number of cache removals",
+            "segment");
 
     LOG.info(
-            "Cache maintenance will trigger asynchronously after {} pending tasks", drainThreshold);
+        "Cache maintenance will trigger asynchronously after {} pending tasks", drainThreshold);
   }
 
   private Cache<ByteArrayWrapper, VersionedValue> createCache(final long maxSize) {
     return Caffeine.newBuilder()
-            .initialCapacity((int) (maxSize * 0.1))
-            .maximumSize(maxSize)
-            .executor(drainExecutor)
-            .build();
+        .initialCapacity((int) (maxSize * 0.1))
+        .maximumSize(maxSize)
+        .executor(drainExecutor)
+        .build();
   }
 
   /**
@@ -208,13 +209,13 @@ public class VersionedCacheManager implements CacheManager, Closeable {
     if (maintenanceScheduled.compareAndSet(false, true)) {
       try {
         maintenanceWorker.execute(
-                () -> {
-                  try {
-                    doMaintenance();
-                  } finally {
-                    maintenanceScheduled.set(false);
-                  }
-                });
+            () -> {
+              try {
+                doMaintenance();
+              } finally {
+                maintenanceScheduled.set(false);
+              }
+            });
       } catch (final Exception e) {
         maintenanceScheduled.set(false);
         LOG.warn("Failed to schedule async cache maintenance", e);
@@ -222,9 +223,7 @@ public class VersionedCacheManager implements CacheManager, Closeable {
     }
   }
 
-  /**
-   * Performs the actual maintenance work: drains pending tasks and runs Caffeine's cleanUp.
-   */
+  /** Performs the actual maintenance work: drains pending tasks and runs Caffeine's cleanUp. */
   private void doMaintenance() {
     try {
       final int drained = drainExecutor.drain();
@@ -295,10 +294,10 @@ public class VersionedCacheManager implements CacheManager, Closeable {
 
   @Override
   public Optional<Bytes> getFromCacheOrStorage(
-          final SegmentIdentifier segment,
-          final byte[] key,
-          final long version,
-          final Supplier<Optional<Bytes>> storageGetter) {
+      final SegmentIdentifier segment,
+      final byte[] key,
+      final long version,
+      final Supplier<Optional<Bytes>> storageGetter) {
 
     final String segmentName = segment.getName();
     final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
@@ -316,8 +315,8 @@ public class VersionedCacheManager implements CacheManager, Closeable {
     if (versionedValue != null && versionedValue.version <= version) {
       cacheHitCounter.labels(segmentName).inc();
       return versionedValue.isRemoval
-              ? Optional.empty()
-              : Optional.of(Bytes.wrap(versionedValue.value));
+          ? Optional.empty()
+          : Optional.of(Bytes.wrap(versionedValue.value));
     }
 
     cacheMissCounter.labels(segmentName).inc();
@@ -329,15 +328,15 @@ public class VersionedCacheManager implements CacheManager, Closeable {
       final boolean isRemoval = result.isEmpty();
 
       cache
-              .asMap()
-              .compute(
-                      wrapper,
-                      (k, existingValue) -> {
-                        if (existingValue == null || existingValue.version < version) {
-                          return new VersionedValue(valueToCache, version, isRemoval);
-                        }
-                        return existingValue;
-                      });
+          .asMap()
+          .compute(
+              wrapper,
+              (k, existingValue) -> {
+                if (existingValue == null || existingValue.version < version) {
+                  return new VersionedValue(valueToCache, version, isRemoval);
+                }
+                return existingValue;
+              });
     }
 
     return result;
@@ -345,10 +344,10 @@ public class VersionedCacheManager implements CacheManager, Closeable {
 
   @Override
   public List<Optional<byte[]>> getMultipleFromCacheOrStorage(
-          final SegmentIdentifier segment,
-          final List<byte[]> keys,
-          final long version,
-          final Function<List<byte[]>, List<Optional<byte[]>>> batchFetcher) {
+      final SegmentIdentifier segment,
+      final List<byte[]> keys,
+      final long version,
+      final Function<List<byte[]>, List<Optional<byte[]>>> batchFetcher) {
 
     final String segmentName = segment.getName();
     final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
@@ -372,7 +371,7 @@ public class VersionedCacheManager implements CacheManager, Closeable {
       if (versionedValue != null && versionedValue.version <= version) {
         cacheHitCounter.labels(segmentName).inc();
         results.add(
-                versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value));
+            versionedValue.isRemoval ? Optional.empty() : Optional.of(versionedValue.value));
       } else {
         cacheMissCounter.labels(segmentName).inc();
         results.add(null);
@@ -399,15 +398,15 @@ public class VersionedCacheManager implements CacheManager, Closeable {
           final boolean isRemoval = fetchedValue.isEmpty();
 
           cache
-                  .asMap()
-                  .compute(
-                          wrapper,
-                          (k, existingValue) -> {
-                            if (existingValue == null || existingValue.version < version) {
-                              return new VersionedValue(valueToCache, version, isRemoval);
-                            }
-                            return existingValue;
-                          });
+              .asMap()
+              .compute(
+                  wrapper,
+                  (k, existingValue) -> {
+                    if (existingValue == null || existingValue.version < version) {
+                      return new VersionedValue(valueToCache, version, isRemoval);
+                    }
+                    return existingValue;
+                  });
         }
       }
     }
@@ -417,41 +416,41 @@ public class VersionedCacheManager implements CacheManager, Closeable {
 
   @Override
   public void putInCache(
-          final SegmentIdentifier segment, final byte[] key, final byte[] value, final long version) {
+      final SegmentIdentifier segment, final byte[] key, final byte[] value, final long version) {
     final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
     if (cache != null) {
       final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
       cache
-              .asMap()
-              .compute(
-                      wrapper,
-                      (k, existingValue) -> {
-                        if (existingValue == null || existingValue.version < version) {
-                          cacheInsertCounter.labels(segment.getName()).inc();
-                          return new VersionedValue(value, version, false);
-                        }
-                        return existingValue;
-                      });
+          .asMap()
+          .compute(
+              wrapper,
+              (k, existingValue) -> {
+                if (existingValue == null || existingValue.version < version) {
+                  cacheInsertCounter.labels(segment.getName()).inc();
+                  return new VersionedValue(value, version, false);
+                }
+                return existingValue;
+              });
     }
   }
 
   @Override
   public void removeFromCache(
-          final SegmentIdentifier segment, final byte[] key, final long version) {
+      final SegmentIdentifier segment, final byte[] key, final long version) {
     final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
     if (cache != null) {
       final ByteArrayWrapper wrapper = new ByteArrayWrapper(key);
       cache
-              .asMap()
-              .compute(
-                      wrapper,
-                      (k, existingValue) -> {
-                        if (existingValue == null || existingValue.version < version) {
-                          cacheRemovalCounter.labels(segment.getName()).inc();
-                          return new VersionedValue(null, version, true);
-                        }
-                        return existingValue;
-                      });
+          .asMap()
+          .compute(
+              wrapper,
+              (k, existingValue) -> {
+                if (existingValue == null || existingValue.version < version) {
+                  cacheRemovalCounter.labels(segment.getName()).inc();
+                  return new VersionedValue(null, version, true);
+                }
+                return existingValue;
+              });
     }
   }
 
@@ -469,10 +468,10 @@ public class VersionedCacheManager implements CacheManager, Closeable {
 
   @Override
   public Optional<VersionedValue> getCachedValue(
-          final SegmentIdentifier segment, final byte[] key) {
+      final SegmentIdentifier segment, final byte[] key) {
     final Cache<ByteArrayWrapper, VersionedValue> cache = caches.get(segment);
     return cache != null
-            ? Optional.ofNullable(cache.getIfPresent(new ByteArrayWrapper(key)))
-            : Optional.empty();
+        ? Optional.ofNullable(cache.getIfPresent(new ByteArrayWrapper(key)))
+        : Optional.empty();
   }
 }
