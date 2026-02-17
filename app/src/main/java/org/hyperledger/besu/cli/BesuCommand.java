@@ -477,7 +477,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   @Option(
-      names = {"--sync-min-peers", "--fast-sync-min-peers"},
+      names = "--sync-min-peers",
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
           "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")

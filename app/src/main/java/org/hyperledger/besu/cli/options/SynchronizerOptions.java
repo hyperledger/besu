@@ -26,10 +26,13 @@ import java.util.List;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 /** The Synchronizer Cli options. */
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
+  private static final Logger logger = LoggerFactory.getLogger(SynchronizerOptions.class);
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
       "--Xsynchronizer-block-propagation-range";
   private static final String DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG =
@@ -87,6 +90,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
+
+  private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   private static final String SNAP_SYNC_SAVE_PRE_CHECKPOINT_HEADERS_ONLY_FLAG =
       "--snapsync-synchronizer-pre-checkpoint-headers-only-enabled";
@@ -320,6 +325,25 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       fallbackValue = "true",
       description = "Enable snap sync server capability. (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
+
+  @SuppressWarnings("UnusedVariable")
+  private Boolean checkpointPostMergeSyncEnabled = false;
+
+  @SuppressWarnings("unused")
+  @CommandLine.Option(
+      names = {CHECKPOINT_POST_MERGE_FLAG},
+      hidden = true,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      fallbackValue = "true",
+      description =
+          "DEPRECATED: This option is deprecated as CHECKPOINT sync mode has been replaced by SNAP. This option no longer has any effect.")
+  private void setCheckpointPostMergeSyncEnabled(final Boolean enabled) {
+    logger.warn(
+        "{} is deprecated and has no effect. CHECKPOINT sync mode has been replaced by SNAP.",
+        CHECKPOINT_POST_MERGE_FLAG);
+    this.checkpointPostMergeSyncEnabled = enabled;
+  }
 
   @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
