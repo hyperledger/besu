@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.ALL_ONES;
-import static org.hyperledger.besu.evm.operation.Shift256Operations.ZERO_32;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,7 +29,6 @@ class Shift256OperationsTest {
 
   @Test
   void constants_areCorrect() {
-    assertThat(ZERO_32).isEqualTo(Bytes32.ZERO);
     assertThat(ALL_ONES.size()).isEqualTo(32);
     assertThat(ALL_ONES.toHexString())
         .isEqualTo("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
