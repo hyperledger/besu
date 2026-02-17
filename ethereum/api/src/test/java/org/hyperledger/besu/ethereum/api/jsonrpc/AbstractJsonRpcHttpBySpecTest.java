@@ -50,7 +50,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
-  private static final boolean UPDATE_SPECS = true;
+  private static final boolean UPDATE_SPECS = Boolean.getBoolean("besu.test.update.specs");
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final Pattern GAS_MATCH_FOR_STATE_DIFF =
       Pattern.compile("\"balance\":(?!\"=\").*?},");
@@ -179,46 +179,47 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
     if (originalResponse != null && originalResponse.equals(actualResponse)) {
       return;
     }
-    // Read original source file to preserve its formatting
+    // Targeted replacement: find leaf value differences and replace in original text
     final String originalText = Files.readString(sourcePath, StandardCharsets.UTF_8);
-    // Preserve the original response field order (e.g. jsonrpc, result, id)
-    final JsonNode orderedResponse;
-    if (originalResponse != null && originalResponse.isObject() && actualResponse.isObject()) {
-      final ObjectNode ordered = objectMapper.createObjectNode();
-      originalResponse
-          .fieldNames()
-          .forEachRemaining(
-              field -> {
-                if (actualResponse.has(field)) {
-                  ordered.set(field, actualResponse.get(field));
-                }
-              });
-      actualResponse
-          .fieldNames()
-          .forEachRemaining(
-              field -> {
-                if (!ordered.has(field)) {
-                  ordered.set(field, actualResponse.get(field));
-                }
-              });
-      orderedResponse = ordered;
-    } else {
-      orderedResponse = actualResponse;
+    final List<String[]> replacements = new ArrayList<>();
+    collectLeafDifferences(originalResponse, actualResponse, replacements);
+    if (!replacements.isEmpty()) {
+      String updatedText = originalText;
+      for (final String[] pair : replacements) {
+        updatedText = updatedText.replace(pair[0], pair[1]);
+      }
+      Files.writeString(sourcePath, updatedText, StandardCharsets.UTF_8);
     }
-    specNode.set("response", orderedResponse);
-    // Detect original formatting style (space before colon or not)
-    final boolean spaceBeforeColon = originalText.contains("\" : ");
-    final ObjectMapper writer = new ObjectMapper();
-    writer.configure(INDENT_OUTPUT, true);
-    String json = writer.writerWithDefaultPrettyPrinter().writeValueAsString(specNode);
-    if (!spaceBeforeColon) {
-      json = json.replace("\" : ", "\": ");
+  }
+
+  private void collectLeafDifferences(
+      final JsonNode original, final JsonNode actual, final List<String[]> diffs) {
+    if (original == null || actual == null) {
+      return;
     }
-    // Preserve trailing newline if original had one
-    if (originalText.endsWith("\n") && !json.endsWith("\n")) {
-      json = json + "\n";
+    if (original.isObject() && actual.isObject()) {
+      final var fields = original.fieldNames();
+      while (fields.hasNext()) {
+        final String field = fields.next();
+        if (actual.has(field)) {
+          collectLeafDifferences(original.get(field), actual.get(field), diffs);
+        }
+      }
+    } else if (original.isArray() && actual.isArray()) {
+      for (int i = 0; i < Math.min(original.size(), actual.size()); i++) {
+        collectLeafDifferences(original.get(i), actual.get(i), diffs);
+      }
+    } else if (original.isValueNode() && actual.isValueNode() && !original.equals(actual)) {
+      // Skip differences that would be normalized to the same value during comparison
+      if (original.isTextual() && actual.isTextual()) {
+        final String normalizedOld = normalizeSpecificErrors(original.asText());
+        final String normalizedNew = normalizeSpecificErrors(actual.asText());
+        if (normalizedOld.equals(normalizedNew)) {
+          return;
+        }
+      }
+      diffs.add(new String[] {original.toString(), actual.toString()});
     }
-    Files.writeString(sourcePath, json, StandardCharsets.UTF_8);
   }
 
   private Path resolveSourcePath(final URL specFile) {
