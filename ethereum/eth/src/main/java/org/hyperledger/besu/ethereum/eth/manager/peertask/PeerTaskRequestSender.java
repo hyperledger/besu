@@ -16,26 +16,27 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.RequestManager.ResponseStream;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class PeerTaskRequestSender {
-  private static final long DEFAULT_TIMEOUT_MS = 5_000;
 
   private final long timeoutMs;
 
   public PeerTaskRequestSender() {
-    this.timeoutMs = DEFAULT_TIMEOUT_MS;
+    this.timeoutMs = NetworkingConfiguration.DEFAULT_P2P_PEER_TASK_TIMEOUT.toMillis();
   }
 
-  public PeerTaskRequestSender(final long timeoutMs) {
-    this.timeoutMs = timeoutMs;
+  public PeerTaskRequestSender(final Duration timeout) {
+    this.timeoutMs = timeout.toMillis();
   }
 
   public MessageData sendRequest(
