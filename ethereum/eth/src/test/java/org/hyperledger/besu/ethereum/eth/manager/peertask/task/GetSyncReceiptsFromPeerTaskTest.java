@@ -75,7 +75,15 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
   @Test
   public void testGetSubProtocol() {
-    final var task = createTask(List.of(), protocolSchedule);
+    final BlockHeader blockHeader = mockBlockHeader(1);
+    final TransactionReceipt receipt =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader.getReceiptsRoot()).thenReturn(BodyValidation.receiptsRoot(List.of(receipt)));
+    final SyncBlockBody syncBlockBody = mock(SyncBlockBody.class);
+    when(syncBlockBody.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock = new SyncBlock(blockHeader, syncBlockBody);
+
+    final var task = createTask(List.of(syncBlock), protocolSchedule);
     assertEquals(EthProtocol.get(), task.getSubProtocol());
   }
 
@@ -127,7 +135,15 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
   @Test
   public void testParseResponseWithNullResponseMessage() {
-    final var task = createTask(List.of(), protocolSchedule);
+    final BlockHeader blockHeader = mockBlockHeader(1);
+    final TransactionReceipt receipt =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader.getReceiptsRoot()).thenReturn(BodyValidation.receiptsRoot(List.of(receipt)));
+    final SyncBlockBody syncBlockBody = mock(SyncBlockBody.class);
+    when(syncBlockBody.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock = new SyncBlock(blockHeader, syncBlockBody);
+
+    final var task = createTask(List.of(syncBlock), protocolSchedule);
     Assertions.assertThrows(
         InvalidPeerTaskResponseException.class, () -> task.processResponse(null));
   }

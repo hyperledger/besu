@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
@@ -32,7 +34,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -51,6 +52,7 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTrans
       final List<SyncBlock> blocks,
       final ProtocolSchedule protocolSchedule,
       final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder) {
+    checkArgument(!blocks.isEmpty(), "Requested block list must not be empty");
     this.requestedBlocks = blocks;
     this.requestedHeaders = blocks.stream().map(SyncBlock::getHeader).toList();
 
@@ -99,28 +101,26 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTrans
   @Override
   public PeerTaskValidationResponse validateResult(
       final List<List<SyncTransactionReceipt>> result) {
-    if (!requestedBlocks.isEmpty()) {
-      if (result.isEmpty()) {
-        return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
-      }
+    if (result.isEmpty()) {
+      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
+    }
 
-      if (result.size() > requestedBlocks.size()) {
+    if (result.size() > requestedBlocks.size()) {
+      return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
+    }
+
+    for (int i = 0; i < result.size(); i++) {
+      final var requestedReceipts = requestedBlocks.get(i);
+      final var receivedReceiptsForBlock = result.get(i);
+
+      // verify that the receipts count is within bounds for every received block
+      if (receivedReceiptsForBlock.size() > requestedReceipts.getBody().getTransactionCount()) {
         return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
       }
 
-      for (int i = 0; i < result.size(); i++) {
-        final var requestedReceipts = requestedBlocks.get(i);
-        final var receivedReceiptsForBlock = result.get(i);
-
-        // verify that the receipts count is within bounds for every received block
-        if (receivedReceiptsForBlock.size() > requestedReceipts.getBody().getTransactionCount()) {
-          return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
-        }
-
-        // ensure the calculated receipts root matches the one in the requested block header
-        if (!receiptsRootMatches(requestedReceipts.getHeader(), receivedReceiptsForBlock)) {
-          return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
-        }
+      // ensure the calculated receipts root matches the one in the requested block header
+      if (!receiptsRootMatches(requestedReceipts.getHeader(), receivedReceiptsForBlock)) {
+        return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
       }
     }
 
