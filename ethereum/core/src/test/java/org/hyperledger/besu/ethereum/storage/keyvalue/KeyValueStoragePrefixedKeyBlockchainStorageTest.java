@@ -24,15 +24,27 @@ import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.assertVa
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.getSampleVariableValues;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateBlockchainStorage;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateVariablesStorage;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BlockchainStorage.Updater;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -115,5 +127,65 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
         () ->
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 kvBlockchain, variablesStorage, blockHeaderFunctions, false));
+  }
+
+  @Test
+  public void testUpdaterPutTransactionReceipts() {
+    populateBlockchainStorage(kvBlockchain, variableValues);
+
+    final var blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            kvBlockchain, variablesStorage, blockHeaderFunctions, false);
+
+    BlockDataGenerator generator = new BlockDataGenerator();
+    Hash blockHash = generator.hash();
+    List<TransactionReceipt> transactionReceipts = new ArrayList<>();
+    transactionReceipts.add(generator.receipt());
+    transactionReceipts.add(generator.receipt());
+    transactionReceipts.add(generator.receipt());
+    transactionReceipts.add(generator.receipt());
+
+    Updater updater = blockchainStorage.updater();
+    updater.putTransactionReceipts(blockHash, transactionReceipts);
+    updater.commit();
+
+    assertEquals(4, blockchainStorage.getTransactionReceipts(blockHash).get().size());
+  }
+
+  @Test
+  public void testUpdaterPutSyncTransactionReceipts() {
+    populateBlockchainStorage(kvBlockchain, variableValues);
+
+    final var blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            kvBlockchain, variablesStorage, blockHeaderFunctions, false);
+
+    BlockDataGenerator generator = new BlockDataGenerator();
+    SyncTransactionReceiptDecoder syncReceiptDecoder = new SyncTransactionReceiptDecoder();
+
+    Hash blockHash = generator.hash();
+    List<SyncTransactionReceipt> transactionReceipts = new ArrayList<>();
+    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+    TransactionReceiptEncoder.writeTo(
+        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
+    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
+    rlpOut = new BytesValueRLPOutput();
+    TransactionReceiptEncoder.writeTo(
+        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
+    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
+    rlpOut = new BytesValueRLPOutput();
+    TransactionReceiptEncoder.writeTo(
+        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
+    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
+    rlpOut = new BytesValueRLPOutput();
+    TransactionReceiptEncoder.writeTo(
+        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
+    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
+
+    Updater updater = blockchainStorage.updater();
+    updater.putSyncTransactionReceipts(blockHash, transactionReceipts);
+    updater.commit();
+
+    assertEquals(4, blockchainStorage.getTransactionReceipts(blockHash).get().size());
   }
 }
