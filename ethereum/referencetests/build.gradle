@@ -184,6 +184,24 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
+def customBlockchainReferenceTests = tasks.register("customBlockchainReferenceTests") {
+  final referenceTestsPath = "src/reference-test/resources/custom"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "custom",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/custom",
+    "CustomBlockchainReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.custom"
+    )
+}
+
 sourceSets {
   referenceTest {
     java {
@@ -196,14 +214,16 @@ sourceSets {
         executionSpecTests,
         executionSpecDevnetTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests
+        generalstateRegressionReferenceTests,
+        customBlockchainReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
         'src/reference-test/external-resources',
         'src/reference-test/templates',
         'build/execution-spec-tests/',
-        'build/execution-spec-devnet-tests/'
+        'build/execution-spec-devnet-tests/',
+        'src/reference-test/resources/custom'
     }
   }
 }
