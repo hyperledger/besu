@@ -68,7 +68,7 @@ public interface BlockchainStorage {
     /**
      * Puts the supplied TransactionReceipts in the database against the supplied block Hash
      *
-     * @param blockHash The block hash to store the receips against
+     * @param blockHash The block hash to store the receipts against
      * @param transactionReceipts The receipts to be stored
      */
     void putTransactionReceipts(Hash blockHash, List<TransactionReceipt> transactionReceipts);
@@ -77,7 +77,7 @@ public interface BlockchainStorage {
      * Puts the supplied SyncTransactionReceipts' rawRlp in the database against the supplied block
      * Hash. This is done for performance reasons during sync.
      *
-     * @param blockHash The block hash to store the receips against
+     * @param blockHash The block hash to store the receipts against
      * @param transactionReceipts The receipts to be stored
      */
     void putSyncTransactionReceipts(
