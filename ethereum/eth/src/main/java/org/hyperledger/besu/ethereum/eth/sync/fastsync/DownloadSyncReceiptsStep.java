@@ -35,6 +35,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,23 +49,25 @@ public class DownloadSyncReceiptsStep
     implements Function<List<SyncBlock>, CompletableFuture<List<SyncBlockWithReceipts>>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DownloadSyncReceiptsStep.class);
-  private static final Duration BASE_RETRY_DELAY = Duration.ofMillis(500);
-  private static final int MAX_RETRIES_ON_FAILURE = 5;
+  private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
   private static final AtomicInteger taskSequence = new AtomicInteger(0);
 
   private final ProtocolSchedule protocolSchedule;
   private final EthScheduler ethScheduler;
   private final PeerTaskExecutor peerTaskExecutor;
   private final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder;
+  private final Duration timeoutDuration;
 
   public DownloadSyncReceiptsStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder) {
+      final SyncTransactionReceiptEncoder syncTransactionReceiptEncoder,
+      final Duration timeoutDuration) {
     this.protocolSchedule = protocolSchedule;
     this.ethScheduler = ethContext.getScheduler();
     this.peerTaskExecutor = ethContext.getPeerTaskExecutor();
     this.syncTransactionReceiptEncoder = syncTransactionReceiptEncoder;
+    this.timeoutDuration = timeoutDuration;
   }
 
   @Override
@@ -74,10 +79,20 @@ public class DownloadSyncReceiptsStep
 
     return ethScheduler
         .scheduleServiceTask(
-            () ->
-                downloadReceipts(
-                    currTaskId, 0, MAX_RETRIES_ON_FAILURE, blocksToRequest, receiptsByRootHash))
-        .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
+            () -> downloadReceipts(currTaskId, 0, blocksToRequest, receiptsByRootHash))
+        .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts))
+        .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
+        .exceptionally(
+            throwable -> {
+              if (throwable instanceof TimeoutException) {
+                LOG.trace(
+                    "[{}] Timed out after {} ms while downloading receipts for {} blocks",
+                    currTaskId,
+                    timeoutDuration.toMillis(),
+                    blocks.size());
+              }
+              throw new CompletionException(throwable);
+            });
   }
 
   private List<SyncBlock> prepareRequest(final List<SyncBlock> blocks) {
@@ -119,7 +134,6 @@ public class DownloadSyncReceiptsStep
   private CompletableFuture<Map<Hash, List<SyncTransactionReceipt>>> downloadReceipts(
       final int currTaskId,
       final int prevIterations,
-      final int remainingRetriesOnFailure,
       final List<SyncBlock> blocksToRequest,
       final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash) {
 
@@ -172,43 +186,30 @@ public class DownloadSyncReceiptsStep
           receiptsByRootHash.put(requestedBlock.getHeader().getReceiptsRoot(), blockReceipts);
         }
 
+        // clearing the sublist also as the effect of removing the received blocks from the original
+        // list, this is intended since they are resolved now
         resolvedBlocks.clear();
       } else {
         LOG.atTrace()
             .setMessage(
-                "[{}:{}] Failed with {} to retrieve receipts for {} blocks (initial {}): {}. Remaining retries {}")
+                "[{}:{}] Failed with {} to retrieve receipts for {} blocks (initial {}): {}")
             .addArgument(currTaskId)
             .addArgument(iteration)
             .addArgument(responseCode)
             .addArgument(blocksToRequest::size)
             .addArgument(initialBlockCount)
             .addArgument(() -> formatBlockDetails(blocksToRequest))
-            .addArgument(remainingRetriesOnFailure)
             .log();
 
-        if (remainingRetriesOnFailure > 0) {
-          final int newRemainingRetriesOnFailure = remainingRetriesOnFailure - 1;
-          final Duration incrementalWaitTime =
-              BASE_RETRY_DELAY.multipliedBy(MAX_RETRIES_ON_FAILURE - newRemainingRetriesOnFailure);
-          LOG.trace(
-              "[{}:{}] Waiting for {} before retrying", currTaskId, iteration, incrementalWaitTime);
-          final int passIterations = iteration;
-          return ethScheduler.scheduleFutureTask(
-              () ->
-                  ethScheduler.scheduleServiceTask(
-                      () ->
-                          downloadReceipts(
-                              currTaskId,
-                              passIterations,
-                              newRemainingRetriesOnFailure,
-                              blocksToRequest,
-                              receiptsByRootHash)),
-              incrementalWaitTime);
-
-        } else {
-          return CompletableFuture.failedFuture(
-              new RuntimeException("Aborting after " + MAX_RETRIES_ON_FAILURE + " failures"));
-        }
+        LOG.trace("[{}:{}] Waiting for {} before retrying", currTaskId, iteration, RETRY_DELAY);
+        final int passIterations = iteration;
+        return ethScheduler.scheduleFutureTask(
+            () ->
+                ethScheduler.scheduleServiceTask(
+                    () ->
+                        downloadReceipts(
+                            currTaskId, passIterations, blocksToRequest, receiptsByRootHash)),
+            RETRY_DELAY);
       }
     }
     return CompletableFuture.completedFuture(receiptsByRootHash);
