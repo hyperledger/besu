@@ -26,6 +26,7 @@ import static org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecuto
 import static org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode.SUCCESS;
 import static org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode.TIMEOUT;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,14 +40,17 @@ import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +82,8 @@ public class DownloadSyncReceiptsStepTest {
     when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
 
     downloadSyncReceiptsStep =
-        new DownloadSyncReceiptsStep(protocolSchedule, ethContext, syncTransactionReceiptEncoder);
+        new DownloadSyncReceiptsStep(
+            protocolSchedule, ethContext, syncTransactionReceiptEncoder, Duration.ofMinutes(1));
   }
 
   @Test
@@ -349,33 +354,6 @@ public class DownloadSyncReceiptsStepTest {
   }
 
   @Test
-  public void shouldThrowExceptionAfterMaxRetriesExceeded() {
-    // Given: 1 block with transactions
-    final List<Block> blocks = gen.blockSequence(2).subList(1, 2);
-    final List<SyncBlock> syncBlocks = blocksToSyncBlocks(blocks);
-
-    // All calls return failure (6 failures total to exceed MAX_RETRIES_ON_FAILURE = 5)
-    final var failureResult =
-        new PeerTaskExecutorResult<List<List<SyncTransactionReceipt>>>(
-            Optional.empty(), TIMEOUT, emptyList());
-
-    when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
-        .thenReturn(failureResult);
-
-    // When: downloading receipts
-    final CompletableFuture<List<SyncBlockWithReceipts>> result =
-        downloadSyncReceiptsStep.apply(syncBlocks);
-
-    // Then: should throw RuntimeException after exhausting retries
-    assertThatThrownBy(result::get)
-        .hasCauseInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Aborting after 5 failures");
-
-    // Verify the task was executed 6 times (initial + 5 retries)
-    verify(peerTaskExecutor, times(6)).execute(any(GetSyncReceiptsFromPeerTask.class));
-  }
-
-  @Test
   public void shouldThrowIllegalStateExceptionWhenSuccessWithEmptyResult() {
     // Given: 1 block with transactions
     final List<Block> blocks = gen.blockSequence(2).subList(1, 2);
@@ -393,10 +371,12 @@ public class DownloadSyncReceiptsStepTest {
     final CompletableFuture<List<SyncBlockWithReceipts>> result =
         downloadSyncReceiptsStep.apply(syncBlocks);
 
-    // Then: should throw IllegalStateException
+    // Then: should throw IllegalStateException (wrapped in ExecutionException and
+    // CompletionException)
     assertThatThrownBy(result::get)
-        .hasCauseInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Task validation failure, it must flag empty result as failure");
+        .isInstanceOf(ExecutionException.class)
+        .hasRootCauseInstanceOf(IllegalStateException.class)
+        .hasRootCauseMessage("Task validation failure, it must flag empty result as failure");
 
     // Verify the task was executed once
     verify(peerTaskExecutor, times(1)).execute(any(GetSyncReceiptsFromPeerTask.class));
@@ -510,5 +490,49 @@ public class DownloadSyncReceiptsStepTest {
     // 2. Failure on remaining blocks
     // 3. Success on retry for remaining blocks
     verify(peerTaskExecutor, times(3)).execute(any(GetSyncReceiptsFromPeerTask.class));
+  }
+
+  @Test
+  public void shouldTimeoutAfterConfiguredDuration() throws Exception {
+    // Given: 1 block with transactions and a very short timeout
+    final List<Block> blocks = gen.blockSequence(2).subList(1, 2);
+    final List<SyncBlock> syncBlocks = blocksToSyncBlocks(blocks);
+
+    // Create a real EthScheduler (not deterministic) to test timeout behavior
+    final EthScheduler realScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final EthContext realEthContext = mock(EthContext.class);
+    when(realEthContext.getScheduler()).thenReturn(realScheduler);
+    when(realEthContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
+
+    try {
+      // Create a new instance with a very short timeout for testing (100ms)
+      final DownloadSyncReceiptsStep shortTimeoutStep =
+          new DownloadSyncReceiptsStep(
+              protocolSchedule,
+              realEthContext,
+              syncTransactionReceiptEncoder,
+              Duration.ofMillis(100));
+
+      // Mock continuous failures that would retry indefinitely without timeout
+      final var failureResult =
+          new PeerTaskExecutorResult<List<List<SyncTransactionReceipt>>>(
+              Optional.empty(), TIMEOUT, emptyList());
+
+      when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
+          .thenReturn(failureResult);
+
+      // When: downloading receipts with short timeout
+      final CompletableFuture<List<SyncBlockWithReceipts>> result =
+          shortTimeoutStep.apply(syncBlocks);
+
+      // Then: should timeout quickly with TimeoutException (wrapped in ExecutionException)
+      assertThatThrownBy(result::get)
+          .isInstanceOf(ExecutionException.class)
+          .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
+    } finally {
+      // Clean up the real scheduler
+      realScheduler.stop();
+      realScheduler.awaitStop();
+    }
   }
 }
