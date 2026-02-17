@@ -80,7 +80,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
@@ -113,7 +113,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
@@ -143,7 +143,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();
@@ -184,7 +184,7 @@ public final class RlpBlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .build();

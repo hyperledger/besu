@@ -412,7 +412,7 @@ public final class RunnerBuilderTest {
             .storageProvider(mock(KeyValueStorageProvider.class, RETURNS_DEEP_STUBS))
             .rpcEndpointService(new RpcEndpointServiceImpl())
             .besuPluginContext(mock(BesuPluginContextImpl.class))
-            .networkingConfiguration(NetworkingConfiguration.create())
+            .networkingConfiguration(NetworkingConfiguration.DEFAULT)
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .transactionValidatorService(mock(TransactionValidatorServiceImpl.class))
             .build();
