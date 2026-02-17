@@ -25,6 +25,7 @@ import org.immutables.value.Value;
 public interface NetworkingConfiguration {
   Duration DEFAULT_INITIATE_CONNECTIONS_FREQUENCY = Duration.ofSeconds(30);
   Duration DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY = Duration.ofSeconds(60);
+  Duration DEFAULT_P2P_PEER_TASK_TIMEOUT = Duration.ofSeconds(5);
   boolean DEFAULT_FILTER_ON_ENR_FORK_ID = true;
 
   NetworkingConfiguration DEFAULT = ImmutableNetworkingConfiguration.builder().build();
@@ -47,6 +48,11 @@ public interface NetworkingConfiguration {
   @Value.Default
   default Duration checkMaintainedConnectionsFrequency() {
     return DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY;
+  }
+
+  @Value.Default
+  default Duration p2pPeerTaskTimeout() {
+    return DEFAULT_P2P_PEER_TASK_TIMEOUT;
   }
 
   Optional<String> dnsDiscoveryServerOverride();
