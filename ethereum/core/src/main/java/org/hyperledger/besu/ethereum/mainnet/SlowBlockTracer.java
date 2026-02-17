@@ -176,6 +176,8 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
         if (metricsTracer != null) {
           executionStats.collectMetricsFromTracer(metricsTracer);
         }
+        // Use block header's gas_used (post-refund) instead of accumulated pre-refund gas
+        executionStats.setGasUsed(blockHeader.getGasUsed());
         // End execution timing
         executionStats.endExecution();
 

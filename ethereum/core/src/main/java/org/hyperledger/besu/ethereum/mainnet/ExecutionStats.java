@@ -172,6 +172,16 @@ public class ExecutionStats implements StateMetricsCollector {
     gasUsed += gas;
   }
 
+  /**
+   * Sets the gas used (overwriting any accumulated value). Used to set the authoritative value from
+   * the block header.
+   *
+   * @param gas the gas used
+   */
+  public void setGasUsed(final long gas) {
+    gasUsed = gas;
+  }
+
   /** Increments transaction count. */
   public void incrementTransactionCount() {
     transactionCount++;
