@@ -32,6 +32,7 @@ public interface CacheManager {
 
   CacheManager EMPTY_CACHE = new CacheManager() {};
 
+
   default long getCurrentVersion() {
     return 0;
   }
@@ -42,6 +43,10 @@ public interface CacheManager {
 
   default void clear(final SegmentIdentifier segment) {
     // No-op
+  }
+
+  default void performMaintenance(){
+   // No-op
   }
 
   default Optional<Bytes> getFromCacheOrStorage(

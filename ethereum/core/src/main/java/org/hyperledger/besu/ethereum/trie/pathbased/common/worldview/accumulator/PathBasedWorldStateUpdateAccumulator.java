@@ -357,7 +357,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
