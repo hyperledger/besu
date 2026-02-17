@@ -37,10 +37,14 @@ import java.util.stream.Collectors;
 import com.google.common.net.InetAddresses;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 /** Command line options for configuring P2P discovery on the node. */
 public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(P2PDiscoveryOptions.class);
 
   /** Functional interface for checking if a network interface is available. */
   @FunctionalInterface
@@ -257,6 +261,8 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
 
   @Override
   public P2PDiscoveryConfiguration toDomainObject() {
+    applySmartDefaults();
+
     return new P2PDiscoveryConfiguration(
         p2pEnabled,
         peerDiscoveryEnabled,
@@ -276,6 +282,36 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         bootNodes,
         discoveryDnsUrl,
         outboundIpVersionPreference);
+  }
+
+  /**
+   * Applies smart defaults for IPv6 dual-stack configuration.
+   *
+   * <p>If --p2p-host-ipv6 is specified but --p2p-interface-ipv6 is not, automatically sets
+   * --p2p-interface-ipv6 to :: (listen on all IPv6 interfaces). This matches the IPv4 behavior
+   * where --p2p-interface defaults to 0.0.0.0.
+   *
+   * <p>Logs a warning if --p2p-interface-ipv6 is specified without --p2p-host-ipv6, as this creates
+   * an incomplete dual-stack configuration where the node listens on IPv6 but doesn't advertise an
+   * IPv6 address in its ENR.
+   */
+  private void applySmartDefaults() {
+    // Auto-set IPv6 interface to listen on all IPv6 addresses when IPv6 host is specified
+    if (p2pHostIpv6 != null && p2pInterfaceIpv6 == null) {
+      p2pInterfaceIpv6 = NetworkUtility.INADDR6_ANY;
+      LOG.info(
+          "Auto-setting --p2p-interface-ipv6={} because --p2p-host-ipv6 was specified. "
+              + "To use a different interface, explicitly set --p2p-interface-ipv6.",
+          NetworkUtility.INADDR6_ANY);
+    }
+
+    // Warn about incomplete dual-stack configuration
+    if (p2pInterfaceIpv6 != null && p2pHostIpv6 == null) {
+      LOG.warn(
+          "--p2p-interface-ipv6 specified without --p2p-host-ipv6. "
+              + "Node will listen on IPv6 but will not advertise IPv6 address in ENR. "
+              + "For full dual-stack support, specify --p2p-host-ipv6.");
+    }
   }
 
   /**
