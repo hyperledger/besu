@@ -915,7 +915,7 @@ task distDocker(type: Exec) {
     dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
   }
   def gitDetails = getGitCommitDetails(7)
-  args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
+  args "-c", "docker build ${dockerPlatform} --provenance=false --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
 }
 
 tasks.register("downloadGossBinaries") {
