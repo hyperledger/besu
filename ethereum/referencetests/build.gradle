@@ -199,7 +199,7 @@ def customBlockchainReferenceTests = tasks.register("customBlockchainReferenceTe
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/custom",
     "CustomBlockchainReferenceTest",
     "org.hyperledger.besu.ethereum.vm.custom"
-  )
+    )
 }
 
 sourceSets {
