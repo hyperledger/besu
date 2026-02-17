@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.operation.Shift256Operations.ALL_ONES;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.ALL_ONES_BYTES;
-import static org.hyperledger.besu.evm.operation.Shift256Operations.ZERO_32;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
 
 import org.hyperledger.besu.evm.EVM;
@@ -69,7 +68,7 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
 
     // shift >= 256, push All 1s if negative, All 0s otherwise
     if (isShiftOverflow(shiftBytes)) {
-      frame.pushStackItem(negative ? ALL_ONES : ZERO_32);
+      frame.pushStackItem(negative ? ALL_ONES : Bytes.EMPTY);
       return sarSuccess;
     }
     final int shift = shiftBytes.length == 0 ? 0 : (shiftBytes[shiftBytes.length - 1] & 0xFF);

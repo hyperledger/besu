@@ -316,6 +316,36 @@ public class SarOperationPropertyBasedTest {
     assertThat(Bytes32.leftPad(originalResult)).isEqualTo(Bytes32.ZERO);
   }
 
+  @Property(tries = 3000)
+  void property_sarOptimized_matchesOriginal_negativeValues_shift255(
+      @ForAll("negativeValues") final byte[] valueBytes) {
+
+    final Bytes value = Bytes.wrap(valueBytes);
+    final Bytes shift = Bytes.of(255);
+
+    final Bytes originalResult = runSarOperation(shift, value);
+    final Bytes optimizedResult = runSarOperationOptimized(shift, value);
+
+    assertThat(Bytes32.leftPad(optimizedResult))
+        .as("SAR negative shift=255 mismatch for value=%s", value.toHexString())
+        .isEqualTo(Bytes32.leftPad(originalResult));
+  }
+
+  @Property(tries = 3000)
+  void property_sarOptimized_matchesOriginal_positiveValues_shift255(
+      @ForAll("positiveValues") final byte[] valueBytes) {
+
+    final Bytes value = Bytes.wrap(valueBytes);
+    final Bytes shift = Bytes.of(255);
+
+    final Bytes originalResult = runSarOperation(shift, value);
+    final Bytes optimizedResult = runSarOperationOptimized(shift, value);
+
+    assertThat(Bytes32.leftPad(optimizedResult))
+        .as("SAR positive shift=255 mismatch for value=%s", value.toHexString())
+        .isEqualTo(Bytes32.leftPad(originalResult));
+  }
+
   // endregion
 
   // region Helper Methods

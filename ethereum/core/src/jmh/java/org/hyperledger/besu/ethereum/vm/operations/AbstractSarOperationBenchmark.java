@@ -147,7 +147,7 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
         case FULL_RANDOM:
         default:
           // Original random behavior
-          final byte[] shift = new byte[1 + random.nextInt(4)];
+          final byte[] shift = new byte[1 + random.nextInt(2)];
           final byte[] value = new byte[1 + random.nextInt(32)];
           random.nextBytes(shift);
           random.nextBytes(value);

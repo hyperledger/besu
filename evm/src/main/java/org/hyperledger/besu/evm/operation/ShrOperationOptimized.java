@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.operation.Shift256Operations.ZERO_32;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
 
 import org.hyperledger.besu.evm.EVM;
@@ -60,7 +59,7 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
     final Bytes shiftAmount = frame.popStackItem();
     final Bytes value = frame.popStackItem();
     if (value.isZero()) {
-      frame.pushStackItem(ZERO_32);
+      frame.pushStackItem(Bytes.EMPTY);
       return shrSuccess;
     }
 
@@ -69,7 +68,7 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
 
     // shift >= 256, push All 0s
     if (isShiftOverflow(shiftBytes)) {
-      frame.pushStackItem(ZERO_32);
+      frame.pushStackItem(Bytes.EMPTY);
       return shrSuccess;
     }
 

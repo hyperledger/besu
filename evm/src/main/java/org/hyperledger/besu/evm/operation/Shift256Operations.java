@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import java.util.Arrays;
+
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Utility class for shared constants and helpers used by optimized 256-bit shift operations (SHL,
@@ -23,8 +24,8 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public final class Shift256Operations {
 
-  /** Zero value (32 zero bytes). */
-  public static final Bytes ZERO_32 = Bytes32.ZERO;
+  /** An array of 31 0 bytes */
+  private static final byte[] ZERO_31 = new byte[31];
 
   /** All ones (0xFF repeated 32 times). */
   public static final Bytes ALL_ONES = Bytes.repeat((byte) 0xFF, 32);
@@ -45,9 +46,8 @@ public final class Shift256Operations {
    * @return {@code true} if the shift amount is >= 256, {@code false} otherwise
    */
   public static boolean isShiftOverflow(final byte[] shiftBytes) {
-    for (int i = 0; i < shiftBytes.length - 1; i++) {
-      if (shiftBytes[i] != 0) return true;
-    }
-    return false;
+    final int len = shiftBytes.length - 1;
+    if (len <= 0) return false;
+    return !Arrays.equals(shiftBytes, 0, len, ZERO_31, 0, len);
   }
 }

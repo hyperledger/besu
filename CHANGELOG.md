@@ -40,12 +40,12 @@
 - Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 - Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9642](https://github.com/hyperledger/besu/pull/9642). Thanks to [@JukLee0ira](https://github.com/JukLee0ira).
 - Update assertj to v3.27.7 [#9710](https://github.com/hyperledger/besu/pull/9710)
-- Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 - Update vertx to 4.5.24 [#9645](https://github.com/hyperledger/besu/pull/9645)
 - Add byte-level metrics for P2P message exchange [#9666](https://github.com/hyperledger/besu/pull/9666)
 
 #### Performance
 - EVM optimisations - Improves 70% of EEST benchmarks [#9775](https://github.com/hyperledger/besu/pull/9775)
+- EVM optimisations - Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 
 ### Bug fixes
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
