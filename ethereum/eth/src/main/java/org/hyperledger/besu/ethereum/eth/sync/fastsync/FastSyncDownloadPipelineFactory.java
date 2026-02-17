@@ -146,7 +146,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadSyncReceiptsStep(
             protocolSchedule,
             ethContext,
-            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()),
+            java.time.Duration.ofMillis(syncConfig.getReceiptsDownloadStepTimeoutMillis()));
     final BlockHeader pivotBlockHeader =
         fastSyncState
             .getPivotBlockHeader()
