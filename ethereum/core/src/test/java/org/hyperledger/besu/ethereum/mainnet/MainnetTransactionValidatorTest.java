@@ -580,6 +580,56 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   }
 
   @Test
+  public void shouldAcceptInitcodeAtAmsterdamLimit() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            0x10000);
+
+    var transaction =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(0x10000)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(
+            transaction, Optional.empty(), Optional.empty(), transactionProcessingParams);
+
+    assertThat(validationResult.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldRejectInitcodeAboveAmsterdamLimit() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            0x10000);
+
+    var transaction =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(0x10001)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(
+            transaction, Optional.empty(), Optional.empty(), transactionProcessingParams);
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INITCODE_TOO_LARGE);
+  }
+
+  @Test
   public void shouldRejectContractCreateWithBlob() {
     /*
     https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#blob-transaction
