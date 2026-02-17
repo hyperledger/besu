@@ -191,7 +191,8 @@ public class SnapSyncChainDownloadPipelineFactory {
         new DownloadSyncReceiptsStep(
             protocolSchedule,
             ethContext,
-            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()),
+            java.time.Duration.ofMillis(syncConfig.getReceiptsDownloadStepTimeoutMillis()));
 
     final ImportSyncBlocksStep importBlocksStep =
         new ImportSyncBlocksStep(
