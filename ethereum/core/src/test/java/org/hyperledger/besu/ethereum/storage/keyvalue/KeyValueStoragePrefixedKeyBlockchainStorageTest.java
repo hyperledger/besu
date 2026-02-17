@@ -24,8 +24,6 @@ import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.assertVa
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.getSampleVariableValues;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateBlockchainStorage;
 import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populateVariablesStorage;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -48,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -122,7 +121,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
     // create and inconsistency putting a different chain head in variables storage
     variableValues.put(CHAIN_HEAD_HASH, SAMPLE_CHAIN_HEAD.getBytes().shiftLeft(1));
     populateVariablesStorage(kvVariables, variableValues);
-    assertThrows(
+    Assertions.assertThrows(
         IllegalStateException.class,
         () ->
             new KeyValueStoragePrefixedKeyBlockchainStorage(
@@ -149,7 +148,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
     updater.putTransactionReceipts(blockHash, transactionReceipts);
     updater.commit();
 
-    assertEquals(4, blockchainStorage.getTransactionReceipts(blockHash).get().size());
+    List<TransactionReceipt> loadedReceipts =
+        blockchainStorage.getTransactionReceipts(blockHash).get();
+    Assertions.assertEquals(4, loadedReceipts.size());
+    Assertions.assertTrue(loadedReceipts.containsAll(transactionReceipts));
   }
 
   @Test
@@ -164,28 +166,29 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
     SyncTransactionReceiptDecoder syncReceiptDecoder = new SyncTransactionReceiptDecoder();
 
     Hash blockHash = generator.hash();
-    List<SyncTransactionReceipt> transactionReceipts = new ArrayList<>();
-    BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
-    TransactionReceiptEncoder.writeTo(
-        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
-    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
-    rlpOut = new BytesValueRLPOutput();
-    TransactionReceiptEncoder.writeTo(
-        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
-    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
-    rlpOut = new BytesValueRLPOutput();
-    TransactionReceiptEncoder.writeTo(
-        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
-    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
-    rlpOut = new BytesValueRLPOutput();
-    TransactionReceiptEncoder.writeTo(
-        generator.receipt(), rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
-    transactionReceipts.add(syncReceiptDecoder.decode(rlpOut.encoded()));
+    List<TransactionReceipt> transactionReceipts = new ArrayList<>();
+    transactionReceipts.add(generator.receipt());
+    transactionReceipts.add(generator.receipt());
+    transactionReceipts.add(generator.receipt());
+    transactionReceipts.add(generator.receipt());
+    List<SyncTransactionReceipt> syncReceipts =
+        transactionReceipts.stream()
+            .map(
+                (tr) -> {
+                  BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
+                  TransactionReceiptEncoder.writeTo(
+                      tr, rlpOut, TransactionReceiptEncodingConfiguration.DEFAULT);
+                  return syncReceiptDecoder.decode(rlpOut.encoded());
+                })
+            .toList();
 
     Updater updater = blockchainStorage.updater();
-    updater.putSyncTransactionReceipts(blockHash, transactionReceipts);
+    updater.putSyncTransactionReceipts(blockHash, syncReceipts);
     updater.commit();
 
-    assertEquals(4, blockchainStorage.getTransactionReceipts(blockHash).get().size());
+    List<TransactionReceipt> loadedReceipts =
+        blockchainStorage.getTransactionReceipts(blockHash).get();
+    Assertions.assertEquals(4, loadedReceipts.size());
+    Assertions.assertTrue(loadedReceipts.containsAll(transactionReceipts));
   }
 }
