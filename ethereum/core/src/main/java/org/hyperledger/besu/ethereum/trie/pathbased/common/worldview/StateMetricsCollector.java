@@ -23,6 +23,12 @@ package org.hyperledger.besu.ethereum.trie.pathbased.common.worldview;
  */
 public interface StateMetricsCollector {
 
+  /** Increments the account read counter. */
+  void incrementAccountReads();
+
+  /** Increments the storage read counter. */
+  void incrementStorageReads();
+
   /** Increments the account write counter. */
   void incrementAccountWrites();
 
@@ -48,6 +54,12 @@ public interface StateMetricsCollector {
   /** A no-op implementation that discards all metrics. */
   StateMetricsCollector NOOP =
       new StateMetricsCollector() {
+        @Override
+        public void incrementAccountReads() {}
+
+        @Override
+        public void incrementStorageReads() {}
+
         @Override
         public void incrementAccountWrites() {}
 

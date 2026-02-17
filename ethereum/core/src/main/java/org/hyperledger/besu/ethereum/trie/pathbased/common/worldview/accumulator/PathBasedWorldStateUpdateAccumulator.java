@@ -317,6 +317,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
           account = worldStateUpdateAccumulator.loadAccount(address, accountFunction);
         } else {
           account = wrappedWorldView().get(address);
+          getStateMetricsCollector().incrementAccountReads();
         }
         if (account instanceof PathBasedAccount pathBasedAccount) {
           ACCOUNT mutableAccount = copyAccount((ACCOUNT) pathBasedAccount, this, true);
@@ -557,6 +558,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
           (wrappedWorldView() instanceof PathBasedWorldState worldState)
               ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
               : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+      getStateMetricsCollector().incrementStorageReads();
       storageToUpdate
           .computeIfAbsent(
               address,

@@ -179,11 +179,13 @@ public class ExecutionStats implements StateMetricsCollector {
   // State read methods
 
   /** Increments account read counter. */
+  @Override
   public void incrementAccountReads() {
     accountReads++;
   }
 
   /** Increments storage read counter. */
+  @Override
   public void incrementStorageReads() {
     storageReads++;
   }

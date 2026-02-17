@@ -283,6 +283,11 @@ class ExecutionStatsIntegrationTest {
     // Then: SLOAD should be tracked via the EVM tracer
     assertThat(stats.getSloadCount()).as("getSlot1 should execute SLOAD").isGreaterThanOrEqualTo(1);
 
+    // Storage reads should be tracked when SLOAD fetches from state (cache miss)
+    assertThat(stats.getStorageReads())
+        .as("getSlot1 should read from storage state")
+        .isGreaterThanOrEqualTo(1);
+
     // Code reads are tracked when contract code is loaded for execution
     assertThat(stats.getCodeReads())
         .as("Calling contract should read code for execution")
@@ -306,6 +311,11 @@ class ExecutionStatsIntegrationTest {
     processTransaction(balanceCheckTx);
     collectStats();
 
+    // Account reads should be tracked (BALANCE opcode triggers account load from state)
+    assertThat(stats.getAccountReads())
+        .as("BALANCE opcode should trigger account reads from state")
+        .isGreaterThanOrEqualTo(1);
+
     // Code reads are tracked when contract code is loaded for execution
     assertThat(stats.getCodeReads())
         .as("Calling contract should read code for execution")
@@ -322,13 +332,14 @@ class ExecutionStatsIntegrationTest {
   void shouldTrackMetricsForContractCall() {
     // Given: A transaction that calls transferTo(address, amount) which uses CALL internally
     // First, send some ETH to the contract so it has balance to transfer
+    // Gas limit must exceed 21000 because CONTRACT_ADDRESS has code (receive/fallback executes)
     Transaction fundContractTx =
         Transaction.builder()
             .type(TransactionType.EIP1559)
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(0))
             .maxFeePerGas(Wei.of(7))
-            .gasLimit(21000L)
+            .gasLimit(100_000L)
             .to(CONTRACT_ADDRESS)
             .value(Wei.of(1_000_000_000_000_000_000L)) // 1 ETH
             .payload(Bytes.EMPTY)
@@ -351,8 +362,10 @@ class ExecutionStatsIntegrationTest {
     collectStats();
 
     // Then: Contract execution metrics should be tracked
-    // TODO: Account reads tracking not yet instrumented in state layer
-    // (CALL target address check, BALANCE opcode etc. will be added in a follow-up)
+    // Account reads should be tracked (CALL target address lookup triggers state read)
+    assertThat(stats.getAccountReads())
+        .as("Contract CALL should trigger account reads from state")
+        .isGreaterThanOrEqualTo(1);
 
     // Note: Code reads are NOT expected here because the contract code was already
     // loaded during the funding transaction above. This is correct geth-parity behavior:
