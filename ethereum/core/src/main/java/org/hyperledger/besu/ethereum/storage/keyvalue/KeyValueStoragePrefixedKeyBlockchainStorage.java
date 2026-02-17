@@ -67,7 +67,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   private static final Bytes TOTAL_DIFFICULTY_PREFIX = Bytes.of(6);
   private static final Bytes TRANSACTION_LOCATION_PREFIX = Bytes.of(7);
   private static final Bytes BLOCK_ACCESS_LIST_PREFIX = Bytes.of(8);
-  private static final SimpleNoCopyRlpEncoder SIMPLE_RLP_ENCODER = new SimpleNoCopyRlpEncoder();
+  private static final SimpleNoCopyRlpEncoder NO_COPY_RLP_ENCODER = new SimpleNoCopyRlpEncoder();
 
   final KeyValueStorage blockchainStorage;
   final VariablesStorage variablesStorage;
@@ -364,7 +364,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       set(
           TRANSACTION_RECEIPTS_PREFIX,
           blockHash.getBytes(),
-          SIMPLE_RLP_ENCODER.encodeList(
+          NO_COPY_RLP_ENCODER.encodeList(
               transactionReceipts.stream().map(SyncTransactionReceipt::getRlpBytes).toList()));
     }
 
