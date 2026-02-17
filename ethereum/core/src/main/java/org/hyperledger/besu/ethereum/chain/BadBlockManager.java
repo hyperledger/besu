@@ -40,6 +40,8 @@ public class BadBlockManager {
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Cache<Hash, Hash> latestValidHashes =
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+  private final Cache<Hash, BlockAccessList> blockAccessLists =
+      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Cache<Hash, BlockAccessList> generatedBlockAccessLists =
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Subscribers<BadBlockListener> badBlockSubscribers = Subscribers.create(true);
@@ -51,15 +53,17 @@ public class BadBlockManager {
    * @param cause the cause detailing why the block is considered invalid
    */
   public void addBadBlock(final Block badBlock, final BadBlockCause cause) {
-    addBadBlock(badBlock, cause, Optional.empty());
+    addBadBlock(badBlock, cause, Optional.empty(), Optional.empty());
   }
 
   public void addBadBlock(
       final Block badBlock,
       final BadBlockCause cause,
+      final Optional<BlockAccessList> blockAccessList,
       final Optional<BlockAccessList> generatedBlockAccessList) {
     LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
     this.badBlocks.put(badBlock.getHash(), badBlock);
+    blockAccessList.ifPresent(bal -> this.blockAccessLists.put(badBlock.getHash(), bal));
     generatedBlockAccessList.ifPresent(
         bal -> this.generatedBlockAccessLists.put(badBlock.getHash(), bal));
     badBlockSubscribers.forEach(s -> s.onBadBlockAdded(badBlock.getHeader(), cause));
@@ -69,6 +73,7 @@ public class BadBlockManager {
     this.badBlocks.invalidateAll();
     this.badHeaders.invalidateAll();
     this.latestValidHashes.invalidateAll();
+    this.blockAccessLists.invalidateAll();
     this.generatedBlockAccessLists.invalidateAll();
   }
 
@@ -116,6 +121,10 @@ public class BadBlockManager {
 
   public Optional<BlockAccessList> getGeneratedBlockAccessList(final Hash blockHash) {
     return Optional.ofNullable(generatedBlockAccessLists.getIfPresent(blockHash));
+  }
+
+  public Optional<BlockAccessList> getBlockAccessList(final Hash blockHash) {
+    return Optional.ofNullable(blockAccessLists.getIfPresent(blockHash));
   }
 
   public long subscribeToBadBlocks(final BadBlockListener listener) {

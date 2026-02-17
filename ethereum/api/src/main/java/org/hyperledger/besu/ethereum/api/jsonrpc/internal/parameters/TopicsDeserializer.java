@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static java.util.Collections.singletonList;
 
-import org.hyperledger.besu.evm.log.LogTopic;
+import org.hyperledger.besu.datatypes.LogTopic;
 
 import java.io.IOException;
 import java.util.List;

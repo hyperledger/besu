@@ -28,12 +28,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineE
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetClientVersionV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV3;
@@ -254,6 +257,12 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 engineQosTimer,
                 protocolSchedule));
         executionEngineApisSupported.add(
+            new EngineGetPayloadBodiesByHashV2(
+                consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer));
+        executionEngineApisSupported.add(
+            new EngineGetPayloadBodiesByRangeV2(
+                consensusEngineServer, protocolContext, blockResultFactory, engineQosTimer));
+        executionEngineApisSupported.add(
             new EngineNewPayloadV5(
                 consensusEngineServer,
                 protocolSchedule,
@@ -262,6 +271,13 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 ethPeers,
                 engineQosTimer,
                 metricsSystem));
+        executionEngineApisSupported.add(
+            new EngineForkchoiceUpdatedV4(
+                consensusEngineServer,
+                protocolSchedule,
+                protocolContext,
+                mergeCoordinator.get(),
+                engineQosTimer));
       }
 
       return mapOf(executionEngineApisSupported);

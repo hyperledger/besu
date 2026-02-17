@@ -28,6 +28,11 @@ jar {
   }
 }
 
+tasks.withType(AbstractArchiveTask).configureEach {
+  archiveVersion = ''
+  archiveBaseName = 'testPlugins'
+}
+
 spotless {
   java {
     // This path needs to be relative to each project
@@ -56,8 +61,14 @@ def preparePlugins = tasks.register('preparePlugins', GradleBuild) {
   tasks = ['prepareDetachedTestPlugins']
 }
 
-tasks.withType(JavaCompile).configureEach {
-  dependsOn preparePlugins
+def isInvokedByEncloserProject = project.hasProperty('invokeByEncloserProject') && project.property('invokeByEncloserProject').toBoolean()
+
+allprojects {
+  tasks.withType(JavaCompile).configureEach {
+    if (!isInvokedByEncloserProject) {
+      dependsOn preparePlugins
+    }
+  }
 }
 
 def getBesuVersion() {

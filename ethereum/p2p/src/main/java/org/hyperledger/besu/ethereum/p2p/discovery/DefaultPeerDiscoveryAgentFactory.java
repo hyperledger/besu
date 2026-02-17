@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentFactoryV4;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv5.PeerDiscoveryAgentFactoryV5;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -51,7 +52,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
         new ForkIdManager(blockchain, blockNumberForks, timestampForks);
 
     this.delegate =
-        new PeerDiscoveryAgentFactoryV4(
+        createPeerDiscoveryAgentFactory(
             vertx,
             nodeKey,
             config,
@@ -60,6 +61,30 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
             metricsSystem,
             storageProvider,
             forkIdManager);
+  }
+
+  private static PeerDiscoveryAgentFactory createPeerDiscoveryAgentFactory(
+      final Vertx vertx,
+      final NodeKey nodeKey,
+      final NetworkingConfiguration config,
+      final PeerPermissions peerPermissions,
+      final NatService natService,
+      final MetricsSystem metricsSystem,
+      final StorageProvider storageProvider,
+      final ForkIdManager forkIdManager) {
+    if (config.discoveryConfiguration().isDiscoveryV5Enabled()) {
+      return new PeerDiscoveryAgentFactoryV5(
+          nodeKey, config, natService, storageProvider, forkIdManager);
+    }
+    return new PeerDiscoveryAgentFactoryV4(
+        vertx,
+        nodeKey,
+        config,
+        peerPermissions,
+        natService,
+        metricsSystem,
+        storageProvider,
+        forkIdManager);
   }
 
   @Override

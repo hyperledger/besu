@@ -29,7 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthEstimateGas
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthFeeHistory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGasPrice;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBalance;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockAccessListByNumber;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockAccessList;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockByNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetBlockReceipts;
@@ -183,9 +183,9 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 miningConfiguration,
                 apiConfiguration));
     if (balConfiguration.isBalApiEnabled()) {
-      final EthGetBlockAccessListByNumber method =
-          new EthGetBlockAccessListByNumber(blockchainQueries);
-      map.put(method.getName(), method);
+      final EthGetBlockAccessList blockAccessListMethod =
+          new EthGetBlockAccessList(blockchainQueries);
+      map.put(blockAccessListMethod.getName(), blockAccessListMethod);
     }
     return map;
   }

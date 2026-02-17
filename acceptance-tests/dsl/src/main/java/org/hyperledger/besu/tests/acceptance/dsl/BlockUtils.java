@@ -18,14 +18,15 @@ import static org.hyperledger.besu.datatypes.Hash.fromHexString;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
 public class BlockUtils {
@@ -51,8 +52,9 @@ public class BlockUtils {
         block.getTimestamp().longValue(),
         Bytes.fromHexString(block.getExtraData()),
         null,
-        mixHash,
+        Bytes32.wrap(mixHash.getBytes()),
         new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
+        null,
         null,
         null,
         null,

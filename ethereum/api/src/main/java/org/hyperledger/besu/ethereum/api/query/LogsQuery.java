@@ -18,10 +18,10 @@ import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TopicsDeserializer;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +62,7 @@ public class LogsQuery {
             : emptyList();
     this.addressBlooms =
         this.addresses.stream()
-            .map(address -> LogsBloomFilter.builder().insertBytes(address).build())
+            .map(address -> LogsBloomFilter.builder().insertBytes(address.getBytes()).build())
             .collect(toUnmodifiableList());
     this.topicsBlooms =
         this.topics.stream()
@@ -70,7 +70,9 @@ public class LogsQuery {
                 subTopics ->
                     subTopics.stream()
                         .filter(Objects::nonNull)
-                        .map(logTopic -> LogsBloomFilter.builder().insertBytes(logTopic).build())
+                        .map(
+                            logTopic ->
+                                LogsBloomFilter.builder().insertBytes(logTopic.getBytes()).build())
                         .collect(Collectors.toList()))
             .collect(toUnmodifiableList());
   }

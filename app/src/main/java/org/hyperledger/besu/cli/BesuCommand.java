@@ -45,7 +45,6 @@ import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.BalConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
-import org.hyperledger.besu.cli.options.DebugTracerOptions;
 import org.hyperledger.besu.cli.options.DnsOptions;
 import org.hyperledger.besu.cli.options.EngineRPCConfiguration;
 import org.hyperledger.besu.cli.options.EngineRPCOptions;
@@ -119,6 +118,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
@@ -325,7 +325,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final IpcOptions unstableIpcOptions = IpcOptions.create();
   private final ChainPruningOptions unstableChainPruningOptions = ChainPruningOptions.create();
   private final QBFTOptions unstableQbftOptions = QBFTOptions.create();
-  private final DebugTracerOptions unstableDebugTracerOptions = DebugTracerOptions.create();
 
   // stable CLI options
   final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
@@ -963,7 +962,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu");
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
+      vertx = createVertx(besuComponent.getMetricsSystem());
 
       validateOptions();
 
@@ -1250,7 +1249,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .put("IPC Options", unstableIpcOptions)
             .put("Chain Data Pruning Options", unstableChainPruningOptions)
             .put("QBFT Options", unstableQbftOptions)
-            .put("Debug Tracer Options", unstableDebugTracerOptions)
             .build();
 
     UnstableOptionsSubCommand.createUnstableOptions(commandLine, unstableOptions);
@@ -1646,30 +1644,66 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateChainDataPruningParams() {
-    Long chainDataPruningBlocksRetained =
-        unstableChainPruningOptions.getChainDataPruningBlocksRetained();
-    if (unstableChainPruningOptions.getChainDataPruningEnabled()) {
-      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-      if (chainDataPruningBlocksRetained
-          < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
+    final ChainPruningStrategy chainPruningStrategy =
+        unstableChainPruningOptions.getChainPruningStrategy();
+    final long blocksRetained = unstableChainPruningOptions.getChainDataPruningBlocksRetained();
+    final long balsRetained = unstableChainPruningOptions.getChainDataPruningBalsRetained();
+    final long retainedMinimum = unstableChainPruningOptions.getChainDataPruningRetainedMinimum();
+
+    // Skip validation if pruning is disabled
+    if (chainPruningStrategy == ChainPruningStrategy.NONE) {
+      return;
+    }
+
+    // Basic validation
+    if (blocksRetained < 0) {
+      throw new ParameterException(
+          this.commandLine, "--Xchain-pruning-blocks-retained must be >= 0");
+    }
+    if (balsRetained < 0) {
+      throw new ParameterException(this.commandLine, "--Xchain-pruning-bals-retained must be >= 0");
+    }
+    if (retainedMinimum < 0) {
+      throw new ParameterException(
+          this.commandLine, "--Xchain-pruning-retained-minimum must be >= 0");
+    }
+
+    // Validate blocks pruning (when mode is ALL)
+    if (chainPruningStrategy == ChainPruningStrategy.ALL) {
+      if (blocksRetained < retainedMinimum) {
         throw new ParameterException(
-            this.commandLine,
-            "--Xchain-pruning-blocks-retained must be >= "
-                + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
-      } else if (genesisConfigOptions.isPoa()) {
+            this.commandLine, "--Xchain-pruning-blocks-retained must be >= " + retainedMinimum);
+      }
+
+      final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
+      if (genesisConfigOptions.isPoa()) {
         final var epochLengthOpt = getPoaEpochLength(genesisConfigOptions);
         if (epochLengthOpt.isPresent()) {
           final long epochLength = epochLengthOpt.getAsLong();
-          if (chainDataPruningBlocksRetained < epochLength) {
+          if (blocksRetained < epochLength) {
             throw new ParameterException(
                 this.commandLine,
                 String.format(
                     "--Xchain-pruning-blocks-retained(%d) must be >= epochlength(%d) for %s",
-                    chainDataPruningBlocksRetained,
-                    epochLength,
-                    getConsensusMechanism(genesisConfigOptions)));
+                    blocksRetained, epochLength, getConsensusMechanism(genesisConfigOptions)));
           }
         }
+      }
+    }
+
+    // Validate BAL pruning (when mode is BAL or ALL)
+    if (chainPruningStrategy == ChainPruningStrategy.BAL
+        || chainPruningStrategy == ChainPruningStrategy.ALL) {
+      if (balsRetained < retainedMinimum) {
+        throw new ParameterException(
+            this.commandLine, "--Xchain-pruning-bals-retained must be >= " + retainedMinimum);
+      }
+
+      // When both are enabled (ALL mode), BAL retention can't exceed block retention
+      if (chainPruningStrategy == ChainPruningStrategy.ALL && balsRetained > blocksRetained) {
+        throw new ParameterException(
+            this.commandLine,
+            "--Xchain-pruning-bals-retained must be <= --Xchain-pruning-blocks-retained when pruning mode is ALL");
       }
     }
   }
@@ -2413,23 +2447,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Builds Vertx instance from VertxOptions. Visible for testing.
+   * Builds Vertx instance from MetricsSystem. Visible for testing.
    *
-   * @param vertxOptions Instance of VertxOptions
+   * @param metricsSystem Instance of MetricsSystem
    * @return Instance of Vertx.
    */
   @VisibleForTesting
-  protected Vertx createVertx(final VertxOptions vertxOptions) {
-    return Vertx.vertx(vertxOptions);
-  }
-
-  private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
-    return new VertxOptions()
-        .setPreferNativeTransport(true)
-        .setMetricsOptions(
-            new io.vertx.core.metrics.MetricsOptions()
-                .setEnabled(true)
-                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
+  protected Vertx createVertx(final MetricsSystem metricsSystem) {
+    return Vertx.builder()
+        .with(new VertxOptions().setPreferNativeTransport(true))
+        .withMetrics(new VertxMetricsAdapterFactory(metricsSystem))
+        .build();
   }
 
   private void addShutdownHook(final Runner runner) {
@@ -2759,7 +2787,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
   public void setIgnorableStorageSegments() {
-    if (!unstableChainPruningOptions.getChainDataPruningEnabled()
+    if (unstableChainPruningOptions.getChainPruningStrategy().equals(ChainPruningStrategy.NONE)
         && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
@@ -2890,6 +2918,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
             .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
       }
+    }
+
+    // Add chain pruning configuration
+    final ChainPruningStrategy pruningStrategy =
+        unstableChainPruningOptions.getChainPruningStrategy();
+    if (!pruningStrategy.equals(ChainPruningStrategy.NONE)) {
+      builder.setChainPruningEnabled(
+          pruningStrategy,
+          unstableChainPruningOptions.getChainDataPruningBlocksRetained(),
+          unstableChainPruningOptions.getChainDataPruningBalsRetained());
     }
 
     if (miningParametersSupplier.get().getTargetGasLimit().isPresent()) {

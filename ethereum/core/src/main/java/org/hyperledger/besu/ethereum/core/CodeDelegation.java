@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 // ignore `signer` field used in execution-spec-tests
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -164,7 +165,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       authorityAddress =
           SIGNATURE_ALGORITHM
               .get()
-              .recoverPublicKeyFromSignature(hash, signature)
+              .recoverPublicKeyFromSignature(Bytes32.wrap(hash.getBytes()), signature)
               .map(Address::extract);
     } catch (final IllegalArgumentException e) {
       authorityAddress = Optional.empty();
@@ -246,14 +247,16 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
       output.startList();
       output.writeBigIntegerScalar(chainId);
-      output.writeBytes(address);
+      output.writeBytes(address.getBytes());
       output.writeLongScalar(nonce);
       output.endList();
 
       signature(
           SIGNATURE_ALGORITHM
               .get()
-              .sign(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())), keyPair));
+              .sign(
+                  Bytes32.wrap(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())).getBytes()),
+                  keyPair));
       return build();
     }
 

@@ -5,4 +5,6 @@ pluginManagement {
   }
 }
 
-rootProject.name = 'test-plugins'
+rootProject.name = 'testPlugins'
+include 'dependency-conflict-1'
+include 'dependency-conflict-2'

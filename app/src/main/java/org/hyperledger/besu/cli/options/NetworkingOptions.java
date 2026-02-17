@@ -14,9 +14,13 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import org.hyperledger.besu.cli.converter.DurationSecondsConverter;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
-import java.util.Arrays;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,18 +43,20 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       hidden = true,
       paramLabel = "<INTEGER>",
       description =
-          "The frequency (in seconds) at which to initiate new outgoing connections (default: ${DEFAULT-VALUE})")
-  private int initiateConnectionsFrequencySec =
-      NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC;
+          "The frequency (in seconds) at which to initiate new outgoing connections (default: ${DEFAULT-VALUE})",
+      converter = DurationSecondsConverter.class)
+  private Duration initiateConnectionsFrequency =
+      NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY;
 
   @CommandLine.Option(
       names = CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
       hidden = true,
       paramLabel = "<INTEGER>",
       description =
-          "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})")
-  private int checkMaintainedConnectionsFrequencySec =
-      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC;
+          "The frequency (in seconds) at which to check maintained connections (default: ${DEFAULT-VALUE})",
+      converter = DurationSecondsConverter.class)
+  private Duration checkMaintainedConnectionsFrequency =
+      NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY;
 
   @CommandLine.Option(
       names = DNS_DISCOVERY_SERVER_OVERRIDE_FLAG,
@@ -90,39 +96,30 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
    */
   public static NetworkingOptions fromConfig(final NetworkingConfiguration networkingConfig) {
     final NetworkingOptions cliOptions = new NetworkingOptions();
-    cliOptions.checkMaintainedConnectionsFrequencySec =
-        networkingConfig.getCheckMaintainedConnectionsFrequencySec();
-    cliOptions.initiateConnectionsFrequencySec =
-        networkingConfig.getInitiateConnectionsFrequencySec();
-    cliOptions.dnsDiscoveryServerOverride = networkingConfig.getDnsDiscoveryServerOverride();
+    cliOptions.checkMaintainedConnectionsFrequency =
+        networkingConfig.checkMaintainedConnectionsFrequency();
+    cliOptions.initiateConnectionsFrequency = networkingConfig.initiateConnectionsFrequency();
+    cliOptions.dnsDiscoveryServerOverride = networkingConfig.dnsDiscoveryServerOverride();
 
     return cliOptions;
   }
 
   @Override
   public NetworkingConfiguration toDomainObject() {
-    final NetworkingConfiguration config = NetworkingConfiguration.create();
-    config.setCheckMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequencySec);
-    config.setInitiateConnectionsFrequency(initiateConnectionsFrequencySec);
-    config.setDnsDiscoveryServerOverride(dnsDiscoveryServerOverride);
-    config.getDiscovery().setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
-    config.getDiscovery().setFilterOnEnrForkId(filterOnEnrForkId);
-    return config;
+    final var discovery = DiscoveryConfiguration.create();
+    discovery.setDiscoveryV5Enabled(isPeerDiscoveryV5Enabled);
+    discovery.setFilterOnEnrForkId(filterOnEnrForkId);
+
+    return ImmutableNetworkingConfiguration.builder()
+        .checkMaintainedConnectionsFrequency(checkMaintainedConnectionsFrequency)
+        .initiateConnectionsFrequency(initiateConnectionsFrequency)
+        .dnsDiscoveryServerOverride(dnsDiscoveryServerOverride)
+        .discoveryConfiguration(discovery)
+        .build();
   }
 
   @Override
   public List<String> getCLIOptions() {
-    final List<String> retval =
-        Arrays.asList(
-            CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
-            OptionParser.format(checkMaintainedConnectionsFrequencySec),
-            INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-            OptionParser.format(initiateConnectionsFrequencySec));
-
-    if (dnsDiscoveryServerOverride.isPresent()) {
-      retval.add(DNS_DISCOVERY_SERVER_OVERRIDE_FLAG);
-      retval.add(dnsDiscoveryServerOverride.get());
-    }
-    return retval;
+    return CommandLineUtils.getCLIOptions(this, new NetworkingOptions());
   }
 }

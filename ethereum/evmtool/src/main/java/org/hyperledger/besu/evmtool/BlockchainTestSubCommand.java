@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -56,6 +57,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -99,7 +101,8 @@ public class BlockchainTestSubCommand implements Runnable {
 
   @Option(
       names = {"--test-name"},
-      description = "Limit execution to one named test.")
+      description =
+          "Limit execution to tests whose name contains the given substring, or matches a glob pattern (using * and ?).")
   private String testName = null;
 
   @Option(
@@ -228,7 +231,7 @@ public class BlockchainTestSubCommand implements Runnable {
             .filter(
                 entry -> {
                   final String test = entry.getKey();
-                  if (testName != null && !testName.equals(test)) {
+                  if (testName != null && !matchesTestName(test)) {
                     parentCommand.out.println("Skipping test: " + test);
                     return false;
                   }
@@ -243,6 +246,17 @@ public class BlockchainTestSubCommand implements Runnable {
       filteredTests.forEach(
           (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
     }
+  }
+
+  private boolean matchesTestName(final String test) {
+    if (testName.contains("*") || testName.contains("?")) {
+      // Convert glob pattern to regex: * -> .*, ? -> .
+      final String regex =
+          "(?i)" + testName.replace(".", "\\.").replace("*", ".*").replace("?", ".");
+      return test.matches(regex);
+    }
+    // Simple substring match (case-insensitive)
+    return test.toLowerCase(Locale.ROOT).contains(testName.toLowerCase(Locale.ROOT));
   }
 
   private void traceTestSpecs(
@@ -473,7 +487,7 @@ public class BlockchainTestSubCommand implements Runnable {
         final org.hyperledger.besu.datatypes.Transaction tx,
         final boolean status,
         final org.apache.tuweni.bytes.Bytes output,
-        final List<org.hyperledger.besu.evm.log.Log> logs,
+        final List<Log> logs,
         final long gasUsed,
         final Set<Address> selfDestructs,
         final long timeNs) {

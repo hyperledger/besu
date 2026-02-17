@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
+
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -21,14 +23,16 @@ import org.apache.tuweni.bytes.Bytes;
 public class SyncTransactionReceipt {
 
   private final Bytes rlpBytes;
+  private final boolean isFormattedForRootCalculation;
   private Bytes transactionTypeCode;
   private Bytes statusOrStateRoot;
   private Bytes cumulativeGasUsed;
-  private Bytes bloomFilter;
+  private LogsBloomFilter bloomFilter;
   private List<List<Bytes>> logs;
 
   public SyncTransactionReceipt(final Bytes rlpBytes) {
     this.rlpBytes = rlpBytes;
+    isFormattedForRootCalculation = true;
   }
 
   public SyncTransactionReceipt(
@@ -36,9 +40,10 @@ public class SyncTransactionReceipt {
       final Bytes transactionTypeCode,
       final Bytes statusOrStateRoot,
       final Bytes cumulativeGasUsed,
-      final Bytes bloomFilter,
+      final LogsBloomFilter bloomFilter,
       final List<List<Bytes>> logs) {
     this.rlpBytes = rlpBytes;
+    isFormattedForRootCalculation = false;
     this.transactionTypeCode = transactionTypeCode;
     this.statusOrStateRoot = statusOrStateRoot;
     this.cumulativeGasUsed = cumulativeGasUsed;
@@ -48,6 +53,10 @@ public class SyncTransactionReceipt {
 
   public Bytes getRlpBytes() {
     return rlpBytes;
+  }
+
+  public boolean isFormattedForRootCalculation() {
+    return isFormattedForRootCalculation;
   }
 
   public Bytes getTransactionTypeCode() {
@@ -62,7 +71,7 @@ public class SyncTransactionReceipt {
     return cumulativeGasUsed;
   }
 
-  public Bytes getBloomFilter() {
+  public LogsBloomFilter getBloomFilter() {
     return bloomFilter;
   }
 
