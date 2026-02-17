@@ -17,8 +17,10 @@ package org.hyperledger.besu.cli.options;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,7 +38,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getCheckMaintainedConnectionsFrequencySec()).isEqualTo(2);
+    assertThat(networkingConfig.checkMaintainedConnectionsFrequency())
+        .isEqualTo(Duration.ofSeconds(2));
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -48,7 +51,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getCheckMaintainedConnectionsFrequencySec()).isEqualTo(60);
+    assertThat(networkingConfig.checkMaintainedConnectionsFrequency())
+        .isEqualTo(Duration.ofSeconds(60));
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -60,7 +64,7 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getInitiateConnectionsFrequencySec()).isEqualTo(2);
+    assertThat(networkingConfig.initiateConnectionsFrequency()).isEqualTo(Duration.ofSeconds(2));
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -72,7 +76,7 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getInitiateConnectionsFrequencySec()).isEqualTo(30);
+    assertThat(networkingConfig.initiateConnectionsFrequency()).isEqualTo(Duration.ofSeconds(30));
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -84,8 +88,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isPresent();
-    assertThat(networkingConfig.getDnsDiscoveryServerOverride().get()).isEqualTo("localhost");
+    assertThat(networkingConfig.dnsDiscoveryServerOverride()).isPresent();
+    assertThat(networkingConfig.dnsDiscoveryServerOverride().get()).isEqualTo("localhost");
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -97,7 +101,7 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDnsDiscoveryServerOverride()).isEmpty();
+    assertThat(networkingConfig.dnsDiscoveryServerOverride()).isEmpty();
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -109,7 +113,7 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDiscovery().isDiscoveryV5Enabled()).isTrue();
+    assertThat(networkingConfig.discoveryConfiguration().isDiscoveryV5Enabled()).isTrue();
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -121,7 +125,7 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDiscovery().isDiscoveryV5Enabled()).isFalse();
+    assertThat(networkingConfig.discoveryConfiguration().isDiscoveryV5Enabled()).isFalse();
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -133,7 +137,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(true);
+    assertThat(networkingConfig.discoveryConfiguration().isFilterOnEnrForkIdEnabled())
+        .isEqualTo(true);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -145,7 +150,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(true);
+    assertThat(networkingConfig.discoveryConfiguration().isFilterOnEnrForkIdEnabled())
+        .isEqualTo(true);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -157,7 +163,8 @@ public class NetworkingOptionsTest
 
     final NetworkingOptions options = cmd.getNetworkingOptions();
     final NetworkingConfiguration networkingConfig = options.toDomainObject();
-    assertThat(networkingConfig.getDiscovery().isFilterOnEnrForkIdEnabled()).isEqualTo(false);
+    assertThat(networkingConfig.discoveryConfiguration().isFilterOnEnrForkIdEnabled())
+        .isEqualTo(false);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -165,17 +172,17 @@ public class NetworkingOptionsTest
 
   @Override
   protected NetworkingConfiguration createDefaultDomainObject() {
-    return NetworkingConfiguration.create();
+    return NetworkingConfiguration.DEFAULT;
   }
 
   @Override
   protected NetworkingConfiguration createCustomizedDomainObject() {
-    final NetworkingConfiguration config = NetworkingConfiguration.create();
-    config.setInitiateConnectionsFrequency(
-        NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY_SEC + 10);
-    config.setCheckMaintainedConnectionsFrequency(
-        NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_SEC + 10);
-    return config;
+    return ImmutableNetworkingConfiguration.builder()
+        .initiateConnectionsFrequency(
+            NetworkingConfiguration.DEFAULT_INITIATE_CONNECTIONS_FREQUENCY.plusSeconds(10))
+        .checkMaintainedConnectionsFrequency(
+            NetworkingConfiguration.DEFAULT_CHECK_MAINTAINED_CONNECTIONS_FREQUENCY.plusSeconds(10))
+        .build();
   }
 
   @Override

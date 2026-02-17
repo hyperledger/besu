@@ -73,6 +73,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
@@ -158,7 +159,7 @@ public class RunnerBuilder {
   private Vertx vertx;
   private BesuController besuController;
 
-  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
+  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.DEFAULT;
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
   private boolean discoveryEnabled;
@@ -640,9 +641,9 @@ public class RunnerBuilder {
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
-          networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
+          networkingConfiguration.discoveryConfiguration().isDiscoveryV5Enabled());
       discoveryConfiguration.setFilterOnEnrForkId(
-          networkingConfiguration.getDiscovery().isFilterOnEnrForkIdEnabled());
+          networkingConfiguration.discoveryConfiguration().isFilterOnEnrForkIdEnabled());
     } else {
       discoveryConfiguration.setEnabled(false);
     }
@@ -668,7 +669,12 @@ public class RunnerBuilder {
             .setBindPort(p2pListenPort)
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuVersionUtils.nodeName(identityString));
-    networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
+    networkingConfiguration =
+        ImmutableNetworkingConfiguration.builder()
+            .from(networkingConfiguration)
+            .rlpxConfiguration(rlpxConfiguration)
+            .discoveryConfiguration(discoveryConfiguration)
+            .build();
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
