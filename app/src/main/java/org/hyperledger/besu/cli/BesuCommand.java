@@ -449,13 +449,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuComponent besuComponent;
 
   private SyncMode syncMode = null;
-
+  
   @Option(
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
           "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
-  public void setSyncMode(final String value) {
+  void setSyncMode(final String value) {
     final String normalized = value.toUpperCase(Locale.ROOT);
     if ("CHECKPOINT".equals(normalized)) {
       logger.warn(
