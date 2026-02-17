@@ -51,6 +51,13 @@ public interface StateMetricsCollector {
   /** Increments the code cache miss counter. */
   void incrementCodeCacheMisses();
 
+  /**
+   * Adds elapsed time for a state read operation.
+   *
+   * @param nanos elapsed time in nanoseconds
+   */
+  void addStateReadTime(long nanos);
+
   /** A no-op implementation that discards all metrics. */
   StateMetricsCollector NOOP =
       new StateMetricsCollector() {
@@ -77,5 +84,8 @@ public interface StateMetricsCollector {
 
         @Override
         public void incrementCodeCacheMisses() {}
+
+        @Override
+        public void addStateReadTime(final long nanos) {}
       };
 }

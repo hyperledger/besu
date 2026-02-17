@@ -316,7 +316,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
               (PathBasedWorldStateUpdateAccumulator<ACCOUNT>) wrappedWorldView();
           account = worldStateUpdateAccumulator.loadAccount(address, accountFunction);
         } else {
+          final long startNanos = System.nanoTime();
           account = wrappedWorldView().get(address);
+          getStateMetricsCollector().addStateReadTime(System.nanoTime() - startNanos);
           getStateMetricsCollector().incrementAccountReads();
         }
         if (account instanceof PathBasedAccount pathBasedAccount) {
@@ -554,10 +556,12 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       }
     }
     try {
+      final long startNanos = System.nanoTime();
       final Optional<UInt256> valueUInt =
           (wrappedWorldView() instanceof PathBasedWorldState worldState)
               ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
               : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+      getStateMetricsCollector().addStateReadTime(System.nanoTime() - startNanos);
       getStateMetricsCollector().incrementStorageReads();
       storageToUpdate
           .computeIfAbsent(

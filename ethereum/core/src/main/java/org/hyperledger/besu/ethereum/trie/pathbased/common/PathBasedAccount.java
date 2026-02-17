@@ -208,11 +208,13 @@ public abstract class PathBasedAccount implements MutableAccount, AccountValue {
     }
 
     // cache miss get the code from the disk, set it and put it in the cache
+    final StateMetricsCollector collector = context.getStateMetricsCollector();
+    final long startNanos = System.nanoTime();
     final Bytes byteCode = context.getCode(address, codeHash).orElse(Bytes.EMPTY);
+    collector.addStateReadTime(System.nanoTime() - startNanos);
     code = new Code(byteCode, codeHash);
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
     // Track code cache miss and code read for cross-client execution metrics
-    final StateMetricsCollector collector = context.getStateMetricsCollector();
     collector.incrementCodeCacheMisses();
     collector.incrementCodeReads();
     collector.addCodeBytesRead(code.getSize());

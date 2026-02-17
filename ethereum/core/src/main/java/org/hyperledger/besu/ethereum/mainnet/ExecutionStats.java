@@ -138,6 +138,7 @@ public class ExecutionStats implements StateMetricsCollector {
    *
    * @param nanos the state read time in nanoseconds
    */
+  @Override
   public void addStateReadTime(final long nanos) {
     stateReadTimeNanos += nanos;
   }
