@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
@@ -120,12 +121,13 @@ public class TestNode implements Closeable {
     this.nodeKey = kp != null ? NodeKeyUtils.createFrom(kp) : NodeKeyUtils.generate();
 
     final NetworkingConfiguration networkingConfiguration =
-        NetworkingConfiguration.create()
-            .setDiscovery(discoveryCfg)
-            .setRlpx(
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(discoveryCfg)
+            .rlpxConfiguration(
                 RlpxConfiguration.create()
                     .setBindPort(listenPort)
-                    .setSupportedProtocols(EthProtocol.get()));
+                    .setSupportedProtocols(EthProtocol.get()))
+            .build();
 
     final GenesisConfig genesisConfig = GenesisConfig.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
