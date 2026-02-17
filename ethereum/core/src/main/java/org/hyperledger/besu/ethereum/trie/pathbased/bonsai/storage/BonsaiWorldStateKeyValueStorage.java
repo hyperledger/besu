@@ -517,6 +517,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
                           cacheManager.removeFromCache(segment, wrapper.getData(), cacheVersion)));
 
       clearStaged();
+      cacheManager.performMaintenance();
     }
 
     @Override
