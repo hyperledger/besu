@@ -91,6 +91,8 @@ public class SynchronizerConfiguration {
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
   private final long receiptsDownloadStepTimeoutMillis;
+  private final long propagationManagerGetBlockTimeoutMillis;
+  private final long receiptsDownloadStepTimeoutMillis;
   private final boolean isPeerTaskSystemEnabled;
   private final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled;
 
