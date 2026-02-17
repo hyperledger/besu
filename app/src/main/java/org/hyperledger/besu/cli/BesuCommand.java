@@ -449,7 +449,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private BesuComponent besuComponent;
 
   private SyncMode syncMode = null;
-  
+
   @Option(
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
