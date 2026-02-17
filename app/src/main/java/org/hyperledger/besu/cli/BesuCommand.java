@@ -2032,13 +2032,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
 
-    // Set system property from CLI flag for slow block threshold
-    if (metricsOptions.getSlowBlockThresholdMs() >= 0) {
-      System.setProperty(
-          "besu.execution.slowBlockThresholdMs",
-          String.valueOf(metricsOptions.getSlowBlockThresholdMs()));
-    }
-
     instantiateSignatureAlgorithmFactory();
 
     logger.info(generateConfigurationOverview());
@@ -2147,6 +2140,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfiguration)
             .balConfiguration(balConfiguration)
+            .slowBlockThresholdMs(metricsOptions.getSlowBlockThresholdMs())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =

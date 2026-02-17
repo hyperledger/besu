@@ -156,8 +156,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     // Wrap with SlowBlockTracer for execution metrics collection.
     // Threshold: negative = disabled, 0 = log all blocks, positive = threshold in ms.
-    // TODO: Replace system property with CLI flag (--slow-block-threshold)
-    final long slowBlockThresholdMs = Long.getLong("besu.execution.slowBlockThresholdMs", -1L);
+    final long slowBlockThresholdMs = protocolContext.getSlowBlockThresholdMs();
     if (slowBlockThresholdMs >= 0) {
       return new SlowBlockTracer(slowBlockThresholdMs, baseTracer);
     }
