@@ -359,7 +359,7 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       timingNode.put("total_ms", stats.getTotalTimeMs());
 
       final ObjectNode throughputNode = json.putObject("throughput");
-      throughputNode.put("mgas_per_sec", stats.getMgasPerSecond());
+      throughputNode.put("mgas_per_sec", Math.round(stats.getMgasPerSecond() * 100.0) / 100.0);
 
       final ObjectNode stateReadsNode = json.putObject("state_reads");
       stateReadsNode.put("accounts", stats.getAccountReads());
@@ -430,7 +430,7 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   private static double calculateHitRate(final long hits, final long misses) {
     final long total = hits + misses;
     if (total > 0) {
-      return (hits * 100.0) / total;
+      return Math.round((hits * 100.0) / total * 100.0) / 100.0;
     }
     return 0.0;
   }
