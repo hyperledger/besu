@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -80,6 +82,50 @@ public class NetworkingOptionsTest
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void p2pPeerTaskTimeoutFlag_isSet() {
+    final TestBesuCommand cmd = parseCommand("--Xp2p-peer-task-timeout", "10000");
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.p2pPeerTaskTimeout()).isEqualTo(Duration.ofSeconds(10));
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void p2pPeerTaskTimeoutFlag_isNotSet() {
+    final TestBesuCommand cmd = parseCommand();
+
+    final NetworkingOptions options = cmd.getNetworkingOptions();
+    final NetworkingConfiguration networkingConfig = options.toDomainObject();
+    assertThat(networkingConfig.p2pPeerTaskTimeout()).isEqualTo(Duration.ofSeconds(5));
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void p2pPeerTaskTimeoutInConfigFileWorks() throws IOException {
+    final long p2pPeerTaskTimeoutMillis = 10_000;
+    final Path tempConfigFilePath =
+        createTempFile(
+            "config",
+            String.format(
+                """
+              Xp2p-peer-task-timeout=%s
+              """,
+                p2pPeerTaskTimeoutMillis));
+
+    internalTestSuccess(
+        config ->
+            assertThat(config.p2pPeerTaskTimeout())
+                .isEqualTo(Duration.ofMillis(p2pPeerTaskTimeoutMillis)),
+        "--config-file",
+        tempConfigFilePath.toString());
   }
 
   @Test
