@@ -52,6 +52,8 @@ public class SynchronizerConfiguration {
       CachingTaskCollection.DEFAULT_CACHE_SIZE;
   public static final long DEFAULT_RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS =
       TimeUnit.SECONDS.toMillis(60);
+  public static final long DEFAULT_BACKWARD_HEADERS_DOWNLOAD_STEP_TIMEOUT_MILLIS =
+      TimeUnit.SECONDS.toMillis(60);
 
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
@@ -91,8 +93,7 @@ public class SynchronizerConfiguration {
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
   private final long receiptsDownloadStepTimeoutMillis;
-  private final long propagationManagerGetBlockTimeoutMillis;
-  private final long receiptsDownloadStepTimeoutMillis;
+  private final long backwardHeadersDownloadStepTimeoutMillis;
   private final boolean isPeerTaskSystemEnabled;
   private final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled;
 
@@ -125,6 +126,7 @@ public class SynchronizerConfiguration {
       final int computationParallelism,
       final int maxTrailingPeers,
       final long receiptsDownloadStepTimeoutMillis,
+      final long backwardHeadersDownloadStepTimeoutMillis,
       final boolean isPeerTaskSystemEnabled,
       final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled,
       final boolean era1ImportPrepipelineEnabled,
@@ -153,6 +155,7 @@ public class SynchronizerConfiguration {
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
     this.receiptsDownloadStepTimeoutMillis = receiptsDownloadStepTimeoutMillis;
+    this.backwardHeadersDownloadStepTimeoutMillis = backwardHeadersDownloadStepTimeoutMillis;
     this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
     this.snapSyncSavePreCheckpointHeadersOnlyEnabled = snapSyncSavePreCheckpointHeadersOnlyEnabled;
     this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
@@ -287,6 +290,10 @@ public class SynchronizerConfiguration {
     return receiptsDownloadStepTimeoutMillis;
   }
 
+  public long getBackwardHeadersDownloadStepTimeoutMillis() {
+    return backwardHeadersDownloadStepTimeoutMillis;
+  }
+
   public boolean isPeerTaskSystemEnabled() {
     return isPeerTaskSystemEnabled;
   }
@@ -340,6 +347,8 @@ public class SynchronizerConfiguration {
     private URI era1DataUri = DEFAULT_ERA1_DATA_URI;
     private int era1ImportPrepipelineConcurrency = DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
     private long receiptsDownloadStepTimeoutMillis = DEFAULT_RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS;
+    private long backwardHeadersDownloadStepTimeoutMillis =
+        DEFAULT_BACKWARD_HEADERS_DOWNLOAD_STEP_TIMEOUT_MILLIS;
 
     public Builder syncPivotDistance(final int distance) {
       syncPivotDistance = distance;
@@ -466,6 +475,12 @@ public class SynchronizerConfiguration {
       return this;
     }
 
+    public Builder backwardHeadersDownloadStepTimeoutMillis(
+        final long backwardHeadersDownloadStepTimeoutMillis) {
+      this.backwardHeadersDownloadStepTimeoutMillis = backwardHeadersDownloadStepTimeoutMillis;
+      return this;
+    }
+
     public Builder isPeerTaskSystemEnabled(final boolean isPeerTaskSystemEnabled) {
       this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
       return this;
@@ -518,6 +533,7 @@ public class SynchronizerConfiguration {
           computationParallelism,
           maxTrailingPeers,
           receiptsDownloadStepTimeoutMillis,
+          backwardHeadersDownloadStepTimeoutMillis,
           isPeerTaskSystemEnabled,
           snapSyncSavePreCheckpointHeadersOnlyEnabled,
           era1ImportPrepipelineEnabled,

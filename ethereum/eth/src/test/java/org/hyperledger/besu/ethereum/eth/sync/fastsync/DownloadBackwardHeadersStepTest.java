@@ -37,15 +37,18 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -95,7 +98,7 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldDownloadHeadersSuccessfully() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
     final PeerTaskExecutorResult<List<BlockHeader>> successResult =
@@ -116,7 +119,8 @@ public class DownloadBackwardHeadersStepTest {
   public void shouldCalculateCorrectHeadersToRequest()
       throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 100, 50);
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, 100, 50, Duration.ofMinutes(1));
 
     // startBlock = 100, trustAnchor = 50, so remainingHeaders = 50
     // Math.min(100, 50) = 50 headers should be requested
@@ -145,7 +149,7 @@ public class DownloadBackwardHeadersStepTest {
   @SuppressWarnings("unchecked")
   public void shouldRetryOnNoPeerAvailable() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 5, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 5, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(5, 100);
 
@@ -169,7 +173,7 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldFailOnInternalServerError() {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final PeerTaskExecutorResult<List<BlockHeader>> errorResult =
         new PeerTaskExecutorResult<>(
@@ -187,7 +191,8 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldHandleSmallRemainingHeaders() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 100, 95);
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, 100, 95, Duration.ofMinutes(1));
 
     // startBlock = 100, trustAnchor = 95, so only 5 headers should be requested
     final List<BlockHeader> mockHeaders = createMockHeaders(5, 100);
@@ -207,7 +212,8 @@ public class DownloadBackwardHeadersStepTest {
   @SuppressWarnings("unchecked")
   public void shouldHandleEmptySuccessResponse() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 90);
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, 10, 90, Duration.ofMinutes(1));
 
     // First response is empty (peer misbehaving), second has the data
     final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
@@ -234,7 +240,8 @@ public class DownloadBackwardHeadersStepTest {
     final long trustAnchor = Long.MAX_VALUE - 2000;
 
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 500, trustAnchor);
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, 500, trustAnchor, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(500, startBlock);
     final PeerTaskExecutorResult<List<BlockHeader>> successResult =
@@ -254,7 +261,7 @@ public class DownloadBackwardHeadersStepTest {
   public void shouldRetryMultipleTimesBeforeSuccess()
       throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
 
@@ -278,32 +285,9 @@ public class DownloadBackwardHeadersStepTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void shouldFailAfterMaxRetriesExhausted() {
-    final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
-
-    // Fail 6 times (initial + 5 retries) with NO_PEER_AVAILABLE
-    final PeerTaskExecutorResult<List<BlockHeader>> noPeerResult =
-        new PeerTaskExecutorResult<>(
-            Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, emptyList());
-
-    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenReturn(noPeerResult);
-
-    final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
-
-    assertThatThrownBy(result::get)
-        .hasCauseInstanceOf(RuntimeException.class)
-        .hasMessageContaining("Aborting after 5 failures");
-
-    // Should attempt 6 times total (initial + 5 retries)
-    verify(peerTaskExecutor, times(6)).execute(any(GetHeadersFromPeerTask.class));
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
   public void shouldRetryOnDifferentErrorCodes() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
 
@@ -332,7 +316,7 @@ public class DownloadBackwardHeadersStepTest {
   public void shouldPreservePartialDownloadOnRetry()
       throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 50, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 50, 0, Duration.ofMinutes(1));
 
     // First batch: successfully download 30 headers
     final List<BlockHeader> firstBatch = createMockHeaders(30, 100);
@@ -364,7 +348,7 @@ public class DownloadBackwardHeadersStepTest {
   @SuppressWarnings("unchecked")
   public void shouldSucceedOnExactlyFifthRetry() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
 
@@ -393,7 +377,7 @@ public class DownloadBackwardHeadersStepTest {
   public void shouldHandleMixedFailureTypesDuringRetries()
       throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(10, 100);
 
@@ -432,7 +416,7 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldNotRetryOnInternalServerError() {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 0, Duration.ofMinutes(1));
 
     final PeerTaskExecutorResult<List<BlockHeader>> errorResult =
         new PeerTaskExecutorResult<>(
@@ -452,14 +436,20 @@ public class DownloadBackwardHeadersStepTest {
 
   @Test
   public void shouldThrowExceptionWhenHeaderRequestSizeIsZero() {
-    assertThatThrownBy(() -> new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 0, 0))
+    assertThatThrownBy(
+            () ->
+                new DownloadBackwardHeadersStep(
+                    protocolSchedule, ethContext, 0, 0, Duration.ofMinutes(1)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("headerRequestSize must be >= 1");
   }
 
   @Test
   public void shouldThrowExceptionWhenHeaderRequestSizeIsNegative() {
-    assertThatThrownBy(() -> new DownloadBackwardHeadersStep(protocolSchedule, ethContext, -1, 0))
+    assertThatThrownBy(
+            () ->
+                new DownloadBackwardHeadersStep(
+                    protocolSchedule, ethContext, -1, 0, Duration.ofMinutes(1)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("headerRequestSize must be >= 1");
   }
@@ -467,7 +457,7 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldAcceptHeaderRequestSizeOfOne() throws ExecutionException, InterruptedException {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 1, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 1, 0, Duration.ofMinutes(1));
 
     final List<BlockHeader> mockHeaders = createMockHeaders(1, 100);
     final PeerTaskExecutorResult<List<BlockHeader>> successResult =
@@ -485,7 +475,8 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldThrowExceptionWhenStartBlockEqualsAnchor() {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 100);
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, 10, 100, Duration.ofMinutes(1));
 
     assertThatThrownBy(() -> step.apply(100L))
         .isInstanceOf(IllegalStateException.class)
@@ -495,7 +486,8 @@ public class DownloadBackwardHeadersStepTest {
   @Test
   public void shouldThrowExceptionWhenStartBlockLessThanAnchor() {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 10, 100);
+        new DownloadBackwardHeadersStep(
+            protocolSchedule, ethContext, 10, 100, Duration.ofMinutes(1));
 
     assertThatThrownBy(() -> step.apply(50L))
         .isInstanceOf(IllegalStateException.class)
@@ -506,7 +498,7 @@ public class DownloadBackwardHeadersStepTest {
   @SuppressWarnings("unchecked")
   public void shouldThrowExceptionWhenParentHashDoesNotMatch() {
     final DownloadBackwardHeadersStep step =
-        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 50, 0);
+        new DownloadBackwardHeadersStep(protocolSchedule, ethContext, 50, 0, Duration.ofMinutes(1));
 
     // Create first batch with specific hash
     final BlockHeaderFunctions bhf = new LocalBlockHeaderFunctions();
@@ -543,6 +535,41 @@ public class DownloadBackwardHeadersStepTest {
     assertThatThrownBy(result::get)
         .hasCauseInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Parent hash of last header does not match first header");
+  }
+
+  @Test
+  public void shouldTimeoutAfterConfiguredDuration() throws Exception {
+    // Create a real EthScheduler (not deterministic) to test timeout behavior
+    final EthScheduler realScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final EthContext realEthContext = mock(EthContext.class);
+    when(realEthContext.getScheduler()).thenReturn(realScheduler);
+    when(realEthContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
+
+    try {
+      // Create a new instance with a very short timeout for testing (100ms)
+      final DownloadBackwardHeadersStep shortTimeoutStep =
+          new DownloadBackwardHeadersStep(
+              protocolSchedule, realEthContext, 10, 0, Duration.ofMillis(100));
+
+      // Mock continuous failures that would retry indefinitely without timeout
+      final PeerTaskExecutorResult<List<BlockHeader>> failureResult =
+          new PeerTaskExecutorResult<>(
+              Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, emptyList());
+
+      when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenReturn(failureResult);
+
+      // When: downloading headers with short timeout
+      final CompletableFuture<List<BlockHeader>> result = shortTimeoutStep.apply(100L);
+
+      // Then: should timeout quickly with TimeoutException (wrapped in ExecutionException)
+      assertThatThrownBy(result::get)
+          .isInstanceOf(ExecutionException.class)
+          .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
+    } finally {
+      // Clean up the real scheduler
+      realScheduler.stop();
+      realScheduler.awaitStop();
+    }
   }
 
   private List<BlockHeader> createMockHeaders(final int count, final long startBlock) {

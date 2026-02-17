@@ -28,6 +28,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -41,8 +44,7 @@ import org.slf4j.LoggerFactory;
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
-  private static final Duration BASE_RETRY_DELAY = Duration.ofMillis(500);
-  private static final int MAX_RETRIES_ON_FAILURE = 5;
+  private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
   private static final AtomicInteger taskId = new AtomicInteger(0);
 
   private final ProtocolSchedule protocolSchedule;
@@ -50,6 +52,7 @@ public class DownloadBackwardHeadersStep
   private final PeerTaskExecutor peerTaskExecutor;
   private final int headerRequestSize;
   private final long trustAnchorBlockNumber;
+  private final Duration timeoutDuration;
 
   /**
    * Creates a new DownloadBackwardHeadersStep.
@@ -58,18 +61,21 @@ public class DownloadBackwardHeadersStep
    * @param ethContext the eth context
    * @param headerRequestSize the number of headers to request per batch
    * @param trustAnchorBlockNumber the lowest header that we want to download
+   * @param timeoutDuration the maximum time to wait including all retries
    */
   public DownloadBackwardHeadersStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final int headerRequestSize,
-      final long trustAnchorBlockNumber) {
+      final long trustAnchorBlockNumber,
+      final Duration timeoutDuration) {
     if (headerRequestSize < 1) throw new IllegalArgumentException("headerRequestSize must be >= 1");
     this.protocolSchedule = protocolSchedule;
     this.ethScheduler = ethContext.getScheduler();
     this.peerTaskExecutor = ethContext.getPeerTaskExecutor();
     this.headerRequestSize = headerRequestSize;
     this.trustAnchorBlockNumber = trustAnchorBlockNumber;
+    this.timeoutDuration = timeoutDuration;
   }
 
   @Override
@@ -83,21 +89,29 @@ public class DownloadBackwardHeadersStep
 
     final int currentTaskId = taskId.getAndIncrement();
     final List<BlockHeader> downloadedHeaders = new ArrayList<>(headersToRequest);
-    return ethScheduler.scheduleServiceTask(
-        () ->
-            downloadAllHeaders(
-                currentTaskId,
-                0,
-                MAX_RETRIES_ON_FAILURE,
-                startBlockNumber,
-                headersToRequest,
-                downloadedHeaders));
+    return ethScheduler
+        .scheduleServiceTask(
+            () ->
+                downloadAllHeaders(
+                    currentTaskId, 0, startBlockNumber, headersToRequest, downloadedHeaders))
+        .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
+        .exceptionally(
+            throwable -> {
+              if (throwable instanceof TimeoutException) {
+                LOG.trace(
+                    "[{}] Timed out after {} ms while downloading {} backward headers from block {}",
+                    currentTaskId,
+                    timeoutDuration.toMillis(),
+                    headersToRequest,
+                    startBlockNumber);
+              }
+              throw new CompletionException(throwable);
+            });
   }
 
   private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
       final int currTaskId,
       final int prevIterations,
-      final int remainingRetriesOnFailure,
       final Long startBlockNumber,
       final int headersToRequest,
       final List<BlockHeader> downloadedHeaders) {
@@ -162,33 +176,20 @@ public class DownloadBackwardHeadersStep
                       + " headers starting from block "
                       + startBlockNumber));
         } else {
-          if (remainingRetriesOnFailure > 0) {
-            final int newRemainingRetriesOnFailure = remainingRetriesOnFailure - 1;
-            final Duration incrementalWaitTime =
-                BASE_RETRY_DELAY.multipliedBy(
-                    MAX_RETRIES_ON_FAILURE - newRemainingRetriesOnFailure);
-            LOG.trace(
-                "[{}:{}] Waiting for {} before retrying",
-                currTaskId,
-                iteration,
-                incrementalWaitTime);
-            final int passIterations = iteration;
-            return ethScheduler.scheduleFutureTask(
-                () ->
-                    ethScheduler.scheduleServiceTask(
-                        () ->
-                            downloadAllHeaders(
-                                currTaskId,
-                                passIterations,
-                                newRemainingRetriesOnFailure,
-                                startBlockNumber,
-                                headersToRequest,
-                                downloadedHeaders)),
-                incrementalWaitTime);
-          } else {
-            return CompletableFuture.failedFuture(
-                new RuntimeException("Aborting after " + MAX_RETRIES_ON_FAILURE + " failures"));
-          }
+
+          LOG.trace("[{}:{}] Waiting for {} before retrying", currTaskId, iteration, RETRY_DELAY);
+          final int passIterations = iteration;
+          return ethScheduler.scheduleFutureTask(
+              () ->
+                  ethScheduler.scheduleServiceTask(
+                      () ->
+                          downloadAllHeaders(
+                              currTaskId,
+                              passIterations,
+                              startBlockNumber,
+                              headersToRequest,
+                              downloadedHeaders)),
+              RETRY_DELAY);
         }
       }
     } while (downloadedHeaders.size() < headersToRequest);
