@@ -152,7 +152,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   });
     }
 
-    return blockImportTracerProvider.getBlockImportTracer(header);
+    BlockAwareOperationTracer baseTracer = blockImportTracerProvider.getBlockImportTracer(header);
+
+    // Wrap with SlowBlockTracer for execution metrics collection.
+    // Threshold: negative = disabled, 0 = log all blocks, positive = threshold in ms.
+    // TODO: Replace system property with CLI flag (--slow-block-threshold)
+    final long slowBlockThresholdMs = Long.getLong("besu.execution.slowBlockThresholdMs", -1L);
+    if (slowBlockThresholdMs >= 0) {
+      return new SlowBlockTracer(slowBlockThresholdMs, baseTracer);
+    }
+    return baseTracer;
   }
 
   /**
@@ -287,7 +296,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               blobGasPrice,
               blockAccessListBuilder,
-              blockAccessList);
+              blockAccessList,
+              blockProcessingContext);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -364,6 +374,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 worldState,
                 cumulativeReceiptGasUsed);
         receipts.add(transactionReceipt);
+
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           parallelizedTxFound = true;
@@ -372,6 +383,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           nbParallelTx++;
         }
       }
+
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {
         final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
@@ -516,7 +528,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
       blockTracer.traceEndBlock(blockHeader, blockBody);
-
       try {
         worldState.persist(blockHeader, stateRootCommitter);
       } catch (MerkleTrieException e) {
@@ -638,7 +649,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
         final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-        final Optional<BlockAccessList> maybeBlockBal);
+        final Optional<BlockAccessList> maybeBlockBal,
+        final BlockProcessingContext blockProcessingContext);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -651,7 +663,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
           final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-          final Optional<BlockAccessList> maybeBlockBal) {
+          final Optional<BlockAccessList> maybeBlockBal,
+          final BlockProcessingContext blockProcessingContext) {
         return Optional.empty();
       }
     }

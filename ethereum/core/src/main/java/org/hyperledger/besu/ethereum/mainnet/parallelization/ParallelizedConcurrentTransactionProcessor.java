@@ -24,19 +24,24 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -53,16 +58,22 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
   private final TransactionCollisionDetector transactionCollisionDetector;
 
+  private final BlockProcessingContext blockProcessingContext;
+
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
    * processor is responsible for the individual processing of transactions.
    *
    * @param transactionProcessor The transaction processor for processing individual transactions.
+   * @param blockProcessingContext The block processing context containing operation tracers and
+   *     other context.
    */
   public ParallelizedConcurrentTransactionProcessor(
-      final MainnetTransactionProcessor transactionProcessor) {
+      final MainnetTransactionProcessor transactionProcessor,
+      final BlockProcessingContext blockProcessingContext) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
+    this.blockProcessingContext = blockProcessingContext;
   }
 
   @VisibleForTesting
@@ -71,6 +82,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       final TransactionCollisionDetector transactionCollisionDetector) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = transactionCollisionDetector;
+    this.blockProcessingContext = null; // For testing only
   }
 
   @Override
@@ -100,33 +112,48 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
               b ->
                   BlockAccessListBuilder.createTransactionAccessLocationTracker(
                       transactionLocation));
+
+      // Create the mining beneficiary tracer for parallel execution collision detection
+      final OperationTracer miningBeneficiaryTracer =
+          new OperationTracer() {
+            @Override
+            public void traceBeforeRewardTransaction(
+                final WorldView worldView,
+                final org.hyperledger.besu.datatypes.Transaction tx,
+                final Wei miningReward) {
+              /*
+               * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
+               * Indeed, if the transaction has interacted with the address to read or modify it,
+               * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
+               * If this is not the case, we can ignore this address during conflict detection.
+               */
+              if (transactionCollisionDetector
+                  .getAddressesTouchedByTransaction(
+                      transaction, Optional.of(roundWorldStateUpdater))
+                  .contains(miningBeneficiary)) {
+                contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
+              }
+              contextBuilder.miningBeneficiaryReward(miningReward);
+            }
+          };
+
+      // Create separate background tracer for parallel execution
+      // This includes a copy of ExecutionMetricsTracer if present in the block tracer
+      final OperationTracer backgroundBlockTracer = createBackgroundTracer(blockProcessingContext);
+
+      // Compose the background tracer with the mining beneficiary tracer
+      final OperationTracer composedTracer =
+          backgroundBlockTracer != null
+              ? TracerAggregator.combining(backgroundBlockTracer, miningBeneficiaryTracer)
+              : miningBeneficiaryTracer;
+
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               transactionUpdater,
               blockHeader,
               transaction.detachedCopy(),
               miningBeneficiary,
-              new OperationTracer() {
-                @Override
-                public void traceBeforeRewardTransaction(
-                    final WorldView worldView,
-                    final org.hyperledger.besu.datatypes.Transaction tx,
-                    final Wei miningReward) {
-                  /*
-                   * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
-                   * Indeed, if the transaction has interacted with the address to read or modify it,
-                   * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
-                   * If this is not the case, we can ignore this address during conflict detection.
-                   */
-                  if (transactionCollisionDetector
-                      .getAddressesTouchedByTransaction(
-                          transaction, Optional.of(roundWorldStateUpdater))
-                      .contains(miningBeneficiary)) {
-                    contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
-                  }
-                  contextBuilder.miningBeneficiaryReward(miningReward);
-                }
-              },
+              composedTracer,
               blockHashLookup,
               TransactionValidationParams.processingBlock(),
               blobGasPrice,
@@ -138,7 +165,8 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
       contextBuilder
           .transactionAccumulator(ws.getAccumulator())
-          .transactionProcessingResult(result);
+          .transactionProcessingResult(result)
+          .backgroundTracer(backgroundBlockTracer);
 
       final ParallelizedTransactionContext parallelizedTransactionContext = contextBuilder.build();
       if (!parallelizedTransactionContext.isMiningBeneficiaryTouchedPreRewardByTransaction()) {
@@ -231,6 +259,9 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
         blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 
+        // Consolidate tracer results from successful parallel execution
+        consolidateTracerResults(parallelizedTransactionContext);
+
         if (confirmedParallelizedTransactionCounter.isPresent()) {
           confirmedParallelizedTransactionCounter.get().inc();
           transactionProcessingResult.setIsProcessedInParallel(Optional.of(Boolean.TRUE));
@@ -248,6 +279,123 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
     }
     if (future != null) {
       future.cancel(true);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Creates a background tracer for parallel execution by creating separate instances of tracers
+   * like ExecutionMetricsTracer that need independent state.
+   *
+   * @param blockProcessingContext the block processing context containing the original tracer
+   * @return a background tracer instance, or null if no block tracer exists
+   */
+  private OperationTracer createBackgroundTracer(
+      final BlockProcessingContext blockProcessingContext) {
+    if (blockProcessingContext == null) {
+      return null;
+    }
+
+    final OperationTracer blockTracer = blockProcessingContext.getOperationTracer();
+    if (blockTracer == null) {
+      return null;
+    }
+
+    // Check if the block tracer contains ExecutionMetricsTracer
+    if (TracerAggregator.hasTracer(blockTracer, ExecutionMetricsTracer.class)) {
+      // Create a new ExecutionMetricsTracer instance for background execution
+      final ExecutionMetricsTracer backgroundMetricsTracer = new ExecutionMetricsTracer();
+
+      // If the block tracer is just an ExecutionMetricsTracer, return the background copy
+      if (blockTracer instanceof ExecutionMetricsTracer) {
+        return backgroundMetricsTracer;
+      }
+
+      // If the block tracer is a TracerAggregator, create a new aggregator with
+      // the background ExecutionMetricsTracer replacing the original one
+      if (blockTracer instanceof TracerAggregator) {
+        return createBackgroundTracerAggregator(
+            (TracerAggregator) blockTracer, backgroundMetricsTracer);
+      }
+    }
+
+    // For other tracer types that don't need separate instances, return the original
+    return blockTracer;
+  }
+
+  /**
+   * Creates a background TracerAggregator by replacing ExecutionMetricsTracer instances with the
+   * provided background instance.
+   */
+  private OperationTracer createBackgroundTracerAggregator(
+      final TracerAggregator originalAggregator,
+      final ExecutionMetricsTracer backgroundMetricsTracer) {
+
+    final List<OperationTracer> backgroundTracers =
+        originalAggregator.getTracers().stream()
+            .map(
+                tracer -> {
+                  if (tracer instanceof ExecutionMetricsTracer) {
+                    return backgroundMetricsTracer;
+                  } else if (tracer instanceof TracerAggregator) {
+                    return createBackgroundTracerAggregator(
+                        (TracerAggregator) tracer, backgroundMetricsTracer);
+                  } else {
+                    return tracer;
+                  }
+                })
+            .collect(Collectors.toList());
+
+    return TracerAggregator.of(backgroundTracers.toArray(new OperationTracer[0]));
+  }
+
+  /**
+   * Consolidates tracer results from successful parallel execution into the block's main tracer.
+   * This implements matkt's suggestion to merge background tracer results when there are no
+   * conflicts.
+   *
+   * @param parallelContext the parallel transaction context containing the background tracer
+   */
+  private void consolidateTracerResults(final ParallelizedTransactionContext parallelContext) {
+
+    parallelContext
+        .backgroundTracer()
+        .ifPresent(
+            backgroundTracer -> {
+              if (blockProcessingContext != null) {
+                final OperationTracer blockTracer = blockProcessingContext.getOperationTracer();
+                if (blockTracer != null) {
+                  mergeTracerResults(backgroundTracer, blockTracer);
+                }
+              }
+            });
+  }
+
+  /**
+   * Merges tracer results from parallel execution into the block's main tracer. Currently focuses
+   * on ExecutionMetricsTracer consolidation.
+   */
+  private void mergeTracerResults(
+      final OperationTracer backgroundTracer, final OperationTracer blockTracer) {
+
+    // Find ExecutionMetricsTracer instances in both tracers
+    final Optional<ExecutionMetricsTracer> backgroundMetrics =
+        findExecutionMetricsTracer(backgroundTracer);
+    final Optional<ExecutionMetricsTracer> blockMetrics = findExecutionMetricsTracer(blockTracer);
+
+    // Merge metrics if both tracers contain ExecutionMetricsTracer
+    if (backgroundMetrics.isPresent() && blockMetrics.isPresent()) {
+      blockMetrics.get().mergeFrom(backgroundMetrics.get());
+    }
+  }
+
+  /** Helper method to find ExecutionMetricsTracer in any type of OperationTracer. */
+  private Optional<ExecutionMetricsTracer> findExecutionMetricsTracer(
+      final OperationTracer tracer) {
+    if (tracer instanceof ExecutionMetricsTracer) {
+      return Optional.of((ExecutionMetricsTracer) tracer);
+    } else if (tracer instanceof TracerAggregator) {
+      return ((TracerAggregator) tracer).findTracer(ExecutionMetricsTracer.class);
     }
     return Optional.empty();
   }

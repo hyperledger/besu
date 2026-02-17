@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.StateMetricsCollector;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
@@ -415,7 +416,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts().stream()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
@@ -475,6 +476,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                 pendingStorageUpdates.clear();
               }
 
+              // Track account write for cross-client execution metrics (account modified)
+              getStateMetricsCollector().incrementAccountWrites();
+
               // parallel stream here may cause database corruption
               updatedAccount
                   .getUpdatedStorage()
@@ -496,6 +500,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                         } else {
                           pendingValue.setUpdated(value);
                         }
+                        // Track storage write for cross-client execution metrics
+                        getStateMetricsCollector().incrementStorageWrites();
                       });
 
               updatedAccount.getUpdatedStorage().clear();
@@ -632,6 +638,11 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   @Override
   public PathBasedWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
+  }
+
+  @Override
+  public StateMetricsCollector getStateMetricsCollector() {
+    return wrappedWorldView().getStateMetricsCollector();
   }
 
   public void rollForward(final TrieLog layer) {

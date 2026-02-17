@@ -1390,7 +1390,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             miningParametersSupplier.get(),
             besuController.getTransactionSimulator(),
             besuController.getProtocolSchedule(),
-            besuController.getProtocolContext().getBlockchain()));
+            besuController.getProtocolContext().getBlockchain(),
+            metricsConfiguration.isExecutionMetricsEnabled()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
@@ -2030,6 +2031,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(p -> ensureAllNodesAreInAllowlist(staticNodes, p));
     metricsConfiguration = metricsConfiguration();
+
+    // Set system property from CLI flag for slow block threshold
+    if (metricsOptions.getSlowBlockThresholdMs() >= 0) {
+      System.setProperty(
+          "besu.execution.slowBlockThresholdMs",
+          String.valueOf(metricsOptions.getSlowBlockThresholdMs()));
+    }
 
     instantiateSignatureAlgorithmFactory();
 

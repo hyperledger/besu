@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -115,9 +116,12 @@ class ParallelBlockTransactionProcessorTest {
     return switch (variant) {
       case PARALLELIZED ->
           new ParallelizedConcurrentTransactionProcessor(transactionProcessor, collisionDetector);
-      case BAL ->
-          new BalConcurrentTransactionProcessor(
-              transactionProcessor, blockAccessList, BalConfiguration.DEFAULT);
+      case BAL -> {
+        final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
+        when(bpc.getOperationTracer()).thenReturn(OperationTracer.NO_TRACING);
+        yield new BalConcurrentTransactionProcessor(
+            transactionProcessor, blockAccessList, BalConfiguration.DEFAULT, bpc);
+      }
     };
   }
 
@@ -507,9 +511,11 @@ class ParallelBlockTransactionProcessorTest {
                   ValidationResult.valid());
             });
 
+    final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
+    when(bpc.getOperationTracer()).thenReturn(OperationTracer.NO_TRACING);
     final BalConcurrentTransactionProcessor processor =
         new BalConcurrentTransactionProcessor(
-            transactionProcessor, blockAccessList, BalConfiguration.DEFAULT);
+            transactionProcessor, blockAccessList, BalConfiguration.DEFAULT, bpc);
 
     final Transaction tx0 = mockTransaction();
     final Transaction tx1 = mockTransaction();
