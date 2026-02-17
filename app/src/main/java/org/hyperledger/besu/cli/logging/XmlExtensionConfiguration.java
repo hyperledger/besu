@@ -15,10 +15,12 @@
 package org.hyperledger.besu.cli.logging;
 
 import org.hyperledger.besu.cli.BesuCommand;
+import org.hyperledger.besu.cli.options.LoggingFormat;
 
 import java.io.IOException;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.AbstractConfiguration;
@@ -26,6 +28,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
 import org.apache.logging.log4j.core.config.xml.XmlConfiguration;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.layout.template.json.JsonTemplateLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,26 +93,12 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
       return;
     }
 
-    final boolean colorEnabled = getColorEnabled();
-    final PatternLayout patternLayout =
-        PatternLayout.newBuilder()
-            .withConfiguration(this)
-            .withDisableAnsi(!colorEnabled)
-            .withNoConsoleNoAnsi(!colorEnabled)
-            .withPattern(
-                String.join(
-                    SEP,
-                    dim("%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}"),
-                    dim("%t"),
-                    colorize("%-5level"),
-                    dim("%c{1}"),
-                    colorize("%msgc%n%throwable")))
-            .build();
+    final Layout<?> layout = createLayout();
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder()
             .setName("Console")
             .setTarget(ConsoleAppender.Target.SYSTEM_OUT)
-            .setLayout(patternLayout)
+            .setLayout(layout)
             .build();
     consoleAppender.start();
 
@@ -119,6 +108,46 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     }
 
     this.getRootLogger().addAppender(consoleAppender, null, null);
+  }
+
+  private Layout<?> createLayout() {
+    final LoggingFormat loggingFormat = getLoggingFormat();
+    if (loggingFormat.isJsonFormat()) {
+      return createJsonLayout(loggingFormat);
+    }
+    return createPatternLayout();
+  }
+
+  private PatternLayout createPatternLayout() {
+    final boolean colorEnabled = getColorEnabled();
+    return PatternLayout.newBuilder()
+        .withConfiguration(this)
+        .withDisableAnsi(!colorEnabled)
+        .withNoConsoleNoAnsi(!colorEnabled)
+        .withPattern(
+            String.join(
+                SEP,
+                dim("%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}"),
+                dim("%t"),
+                colorize("%-5level"),
+                dim("%c{1}"),
+                colorize("%msgc%n%throwable")))
+        .build();
+  }
+
+  private JsonTemplateLayout createJsonLayout(final LoggingFormat loggingFormat) {
+    return JsonTemplateLayout.newBuilder()
+        .setConfiguration(this)
+        .setEventTemplateUri(loggingFormat.getEventTemplateUri())
+        .build();
+  }
+
+  private LoggingFormat getLoggingFormat() {
+    try {
+      return BesuCommand.getSelectedLoggingFormat();
+    } catch (NoClassDefFoundError | ExceptionInInitializerError e) {
+      return LoggingFormat.PLAIN;
+    }
   }
 
   private boolean getColorEnabled() {

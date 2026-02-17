@@ -38,6 +38,20 @@ public interface LogConfigurator {
     }
   }
 
+  /**
+   * Applies a structured JSON logging format by replacing the Console appender layout. Called after
+   * CLI parsing to apply the user's --logging-format choice.
+   *
+   * @param eventTemplateUri the Log4j2 JsonTemplateLayout event template URI, or null for PLAIN
+   */
+  static void applyLoggingFormat(final String eventTemplateUri) {
+    try {
+      Log4j2ConfiguratorUtil.applyLoggingFormat(eventTemplateUri);
+    } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
+      // This is expected when Log4j support is not in the classpath, so ignore
+    }
+  }
+
   /** Reconfigure. */
   static void reconfigure() {
     try {
