@@ -525,8 +525,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), e);
       }
 
-      LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
-      blockTracer.traceEndBlock(blockHeader, blockBody);
+      // Persist before traceEndBlock so that state root calculation (trie cache lookups,
+      // state_hash_ms timing) occurs while ExecutionStatsHolder is still set on this thread.
       try {
         worldState.persist(blockHeader, stateRootCommitter);
       } catch (MerkleTrieException e) {
@@ -548,6 +548,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed persisting block", e);
         return new BlockProcessingResult(Optional.empty(), e);
       }
+
+      LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
+      blockTracer.traceEndBlock(blockHeader, blockBody);
 
       return new BlockProcessingResult(
           Optional.of(
