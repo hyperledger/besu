@@ -297,6 +297,16 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       validateInterface(
           commandLine, networkInterfaceChecker, p2pInterfaceIpv6, "--p2p-interface-ipv6");
       validateIpv6Address(commandLine, p2pInterfaceIpv6, "--p2p-interface-ipv6");
+
+      // Enforce primary must be IPv4 when IPv6 is also specified (dual-stack)
+      if (!NetworkUtility.isIpV4Address(p2pInterface)
+          && !NetworkUtility.INADDR_ANY.equals(p2pInterface)) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "When --p2p-interface-ipv6 is specified for dual-stack configuration, "
+                + "--p2p-interface must be an IPv4 address or 0.0.0.0, but was: "
+                + p2pInterface);
+      }
     }
   }
 
@@ -320,6 +330,15 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
     if (p2pHostIpv6 != null) {
       validateHost(commandLine, p2pHostIpv6, "--p2p-host-ipv6");
       validateIpv6Address(commandLine, p2pHostIpv6, "--p2p-host-ipv6");
+
+      // Enforce primary must be IPv4 when IPv6 is also specified (dual-stack)
+      if (!NetworkUtility.isIpV4Address(p2pHost)) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "When --p2p-host-ipv6 is specified for dual-stack configuration, "
+                + "--p2p-host must be an IPv4 address, but was: "
+                + p2pHost);
+      }
     }
   }
 

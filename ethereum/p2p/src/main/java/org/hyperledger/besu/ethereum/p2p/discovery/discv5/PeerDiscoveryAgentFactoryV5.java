@@ -95,7 +95,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
     final NodeRecord localNodeRecord = initializeLocalNodeRecord();
 
-    final DiscoveryConfiguration disc = config.getDiscovery();
+    final DiscoveryConfiguration disc = config.discoveryConfiguration();
     final DiscoverySystemBuilder builder =
         new DiscoverySystemBuilder()
             .signer(new LocalNodeKeySigner(nodeKey))
@@ -132,7 +132,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    * @throws IllegalStateException if the local node record has not been initialized
    */
   private NodeRecord initializeLocalNodeRecord() {
-    final DiscoveryConfiguration disc = config.getDiscovery();
+    final DiscoveryConfiguration disc = config.discoveryConfiguration();
     nodeRecordManager.initializeLocalNode(
         new HostEndpoint(disc.getAdvertisedHost(), disc.getBindPort(), disc.getBindPort()),
         disc.getAdvertisedHostIpv6()
