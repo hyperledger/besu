@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.config;
 
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.NetworkUtility;
 
@@ -36,7 +37,7 @@ public class DiscoveryConfiguration {
   private boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
   private boolean includeBootnodesOnPeerRefresh = true;
   private Optional<String> bindHostIpv6 = Optional.empty();
-  private int bindPortIpv6 = 30404;
+  private int bindPortIpv6 = EnodeURLImpl.DEFAULT_LISTENING_PORT_IPV6;
   private Optional<String> advertisedHostIpv6 = Optional.empty();
   private IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
 

@@ -97,14 +97,32 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       arity = "0..*")
   public final List<String> bootNodes = null;
 
+  // ===================== IPv4 / General Network Options =====================
+
   /** The IP address the node advertises to peers for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @CommandLine.Option(
       names = {"--p2p-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})")
   public String p2pHost = autoDiscoverDefaultIP().getHostAddress();
+
+  /** The network interface address on which this node listens for P2P communication. */
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @CommandLine.Option(
+      names = {"--p2p-interface"},
+      paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
+      description = "Network interface address to listen on (default: ${DEFAULT-VALUE})")
+  public String p2pInterface = NetworkUtility.INADDR_ANY;
+
+  /** The port on which this node listens for P2P communication. */
+  @CommandLine.Option(
+      names = {"--p2p-port"},
+      paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
+      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})")
+  public Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
+
+  // ===================== IPv6 Network Options =====================
 
   /** The IPv6 address the node advertises to peers for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -113,15 +131,6 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       description = "IPv6 address this node advertises to its peers (default: none)")
   public String p2pHostIpv6 = null;
-
-  /** The network interface address on which this node listens for P2P communication. */
-  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-  @CommandLine.Option(
-      names = {"--p2p-interface"},
-      paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "Network interface address to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  public String p2pInterface = NetworkUtility.INADDR_ANY;
 
   /** The IPv6 network interface address on which this node listens for P2P communication. */
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
@@ -137,7 +146,9 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
       description =
           "Port on which to listen for IPv6 P2P communication (default: ${DEFAULT-VALUE})")
-  public final Integer p2pPortIpv6 = 30404;
+  public Integer p2pPortIpv6 = EnodeURLImpl.DEFAULT_LISTENING_PORT_IPV6;
+
+  // ===================== IP Version Preference =====================
 
   /**
    * IP version preference for outbound peer connections. This determines which address to use when
@@ -147,20 +158,14 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       names = {"--p2p-outbound-ip-version"},
       paramLabel = "<ipv4_preferred|ipv6_preferred|ipv4_only|ipv6_only>",
       description =
-          "IP version preference for outbound P2P connections when peers advertise both IPv4 and IPv6 addresses. "
-              + "IPV4_PREFERRED: prefer IPv4, fallback to IPv6 if IPv4 unavailable (default). "
-              + "IPV6_PREFERRED: prefer IPv6, fallback to IPv4 if IPv6 unavailable. "
-              + "IPV4_ONLY: only use IPv4, never use IPv6. "
-              + "IPV6_ONLY: only use IPv6, never use IPv4. "
-              + "(default: ${DEFAULT-VALUE})")
+          """
+          IP version preference for outbound P2P connections when peers advertise both IPv4 and IPv6 addresses.
+          IPV4_PREFERRED: prefer IPv4, fallback to IPv6 if IPv4 unavailable (default).
+          IPV6_PREFERRED: prefer IPv6, fallback to IPv4 if IPv6 unavailable.
+          IPV4_ONLY: only use IPv4, never use IPv6.
+          IPV6_ONLY: only use IPv6, never use IPv4.
+          (default: ${DEFAULT-VALUE})""")
   public final IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
-
-  /** The port on which this node listens for P2P communication. */
-  @CommandLine.Option(
-      names = {"--p2p-port"},
-      paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})")
-  public final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
 
   /** The maximum number of peers this node can connect to. */
   @CommandLine.Option(
