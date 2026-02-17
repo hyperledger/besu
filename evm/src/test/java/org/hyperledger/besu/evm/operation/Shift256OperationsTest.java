@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.operation.Shift256Operations.ALL_ONES;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 /** Unit tests for the {@link Shift256Operations} utility class. */
