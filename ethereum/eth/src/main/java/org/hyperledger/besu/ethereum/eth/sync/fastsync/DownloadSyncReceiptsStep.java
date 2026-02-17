@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import static java.util.Collections.emptyList;
-import static org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE;
 import static org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode.SUCCESS;
-import static org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode.TIMEOUT;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
@@ -30,6 +28,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -47,8 +46,8 @@ public class DownloadSyncReceiptsStep
     implements Function<List<SyncBlock>, CompletableFuture<List<SyncBlockWithReceipts>>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DownloadSyncReceiptsStep.class);
-  private static final long DEFAULT_BASE_WAIT_MILLIS = 1000;
-  private static final int MAX_RETRIES = 5;
+  private static final Duration BASE_RETRY_DELAY = Duration.ofMillis(500);
+  private static final int MAX_RETRIES_ON_FAILURE = 5;
   private static final AtomicInteger taskSequence = new AtomicInteger(0);
 
   private final ProtocolSchedule protocolSchedule;
@@ -68,16 +67,20 @@ public class DownloadSyncReceiptsStep
 
   @Override
   public CompletableFuture<List<SyncBlockWithReceipts>> apply(final List<SyncBlock> blocks) {
+    final int currTaskId = taskSequence.incrementAndGet();
+    final List<SyncBlock> blocksToRequest = prepareRequest(blocks);
+    final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash =
+        HashMap.newHashMap(blocksToRequest.size());
+
     return ethScheduler
-        .scheduleServiceTask(() -> downloadReceipts(blocks))
+        .scheduleServiceTask(
+            () ->
+                downloadReceipts(
+                    currTaskId, 0, MAX_RETRIES_ON_FAILURE, blocksToRequest, receiptsByRootHash))
         .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts));
   }
 
-  private CompletableFuture<Map<Hash, List<SyncTransactionReceipt>>> downloadReceipts(
-      final List<SyncBlock> blocks) {
-
-    final int currTaskId = taskSequence.incrementAndGet();
-
+  private List<SyncBlock> prepareRequest(final List<SyncBlock> blocks) {
     // filter any headers with an empty receipts root, for which we do not need to request anything
     final List<SyncBlock> blocksWithTxs =
         blocks.stream()
@@ -110,13 +113,18 @@ public class DownloadSyncReceiptsStep
             .collect(Collectors.toCollection(ArrayList::new));
 
     LOG.trace("Saving by dedup {}", blocksWithTxs.size() - blocksToRequest.size());
+    return blocksToRequest;
+  }
 
-    final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash =
-        HashMap.newHashMap(blocksToRequest.size());
+  private CompletableFuture<Map<Hash, List<SyncTransactionReceipt>>> downloadReceipts(
+      final int currTaskId,
+      final int prevIterations,
+      final int remainingRetriesOnFailure,
+      final List<SyncBlock> blocksToRequest,
+      final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash) {
 
     final int initialBlockCount = blocksToRequest.size();
-    int iteration = 0;
-    int retry = 0;
+    int iteration = prevIterations;
     while (!blocksToRequest.isEmpty()) {
       ++iteration;
 
@@ -137,8 +145,14 @@ public class DownloadSyncReceiptsStep
 
       final var responseCode = getReceiptsResult.responseCode();
 
-      if (responseCode == SUCCESS && getReceiptsResult.result().isPresent()) {
-        final var blocksReceipts = getReceiptsResult.result().get();
+      if (responseCode == SUCCESS) {
+        final var blocksReceipts =
+            getReceiptsResult
+                .result()
+                .orElseThrow(
+                    () ->
+                        new IllegalStateException(
+                            "Task validation failure, it must flag empty result as failure"));
 
         final var resolvedBlocks = blocksToRequest.subList(0, blocksReceipts.size());
 
@@ -162,32 +176,38 @@ public class DownloadSyncReceiptsStep
       } else {
         LOG.atTrace()
             .setMessage(
-                "[{}:{}] Failed with {} to retrieve receipts for {} blocks (initial {}): {}")
+                "[{}:{}] Failed with {} to retrieve receipts for {} blocks (initial {}): {}. Remaining retries {}")
             .addArgument(currTaskId)
             .addArgument(iteration)
             .addArgument(responseCode)
             .addArgument(blocksToRequest::size)
             .addArgument(initialBlockCount)
             .addArgument(() -> formatBlockDetails(blocksToRequest))
+            .addArgument(remainingRetriesOnFailure)
             .log();
 
-        if (responseCode == NO_PEER_AVAILABLE || responseCode == TIMEOUT) {
-          // wait a bit more every iteration before retrying
-          if (retry++ < MAX_RETRIES) {
-            try {
-              final long incrementalWaitTime = DEFAULT_BASE_WAIT_MILLIS * retry;
-              LOG.trace(
-                  "[{}:{}] Waiting for {}ms before retrying",
-                  currTaskId,
-                  iteration,
-                  incrementalWaitTime);
-              Thread.sleep(incrementalWaitTime);
-            } catch (InterruptedException e) {
-              throw new RuntimeException("Interrupted while waiting before retrying", e);
-            }
-          } else {
-            throw new RuntimeException("Aborting after " + MAX_RETRIES + " failures");
-          }
+        if (remainingRetriesOnFailure > 0) {
+          final int newRemainingRetriesOnFailure = remainingRetriesOnFailure - 1;
+          final Duration incrementalWaitTime =
+              BASE_RETRY_DELAY.multipliedBy(MAX_RETRIES_ON_FAILURE - newRemainingRetriesOnFailure);
+          LOG.trace(
+              "[{}:{}] Waiting for {} before retrying", currTaskId, iteration, incrementalWaitTime);
+          final int passIterations = iteration;
+          return ethScheduler.scheduleFutureTask(
+              () ->
+                  ethScheduler.scheduleServiceTask(
+                      () ->
+                          downloadReceipts(
+                              currTaskId,
+                              passIterations,
+                              newRemainingRetriesOnFailure,
+                              blocksToRequest,
+                              receiptsByRootHash)),
+              incrementalWaitTime);
+
+        } else {
+          return CompletableFuture.failedFuture(
+              new RuntimeException("Aborting after " + MAX_RETRIES_ON_FAILURE + " failures"));
         }
       }
     }
