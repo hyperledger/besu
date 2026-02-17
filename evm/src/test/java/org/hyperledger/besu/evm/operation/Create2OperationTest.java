@@ -210,10 +210,10 @@ public class Create2OperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM myEVM = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, myEVM);
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
-    final ContractCreationProcessor ccp = new ContractCreationProcessor(myEVM, false, List.of(), 0);
+    final ContractCreationProcessor ccp = new ContractCreationProcessor(evm, false, List.of(), 0);
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
@@ -259,8 +259,8 @@ public class Create2OperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM myEVM = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, myEVM);
+    final EVM evm = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
   }
 
@@ -280,8 +280,8 @@ public class Create2OperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM myEVM = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, myEVM);
+    final EVM evm = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
@@ -301,8 +301,8 @@ public class Create2OperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM myEVM = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, myEVM);
+    final EVM evm = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isNull();
   }
 
