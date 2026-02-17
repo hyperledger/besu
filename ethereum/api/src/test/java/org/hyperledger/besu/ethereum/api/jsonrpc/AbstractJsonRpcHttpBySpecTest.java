@@ -50,6 +50,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpServiceTest {
 
+  private static final boolean UPDATE_SPECS = true;
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final Pattern GAS_MATCH_FOR_STATE_DIFF =
       Pattern.compile("\"balance\":(?!\"=\").*?},");
@@ -129,13 +130,19 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       final int expectedStatusCode = specNode.get("statusCode").asInt();
       assertThat(resp.code()).isEqualTo(expectedStatusCode);
 
+      final String responseString = Objects.requireNonNull(resp.body()).string();
+      final JsonNode actualResponseNode = objectMapper.readTree(responseString);
+
+      if (UPDATE_SPECS) {
+        updateSpecFile(specFile, specNode, actualResponseNode);
+        return;
+      }
+
       final JsonNode expectedResponse = specNode.get("response");
       if (expectedResponse.isObject()) {
         try {
-          final ObjectNode responseBody =
-              (ObjectNode) objectMapper.readTree(Objects.requireNonNull(resp.body()).string());
           checkResponse(
-              responseBody,
+              (ObjectNode) actualResponseNode,
               (ObjectNode) expectedResponse,
               getMethod(rawRequestBody),
               getTraceType(specFile.toString()));
@@ -145,8 +152,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       } else if (expectedResponse.isArray()) {
         final ArrayNode responseBody;
         try {
-          responseBody =
-              (ArrayNode) objectMapper.readTree(Objects.requireNonNull(resp.body()).string());
+          responseBody = (ArrayNode) actualResponseNode;
         } catch (final Exception e) {
           throw new RuntimeException("Unable to parse response as json Array", e);
         }
@@ -158,6 +164,77 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
               getTraceType(specFile.toString()));
         }
       }
+    }
+  }
+
+  private void updateSpecFile(
+      final URL specFile, final ObjectNode specNode, final JsonNode actualResponse)
+      throws IOException {
+    final Path sourcePath = resolveSourcePath(specFile);
+    if (sourcePath == null) {
+      return;
+    }
+    // Only update if response actually differs
+    final JsonNode originalResponse = specNode.get("response");
+    if (originalResponse != null && originalResponse.equals(actualResponse)) {
+      return;
+    }
+    // Read original source file to preserve its formatting
+    final String originalText = Files.readString(sourcePath, StandardCharsets.UTF_8);
+    // Preserve the original response field order (e.g. jsonrpc, result, id)
+    final JsonNode orderedResponse;
+    if (originalResponse != null && originalResponse.isObject() && actualResponse.isObject()) {
+      final ObjectNode ordered = objectMapper.createObjectNode();
+      originalResponse
+          .fieldNames()
+          .forEachRemaining(
+              field -> {
+                if (actualResponse.has(field)) {
+                  ordered.set(field, actualResponse.get(field));
+                }
+              });
+      actualResponse
+          .fieldNames()
+          .forEachRemaining(
+              field -> {
+                if (!ordered.has(field)) {
+                  ordered.set(field, actualResponse.get(field));
+                }
+              });
+      orderedResponse = ordered;
+    } else {
+      orderedResponse = actualResponse;
+    }
+    specNode.set("response", orderedResponse);
+    // Detect original formatting style (space before colon or not)
+    final boolean spaceBeforeColon = originalText.contains("\" : ");
+    final ObjectMapper writer = new ObjectMapper();
+    writer.configure(INDENT_OUTPUT, true);
+    String json = writer.writerWithDefaultPrettyPrinter().writeValueAsString(specNode);
+    if (!spaceBeforeColon) {
+      json = json.replace("\" : ", "\": ");
+    }
+    // Preserve trailing newline if original had one
+    if (originalText.endsWith("\n") && !json.endsWith("\n")) {
+      json = json + "\n";
+    }
+    Files.writeString(sourcePath, json, StandardCharsets.UTF_8);
+  }
+
+  private Path resolveSourcePath(final URL specFile) {
+    try {
+      final Path buildPath = Paths.get(specFile.toURI());
+      final String pathStr = buildPath.toString();
+      // Convert build/resources/test/ path to src/test/resources/ path
+      final int buildIdx = pathStr.indexOf("/build/resources/test/");
+      if (buildIdx >= 0) {
+        final String moduleRoot = pathStr.substring(0, buildIdx);
+        final String resourcePath = pathStr.substring(buildIdx + "/build/resources/test/".length());
+        return Paths.get(moduleRoot, "src", "test", "resources", resourcePath);
+      }
+      return null;
+    } catch (final URISyntaxException e) {
+      return null;
     }
   }
 

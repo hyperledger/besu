@@ -917,7 +917,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         ethPeers,
         storageProvider,
         dataStorageConfiguration,
-        transactionSimulator);
+        transactionSimulator,
+        scheduler);
   }
 
   private void preloadBlockHeaderCache(
