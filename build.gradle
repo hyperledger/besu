@@ -711,7 +711,9 @@ application {
     "java.base/jdk.internal.misc=ALL-UNNAMED",
     "--add-opens",
     "java.base/java.nio=ALL-UNNAMED",
-    "--enable-native-access=ALL-UNNAMED"
+    "--enable-native-access=ALL-UNNAMED",
+    // Immediately exit on OOM rather than becoming a zombie process
+    '-XX:+ExitOnOutOfMemoryError'
   ]
 }
 

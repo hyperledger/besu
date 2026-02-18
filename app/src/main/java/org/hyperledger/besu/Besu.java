@@ -92,6 +92,11 @@ public final class Besu {
 
   private static Thread.UncaughtExceptionHandler slf4jExceptionHandler(final Logger logger) {
     return (thread, error) -> {
+      if (error instanceof OutOfMemoryError) {
+        // Halt immediately — logging would fail due to allocation.
+        // Belt-and-suspenders backup for -XX:+ExitOnOutOfMemoryError.
+        Runtime.getRuntime().halt(137);
+      }
       if (logger.isErrorEnabled()) {
         logger.error(String.format("Uncaught exception in thread \"%s\"", thread.getName()), error);
       }
