@@ -674,87 +674,90 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
   private UInt256 mac128(final long multiplier, final UInt256 carryIn) {
     // Multiply accumulate for 128bits integer (this):
-    // Returns this * multiplier + (carryIn >>> 64)
-    long hi, lo, carry;
+    // <p1, p0> = <u1, u0> * multiplier + carryIn
     if (multiplier == 0) return carryIn.shiftDigitsRight();
 
-    lo = u0 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u0, multiplier);
-    long z0 = lo + carryIn.u1;
-    hi += (Long.compareUnsigned(z0, lo) < 0) ? 1 : 0;
+    long p0 = u0 * multiplier;
+    long p1 = Math.unsignedMultiplyHigh(u0, multiplier);
+    long z0 = p0 + carryIn.u1;
+    long carry = p1 + (((p0 & carryIn.u1) | ((p0 | carryIn.u1) & ~z0)) >>> 63);
 
-    long z1 = hi + carryIn.u2;
-    carry = (Long.compareUnsigned(z1, hi) < 0) ? 1 : 0;
-    lo = u1 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u1, multiplier);
-    z1 += lo;
-    hi += (Long.compareUnsigned(z1, lo) < 0) ? carry + 1 : carry;
+    p0 = u1 * multiplier;
+    p1 = Math.unsignedMultiplyHigh(u1, multiplier);
+    long res = carry + carryIn.u2;
+    long z1 = res + p0;
+    carry = (((carry & carryIn.u2) | ((carry | carryIn.u2) & ~res)) >>> 63);
+    carry += ((res & p0) | ((res | p0) & ~z1)) >>> 63;
 
-    return new UInt256(0, hi, z1, z0);
+    long z2 = p1 + carry;
+
+    return new UInt256(0, z2, z1, z0);
   }
 
   private UInt256 mac192(final long multiplier, final UInt256 carryIn) {
     // Multiply accumulate for 192bits integer (this):
     // Returns this * multiplier + (carryIn >>> 64)
-    long hi, lo, carry;
+    // <p1, p0> = <u1, u0> * multiplier + carryIn
     if (multiplier == 0) return carryIn.shiftDigitsRight();
 
-    lo = u0 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u0, multiplier);
-    long z0 = lo + carryIn.u1;
-    hi += (Long.compareUnsigned(z0, lo) < 0) ? 1 : 0;
+    long p0 = u0 * multiplier;
+    long p1 = Math.unsignedMultiplyHigh(u0, multiplier);
+    long z0 = p0 + carryIn.u1;
+    long carry = p1 + (((p0 & carryIn.u1) | ((p0 | carryIn.u1) & ~z0)) >>> 63);
 
-    long z1 = hi + carryIn.u2;
-    carry = (Long.compareUnsigned(z1, hi) < 0) ? 1 : 0;
-    lo = u1 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u1, multiplier);
-    z1 += lo;
-    hi += (Long.compareUnsigned(z1, lo) < 0) ? carry + 1 : carry;
+    p0 = u1 * multiplier;
+    p1 = Math.unsignedMultiplyHigh(u1, multiplier);
+    long res = carry + carryIn.u2;
+    long z1 = res + p0;
+    carry = (((carry & carryIn.u2) | ((carry | carryIn.u2) & ~res)) >>> 63);
+    carry += p1 + (((res & p0) | ((res | p0) & ~z1)) >>> 63);
 
-    long z2 = hi + carryIn.u3;
-    carry = (Long.compareUnsigned(z2, hi) < 0) ? 1 : 0;
-    lo = u2 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u2, multiplier);
-    z2 += lo;
-    hi += (Long.compareUnsigned(z2, lo) < 0) ? carry + 1 : carry;
+    p0 = u2 * multiplier;
+    p1 = Math.unsignedMultiplyHigh(u2, multiplier);
+    res = carry + carryIn.u3;
+    long z2 = res + p0;
+    carry = (((carry & carryIn.u3) | ((carry | carryIn.u3) & ~res)) >>> 63);
+    carry += ((res & p0) | ((res | p0) & ~z2)) >>> 63;
 
-    return new UInt256(hi, z2, z1, z0);
+    long z3 = p1 + carry;
+    return new UInt256(z3, z2, z1, z0);
   }
 
   private UInt320 mac256(final long multiplier, final UInt320 carryIn) {
     // Multiply accumulate for 192bits integer (this):
     // Returns this * multiplier + carryIn
-    long hi, lo, carry;
+    // <p1, p0> = <u1, u0> * multiplier + carryIn
     if (multiplier == 0) return carryIn.shiftDigitsRight();
 
-    lo = u0 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u0, multiplier);
-    long z0 = lo + carryIn.u1;
-    hi += (Long.compareUnsigned(z0, lo) < 0) ? 1 : 0;
-    carry = 0;
+    long p0 = u0 * multiplier;
+    long p1 = Math.unsignedMultiplyHigh(u0, multiplier);
+    long z0 = p0 + carryIn.u1;
+    long carry = p1 + (((p0 & carryIn.u1) | ((p0 | carryIn.u1) & ~z0)) >>> 63);
 
-    long z1 = hi + carryIn.u2;
-    carry = (Long.compareUnsigned(z1, hi) < 0) ? 1 : 0;
-    lo = u1 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u1, multiplier);
-    z1 += lo;
-    hi += (Long.compareUnsigned(z1, lo) < 0) ? carry + 1 : carry;
+    p0 = u1 * multiplier;
+    p1 = Math.unsignedMultiplyHigh(u1, multiplier);
+    long res = carry + carryIn.u2;
+    long z1 = res + p0;
+    carry = (((carry & carryIn.u2) | ((carry | carryIn.u2) & ~res)) >>> 63);
+    carry += p1 + (((res & p0) | ((res | p0) & ~z1)) >>> 63);
 
-    long z2 = hi + carryIn.u3;
-    carry = (Long.compareUnsigned(z2, hi) < 0) ? 1 : 0;
-    lo = u2 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u2, multiplier);
-    z2 += lo;
-    hi += (Long.compareUnsigned(z2, lo) < 0) ? carry + 1 : carry;
+    p0 = u2 * multiplier;
+    p1 = Math.unsignedMultiplyHigh(u2, multiplier);
+    res = carry + carryIn.u3;
+    long z2 = res + p0;
+    carry = (((carry & carryIn.u3) | ((carry | carryIn.u3) & ~res)) >>> 63);
+    carry += p1 + (((res & p0) | ((res | p0) & ~z2)) >>> 63);
 
-    long z3 = hi + carryIn.u4;
-    carry = (Long.compareUnsigned(z3, hi) < 0) ? 1 : 0;
-    lo = u3 * multiplier;
-    hi = Math.unsignedMultiplyHigh(u3, multiplier);
-    z3 += lo;
-    hi += (Long.compareUnsigned(z3, lo) < 0) ? carry + 1 : carry;
+    p0 = u3 * multiplier;
+    p1 = Math.unsignedMultiplyHigh(u3, multiplier);
+    res = carry + carryIn.u4;
+    long z3 = res + p0;
+    carry = (((carry & carryIn.u4) | ((carry | carryIn.u4) & ~res)) >>> 63);
+    carry += ((res & p0) | ((res | p0) & ~z3)) >>> 63;
 
-    return new UInt320(hi, z3, z2, z1, z0);
+    long z4 = p1 + carry;
+
+    return new UInt320(z4, z3, z2, z1, z0);
   }
 
   // --------------------------------------------------------------------------
@@ -764,24 +767,23 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // --------------------------------------------------------------------------
 
   private UInt256 mul64(final UInt256 v) {
-    long a = u0;
+    // <p1, p0> = <u1, u0> * multiplier
+    long p0 = u0 * v.u0;
+    long p1 = Math.unsignedMultiplyHigh(u0, v.u0);
+    long z0 = p0;
+    long carry = p1;
 
-    // a * v.u0
-    long z0 = a * v.u0;
-    long c = Math.unsignedMultiplyHigh(a, v.u0);
+    p0 = u0 * v.u1;
+    p1 = Math.unsignedMultiplyHigh(u0, v.u1);
+    long z1 = p0 + carry;
+    carry = p1 + (((p0 & carry) | ((p0 | carry) & ~z1)) >>> 63);
 
-    // a * v.u1 + carry
-    long p = a * v.u1;
-    long z1 = p + c;
-    c = Math.unsignedMultiplyHigh(a, v.u1) + ((Long.compareUnsigned(z1, p) < 0) ? 1L : 0L);
+    p0 = u0 * v.u2;
+    p1 = Math.unsignedMultiplyHigh(u0, v.u2);
+    long z2 = p0 + carry;
+    carry = p1 + (((p0 & carry) | ((p0 | carry) & ~z2)) >>> 63);
 
-    // a * v.u2 + carry
-    p = a * v.u2;
-    long z2 = p + c;
-    c = Math.unsignedMultiplyHigh(a, v.u2) + ((Long.compareUnsigned(z2, p) < 0) ? 1L : 0L);
-
-    // a * v.u3 + carry (hi overflows 256 bits, discarded)
-    long z3 = a * v.u3 + c;
+    long z3 = u0 * v.u3 + carry;
 
     return new UInt256(z3, z2, z1, z0);
   }
