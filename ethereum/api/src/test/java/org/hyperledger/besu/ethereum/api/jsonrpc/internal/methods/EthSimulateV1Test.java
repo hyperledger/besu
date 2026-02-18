@@ -22,8 +22,9 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SimulateV1Parameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
@@ -76,15 +77,16 @@ public class EthSimulateV1Test {
   }
 
   @Test
-  public void shouldReturnNullWhenInvalidBlockNumberSpecified() {
+  public void shouldReturnBlockNotFoundErrorWhenFutureBlockNumberSpecified() {
     final JsonRpcRequestContext request =
         ethSimulateV1Request(simulateParameter(), Quantity.create(33L));
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
 
     final JsonRpcResponse response = method.response(request);
 
-    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
-    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
+    Assertions.assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    Assertions.assertThat(((JsonRpcErrorResponse) response).getError().getCode())
+        .isEqualTo(RpcErrorType.BLOCK_NOT_FOUND.getCode());
 
     verify(blockchainQueries).headBlockNumber();
   }
