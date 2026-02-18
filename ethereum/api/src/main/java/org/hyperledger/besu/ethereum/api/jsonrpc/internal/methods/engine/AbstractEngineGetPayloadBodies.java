@@ -43,6 +43,15 @@ public abstract class AbstractEngineGetPayloadBodies extends ExecutionEngineJson
     return MAX_REQUEST_BLOCKS;
   }
 
+  /**
+   * This method is used in v2 only.
+   *
+   * @param blockchain the blockchain
+   * @param blockHash block hash
+   * @return an Optional containing the RLP-encoded block access list as a hex string if it exists
+   * @see EngineGetPayloadBodiesByHashV2
+   * @see EngineGetPayloadBodiesByRangeV2
+   */
   protected Optional<String> getBlockAccessList(final Blockchain blockchain, final Hash blockHash) {
     return blockchain
         .getBlockAccessList(blockHash)
