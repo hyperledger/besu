@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.StreamingJsonRpcSuccessResponse;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
@@ -72,6 +73,14 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
     response.setStatusCode(status(jsonRpcResponse).code());
     if (jsonRpcResponse.getType() == RpcResponseType.NONE) {
       response.end();
+    } else if (jsonRpcResponse instanceof StreamingJsonRpcSuccessResponse streamingResponse) {
+      try (final JsonResponseStreamer streamer =
+          new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
+        try (JsonGenerator generator =
+            getJsonObjectMapper().getFactory().createGenerator(streamer)) {
+          streamingResponse.writeTo(generator);
+        }
+      }
     } else {
       try (final JsonResponseStreamer streamer =
           new JsonResponseStreamer(response, ctx.request().remoteAddress())) {

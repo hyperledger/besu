@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Transaction
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.StreamingJsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -38,14 +39,14 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.google.common.base.Suppliers;
 
 public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
@@ -97,61 +98,89 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
     return traceOptions;
   }
 
-  protected Collection<DebugTraceTransactionResult> getTraces(
-      final JsonRpcRequestContext requestContext,
-      final TraceOptions traceOptions,
-      final Optional<Block> maybeBlock) {
-    return maybeBlock
-        .flatMap(
-            block ->
-                Tracer.processTracing(
-                    getBlockchainQueries(),
-                    Optional.of(block.getHeader()),
-                    traceableState -> {
-                      List<DebugTraceTransactionResult> tracesList =
-                          Collections.synchronizedList(new ArrayList<>());
-                      final ProtocolSpec protocolSpec =
-                          protocolSchedule.getByBlockHeader(block.getHeader());
-                      final MainnetTransactionProcessor transactionProcessor =
-                          protocolSpec.getTransactionProcessor();
-                      final TraceBlock.ChainUpdater chainUpdater =
-                          new TraceBlock.ChainUpdater(traceableState);
+  /**
+   * Creates a streaming response that writes each transaction trace directly to the JSON output as
+   * it is produced, instead of accumulating all traces in memory. Peak memory usage drops from
+   * O(all_traces) to O(one_trace).
+   */
+  protected StreamingJsonRpcSuccessResponse.ResultWriter getStreamingTraces(
+      final TraceOptions traceOptions, final Optional<Block> maybeBlock) {
+    return generator -> {
+      if (maybeBlock.isEmpty()) {
+        generator.writeNull();
+        return;
+      }
+      final Block block = maybeBlock.get();
 
-                      TransactionSource transactionSource = new TransactionSource(block);
-                      DebugOperationTracer debugOperationTracer =
-                          new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
-                      ExecuteTransactionStep executeTransactionStep =
-                          new ExecuteTransactionStep(
-                              chainUpdater,
-                              transactionProcessor,
-                              getBlockchainQueries().getBlockchain(),
-                              debugOperationTracer,
-                              protocolSpec,
-                              block);
+      final Optional<?> tracingResult = Tracer.processTracing(
+          getBlockchainQueries(),
+          Optional.of(block.getHeader()),
+          traceableState -> {
+            final ProtocolSpec protocolSpec =
+                protocolSchedule.getByBlockHeader(block.getHeader());
+            final MainnetTransactionProcessor transactionProcessor =
+                protocolSpec.getTransactionProcessor();
+            final TraceBlock.ChainUpdater chainUpdater =
+                new TraceBlock.ChainUpdater(traceableState);
 
-                      Pipeline<TransactionTrace> traceBlockPipeline =
-                          createPipelineFrom(
-                                  "getTransactions",
-                                  transactionSource,
-                                  4,
-                                  outputCounter,
-                                  false,
-                                  "debug_trace_block")
-                              .thenProcess("executeTransaction", executeTransactionStep)
-                              .thenProcessAsyncOrdered(
-                                  "debugTraceTransactionStep",
-                                  DebugTraceTransactionStepFactory.createAsync(
-                                      traceOptions, protocolSpec),
-                                  4)
-                              .andFinishWith("collect_results", tracesList::add);
+            TransactionSource transactionSource = new TransactionSource(block);
+            DebugOperationTracer debugOperationTracer =
+                new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
+            ExecuteTransactionStep executeTransactionStep =
+                new ExecuteTransactionStep(
+                    chainUpdater,
+                    transactionProcessor,
+                    getBlockchainQueries().getBlockchain(),
+                    debugOperationTracer,
+                    protocolSpec,
+                    block);
 
-                      try {
-                        ethScheduler.startPipeline(traceBlockPipeline).get();
-                      } catch (InterruptedException | ExecutionException e) {
-                        throw new RuntimeException(e);
-                      }
-                      return Optional.of(tracesList);
-                    }))
-        .orElse(null);
+            // Write each trace directly to the generator as it's produced
+            Consumer<DebugTraceTransactionResult> streamWriter =
+                result -> {
+                  try {
+                    generator.writeObject(result);
+                    generator.flush();
+                  } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                  }
+                };
+
+            try {
+              generator.writeStartArray();
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+
+            Pipeline<TransactionTrace> traceBlockPipeline =
+                createPipelineFrom(
+                        "getTransactions",
+                        transactionSource,
+                        4,
+                        outputCounter,
+                        false,
+                        "debug_trace_block")
+                    .thenProcess("executeTransaction", executeTransactionStep)
+                    .thenProcessAsyncOrdered(
+                        "debugTraceTransactionStep",
+                        DebugTraceTransactionStepFactory.createAsync(traceOptions, protocolSpec),
+                        4)
+                    .andFinishWith("stream_results", streamWriter);
+
+            try {
+              ethScheduler.startPipeline(traceBlockPipeline).get();
+              generator.writeEndArray();
+            } catch (InterruptedException | ExecutionException | IOException e) {
+              throw new RuntimeException(e);
+            }
+            return Optional.of(Boolean.TRUE);
+          });
+
+      // If processTracing couldn't get the tracing state (e.g. parent block not available),
+      // the lambda was never called and nothing was written to the generator yet.
+      if (tracingResult.isEmpty()) {
+        generator.writeNull();
+      }
+    };
   }
 }

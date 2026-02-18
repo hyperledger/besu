@@ -20,9 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.StreamingJsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -34,7 +33,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
-import java.util.Collection;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -80,9 +78,9 @@ public class DebugTraceBlock extends AbstractDebugTraceBlock {
         .getBlockchain()
         .getBlockByHash(block.getHeader().getParentHash())
         .isPresent()) {
-      final Collection<DebugTraceTransactionResult> results =
-          getTraces(requestContext, traceOptions, Optional.ofNullable(block));
-      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), results);
+      return new StreamingJsonRpcSuccessResponse(
+          requestContext.getRequest().getId(),
+          getStreamingTraces(traceOptions, Optional.ofNullable(block)));
     } else {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.PARENT_BLOCK_NOT_FOUND);
