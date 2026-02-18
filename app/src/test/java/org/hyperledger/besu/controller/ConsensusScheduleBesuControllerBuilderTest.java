@@ -150,19 +150,31 @@ public class ConsensusScheduleBesuControllerBuilderTest {
         (softly) -> {
           softly
               .assertThat(
-                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(0L).getValue())
+                  migratingMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(0L, 0)
+                      .getValue())
               .isSameAs(miningCoordinator1);
           softly
               .assertThat(
-                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(4L).getValue())
+                  migratingMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(4L, 0)
+                      .getValue())
               .isSameAs(miningCoordinator1);
           softly
               .assertThat(
-                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(5L).getValue())
+                  migratingMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(5L, 0)
+                      .getValue())
               .isSameAs(miningCoordinator2);
           softly
               .assertThat(
-                  migratingMiningCoordinator.getMiningCoordinatorSchedule().getFork(6L).getValue())
+                  migratingMiningCoordinator
+                      .getMiningCoordinatorSchedule()
+                      .getFork(6L, 0)
+                      .getValue())
               .isSameAs(miningCoordinator2);
         });
   }
@@ -198,11 +210,11 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     expectedConsensusContextSpecs.add(new ForkSpec<>(10L, context2));
     assertThat(contextSchedule.getForks()).isEqualTo(expectedConsensusContextSpecs);
 
-    assertThat(contextSchedule.getFork(0).getValue()).isSameAs(context1);
-    assertThat(contextSchedule.getFork(1).getValue()).isSameAs(context1);
-    assertThat(contextSchedule.getFork(9).getValue()).isSameAs(context1);
-    assertThat(contextSchedule.getFork(10).getValue()).isSameAs(context2);
-    assertThat(contextSchedule.getFork(11).getValue()).isSameAs(context2);
+    assertThat(contextSchedule.getFork(0, 0).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(1, 0).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(9, 0).getValue()).isSameAs(context1);
+    assertThat(contextSchedule.getFork(10, 0).getValue()).isSameAs(context2);
+    assertThat(contextSchedule.getFork(11, 0).getValue()).isSameAs(context2);
   }
 
   @Test

@@ -66,6 +66,12 @@ public class QbftBlockHeaderTestFixture {
       public Address getCoinbase() {
         return coinbase;
       }
+
+      /*
+      @Override
+      public BlockHeader getHeader() {
+        return null;
+      }*/
     };
   }
 }

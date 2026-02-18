@@ -69,6 +69,38 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
   }
 
   /**
+   * Look up type of spec by block number or timestamp
+   *
+   * @param number block number
+   * @param timestamp block timestamp
+   * @return the protocol spec type for that block number or timestamp
+   */
+  public ScheduledProtocolSpec.ScheduleType getSpecTypeBlockNumberOrTimestamp(
+      final long number, final long timestamp) {
+    checkArgument(number >= 0, "number must be non-negative");
+    checkArgument(
+        !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
+    checkArgument(
+        protocolSpecs.last().fork().milestone() == 0,
+        "There must be a milestone starting from block 0");
+    // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
+    // the requested level will be the most appropriate spec
+    ScheduledProtocolSpec.ScheduleType specType = null;
+    for (final ScheduledProtocolSpec s : protocolSpecs) {
+      if ((s instanceof ScheduledProtocolSpec.BlockNumberProtocolSpec)
+          && (number >= s.fork().milestone())) {
+        specType = ScheduledProtocolSpec.ScheduleType.BLOCK;
+        break;
+      } else if ((s instanceof ScheduledProtocolSpec.TimestampProtocolSpec)
+          && (timestamp >= s.fork().milestone())) {
+        specType = ScheduledProtocolSpec.ScheduleType.TIME;
+        break;
+      }
+    }
+    return specType;
+  }
+
+  /**
    * return the ordered list of scheduled protocol specs
    *
    * @return the scheduled protocol specs
