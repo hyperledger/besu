@@ -110,7 +110,7 @@ public class EngineGetPayloadBodiesByRangeV2 extends AbstractEngineGetPayloadBod
     final List<Optional<Hash>> blockHashes =
         LongStream.range(startBlockNumber, endExclusiveBlockNumber)
             .mapToObj(blockchain::getBlockHashByNumber)
-            .toList();
+            .collect(Collectors.toList());
 
     final List<Optional<String>> blockAccessLists =
         blockHashes.stream()

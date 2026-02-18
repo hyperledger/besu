@@ -62,7 +62,7 @@ public abstract class AbstractEngineGetPayloadBodiesTest {
     AbstractEngineGetPayloadBodies create(
         final Vertx vertx,
         final ProtocolContext protocolContext,
-        final BlockResultFactory ethPeers,
+        final BlockResultFactory blockResultFactory,
         final EngineCallListener engineCallListener);
   }
 

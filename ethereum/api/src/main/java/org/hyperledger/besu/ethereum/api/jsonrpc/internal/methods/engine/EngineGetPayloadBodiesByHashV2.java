@@ -83,8 +83,7 @@ public class EngineGetPayloadBodiesByHashV2 extends AbstractEngineGetPayloadBodi
     final List<Optional<String>> blockAccessLists =
         Arrays.stream(blockHashes)
             .map(blockHash -> getBlockAccessList(blockchain, blockHash))
-            .toList();
-
+            .collect(Collectors.toList());
     final List<Optional<BlockBody>> blockBodies =
         Arrays.stream(blockHashes).map(blockchain::getBlockBody).collect(Collectors.toList());
 
