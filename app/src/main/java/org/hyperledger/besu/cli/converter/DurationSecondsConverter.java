@@ -31,7 +31,7 @@ public class DurationSecondsConverter
   public Duration convert(final String value) throws DurationConversionException {
     try {
       final long seconds = Long.parseLong(value);
-      if (seconds <= 0) {
+      if (seconds < 0) {
         throw new DurationConversionException(seconds);
       }
       return Duration.ofSeconds(seconds);
