@@ -48,6 +48,7 @@
 - EVM optimisations - Improves 70% of EEST benchmarks [#9775](https://github.com/hyperledger/besu/pull/9775)
 
 ### Bug fixes
+- Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 - Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
 
