@@ -77,7 +77,6 @@ public class BesuController implements java.io.Closeable {
   private final StorageProvider storageProvider;
   private final DataStorageConfiguration dataStorageConfiguration;
   private final TransactionSimulator transactionSimulator;
-  private final EthScheduler ethScheduler;
 
   /**
    * Instantiates a new Besu controller.
@@ -100,7 +99,6 @@ public class BesuController implements java.io.Closeable {
    * @param storageProvider the storage provider
    * @param dataStorageConfiguration the data storage configuration
    * @param transactionSimulator the transaction simulator
-   * @param ethScheduler the eth scheduler
    */
   BesuController(
       final ProtocolSchedule protocolSchedule,
@@ -120,8 +118,7 @@ public class BesuController implements java.io.Closeable {
       final EthPeers ethPeers,
       final StorageProvider storageProvider,
       final DataStorageConfiguration dataStorageConfiguration,
-      final TransactionSimulator transactionSimulator,
-      final EthScheduler ethScheduler) {
+      final TransactionSimulator transactionSimulator) {
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethProtocolManager = ethProtocolManager;
@@ -140,7 +137,6 @@ public class BesuController implements java.io.Closeable {
     this.storageProvider = storageProvider;
     this.dataStorageConfiguration = dataStorageConfiguration;
     this.transactionSimulator = transactionSimulator;
-    this.ethScheduler = ethScheduler;
   }
 
   /**
@@ -317,7 +313,7 @@ public class BesuController implements java.io.Closeable {
    * @return the eth scheduler
    */
   public EthScheduler getEthScheduler() {
-    return ethScheduler;
+    return ethProtocolManager.ethContext().getScheduler();
   }
 
   /** The type Builder. */
