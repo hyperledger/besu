@@ -41,6 +41,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
   /** The constant 0. */
   public static final UInt256 ZERO = new UInt256(0, 0, 0, 0);
+
   private static final byte[] ZERO_BYTES = new byte[BYTESIZE];
 
   /** The constant All ones */
@@ -655,19 +656,19 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     long v0 = other.u0;
     long z0 = u0 + v0;
-    long carry = ((v0 & u0) | ((v0 | u0) & ~z0)) >>> 63;  // z0 < u0 ? 1 : 0
+    long carry = ((v0 & u0) | ((v0 | u0) & ~z0)) >>> 63; // z0 < u0 ? 1 : 0
 
     long v1 = other.u1;
     long z1 = u1 + v1 + carry;
-    carry = ((v1 & u1) | ((v1 | u1) & ~z1)) >>> 63;   // z1 < u1 || (z1 == u1 && carry) ? 1 : 0
+    carry = ((v1 & u1) | ((v1 | u1) & ~z1)) >>> 63; // z1 < u1 || (z1 == u1 && carry) ? 1 : 0
 
     long v2 = other.u2;
     long z2 = u2 + v2 + carry;
-    carry = ((v2 & u2) | ((v2 | u2) & ~z2)) >>> 63;   // z2 < u2 || (z2 == u2 && carry) ? 1 : 0
+    carry = ((v2 & u2) | ((v2 | u2) & ~z2)) >>> 63; // z2 < u2 || (z2 == u2 && carry) ? 1 : 0
 
     long v3 = other.u3;
     long z3 = u3 + other.u3 + carry;
-    carry = ((v3 & u3) | ((v3 | u3) & ~z3)) >>> 63;   // z3 < u3 || (z3 == u3 && carry) ? 1 : 0
+    carry = ((v3 & u3) | ((v3 | u3) & ~z3)) >>> 63; // z3 < u3 || (z3 == u3 && carry) ? 1 : 0
 
     return new UInt257(carry != 0, new UInt256(z3, z2, z1, z0));
   }
@@ -1163,7 +1164,9 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       long carry = ((v0 & u0) | ((v0 | u0) & ~z0)) >>> 63;
 
       long z1 = v1 + u1 + carry;
-      carry = (Long.compareUnsigned(z1, v1) < 0 || (u1 == -1 && carry == 1)) ? 1 : 0;
+      long overflow1 = ((v1 & u1) | ((v1 | u1) & ~z1)) >>> 63;
+      long overflow2 = (u1 & carry) >>> 63; // Special case: u1=-1, carry=1
+      carry = overflow1 | overflow2;
 
       if (carry == 0) { // unlikely: add back again
         // Proper quotient estimation guarantees recursion max-depth <= 2
@@ -1185,7 +1188,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       long z1 = x1 - carry;
       long borrow = ((~x1 & carry) | ((~x1 | carry) & z1)) >>> 63;
 
-      if (borrow != 0) return addBack(z1, z0);  // less likely
+      if (borrow != 0) return addBack(z1, z0); // less likely
       return new UInt128(z1, z0);
     }
 
@@ -1340,12 +1343,12 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
       long z1 = v1 + u1 + carry;
       long overflow1 = ((v1 & u1) | ((v1 | u1) & ~z1)) >>> 63;
-      long overflow2 = (u1 & carry) >>> 63;  // Special case: u1=-1, carry=1
+      long overflow2 = (u1 & carry) >>> 63; // Special case: u1=-1, carry=1
       carry = overflow1 | overflow2;
 
       long z2 = v2 + u2 + carry;
       overflow1 = ((v2 & u2) | ((v2 | u2) & ~z2)) >>> 63;
-      overflow2 = (u2 & carry) >>> 63;  // Special case: u2=-1, carry=1
+      overflow2 = (u2 & carry) >>> 63; // Special case: u2=-1, carry=1
       carry = overflow1 | overflow2;
 
       if (carry == 0) { // unlikely: add back again
@@ -1375,7 +1378,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       long z2 = v2 - carry - borrow;
       borrow = ((~v2 & carry) | ((~v2 | carry) & z2)) >>> 63;
 
-      if (borrow != 0) return addBack(z2, z1, z0);  // unlikely
+      if (borrow != 0) return addBack(z2, z1, z0); // unlikely
       return new UInt192(z2, z1, z0);
     }
 
@@ -1549,17 +1552,17 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
       long z1 = v1 + u1 + carry;
       long overflow1 = ((v1 & u1) | ((v1 | u1) & ~z1)) >>> 63;
-      long overflow2 = (u1 & carry) >>> 63;  // Special case: u1=-1, carry=1
+      long overflow2 = (u1 & carry) >>> 63; // Special case: u1=-1, carry=1
       carry = overflow1 | overflow2;
 
       long z2 = v2 + u2 + carry;
       overflow1 = ((v2 & u2) | ((v2 | u2) & ~z2)) >>> 63;
-      overflow2 = (u2 & carry) >>> 63;  // Special case: u2=-1, carry=1
+      overflow2 = (u2 & carry) >>> 63; // Special case: u2=-1, carry=1
       carry = overflow1 | overflow2;
 
       long z3 = v3 + u3 + carry;
       overflow1 = ((v3 & u3) | ((v3 | u3) & ~z3)) >>> 63;
-      overflow2 = (u3 & carry) >>> 63;  // Special case: u3=-1, carry=1
+      overflow2 = (u3 & carry) >>> 63; // Special case: u3=-1, carry=1
       carry = overflow1 | overflow2;
 
       if (carry == 0) { // unlikely: add back again
@@ -1570,14 +1573,14 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       return new UInt256(z3, z2, z1, z0);
     }
 
-    private UInt256 mulSub(final long v3, final long v2, final long v1, final long v0, final long q) {
+    private UInt256 mulSub(
+        final long v3, final long v2, final long v1, final long v0, final long q) {
       // Multiply-subtract: already have highest 1 limbs
       // <z4, z3, z2, z1, z0>  =  <u3, u2, u1, u0> * q
       long p0 = u0 * q;
       long p1 = Math.unsignedMultiplyHigh(u0, q);
       long z0 = v0 - p0;
       long carry = p1 + (((~v0 & p0) | ((~v0 | p0) & z0)) >>> 63);
-
 
       p0 = u1 * q;
       p1 = Math.unsignedMultiplyHigh(u1, q);

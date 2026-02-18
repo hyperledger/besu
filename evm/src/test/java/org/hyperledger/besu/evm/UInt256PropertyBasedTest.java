@@ -1998,16 +1998,14 @@ public class UInt256PropertyBasedTest {
     return bigUnsignedToBytes32(A.mod(M));
   }
 
-  private static byte[] expectedAddMod(
-      final BigInteger A, final BigInteger B, final BigInteger M) {
+  private static byte[] expectedAddMod(final BigInteger A, final BigInteger B, final BigInteger M) {
     if (M.signum() == 0) {
       return new byte[32];
     }
     return bigUnsignedToBytes32(A.add(B).mod(M));
   }
 
-  private static byte[] expectedMulMod(
-      final BigInteger A, final BigInteger B, final BigInteger M) {
+  private static byte[] expectedMulMod(final BigInteger A, final BigInteger B, final BigInteger M) {
     if (M.signum() == 0) {
       return new byte[32];
     }

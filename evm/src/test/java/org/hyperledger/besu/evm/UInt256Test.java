@@ -322,10 +322,8 @@ public class UInt256Test {
   @Test
   public void modL() {
     // modulus 128 with overflow case -> 2 add back in quotient estimate div2by1.
-    BigInteger big_number =
-        new BigInteger("800000000000000080", 16);
-    BigInteger big_modulus =
-        new BigInteger("80", 16);
+    BigInteger big_number = new BigInteger("800000000000000080", 16);
+    BigInteger big_modulus = new BigInteger("80", 16);
     UInt256 number = UInt256.fromBytesBE(big_number.toByteArray());
     UInt256 modulus = UInt256.fromBytesBE(big_modulus.toByteArray());
     Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(number.mod(modulus).toBytesBE()));
