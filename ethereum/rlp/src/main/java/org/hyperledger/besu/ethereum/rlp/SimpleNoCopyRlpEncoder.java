@@ -81,12 +81,10 @@ public class SimpleNoCopyRlpEncoder {
     int totalLength = encodedBytesList.stream().mapToInt(Bytes::size).sum();
 
     if (totalLength <= LENGTH_THRESHOLD) {
-      return Bytes.wrap(
-          SHORT_LIST_LENGTHS[totalLength], Bytes.wrap(encodedBytesList));
+      return Bytes.wrap(SHORT_LIST_LENGTHS[totalLength], Bytes.wrap(encodedBytesList));
     } else { // totalLength > LENGTH_THRESHOLD
       Bytes length = Bytes.minimalBytes(totalLength);
-      return Bytes.wrap(
-          LONG_LIST_LENGTHS[length.size()], length, Bytes.wrap(encodedBytesList));
+      return Bytes.wrap(LONG_LIST_LENGTHS[length.size()], length, Bytes.wrap(encodedBytesList));
     }
   }
 }
