@@ -249,5 +249,6 @@ snapsync-synchronizer-pre-checkpoint-headers-only-enabled=true
 # history expiry
 history-expiry-prune=false
 
-# slow block logging threshold
+# execution metrics
+enable-execution-metrics=false
 slow-block-threshold=500
