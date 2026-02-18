@@ -127,7 +127,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.debug("DiscV5 peer discovery is disabled; not starting agent");
       return CompletableFuture.completedFuture(0);
     }
-    LOG.info("Starting DiscV5 peer discovery agent on TCP port {}", tcpPort);
+    LOG.info("Starting DiscV5 peer discovery agent ...");
     running = true;
     scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
     return discoverySystem
@@ -135,7 +135,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .thenApply(
             v -> {
               final int localPort =
-                  discoverySystem.getLocalNodeRecord().getTcpAddress().orElseThrow().getPort();
+                  discoverySystem.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
