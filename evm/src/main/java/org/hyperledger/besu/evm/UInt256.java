@@ -893,14 +893,19 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     q1 += x1 + carry + 1;
 
     long r = x0 - q1 * y;
-    if (Long.compareUnsigned(r, q0) > 0) {
-      q1 -= 1;
-      r += y;
-    }
-    if (Long.compareUnsigned(r, y) >= 0) {
-      q1 += 1;
-      r -= y;
-    }
+
+    // Long.compareUnsigned(q0, r) < 0 ? 1 : 0
+    long compare = (q0 >>> 1) - (r >>> 1) - ((~q0 & r) & 1);
+    long adjust = compare >>> 63;
+    q1 -= adjust;
+    r += adjust * y;
+
+    // Long.compareUnsigned(r, y) >= 0  ? 1 : 0
+    compare = (r >>> 1) - (y >>> 1) - ((~r & y) & 1);
+    adjust = 1 - (compare >>> 63);
+    q1 += adjust;
+    r -= y * adjust;
+
     return new DivEstimate(q1, r);
   }
 
@@ -916,12 +921,17 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     q1 += x1 + carry + 1;
 
     long r = x0 - q1 * y;
-    if (Long.compareUnsigned(r, q0) > 0) {
-      r += y;
-    }
-    if (Long.compareUnsigned(r, y) >= 0) {
-      r -= y;
-    }
+
+    // Long.compareUnsigned(q0, r) < 0 ? 1 : 0
+    long compare = (q0 >>> 1) - (r >>> 1) - ((~q0 & r) & 1);
+    long adjust = compare >>> 63;
+    r += y * adjust;
+
+    // Long.compareUnsigned(r, y) >= 0  ? 1 : 0
+    compare = (r >>> 1) - (y >>> 1) - ((~r & y) & 1);
+    adjust = 1 - (compare >>> 63);
+    r -= y * adjust;
+
     return r;
   }
 
