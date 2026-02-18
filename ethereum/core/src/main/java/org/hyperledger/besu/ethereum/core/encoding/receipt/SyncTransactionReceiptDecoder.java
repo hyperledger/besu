@@ -43,8 +43,10 @@ public class SyncTransactionReceiptDecoder {
   private SyncTransactionReceipt decodeTypedReceipt(final Bytes rawRlp, final RLPInput rlpInput) {
     RLPInput input = rlpInput;
     Bytes transactionTypeCode = input.readBytes();
-    input = new BytesValueRLPInput(transactionTypeCode.slice(1), false);
-    transactionTypeCode = transactionTypeCode.slice(0, 1);
+    if (transactionTypeCode.size() > 1) {
+      input = new BytesValueRLPInput(transactionTypeCode.slice(1), false);
+      transactionTypeCode = transactionTypeCode.slice(0, 1);
+    }
 
     input.enterList();
     Bytes statusOrStateRoot = input.readBytes();

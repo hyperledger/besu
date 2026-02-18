@@ -26,6 +26,13 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>This class serves as a base holder for byte sequences, implementing {@link Comparable} to
  * allow for ordered collections and comparisons. Subclasses can extend this to create specialized
  * byte holders with domain-specific semantics.
+ *
+ * <p>NOTE: For performance reasons - prefer to always call `getBytes()` instead first as it will
+ * give better chances of locally inlining any subsequent method calls done upon `Bytes` including
+ * their implementations at runtime. This class contains several annotated methods with @Deprecated
+ * to desincentivize its use and prefer calling `getBytes()` first. The reason is that for the case
+ * of these annotated methods, all implementations of `Bytes` get channelled through these single
+ * places and that makes it harder for the JIT profiler to inline code from implementations.
  */
 public class BytesHolder implements Comparable<BytesHolder> {
   private final Bytes value;
@@ -50,6 +57,26 @@ public class BytesHolder implements Comparable<BytesHolder> {
   }
 
   /**
+   * Provides the number of bytes this value represents.
+   *
+   * @return The number of bytes this value represents.
+   */
+  @Deprecated
+  public final int size() {
+    return value.size();
+  }
+
+  /**
+   * Provides this value represented as hexadecimal, starting with "0x".
+   *
+   * @return This value represented as hexadecimal, starting with "0x".
+   */
+  @Deprecated
+  public final String toHexString() {
+    return value.toHexString();
+  }
+
+  /**
    * Creates a default BytesHolder instance with the given bytes value.
    *
    * @param value the bytes value to hold
@@ -69,6 +96,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @return {@code true} if the objects are equal, {@code false} otherwise
    */
   @Override
+  @Deprecated
   public final boolean equals(final Object obj) {
     if (obj == this) {
       return true;
@@ -85,6 +113,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @return the hash code based on the underlying bytes value
    */
   @Override
+  @Deprecated
   public final int hashCode() {
     return value.hashCode();
   }
@@ -95,6 +124,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @return the string representation of the underlying bytes value
    */
   @Override
+  @Deprecated
   public final String toString() {
     return value.toString();
   }
@@ -110,6 +140,7 @@ public class BytesHolder implements Comparable<BytesHolder> {
    * @throws NullPointerException if bytesHolder is null
    */
   @Override
+  @Deprecated
   public final int compareTo(final BytesHolder bytesHolder) {
     Objects.requireNonNull(bytesHolder, "bytesHolder cannot be null");
     return value.compareTo(bytesHolder.value);

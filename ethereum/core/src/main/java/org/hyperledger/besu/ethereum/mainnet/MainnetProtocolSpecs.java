@@ -112,6 +112,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -139,8 +140,7 @@ public abstract class MainnetProtocolSpecs {
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
   // failed, but the transaction itself succeeded.
-  private static final Set<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
-      Set.of(RIPEMD160_PRECOMPILE);
+  private static final HashSet<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES;
 
   private static final Wei FRONTIER_BLOCK_REWARD = Wei.fromEth(5);
 
@@ -150,6 +150,11 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
   private static final int POW_SLOT_TIME_ESTIMATION = 13;
+
+  static {
+    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES = new HashSet<>();
+    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES.add(RIPEMD160_PRECOMPILE);
+  }
 
   private MainnetProtocolSpecs() {}
 

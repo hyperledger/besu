@@ -47,6 +47,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -238,8 +239,9 @@ public class FastSyncActionsTest {
     FastSyncState expectedResult = new FastSyncState(123, false);
 
     when(pivotBlockSelector.selectNewPivotBlock())
-        .thenReturn(Optional.empty())
-        .thenReturn(Optional.of(expectedResult));
+        .thenReturn(
+            CompletableFuture.failedFuture(new RuntimeException("No pivot block available")))
+        .thenReturn(CompletableFuture.completedFuture(expectedResult));
     when(pivotBlockSelector.prepareRetry()).thenReturn(CompletableFuture.runAsync(() -> {}));
 
     CompletableFuture<FastSyncState> resultFuture =
@@ -417,6 +419,9 @@ public class FastSyncActionsTest {
                 blockchain.getBlockHashByNumber(3L).get(),
                 blockchain.getBlockHashByNumber(2L).get()));
 
+    final SingleBlockHeaderDownloader headerDownloader =
+        new SingleBlockHeaderDownloader(ethContext, blockchainSetupUtil.getProtocolSchedule());
+
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
@@ -426,7 +431,8 @@ public class FastSyncActionsTest {
                 ethContext,
                 genesisConfig,
                 () -> finalizedEvent,
-                () -> {}));
+                () -> {},
+                headerDownloader));
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<FastSyncState> result =
@@ -446,15 +452,22 @@ public class FastSyncActionsTest {
     final ProtocolSchedule protocolSchedule = blockchainSetupUtil.getProtocolSchedule();
     final ProtocolContext protocolContext = blockchainSetupUtil.getProtocolContext();
     final EthContext ethContext = ethProtocolManager.ethContext();
-    return new FastSyncActions(
-        syncConfig,
-        worldStateStorageCoordinator,
-        protocolSchedule,
-        protocolContext,
-        ethContext,
-        new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
-        pivotBlockSelector,
-        new NoOpMetricsSystem());
+    final FastSyncStateStorage fastSyncStateStorage = mock(FastSyncStateStorage.class);
+    try {
+      return new FastSyncActions(
+          syncConfig,
+          worldStateStorageCoordinator,
+          protocolSchedule,
+          protocolContext,
+          ethContext,
+          new SyncState(blockchain, ethContext.getEthPeers(), true, Optional.empty()),
+          pivotBlockSelector,
+          new NoOpMetricsSystem(),
+          fastSyncStateStorage,
+          java.nio.file.Files.createTempDirectory("checkpoint-sync-test"));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Test

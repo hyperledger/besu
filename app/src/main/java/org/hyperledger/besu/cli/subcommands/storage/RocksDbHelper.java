@@ -251,6 +251,15 @@ public class RocksDbHelper {
   static ColumnFamilyUsage getAndPrintUsageForColumnFamily(
       final RocksDB rocksdb, final ColumnFamilyHandle cfHandle, final PrintWriter out)
       throws RocksDBException, NumberFormatException {
+    return getAndPrintUsageForColumnFamily(rocksdb, cfHandle, out, SizeUnit.GIB);
+  }
+
+  static ColumnFamilyUsage getAndPrintUsageForColumnFamily(
+      final RocksDB rocksdb,
+      final ColumnFamilyHandle cfHandle,
+      final PrintWriter out,
+      final SizeUnit maxSizeUnit)
+      throws RocksDBException, NumberFormatException {
     final String numberOfKeys = rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys");
     if (!numberOfKeys.isBlank()) {
       try {
@@ -271,9 +280,9 @@ public class RocksDbHelper {
               out,
               getNameById(cfHandle.getName()),
               rocksdb.getProperty(cfHandle, "rocksdb.estimate-num-keys"),
-              formatOutputSize(totalFilesSize),
-              formatOutputSize(totalSstFilesSizeLong),
-              formatOutputSize(totalBlobFilesSizeLong));
+              formatOutputSize(totalFilesSize, maxSizeUnit),
+              formatOutputSize(totalSstFilesSizeLong, maxSizeUnit),
+              formatOutputSize(totalBlobFilesSizeLong, maxSizeUnit));
         }
         return new ColumnFamilyUsage(
             getNameById(cfHandle.getName()),
@@ -290,6 +299,13 @@ public class RocksDbHelper {
   }
 
   static void printTotals(final PrintWriter out, final List<ColumnFamilyUsage> columnFamilyUsages) {
+    printTotals(out, columnFamilyUsages, SizeUnit.GIB);
+  }
+
+  static void printTotals(
+      final PrintWriter out,
+      final List<ColumnFamilyUsage> columnFamilyUsages,
+      final SizeUnit maxSizeUnit) {
     final long totalKeys = columnFamilyUsages.stream().mapToLong(ColumnFamilyUsage::keys).sum();
     final long totalSize =
         columnFamilyUsages.stream().mapToLong(ColumnFamilyUsage::totalSize).sum();
@@ -302,9 +318,9 @@ public class RocksDbHelper {
         out,
         "ESTIMATED TOTAL",
         String.valueOf(totalKeys),
-        formatOutputSize(totalSize),
-        formatOutputSize(totalSsts),
-        formatOutputSize(totalBlobs));
+        formatOutputSize(totalSize, maxSizeUnit),
+        formatOutputSize(totalSsts, maxSizeUnit),
+        formatOutputSize(totalBlobs, maxSizeUnit));
     printSeparator(out);
   }
 
@@ -313,18 +329,31 @@ public class RocksDbHelper {
   }
 
   static String formatOutputSize(final long size) {
-    if (size > (1024 * 1024 * 1024)) {
-      long sizeInGiB = size / (1024 * 1024 * 1024);
-      return sizeInGiB + " GiB";
-    } else if (size > (1024 * 1024)) {
-      long sizeInMiB = size / (1024 * 1024);
-      return sizeInMiB + " MiB";
-    } else if (size > 1024) {
-      long sizeInKiB = size / 1024;
-      return sizeInKiB + " KiB";
+    return formatOutputSize(size, SizeUnit.GIB);
+  }
+
+  static String formatOutputSize(final long size, final SizeUnit maxUnit) {
+    // Determine the appropriate unit, capped at maxUnit
+    SizeUnit unit;
+    if (size > SizeUnit.GIB.getDivisor() && maxUnit.ordinal() >= SizeUnit.GIB.ordinal()) {
+      unit = SizeUnit.GIB;
+    } else if (size > SizeUnit.MIB.getDivisor() && maxUnit.ordinal() >= SizeUnit.MIB.ordinal()) {
+      unit = SizeUnit.MIB;
+    } else if (size > SizeUnit.KIB.getDivisor() && maxUnit.ordinal() >= SizeUnit.KIB.ordinal()) {
+      unit = SizeUnit.KIB;
+    } else if (size > SizeUnit.GIB.getDivisor()) {
+      // Size exceeds GiB but maxUnit is smaller, use maxUnit
+      unit = maxUnit;
+    } else if (size > SizeUnit.MIB.getDivisor()) {
+      // Size exceeds MiB but maxUnit is smaller, use maxUnit
+      unit = maxUnit;
+    } else if (size > SizeUnit.KIB.getDivisor()) {
+      // Size exceeds KiB but maxUnit is smaller, use maxUnit
+      unit = maxUnit;
     } else {
-      return size + " B";
+      unit = SizeUnit.B;
     }
+    return (size / unit.getDivisor()) + " " + unit.getSuffix();
   }
 
   private static String getNameById(final byte[] id) {

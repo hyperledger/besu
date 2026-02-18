@@ -83,7 +83,7 @@ public class SimulationTransactionProcessorFactoryTest {
     originalRegistry = new PrecompileContractRegistry();
     originalRegistry.put(ORIGINAL_ADDRESS_1, originalPrecompiledContract);
     originalRegistry.put(ORIGINAL_ADDRESS_2, originalPrecompiledContract);
-    originalProcessor = new MessageCallProcessor(null, originalRegistry, null);
+    originalProcessor = new MessageCallProcessor(null, originalRegistry);
   }
 
   @Test

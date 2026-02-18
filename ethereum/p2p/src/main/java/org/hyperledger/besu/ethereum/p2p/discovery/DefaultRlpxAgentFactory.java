@@ -61,7 +61,7 @@ public class DefaultRlpxAgentFactory implements RlpxAgentFactory {
 
     return RlpxAgent.builder()
         .nodeKey(nodeKey)
-        .config(config.getRlpx())
+        .config(config.rlpxConfiguration())
         .peerPermissions(peerPermissions)
         .peerPrivileges(peerPrivileges)
         .localNode(localNode)

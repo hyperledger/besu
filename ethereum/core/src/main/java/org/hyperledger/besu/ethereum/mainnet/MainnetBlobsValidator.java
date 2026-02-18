@@ -180,11 +180,6 @@ public class MainnetBlobsValidator {
           "transaction blobs and commitments are not the same size");
     }
 
-    if (transaction.getVersionedHashes().isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_BLOBS,
-          "transaction versioned hashes are empty, cannot verify without versioned hashes");
-    }
     // Versioned hashes and commitments must be the same size
     if (transaction.getVersionedHashes().get().size()
         != blobsWithCommitments.getKzgCommitments().size()) {

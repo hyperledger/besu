@@ -421,7 +421,7 @@ public abstract class JsonBlockImporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .besuComponent(DaggerJsonBlockImporterTest_JsonBlockImportComponent.builder().build())
         .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();

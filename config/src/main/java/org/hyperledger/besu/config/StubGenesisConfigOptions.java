@@ -64,22 +64,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private Optional<UInt256> terminalTotalDifficulty = Optional.empty();
 
   private Optional<Wei> baseFeePerGas = Optional.empty();
-  private OptionalLong classicForkBlock = OptionalLong.empty();
-  private OptionalLong ecip1015BlockNumber = OptionalLong.empty();
-  private OptionalLong diehardBlockNumber = OptionalLong.empty();
-  private OptionalLong gothamBlockNumber = OptionalLong.empty();
-  private OptionalLong defuseDifficultyBombBlockNumber = OptionalLong.empty();
-  private OptionalLong atlantisBlockNumber = OptionalLong.empty();
-  private OptionalLong aghartaBlockNumber = OptionalLong.empty();
-  private OptionalLong phoenixBlockNumber = OptionalLong.empty();
-  private OptionalLong thanosBlockNumber = OptionalLong.empty();
-  private OptionalLong magnetoBlockNumber = OptionalLong.empty();
-  private OptionalLong mystiqueBlockNumber = OptionalLong.empty();
-  private OptionalLong spiralBlockNumber = OptionalLong.empty();
   private Optional<BigInteger> chainId = Optional.empty();
   private OptionalInt contractSizeLimit = OptionalInt.empty();
   private OptionalInt stackSizeLimit = OptionalInt.empty();
-  private final OptionalLong ecip1017EraRounds = OptionalLong.empty();
   private Optional<String> ecCurve = Optional.empty();
   private QbftConfigOptions qbftConfigOptions = JsonQbftConfigOptions.DEFAULT;
   private BftConfigOptions bftConfigOptions = JsonBftConfigOptions.DEFAULT;
@@ -328,66 +315,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public OptionalLong getClassicForkBlock() {
-    return classicForkBlock;
-  }
-
-  @Override
-  public OptionalLong getEcip1015BlockNumber() {
-    return ecip1015BlockNumber;
-  }
-
-  @Override
-  public OptionalLong getDieHardBlockNumber() {
-    return diehardBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getGothamBlockNumber() {
-    return gothamBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getDefuseDifficultyBombBlockNumber() {
-    return defuseDifficultyBombBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getAtlantisBlockNumber() {
-    return atlantisBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getAghartaBlockNumber() {
-    return aghartaBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getPhoenixBlockNumber() {
-    return phoenixBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getThanosBlockNumber() {
-    return thanosBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getMagnetoBlockNumber() {
-    return magnetoBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getMystiqueBlockNumber() {
-    return mystiqueBlockNumber;
-  }
-
-  @Override
-  public OptionalLong getSpiralBlockNumber() {
-    return spiralBlockNumber;
-  }
-
-  @Override
   public OptionalInt getContractSizeLimit() {
     return contractSizeLimit;
   }
@@ -395,11 +322,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public OptionalInt getEvmStackSize() {
     return stackSizeLimit;
-  }
-
-  @Override
-  public OptionalLong getEcip1017EraRounds() {
-    return ecip1017EraRounds;
   }
 
   @Override
@@ -441,19 +363,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
     getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h));
-    // classic fork blocks
-    getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
-    getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
-    getDieHardBlockNumber().ifPresent(l -> builder.put("dieHardBlock", l));
-    getGothamBlockNumber().ifPresent(l -> builder.put("gothamBlock", l));
-    getDefuseDifficultyBombBlockNumber().ifPresent(l -> builder.put("ecip1041Block", l));
-    getAtlantisBlockNumber().ifPresent(l -> builder.put("atlantisBlock", l));
-    getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
-    getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
-    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
-    getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
-    getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
-    getSpiralBlockNumber().ifPresent(l -> builder.put("spiralBlock", l));
 
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmStackSize", l));
@@ -878,138 +787,6 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions fixedBaseFee(final boolean fixedBaseFee) {
     this.fixedBaseFee = fixedBaseFee;
-    return this;
-  }
-
-  /**
-   * Classic fork block stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions classicForkBlock(final long blockNumber) {
-    classicForkBlock = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Ecip 1015 stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions ecip1015(final long blockNumber) {
-    ecip1015BlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Die hard stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions dieHard(final long blockNumber) {
-    diehardBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Gotham stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions gotham(final long blockNumber) {
-    gothamBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Defuse difficulty bomb stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions defuseDifficultyBomb(final long blockNumber) {
-    defuseDifficultyBombBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Atlantis stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions atlantis(final long blockNumber) {
-    atlantisBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Agharta stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions agharta(final long blockNumber) {
-    aghartaBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Phoenix stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions phoenix(final long blockNumber) {
-    phoenixBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Thanos stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions thanos(final long blockNumber) {
-    thanosBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Magneto stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions magneto(final long blockNumber) {
-    magnetoBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Mystique stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions mystique(final long blockNumber) {
-    mystiqueBlockNumber = OptionalLong.of(blockNumber);
-    return this;
-  }
-
-  /**
-   * Spiral stub genesis config options.
-   *
-   * @param blockNumber the block number
-   * @return the stub genesis config options
-   */
-  public StubGenesisConfigOptions spiral(final long blockNumber) {
-    spiralBlockNumber = OptionalLong.of(blockNumber);
     return this;
   }
 

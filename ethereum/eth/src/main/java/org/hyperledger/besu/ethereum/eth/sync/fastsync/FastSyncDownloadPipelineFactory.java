@@ -47,6 +47,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 
 import java.util.concurrent.CompletionStage;
 
@@ -116,8 +117,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, fastSyncState),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -147,11 +147,18 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             protocolSchedule,
             ethContext,
             new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+    final BlockHeader pivotBlockHeader =
+        fastSyncState
+            .getPivotBlockHeader()
+            .orElseThrow(
+                () -> new InvalidConfigurationException("Pivot block header not available."));
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
             protocolContext,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get(),
+            syncState,
+            BlockHeader.GENESIS_BLOCK_NUMBER,
+            pivotBlockHeader.getNumber(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(

@@ -25,10 +25,28 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.nio.file.Path;
+
 public class FastSyncChainDownloader {
 
   protected FastSyncChainDownloader() {}
 
+  /**
+   * Creates a traditional fast sync chain downloader using pipeline-based single-stage sync.
+   *
+   * @param config the synchronizer configuration
+   * @param worldStateStorageCoordinator the world state storage coordinator
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param ethContext the Ethereum context
+   * @param syncState the sync state
+   * @param metricsSystem the metrics system
+   * @param fastSyncState the fast sync state
+   * @param syncDurationMetrics the sync duration metrics
+   * @param fastSyncDataDirectory the directory for storing sync state (unused for traditional fast
+   *     sync)
+   * @return a PipelineChainDownloader configured for traditional fast sync
+   */
   public static ChainDownloader create(
       final SynchronizerConfiguration config,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -38,7 +56,8 @@ public class FastSyncChainDownloader {
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState,
-      final SyncDurationMetrics syncDurationMetrics) {
+      final SyncDurationMetrics syncDurationMetrics,
+      final Path fastSyncDataDirectory) {
 
     final SyncTargetManager syncTargetManager =
         new SyncTargetManager(
@@ -49,11 +68,15 @@ public class FastSyncChainDownloader {
             ethContext,
             metricsSystem,
             fastSyncState);
+
+    final FastSyncDownloadPipelineFactory pipelineFactory =
+        new FastSyncDownloadPipelineFactory(
+            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem);
+
     return new PipelineChainDownloader(
         syncState,
         syncTargetManager,
-        new FastSyncDownloadPipelineFactory(
-            config, protocolSchedule, protocolContext, ethContext, fastSyncState, metricsSystem),
+        pipelineFactory,
         ethContext.getScheduler(),
         metricsSystem,
         syncDurationMetrics);

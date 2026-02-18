@@ -48,6 +48,7 @@ public class MockPeerConnection extends AbstractPeerConnection {
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
       final LabelledMetric<Counter> outboundMessagesCounter,
+      final LabelledMetric<Counter> outboundBytesCounter,
       final boolean inboundInitiated) {
     super(
         peer,
@@ -58,6 +59,7 @@ public class MockPeerConnection extends AbstractPeerConnection {
         multiplexer,
         connectionEventDispatcher,
         outboundMessagesCounter,
+        outboundBytesCounter,
         inboundInitiated);
   }
 
@@ -87,6 +89,7 @@ public class MockPeerConnection extends AbstractPeerConnection {
         Integer.toString(connectionId.incrementAndGet()),
         multiplexer,
         eventDispatcher,
+        NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
         NoOpMetricsSystem.NO_OP_LABELLED_3_COUNTER,
         inboundInitiated);
   }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * The Stacked updater.
@@ -59,8 +60,12 @@ public class StackedUpdater<W extends WorldView, A extends Account>
     return account == null ? null : new UpdateTrackingAccount<>(account);
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
+    if (getUpdatedAccounts().isEmpty()) {
+      return Collections.emptyList();
+    }
     return new ArrayList<>(getUpdatedAccounts());
   }
 

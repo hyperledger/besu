@@ -962,7 +962,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Starting Besu");
 
       // Need to create vertx after cmdline has been parsed, such that metricsSystem is configurable
-      vertx = createVertx(createVertxOptions(besuComponent.getMetricsSystem()));
+      vertx = createVertx(besuComponent.getMetricsSystem());
 
       validateOptions();
 
@@ -2330,6 +2330,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
     }
 
+    if (!dataStorageConfiguration.getBonsaiCacheEnabled()) {
+      dataStorageConfiguration =
+          ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+              .withBonsaiCacheEnabled(
+                  balConfigurationOptions.toDomainObject().isBalPreFetchReadingEnabled());
+      if (dataStorageConfiguration.getBonsaiCacheEnabled()) {
+        logger.info("Bonsai cache enabled for prefetch reading");
+      }
+    } else {
+      logger.info("Bonsai cache enabled");
+    }
+
     if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration pathBasedExtraStorageConfiguration =
@@ -2360,6 +2372,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             DataStorageFormat.BONSAI);
       }
     }
+
     return dataStorageConfiguration;
   }
 
@@ -2447,23 +2460,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Builds Vertx instance from VertxOptions. Visible for testing.
+   * Builds Vertx instance from MetricsSystem. Visible for testing.
    *
-   * @param vertxOptions Instance of VertxOptions
+   * @param metricsSystem Instance of MetricsSystem
    * @return Instance of Vertx.
    */
   @VisibleForTesting
-  protected Vertx createVertx(final VertxOptions vertxOptions) {
-    return Vertx.vertx(vertxOptions);
-  }
-
-  private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
-    return new VertxOptions()
-        .setPreferNativeTransport(true)
-        .setMetricsOptions(
-            new io.vertx.core.metrics.MetricsOptions()
-                .setEnabled(true)
-                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
+  protected Vertx createVertx(final MetricsSystem metricsSystem) {
+    return Vertx.builder()
+        .with(new VertxOptions().setPreferNativeTransport(true))
+        .withMetrics(new VertxMetricsAdapterFactory(metricsSystem))
+        .build();
   }
 
   private void addShutdownHook(final Runner runner) {

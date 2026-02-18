@@ -122,51 +122,55 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
+  integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 artifacts { testSupportArtifacts testSupportJar }
 
+def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'
+def dataPath = file("$buildDir/generated/data")
+def blocksBin = file("$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin")
+
+tasks.register('importTestBlocks', JavaExec) {
+  onlyIf { !blocksBin.exists() }
+  mainClass = 'org.hyperledger.besu.Besu'
+  classpath = configurations.testResourceGeneration
+  args = [
+    "--logging=ERROR",
+    "--data-path=$dataPath",
+    "--genesis-file=$srcFiles/genesis.json",
+    "blocks",
+    "import",
+    "--format=JSON",
+    "--from=$srcFiles/blocks.json",
+    "--start-time=1438269971"
+  ]
+  dependsOn processTestResources
+  doFirst {
+    dataPath.mkdirs()
+  }
+}
+
+tasks.register('exportTestBlocks', JavaExec) {
+  onlyIf { !blocksBin.exists() }
+  mainClass = 'org.hyperledger.besu.Besu'
+  classpath = configurations.testResourceGeneration
+  args = [
+    "--logging=ERROR",
+    "--data-path=$dataPath",
+    "--genesis-file=$srcFiles/genesis.json",
+    "blocks",
+    "export",
+    "--format=RLP",
+    "--start-block=0",
+    "--to=$blocksBin"
+  ]
+  dependsOn importTestBlocks
+}
+
 tasks.register('generateTestBlockchain') {
-  def srcFiles = 'src/test/resources/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data'
-  def dataPath = new File("$buildDir/generated/data")
-  def blocksBin = "$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin"
   inputs.dir(srcFiles)
   outputs.file(blocksBin)
-  dependsOn(configurations.testResourceGeneration)
-  dependsOn(processTestResources)
-  doLast {
-    if(!dataPath.exists()) {
-      mkdir(dataPath)
-
-      javaexec {
-        main = 'org.hyperledger.besu.Besu'
-        classpath = configurations.testResourceGeneration
-        args = [
-          "--logging=ERROR",
-          "--data-path=$dataPath",
-          "--genesis-file=$srcFiles/genesis.json",
-          "blocks",
-          "import",
-          "--format=JSON",
-          "--from=$srcFiles/blocks.json",
-          "--start-time=1438269971"
-        ]
-      }
-      javaexec {
-        main = 'org.hyperledger.besu.Besu'
-        classpath = configurations.testResourceGeneration
-        args = [
-          "--logging=ERROR",
-          "--data-path=$dataPath",
-          "--genesis-file=$srcFiles/genesis.json",
-          "blocks",
-          "export",
-          "--format=RLP",
-          "--start-block=0",
-          "--to=$blocksBin"
-        ]
-      }
-    }
-  }
+  dependsOn exportTestBlocks
 }
 test.dependsOn(generateTestBlockchain)
