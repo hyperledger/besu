@@ -35,14 +35,20 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbSegmentIdentifier;
 import org.hyperledger.besu.services.kvstore.SegmentedKeyValueStorageAdapter;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 
@@ -51,6 +57,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.rocksdb.FlushOptions;
+import org.rocksdb.HistogramType;
+import org.rocksdb.TickerType;
 
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
@@ -319,7 +328,7 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
       // Assertions
       assertThat(keyValueStorage).isNotNull();
-      verify(metricsSystemMock, times(4))
+      verify(metricsSystemMock, times(5))
           .createLabelledTimer(
               eq(BesuMetricCategory.KVSTORE_ROCKSDB),
               labelledTimersMetricsNameArgs.capture(),
@@ -328,12 +337,14 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       assertThat(labelledTimersMetricsNameArgs.getAllValues())
           .containsExactly(
               "read_latency_seconds",
+              "multi_read_latency_seconds",
               "remove_latency_seconds",
               "write_latency_seconds",
               "commit_latency_seconds");
       assertThat(labelledTimersHelpArgs.getAllValues())
           .containsExactly(
               "Latency for read from RocksDB.",
+              "Latency for multi read from RocksDB.",
               "Latency of remove requests from RocksDB.",
               "Latency for write to RocksDB.",
               "Latency for commits to RocksDB.");
@@ -425,5 +436,157 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
   @Override
   protected KeyValueStorage createStore() throws Exception {
     return new SegmentedKeyValueStorageAdapter(TestSegment.FOO, createSegmentedStore());
+  }
+
+  @Test
+  public void perfTestMultiget() throws Exception {
+    final int totalKeys = 1_000_000;
+    final int shardSize = 1000;
+    // final int[] batchSizes = new int[] {10_000, 100_000, totalKeys};
+    final int[] batchSizes = new int[] {100_000};
+    final int iterations = 1;
+
+    for (int batchSize : batchSizes) {
+      long totalTime = 0;
+      for (int iter = 0; iter < iterations; iter++) {
+        TransactionDBRocksDBColumnarKeyValueStorage segmentedStore =
+            (TransactionDBRocksDBColumnarKeyValueStorage) createSegmentedStore();
+        final List<Map.Entry<byte[], byte[]>> entries = new ArrayList<>(totalKeys);
+        final var db = segmentedStore.getDB();
+
+        try (FlushOptions flushOptions = new FlushOptions()) {
+          flushOptions.setWaitForFlush(true);
+          flushOptions.setAllowWriteStall(false);
+
+          for (int shard = 0; shard < totalKeys / shardSize; shard++) {
+            final SegmentedKeyValueStorageTransaction tx = segmentedStore.startTransaction();
+            final String shardPrefix = String.format("shard-%04d-", shard);
+
+            for (int i = 0; i < shardSize; i++) {
+              String keyStr = shardPrefix + i;
+              byte[] key = keyStr.getBytes(StandardCharsets.UTF_8);
+              byte[] value = new byte[1024];
+              ThreadLocalRandom.current().nextBytes(value);
+              entries.add(new AbstractMap.SimpleEntry<>(key, value));
+              tx.put(TestSegment.FOO, key, value);
+            }
+
+            tx.commit();
+            db.flush(flushOptions, segmentedStore.safeColumnHandle(TestSegment.FOO));
+          }
+
+          db.compactRange(segmentedStore.safeColumnHandle(TestSegment.FOO));
+        }
+
+        // System.out.println("--- SSTable Layout ---");
+        // for (int level = 0; level <= 6; level++) {
+        //     String files = db.getProperty(segmentedStore.safeColumnHandle(TestSegment.FOO),
+        // "rocksdb.num-files-at-level" + level);
+        //     System.out.println("Level " + level + ": " + files + " files");
+        // }
+
+        Collections.shuffle(entries);
+
+        final long startTime = System.nanoTime();
+
+        for (int index = 0; index < entries.size(); index += batchSize) {
+          final int endIndex = Math.min(index + batchSize, entries.size());
+          final List<byte[]> batchKeys = new ArrayList<>(endIndex - index);
+          final List<byte[]> expectedValues = new ArrayList<>(endIndex - index);
+          for (int j = index; j < endIndex; j++) {
+            batchKeys.add(entries.get(j).getKey());
+            expectedValues.add(entries.get(j).getValue());
+          }
+
+          final List<Optional<byte[]>> results =
+              segmentedStore.multiget(TestSegment.FOO, batchKeys);
+          for (int j = 0; j < results.size(); j++) {
+            assertThat(results.get(j)).contains(expectedValues.get(j));
+          }
+        }
+
+        final long elapsedMillis = (System.nanoTime() - startTime) / totalKeys;
+        totalTime += elapsedMillis;
+
+        var coroutineCount =
+            segmentedStore.getStats().getTickerCount(TickerType.MULTIGET_COROUTINE_COUNT);
+        var dbMultigetMedian =
+            segmentedStore.getStats().getHistogramData(HistogramType.DB_MULTIGET).getMedian();
+        var dbMultigetIoBatchSize =
+            segmentedStore
+                .getStats()
+                .getHistogramData(HistogramType.MULTIGET_IO_BATCH_SIZE)
+                .getMedian();
+        var asyncReadBytes =
+            segmentedStore.getStats().getHistogramData(HistogramType.ASYNC_READ_BYTES).getMedian();
+
+        System.out.println("Coroutine count: " + coroutineCount);
+        System.out.println("DB Multiget latency (median): " + dbMultigetMedian + " ns");
+        System.out.println("Multiget I/O batch size (median): " + dbMultigetIoBatchSize);
+        System.out.println("Async read bytes (median): " + asyncReadBytes);
+      }
+
+      System.out.println(
+          "Batch size: "
+              + batchSize
+              + " - Average time over "
+              + iterations
+              + " iterations: "
+              + (totalTime / iterations)
+              + " ms");
+    }
+  }
+
+  @Test
+  public void perfTestNonBatched() throws Exception {
+    final int totalKeys = 1_000_000;
+    final int iterations = 5;
+    long totalTime = 0;
+
+    for (int iter = 0; iter < iterations; iter++) {
+      try (final TransactionDBRocksDBColumnarKeyValueStorage segmentedStore =
+          (TransactionDBRocksDBColumnarKeyValueStorage) createSegmentedStore()) {
+        final List<Map.Entry<byte[], byte[]>> entries = new ArrayList<>(totalKeys);
+        final SegmentedKeyValueStorageTransaction tx = segmentedStore.startTransaction();
+        for (int i = 0; i < totalKeys; i++) {
+          byte[] key = new byte[16];
+          ThreadLocalRandom.current().nextBytes(key);
+
+          byte[] value = new byte[1024];
+          ThreadLocalRandom.current().nextBytes(value);
+          entries.add(new AbstractMap.SimpleEntry<>(key, value));
+          tx.put(TestSegment.FOO, key, value);
+        }
+        tx.commit();
+
+        try (FlushOptions flushOptions = new FlushOptions()) {
+          flushOptions.setWaitForFlush(true);
+          flushOptions.setAllowWriteStall(false);
+          for (RocksDbSegmentIdentifier handle :
+              segmentedStore.columnHandlesBySegmentIdentifier.values()) {
+            segmentedStore.getDB().flush(flushOptions, handle.get());
+          }
+        }
+
+        Collections.shuffle(entries);
+
+        final long startTime = System.nanoTime();
+
+        for (Map.Entry<byte[], byte[]> entry : entries) {
+          Optional<byte[]> result = segmentedStore.get(TestSegment.FOO, entry.getKey());
+          assertThat(result).isPresent();
+          assertThat(result.get()).containsExactly(entry.getValue());
+        }
+        final long elapsedMillis = (System.nanoTime() - startTime) / totalKeys;
+        totalTime += elapsedMillis;
+      }
+      Thread.sleep(50);
+    }
+    System.out.println(
+        "Non-batched reads - Average time over "
+            + iterations
+            + " iterations: "
+            + (totalTime / iterations)
+            + " ms");
   }
 }

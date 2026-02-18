@@ -165,64 +165,6 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     this.isAccumulatorStateChanged = true;
   }
 
-  /**
-   * Imports unchanged state data from an external source into the current state. This method
-   * focuses on integrating state data from the specified source that has been read but not
-   * modified.
-   *
-   * <p>The method ensures that only new, unmodified data from the source is added to the current
-   * state. If a state data has already been read or modified in the current state, it will not be
-   * added again to avoid overwriting any existing modifications.
-   *
-   * @param source The source accumulator
-   */
-  public void importPriorStateFromSource(
-      final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
-
-    source
-        .getAccountsToUpdate()
-        .forEach(
-            (address, pathBasedValue) -> {
-              ACCOUNT copyPrior =
-                  pathBasedValue.getPrior() != null
-                      ? copyAccount(pathBasedValue.getPrior(), this, false)
-                      : null;
-              ACCOUNT copyUpdated =
-                  pathBasedValue.getPrior() != null
-                      ? copyAccount(pathBasedValue.getPrior(), this, true)
-                      : null;
-              accountsToUpdate.putIfAbsent(address, new PathBasedValue<>(copyPrior, copyUpdated));
-            });
-    source
-        .getCodeToUpdate()
-        .forEach(
-            (address, pathBasedValue) -> {
-              codeToUpdate.putIfAbsent(
-                  address,
-                  new PathBasedValue<>(pathBasedValue.getPrior(), pathBasedValue.getPrior()));
-            });
-    source
-        .getStorageToUpdate()
-        .forEach(
-            (address, slots) -> {
-              StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageConsumingMap =
-                  storageToUpdate.computeIfAbsent(
-                      address,
-                      k ->
-                          new StorageConsumingMap<>(
-                              address, new ConcurrentHashMap<>(), storagePreloader));
-              slots.forEach(
-                  (storageSlotKey, uInt256PathBasedValue) -> {
-                    storageConsumingMap.putIfAbsent(
-                        storageSlotKey,
-                        new PathBasedValue<>(
-                            uInt256PathBasedValue.getPrior(), uInt256PathBasedValue.getPrior()));
-                  });
-            });
-    storageKeyHashLookup.putAll(source.storageKeyHashLookup);
-    this.isAccumulatorStateChanged = true;
-  }
-
   protected Consumer<PathBasedValue<ACCOUNT>> getAccountPreloader() {
     return accountPreloader;
   }
@@ -415,7 +357,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();

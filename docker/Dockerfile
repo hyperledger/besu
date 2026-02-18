@@ -12,7 +12,7 @@ ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true
 RUN apt-get update $NO_PROXY_CACHE  && \
   # $NO_PROXY_CACHE must not be used here or otherwise will trigger a hadolint error
   apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
-    --no-install-recommends -q --assume-yes install libjemalloc-dev=5.* && \
+    --no-install-recommends -q --assume-yes install libjemalloc-dev=5.* liburing2 liburing-dev && \
   # Clean apt cache
   apt-get clean  && \
   rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
