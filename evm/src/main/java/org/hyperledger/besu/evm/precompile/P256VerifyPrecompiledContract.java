@@ -128,7 +128,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   public PrecompileContractResult computePrecompile(
       final Bytes input, final MessageFrame messageFrame) {
     if (input.size() != SECP256R1_INPUT_LENGTH) {
-      LOG.warn(
+      LOG.debug(
           "Invalid input length for P256VERIFY precompile: expected {} bytes but got {}",
           SECP256R1_INPUT_LENGTH,
           input.size());
