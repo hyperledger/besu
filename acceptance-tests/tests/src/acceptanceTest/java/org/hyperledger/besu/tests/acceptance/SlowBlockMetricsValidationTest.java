@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
@@ -87,8 +86,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
     // - 0ms slow block threshold (log ALL blocks as slow)
     // We use a config modifier to add the environment variable for slow block threshold
     final UnaryOperator<BesuNodeConfigurationBuilder> configModifier =
-        builder ->
-            builder.environment(Map.of("BESU_OPTS", "-Dbesu.execution.slowBlockThresholdMs=0"));
+        builder -> builder.extraCLIOptions(List.of("--slow-block-threshold=0"));
 
     devNode = besu.createQbftNode("qbft-metrics-node", configModifier);
 
