@@ -30,6 +30,6 @@ metrics-port=309
 genesis-file="/opt/besu/genesis.json" # Path
 network-id=42
 sync-mode="snap"
-fast-sync-min-peers=13
+sync-min-peers=13
 
 #mining

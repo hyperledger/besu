@@ -1234,7 +1234,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
+    assertThat(commandOutput.toString(UTF_8)).contains("--sync-min-peers");
     // whitelist is now a hidden option
     assertThat(commandOutput.toString(UTF_8)).doesNotContain("whitelist");
   }
@@ -2398,7 +2398,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
-    parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
+    parseCommand("--sync-mode", "FULL", "--sync-min-peers", "1");
     verify(mockLogger).warn("--sync-min-peers is ignored in FULL sync-mode");
   }
 
