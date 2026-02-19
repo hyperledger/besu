@@ -183,4 +183,43 @@ public class StructLog {
 
     return result.toString();
   }
+
+  /**
+   * Appends compact hex representation to an existing StringBuilder, avoiding allocation. The
+   * StringBuilder is cleared before use but retains its internal buffer.
+   */
+  public static void toCompactHex(
+      final Bytes abytes, final boolean prefix, final StringBuilder buf) {
+    buf.setLength(0);
+
+    if (abytes.isEmpty()) {
+      buf.append(prefix ? "0x0" : "0");
+      return;
+    }
+
+    final byte[] bytes = abytes.toArrayUnsafe();
+    final int size = bytes.length;
+
+    if (prefix) {
+      buf.append("0x");
+    }
+
+    boolean leadingZero = true;
+
+    for (int i = 0; i < size; i++) {
+      final byte b = bytes[i];
+
+      final int highNibble = (b >> 4) & 0xF;
+      if (!leadingZero || highNibble != 0) {
+        buf.append(hexChars[highNibble]);
+        leadingZero = false;
+      }
+
+      final int lowNibble = b & 0xF;
+      if (!leadingZero || lowNibble != 0 || i == size - 1) {
+        buf.append(hexChars[lowNibble]);
+        leadingZero = false;
+      }
+    }
+  }
 }

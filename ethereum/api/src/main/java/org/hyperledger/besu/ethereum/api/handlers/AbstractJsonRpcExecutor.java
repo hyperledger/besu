@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractJsonRpcExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractJsonRpcExecutor.class);
 
-  private static final String SPAN_CONTEXT = "span_context";
+  protected static final String SPAN_CONTEXT = "span_context";
   final JsonRpcExecutor jsonRpcExecutor;
   final Tracer tracer;
   final RoutingContext ctx;
