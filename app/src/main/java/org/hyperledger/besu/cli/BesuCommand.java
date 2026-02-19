@@ -2805,8 +2805,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validatePostMergeCheckpointBlockRequirements() {
     final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-    final Optional<UInt256> terminalTotalDifficulty =
-        genesisConfigOptions.getTerminalTotalDifficulty();
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfigOptions.getCheckpointOptions();
 
@@ -2816,18 +2814,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new InvalidConfigurationException(
             "The checkpoint block configured in the genesis file is not valid.");
       }
-      terminalTotalDifficulty.ifPresentOrElse(
-          ttd -> {
-            if (UInt256.fromHexString(checkpointConfigOptions.getTotalDifficulty().get())
-                .lessThan(ttd)) {
-              throw new InvalidConfigurationException(
-                  "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
-            }
-          },
-          () -> {
-            throw new InvalidConfigurationException(
-                "PoS checkpoint sync requires TTD in the genesis file");
-          });
     }
   }
 
