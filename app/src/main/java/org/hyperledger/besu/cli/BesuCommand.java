@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.lang.Long.parseLong;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
@@ -449,15 +448,36 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final BlockchainServiceImpl blockchainServiceImpl;
   private BesuComponent besuComponent;
 
+  private SyncMode syncMode = null;
+
   @Option(
       names = {"--sync-mode"},
       paramLabel = MANDATORY_MODE_FORMAT_HELP,
       description =
           "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
-  private SyncMode syncMode = null;
+  void setSyncMode(final String value) {
+    final String normalized = value.toUpperCase(Locale.ROOT);
+    if (SyncMode.CHECKPOINT.name().equals(normalized)) {
+      logger.warn(
+          "CHECKPOINT sync mode is deprecated and has been removed. "
+              + "Using SNAP sync mode instead. Your checkpoint configuration will be used automatically.");
+      this.syncMode = SyncMode.SNAP;
+    } else {
+      try {
+        this.syncMode = SyncMode.valueOf(normalized);
+      } catch (IllegalArgumentException e) {
+        throw new ParameterException(
+            this.commandLine,
+            "Invalid value for option '--sync-mode': '"
+                + value
+                + "' is not a valid sync mode. "
+                + "Valid values are: FULL, SNAP");
+      }
+    }
+  }
 
   @Option(
-      names = {"--sync-min-peers", "--fast-sync-min-peers"},
+      names = "--sync-min-peers",
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
       description =
           "Minimum number of peers required before starting sync. Has effect only on non-PoS networks. (default: ${DEFAULT-VALUE})")
@@ -1941,20 +1961,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    if (SyncMode.FAST == syncMode) {
-      logger.warn("FAST sync is deprecated. Recommend using SNAP sync instead.");
-    }
-
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
     }
-
-    CommandLineUtils.failIfOptionDoesntMeetRequirement(
-        commandLine,
-        "--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode",
-        getDefaultSyncModeIfNotSet() == SyncMode.CHECKPOINT,
-        singletonList("--Xcheckpoint-post-merge-enabled"));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
@@ -2794,36 +2804,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validatePostMergeCheckpointBlockRequirements() {
-    final SynchronizerConfiguration synchronizerConfiguration =
-        unstableSynchronizerOptions.toDomainObject().build();
     final GenesisConfigOptions genesisConfigOptions = readGenesisConfigOptions();
-    final Optional<UInt256> terminalTotalDifficulty =
-        genesisConfigOptions.getTerminalTotalDifficulty();
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfigOptions.getCheckpointOptions();
-    if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
+
+    // Only validate if checkpoint config is not the default (empty) one
+    if (checkpointConfigOptions != CheckpointConfigOptions.DEFAULT) {
       if (!checkpointConfigOptions.isValid()) {
         throw new InvalidConfigurationException(
-            "PoS checkpoint sync requires a checkpoint block configured in the genesis file");
+            "The checkpoint block configured in the genesis file is not valid.");
       }
-      terminalTotalDifficulty.ifPresentOrElse(
-          ttd -> {
-            if (UInt256.fromHexString(checkpointConfigOptions.getTotalDifficulty().get())
-                    .equals(UInt256.ZERO)
-                && ttd.equals(UInt256.ZERO)) {
-              throw new InvalidConfigurationException(
-                  "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
-            }
-            if (UInt256.fromHexString(checkpointConfigOptions.getTotalDifficulty().get())
-                .lessThan(ttd)) {
-              throw new InvalidConfigurationException(
-                  "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
-            }
-          },
-          () -> {
-            throw new InvalidConfigurationException(
-                "PoS checkpoint sync requires TTD in the genesis file");
-          });
     }
   }
 
