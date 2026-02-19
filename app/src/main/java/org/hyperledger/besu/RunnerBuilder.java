@@ -641,7 +641,7 @@ public class RunnerBuilder {
   }
 
   /**
-   * Set IP version preference for outbound P2P connections
+   * Add IP version preference for outbound P2P connections.
    *
    * @param outboundIpVersionPreference the IP version preference
    * @return the runner builder
