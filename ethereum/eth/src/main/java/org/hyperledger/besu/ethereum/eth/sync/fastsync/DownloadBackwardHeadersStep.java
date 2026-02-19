@@ -28,7 +28,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -95,8 +94,8 @@ public class DownloadBackwardHeadersStep
                 downloadAllHeaders(
                     currentTaskId, 0, startBlockNumber, headersToRequest, downloadedHeaders))
         .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
-        .exceptionally(
-            throwable -> {
+        .whenComplete(
+            (unused, throwable) -> {
               if (throwable instanceof TimeoutException) {
                 LOG.trace(
                     "[{}] Timed out after {} ms while downloading {} backward headers from block {}",
@@ -105,7 +104,6 @@ public class DownloadBackwardHeadersStep
                     headersToRequest,
                     startBlockNumber);
               }
-              throw new CompletionException(throwable);
             });
   }
 
