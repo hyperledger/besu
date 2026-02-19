@@ -113,7 +113,7 @@ testing {
         acceptanceTestBftSoak {
           testTask.configure {
             // Clear the exclude inherited from the 'all' block
-            excludes = []
+            excludes.clear()
             include '**/bftsoak/**'
 
             dependsOn(rootProject.installDist)
