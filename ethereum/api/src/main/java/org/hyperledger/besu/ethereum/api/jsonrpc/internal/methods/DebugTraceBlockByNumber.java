@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
-import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
+import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
+import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -23,36 +25,37 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.StreamingJsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLogWithError;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.services.pipeline.Pipeline;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
-  protected final ProtocolSchedule protocolSchedule;
-  private final LabelledMetric<Counter> outputCounter;
-  private final EthScheduler ethScheduler;
+  private final ProtocolSchedule protocolSchedule;
 
   public DebugTraceBlockByNumber(
       final ProtocolSchedule protocolSchedule,
@@ -61,14 +64,6 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
       final EthScheduler ethScheduler) {
     super(blockchainQueries);
     this.protocolSchedule = protocolSchedule;
-    this.outputCounter =
-        metricsSystem.createLabelledCounter(
-            BesuMetricCategory.BLOCKCHAIN,
-            "transactions_debugtraceblock_pipeline_processed_total",
-            "Number of transactions processed for each block",
-            "step",
-            "action");
-    this.ethScheduler = ethScheduler;
   }
 
   @Override
@@ -144,56 +139,74 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
                     protocolSpec.getTransactionProcessor();
                 final TraceBlock.ChainUpdater chainUpdater =
                     new TraceBlock.ChainUpdater(traceableState);
+                final BlockHeader header = block.getHeader();
+                final Optional<BlockHeader> maybeParentHeader =
+                    getBlockchainQueries().getBlockchain().getBlockHeader(header.getParentHash());
+                final Wei blobGasPrice =
+                    protocolSpec
+                        .getFeeMarket()
+                        .blobGasPricePerGas(
+                            maybeParentHeader
+                                .map(parent ->
+                                    calculateExcessBlobGasForParent(protocolSpec, parent))
+                                .orElse(BlobGas.ZERO));
+                final BlockHashLookup blockHashLookup =
+                    protocolSpec.getPreExecutionProcessor().createBlockHashLookup(
+                        getBlockchainQueries().getBlockchain(), header);
 
-                TransactionSource transactionSource = new TransactionSource(block);
-                DebugOperationTracer debugOperationTracer =
+                final DebugOperationTracer tracer =
                     new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
-                ExecuteTransactionStep executeTransactionStep =
-                    new ExecuteTransactionStep(
-                        chainUpdater,
-                        transactionProcessor,
-                        getBlockchainQueries().getBlockchain(),
-                        debugOperationTracer,
-                        protocolSpec,
-                        block);
-
-                Consumer<DebugTraceTransactionResult> streamWriter =
-                    result -> {
-                      try {
-                        generator.writeObject(result);
-                        generator.flush();
-                      } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                      }
-                    };
 
                 try {
                   generator.writeStartArray();
+
+                  for (final Transaction tx : block.getBody().getTransactions()) {
+                    final AccessLocationTracker accessListTracker =
+                        BlockAccessList.BlockAccessListBuilder
+                            .createTransactionAccessLocationTracker(0);
+                    final TransactionProcessingResult result =
+                        transactionProcessor.processTransaction(
+                            chainUpdater.getNextUpdater(),
+                            header,
+                            tx,
+                            header.getCoinbase(),
+                            tracer,
+                            blockHashLookup,
+                            ImmutableTransactionValidationParams.builder().build(),
+                            blobGasPrice,
+                            Optional.of(accessListTracker));
+
+                    final List<TraceFrame> frames = tracer.getTraceFrames();
+                    final long gas = tx.getGasLimit() - result.getGasRemaining();
+                    final String returnValue = result.getOutput().toString().substring(2);
+                    final boolean failed = !result.isSuccessful();
+
+                    generator.writeStartObject();
+                    generator.writeStringField("txHash", tx.getHash().toHexString());
+                    generator.writeFieldName("result");
+                    generator.writeStartObject();
+                    generator.writeNumberField("gas", gas);
+                    generator.writeBooleanField("failed", failed);
+                    generator.writeStringField("returnValue", returnValue);
+                    generator.writeFieldName("structLogs");
+                    generator.writeStartArray();
+                    for (final TraceFrame frame : frames) {
+                      final StructLog structLog = frame.getExceptionalHaltReason().isPresent()
+                          ? new StructLogWithError(frame)
+                          : new StructLog(frame);
+                      generator.writeObject(structLog);
+                    }
+                    generator.writeEndArray();
+                    generator.writeEndObject();
+                    generator.writeEndObject();
+                    generator.flush();
+
+                    tracer.reset();
+                  }
+
+                  generator.writeEndArray();
                 } catch (IOException e) {
                   throw new UncheckedIOException(e);
-                }
-
-                Pipeline<TransactionTrace> traceBlockPipeline =
-                    createPipelineFrom(
-                            "getTransactions",
-                            transactionSource,
-                            4,
-                            outputCounter,
-                            false,
-                            "debug_trace_block_by_number")
-                        .thenProcess("executeTransaction", executeTransactionStep)
-                        .thenProcessAsyncOrdered(
-                            "debugTraceTransactionStep",
-                            DebugTraceTransactionStepFactory.createAsync(
-                                traceOptions, protocolSpec),
-                            4)
-                        .andFinishWith("stream_results", streamWriter);
-
-                try {
-                  ethScheduler.startPipeline(traceBlockPipeline).get();
-                  generator.writeEndArray();
-                } catch (InterruptedException | ExecutionException | IOException e) {
-                  throw new RuntimeException(e);
                 }
                 return Optional.empty();
               });

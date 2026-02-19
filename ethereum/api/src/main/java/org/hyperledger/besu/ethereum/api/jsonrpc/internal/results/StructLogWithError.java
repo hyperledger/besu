@@ -22,7 +22,7 @@ public class StructLogWithError extends StructLog {
 
   private final String[] error;
 
-  StructLogWithError(final TraceFrame traceFrame) {
+  public StructLogWithError(final TraceFrame traceFrame) {
     super(traceFrame);
     error =
         traceFrame.getExceptionalHaltReason().map(ehr -> new String[] {ehr.name()}).orElse(null);
