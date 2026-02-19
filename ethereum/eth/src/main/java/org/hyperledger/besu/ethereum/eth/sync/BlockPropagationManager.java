@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,7 +79,7 @@ import org.slf4j.LoggerFactory;
 
 public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
-  public static final long SIXTY_SECONDS_IN_MILLIS = 60_000L;
+  private static final long TIMEOUT = Duration.ofSeconds(60L).toMillis();
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -546,7 +547,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
                 importOrSavePendingBlock(
                     blockExecutorResult.result().get().getFirst(),
                     blockExecutorResult.ethPeers().getLast().nodeId()))
-        .orTimeout(SIXTY_SECONDS_IN_MILLIS, TimeUnit.MILLISECONDS);
+        .orTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
   }
 
   private CompletableFuture<BlockHeader> getBlockHeader(
