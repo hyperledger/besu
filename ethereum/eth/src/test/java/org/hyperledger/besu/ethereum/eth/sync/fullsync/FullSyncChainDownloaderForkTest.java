@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -23,12 +25,17 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -37,8 +44,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-
-import java.io.IOException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,21 +57,22 @@ public class FullSyncChainDownloaderForkTest {
   protected ProtocolContext protocolContext;
   private SyncState syncState;
 
-  private BlockchainSetupUtil localBlockchainSetup;
   protected MutableBlockchain localBlockchain;
   private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
+  private PeerTaskExecutor peerTaskExecutor;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
 
   @BeforeEach
-  public void setupTest() throws IOException {
-    localBlockchainSetup = BlockchainSetupUtil.forUpgradedFork();
+  public void setupTest() {
+    BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forUpgradedFork();
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forOutdatedFork();
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
+    peerTaskExecutor = mock(PeerTaskExecutor.class);
     ethProtocolManager =
         EthProtocolManagerTestBuilder.builder()
             .setProtocolSchedule(protocolSchedule)
@@ -75,9 +81,22 @@ public class FullSyncChainDownloaderForkTest {
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
             .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+
+    GetHeadersFromPeerTaskExecutorAnswer getHeadersAnswer =
+        new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
+    when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class))).thenAnswer(getHeadersAnswer);
+    when(peerTaskExecutor.executeAgainstPeer(any(GetHeadersFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(getHeadersAnswer);
+
+    GetBodiesFromPeerTaskExecutorAnswer getBodiesAnswer =
+        new GetBodiesFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
+    when(peerTaskExecutor.execute(any(GetBodiesFromPeerTask.class))).thenAnswer(getBodiesAnswer);
+    when(peerTaskExecutor.executeAgainstPeer(any(GetBodiesFromPeerTask.class), any(EthPeer.class)))
+        .thenAnswer(getBodiesAnswer);
   }
 
   @AfterEach
@@ -95,7 +114,7 @@ public class FullSyncChainDownloaderForkTest {
         metricsSystem,
         SyncTerminationCondition.never(),
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-        mock(PeerTaskExecutor.class));
+        peerTaskExecutor);
   }
 
   private ChainDownloader downloader() {

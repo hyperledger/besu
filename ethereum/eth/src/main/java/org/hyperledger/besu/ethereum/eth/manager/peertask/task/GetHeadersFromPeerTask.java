@@ -140,11 +140,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
     this.direction = direction;
     this.maximumRetriesAgainstDifferentPeers = maximumRetriesAgainstDifferentPeers;
     this.protocolSchedule = protocolSchedule;
-
-    requiredBlockchainHeight =
-        direction == Direction.FORWARD
-            ? blockNumber + (long) (maxHeaders - 1) * (skip + 1)
-            : blockNumber;
+    requiredBlockchainHeight = blockNumber;
   }
 
   @Override
