@@ -62,7 +62,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.LockSupport;
@@ -142,11 +144,13 @@ public class FastSyncChainDownloaderTest {
             (invocationOnMock) -> {
               GetSyncReceiptsFromPeerTask task =
                   invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
-              List<List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult = new ArrayList<>();
+              Map<SyncBlock, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
+                  new HashMap<>();
               task.getRequestedBlocks()
                   .forEach(
                       (block) ->
-                          getReceiptsFromPeerTaskResult.add(
+                          getReceiptsFromPeerTaskResult.put(
+                              block,
                               otherBlockchain
                                   .getTxReceipts(block.getHeader().getHash())
                                   .get()
