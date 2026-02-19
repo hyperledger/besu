@@ -238,12 +238,14 @@ public class DownloadSyncReceiptsStepTest {
         receiptsToSyncReceipts(gen.receipts(block), ETH69_RECEIPT_CONFIGURATION);
 
     // Add fewer receipts than transactions
-    final Map<SyncBlock, List<SyncTransactionReceipt>> receiptsByBlock =
-        Map.of(syncBlocks.get(0), allReceipts.subList(0, allReceipts.size() - 1));
+    final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash =
+        Map.of(
+            syncBlocks.get(0).getHeader().getReceiptsRoot(),
+            allReceipts.subList(0, allReceipts.size() - 1));
 
     // When/Then: should throw IllegalStateException
     assertThatThrownBy(
-            () -> downloadSyncReceiptsStep.combineBlocksAndReceipts(syncBlocks, receiptsByBlock))
+            () -> downloadSyncReceiptsStep.combineBlocksAndReceipts(syncBlocks, receiptsByRootHash))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("incorrect number of receipts returned");
   }
@@ -255,11 +257,11 @@ public class DownloadSyncReceiptsStepTest {
     final Block blockWithoutTxs = gen.block();
     final List<SyncBlock> syncBlocks = blocksToSyncBlocks(List.of(blockWithoutTxs));
 
-    final Map<SyncBlock, List<SyncTransactionReceipt>> receiptsByBlock = Map.of();
+    final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash = Map.of();
 
     // When: combining blocks and receipts
     final List<SyncBlockWithReceipts> result =
-        downloadSyncReceiptsStep.combineBlocksAndReceipts(syncBlocks, receiptsByBlock);
+        downloadSyncReceiptsStep.combineBlocksAndReceipts(syncBlocks, receiptsByRootHash);
 
     // Then: should return blocks with empty receipts
     assertThat(result).hasSize(1);
@@ -396,9 +398,10 @@ public class DownloadSyncReceiptsStepTest {
   @Test
   public void shouldDeduplicateBlocksWithSameReceiptRoot()
       throws ExecutionException, InterruptedException {
-    // Given: Create 3 blocks where block2 has the same receipt root as block1 but no transactions.
+    // Given: Create 3 blocks where block2 has the same receipt root as block1.
     // The dedup in prepareRequest sends only one request per unique receipt root, so block2 is
-    // excluded from the request. Since block2 has no transactions its receipts are empty.
+    // excluded from the request. combineBlocksAndReceipts looks up by receipt root hash, so block2
+    // still gets block1's receipts.
     final List<Block> allBlocks = gen.blockSequence(4).subList(1, 4);
     final Block block1 = allBlocks.get(0);
     final Block block3 = allBlocks.get(2);
@@ -406,7 +409,7 @@ public class DownloadSyncReceiptsStepTest {
     gen.setBlockOptionsSupplier(
         () ->
             BlockOptions.create()
-                .hasTransactions(false)
+                .hasTransactions(true)
                 .setReceiptsRoot(block1.getHeader().getReceiptsRoot()));
     final Block block2WithSameRoot = gen.blockSequence(block1, 1).getFirst();
 
@@ -439,9 +442,10 @@ public class DownloadSyncReceiptsStepTest {
     assertThat(blocksWithReceipts.get(0).getBlock()).isEqualTo(syncBlocks.get(0));
     assertThat(blocksWithReceipts.get(0).getReceipts()).isEqualTo(receiptsForBlock1);
 
-    // block2 was deduped out of the request; it has no transactions so its receipts are empty
+    // block2 was deduped out of the request; combineBlocksAndReceipts finds its receipts via the
+    // shared receipt root, so it gets the same receipts as block1
     assertThat(blocksWithReceipts.get(1).getBlock()).isEqualTo(syncBlocks.get(1));
-    assertThat(blocksWithReceipts.get(1).getReceipts()).isEmpty();
+    assertThat(blocksWithReceipts.get(1).getReceipts()).isEqualTo(receiptsForBlock1);
 
     // block3 should have its own receipts
     assertThat(blocksWithReceipts.get(2).getBlock()).isEqualTo(syncBlocks.get(2));

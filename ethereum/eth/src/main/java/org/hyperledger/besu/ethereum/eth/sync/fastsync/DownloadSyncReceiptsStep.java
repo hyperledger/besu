@@ -77,13 +77,13 @@ public class DownloadSyncReceiptsStep
   public CompletableFuture<List<SyncBlockWithReceipts>> apply(final List<SyncBlock> blocks) {
     final int currTaskId = taskSequence.incrementAndGet();
     final List<SyncBlock> blocksToRequest = prepareRequest(blocks);
-    final Map<SyncBlock, List<SyncTransactionReceipt>> cumulativeReceiptsByBlocks =
+    final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash =
         HashMap.newHashMap(blocksToRequest.size());
 
     return ethScheduler
         .scheduleServiceTask(
-            () -> downloadReceipts(currTaskId, 0, blocksToRequest, cumulativeReceiptsByBlocks))
-        .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts))
+            () -> downloadReceipts(currTaskId, 0, blocksToRequest, receiptsByRootHash))
+        .thenApply(receipts -> combineBlocksAndReceipts(blocks, receipts))
         .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
         .exceptionally(
             throwable -> {
@@ -134,11 +134,11 @@ public class DownloadSyncReceiptsStep
     return blocksToRequest;
   }
 
-  private CompletableFuture<Map<SyncBlock, List<SyncTransactionReceipt>>> downloadReceipts(
+  private CompletableFuture<Map<Hash, List<SyncTransactionReceipt>>> downloadReceipts(
       final int currTaskId,
       final int prevIterations,
       final List<SyncBlock> blocksToRequest,
-      final Map<SyncBlock, List<SyncTransactionReceipt>> cumulativeReceiptsByBlocks) {
+      final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash) {
 
     final int initialBlockCount = blocksToRequest.size();
     int iteration = prevIterations;
@@ -182,7 +182,10 @@ public class DownloadSyncReceiptsStep
             .addArgument(() -> formatBlockDetails(receiptsByBlock.keySet()))
             .log();
 
-        cumulativeReceiptsByBlocks.putAll(receiptsByBlock);
+        receiptsByBlock.forEach(
+            (syncBlock, syncTransactionReceipts) ->
+                receiptsByRootHash.put(
+                    syncBlock.getHeader().getReceiptsRoot(), syncTransactionReceipts));
 
         blocksToRequest.removeAll(receiptsByBlock.keySet());
       } else {
@@ -204,24 +207,21 @@ public class DownloadSyncReceiptsStep
                 ethScheduler.scheduleServiceTask(
                     () ->
                         downloadReceipts(
-                            currTaskId,
-                            passIterations,
-                            blocksToRequest,
-                            cumulativeReceiptsByBlocks)),
+                            currTaskId, passIterations, blocksToRequest, receiptsByRootHash)),
             RETRY_DELAY);
       }
     }
-    return CompletableFuture.completedFuture(cumulativeReceiptsByBlocks);
+    return CompletableFuture.completedFuture(receiptsByRootHash);
   }
 
   List<SyncBlockWithReceipts> combineBlocksAndReceipts(
       final List<SyncBlock> blocks,
-      final Map<SyncBlock, List<SyncTransactionReceipt>> receiptsByRootHash) {
+      final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash) {
     return blocks.stream()
         .map(
             block -> {
               final List<SyncTransactionReceipt> receipts =
-                  receiptsByRootHash.getOrDefault(block, emptyList());
+                  receiptsByRootHash.getOrDefault(block.getHeader().getReceiptsRoot(), emptyList());
               if (block.getBody().getTransactionCount() != receipts.size()) {
                 throw new IllegalStateException(
                     "PeerTask response code was success, but incorrect number of receipts returned. Block hash: "
