@@ -402,7 +402,7 @@ public abstract class JsonBlockImporterTest {
 
   protected BesuController createController(final GenesisConfig genesisConfig) {
     return new BesuController.Builder()
-        .fromGenesisFile(genesisConfig, SyncMode.FAST)
+        .fromGenesisFile(genesisConfig, SyncMode.SNAP)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -421,7 +421,7 @@ public abstract class JsonBlockImporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .besuComponent(DaggerJsonBlockImporterTest_JsonBlockImportComponent.builder().build())
         .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();

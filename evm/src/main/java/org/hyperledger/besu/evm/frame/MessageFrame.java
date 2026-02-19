@@ -1631,11 +1631,13 @@ public class MessageFrame {
       TxValues newTxValues;
 
       if (parentMessageFrame == null) {
+        HashSet<Address> warmedUpAddresses = new HashSet<>();
+        warmedUpAddresses.add(contract);
         newTxValues =
             new TxValues(
                 blockHashLookup,
                 maxStackSize,
-                UndoSet.of(new HashSet<>(Address.SIZE)),
+                UndoSet.of(warmedUpAddresses),
                 UndoTable.of(HashBasedTable.create()),
                 originator,
                 gasPrice,
@@ -1645,8 +1647,8 @@ public class MessageFrame {
                 miningBeneficiary,
                 versionedHashes,
                 UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new HashSet<>(Address.SIZE)),
-                UndoSet.of(new HashSet<>(Address.SIZE)),
+                UndoSet.of(new HashSet<>()),
+                UndoSet.of(new HashSet<>()),
                 new UndoScalar<>(0L));
         updater = worldUpdater;
         newStatic = isStatic;
@@ -1677,7 +1679,6 @@ public class MessageFrame {
               eip7928AccessList);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
-      messageFrame.warmUpAddress(contract);
       for (Address a : eip2930AccessListWarmAddresses) {
         messageFrame.warmUpAddress(a);
       }
