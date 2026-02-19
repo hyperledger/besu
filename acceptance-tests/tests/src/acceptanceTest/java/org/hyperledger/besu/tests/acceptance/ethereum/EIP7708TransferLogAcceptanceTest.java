@@ -57,7 +57,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
  *
  * <ul>
  *   <li>SELFDESTRUCT to different address: Transfer log (LOG3) with 3 topics
- *   <li>SELFDESTRUCT to self: Selfdestruct log (LOG2) with 2 topics
+ *   <li>SELFDESTRUCT to self: Burn log (LOG2) with 2 topics
  * </ul>
  */
 public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
@@ -67,8 +67,8 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   private static final String EIP7708_SYSTEM_ADDRESS = "0xfffffffffffffffffffffffffffffffffffffffe";
   private static final String TRANSFER_TOPIC =
       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-  private static final String SELFDESTRUCT_TOPIC =
-      "0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083";
+  private static final String BURN_TOPIC =
+      "0xcc16f5dbb4873280815c1ee09dbd06736cffcc184412cf7a71a0fdb75d397ca5";
 
   private final Account sender =
       accounts.createAccount(
@@ -344,7 +344,7 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
    *
    * <p>Per EIP-7708, since no actual destruction or value transfer occurs, no log should be
    * emitted. This is different from pre-Cancun behavior where the contract would be destroyed and a
-   * Selfdestruct log would be emitted.
+   * Burn log would be emitted.
    */
   @Test
   public void shouldNotEmitLogForPreExistingContractSelfDestructToSelf() throws IOException {
@@ -497,7 +497,7 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * Test that SELFDESTRUCT to SELF for a same-tx-created contract DOES emit a Selfdestruct log.
+   * Test that SELFDESTRUCT to SELF for a same-tx-created contract DOES emit a Burn log.
    *
    * <p>This test calls a factory contract (0x7710) that:
    *
@@ -508,8 +508,8 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
    * </ol>
    *
    * <p>Under EIP-6780, contracts created in the same transaction CAN be destroyed by SELFDESTRUCT.
-   * Per EIP-7708, when a same-tx-created contract selfdestructs to itself, a Selfdestruct log
-   * (LOG2) should be emitted with the destroyed balance.
+   * Per EIP-7708, when a same-tx-created contract selfdestructs to itself, a Burn log (LOG2) should
+   * be emitted with the destroyed balance.
    */
   @Test
   public void shouldEmitSelfdestructLogForSameTxCreatedContractSelfDestructToSelf()
@@ -552,18 +552,18 @@ public class EIP7708TransferLogAcceptanceTest extends AcceptanceTestBase {
 
     final List<Log> logs = receipt.getLogs();
 
-    // Should have at least one Selfdestruct log (LOG2 with 2 topics)
+    // Should have at least one Burn log (LOG2 with 2 topics)
     final List<Log> selfdestructLogs =
         logs.stream()
             .filter(log -> log.getTopics().size() == 2)
-            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(SELFDESTRUCT_TOPIC))
+            .filter(log -> log.getTopics().get(0).equalsIgnoreCase(BURN_TOPIC))
             .toList();
 
     assertThat(selfdestructLogs)
-        .as("Same-tx-created contract SELFDESTRUCT to self SHOULD emit a Selfdestruct log")
+        .as("Same-tx-created contract SELFDESTRUCT to self SHOULD emit a Burn log")
         .isNotEmpty();
 
-    // Verify the Selfdestruct log has the correct balance
+    // Verify the Burn log has the correct balance
     final Log selfdestructLog = selfdestructLogs.getFirst();
     assertThat(selfdestructLog.getAddress()).isEqualToIgnoringCase(EIP7708_SYSTEM_ADDRESS);
     assertThat(selfdestructLog.getData())
