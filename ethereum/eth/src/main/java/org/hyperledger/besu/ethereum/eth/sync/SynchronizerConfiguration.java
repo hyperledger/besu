@@ -52,9 +52,6 @@ public class SynchronizerConfiguration {
       CachingTaskCollection.DEFAULT_CACHE_SIZE;
   public static final long DEFAULT_RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS =
       TimeUnit.SECONDS.toMillis(60);
-
-  public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
-
   public static final Boolean DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED = Boolean.FALSE;
   public static final URI DEFAULT_ERA1_DATA_URI = URI.create("https://mainnet.era1.nimbus.team/");
   public static final Integer DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY = 1;
