@@ -10,6 +10,7 @@
       },
       "latest",
       {
+        "disableMemory": false,
         "stateOverrides": {
           "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
             "comment": "Always returns one",
