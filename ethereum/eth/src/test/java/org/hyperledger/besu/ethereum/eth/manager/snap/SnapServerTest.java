@@ -261,7 +261,7 @@ public class SnapServerTest {
     var rangeData =
         getAndVerifyAccountRangeData(
             (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit),
-            acctCount);
+            acctCount - 1);
 
     // assert proofs are valid for the requested range
     assertThat(assertIsValidAccountRangeProof(Hash.ZERO, rangeData)).isTrue();
@@ -320,7 +320,7 @@ public class SnapServerTest {
     // account found at startHash
     insertTestAccounts(acct4, acct3, acct1, acct2);
     var rangeData =
-        getAndVerifyAccountRangeData(requestAccountRange(acct1.addressHash, acct4.addressHash), 4);
+        getAndVerifyAccountRangeData(requestAccountRange(acct1.addressHash, acct4.addressHash), 3);
 
     // assert proofs are valid for requested range
     assertThat(assertIsValidAccountRangeProof(acct1.addressHash, rangeData)).isTrue();
@@ -394,8 +394,8 @@ public class SnapServerTest {
     assertThat(slotsData.slots()).isNotNull();
     assertThat(slotsData.slots().size()).isEqualTo(1);
     var firstAccountStorages = slotsData.slots().first();
-    // expecting to see 2 slots
-    assertThat(firstAccountStorages.size()).isEqualTo(2);
+    // expecting to see 1 slot (limitHash is exclusive)
+    assertThat(firstAccountStorages.size()).isEqualTo(1);
     // assert proofs are valid for the requested range
     assertThat(
             assertIsValidStorageProof(
@@ -467,8 +467,8 @@ public class SnapServerTest {
     // expecting to see complete 10 slot storage for acct3
     assertThat(firstAccountStorages.size()).isEqualTo(10);
     var secondAccountStorages = slotsData.slots().last();
-    // expecting to see only 6 since request was limited to 16 slots
-    assertThat(secondAccountStorages.size()).isEqualTo(6);
+    // expecting to see only 5 since request was limited to 16 slots
+    assertThat(secondAccountStorages.size()).isEqualTo(5);
     // proofs required for interrupted storage range:
     assertThat(slotsData.proofs().size()).isNotEqualTo(0);
 

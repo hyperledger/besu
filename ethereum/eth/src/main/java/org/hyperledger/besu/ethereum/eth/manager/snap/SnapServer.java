@@ -598,12 +598,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   }
 
   /**
-   * Predicate that doesn't immediately stop when the delegate predicate returns false, but instead
-   * sets a flag to stop after the current element is processed.
+   * Predicate that delegates to another predicate, tracks whether the stream was interrupted, and
+   * guarantees at least the first element is always included for progress.
    */
   static class ExceedingPredicate implements Predicate<Pair<Bytes32, Bytes>> {
     private final Predicate<Pair<Bytes32, Bytes>> delegate;
     final AtomicBoolean shouldContinue = new AtomicBoolean(true);
+    private final AtomicBoolean isFirst = new AtomicBoolean(true);
 
     public ExceedingPredicate(final Predicate<Pair<Bytes32, Bytes>> delegate) {
       this.delegate = delegate;
@@ -612,7 +613,15 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     @Override
     public boolean test(final Pair<Bytes32, Bytes> pair) {
       final boolean result = delegate.test(pair);
-      return shouldContinue.getAndSet(result);
+      // Always include at least the first element for progress guarantees
+      if (isFirst.getAndSet(false)) {
+        if (!result) {
+          shouldContinue.set(false);
+        }
+        return true;
+      }
+      shouldContinue.set(result);
+      return result;
     }
 
     public boolean shouldGetMore() {

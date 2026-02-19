@@ -80,7 +80,7 @@ public class SnapServerGetAccountRangeTest {
 
   /**
    * In this test, we request the entire state range, but limit the response to 4000 bytes.
-   * Expected: 86 accounts.
+   * Expected: 85 accounts.
    */
   @Test
   public void test0_RequestEntireStateRangeWith4000BytesLimit() {
@@ -88,17 +88,17 @@ public class SnapServerGetAccountRangeTest {
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
             .responseBytes(4000)
-            .expectedAccounts(86)
+            .expectedAccounts(85)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(
                 Bytes32.fromHexString(
-                    "0x445cb5c1278fdce2f9cbdb681bdd76c52f8e50e41dbd9e220242a69ba99ac099"))
+                    "0x4363d332a0d4df8582a84932729892387c623fe1ec42e2cfcbe85c183ed98e0e"))
             .build());
   }
 
   /**
    * In this test, we request the entire state range, but limit the response to 3000 bytes.
-   * Expected: 65 accounts.
+   * Expected: 64 accounts.
    */
   @Test
   public void test1_RequestEntireStateRangeWith3000BytesLimit() {
@@ -106,17 +106,17 @@ public class SnapServerGetAccountRangeTest {
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
             .responseBytes(3000)
-            .expectedAccounts(65)
+            .expectedAccounts(64)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(
                 Bytes32.fromHexString(
-                    "0x2e6fe1362b3e388184fd7bf08e99e74170b26361624ffd1c5f646da7067b58b6"))
+                    "0x2baa718b760c0cbd0ec40a3c6df7f2948b40ba096e6e4b116b636f0cca023bde"))
             .build());
   }
 
   /**
    * In this test, we request the entire state range, but limit the response to 2000 bytes.
-   * Expected: 44 accounts.
+   * Expected: 43 accounts.
    */
   @Test
   public void test2_RequestEntireStateRangeWith2000BytesLimit() {
@@ -124,11 +124,11 @@ public class SnapServerGetAccountRangeTest {
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
             .responseBytes(2000)
-            .expectedAccounts(44)
+            .expectedAccounts(43)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(
                 Bytes32.fromHexString(
-                    "0x1c3f74249a4892081ba0634a819aec9ed25f34c7653f5719b9098487e65ab595"))
+                    "0x1c248f110218eaae2feb51bc82e9dcc2844bf93b88172c52afcb86383d262323"))
             .build());
   }
 
@@ -166,8 +166,8 @@ public class SnapServerGetAccountRangeTest {
 
   /**
    * In this test, we request a range where startingHash is before the first available account key,
-   * and limitHash is after. The server should return the first and second account of the state
-   * (because the second account is the 'next available'). Expected: 2 accounts.
+   * and limitHash is after. The server should return the first account of the state. Expected: 1
+   * account.
    */
   @Test
   public void test5_RequestRangeBeforeFirstAccountKey() {
@@ -176,9 +176,9 @@ public class SnapServerGetAccountRangeTest {
             .rootHash(rootHash)
             .startHash(hashAdd(firstAccount, -500))
             .limitHash(hashAdd(firstAccount, 1))
-            .expectedAccounts(2)
+            .expectedAccounts(1)
             .expectedFirstAccount(firstAccount)
-            .expectedLastAccount(secondAccount)
+            .expectedLastAccount(firstAccount)
             .build());
   }
 
@@ -218,7 +218,7 @@ public class SnapServerGetAccountRangeTest {
 
   /**
    * In this test, startingHash is exactly the first available account key. The server should return
-   * the first available account of the state as the first item. Expected: 86 accounts.
+   * the first available account of the state as the first item. Expected: 85 accounts.
    */
   @Test
   public void test8_RequestStartingHashFirstAvailableAccountKey() {
@@ -227,17 +227,17 @@ public class SnapServerGetAccountRangeTest {
             .rootHash(rootHash)
             .startHash(firstAccount)
             .responseBytes(4000)
-            .expectedAccounts(86)
+            .expectedAccounts(85)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(
                 Bytes32.fromHexString(
-                    "0x445cb5c1278fdce2f9cbdb681bdd76c52f8e50e41dbd9e220242a69ba99ac099"))
+                    "0x4363d332a0d4df8582a84932729892387c623fe1ec42e2cfcbe85c183ed98e0e"))
             .build());
   }
 
   /**
    * In this test, startingHash is after the first available key. The server should return the
-   * second account of the state as the first item. Expected: 86 accounts.
+   * second account of the state as the first item. Expected: 85 accounts.
    */
   @Test
   public void test9_RequestStartingHashAfterFirstAvailableKey() {
@@ -246,11 +246,11 @@ public class SnapServerGetAccountRangeTest {
             .rootHash(rootHash)
             .startHash(secondAccount)
             .responseBytes(4000)
-            .expectedAccounts(86)
+            .expectedAccounts(85)
             .expectedFirstAccount(secondAccount)
             .expectedLastAccount(
                 Bytes32.fromHexString(
-                    "0x4615e5f5df5b25349a00ad313c6cd0436b6c08ee5826e33a018661997f85ebaa"))
+                    "0x445cb5c1278fdce2f9cbdb681bdd76c52f8e50e41dbd9e220242a69ba99ac099"))
             .build());
   }
 
@@ -265,7 +265,7 @@ public class SnapServerGetAccountRangeTest {
 
   /**
    * This test requests data at a state root that is 127 blocks old. We expect the server to have
-   * this state available. Expected: 84 accounts.
+   * this state available. Expected: 83 accounts.
    */
   @Test
   public void test12_RequestStateRoot127BlocksOld() {
@@ -279,12 +279,12 @@ public class SnapServerGetAccountRangeTest {
     testAccountRangeRequest(
         new AccountRangeRequestParams.Builder()
             .rootHash(rootHash)
-            .expectedAccounts(84)
+            .expectedAccounts(83)
             .responseBytes(4000)
             .expectedFirstAccount(firstAccount)
             .expectedLastAccount(
                 Bytes32.fromHexString(
-                    "0x580aa878e2f92d113a12c0a3ce3c21972b03dbe80786858d49a72097e2c491a3"))
+                    "0x570210539713235b442bbbad50c58bee81b70efd2dad78f99e41a6c462faeb43"))
             .build());
   }
 
