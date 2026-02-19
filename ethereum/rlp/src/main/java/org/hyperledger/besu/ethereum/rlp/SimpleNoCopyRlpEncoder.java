@@ -64,10 +64,10 @@ public class SimpleNoCopyRlpEncoder {
     if (bytes.size() == 1 && Byte.toUnsignedInt(bytes.get(0)) <= MAXIMUM_STANDALONE_BYTE_VALUE) {
       return bytes;
     } else if (bytes.size() <= LENGTH_THRESHOLD) {
-      return Bytes.concatenate(SHORT_STRING_LENGTHS[bytes.size()], bytes);
+      return Bytes.wrap(SHORT_STRING_LENGTHS[bytes.size()], bytes);
     } else { // bytes.size > LENGTH_THRESHOLD
       Bytes length = Bytes.minimalBytes(bytes.size());
-      return Bytes.concatenate(LONG_STRING_LENGTHS[length.size()], length, bytes);
+      return Bytes.wrap(LONG_STRING_LENGTHS[length.size()], length, bytes);
     }
   }
 
@@ -81,12 +81,10 @@ public class SimpleNoCopyRlpEncoder {
     int totalLength = encodedBytesList.stream().mapToInt(Bytes::size).sum();
 
     if (totalLength <= LENGTH_THRESHOLD) {
-      return Bytes.concatenate(
-          SHORT_LIST_LENGTHS[totalLength], Bytes.concatenate(encodedBytesList));
+      return Bytes.wrap(SHORT_LIST_LENGTHS[totalLength], Bytes.wrap(encodedBytesList));
     } else { // totalLength > LENGTH_THRESHOLD
       Bytes length = Bytes.minimalBytes(totalLength);
-      return Bytes.concatenate(
-          LONG_LIST_LENGTHS[length.size()], length, Bytes.concatenate(encodedBytesList));
+      return Bytes.wrap(LONG_LIST_LENGTHS[length.size()], length, Bytes.wrap(encodedBytesList));
     }
   }
 }

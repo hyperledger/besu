@@ -280,7 +280,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   /** Builds a stream of candidate peers suitable for outbound connection attempts. */
   private Stream<DiscoveryPeer> candidatePeers(final Collection<NodeRecord> newPeers) {
-    LOG.trace("Discovered {} new peers", newPeers.size());
+    if (LOG.isTraceEnabled() && !newPeers.isEmpty()) {
+      LOG.trace("Discovered {} new peers", newPeers.size());
+    }
 
     // Combine newly discovered peers with known peers and filter for suitability
     final Stream<NodeRecord> knownPeers = discoverySystem.streamLiveNodes();
@@ -291,7 +293,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .filter(DiscoveryPeer::isReadyForConnections)
             .filter(peer -> peer.getForkId().map(forkIdManager::peerCheck).orElse(true))
             .toList();
-    LOG.trace("Total unique peers eligible for connection: {}", candidates.size());
+    if (LOG.isTraceEnabled() && !candidates.isEmpty()) {
+      LOG.trace("Total unique peers eligible for connection: {}", candidates.size());
+    }
     return candidates.stream();
   }
 }
