@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -178,29 +179,26 @@ public class GetSyncReceiptsFromPeerTaskTest {
     when(syncBlockBody3.getTransactionCount()).thenReturn(1);
     final SyncBlock syncBlock3 = new SyncBlock(blockHeader3, syncBlockBody3);
 
-    BlockHeader blockHeader4 = mockBlockHeader(4);
-    when(blockHeader4.getReceiptsRoot()).thenReturn(Hash.EMPTY_TRIE_HASH);
-
     final var task = createTask(List.of(syncBlock1, syncBlock2, syncBlock3), protocolSchedule);
 
     ReceiptsMessage receiptsMessage =
         ReceiptsMessage.create(
             List.of(
-                List.of(receiptForBlock1),
-                List.of(receiptForBlock2),
-                List.of(receiptForBlock3),
-                List.of()),
+                List.of(receiptForBlock1), List.of(receiptForBlock2), List.of(receiptForBlock3)),
             TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
 
     final var response = task.processResponse(receiptsMessage);
 
-    assertThat(response)
-        .usingElementComparator(this::receiptsComparator)
-        .containsExactly(
-            List.of(toResponseReceipt(receiptForBlock1)),
-            List.of(toResponseReceipt(receiptForBlock2)),
-            List.of(toResponseReceipt(receiptForBlock3)),
-            Collections.emptyList());
+    assertThat(response).hasSize(3);
+    assertThat(response.get(syncBlock1))
+        .usingElementComparator(Utils::compareSyncReceipts)
+        .containsExactly(toResponseReceipt(receiptForBlock1));
+    assertThat(response.get(syncBlock2))
+        .usingElementComparator(Utils::compareSyncReceipts)
+        .containsExactly(toResponseReceipt(receiptForBlock2));
+    assertThat(response.get(syncBlock3))
+        .usingElementComparator(Utils::compareSyncReceipts)
+        .containsExactly(toResponseReceipt(receiptForBlock3));
   }
 
   @ParameterizedTest
@@ -253,7 +251,7 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
     final var task = createTask(List.of(syncBlock), protocolSchedule);
 
-    assertEquals(PeerTaskValidationResponse.NO_RESULTS_RETURNED, task.validateResult(List.of()));
+    assertEquals(PeerTaskValidationResponse.NO_RESULTS_RETURNED, task.validateResult(Map.of()));
   }
 
   @Test
@@ -271,11 +269,13 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
     assertEquals(
         PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD,
-        task.validateResult(List.of(List.of(toResponseReceipt(receiptForBlock)))));
+        task.validateResult(Map.of(syncBlock, List.of(toResponseReceipt(receiptForBlock)))));
   }
 
   @Test
   public void testParseResponseForInvalidResponse() {
+    // Too many block-lists in the response (4 for 3 requested blocks) must be rejected at parse
+    // time by processResponse, not deferred to validateResult.
     final BlockHeader blockHeader1 = mockBlockHeader(1);
     final TransactionReceipt receiptForBlock1 =
         new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
@@ -304,21 +304,24 @@ public class GetSyncReceiptsFromPeerTaskTest {
     final SyncBlock syncBlock3 = new SyncBlock(blockHeader3, syncBlockBody3);
 
     final var task = createTask(List.of(syncBlock1, syncBlock2, syncBlock3), protocolSchedule);
-    var response =
-        List.of(
-            List.of(toResponseReceipt(receiptForBlock1)),
-            List.of(toResponseReceipt(receiptForBlock2)),
-            List.of(toResponseReceipt(receiptForBlock3)),
-            List.of(
-                toResponseReceipt(
-                    new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))));
 
-    assertEquals(
-        PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED, task.validateResult(response));
+    final ReceiptsMessage receiptsMessage =
+        ReceiptsMessage.create(
+            List.of(
+                List.of(receiptForBlock1),
+                List.of(receiptForBlock2),
+                List.of(receiptForBlock3),
+                List.of(
+                    new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+
+    Assertions.assertThrows(
+        InvalidPeerTaskResponseException.class, () -> task.processResponse(receiptsMessage));
   }
 
   @Test
   public void validateResultFailsWhenTooManyBlocksReturned() {
+    // A block with 1 transaction that receives 2 receipts must be rejected.
     final BlockHeader blockHeader1 = mockBlockHeader(1);
     final TransactionReceipt receiptForBlock1 =
         new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
@@ -328,7 +331,7 @@ public class GetSyncReceiptsFromPeerTaskTest {
     when(syncBlockBody1.getTransactionCount()).thenReturn(1);
     final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
 
-    TransactionReceipt extraReceiptForBlock2 =
+    final TransactionReceipt extraReceipt =
         new TransactionReceipt(1, 321, Collections.emptyList(), Optional.empty());
 
     final var task = createTask(List.of(syncBlock1), protocolSchedule);
@@ -336,9 +339,9 @@ public class GetSyncReceiptsFromPeerTaskTest {
     assertEquals(
         PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED,
         task.validateResult(
-            List.of(
-                List.of(toResponseReceipt(receiptForBlock1)),
-                List.of(toResponseReceipt(extraReceiptForBlock2)))));
+            Map.of(
+                syncBlock1,
+                List.of(toResponseReceipt(receiptForBlock1), toResponseReceipt(extraReceipt)))));
   }
 
   @Test
@@ -359,7 +362,8 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
     assertEquals(
         PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY,
-        task.validateResult(List.of(List.of(toResponseReceipt(returnedReceiptForBlock1)))));
+        task.validateResult(
+            Map.of(syncBlock1, List.of(toResponseReceipt(returnedReceiptForBlock1)))));
   }
 
   private static BlockHeader mockBlockHeader(final long blockNumber) {
@@ -394,19 +398,5 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
   private SyncTransactionReceipt toResponseReceipt(final TransactionReceipt receipt) {
     return receiptToSyncReceipt(receipt, TransactionReceiptEncodingConfiguration.DEFAULT);
-  }
-
-  private int receiptsComparator(
-      final List<SyncTransactionReceipt> receipts1, final List<SyncTransactionReceipt> receipts2) {
-    if (receipts1.size() != receipts2.size()) {
-      return receipts1.size() - receipts2.size();
-    }
-    for (int i = 0; i < receipts1.size(); i++) {
-      if (Utils.compareSyncReceipts(receipts1.get(i), receipts2.get(i)) != 0) {
-        // quick tiebreak since we are not interested in the order here
-        return receipts1.hashCode() - receipts2.hashCode();
-      }
-    }
-    return 0;
   }
 }

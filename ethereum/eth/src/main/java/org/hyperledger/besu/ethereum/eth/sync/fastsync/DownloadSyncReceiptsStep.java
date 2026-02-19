@@ -25,11 +25,14 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceip
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,7 +83,7 @@ public class DownloadSyncReceiptsStep
     return ethScheduler
         .scheduleServiceTask(
             () -> downloadReceipts(currTaskId, 0, blocksToRequest, receiptsByRootHash))
-        .thenApply((receipts) -> combineBlocksAndReceipts(blocks, receipts))
+        .thenApply(receipts -> combineBlocksAndReceipts(blocks, receipts))
         .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
         .exceptionally(
             throwable -> {
@@ -151,16 +154,17 @@ public class DownloadSyncReceiptsStep
           .addArgument(() -> formatBlockDetails(blocksToRequest))
           .log();
 
-      final var task =
+      final GetSyncReceiptsFromPeerTask task =
           new GetSyncReceiptsFromPeerTask(
               blocksToRequest, protocolSchedule, syncTransactionReceiptEncoder);
 
-      final var getReceiptsResult = peerTaskExecutor.execute(task);
+      final PeerTaskExecutorResult<Map<SyncBlock, List<SyncTransactionReceipt>>> getReceiptsResult =
+          peerTaskExecutor.execute(task);
 
-      final var responseCode = getReceiptsResult.responseCode();
+      final PeerTaskExecutorResponseCode responseCode = getReceiptsResult.responseCode();
 
       if (responseCode == SUCCESS) {
-        final var blocksReceipts =
+        final Map<SyncBlock, List<SyncTransactionReceipt>> receiptsByBlock =
             getReceiptsResult
                 .result()
                 .orElseThrow(
@@ -168,27 +172,22 @@ public class DownloadSyncReceiptsStep
                         new IllegalStateException(
                             "Task validation failure, it must flag empty result as failure"));
 
-        final var resolvedBlocks = blocksToRequest.subList(0, blocksReceipts.size());
-
         LOG.atTrace()
             .setMessage("[{}:{}] Received response for {} blocks (requested {}, initial {}): {}")
             .addArgument(currTaskId)
             .addArgument(iteration)
-            .addArgument(blocksReceipts::size)
+            .addArgument(receiptsByBlock::size)
             .addArgument(blocksToRequest::size)
             .addArgument(initialBlockCount)
-            .addArgument(() -> formatBlockDetails(resolvedBlocks))
+            .addArgument(() -> formatBlockDetails(receiptsByBlock.keySet()))
             .log();
 
-        for (int i = 0; i < resolvedBlocks.size(); i++) {
-          final SyncBlock requestedBlock = blocksToRequest.get(i);
-          final List<SyncTransactionReceipt> blockReceipts = blocksReceipts.get(i);
-          receiptsByRootHash.put(requestedBlock.getHeader().getReceiptsRoot(), blockReceipts);
-        }
+        receiptsByBlock.forEach(
+            (syncBlock, syncTransactionReceipts) ->
+                receiptsByRootHash.put(
+                    syncBlock.getHeader().getReceiptsRoot(), syncTransactionReceipts));
 
-        // clearing the sublist also as the effect of removing the received blocks from the original
-        // list, this is intended since they are resolved now
-        resolvedBlocks.clear();
+        blocksToRequest.removeAll(receiptsByBlock.keySet());
       } else {
         LOG.atTrace()
             .setMessage(
@@ -237,7 +236,7 @@ public class DownloadSyncReceiptsStep
         .toList();
   }
 
-  private String formatBlockDetails(final List<SyncBlock> blocks) {
+  private String formatBlockDetails(final Collection<SyncBlock> blocks) {
     return blocks.stream()
         .map(sb -> sb.getHeader().getNumber() + "(" + sb.getBody().getTransactionCount() + ")")
         .collect(Collectors.joining(","));
