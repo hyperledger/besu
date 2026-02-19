@@ -290,7 +290,7 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
                 TransactionValidationParams.transactionSimulatorAllowFutureNonce()))
         .isEqualTo(ValidationResult.valid());
   }
-  
+
   @Test
   public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
     final TransactionValidator validator =
