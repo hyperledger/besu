@@ -66,8 +66,6 @@ import picocli.CommandLine.ParentCommand;
 class GenerateBlockchainConfig implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(GenerateBlockchainConfig.class);
 
-  private SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithmFactory.getInstance();
-
   @NotBlank
   @Option(
       required = true,
@@ -173,14 +171,15 @@ class GenerateBlockchainConfig implements Runnable {
     final String publicKeyText = publicKeyJson.asText();
 
     try {
+      SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
       final SECPPublicKey publicKey =
-          SIGNATURE_ALGORITHM.createPublicKey(Bytes.fromHexString(publicKeyText));
+          signatureAlgorithm.createPublicKey(Bytes.fromHexString(publicKeyText));
 
-      if (!SIGNATURE_ALGORITHM.isValidPublicKey(publicKey)) {
+      if (!signatureAlgorithm.isValidPublicKey(publicKey)) {
         throw new IllegalArgumentException(
             publicKeyText
                 + " is not a valid public key for elliptic curve "
-                + SIGNATURE_ALGORITHM.getCurveName());
+                + signatureAlgorithm.getCurveName());
       }
 
       writeKeypair(publicKey, null);
@@ -205,7 +204,7 @@ class GenerateBlockchainConfig implements Runnable {
   private void generateNodeKeypair(final int node) {
     try {
       LOG.info("Generating keypair for node {}.", node);
-      final KeyPair keyPair = SIGNATURE_ALGORITHM.generateKeyPair();
+      final KeyPair keyPair = SignatureAlgorithmFactory.getInstance().generateKeyPair();
       writeKeypair(keyPair.getPublicKey(), keyPair.getPrivateKey());
 
     } catch (final IOException e) {
@@ -293,7 +292,6 @@ class GenerateBlockchainConfig implements Runnable {
 
     try {
       SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
-      SIGNATURE_ALGORITHM = SignatureAlgorithmFactory.getInstance();
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
           "Invalid parameter for ecCurve in genesis config: " + e.getMessage());
