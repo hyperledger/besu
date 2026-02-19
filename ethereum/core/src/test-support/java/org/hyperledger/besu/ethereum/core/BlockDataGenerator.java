@@ -902,7 +902,7 @@ public class BlockDataGenerator {
     private Optional<Long> timestamp = Optional.empty();
     private boolean hasOmmers = true;
     private boolean hasTransactions = true;
-    private int transactionsCount = 2;
+    private int transactionCount = 2;
     private TransactionType[] transactionTypes = {
       TransactionType.FRONTIER, TransactionType.ACCESS_LIST, TransactionType.EIP1559
     };
@@ -1000,7 +1000,7 @@ public class BlockDataGenerator {
     }
 
     public int transactionCount() {
-      return transactionsCount;
+      return transactionCount;
     }
 
     public boolean hasOmmers() {
@@ -1103,7 +1103,7 @@ public class BlockDataGenerator {
     }
 
     public BlockOptions transactionCount(final int transactionCount) {
-      this.transactionsCount = transactionCount;
+      this.transactionCount = transactionCount;
       return this;
     }
 

@@ -38,7 +38,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,8 +84,8 @@ public class DownloadSyncReceiptsStep
             () -> downloadReceipts(currTaskId, 0, blocksToRequest, receiptsByRootHash))
         .thenApply(receipts -> combineBlocksAndReceipts(blocks, receipts))
         .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
-        .exceptionally(
-            throwable -> {
+        .whenComplete(
+            (unused, throwable) -> {
               if (throwable instanceof TimeoutException) {
                 LOG.trace(
                     "[{}] Timed out after {} ms while downloading receipts for {} blocks",
@@ -94,7 +93,6 @@ public class DownloadSyncReceiptsStep
                     timeoutDuration.toMillis(),
                     blocks.size());
               }
-              throw new CompletionException(throwable);
             });
   }
 
