@@ -457,7 +457,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
   void setSyncMode(final String value) {
     final String normalized = value.toUpperCase(Locale.ROOT);
-    if ("CHECKPOINT".equals(normalized)) {
+    if (SyncMode.CHECKPOINT.name().equals(normalized)) {
       logger.warn(
           "CHECKPOINT sync mode is deprecated and has been removed. "
               + "Using SNAP sync mode instead. Your checkpoint configuration will be used automatically.");
