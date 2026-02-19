@@ -14,41 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.OpCodeLoggerTracerResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Optional;
-import java.util.function.Function;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -58,15 +48,13 @@ import org.mockito.quality.Strictness;
 public class DebugTraceBlockByHashTest {
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private BlockchainQueries blockchainQueries;
-  @Mock private ObservableMetricsSystem metricsSystem;
   @Mock private Blockchain blockchain;
   private DebugTraceBlockByHash debugTraceBlockByHash;
+  private final ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module());
 
   @BeforeEach
   public void setUp() {
-    debugTraceBlockByHash =
-        new DebugTraceBlockByHash(
-            protocolSchedule, blockchainQueries, metricsSystem, new DeterministicEthScheduler());
+    debugTraceBlockByHash = new DebugTraceBlockByHash(protocolSchedule, blockchainQueries);
   }
 
   @Test
@@ -74,9 +62,8 @@ public class DebugTraceBlockByHashTest {
     assertThat(debugTraceBlockByHash.getName()).isEqualTo("debug_traceBlockByHash");
   }
 
-  @SuppressWarnings("unchecked")
   @Test
-  public void shouldReturnCorrectResponse() {
+  public void shouldReturnCorrectResponse() throws IOException {
     final Block block =
         new BlockDataGenerator()
             .block(
@@ -90,35 +77,11 @@ public class DebugTraceBlockByHashTest {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
 
-    OpCodeLoggerTracerResult result1 = mock(OpCodeLoggerTracerResult.class);
-    OpCodeLoggerTracerResult result2 = mock(OpCodeLoggerTracerResult.class);
-
-    List<OpCodeLoggerTracerResult> resultList = Arrays.asList(result1, result2);
-
-    try (MockedStatic<Tracer> mockedTracer = mockStatic(Tracer.class)) {
-      mockedTracer
-          .when(
-              () ->
-                  Tracer.processTracing(
-                      eq(blockchainQueries),
-                      eq(Optional.of(block.getHeader())),
-                      any(Function.class)))
-          .thenReturn(Optional.of(resultList));
-
-      final JsonRpcResponse jsonRpcResponse = debugTraceBlockByHash.response(request);
-      assertThat(jsonRpcResponse).isInstanceOf(JsonRpcSuccessResponse.class);
-      JsonRpcSuccessResponse response = (JsonRpcSuccessResponse) jsonRpcResponse;
-
-      final Collection<OpCodeLoggerTracerResult> traceResult = getResult(response);
-      assertThat(traceResult).isNotEmpty();
-      assertThat(traceResult).isInstanceOf(Collection.class).hasSize(2);
-      assertThat(traceResult).containsExactly(result1, result2);
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private Collection<OpCodeLoggerTracerResult> getResult(final JsonRpcSuccessResponse response) {
-    return (Collection<OpCodeLoggerTracerResult>) response.getResult();
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    debugTraceBlockByHash.streamResponse(request, out, mapper);
+    final String json = out.toString(UTF_8);
+    assertThat(json).startsWith("{\"jsonrpc\":\"2.0\"");
+    assertThat(json).contains("\"result\":");
   }
 
   @Test
@@ -128,7 +91,9 @@ public class DebugTraceBlockByHashTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "debug_traceBlockByHash", invalidParams));
 
-    assertThatThrownBy(() -> debugTraceBlockByHash.response(request))
+    assertThatThrownBy(
+            () ->
+                debugTraceBlockByHash.streamResponse(request, new ByteArrayOutputStream(), mapper))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Invalid block hash parameter");
   }
