@@ -105,7 +105,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
             // TODO Integrate address filtering based on peer permissions
             .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
             .bootnodes(
-                config.getDiscovery().getEnrBootnodes().stream()
+                config.discoveryConfiguration().getEnrBootnodes().stream()
                     .map(EthereumNodeRecord::nodeRecord)
                     .toList())
             .buildMutable();
