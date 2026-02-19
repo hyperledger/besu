@@ -25,8 +25,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Transaction
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.StreamingJsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLogWithError;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -40,14 +38,12 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
-import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.ethereum.vm.StreamingDebugOperationTracer;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -94,8 +90,8 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
 
   /**
    * Creates a streaming response that writes each transaction trace directly to the JSON output.
-   * Struct logs within each transaction are streamed frame-by-frame to avoid accumulating all
-   * trace data in memory. Peak memory = O(one_frame) instead of O(all_frames_in_block).
+   * Uses StreamingDebugOperationTracer which writes each struct log inline during EVM execution,
+   * achieving O(1) frame memory. Memory is only captured for the 24 opcodes that touch it.
    */
   protected StreamingJsonRpcSuccessResponse.ResultWriter getStreamingTraces(
       final TraceOptions traceOptions, final Optional<Block> maybeBlock) {
@@ -130,13 +126,24 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                 protocolSpec.getPreExecutionProcessor().createBlockHashLookup(
                     getBlockchainQueries().getBlockchain(), header);
 
-            final DebugOperationTracer tracer =
-                new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
-
             try {
               generator.writeStartArray();
 
               for (final Transaction tx : block.getBody().getTransactions()) {
+                // Write the tx envelope: { txHash, result: { gas, failed, returnValue, structLogs: [...] } }
+                generator.writeStartObject();
+                generator.writeStringField("txHash", tx.getHash().toHexString());
+                generator.writeFieldName("result");
+                generator.writeStartObject();
+
+                // structLogs array — tracer writes entries inline during processTransaction
+                generator.writeFieldName("structLogs");
+                generator.writeStartArray();
+
+                final StreamingDebugOperationTracer tracer =
+                    new StreamingDebugOperationTracer(
+                        traceOptions.opCodeTracerConfig(), true, generator);
+
                 final AccessLocationTracker accessListTracker =
                     BlockAccessList.BlockAccessListBuilder
                         .createTransactionAccessLocationTracker(0);
@@ -152,34 +159,19 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                         blobGasPrice,
                         Optional.of(accessListTracker));
 
-                // Stream the tx trace: write struct logs frame-by-frame, then discard
-                final List<TraceFrame> frames = tracer.getTraceFrames();
+                // Close structLogs array — all entries were written inline by the tracer
+                generator.writeEndArray();
+
+                // Write tx-level fields after execution completes
                 final long gas = tx.getGasLimit() - result.getGasRemaining();
                 final String returnValue = result.getOutput().toString().substring(2);
-                final boolean failed = !result.isSuccessful();
-
-                generator.writeStartObject();
-                generator.writeStringField("txHash", tx.getHash().toHexString());
-                generator.writeFieldName("result");
-                generator.writeStartObject();
                 generator.writeNumberField("gas", gas);
-                generator.writeBooleanField("failed", failed);
+                generator.writeBooleanField("failed", !result.isSuccessful());
                 generator.writeStringField("returnValue", returnValue);
-                generator.writeFieldName("structLogs");
-                generator.writeStartArray();
-                for (final TraceFrame frame : frames) {
-                  final StructLog structLog = frame.getExceptionalHaltReason().isPresent()
-                      ? new StructLogWithError(frame)
-                      : new StructLog(frame);
-                  generator.writeObject(structLog);
-                }
-                generator.writeEndArray();
-                generator.writeEndObject();
-                generator.writeEndObject();
-                generator.flush();
 
-                // Discard all trace frames immediately — this is the key memory optimization
-                tracer.reset();
+                generator.writeEndObject(); // result
+                generator.writeEndObject(); // tx
+                generator.flush();
               }
 
               generator.writeEndArray();
