@@ -47,7 +47,7 @@ public abstract class AbstractEngineGetPayloadBodies extends ExecutionEngineJson
    * This method is used only in {@link EngineGetPayloadBodiesByHashV2} and {@link
    * EngineGetPayloadBodiesByRangeV2}
    *
-   * @param blockchain the blockchain
+   * @param blockchain blockchain
    * @param blockHash block hash
    * @return an Optional containing the RLP-encoded block access list as a hex string if it exists
    * @see EngineGetPayloadBodiesByHashV2
