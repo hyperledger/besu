@@ -108,12 +108,12 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
 
     // Only iterate bytes that receive shifted data from the input
     for (int i = 31; i >= shiftBytes; i--) {
-      final int src = i - shiftBytes;
-      final int curr = in[src] & 0xFF;
+      final int srcIndex = i - shiftBytes;
+      final int curr = in[srcIndex] & 0xFF;
       if (shiftBits == 0) {
         out[i] = (byte) curr;
       } else {
-        final int prev = (src - 1 >= 0) ? (in[src - 1] & 0xFF) : fill;
+        final int prev = (srcIndex - 1 >= 0) ? (in[srcIndex - 1] & 0xFF) : fill;
         out[i] = (byte) ((curr >>> shiftBits) | (prev << (8 - shiftBits)));
       }
     }

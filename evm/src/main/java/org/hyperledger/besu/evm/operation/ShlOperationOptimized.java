@@ -102,12 +102,12 @@ public class ShlOperationOptimized extends AbstractFixedCostOperation {
     // Bytes at index >= (32 - shiftBytes) are guaranteed zero (already from new byte[32])
     final int limit = 32 - shiftBytes;
     for (int i = 0; i < limit; i++) {
-      final int src = i + shiftBytes;
-      final int curr = in[src] & 0xFF;
+      final int srcIndex = i + shiftBytes;
+      final int curr = in[srcIndex] & 0xFF;
       if (shiftBits == 0) {
         out[i] = (byte) curr;
       } else {
-        final int next = (src + 1 < 32) ? (in[src + 1] & 0xFF) : 0;
+        final int next = (srcIndex + 1 < 32) ? (in[srcIndex + 1] & 0xFF) : 0;
         out[i] = (byte) ((curr << shiftBits) | (next >>> (8 - shiftBits)));
       }
     }
