@@ -97,13 +97,17 @@ public interface TransactionTraceParams {
    * @return TraceOptions object containing the tracer type and configuration.
    */
   default TraceOptions traceOptions() {
-    var defaultTracerConfig =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceStorage(!disableStorage())
-            .traceMemory(!disableMemory())
-            .traceStack(!disableStack())
-            .traceOpcodes(opcodes())
-            .build();
+    var builder = OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT);
+    if (disableStorageNullable() != null) {
+      builder.traceStorage(!disableStorage());
+    }
+    if (disableMemoryNullable() != null) {
+      builder.traceMemory(!disableMemory());
+    }
+    if (disableStackNullable() != null) {
+      builder.traceStack(!disableStack());
+    }
+    var defaultTracerConfig = builder.traceOpcodes(opcodes()).build();
 
     // Convert string tracer to TracerType enum, handling null case
     TracerType tracerType =
