@@ -76,9 +76,17 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
     } else if (jsonRpcResponse instanceof StreamingJsonRpcSuccessResponse streamingResponse) {
       try (final JsonResponseStreamer streamer =
           new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
-        try (JsonGenerator generator =
-            getJsonObjectMapper().getFactory().createGenerator(streamer)) {
+        final JsonGenerator generator =
+            getJsonObjectMapper().getFactory().createGenerator(streamer);
+        try {
           streamingResponse.writeTo(generator);
+        } finally {
+          try {
+            generator.close();
+          } catch (final IOException ignored) {
+            // Generator close flushes the buffer, which may fail if the connection was
+            // reset mid-stream. Swallow it — the primary exception is already propagating.
+          }
         }
       }
     } else {

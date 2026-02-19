@@ -45,6 +45,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -102,10 +103,14 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
       }
       final Block block = maybeBlock.get();
 
+      generator.writeStartArray();
+      final AtomicBoolean lambdaEntered = new AtomicBoolean(false);
+
       final Optional<?> tracingResult = Tracer.processTracing(
           getBlockchainQueries(),
           Optional.of(block.getHeader()),
           traceableState -> {
+            lambdaEntered.set(true);
             final ProtocolSpec protocolSpec =
                 protocolSchedule.getByBlockHeader(block.getHeader());
             final MainnetTransactionProcessor transactionProcessor =
@@ -127,16 +132,12 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                     getBlockchainQueries().getBlockchain(), header);
 
             try {
-              generator.writeStartArray();
-
               for (final Transaction tx : block.getBody().getTransactions()) {
-                // Write the tx envelope: { txHash, result: { gas, failed, returnValue, structLogs: [...] } }
                 generator.writeStartObject();
                 generator.writeStringField("txHash", tx.getHash().toHexString());
                 generator.writeFieldName("result");
                 generator.writeStartObject();
 
-                // structLogs array — tracer writes entries inline during processTransaction
                 generator.writeFieldName("structLogs");
                 generator.writeStartArray();
 
@@ -159,10 +160,8 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                         blobGasPrice,
                         Optional.of(accessListTracker));
 
-                // Close structLogs array — all entries were written inline by the tracer
-                generator.writeEndArray();
+                generator.writeEndArray(); // structLogs
 
-                // Write tx-level fields after execution completes
                 final long gas = tx.getGasLimit() - result.getGasRemaining();
                 final String returnValue = result.getOutput().toString().substring(2);
                 generator.writeNumberField("gas", gas);
@@ -173,17 +172,20 @@ public abstract class AbstractDebugTraceBlock implements JsonRpcMethod {
                 generator.writeEndObject(); // tx
                 generator.flush();
               }
-
-              generator.writeEndArray();
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
             return Optional.of(Boolean.TRUE);
           });
 
-      if (tracingResult.isEmpty()) {
-        generator.writeNull();
+      if (tracingResult.isEmpty() && lambdaEntered.get()) {
+        // Lambda ran but failed (e.g. connection reset mid-trace). The generator is in an
+        // unknown nested context — abandon the response rather than producing broken JSON.
+        throw new IOException("debug_traceBlock failed mid-stream: tracing aborted");
       }
+      // Either tracing succeeded (all tx objects closed cleanly) or worldstate was unavailable
+      // (lambda never ran, generator is at top-level array context → produces []).
+      generator.writeEndArray();
     };
   }
 }
