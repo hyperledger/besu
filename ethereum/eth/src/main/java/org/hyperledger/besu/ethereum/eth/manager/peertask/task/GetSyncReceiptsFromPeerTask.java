@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
@@ -34,13 +35,16 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
-public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTransactionReceipt>>> {
+public class GetSyncReceiptsFromPeerTask
+    implements PeerTask<Map<SyncBlock, List<SyncTransactionReceipt>>> {
 
   private final List<SyncBlock> requestedBlocks;
   private final List<BlockHeader> requestedHeaders;
@@ -79,14 +83,23 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTrans
   }
 
   @Override
-  public List<List<SyncTransactionReceipt>> processResponse(final MessageData messageData)
+  public Map<SyncBlock, List<SyncTransactionReceipt>> processResponse(final MessageData messageData)
       throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException("Null message data");
     }
     final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(messageData);
     try {
-      return receiptsMessage.syncReceipts();
+      final List<List<SyncTransactionReceipt>> receivedBlocks = receiptsMessage.syncReceipts();
+      if (receivedBlocks.size() > requestedBlocks.size()) {
+        throw new InvalidPeerTaskResponseException("Too many result returned");
+      }
+      final Map<SyncBlock, List<SyncTransactionReceipt>> response =
+          HashMap.newHashMap(receivedBlocks.size());
+      for (int i = 0; i < receivedBlocks.size(); i++) {
+        response.put(requestedBlocks.get(i), receivedBlocks.get(i));
+      }
+      return response;
     } catch (RLPException e) {
       // indicates a malformed or unexpected RLP result from the peer
       throw new MalformedRlpFromPeerException(e, messageData.getData());
@@ -100,26 +113,22 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTrans
 
   @Override
   public PeerTaskValidationResponse validateResult(
-      final List<List<SyncTransactionReceipt>> result) {
+      final Map<SyncBlock, List<SyncTransactionReceipt>> result) {
     if (result.isEmpty()) {
       return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
     }
 
-    if (result.size() > requestedBlocks.size()) {
-      return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
-    }
-
-    for (int i = 0; i < result.size(); i++) {
-      final var requestedReceipts = requestedBlocks.get(i);
-      final var receivedReceiptsForBlock = result.get(i);
+    for (final Map.Entry<SyncBlock, List<SyncTransactionReceipt>> entry : result.entrySet()) {
+      final SyncBlock requestedBlock = entry.getKey();
+      final List<SyncTransactionReceipt> receivedReceiptsForBlock = entry.getValue();
 
       // verify that the receipts count is within bounds for every received block
-      if (receivedReceiptsForBlock.size() > requestedReceipts.getBody().getTransactionCount()) {
+      if (receivedReceiptsForBlock.size() > requestedBlock.getBody().getTransactionCount()) {
         return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
       }
 
       // ensure the calculated receipts root matches the one in the requested block header
-      if (!receiptsRootMatches(requestedReceipts.getHeader(), receivedReceiptsForBlock)) {
+      if (!receiptsRootMatches(requestedBlock.getHeader(), receivedReceiptsForBlock)) {
         return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
       }
     }
@@ -129,7 +138,7 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTrans
 
   private boolean receiptsRootMatches(
       final BlockHeader blockHeader, final List<SyncTransactionReceipt> receipts) {
-    final var calculatedReceiptsRoot =
+    final Hash calculatedReceiptsRoot =
         Util.getRootFromListOfBytes(
             receipts.stream()
                 .map(
@@ -143,7 +152,7 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<List<List<SyncTrans
                     })
                 .toList());
 
-    return calculatedReceiptsRoot.getBytes().equals(blockHeader.getReceiptsRoot().getBytes());
+    return calculatedReceiptsRoot.equals(blockHeader.getReceiptsRoot());
   }
 
   @VisibleForTesting
