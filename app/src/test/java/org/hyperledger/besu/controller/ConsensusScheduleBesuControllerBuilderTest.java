@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -129,7 +130,9 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     when(besuControllerBuilder2.createMiningCoordinator(any(), any(), any(), any(), any(), any()))
         .thenReturn(miningCoordinator2);
     final ProtocolContext mockProtocolContext = mock(ProtocolContext.class);
-    when(mockProtocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    when(mockProtocolContext.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getChainHeadHeader()).thenReturn(mock(BlockHeader.class));
 
     final ConsensusScheduleBesuControllerBuilder builder =
         new ConsensusScheduleBesuControllerBuilder(consensusSchedule);
