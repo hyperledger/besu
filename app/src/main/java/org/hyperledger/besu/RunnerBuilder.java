@@ -636,9 +636,17 @@ public class RunnerBuilder {
         bootstrap = ethNetworkConfig.enodeBootNodes();
       }
       discoveryConfiguration.setEnodeBootnodes(bootstrap);
+      discoveryConfiguration.setEnrBootnodes(
+          ethNetworkConfig.enrBootNodes() == null
+              ? EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).enrBootNodes()
+              : ethNetworkConfig.enrBootNodes());
+
       discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
           besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
-      LOG.info("Resolved {} bootnodes.", bootstrap.size());
+      LOG.info(
+          "Resolved {} bootnodes.",
+          discoveryConfiguration.getEnodeBootnodes().size()
+              + discoveryConfiguration.getEnrBootnodes().size());
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(

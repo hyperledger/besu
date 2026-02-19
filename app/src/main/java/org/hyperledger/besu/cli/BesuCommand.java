@@ -2022,15 +2022,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
-    final List<EnodeURLImpl> enodeURIs = ethNetworkConfig.enodeBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(ethNetworkConfig.enodeBootNodes(), p));
 
-    final List<EthereumNodeRecord> enrBootNodes = ethNetworkConfig.enrBootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(p -> ensureAllNodesAreInAllowlist(enrBootNodes, p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(ethNetworkConfig.enrBootNodes(), p));
 
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
