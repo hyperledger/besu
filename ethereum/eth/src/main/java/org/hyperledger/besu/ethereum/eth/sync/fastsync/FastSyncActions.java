@@ -173,8 +173,7 @@ public class FastSyncActions {
   public ChainDownloader createChainDownloader(
       final FastSyncState currentState, final SyncDurationMetrics syncDurationMetrics) {
 
-    if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP) {
       return SnapSyncChainDownloader.create(
           syncConfig,
           worldStateStorageCoordinator,

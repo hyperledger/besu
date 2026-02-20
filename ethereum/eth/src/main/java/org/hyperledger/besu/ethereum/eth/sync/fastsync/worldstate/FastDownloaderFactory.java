@@ -68,7 +68,7 @@ public class FastDownloaderFactory {
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
 
-    if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
+    if (syncConfig.getSyncMode() == SyncMode.FULL) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
             "Unable to change the sync mode when fast sync is incomplete, please restart with fast sync mode");

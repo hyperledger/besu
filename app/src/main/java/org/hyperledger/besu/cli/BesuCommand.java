@@ -457,7 +457,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
   void setSyncMode(final String value) {
     final String normalized = value.toUpperCase(Locale.ROOT);
-    if (SyncMode.CHECKPOINT.name().equals(normalized)) {
+    if ("CHECKPOINT".equals(normalized)) {
       logger.warn(
           "CHECKPOINT sync mode is deprecated and has been removed. "
               + "Using SNAP sync mode instead. Your checkpoint configuration will be used automatically.");
@@ -1960,7 +1960,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
+    if (getDefaultSyncModeIfNotSet() == SyncMode.FULL
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
     }

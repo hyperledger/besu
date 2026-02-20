@@ -68,7 +68,7 @@ public final class RlpBlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.SNAP)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -101,7 +101,7 @@ public final class RlpBlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.SNAP)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -131,7 +131,7 @@ public final class RlpBlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.SNAP)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
