@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.pathbased.common.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -99,7 +98,7 @@ public class TrieLogManager {
       final BlockHeader blockHeader, final PathBasedWorldStateUpdateAccumulator<?> localUpdater) {
     LOG.atDebug()
         .setMessage("Adding layered world state for {}")
-        .addArgument(() -> Util.toLogString(blockHeader))
+        .addArgument(blockHeader::toLogString)
         .log();
     final TrieLog trieLog = trieLogFactory.create(localUpdater, blockHeader);
     trieLog.freeze();
@@ -113,7 +112,7 @@ public class TrieLogManager {
       final PathBasedWorldStateKeyValueStorage.Updater stateUpdater) {
     LOG.atDebug()
         .setMessage("Persisting trie log for block hash {} and world state root {}")
-        .addArgument(() -> Util.toLogString(blockHeader))
+        .addArgument(blockHeader::toLogString)
         .addArgument(() -> worldStateRootHash.getBytes().toHexString())
         .log();
 

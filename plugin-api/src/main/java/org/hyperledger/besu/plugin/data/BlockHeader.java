@@ -152,4 +152,8 @@ public interface BlockHeader extends ProcessableBlockHeader {
    * @return The blob_gas_used of this header.
    */
   Optional<? extends Long> getBlobGasUsed();
+
+  default String toLogString() {
+    return getNumber() + " (" + getBlockHash() + ")";
+  }
 }
