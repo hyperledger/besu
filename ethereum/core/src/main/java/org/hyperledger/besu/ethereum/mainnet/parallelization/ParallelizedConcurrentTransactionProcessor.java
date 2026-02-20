@@ -323,7 +323,8 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
     // SlowBlockTracer has mutable counters (tx_count, gas, EVM opcodes) that must not be
     // shared with the background cache-warming thread, otherwise metrics get doubled.
     // The background pass doesn't need metrics collection, so skip tracing entirely.
-    if (blockTracer instanceof SlowBlockTracer) {
+    if (blockTracer instanceof SlowBlockTracer
+        || TracerAggregator.hasTracer(blockTracer, SlowBlockTracer.class)) {
       return OperationTracer.NO_TRACING;
     }
 

@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A tracer that collects execution metrics and logs slow blocks.
+ * A standalone tracer that collects execution metrics and logs slow blocks.
  *
  * <p>This tracer implements the cross-client execution metrics specification, collecting detailed
  * statistics about block execution including timing, state access patterns, cache performance, and
@@ -50,9 +50,6 @@ import org.slf4j.LoggerFactory;
  *
  * <p>The tracer uses a dedicated "SlowBlock" logger, allowing operators to route slow block output
  * to a separate file/sink via logback configuration.
- *
- * <p>This tracer supports composition - it can wrap another BlockAwareOperationTracer and delegate
- * all calls to it while adding slow block metrics collection.
  */
 public class SlowBlockTracer implements BlockAwareOperationTracer {
 
@@ -60,31 +57,17 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
   private final long slowBlockThresholdMs;
-  private final BlockAwareOperationTracer delegate;
   private ExecutionStats executionStats;
   private ExecutionMetricsTracer metricsTracer;
 
   /**
-   * Creates a new SlowBlockTracer with no delegate.
+   * Creates a new SlowBlockTracer.
    *
    * @param slowBlockThresholdMs the threshold in milliseconds beyond which blocks are logged.
    *     Negative values disable logging, zero logs all blocks.
    */
   public SlowBlockTracer(final long slowBlockThresholdMs) {
-    this(slowBlockThresholdMs, BlockAwareOperationTracer.NO_TRACING);
-  }
-
-  /**
-   * Creates a new SlowBlockTracer that wraps another tracer.
-   *
-   * @param slowBlockThresholdMs the threshold in milliseconds beyond which blocks are logged.
-   *     Negative values disable logging, zero logs all blocks.
-   * @param delegate the tracer to delegate calls to
-   */
-  public SlowBlockTracer(
-      final long slowBlockThresholdMs, final BlockAwareOperationTracer delegate) {
     this.slowBlockThresholdMs = slowBlockThresholdMs;
-    this.delegate = delegate;
   }
 
   /**
@@ -102,9 +85,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final BlockHeader blockHeader,
       final BlockBody blockBody,
       final Address miningBeneficiary) {
-    // Delegate first
-    delegate.traceStartBlock(worldView, blockHeader, blockBody, miningBeneficiary);
-
     if (!isEnabled()) {
       return;
     }
@@ -126,10 +106,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final WorldView worldView,
       final ProcessableBlockHeader processableBlockHeader,
       final Address miningBeneficiary) {
-    // Delegate first
-    delegate.traceStartBlock(worldView, processableBlockHeader, miningBeneficiary);
-
-    // Block building - same initialization
     if (!isEnabled()) {
       return;
     }
@@ -156,10 +132,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
-    // Delegate first
-    delegate.traceEndTransaction(
-        worldView, tx, status, output, logs, gasUsed, selfDestructs, timeNs);
-
     if (!isEnabled() || executionStats == null) {
       return;
     }
@@ -169,7 +141,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
-    // Our metrics collection first (before delegate which may do cleanup)
     if (isEnabled() && executionStats != null) {
       try {
         // Collect EVM operation counters from ExecutionMetricsTracer
@@ -192,9 +163,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
         metricsTracer = null;
       }
     }
-
-    // Delegate after our cleanup
-    delegate.traceEndBlock(blockHeader, blockBody);
   }
 
   /**
@@ -217,10 +185,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {
-    // Delegate to the wrapped tracer first
-    delegate.tracePreExecution(frame);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.tracePreExecution(frame);
     }
@@ -228,10 +192,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    // Delegate to the wrapped tracer first
-    delegate.tracePostExecution(frame, operationResult);
-
-    // Delegate to ExecutionMetricsTracer if available for EVM operation counting
     if (metricsTracer != null) {
       metricsTracer.tracePostExecution(frame, operationResult);
     }
@@ -240,10 +200,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
-    // Delegate to the wrapped tracer first
-    delegate.tracePrecompileCall(frame, gasRequirement, output);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.tracePrecompileCall(frame, gasRequirement, output);
     }
@@ -252,10 +208,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   @Override
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    // Delegate to the wrapped tracer first
-    delegate.traceAccountCreationResult(frame, haltReason);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.traceAccountCreationResult(frame, haltReason);
     }
@@ -263,10 +215,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {
-    // Delegate to the wrapped tracer first
-    delegate.tracePrepareTransaction(worldView, transaction);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.tracePrepareTransaction(worldView, transaction);
     }
@@ -274,10 +222,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
-    // Delegate to the wrapped tracer first
-    delegate.traceStartTransaction(worldView, transaction);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.traceStartTransaction(worldView, transaction);
     }
@@ -286,10 +230,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   @Override
   public void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {
-    // Delegate to the wrapped tracer first
-    delegate.traceBeforeRewardTransaction(worldView, tx, miningReward);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.traceBeforeRewardTransaction(worldView, tx, miningReward);
     }
@@ -297,10 +237,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void traceContextEnter(final MessageFrame frame) {
-    // Delegate to the wrapped tracer first
-    delegate.traceContextEnter(frame);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.traceContextEnter(frame);
     }
@@ -308,10 +244,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void traceContextReEnter(final MessageFrame frame) {
-    // Delegate to the wrapped tracer first
-    delegate.traceContextReEnter(frame);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.traceContextReEnter(frame);
     }
@@ -319,10 +251,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public void traceContextExit(final MessageFrame frame) {
-    // Delegate to the wrapped tracer first
-    delegate.traceContextExit(frame);
-
-    // Delegate to ExecutionMetricsTracer if available
     if (metricsTracer != null) {
       metricsTracer.traceContextExit(frame);
     }
@@ -330,8 +258,7 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   @Override
   public boolean isExtendedTracing() {
-    // Return true if either the delegate supports extended tracing or we need metrics tracking
-    return delegate.isExtendedTracing() || (metricsTracer != null);
+    return metricsTracer != null;
   }
 
   /**
