@@ -242,7 +242,12 @@ public class NodeRecordManager {
       return true;
     }
 
-    final HostEndpoint ipv6 = ipv6Endpoint.orElseThrow();
+    final HostEndpoint ipv6 =
+        ipv6Endpoint.orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "ipv6Endpoint is unexpectedly absent during IPv6 ENR field validation"
+                        + " while primary address is IPv4 (dual-stack)"));
     return ipv6AddressBytes.get().equals(record.get(EnrField.IP_V6))
         && Integer.valueOf(ipv6.discoveryPort()).equals(record.get(EnrField.UDP_V6))
         && Integer.valueOf(ipv6.tcpPort()).equals(record.get(EnrField.TCP_V6));
