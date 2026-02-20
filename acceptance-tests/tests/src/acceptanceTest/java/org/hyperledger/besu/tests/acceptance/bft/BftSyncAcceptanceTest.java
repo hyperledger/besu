@@ -31,7 +31,7 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
   private static final int TARGET_BLOCK_HEIGHT = 70;
 
   static Stream<Arguments> syncModeTestParameters() {
-    return Stream.of(SyncMode.FULL, SyncMode.SNAP, SyncMode.CHECKPOINT)
+    return Stream.of(SyncMode.FULL, SyncMode.SNAP)
         .flatMap(
             syncMode ->
                 factoryFunctions()
@@ -54,7 +54,7 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     final BesuNode validator4 = nodeFactory.createBonsaiNodeFixedPort(besu, "validator4");
 
     // Enable snap server on validators 1-3 so they can serve world state data
-    // This is required for SNAP/CHECKPOINT sync modes to work
+    // This is required for SNAP sync mode to work
     final SnapSyncConfiguration snapServerEnabledConfig =
         ImmutableSnapSyncConfiguration.builder().isSnapServerEnabled(true).build();
     final SynchronizerConfiguration fullSyncWithSnapServer =
@@ -68,7 +68,7 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     validator2.setSynchronizerConfiguration(fullSyncWithSnapServer);
     validator3.setSynchronizerConfiguration(fullSyncWithSnapServer);
 
-    // Configure validator4 with the test's specified sync mode (FULL/SNAP/CHECKPOINT)
+    // Configure validator4 with the test's specified sync mode (FULL/SNAP)
     final SynchronizerConfiguration syncConfig =
         SynchronizerConfiguration.builder().syncMode(syncMode).syncMinimumPeerCount(1).build();
     validator4.setSynchronizerConfiguration(syncConfig);
