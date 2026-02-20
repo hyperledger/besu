@@ -559,10 +559,8 @@ public class SlowBlockMetricsReportGenerator {
     report.append("### Why Certain Metrics Show Zero\n\n");
     report.append("| Metric | Observed Value | Reason |\n");
     report.append("|--------|----------------|--------|\n");
-    report.append(
-        "| eip7702_delegations_set | 0 | May be 0 if EIP-7702 is not enabled |\n");
-    report.append(
-        "| eip7702_delegations_cleared | 0 | May be 0 if EIP-7702 is not enabled |\n");
+    report.append("| eip7702_delegations_set | 0 | May be 0 if EIP-7702 is not enabled |\n");
+    report.append("| eip7702_delegations_cleared | 0 | May be 0 if EIP-7702 is not enabled |\n");
     report.append(
         "| state_read_ms | 0.0 | Sub-millisecond precision; QBFT blocks execute very fast |\n");
     report.append(
