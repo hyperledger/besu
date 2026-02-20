@@ -14,6 +14,13 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+/**
+ * Gas Calculator for Amsterdam
+ *
+ * <UL>
+ *   <LI>EIP-7928: gas cost per item for block access list size limit
+ * </UL>
+ */
 public class AmsterdamGasCalculator extends OsakaGasCalculator {
 
   /**
@@ -21,6 +28,28 @@ public class AmsterdamGasCalculator extends OsakaGasCalculator {
    * ITEM_COST).
    */
   private static final long BLOCK_ACCESS_LIST_ITEM_COST = 2000L;
+
+  /** Instantiates a new Amsterdam Gas Calculator. */
+  public AmsterdamGasCalculator() {}
+
+  /**
+   * Instantiates a new Amsterdam Gas Calculator
+   *
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   * @param maxL2Precompile max precompile address from the L2 precompile space (0x0100 - 0x01FF)
+   */
+  public AmsterdamGasCalculator(final int maxPrecompile, final int maxL2Precompile) {
+    super(maxPrecompile, maxL2Precompile);
+  }
+
+  /**
+   * Instantiates a new Amsterdam Gas Calculator, uses default P256_VERIFY as max L2 precompile.
+   *
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   */
+  public AmsterdamGasCalculator(final int maxPrecompile) {
+    super(maxPrecompile);
+  }
 
   @Override
   public long getBlockAccessListItemCost() {
