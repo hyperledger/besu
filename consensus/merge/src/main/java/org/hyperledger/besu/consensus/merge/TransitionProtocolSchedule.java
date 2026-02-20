@@ -92,6 +92,20 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   }
 
   /**
+   * Gets scheduled protocol spec by block header.
+   *
+   * @param blockHeader the block header
+   * @return the ProtocolSpec to be used by the provided block
+   */
+  /*  @Override
+  public ScheduledProtocolSpec getNextProtocolSpecByBlockHeader(
+      final org.hyperledger.besu.plugin.data.ProcessableBlockHeader blockHeader) {
+    return this.transitionUtils.dispatchFunctionAccordingToMergeState(
+        blockHeader,
+        protocolSchedule -> protocolSchedule.getNextProtocolSpecByBlockHeader(blockHeader));
+  }*/
+
+  /**
    * Gets the protocol spec by block header, with some additional logic used by backwards sync (BWS)
    *
    * @param blockHeader the block header

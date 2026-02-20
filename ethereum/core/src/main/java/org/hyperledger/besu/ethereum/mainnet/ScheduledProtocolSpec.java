@@ -21,10 +21,19 @@ import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
  * Knows how to query the timestamp or block number of a given block header
  */
 public interface ScheduledProtocolSpec {
+
+  enum ScheduleType {
+    BLOCK,
+    TIME
+  }
+
   boolean isOnOrAfterMilestoneBoundary(
       org.hyperledger.besu.plugin.data.ProcessableBlockHeader header);
 
   boolean isOnMilestoneBoundary(org.hyperledger.besu.plugin.data.ProcessableBlockHeader header);
+
+  /*
+  public ScheduleType getScheduleType();*/
 
   Hardfork fork();
 
@@ -72,6 +81,12 @@ public interface ScheduledProtocolSpec {
       return header.getTimestamp() == timestamp;
     }
 
+    /*
+    @Override
+    public ScheduleType getScheduleType() {
+      return ScheduleType.TIME;
+    }*/
+
     @Override
     public Hardfork fork() {
       return new Hardfork(protocolSpec.getHardforkId().description(), timestamp);
@@ -117,5 +132,11 @@ public interface ScheduledProtocolSpec {
     public ProtocolSpec spec() {
       return protocolSpec;
     }
+
+    /*
+    @Override
+    public ScheduleType getScheduleType() {
+      return ScheduleType.BLOCK;
+    }*/
   }
 }

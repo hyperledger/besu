@@ -161,6 +161,9 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
 
+  /** The protocol schedule. */
+  /*protected ProtocolSchedule protocolSchedule;*/
+
   /** The Data directory. */
   protected Path dataDirectory;
 
@@ -617,8 +620,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     this.codeCache = besuComponent.map(BesuComponent::getCodeCache).orElse(new CodeCache());
     this.codeCache.setupMetricsSystem(metricsSystem);
 
+    // Create the initial objects, including the basic fork spec schedule
     prepForBuild();
 
+    // Create the protocol schedule, which requires the fork spec
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();

@@ -28,26 +28,31 @@ import org.apache.tuweni.bytes.Bytes32;
 public class ProcessableBlockHeader
     implements BlockValues, org.hyperledger.besu.plugin.data.ProcessableBlockHeader {
 
-  protected final Hash parentHash;
+  protected Hash parentHash;
 
-  protected final Address coinbase;
+  protected Address coinbase;
 
-  protected final Difficulty difficulty;
+  protected Difficulty difficulty;
 
   protected final long number;
 
-  protected final long gasLimit;
+  protected long gasLimit;
 
   // The block creation timestamp (seconds since the unix epoch)
   protected final long timestamp;
   // base fee is included for post EIP-1559 blocks
-  protected final Wei baseFee;
+  protected Wei baseFee;
   // prevRandao is included for post-merge blocks
-  protected final Bytes32 mixHashOrPrevRandao;
+  protected Bytes32 mixHashOrPrevRandao;
   // parentBeaconBlockRoot is included for Cancun
-  protected final Bytes32 parentBeaconBlockRoot;
+  protected Bytes32 parentBeaconBlockRoot;
   // slotNumber is included for Amsterdam (EIP-7843)
-  protected final Long slotNumber;
+  protected Long slotNumber;
+
+  public ProcessableBlockHeader(final long number, final long timestamp) {
+    this.number = number;
+    this.timestamp = timestamp;
+  }
 
   protected ProcessableBlockHeader(
       final Hash parentHash,

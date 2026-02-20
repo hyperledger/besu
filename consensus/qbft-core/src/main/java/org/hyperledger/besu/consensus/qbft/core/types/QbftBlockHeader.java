@@ -47,4 +47,7 @@ public interface QbftBlockHeader {
    * @return the hash.
    */
   Hash getHash();
+
+  /*
+  BlockHeader getHeader();*/
 }
