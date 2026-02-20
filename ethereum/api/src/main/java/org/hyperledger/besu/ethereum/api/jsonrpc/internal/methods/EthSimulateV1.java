@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SimulateV1P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockStateCallResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -46,6 +45,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
@@ -68,6 +69,16 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
             miningConfiguration,
             blockchainQueries.getBlockchain(),
             apiConfiguration.getGasCap());
+  }
+
+  @VisibleForTesting
+  EthSimulateV1(
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final BlockSimulator blockSimulator) {
+    super(blockchainQueries);
+    this.protocolSchedule = protocolSchedule;
+    this.blockSimulator = blockSimulator;
   }
 
   @Override
@@ -154,22 +165,9 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   }
 
   @Override
-  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    Object response = handleParamTypes(requestContext);
-
-    if (response instanceof JsonRpcResponse) {
-      // Convert null success responses to BLOCK_NOT_FOUND errors for eth_simulateV1.
-      // The base class returns null for future/unknown blocks, but eth_simulateV1
-      // should return an error per the execution-apis spec.
-      if (response instanceof JsonRpcSuccessResponse successResponse
-          && successResponse.getResult() == null) {
-        return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), new JsonRpcError(BLOCK_NOT_FOUND));
-      }
-      return (JsonRpcResponse) response;
-    }
-
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
+  protected JsonRpcResponse blockNotFoundResponse(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), new JsonRpcError(BLOCK_NOT_FOUND));
   }
 
   private JsonRpcErrorResponse errorResponse(
