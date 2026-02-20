@@ -110,14 +110,14 @@ class DupNOperationTest {
   }
 
   @Test
-  void testDupN_immediate128() {
-    // DUPN with immediate 128 (0x80) -> n=(128+145)%256=17
-    final Bytes code = Bytes.fromHexString("e680"); // DUPN -> n=17
+  void testDupN_immediateFF() {
+    // DUPN with immediate 0xFF -> n=(255+145)&0xFF=144
+    final Bytes code = Bytes.fromHexString("e6ff"); // DUPN 0xFF -> n=144
     final TestMessageFrameBuilder builder =
         new TestMessageFrameBuilder().code(new Code(code)).pc(0);
 
-    // Push 17 items
-    for (int i = 17; i >= 1; i--) {
+    // Push 144 items
+    for (int i = 144; i >= 1; i--) {
       builder.pushStackItem(Bytes.ofUnsignedInt(i));
     }
     final MessageFrame frame = builder.build();
@@ -125,7 +125,9 @@ class DupNOperationTest {
     final OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getHaltReason()).isNull();
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(17);
+    // Should duplicate item 144 (value 144)
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(144);
+    assertThat(frame.stackSize()).isEqualTo(145);
   }
 
   @ParameterizedTest

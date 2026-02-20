@@ -38,8 +38,9 @@ public final class Eip8024Decoder {
 
   /**
    * Decode table for single operand instructions (DUPN, SWAPN). Maps immediate byte value to
-   * decoded n value using branchless formula: n = (x + 145) % 256. Valid range: 0-90 maps to
-   * 145-235, 128-255 maps to 17-144. Invalid range: 91-127.
+   * decoded n value using branchless formula: n = (x + 145) % 256. Only meaningful for valid
+   * immediates where {@link #VALID_SINGLE}[x] is true. Valid range: 0-90 maps to 145-235, 128-255
+   * maps to 17-144. Invalid range: 91-127 (entries left at default 0).
    */
   public static final int[] DECODE_SINGLE = new int[256];
 

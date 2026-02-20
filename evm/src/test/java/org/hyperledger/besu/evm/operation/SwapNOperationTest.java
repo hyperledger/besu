@@ -88,29 +88,29 @@ class SwapNOperationTest {
   }
 
   @Test
-  void testSwapN_immediate128() {
-    // SWAPN with immediate 128 (0x80) -> n=(128+145)%256=17, swaps top with 18th item
-    final Bytes code = Bytes.fromHexString("e780"); // SWAPN 0x80 -> n=17
+  void testSwapN_immediateFF() {
+    // SWAPN with immediate 0xFF -> n=(255+145)&0xFF=144, swaps top with 145th item
+    final Bytes code = Bytes.fromHexString("e7ff"); // SWAPN 0xFF -> n=144
     final TestMessageFrameBuilder builder =
         new TestMessageFrameBuilder().code(new Code(code)).pc(0);
 
-    // Push 18 items
-    for (int i = 18; i >= 1; i--) {
+    // Push 145 items
+    for (int i = 145; i >= 1; i--) {
       builder.pushStackItem(Bytes.ofUnsignedInt(i));
     }
     final MessageFrame frame = builder.build();
 
-    // Before: stack[0]=1, stack[17]=18
+    // Before: stack[0]=1, stack[144]=145
     assertThat(frame.getStackItem(0).toInt()).isEqualTo(1);
-    assertThat(frame.getStackItem(17).toInt()).isEqualTo(18);
+    assertThat(frame.getStackItem(144).toInt()).isEqualTo(145);
 
     final OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getHaltReason()).isNull();
 
     // After: swapped
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(18);
-    assertThat(frame.getStackItem(17).toInt()).isEqualTo(1);
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(145);
+    assertThat(frame.getStackItem(144).toInt()).isEqualTo(1);
   }
 
   @ParameterizedTest
