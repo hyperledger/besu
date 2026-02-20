@@ -873,7 +873,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     long t0 = v3 * x;
     long t1 = Math.unsignedMultiplyHigh(v3, x);
     t0 += x;
-    if (Long.compareUnsigned(t0, x) < 0) t1++;
+    t1 += Long.compareUnsigned(t0, x) < 0 ? 1 : 0;
     t1 += x;
     long v4 = v3 - t1;
     return v4;
@@ -892,15 +892,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     long r = x0 - q1 * y;
 
-    // Long.compareUnsigned(q0, r) < 0 ? 1 : 0
-    long compare = (q0 >>> 1) - (r >>> 1) - ((~q0 & r) & 1);
-    long adjust = compare >>> 63;
+    long adjust = Long.compareUnsigned(q0, r) < 0 ? 1 : 0;
     q1 -= adjust;
     r += adjust * y;
 
-    // Long.compareUnsigned(r, y) >= 0  ? 1 : 0
-    compare = (r >>> 1) - (y >>> 1) - ((~r & y) & 1);
-    adjust = 1 - (compare >>> 63);
+    adjust = Long.compareUnsigned(y, r) <= 0  ? 1 : 0;
     q1 += adjust;
     r -= y * adjust;
 
@@ -920,14 +916,10 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     long r = x0 - q1 * y;
 
-    // Long.compareUnsigned(q0, r) < 0 ? 1 : 0
-    long compare = (q0 >>> 1) - (r >>> 1) - ((~q0 & r) & 1);
-    long adjust = compare >>> 63;
+    long adjust = Long.compareUnsigned(q0, r) < 0 ? 1 : 0;
     r += y * adjust;
 
-    // Long.compareUnsigned(r, y) >= 0  ? 1 : 0
-    compare = (r >>> 1) - (y >>> 1) - ((~r & y) & 1);
-    adjust = 1 - (compare >>> 63);
+    adjust = Long.compareUnsigned(y, r) <= 0  ? 1 : 0;
     r -= y * adjust;
 
     return r;
