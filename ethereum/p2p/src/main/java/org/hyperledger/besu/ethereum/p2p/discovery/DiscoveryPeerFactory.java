@@ -60,7 +60,12 @@ public class DiscoveryPeerFactory {
 
     if (ipVersionPreference.shouldUseIpv6(hasIpv4, hasIpv6)) {
       return EnodeURLImpl.builder()
-          .ipAddress(enr.ipv6().get())
+          .ipAddress(
+              enr.ipv6()
+                  .orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "IPv6 address not present in ENR despite shouldUseIpv6 returning true")))
           .nodeId(enr.publicKey())
           .discoveryPort(enr.udpV6())
           .listeningPort(enr.tcpV6())
