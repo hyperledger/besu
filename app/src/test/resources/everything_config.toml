@@ -57,7 +57,7 @@ network="MAINNET"
 genesis-file="~/genesis.json"
 genesis-state-hash-cache-enabled=false
 sync-mode="fast"
-fast-sync-min-peers=5
+sync-min-peers=5
 network-id=303
 kzg-trusted-setup="/etc/besu/kzg-trusted-setup.txt"
 

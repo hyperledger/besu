@@ -22,8 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum SyncMode {
   // Fully validate all blocks as they sync
   FULL,
-  // Perform light validation on older blocks, and switch to full validation for more recent blocks
-  FAST,
   // Perform snapsync
   SNAP,
   // Perform snapsync but starting from a checkpoint instead of starting from genesis
@@ -34,6 +32,6 @@ public enum SyncMode {
   }
 
   public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(SyncMode.FAST, SyncMode.SNAP, SyncMode.CHECKPOINT).contains(syncMode);
+    return !EnumSet.of(SyncMode.SNAP, SyncMode.CHECKPOINT).contains(syncMode);
   }
 }
