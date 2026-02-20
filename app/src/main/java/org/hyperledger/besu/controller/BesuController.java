@@ -360,6 +360,14 @@ public class BesuController implements java.io.Closeable {
       } else if (configOptions.isQbft()) {
         builder = new QbftBesuControllerBuilder();
       } else if (configOptions.isClique()) {
+        if (configOptions.getTerminalTotalDifficulty().isEmpty()) {
+          throw new IllegalStateException(
+              """
+                 Clique consensus has been removed from Besu.
+                 Existing Clique networks cannot be started.
+                 Please migrate to PoS, QBFT or IBFT2 for Proof of Authority consensus.
+                 """);
+        }
         builder = new CliqueBesuControllerBuilder();
       } else {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");

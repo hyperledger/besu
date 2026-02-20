@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. Users of pure Clique networks must migrate to PoS, QBFT or IBFT2. [#9852](https://github.com/hyperledger/besu/pull/9852)
 - ETC Classic support in Besu is removed. This includes all ETC related hardforks including Mordor and Spiral. [#9671](https://github.com/hyperledger/besu/pull/9671)
 - Forest db subcommands `x-backup-state` and `x-restore-state` are removed [#9821](https://github.com/hyperledger/besu/pull/9821)
 - Omit totalDifficulty from post-merge blockResults [#9836](https://github.com/hyperledger/besu/pull/9836)
@@ -32,7 +33,6 @@
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
     - Proof of Work consensus (PoW)
-    - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
     - Fast Sync
 
 ### Additions and Improvements
