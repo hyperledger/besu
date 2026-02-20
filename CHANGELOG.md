@@ -5,6 +5,7 @@
 ### Breaking Changes
 - ETC Classic support in Besu is removed. This includes all ETC related hardforks including Mordor and Spiral. [#9671](https://github.com/hyperledger/besu/pull/9671)
 - Forest db subcommands `x-backup-state` and `x-restore-state` are removed [#9821](https://github.com/hyperledger/besu/pull/9821)
+- Omit totalDifficulty from post-merge blockResults [#9836](https://github.com/hyperledger/besu/pull/9836)
 - **Chain pruning CLI options have been redesigned with new behavior:** [#9637](https://github.com/hyperledger/besu/pull/9637)
   - `--Xchain-pruning-enabled` now accepts three strategy values instead of boolean:
     - `ALL` - prunes both blocks and BALs (replaces the old `--Xchain-pruning-enabled=true`)
