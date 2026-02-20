@@ -257,7 +257,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-    LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
+    LOG.trace(
+        "traceStartBlock for {} using tracer {}",
+        blockHeader.getNumber(),
+        blockTracer.getClass().getSimpleName());
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
     maybeSlowBlockTracer.ifPresent(
         sbt -> sbt.traceStartBlock(worldState, blockHeader, miningBeneficiary));

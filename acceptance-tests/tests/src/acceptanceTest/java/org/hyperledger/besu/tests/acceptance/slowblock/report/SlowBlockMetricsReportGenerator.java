@@ -560,8 +560,9 @@ public class SlowBlockMetricsReportGenerator {
     report.append("| Metric | Observed Value | Reason |\n");
     report.append("|--------|----------------|--------|\n");
     report.append(
-        "| eip7702_delegations_set | 0 | EIP-7702 requires Prague fork; test uses pre-Prague genesis |\n");
-    report.append("| eip7702_delegations_cleared | 0 | Same as above |\n");
+        "| eip7702_delegations_set | 0 | May be 0 if EIP-7702 is not enabled |\n");
+    report.append(
+        "| eip7702_delegations_cleared | 0 | May be 0 if EIP-7702 is not enabled |\n");
     report.append(
         "| state_read_ms | 0.0 | Sub-millisecond precision; QBFT blocks execute very fast |\n");
     report.append(
