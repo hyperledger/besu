@@ -444,6 +444,25 @@ public class UInt256Test {
   }
 
   @Test
+  public void mulMod_Modulus256_mulSubOverflow() {
+    Bytes modBytes =
+        Bytes.fromHexString("0x0000000000000001000000000000000000000000000000000000000000000001");
+    Bytes aBytes =
+        Bytes.fromHexString("0x0000000000000001000000000000000000000000000000000000000000000000");
+    Bytes bBytes =
+        Bytes.fromHexString("0x0000000000000001000000000000000000000000000000000000000000000000");
+    BigInteger aInt = new BigInteger(1, aBytes.toArrayUnsafe());
+    BigInteger bInt = new BigInteger(1, bBytes.toArrayUnsafe());
+    BigInteger mInt = new BigInteger(1, modBytes.toArrayUnsafe());
+    UInt256 a = UInt256.fromBytesBE(aBytes.toArrayUnsafe());
+    UInt256 b = UInt256.fromBytesBE(bBytes.toArrayUnsafe());
+    UInt256 m = UInt256.fromBytesBE(modBytes.toArrayUnsafe());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.mulMod(b, m).toBytesBE()));
+    Bytes32 expected = bigIntTo32B(aInt.multiply(bInt).mod(mInt));
+    assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
   public void mulMod_ExecutionSpecStateTest_457() {
     Bytes value0 =
         Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");
