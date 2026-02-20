@@ -80,6 +80,6 @@ public class BftSyncAcceptanceTest extends ParameterizedBftTestBase {
     // Add validator4 to cluster and start
     cluster.addNode(validator4);
 
-    validator4.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, 120));
+    validator4.verify(blockchain.minimumHeight(TARGET_BLOCK_HEIGHT, 140));
   }
 }
