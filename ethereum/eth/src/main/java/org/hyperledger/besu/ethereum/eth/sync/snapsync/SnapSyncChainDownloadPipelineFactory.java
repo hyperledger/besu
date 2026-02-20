@@ -45,6 +45,7 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -128,7 +129,11 @@ public class SnapSyncChainDownloadPipelineFactory {
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule, ethContext, headerRequestSize, anchorForHeaderDownload.getNumber());
+            protocolSchedule,
+            ethContext,
+            headerRequestSize,
+            anchorForHeaderDownload.getNumber(),
+            java.time.Duration.ofMillis(syncConfig.getBackwardHeadersDownloadStepTimeoutMillis()));
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
@@ -191,7 +196,8 @@ public class SnapSyncChainDownloadPipelineFactory {
         new DownloadSyncReceiptsStep(
             protocolSchedule,
             ethContext,
-            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()),
+            Duration.ofMillis(syncConfig.getReceiptsDownloadStepTimeoutMillis()));
 
     final ImportSyncBlocksStep importBlocksStep =
         new ImportSyncBlocksStep(

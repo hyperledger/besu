@@ -68,6 +68,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-world-state-min-millis-before-stalling";
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
+  private static final String RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG =
+      "--Xsynchronizer-receipts-download-step-timeout-millis";
+  private static final String BACKWARD_HEADERS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG =
+      "--Xsynchronizer-backward-headers-download-step-timeout-millis";
 
   // Regular (stable) flag
   private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
@@ -257,6 +261,24 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
           "The max number of pending node data requests cached in-memory during fast sync world state download. (default: ${DEFAULT-VALUE})")
   private int worldStateTaskCacheSize =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
+
+  @CommandLine.Option(
+      names = RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG,
+      hidden = true,
+      paramLabel = "<LONG>",
+      description =
+          "Maximum time in milliseconds to wait for receipts download step including all retries (default: ${DEFAULT-VALUE})")
+  private long receiptsDownloadStepTimeoutMillis =
+      SynchronizerConfiguration.DEFAULT_RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS;
+
+  @CommandLine.Option(
+      names = BACKWARD_HEADERS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG,
+      hidden = true,
+      paramLabel = "<LONG>",
+      description =
+          "Maximum time in milliseconds to wait for backward headers download step including all retries (default: ${DEFAULT-VALUE})")
+  private long backwardHeadersDownloadStepTimeoutMillis =
+      SynchronizerConfiguration.DEFAULT_BACKWARD_HEADERS_DOWNLOAD_STEP_TIMEOUT_MILLIS;
 
   @CommandLine.Option(
       names = SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
@@ -474,6 +496,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.era1ImportPrepipelineEnabled = config.era1ImportPrepipelineEnabled();
     options.era1DataUri = config.era1DataUri();
     options.era1ImportPrepipelineConcurrency = config.era1ImportPrepipelineConcurrency();
+    options.receiptsDownloadStepTimeoutMillis = config.getReceiptsDownloadStepTimeoutMillis();
+    options.backwardHeadersDownloadStepTimeoutMillis =
+        config.getBackwardHeadersDownloadStepTimeoutMillis();
     return options;
   }
 
@@ -513,6 +538,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
+    builder.receiptsDownloadStepTimeoutMillis(receiptsDownloadStepTimeoutMillis);
+    builder.backwardHeadersDownloadStepTimeoutMillis(backwardHeadersDownloadStepTimeoutMillis);
     builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);
     builder.era1DataUri(era1DataUri);
     builder.era1ImportPrepipelineConcurrency(era1ImportPrepipelineConcurrency);
@@ -557,6 +584,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(worldStateMinMillisBeforeStalling),
             WORLD_STATE_TASK_CACHE_SIZE_FLAG,
             OptionParser.format(worldStateTaskCacheSize),
+            RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG,
+            OptionParser.format(receiptsDownloadStepTimeoutMillis),
+            BACKWARD_HEADERS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG,
+            OptionParser.format(backwardHeadersDownloadStepTimeoutMillis),
             SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
             OptionParser.format(snapsyncPivotBlockWindowValidity),
             SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,

@@ -17,16 +17,20 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -39,11 +43,15 @@ import org.slf4j.LoggerFactory;
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
+  private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
+  private static final AtomicInteger taskId = new AtomicInteger(0);
 
   private final ProtocolSchedule protocolSchedule;
-  private final EthContext ethContext;
+  private final EthScheduler ethScheduler;
+  private final PeerTaskExecutor peerTaskExecutor;
   private final int headerRequestSize;
   private final long trustAnchorBlockNumber;
+  private final Duration timeoutDuration;
 
   /**
    * Creates a new DownloadBackwardHeadersStep.
@@ -52,17 +60,21 @@ public class DownloadBackwardHeadersStep
    * @param ethContext the eth context
    * @param headerRequestSize the number of headers to request per batch
    * @param trustAnchorBlockNumber the lowest header that we want to download
+   * @param timeoutDuration the maximum time to wait including all retries
    */
   public DownloadBackwardHeadersStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final int headerRequestSize,
-      final long trustAnchorBlockNumber) {
+      final long trustAnchorBlockNumber,
+      final Duration timeoutDuration) {
     if (headerRequestSize < 1) throw new IllegalArgumentException("headerRequestSize must be >= 1");
     this.protocolSchedule = protocolSchedule;
-    this.ethContext = ethContext;
+    this.ethScheduler = ethContext.getScheduler();
+    this.peerTaskExecutor = ethContext.getPeerTaskExecutor();
     this.headerRequestSize = headerRequestSize;
     this.trustAnchorBlockNumber = trustAnchorBlockNumber;
+    this.timeoutDuration = timeoutDuration;
   }
 
   @Override
@@ -74,56 +86,120 @@ public class DownloadBackwardHeadersStep
           "Number of headers to request is less than 1:" + headersToRequest);
     }
 
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(() -> downloadAllHeaders(startBlockNumber, headersToRequest))
-        .orTimeout(2L, TimeUnit.MINUTES);
+    final int currentTaskId = taskId.getAndIncrement();
+    final List<BlockHeader> downloadedHeaders = new ArrayList<>(headersToRequest);
+    return ethScheduler
+        .scheduleServiceTask(
+            () ->
+                downloadAllHeaders(
+                    currentTaskId, 0, startBlockNumber, headersToRequest, downloadedHeaders))
+        .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
+        .whenComplete(
+            (unused, throwable) -> {
+              if (throwable instanceof TimeoutException) {
+                LOG.trace(
+                    "[{}] Timed out after {} ms while downloading {} backward headers from block {}",
+                    currentTaskId,
+                    timeoutDuration.toMillis(),
+                    headersToRequest,
+                    startBlockNumber);
+              }
+            });
   }
 
   private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
-      final Long startBlockNumber, final int headersToRequest) {
-    List<BlockHeader> headers = new ArrayList<>(headersToRequest);
+      final int currTaskId,
+      final int prevIterations,
+      final Long startBlockNumber,
+      final int headersToRequest,
+      final List<BlockHeader> downloadedHeaders) {
+
+    int iteration = prevIterations;
     do {
+      ++iteration;
+
+      final long requestStartBlockNumber = startBlockNumber - downloadedHeaders.size();
+      final int requestMaxHeaders = headersToRequest - downloadedHeaders.size();
+
+      LOG.trace(
+          "[{}:{}] Backward downloading {} headers starting from block {}",
+          currTaskId,
+          iteration,
+          requestMaxHeaders,
+          requestStartBlockNumber);
+
       final GetHeadersFromPeerTask task =
           new GetHeadersFromPeerTask(
-              startBlockNumber - headers.size(),
-              headersToRequest - headers.size(),
+              requestStartBlockNumber,
+              requestMaxHeaders,
               0,
               GetHeadersFromPeerTask.Direction.REVERSE,
               protocolSchedule);
 
-      final PeerTaskExecutorResult<List<BlockHeader>> result =
-          ethContext.getPeerTaskExecutor().execute(task);
+      final PeerTaskExecutorResult<List<BlockHeader>> result = peerTaskExecutor.execute(task);
 
-      final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
-      if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
-        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
-          throw new RuntimeException(
-              "Failed to download "
-                  + headersToRequest
-                  + " headers starting from block "
-                  + startBlockNumber);
-        }
-        // wait for a peer to become available before retrying
-        ethContext.getEthPeers().waitForPeer(__ -> true);
-      } else {
-        final Optional<List<BlockHeader>> optionalBlockHeaderList = result.result();
-        final List<BlockHeader> resultBlockHeaders = optionalBlockHeaderList.orElseGet(List::of);
-        if (!headers.isEmpty() // check the parent hash and block hash match
+      final PeerTaskExecutorResponseCode responseCode = result.responseCode();
+
+      if (responseCode == PeerTaskExecutorResponseCode.SUCCESS) {
+        final List<BlockHeader> resultBlockHeaders = result.result().orElseGet(List::of);
+        if (!downloadedHeaders.isEmpty() // check the parent hash and block hash match
             && !resultBlockHeaders.isEmpty()
-            && !resultBlockHeaders.getFirst().getHash().equals(headers.getLast().getParentHash())) {
+            && !resultBlockHeaders
+                .getFirst()
+                .getHash()
+                .getBytes()
+                .equals(downloadedHeaders.getLast().getParentHash().getBytes())) {
           throw new IllegalStateException("Parent hash of last header does not match first header");
         }
-        headers.addAll(resultBlockHeaders);
+        downloadedHeaders.addAll(resultBlockHeaders);
+        LOG.trace(
+            "[{}:{}] Successfully received {} headers starting from block {}",
+            currTaskId,
+            iteration,
+            requestMaxHeaders,
+            requestStartBlockNumber);
+      } else {
+        LOG.trace(
+            "[{}:{}] Failed with {} to retrieve {} headers starting from block {}",
+            currTaskId,
+            iteration,
+            responseCode,
+            requestMaxHeaders,
+            requestStartBlockNumber);
+        if (responseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
+          return CompletableFuture.failedFuture(
+              new RuntimeException(
+                  "Failed to download "
+                      + headersToRequest
+                      + " headers starting from block "
+                      + startBlockNumber));
+        } else {
+
+          LOG.trace("[{}:{}] Waiting for {} before retrying", currTaskId, iteration, RETRY_DELAY);
+          final int passIterations = iteration;
+          return ethScheduler.scheduleFutureTask(
+              () ->
+                  ethScheduler.scheduleServiceTask(
+                      () ->
+                          downloadAllHeaders(
+                              currTaskId,
+                              passIterations,
+                              startBlockNumber,
+                              headersToRequest,
+                              downloadedHeaders)),
+              RETRY_DELAY);
+        }
       }
-    } while (headers.size() < headersToRequest);
+    } while (downloadedHeaders.size() < headersToRequest);
     LOG.atTrace()
-        .setMessage("Downloaded {} headers: blocks {} to {}")
-        .addArgument(headers.size())
-        .addArgument(headers.getFirst().getNumber())
-        .addArgument(headers.getLast().getNumber())
+        .setMessage("[{}:{}] Downloaded {} headers: blocks {} to {}")
+        .addArgument(currTaskId)
+        .addArgument(iteration)
+        .addArgument(downloadedHeaders::size)
+        .addArgument(downloadedHeaders.getFirst()::getNumber)
+        .addArgument(downloadedHeaders.getLast()::getNumber)
         .log();
 
-    return CompletableFuture.completedFuture(headers);
+    return CompletableFuture.completedFuture(downloadedHeaders);
   }
 }
