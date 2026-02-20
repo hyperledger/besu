@@ -31,18 +31,41 @@ public class DiscoveryPeerFactory {
     return DiscoveryPeerV4.fromEnode(enode);
   }
 
-  public static DiscoveryPeer fromNodeRecord(final NodeRecord nodeRecord) {
+  public static DiscoveryPeer fromNodeRecord(
+      final NodeRecord nodeRecord, final boolean preferIpv6Outbound) {
     EthereumNodeRecord enr = EthereumNodeRecord.fromNodeRecord(nodeRecord);
-    return fromEthereumNodeRecord(enr);
+    return fromEthereumNodeRecord(enr, preferIpv6Outbound);
   }
 
   public static DiscoveryPeer fromEthereumNodeRecord(final EthereumNodeRecord enr) {
-    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr));
+    return fromEthereumNodeRecord(enr, false);
+  }
+
+  public static DiscoveryPeer fromEthereumNodeRecord(
+      final EthereumNodeRecord enr, final boolean preferIpv6Outbound) {
+    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr, preferIpv6Outbound));
     peer.setNodeRecord(enr.nodeRecord());
     return peer;
   }
 
-  private static EnodeURL buildEnodeUrl(final EthereumNodeRecord enr) {
+  private static EnodeURL buildEnodeUrl(
+      final EthereumNodeRecord enr, final boolean preferIpv6Outbound) {
+    final boolean hasIpv4 = enr.ip() != null;
+    final boolean hasIpv6 = enr.ipv6().isPresent();
+
+    if (hasIpv6 && (!hasIpv4 || preferIpv6Outbound)) {
+      return EnodeURLImpl.builder()
+          .ipAddress(
+              enr.ipv6()
+                  .orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "IPv6 address not present in ENR despite shouldUseIpv6 returning true")))
+          .nodeId(enr.publicKey())
+          .discoveryPort(enr.udpV6().or(enr::udp))
+          .listeningPort(enr.tcpV6().or(enr::tcp))
+          .build();
+    }
     return EnodeURLImpl.builder()
         .ipAddress(enr.ip())
         .nodeId(enr.publicKey())
