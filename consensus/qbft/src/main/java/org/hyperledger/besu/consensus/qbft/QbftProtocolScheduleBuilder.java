@@ -67,21 +67,18 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
-    final BftProtocolSchedule schedule =
-        new QbftProtocolScheduleBuilder()
-            .createProtocolSchedule(
-                config,
-                qbftForksSchedule,
-                isRevertReasonEnabled,
-                bftExtraDataCodec,
-                evmConfiguration,
-                miningConfiguration,
-                badBlockManager,
-                isParallelTxProcessingEnabled,
-                balConfiguration,
-                metricsSystem);
-
-    return schedule;
+    return new QbftProtocolScheduleBuilder()
+        .createProtocolSchedule(
+            config,
+            qbftForksSchedule,
+            isRevertReasonEnabled,
+            bftExtraDataCodec,
+            evmConfiguration,
+            miningConfiguration,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem);
   }
 
   /**

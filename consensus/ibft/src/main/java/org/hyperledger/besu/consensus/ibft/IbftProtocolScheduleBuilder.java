@@ -64,21 +64,18 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
-    final BftProtocolSchedule schedule =
-        new IbftProtocolScheduleBuilder()
-            .createProtocolSchedule(
-                config,
-                forksSchedule,
-                isRevertReasonEnabled,
-                bftExtraDataCodec,
-                evmConfiguration,
-                miningConfiguration,
-                badBlockManager,
-                isParallelTxProcessingEnabled,
-                balConfiguration,
-                metricsSystem);
-
-    return schedule;
+    return new IbftProtocolScheduleBuilder()
+        .createProtocolSchedule(
+            config,
+            forksSchedule,
+            isRevertReasonEnabled,
+            bftExtraDataCodec,
+            evmConfiguration,
+            miningConfiguration,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem);
   }
 
   /**
