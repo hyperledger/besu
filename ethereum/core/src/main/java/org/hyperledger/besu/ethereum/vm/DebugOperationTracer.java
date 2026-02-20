@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
+import org.hyperledger.besu.evm.operation.AbstractCreateOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
@@ -149,7 +150,15 @@ public class DebugOperationTracer implements OperationTracer {
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
-    final Optional<Bytes[]> memory = captureMemory(frame);
+    // Always capture memory for soft-failed CREATE/CREATE2 ops so callTracer can extract init code
+    final Optional<Bytes[]> memory =
+        captureMemory(frame)
+            .or(
+                () ->
+                    operationResult.getSoftFailureReason().isPresent()
+                            && currentOperation instanceof AbstractCreateOperation
+                        ? forceCaptureMem(frame)
+                        : Optional.empty());
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
     if (frameConsumer == null && !traceFrames.isEmpty()) {
@@ -384,6 +393,13 @@ public class DebugOperationTracer implements OperationTracer {
 
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
     if (!options.traceMemory() || frame.memoryWordSize() == 0) {
+      return Optional.empty();
+    }
+    return forceCaptureMem(frame);
+  }
+
+  private Optional<Bytes[]> forceCaptureMem(final MessageFrame frame) {
+    if (frame.memoryWordSize() == 0) {
       return Optional.empty();
     }
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
