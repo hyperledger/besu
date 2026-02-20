@@ -775,12 +775,12 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     p0 = u0 * v.u1;
     p1 = Math.unsignedMultiplyHigh(u0, v.u1);
     long z1 = p0 + carry;
-    carry = p1 + (((p0 & carry) | ((p0 | carry) & ~z1)) >>> 63);
+    carry = p1 + ((Long.compareUnsigned(z1, p0) < 0) ? 1 : 0);
 
     p0 = u0 * v.u2;
     p1 = Math.unsignedMultiplyHigh(u0, v.u2);
     long z2 = p0 + carry;
-    carry = p1 + (((p0 & carry) | ((p0 | carry) & ~z2)) >>> 63);
+    carry = p1 + ((Long.compareUnsigned(z2, p0) < 0) ? 1 : 0);
 
     long z3 = u0 * v.u3 + carry;
 
@@ -855,7 +855,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
         1024,
       };
 
-  private static final long TWO_POWER_SIXTY = 1L << 60;
+  private static final long TWO_POW_SIXTY = 1L << 60;
 
   // Taken from https://gmplib.org/~tege/division-paper.pdf taken from III. algorithm 2
   private static long reciprocal(final long x) {
@@ -866,7 +866,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     long x63 = (x + 1) >>> 1;
     long v0 = LUT[x9 - 256] & 0xFFFFL;
     long v1 = (v0 << 11) - ((v0 * v0 * x40) >>> 40) - 1;
-    long v2 = (v1 << 13) + ((v1 * (TWO_POWER_SIXTY - v1 * x40)) >>> 47);
+    long v2 = (v1 << 13) + ((v1 * (TWO_POW_SIXTY - v1 * x40)) >>> 47);
     long e = ((v2 >>> 1) & (-x0)) - v2 * x63;
     long s = Math.unsignedMultiplyHigh(v2, e);
     long v3 = (s >>> 1) + (v2 << 31);
