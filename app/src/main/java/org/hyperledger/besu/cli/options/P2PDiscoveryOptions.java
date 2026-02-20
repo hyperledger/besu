@@ -385,17 +385,15 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
 
   private void validateHost(
       final CommandLine commandLine, final String host, final String optionName) {
-    final String failMessage = "The provided " + optionName + " is invalid: " + host;
     if (!InetAddresses.isInetAddress(host)) {
+      final String failMessage = "The provided " + optionName + " is invalid: " + host;
       throw new CommandLine.ParameterException(commandLine, failMessage);
     }
   }
 
   private void validateIpv6Address(
       final CommandLine commandLine, final String address, final String optionName) {
-    if (!NetworkUtility.isIpV6Address(address)
-        && !NetworkUtility.INADDR6_ANY.equals(address)
-        && !NetworkUtility.INADDR6_NONE.equals(address)) {
+    if (!NetworkUtility.isIpV6Address(address)) {
       throw new CommandLine.ParameterException(
           commandLine,
           "The provided " + optionName + " must be an IPv6 address, but was: " + address);
