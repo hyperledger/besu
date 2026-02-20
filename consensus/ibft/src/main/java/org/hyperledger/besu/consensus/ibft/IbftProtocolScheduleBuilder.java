@@ -78,9 +78,6 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
                 balConfiguration,
                 metricsSystem);
 
-    // Once we have the schedule we can update the fork schedule with the type of each milestone
-    forksSchedule.applyMilestoneTypes(schedule);
-
     return schedule;
   }
 

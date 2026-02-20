@@ -81,9 +81,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
                 balConfiguration,
                 metricsSystem);
 
-    // Once we have the schedule we can update the fork schedule with the type of each milestone
-    qbftForksSchedule.applyMilestoneTypes(schedule);
-
     return schedule;
   }
 
