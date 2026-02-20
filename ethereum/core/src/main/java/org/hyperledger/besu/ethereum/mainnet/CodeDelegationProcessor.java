@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -119,14 +120,17 @@ public class CodeDelegationProcessor {
 
     LOG.trace("Set code delegation for authority: {}", authorizer.get());
 
-    final Optional<MutableAccount> maybeAuthorityAccount =
-        Optional.ofNullable(worldUpdater.getAccount(authorizer.get()));
+    // Use read-only get() to avoid marking the account as touched during validation.
+    // getAccount() would mark it as touched, causing empty accounts to be incorrectly
+    // deleted by clearAccountsThatAreEmpty() even when authorization is invalid/skipped.
+    final Optional<Account> maybeExistingAccount =
+        Optional.ofNullable(worldUpdater.get(authorizer.get()));
     eip7928AccessList.ifPresent(t -> t.addTouchedAccount(authorizer.get()));
     result.addAccessedDelegatorAddress(authorizer.get());
 
     MutableAccount authority;
     boolean authorityDoesAlreadyExist = false;
-    if (maybeAuthorityAccount.isEmpty()) {
+    if (maybeExistingAccount.isEmpty()) {
       // only create an account if nonce is valid
       if (codeDelegation.nonce() != 0) {
         return;
@@ -134,17 +138,25 @@ public class CodeDelegationProcessor {
       authority = worldUpdater.createAccount(authorizer.get());
       eip7928AccessList.ifPresent(t -> t.addTouchedAccount(authority.getAddress()));
     } else {
-      authority = maybeAuthorityAccount.get();
-      eip7928AccessList.ifPresent(t -> t.addTouchedAccount(authority.getAddress()));
-
-      if (!codeDelegationService.canSetCodeDelegation(authority)) {
+      if (!codeDelegationService.canSetCodeDelegation(maybeExistingAccount.get())) {
         return;
       }
 
+      if (codeDelegation.nonce() != maybeExistingAccount.get().getNonce()) {
+        LOG.trace(
+            "Invalid nonce for code delegation. Expected: {}, Actual: {}",
+            maybeExistingAccount.get().getNonce(),
+            codeDelegation.nonce());
+        return;
+      }
+
+      // Validation passed — now get the mutable account for mutation
+      authority = worldUpdater.getAccount(authorizer.get());
+      eip7928AccessList.ifPresent(t -> t.addTouchedAccount(authority.getAddress()));
       authorityDoesAlreadyExist = true;
     }
 
-    if (codeDelegation.nonce() != authority.getNonce()) {
+    if (!authorityDoesAlreadyExist && codeDelegation.nonce() != authority.getNonce()) {
       LOG.trace(
           "Invalid nonce for code delegation. Expected: {}, Actual: {}",
           authority.getNonce(),
