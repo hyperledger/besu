@@ -64,10 +64,10 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   // Pattern to match slow block JSON in console output
-  // The JSON is nested with multiple closing braces, so we capture from the start pattern to the
-  // final closing brace sequence. The pattern matches the entire JSON object.
+  // Matches from the start marker to the final closing braces on the same line,
+  // without depending on any specific field order.
   private static final Pattern SLOW_BLOCK_PATTERN =
-      Pattern.compile("(\\{\"level\":\"warn\",\"msg\":\"Slow block\".*?\"creates\":\\d+\\}\\})");
+      Pattern.compile("(\\{\"level\":\"warn\",\"msg\":\"Slow block\"[^\\n]*\\}\\})");
 
   // All expected JSON field paths (38 fields - matching geth + Besu extras)
   // Now sourced from ExpectedMetrics for consistency
