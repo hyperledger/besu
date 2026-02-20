@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum;
 
+import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -40,7 +41,11 @@ public class MainnetBlockValidatorBuilder {
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor) {
     return new MainnetBlockValidator(
-        blockHeaderValidator, blockBodyValidator, blockProcessor, Integer.MAX_VALUE);
+        blockHeaderValidator,
+        blockBodyValidator,
+        blockProcessor,
+        BlockAccessListValidator.REJECT_ANY_BAL,
+        Integer.MAX_VALUE);
   }
 
   /**
@@ -56,6 +61,32 @@ public class MainnetBlockValidatorBuilder {
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor) {
     return new MainnetBlockValidator(
-        blockHeaderValidator, blockBodyValidator, blockProcessor, OSAKA_MAX_RLP_BLOCK_SIZE);
+        blockHeaderValidator,
+        blockBodyValidator,
+        blockProcessor,
+        BlockAccessListValidator.REJECT_ANY_BAL,
+        OSAKA_MAX_RLP_BLOCK_SIZE);
+  }
+
+  /**
+   * Creates a block validator for the Amsterdam network with a specific block size limit.
+   *
+   * @param blockHeaderValidator the block header validator
+   * @param blockBodyValidator the block body validator
+   * @param blockProcessor the block processor
+   * @param blockAccessListValidator the block access list validator
+   * @return a BlockValidator instance with Amsterdam-specific settings
+   */
+  public static BlockValidator amsterdam(
+      final BlockHeaderValidator blockHeaderValidator,
+      final BlockBodyValidator blockBodyValidator,
+      final BlockProcessor blockProcessor,
+      final BlockAccessListValidator blockAccessListValidator) {
+    return new MainnetBlockValidator(
+        blockHeaderValidator,
+        blockBodyValidator,
+        blockProcessor,
+        blockAccessListValidator,
+        OSAKA_MAX_RLP_BLOCK_SIZE);
   }
 }

@@ -84,6 +84,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -203,6 +204,7 @@ public abstract class MainnetProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
+        .blockAccessListValidatorBuilder(__ -> BlockAccessListValidator.REJECT_ANY_BAL)
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
@@ -211,7 +213,10 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
                 : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
-        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
+        .blockValidatorBuilder(
+            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
+                MainnetBlockValidatorBuilder.frontier(
+                    blockHeaderValidator, blockBodyValidator, blockProcessor))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
@@ -1040,7 +1045,10 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
-        .blockValidatorBuilder(MainnetBlockValidatorBuilder::osaka)
+        .blockValidatorBuilder(
+            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
+                MainnetBlockValidatorBuilder.osaka(
+                    blockHeaderValidator, blockBodyValidator, blockProcessor))
         .hardforkId(OSAKA);
   }
 
@@ -1172,6 +1180,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
+        .gasCalculator(AmsterdamGasCalculator::new)
         // EIP-7708: Override evmBuilder to use Amsterdam EVM with transfer logging
         .evmBuilder(
             (gasCalculator, __) ->
@@ -1220,7 +1229,10 @@ public abstract class MainnetProtocolSpecs {
                     .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
                     .build())
         .blockAccessListFactory(new BlockAccessListFactory())
+        .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::amsterdam)
+
         // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
         .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)

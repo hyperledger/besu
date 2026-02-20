@@ -76,6 +76,7 @@ public class ProtocolSpecBuilder {
 
   private BlockProcessorBuilder blockProcessorBuilder;
   private BlockValidatorBuilder blockValidatorBuilder;
+  private Function<ProtocolSchedule, BlockAccessListValidator> blockAccessListValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
 
   private HardforkId hardforkId;
@@ -166,6 +167,12 @@ public class ProtocolSpecBuilder {
   public ProtocolSpecBuilder blockBodyValidatorBuilder(
       final Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
     this.blockBodyValidatorBuilder = blockBodyValidatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder blockAccessListValidatorBuilder(
+      final Function<ProtocolSchedule, BlockAccessListValidator> blockAccessListValidatorBuilder) {
+    this.blockAccessListValidatorBuilder = blockAccessListValidatorBuilder;
     return this;
   }
 
@@ -344,6 +351,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(transactionProcessorBuilder, "Missing transaction processor");
     checkNotNull(blockHeaderValidatorBuilder, "Missing block header validator");
     checkNotNull(blockBodyValidatorBuilder, "Missing block body validator");
+    checkNotNull(blockAccessListValidatorBuilder, "Missing block access list validator");
     checkNotNull(blockProcessorBuilder, "Missing block processor");
     checkNotNull(blockImporterBuilder, "Missing block importer");
     checkNotNull(blockValidatorBuilder, "Missing block validator");
@@ -399,12 +407,9 @@ public class ProtocolSpecBuilder {
 
     BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor, protocolSchedule);
 
-    final BlockValidator blockValidator =
-        blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
-    final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
-
     final boolean isStackedModeEnabled =
         evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.STACKED;
+
     final boolean balForkActivated = blockAccessListFactory != null;
 
     if (balForkActivated && !isStackedModeEnabled) {
@@ -412,6 +417,14 @@ public class ProtocolSpecBuilder {
           "Block Access List (BAL) is activated by fork but world updater mode is not STACKED. "
               + "BAL requires STACKED world updater mode.");
     }
+
+    final BlockAccessListValidator blockAccessListValidator =
+        blockAccessListValidatorBuilder.apply(protocolSchedule);
+
+    final BlockValidator blockValidator =
+        blockValidatorBuilder.apply(
+            blockHeaderValidator, blockBodyValidator, blockProcessor, blockAccessListValidator);
+    final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
 
     return new ProtocolSpec(
         hardforkId,
@@ -501,7 +514,8 @@ public class ProtocolSpecBuilder {
     BlockValidator apply(
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
-        BlockProcessor blockProcessor);
+        BlockProcessor blockProcessor,
+        BlockAccessListValidator blockAccessListValidator);
   }
 
   @FunctionalInterface
