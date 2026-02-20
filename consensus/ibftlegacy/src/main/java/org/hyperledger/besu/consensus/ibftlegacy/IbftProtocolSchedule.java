@@ -86,7 +86,10 @@ public class IbftProtocolSchedule {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 ibftBlockHeaderValidatorBuilder(secondsBetweenBlocks))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
+        .blockValidatorBuilder(
+            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
+                MainnetBlockValidatorBuilder.frontier(
+                    blockHeaderValidator, blockBodyValidator, blockProcessor))
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent) -> BigInteger.ONE)
         .blockReward(Wei.ZERO)
