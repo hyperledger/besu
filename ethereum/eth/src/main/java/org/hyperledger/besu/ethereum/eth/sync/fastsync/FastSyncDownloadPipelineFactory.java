@@ -49,6 +49,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -146,7 +147,8 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadSyncReceiptsStep(
             protocolSchedule,
             ethContext,
-            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()),
+            Duration.ofMillis(syncConfig.getReceiptsDownloadStepTimeoutMillis()));
     final BlockHeader pivotBlockHeader =
         fastSyncState
             .getPivotBlockHeader()
