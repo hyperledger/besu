@@ -16,11 +16,10 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
-import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 
 import java.util.Optional;
 
@@ -48,7 +47,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -79,7 +78,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ip);
@@ -102,7 +101,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     parseCommand("--p2p-host", host);
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -122,7 +121,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -150,7 +149,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     parseCommand("--p2p-host", ipv4Host, "--p2p-host-ipv6", ipv6Host);
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
@@ -177,7 +176,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     parseCommand("--p2p-host", ipv6Host);
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv6Host);
@@ -204,7 +203,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     parseCommand("--p2p-interface", ipv4Interface, "--p2p-interface-ipv6", ipv6Interface);
 
     verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Interface);
@@ -245,7 +244,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pListenInterfaceIpv6(optionalStringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
@@ -272,7 +271,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pListenInterfaceIpv6(optionalStringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
@@ -291,7 +290,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
     verify(mockRunnerBuilder).p2pListenInterfaceIpv6(optionalStringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).outboundIpVersionPreference(any(IpVersionPreference.class));
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);

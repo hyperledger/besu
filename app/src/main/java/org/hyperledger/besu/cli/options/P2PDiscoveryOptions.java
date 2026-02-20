@@ -18,7 +18,6 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -151,21 +150,19 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   // ===================== IP Version Preference =====================
 
   /**
-   * IP version preference for outbound peer connections. This determines which address to use when
-   * connecting to peers that advertise both IPv4 and IPv6 addresses.
+   * When a discovered peer advertises both IPv4 and IPv6 addresses, prefer IPv6 for outbound
+   * connections. By default, IPv4 is preferred. If the peer only advertises one address family, it
+   * is always used regardless of this setting.
    */
   @CommandLine.Option(
-      names = {"--p2p-outbound-ip-version"},
-      paramLabel = "<ipv4_preferred|ipv6_preferred|ipv4_only|ipv6_only>",
+      names = {"--p2p-ipv6-outbound-enabled"},
       description =
           """
-          IP version preference for outbound P2P connections when peers advertise both IPv4 and IPv6 addresses.
-          IPV4_PREFERRED: prefer IPv4, fallback to IPv6 if IPv4 unavailable (default).
-          IPV6_PREFERRED: prefer IPv6, fallback to IPv4 if IPv6 unavailable.
-          IPV4_ONLY: only use IPv4, never use IPv6.
-          IPV6_ONLY: only use IPv6, never use IPv4.
+          Prefer IPv6 addresses for outbound P2P connections when peers advertise both IPv4 and IPv6.
+          When false (default), IPv4 is preferred.
+          If a peer only advertises one address family, it is always used.
           (default: ${DEFAULT-VALUE})""")
-  public final IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
+  public boolean preferIpv6Outbound = false;
 
   /** The maximum number of peers this node can connect to. */
   @CommandLine.Option(
@@ -286,7 +283,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
         poaDiscoveryRetryBootnodes,
         bootNodes,
         discoveryDnsUrl,
-        outboundIpVersionPreference);
+        preferIpv6Outbound);
   }
 
   /**

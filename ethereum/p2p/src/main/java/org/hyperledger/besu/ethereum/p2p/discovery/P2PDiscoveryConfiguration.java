@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Collection;
@@ -42,4 +41,4 @@ public record P2PDiscoveryConfiguration(
     Boolean poaDiscoveryRetryBootnodes,
     List<String> bootNodes,
     String discoveryDnsUrl,
-    IpVersionPreference outboundIpVersionPreference) {}
+    boolean preferIpv6Outbound) {}

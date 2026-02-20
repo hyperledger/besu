@@ -39,7 +39,7 @@ public class DiscoveryConfiguration {
   private Optional<String> bindHostIpv6 = Optional.empty();
   private int bindPortIpv6 = EnodeURLImpl.DEFAULT_LISTENING_PORT_IPV6;
   private Optional<String> advertisedHostIpv6 = Optional.empty();
-  private IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
+  private boolean preferIpv6Outbound = false;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -179,13 +179,12 @@ public class DiscoveryConfiguration {
     return bindHostIpv6.isPresent();
   }
 
-  public IpVersionPreference getOutboundIpVersionPreference() {
-    return outboundIpVersionPreference;
+  public boolean isPreferIpv6Outbound() {
+    return preferIpv6Outbound;
   }
 
-  public DiscoveryConfiguration setOutboundIpVersionPreference(
-      final IpVersionPreference outboundIpVersionPreference) {
-    this.outboundIpVersionPreference = outboundIpVersionPreference;
+  public DiscoveryConfiguration setPreferIpv6Outbound(final boolean preferIpv6Outbound) {
+    this.preferIpv6Outbound = preferIpv6Outbound;
     return this;
   }
 
@@ -208,7 +207,7 @@ public class DiscoveryConfiguration {
         && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL)
         && Objects.equals(bindHostIpv6, that.bindHostIpv6)
         && Objects.equals(advertisedHostIpv6, that.advertisedHostIpv6)
-        && Objects.equals(outboundIpVersionPreference, that.outboundIpVersionPreference);
+        && preferIpv6Outbound == that.preferIpv6Outbound;
   }
 
   @Override
@@ -224,7 +223,7 @@ public class DiscoveryConfiguration {
         bindHostIpv6,
         bindPortIpv6,
         advertisedHostIpv6,
-        outboundIpVersionPreference);
+        preferIpv6Outbound);
   }
 
   @Override
@@ -256,8 +255,8 @@ public class DiscoveryConfiguration {
         + bindPortIpv6
         + ", advertisedHostIpv6="
         + advertisedHostIpv6
-        + ", outboundIpVersionPreference="
-        + outboundIpVersionPreference
+        + ", preferIpv6Outbound="
+        + preferIpv6Outbound
         + '}';
   }
 }

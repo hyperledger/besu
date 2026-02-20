@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -33,28 +32,28 @@ public class DiscoveryPeerFactory {
   }
 
   public static DiscoveryPeer fromNodeRecord(
-      final NodeRecord nodeRecord, final IpVersionPreference ipVersionPreference) {
+      final NodeRecord nodeRecord, final boolean preferIpv6Outbound) {
     EthereumNodeRecord enr = EthereumNodeRecord.fromNodeRecord(nodeRecord);
-    return fromEthereumNodeRecord(enr, ipVersionPreference);
+    return fromEthereumNodeRecord(enr, preferIpv6Outbound);
   }
 
   public static DiscoveryPeer fromEthereumNodeRecord(final EthereumNodeRecord enr) {
-    return fromEthereumNodeRecord(enr, IpVersionPreference.IPV4_PREFERRED);
+    return fromEthereumNodeRecord(enr, false);
   }
 
   public static DiscoveryPeer fromEthereumNodeRecord(
-      final EthereumNodeRecord enr, final IpVersionPreference ipVersionPreference) {
-    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr, ipVersionPreference));
+      final EthereumNodeRecord enr, final boolean preferIpv6Outbound) {
+    DiscoveryPeer peer = fromEnode(buildEnodeUrl(enr, preferIpv6Outbound));
     peer.setNodeRecord(enr.nodeRecord());
     return peer;
   }
 
   private static EnodeURL buildEnodeUrl(
-      final EthereumNodeRecord enr, final IpVersionPreference ipVersionPreference) {
+      final EthereumNodeRecord enr, final boolean preferIpv6Outbound) {
     final boolean hasIpv4 = enr.ip() != null;
     final boolean hasIpv6 = enr.ipv6().isPresent();
 
-    if (ipVersionPreference.shouldUseIpv6(hasIpv4, hasIpv6)) {
+    if (hasIpv6 && (!hasIpv4 || preferIpv6Outbound)) {
       return EnodeURLImpl.builder()
           .ipAddress(
               enr.ipv6()

@@ -74,7 +74,6 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.config.IpVersionPreference;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
@@ -171,6 +170,7 @@ public class RunnerBuilder {
   private Optional<String> p2pAdvertisedHostIpv6 = Optional.empty();
   private Optional<String> p2pListenInterfaceIpv6 = Optional.empty();
   private int p2pListenPortIpv6 = EnodeURLImpl.DEFAULT_LISTENING_PORT_IPV6;
+  private boolean preferIpv6Outbound = false;
   private NatMethod natMethod = NatMethod.AUTO;
   private boolean natMethodFallbackEnabled;
   private EthNetworkConfig ethNetworkConfig;
@@ -198,7 +198,6 @@ public class RunnerBuilder {
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
   private boolean poaDiscoveryRetryBootnodes = true;
-  private IpVersionPreference outboundIpVersionPreference = IpVersionPreference.IPV4_PREFERRED;
   private TransactionValidatorServiceImpl transactionValidatorService;
 
   /** Instantiates a new Runner builder. */
@@ -641,14 +640,13 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add IP version preference for outbound P2P connections.
+   * Add IPv6 outbound preference for P2P connections.
    *
-   * @param outboundIpVersionPreference the IP version preference
+   * @param preferIpv6Outbound if true, prefer IPv6 when peer advertises both address families
    * @return the runner builder
    */
-  public RunnerBuilder outboundIpVersionPreference(
-      final IpVersionPreference outboundIpVersionPreference) {
-    this.outboundIpVersionPreference = outboundIpVersionPreference;
+  public RunnerBuilder preferIpv6Outbound(final boolean preferIpv6Outbound) {
+    this.preferIpv6Outbound = preferIpv6Outbound;
     return this;
   }
 
@@ -684,7 +682,7 @@ public class RunnerBuilder {
           discoveryConfiguration.setBindPortIpv6(p2pListenPortIpv6);
           discoveryConfiguration.setAdvertisedHostIpv6(p2pAdvertisedHostIpv6);
         });
-    discoveryConfiguration.setOutboundIpVersionPreference(outboundIpVersionPreference);
+    discoveryConfiguration.setPreferIpv6Outbound(preferIpv6Outbound);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
