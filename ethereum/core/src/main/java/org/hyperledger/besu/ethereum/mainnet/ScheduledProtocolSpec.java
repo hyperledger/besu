@@ -32,9 +32,6 @@ public interface ScheduledProtocolSpec {
 
   boolean isOnMilestoneBoundary(org.hyperledger.besu.plugin.data.ProcessableBlockHeader header);
 
-  /*
-  public ScheduleType getScheduleType();*/
-
   Hardfork fork();
 
   ProtocolSpec spec();
@@ -81,12 +78,6 @@ public interface ScheduledProtocolSpec {
       return header.getTimestamp() == timestamp;
     }
 
-    /*
-    @Override
-    public ScheduleType getScheduleType() {
-      return ScheduleType.TIME;
-    }*/
-
     @Override
     public Hardfork fork() {
       return new Hardfork(protocolSpec.getHardforkId().description(), timestamp);
@@ -132,11 +123,5 @@ public interface ScheduledProtocolSpec {
     public ProtocolSpec spec() {
       return protocolSpec;
     }
-
-    /*
-    @Override
-    public ScheduleType getScheduleType() {
-      return ScheduleType.BLOCK;
-    }*/
   }
 }

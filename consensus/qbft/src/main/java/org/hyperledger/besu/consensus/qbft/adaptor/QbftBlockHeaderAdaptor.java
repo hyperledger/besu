@@ -55,12 +55,6 @@ public class QbftBlockHeaderAdaptor implements QbftBlockHeader {
     return blockHeader.getHash();
   }
 
-  /*
-  @Override
-  public BlockHeader getHeader() {
-    return blockHeader;
-  }*/
-
   /**
    * Returns the Besu block header.
    *
