@@ -32,10 +32,6 @@ public class DiscoveryPeerFactory {
     return DiscoveryPeerV4.fromEnode(enode);
   }
 
-  public static DiscoveryPeer fromNodeRecord(final NodeRecord nodeRecord) {
-    return fromNodeRecord(nodeRecord, IpVersionPreference.IPV4_PREFERRED);
-  }
-
   public static DiscoveryPeer fromNodeRecord(
       final NodeRecord nodeRecord, final IpVersionPreference ipVersionPreference) {
     EthereumNodeRecord enr = EthereumNodeRecord.fromNodeRecord(nodeRecord);
