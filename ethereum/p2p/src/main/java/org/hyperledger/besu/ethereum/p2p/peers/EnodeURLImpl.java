@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.peers;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.NetworkUtility;
 
@@ -34,7 +35,7 @@ import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import org.apache.tuweni.bytes.Bytes;
 
-public class EnodeURLImpl implements EnodeURL {
+public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
 
   public static final int DEFAULT_LISTENING_PORT = 30303;
   public static final int NODE_ID_SIZE = 64;
@@ -71,11 +72,11 @@ public class EnodeURLImpl implements EnodeURL {
     return new Builder();
   }
 
-  public static EnodeURL fromString(final String value) {
+  public static EnodeURLImpl fromString(final String value) {
     return fromString(value, EnodeDnsConfiguration.dnsDisabled());
   }
 
-  public static EnodeURL fromString(
+  public static EnodeURLImpl fromString(
       final String value, final EnodeDnsConfiguration enodeDnsConfiguration) {
     try {
       checkStringArgumentNotEmpty(value, "Invalid empty value.");
@@ -101,11 +102,12 @@ public class EnodeURLImpl implements EnodeURL {
     }
   }
 
-  public static EnodeURL fromURI(final URI uri) {
+  public static EnodeURLImpl fromURI(final URI uri) {
     return fromURI(uri, EnodeDnsConfiguration.dnsDisabled());
   }
 
-  public static EnodeURL fromURI(final URI uri, final EnodeDnsConfiguration enodeDnsConfiguration) {
+  public static EnodeURLImpl fromURI(
+      final URI uri, final EnodeDnsConfiguration enodeDnsConfiguration) {
     checkArgument(uri != null, "URI cannot be null");
     checkStringArgumentNotEmpty(uri.getScheme(), "Missing 'enode' scheme.");
     checkStringArgumentNotEmpty(uri.getHost(), "Missing or invalid host or ip address.");
@@ -146,14 +148,13 @@ public class EnodeURLImpl implements EnodeURL {
     checkArgument(argument != null && !argument.trim().isEmpty(), message);
   }
 
-  public static boolean sameListeningEndpoint(final EnodeURL enodeA, final EnodeURL enodeB) {
+  public static boolean sameListeningEndpoint(final EnodeURL enodeA, final NodeIdentifier enodeB) {
     if (enodeA == null || enodeB == null) {
       return false;
     }
 
-    return Objects.equals(enodeA.getNodeId(), enodeB.getNodeId())
-        && Objects.equals(enodeA.getIp(), enodeB.getIp())
-        && Objects.equals(enodeA.getListeningPort(), enodeB.getListeningPort());
+    return Objects.equals(enodeA.getIp(), enodeB.getInetAddress())
+        && Objects.equals(enodeA.getListeningPort(), enodeB.getTcpListeningPort());
   }
 
   public static Bytes parseNodeId(final String nodeId) {
@@ -328,6 +329,21 @@ public class EnodeURLImpl implements EnodeURL {
     return this.toURI().toString();
   }
 
+  @Override
+  public InetAddress getInetAddress() {
+    return getIp();
+  }
+
+  @Override
+  public Optional<Integer> getTcpListeningPort() {
+    return getListeningPort();
+  }
+
+  @Override
+  public Optional<Integer> getUdpDiscoveryPort() {
+    return getDiscoveryPort();
+  }
+
   public static class Builder {
 
     private Bytes nodeId;
@@ -338,7 +354,7 @@ public class EnodeURLImpl implements EnodeURL {
 
     private Builder() {}
 
-    public EnodeURL build() {
+    public EnodeURLImpl build() {
       validate();
       return new EnodeURLImpl(nodeId, ip, maybeHostname, listeningPort, discoveryPort);
     }

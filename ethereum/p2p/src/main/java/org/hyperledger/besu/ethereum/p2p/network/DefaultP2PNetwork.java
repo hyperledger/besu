@@ -50,7 +50,6 @@ import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -456,7 +455,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Optional<EnodeURL> getLocalEnode() {
+  public Optional<EnodeURLImpl> getLocalEnode() {
     if (!localNode.isReady()) {
       return Optional.empty();
     }
@@ -473,7 +472,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     // override advertised host if we detect an external IP address via NAT manager
     final String advertisedAddress = natService.queryExternalIPAddress(address);
 
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress(advertisedAddress)

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
@@ -103,6 +104,10 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
             .newAddressHandler((nodeRecord, newAddress) -> Optional.of(nodeRecord))
             // TODO Integrate address filtering based on peer permissions
             .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
+            .bootnodes(
+                config.discoveryConfiguration().getEnrBootnodes().stream()
+                    .map(EthereumNodeRecord::nodeRecord)
+                    .toList())
             .buildMutable();
 
     return new PeerDiscoveryAgentV5(

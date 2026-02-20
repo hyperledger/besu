@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
@@ -88,6 +89,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
@@ -181,7 +183,7 @@ public class RunnerBuilder {
   private ObservableMetricsSystem metricsSystem;
   private PermissioningServiceImpl permissioningService;
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
-  private Collection<EnodeURL> staticNodes = Collections.emptyList();
+  private Collection<EnodeURLImpl> staticNodes = Collections.emptyList();
   private Optional<String> identityString = Optional.empty();
   private BesuPluginContextImpl besuPluginContext;
   private boolean autoLogBloomCaching = true;
@@ -482,7 +484,7 @@ public class RunnerBuilder {
    * @param staticNodes the static nodes
    * @return the runner builder
    */
-  public RunnerBuilder staticNodes(final Collection<EnodeURL> staticNodes) {
+  public RunnerBuilder staticNodes(final Collection<EnodeURLImpl> staticNodes) {
     this.staticNodes = staticNodes;
     return this;
   }
@@ -615,16 +617,24 @@ public class RunnerBuilder {
             .setBindPort(p2pListenPort)
             .setAdvertisedHost(p2pAdvertisedHost);
     if (discoveryEnabled) {
-      final List<EnodeURL> bootstrap;
-      if (ethNetworkConfig.bootNodes() == null) {
-        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).bootNodes();
+      final List<EnodeURLImpl> bootstrap;
+      if (ethNetworkConfig.enodeBootNodes() == null) {
+        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).enodeBootNodes();
       } else {
-        bootstrap = ethNetworkConfig.bootNodes();
+        bootstrap = ethNetworkConfig.enodeBootNodes();
       }
-      discoveryConfiguration.setBootnodes(bootstrap);
+      discoveryConfiguration.setEnodeBootnodes(bootstrap);
+      discoveryConfiguration.setEnrBootnodes(
+          ethNetworkConfig.enrBootNodes() == null
+              ? EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).enrBootNodes()
+              : ethNetworkConfig.enrBootNodes());
+
       discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
           besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
-      LOG.info("Resolved {} bootnodes.", bootstrap.size());
+      LOG.info(
+          "Resolved {} bootnodes.",
+          discoveryConfiguration.getEnodeBootnodes().size()
+              + discoveryConfiguration.getEnrBootnodes().size());
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
@@ -670,7 +680,8 @@ public class RunnerBuilder {
     final PeerPermissions defaultPeerPermissions =
         PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
 
-    final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
+    final List<? extends NodeIdentifier> bootnodes =
+        discoveryConfiguration.getBootnodeIdentifiers();
 
     final Synchronizer synchronizer = besuController.getSynchronizer();
 
@@ -1124,8 +1135,8 @@ public class RunnerBuilder {
     return ethstatsOptions != null && !Strings.isNullOrEmpty(ethstatsOptions.getEthstatsUrl());
   }
 
-  private Stream<EnodeURL> sanitizePeers(
-      final P2PNetwork network, final Collection<EnodeURL> enodeURLS) {
+  private Stream<EnodeURLImpl> sanitizePeers(
+      final P2PNetwork network, final Collection<EnodeURLImpl> enodeURLS) {
     if (network.getLocalEnode().isEmpty()) {
       return enodeURLS.stream();
     }
@@ -1135,12 +1146,12 @@ public class RunnerBuilder {
   }
 
   private Optional<NodePermissioningController> buildNodePermissioningController(
-      final List<EnodeURL> bootnodesAsEnodeURLs,
+      final List<? extends NodeIdentifier> bootnodesIdentifiers,
       final Synchronizer synchronizer,
       final TransactionSimulator transactionSimulator,
       final Bytes localNodeId,
       final Blockchain blockchain) {
-    final Collection<EnodeURL> fixedNodes = getFixedNodes(bootnodesAsEnodeURLs, staticNodes);
+    final Collection<NodeIdentifier> fixedNodes = getFixedNodes(bootnodesIdentifiers, staticNodes);
 
     if (permissioningConfiguration.isPresent()) {
       final PermissioningConfiguration configuration = this.permissioningConfiguration.get();
@@ -1229,9 +1240,11 @@ public class RunnerBuilder {
    * @return the fixed and more nodes combined
    */
   @VisibleForTesting
-  public static Collection<EnodeURL> getFixedNodes(
-      final Collection<EnodeURL> someFixedNodes, final Collection<EnodeURL> moreFixedNodes) {
-    final Collection<EnodeURL> fixedNodes = new ArrayList<>(someFixedNodes);
+  public static Collection<NodeIdentifier> getFixedNodes(
+      final Collection<? extends NodeIdentifier> someFixedNodes,
+      final Collection<EnodeURLImpl> moreFixedNodes) {
+    final Collection<NodeIdentifier> fixedNodes = new ArrayList<>();
+    fixedNodes.addAll(someFixedNodes);
     fixedNodes.addAll(moreFixedNodes);
     return fixedNodes;
   }
