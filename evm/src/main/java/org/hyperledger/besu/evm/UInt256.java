@@ -653,22 +653,20 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   private UInt257 adc(final UInt256 other) {
     if (isZero()) return new UInt257(false, other);
     if (other.isZero()) return new UInt257(false, this);
+    long z0 = u0 + other.u0;
+    long carry = Long.compareUnsigned(z0, u0) < 0 ? 1 : 0;
 
-    long v0 = other.u0;
-    long z0 = u0 + v0;
-    long carry = ((v0 & u0) | ((v0 | u0) & ~z0)) >>> 63; // z0 < u0 ? 1 : 0
+    long z1 = u1 + other.u1 + carry;
+    carry = (Long.compareUnsigned(z1, u1) < 0 ? 1 : 0)
+      | ((Long.compareUnsigned(z1, u1) == 0 ? 1 : 0) & carry);
 
-    long v1 = other.u1;
-    long z1 = u1 + v1 + carry;
-    carry = ((v1 & u1) | ((v1 | u1) & ~z1)) >>> 63; // z1 < u1 || (z1 == u1 && carry) ? 1 : 0
+    long z2 = u2 + other.u2 + carry;
+    carry = (Long.compareUnsigned(z2, u2) < 0 ? 1 : 0)
+      | ((Long.compareUnsigned(z2, u2) == 0 ? 1 : 0) & carry);
 
-    long v2 = other.u2;
-    long z2 = u2 + v2 + carry;
-    carry = ((v2 & u2) | ((v2 | u2) & ~z2)) >>> 63; // z2 < u2 || (z2 == u2 && carry) ? 1 : 0
-
-    long v3 = other.u3;
     long z3 = u3 + other.u3 + carry;
-    carry = ((v3 & u3) | ((v3 | u3) & ~z3)) >>> 63; // z3 < u3 || (z3 == u3 && carry) ? 1 : 0
+    carry = (Long.compareUnsigned(z3, u3) < 0 ? 1 : 0)
+      | ((Long.compareUnsigned(z3, u3) == 0 ? 1 : 0) & carry);
 
     return new UInt257(carry != 0, new UInt256(z3, z2, z1, z0));
   }
