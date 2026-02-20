@@ -20,6 +20,8 @@
 
 ### Bug fixes
 
+- BFT forks that change block period on time-based forks don't take effect [9681](https://github.com/hyperledger/besu/issues/9681)
+
 ## 26.1.0-RC1
 
 ### Breaking Changes
