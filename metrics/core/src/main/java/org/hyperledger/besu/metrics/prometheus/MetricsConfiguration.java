@@ -65,6 +65,7 @@ public class MetricsConfiguration {
   private final List<String> hostsAllowlist;
   private final boolean timersEnabled;
   private final int idleTimeout;
+  private final boolean executionMetricsEnabled;
 
   /**
    * Builder.
@@ -88,7 +89,8 @@ public class MetricsConfiguration {
       final String prometheusJob,
       final List<String> hostsAllowlist,
       final boolean timersEnabled,
-      final int idleTimeout) {
+      final int idleTimeout,
+      final boolean executionMetricsEnabled) {
     this.enabled = enabled;
     this.port = port;
     this.protocol = protocol;
@@ -102,6 +104,7 @@ public class MetricsConfiguration {
     this.hostsAllowlist = hostsAllowlist;
     this.timersEnabled = timersEnabled;
     this.idleTimeout = idleTimeout;
+    this.executionMetricsEnabled = executionMetricsEnabled;
   }
 
   /**
@@ -250,6 +253,15 @@ public class MetricsConfiguration {
     return idleTimeout;
   }
 
+  /**
+   * Is execution metrics enabled.
+   *
+   * @return the boolean
+   */
+  public boolean isExecutionMetricsEnabled() {
+    return executionMetricsEnabled;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -266,6 +278,7 @@ public class MetricsConfiguration {
         .add("hostsAllowlist", hostsAllowlist)
         .add("timersEnabled", timersEnabled)
         .add("idleTimeout", idleTimeout)
+        .add("executionMetricsEnabled", executionMetricsEnabled)
         .toString();
   }
 
@@ -290,7 +303,8 @@ public class MetricsConfiguration {
         && Objects.equals(prometheusJob, that.prometheusJob)
         && Objects.equals(hostsAllowlist, that.hostsAllowlist)
         && timersEnabled == that.timersEnabled
-        && idleTimeout == that.idleTimeout;
+        && idleTimeout == that.idleTimeout
+        && executionMetricsEnabled == that.executionMetricsEnabled;
   }
 
   @Override
@@ -308,7 +322,8 @@ public class MetricsConfiguration {
         prometheusJob,
         hostsAllowlist,
         timersEnabled,
-        idleTimeout);
+        idleTimeout,
+        executionMetricsEnabled);
   }
 
   /** The type Builder. */
@@ -326,6 +341,7 @@ public class MetricsConfiguration {
     private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
     private boolean timersEnabled = DEFAULT_METRICS_TIMERS_ENABLED;
     private int idleTimeout = DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS;
+    private boolean executionMetricsEnabled = false;
 
     private Builder() {}
 
@@ -486,6 +502,17 @@ public class MetricsConfiguration {
     }
 
     /**
+     * Execution metrics enabled.
+     *
+     * @param executionMetricsEnabled the execution metrics enabled
+     * @return the builder
+     */
+    public Builder executionMetricsEnabled(final boolean executionMetricsEnabled) {
+      this.executionMetricsEnabled = executionMetricsEnabled;
+      return this;
+    }
+
+    /**
      * Build metrics configuration.
      *
      * @return the metrics configuration
@@ -504,7 +531,8 @@ public class MetricsConfiguration {
           prometheusJob,
           hostsAllowlist,
           timersEnabled,
-          idleTimeout);
+          idleTimeout,
+          executionMetricsEnabled);
     }
   }
 }

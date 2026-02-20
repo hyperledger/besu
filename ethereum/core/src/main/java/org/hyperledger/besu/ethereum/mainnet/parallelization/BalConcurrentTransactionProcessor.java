@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
+import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -56,14 +57,17 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
   private final MainnetTransactionProcessor transactionProcessor;
   private final BlockAccessList blockAccessList;
   private final Duration balProcessingTimeout;
+  private final BlockProcessingContext blockProcessingContext;
 
   public BalConcurrentTransactionProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final BlockAccessList blockAccessList,
-      final BalConfiguration balConfiguration) {
+      final BalConfiguration balConfiguration,
+      final BlockProcessingContext blockProcessingContext) {
     this.transactionProcessor = transactionProcessor;
     this.blockAccessList = blockAccessList;
     this.balProcessingTimeout = balConfiguration.getBalProcessingTimeout();
+    this.blockProcessingContext = blockProcessingContext;
   }
 
   @Override
@@ -98,13 +102,20 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                   BlockAccessListBuilder.createTransactionAccessLocationTracker(
                       transactionLocation));
 
+      // Use the operation tracer from the block processing context if available
+      // (which may contain ExecutionMetricsTracer), otherwise use NO_TRACING
+      final OperationTracer operationTracer =
+          blockProcessingContext != null
+              ? blockProcessingContext.getOperationTracer()
+              : OperationTracer.NO_TRACING;
+
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               txUpdater,
               blockHeader,
               transaction.detachedCopy(),
               miningBeneficiary,
-              OperationTracer.NO_TRACING,
+              operationTracer,
               blockHashLookup,
               TransactionValidationParams.processingBlock(),
               blobGasPrice,
@@ -114,7 +125,11 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       blockUpdater.commit();
 
       // TODO: We should pass transaction accumulator
-      ctxBuilder.transactionAccumulator(blockUpdater).transactionProcessingResult(result);
+      ctxBuilder
+          .transactionAccumulator(blockUpdater)
+          .transactionProcessingResult(result)
+          .backgroundTracer(
+              null); // BalConcurrentTransactionProcessor doesn't use background tracers
 
       return ctxBuilder.build();
     } finally {
