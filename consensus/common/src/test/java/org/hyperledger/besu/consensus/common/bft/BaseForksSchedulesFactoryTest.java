@@ -24,6 +24,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Map;
 import java.util.Optional;
@@ -166,6 +167,46 @@ public abstract class BaseForksSchedulesFactoryTest<
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(
             "Mining beneficiary in transition config is not a valid ethereum address");
+  }
+
+  @Test
+  public void createsScheduleThatChangesBlockPeriodAtTimestamp() {
+    final C qbftConfigOptions = createBftOptions(o -> o.setBlockPeriodSeconds(2));
+
+    ObjectNode[] forks = {
+      // Change block period 2->3 seconds
+      JsonUtil.objectNodeFromMap(
+          Map.of(BftFork.FORK_BLOCK_KEY, 1234567, BftFork.BLOCK_PERIOD_SECONDS_KEY, 3)),
+      // Change block period 3->4 seconds
+      JsonUtil.objectNodeFromMap(
+          Map.of(BftFork.FORK_BLOCK_KEY, 1234568, BftFork.BLOCK_PERIOD_SECONDS_KEY, 4))
+    };
+
+    final GenesisConfigOptions genesisConfigOptions = createGenesisConfig(qbftConfigOptions, forks);
+    final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
+
+    for (ForkSpec<C> f : forksSchedule.getForks()) {
+      f.setForkType(ScheduledProtocolSpec.ScheduleType.BLOCK);
+    }
+
+    // Should ignore block timestamp if forks are block type
+    assertThat(forksSchedule.getFork(0, 1234566).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+    assertThat(forksSchedule.getFork(0, 1234567).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+    assertThat(forksSchedule.getFork(0, 1234568).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+
+    for (ForkSpec<C> f : forksSchedule.getForks()) {
+      f.setForkType(ScheduledProtocolSpec.ScheduleType.TIME);
+    }
+
+    // Should ignore block timestamp if forks are block type
+    assertThat(forksSchedule.getFork(1234566, 0).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+    assertThat(forksSchedule.getFork(1234567, 0).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+    assertThat(forksSchedule.getFork(1234568, 0).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+
+    // Should reflect changes based on timestamp
+    assertThat(forksSchedule.getFork(0, 1234566).getValue().getBlockPeriodSeconds()).isEqualTo(2);
+    assertThat(forksSchedule.getFork(0, 1234567).getValue().getBlockPeriodSeconds()).isEqualTo(3);
+    assertThat(forksSchedule.getFork(0, 1234568).getValue().getBlockPeriodSeconds()).isEqualTo(4);
   }
 
   protected abstract C createBftOptions(final Consumer<M> optionModifier);
