@@ -204,6 +204,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       LOG.warn(
           "Discovery Protocol v5 is enabled via --Xv5-discovery-enabled. This is an experimental feature and may not be fully stable.");
       warnIfEphemeralPortsWithDiscV5();
+    } else {
+      warnIfIpv6OptionsWithDiscV4();
     }
 
     final String address = config.discoveryConfiguration().getAdvertisedHost();
@@ -463,6 +465,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return Optional.empty();
     }
     return Optional.of(localNode.getPeer().getEnodeURL());
+  }
+
+  private void warnIfIpv6OptionsWithDiscV4() {
+    final DiscoveryConfiguration disc = config.discoveryConfiguration();
+    if (disc.getAdvertisedHostIpv6().isPresent() || disc.isDualStackEnabled()) {
+      LOG.warn(
+          "--p2p-host-ipv6 and --p2p-interface-ipv6 are only supported with DiscV5 "
+              + "(--Xv5-discovery-enabled). These options are ignored by DiscV4.");
+    }
   }
 
   private void warnIfEphemeralPortsWithDiscV5() {
