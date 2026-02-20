@@ -67,8 +67,8 @@ public class DiscoveryPeerFactory {
                           new IllegalStateException(
                               "IPv6 address not present in ENR despite shouldUseIpv6 returning true")))
           .nodeId(enr.publicKey())
-          .discoveryPort(enr.udpV6())
-          .listeningPort(enr.tcpV6())
+          .discoveryPort(enr.udpV6().or(enr::udp))
+          .listeningPort(enr.tcpV6().or(enr::tcp))
           .build();
     }
     return EnodeURLImpl.builder()
