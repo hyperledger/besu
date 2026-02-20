@@ -201,7 +201,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     if (config.discoveryConfiguration().isDiscoveryV5Enabled()) {
-      LOG.warn("Discovery Protocol v5 is not available");
+      LOG.warn(
+          "Discovery Protocol v5 is enabled via --Xv5-discovery-enabled. This is an experimental feature and may not be fully stable.");
     }
 
     final String address = config.discoveryConfiguration().getAdvertisedHost();
