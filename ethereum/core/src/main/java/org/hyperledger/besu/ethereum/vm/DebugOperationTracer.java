@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
+import org.hyperledger.besu.evm.operation.AbstractCreateOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
@@ -35,11 +36,29 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer implements OperationTracer {
+
+  /**
+   * Functional interface for zero-allocation streaming of trace data directly from MessageFrame.
+   */
+  @FunctionalInterface
+  public interface StreamingFrameWriter {
+    void writeFrame(
+        int pc,
+        String opcode,
+        long gasRemaining,
+        long gasCost,
+        int depth,
+        Bytes[] preExecutionStack,
+        MessageFrame frame,
+        ExceptionalHaltReason haltReason,
+        Bytes revertReason);
+  }
 
   private final OpCodeTracerConfig options;
 
@@ -50,6 +69,8 @@ public class DebugOperationTracer implements OperationTracer {
    */
   private final boolean recordChildCallGas;
 
+  private StreamingFrameWriter streamingWriter;
+  private Consumer<TraceFrame> frameConsumer;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
@@ -73,6 +94,14 @@ public class DebugOperationTracer implements OperationTracer {
   public DebugOperationTracer(final OpCodeTracerConfig options, final boolean recordChildCallGas) {
     this.options = options;
     this.recordChildCallGas = recordChildCallGas;
+  }
+
+  public void setFrameConsumer(final Consumer<TraceFrame> consumer) {
+    this.frameConsumer = consumer;
+  }
+
+  public void setStreamingWriter(final StreamingFrameWriter writer) {
+    this.streamingWriter = writer;
   }
 
   @Override
@@ -109,18 +138,30 @@ public class DebugOperationTracer implements OperationTracer {
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    final Operation currentOperation = frame.getCurrentOperation();
-    final String opcode = currentOperation.getName();
     if (!traceOpcode) {
       return;
     }
+    if (streamingWriter != null) {
+      tracePostExecutionStreaming(frame, operationResult);
+      return;
+    }
+    final Operation currentOperation = frame.getCurrentOperation();
+    final String opcode = currentOperation.getName();
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
-    final Optional<Bytes[]> memory = captureMemory(frame);
+    // Always capture memory for soft-failed CREATE/CREATE2 ops so callTracer can extract init code
+    final Optional<Bytes[]> memory =
+        captureMemory(frame)
+            .or(
+                () ->
+                    operationResult.getSoftFailureReason().isPresent()
+                            && currentOperation instanceof AbstractCreateOperation
+                        ? forceCaptureMem(frame)
+                        : Optional.empty());
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
-    if (!traceFrames.isEmpty()) {
+    if (frameConsumer == null && !traceFrames.isEmpty()) {
       final TraceFrame lastTraceFrame = traceFrames.removeLast();
       final TraceFrame updatedLast =
           TraceFrame.from(lastTraceFrame).setGasRemainingPostExecution(gasRemaining).build();
@@ -170,18 +211,80 @@ public class DebugOperationTracer implements OperationTracer {
             .setGasAvailableForChildCall(operationResult.getGasAvailableForChildCall())
             .build();
 
-    traceFrames.add(lastFrame);
+    if (frameConsumer != null) {
+      frameConsumer.accept(lastFrame);
+    } else {
+      traceFrames.add(lastFrame);
+    }
+    frame.reset();
+  }
+
+  private void tracePostExecutionStreaming(
+      final MessageFrame frame, final OperationResult operationResult) {
+    final Operation currentOperation = frame.getCurrentOperation();
+    final String opcode = currentOperation.getName();
+
+    long thisGasCost = operationResult.getGasCost();
+    if (recordChildCallGas && currentOperation instanceof AbstractCallOperation) {
+      thisGasCost += frame.getMessageFrameStack().getFirst().getRemainingGas();
+    }
+
+    final ExceptionalHaltReason haltReason =
+        operationResult.getHaltReason() != null
+            ? operationResult.getHaltReason()
+            : frame.getExceptionalHaltReason().orElse(null);
+
+    final Bytes revertReason = frame.getRevertReason().orElse(null);
+
+    streamingWriter.writeFrame(
+        pc,
+        opcode,
+        gasRemaining,
+        thisGasCost,
+        depth,
+        preExecutionStack.orElse(null),
+        frame,
+        haltReason,
+        revertReason);
+
     frame.reset();
   }
 
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
+    if (streamingWriter != null) {
+      return;
+    }
 
     final Address recipient = frame.getRecipientAddress();
     final Bytes inputData = frame.getInputData().copy();
 
-    if (traceFrames.isEmpty()) {
+    if (frameConsumer != null) {
+      if (traceFrames.isEmpty()) {
+        final TraceFrame traceFrame =
+            TraceFrame.builder()
+                .setPc(frame.getPC())
+                .setOpcodeNumber(Integer.MAX_VALUE)
+                .setGasRemaining(frame.getRemainingGas())
+                .setGasRefund(frame.getGasRefund())
+                .setDepth(frame.getDepth())
+                .setRecipient(recipient)
+                .setValue(frame.getValue())
+                .setInputData(inputData)
+                .setOutputData(frame.getOutputData())
+                .setWorldUpdater(frame.getWorldUpdater())
+                .setMaybeRefunds(Optional.ofNullable(frame.getRefunds()))
+                .setMaybeCode(Optional.ofNullable(frame.getCode()))
+                .setStackItemsProduced(frame.getMaxStackSize())
+                .setVirtualOperation(true)
+                .setPrecompiledGasCost(gasRequirement)
+                .setPrecompileIOData(recipient, inputData, output)
+                .build();
+        frameConsumer.accept(traceFrame);
+      }
+      // When streaming with non-empty traceFrames, already-written frames can't be modified
+    } else if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
           TraceFrame.builder()
               .setPc(frame.getPC())
@@ -218,6 +321,11 @@ public class DebugOperationTracer implements OperationTracer {
   @Override
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
+    if (streamingWriter != null || frameConsumer != null) {
+      // When streaming, already-written frames can't be modified retroactively.
+      // CREATE failure is still captured at the transaction level via failed:true.
+      return;
+    }
     haltReason.ifPresent(
         exceptionalHaltReason -> {
           if (!traceFrames.isEmpty()) {
@@ -285,6 +393,13 @@ public class DebugOperationTracer implements OperationTracer {
 
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
     if (!options.traceMemory() || frame.memoryWordSize() == 0) {
+      return Optional.empty();
+    }
+    return forceCaptureMem(frame);
+  }
+
+  private Optional<Bytes[]> forceCaptureMem(final MessageFrame frame) {
+    if (frame.memoryWordSize() == 0) {
       return Optional.empty();
     }
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
