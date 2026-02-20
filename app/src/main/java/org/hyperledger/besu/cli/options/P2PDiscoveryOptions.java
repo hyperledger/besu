@@ -307,7 +307,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       LOG.info(
           "Auto-setting --p2p-interface-ipv6={} because --p2p-host-ipv6 was specified. "
               + "To use a different interface, explicitly set --p2p-interface-ipv6.",
-          NetworkUtility.INADDR6_ANY);
+          p2pInterfaceIpv6);
     }
 
     // Warn about incomplete dual-stack configuration
