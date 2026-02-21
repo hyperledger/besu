@@ -141,7 +141,7 @@ public abstract class AbstractMessageProcessor {
    */
   private void exceptionalHalt(final MessageFrame frame) {
     clearAccumulatedStateBesidesGasAndOutput(frame);
-    frame.clearGasRemaining();
+    frame.clearAllGas();
     frame.clearOutputData();
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }
