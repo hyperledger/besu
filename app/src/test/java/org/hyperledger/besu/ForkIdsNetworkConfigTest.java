@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -165,9 +166,9 @@ public class ForkIdsNetworkConfigTest {
             (DefaultProtocolSchedule)
                 MainnetProtocolSchedule.fromConfig(
                     configOptions,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
@@ -175,10 +176,9 @@ public class ForkIdsNetworkConfigTest {
             (DefaultProtocolSchedule)
                 MergeProtocolSchedule.create(
                     configOptions,
-                    false,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem(),
                     EvmConfiguration.DEFAULT));

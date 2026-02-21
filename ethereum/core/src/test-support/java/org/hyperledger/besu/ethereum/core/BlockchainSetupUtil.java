@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -170,7 +171,7 @@ public class BlockchainSetupUtil {
         EvmConfiguration.DEFAULT,
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
-        false,
+        DataStorageConfiguration.DEFAULT_CONFIG,
         BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }

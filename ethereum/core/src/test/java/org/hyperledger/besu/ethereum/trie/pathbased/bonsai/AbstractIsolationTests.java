@@ -109,9 +109,9 @@ public abstract class AbstractIsolationTests {
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           GenesisConfig.fromResource("/dev.json").getConfigOptions(),
+          DataStorageConfiguration.DEFAULT_CONFIG,
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
-          false,
           BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =

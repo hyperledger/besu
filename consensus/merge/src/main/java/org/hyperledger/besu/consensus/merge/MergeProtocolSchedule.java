@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -52,19 +53,17 @@ public class MergeProtocolSchedule {
    * Create protocol schedule.
    *
    * @param config the config
-   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param dataStorageConfiguration the data storage configuration
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param evmConfiguration the evm configuration
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem,
       final EvmConfiguration evmConfiguration) {
@@ -82,11 +81,10 @@ public class MergeProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             new ProtocolSpecAdapters(postMergeModifications),
-            isRevertReasonEnabled,
+            dataStorageConfiguration,
             evmConfiguration,
             miningConfiguration,
             badBlockManager,
-            isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
         .createProtocolSchedule();

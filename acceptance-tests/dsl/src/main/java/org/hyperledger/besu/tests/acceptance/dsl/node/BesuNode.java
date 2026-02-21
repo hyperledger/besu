@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
@@ -743,7 +744,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   }
 
   public DataStorageConfiguration getDataStorageConfiguration() {
-    return dataStorageConfiguration;
+    return ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+        .withRevertReasonEnabled(revertReasonEnabled);
   }
 
   public boolean isDevMode() {

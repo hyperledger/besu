@@ -23,10 +23,10 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -38,11 +38,9 @@ public class ProtocolScheduleFixture {
   public static final ProtocolSchedule MAINNET =
       MainnetProtocolSchedule.fromConfig(
           getMainnetConfigOptions(),
-          Optional.empty(),
-          Optional.empty(),
+          DataStorageConfiguration.DEFAULT_CONFIG,
           MiningConfiguration.newDefault(),
           new BadBlockManager(),
-          false,
           BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
 

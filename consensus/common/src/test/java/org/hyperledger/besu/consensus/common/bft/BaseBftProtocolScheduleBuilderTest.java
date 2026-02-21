@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -257,12 +258,11 @@ public class BaseBftProtocolScheduleBuilderTest {
     return bftProtocolSchedule.createProtocolSchedule(
         genesisConfig,
         new ForksSchedule<>(forks),
-        false,
+        DataStorageConfiguration.DEFAULT_CONFIG,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
-        false,
         BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }

@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -68,11 +69,10 @@ public class CliqueProtocolScheduleTest {
             config,
             new ForksSchedule<>(List.of()),
             NODE_KEY,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
@@ -95,11 +95,10 @@ public class CliqueProtocolScheduleTest {
                 GenesisConfig.DEFAULT.getConfigOptions(),
                 forksSchedule,
                 NODE_KEY,
-                false,
+                DataStorageConfiguration.DEFAULT_CONFIG,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
-                false,
                 BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
@@ -122,11 +121,10 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
-                    false,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
@@ -145,11 +143,10 @@ public class CliqueProtocolScheduleTest {
                     genesisConfig,
                     new ForksSchedule<>(List.of()),
                     NODE_KEY,
-                    false,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
@@ -172,11 +169,10 @@ public class CliqueProtocolScheduleTest {
             config,
             forksSchedule,
             NODE_KEY,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 

@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -38,7 +39,7 @@ public class ProtocolSpecModule {
    *
    * @param genesisConfigOptions the genesis config options
    * @param evmConfiguration the EVM configuration
-   * @param isParallelTxEnabled whether parallel tx processing is enabled
+   * @param dataStorageConfiguration the data storage configuration
    * @param metricsSystem the metrics system
    * @param balConfiguration configuration for block-level access lists
    * @return the protocol spec for the frontier network fork
@@ -48,13 +49,13 @@ public class ProtocolSpecModule {
   public ProtocolSpecBuilder frontierProtocolSpec(
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.frontierDefinition(
         genesisConfigOptions,
         evmConfiguration,
-        isParallelTxEnabled,
+        dataStorageConfiguration,
         balConfiguration,
         metricsSystem);
   }

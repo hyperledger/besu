@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -161,11 +162,10 @@ public class ExecutionContextTestFixture {
                     genesisConfig.getConfigOptions(),
                     Optional.of(BigInteger.valueOf(42)),
                     ProtocolSpecAdapters.create(0, Function.identity()),
-                    false,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
                     ImmutableBalConfiguration.builder().build(),
                     new NoOpMetricsSystem())
                 .createProtocolSchedule();

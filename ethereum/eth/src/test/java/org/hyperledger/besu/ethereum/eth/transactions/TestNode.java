@@ -133,11 +133,9 @@ public class TestNode implements Closeable {
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
             GenesisConfig.fromResource("/dev.json").getConfigOptions(),
-            false,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 

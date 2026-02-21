@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -92,7 +93,7 @@ public class MainnetProtocolScheduleTest {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getHardforkId())
@@ -111,7 +112,7 @@ public class MainnetProtocolScheduleTest {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getHardforkId())
@@ -150,7 +151,7 @@ public class MainnetProtocolScheduleTest {
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()));
   }

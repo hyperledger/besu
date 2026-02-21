@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -209,11 +210,10 @@ public class ReferenceTestProtocolSchedules {
             options,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             evmConfiguration,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem())
         .createProtocolSchedule();

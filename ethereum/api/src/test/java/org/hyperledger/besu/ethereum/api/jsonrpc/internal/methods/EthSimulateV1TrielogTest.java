@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.transaction.ImmutableCallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -59,9 +60,9 @@ public class EthSimulateV1TrielogTest {
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           GenesisConfig.fromResource("/dev.json").getConfigOptions(),
+          DataStorageConfiguration.DEFAULT_CONFIG,
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
-          false,
           BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
 

@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -101,11 +102,9 @@ class JsonRpcMethodsFactoryTest {
     pragueAllMilestonesZeroProtocolSchedule =
         MainnetProtocolSchedule.fromConfig(
             getPragueAllZeroMilestonesConfigOptions(),
-            Optional.empty(),
-            Optional.empty(),
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.newDefault(),
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 

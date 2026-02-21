@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.referencetests.ForestReferenceTestWorldState;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -87,9 +88,9 @@ public class ForwardSyncStepTest {
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           new StubGenesisConfigOptions(),
+          DataStorageConfiguration.DEFAULT_CONFIG,
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
-          false,
           BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   private MutableBlockchain localBlockchain;

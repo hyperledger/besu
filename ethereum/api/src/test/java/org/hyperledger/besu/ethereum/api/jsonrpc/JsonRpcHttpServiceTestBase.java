@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
@@ -133,7 +134,7 @@ public class JsonRpcHttpServiceTestBase {
                     EvmConfiguration.DEFAULT,
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
-                    false,
+                    DataStorageConfiguration.DEFAULT_CONFIG,
                     BalConfiguration.DEFAULT,
                     new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),

@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -34,11 +35,10 @@ public class FixedDifficultyProtocolSchedule {
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return new ProtocolScheduleBuilder(
@@ -48,11 +48,10 @@ public class FixedDifficultyProtocolSchedule {
                 0,
                 builder ->
                     builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
-            isRevertReasonEnabled,
+            dataStorageConfiguration,
             evmConfiguration,
             miningConfiguration,
             badBlockManager,
-            isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
         .createProtocolSchedule();
@@ -63,16 +62,14 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     return create(
         config,
-        false,
+        DataStorageConfiguration.DEFAULT_CONFIG,
         evmConfiguration,
         miningConfiguration,
         badBlockManager,
-        isParallelTxProcessingEnabled,
         balConfiguration,
         metricsSystem);
   }

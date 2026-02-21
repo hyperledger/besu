@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -57,10 +58,9 @@ public interface MergeGenesisConfigHelper {
   default ProtocolSchedule getMergeProtocolSchedule() {
     return MergeProtocolSchedule.create(
         getPosGenesisConfig().getConfigOptions(),
-        false,
+        DataStorageConfiguration.DEFAULT_CONFIG,
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
-        false,
         BalConfiguration.DEFAULT,
         new NoOpMetricsSystem(),
         EvmConfiguration.DEFAULT);

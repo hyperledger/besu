@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -49,14 +50,14 @@ public class IbftProtocolSchedule {
    * Create protocol schedule.
    *
    * @param config the config
-   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param dataStorageConfiguration the data storage configuration
    * @param evmConfiguration the evm configuration
    * @param metricsSystem the metrics system
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final EvmConfiguration evmConfiguration,
       final MetricsSystem metricsSystem) {
     final IbftLegacyConfigOptions ibftConfig = config.getIbftLegacyConfigOptions();
@@ -66,11 +67,10 @@ public class IbftProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(0, builder -> applyIbftChanges(blockPeriod, builder)),
-            isRevertReasonEnabled,
+            dataStorageConfiguration,
             evmConfiguration,
             null,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             metricsSystem)
         .createProtocolSchedule();

@@ -341,10 +341,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       params.addAll(networkConfigParams);
     }
 
-    if (node.isRevertReasonEnabled()) {
-      params.add("--revert-reason-enabled");
-    }
-
     params.add("--Xsecp256k1-native-enabled=" + node.isSecp256k1Native());
     params.add("--Xaltbn128-native-enabled=" + node.isAltbn128Native());
 

@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -182,11 +183,10 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
                 genesisConfigFile.getConfigOptions(),
                 Optional.of(BigInteger.valueOf(1)),
                 ProtocolSpecAdapters.create(0, Function.identity()),
-                false,
+                DataStorageConfiguration.DEFAULT_CONFIG,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
-                false,
                 BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
