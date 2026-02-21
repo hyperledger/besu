@@ -24,6 +24,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 public interface VariablesStorage {
+
   enum Keys {
     CHAIN_HEAD_HASH("chainHeadHash"),
     FORK_HEADS("forkHeads"),
@@ -69,6 +70,8 @@ public interface VariablesStorage {
   Optional<Hash> getGenesisStateHash();
 
   Updater updater();
+
+  Updater writeBatch();
 
   interface Updater {
 

@@ -373,7 +373,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     final boolean wasActiveConnection = ethPeers.registerDisconnect(connection);
-    LOG.atDebug()
+    LOG.atInfo()
         .setMessage("Disconnect - active Connection? {} - {} - {} - {} {} - {} peers left")
         .addArgument(wasActiveConnection)
         .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
