@@ -184,6 +184,19 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
+  /**
+   * Create a context-safe copy of this storage with a cloned flat DB strategy. This allows isolated
+   * updates to the context without affecting the original.
+   *
+   * @return a new BonsaiWorldStateKeyValueStorage with a cloned context
+   */
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiWorldStateKeyValueStorage(
+        flatDbStrategyProvider.cloneWithContextSafeFlatDbStrategy(composedWorldStateStorage),
+        composedWorldStateStorage,
+        trieLogStorage);
+  }
+
   @Override
   public Updater updater() {
     return new Updater(

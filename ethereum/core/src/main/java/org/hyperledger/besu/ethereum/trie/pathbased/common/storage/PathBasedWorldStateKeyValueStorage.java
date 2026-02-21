@@ -65,9 +65,6 @@ public abstract class PathBasedWorldStateKeyValueStorage
   // 0x776f726c64426c6f636b48617368
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
-  // 0x776f726c64426c6f636b4e756d626572
-  public static final byte[] WORLD_BLOCK_NUMBER_KEY =
-      "worldBlockNumber".getBytes(StandardCharsets.UTF_8);
 
   // 0x6172636869766564426C6F636B73
   public static final byte[] ARCHIVED_BLOCKS = "archivedBlocks".getBytes(StandardCharsets.UTF_8);
@@ -134,12 +131,6 @@ public abstract class PathBasedWorldStateKeyValueStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY)
         .map(Bytes32::wrap)
         .map(Hash::wrap);
-  }
-
-  public Optional<Long> getWorldStateBlockNumber() {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY)
-        .map(bytes -> Bytes.wrap(bytes).toLong());
   }
 
   public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
@@ -236,7 +227,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
-                    previousContext, accountHash.getBytes().toArrayUnsafe()));
+                    Optional.of(previousContext), accountHash.getBytes().toArrayUnsafe()));
 
         Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
 
@@ -307,7 +298,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
         final Bytes previousKey =
             Bytes.of(
                 BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
-                    previousContext, storageSlotKey.toArrayUnsafe()));
+                    Optional.of(previousContext), storageSlotKey.toArrayUnsafe()));
 
         Optional<SegmentedKeyValueStorage.NearestKeyValue> nextMatch;
 
