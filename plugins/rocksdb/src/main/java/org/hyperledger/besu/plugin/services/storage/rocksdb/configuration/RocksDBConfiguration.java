@@ -30,6 +30,7 @@ public class RocksDBConfiguration {
   private final boolean isBlockchainGarbageCollectionEnabled;
   private final Optional<Double> blobGarbageCollectionAgeCutoff;
   private final Optional<Double> blobGarbageCollectionForceThreshold;
+  private final boolean useSeparateDatabasePerColumn;
 
   /**
    * Instantiates a new RocksDb configuration.
@@ -45,6 +46,7 @@ public class RocksDBConfiguration {
    *     column family
    * @param blobGarbageCollectionAgeCutoff the blob garbage collection age cutoff
    * @param blobGarbageCollectionForceThreshold the blob garbage collection force threshold
+   * @param useSeparateDatabasePerColumn whether to use separate database per column
    */
   public RocksDBConfiguration(
       final Path databaseDir,
@@ -56,7 +58,8 @@ public class RocksDBConfiguration {
       final boolean enableReadCacheForSnapshots,
       final boolean isBlockchainGarbageCollectionEnabled,
       final Optional<Double> blobGarbageCollectionAgeCutoff,
-      final Optional<Double> blobGarbageCollectionForceThreshold) {
+      final Optional<Double> blobGarbageCollectionForceThreshold,
+      final boolean useSeparateDatabasePerColumn) {
     this.backgroundThreadCount = backgroundThreadCount;
     this.databaseDir = databaseDir;
     this.maxOpenFiles = maxOpenFiles;
@@ -67,6 +70,7 @@ public class RocksDBConfiguration {
     this.isBlockchainGarbageCollectionEnabled = isBlockchainGarbageCollectionEnabled;
     this.blobGarbageCollectionAgeCutoff = blobGarbageCollectionAgeCutoff;
     this.blobGarbageCollectionForceThreshold = blobGarbageCollectionForceThreshold;
+    this.useSeparateDatabasePerColumn = useSeparateDatabasePerColumn;
   }
 
   /**
@@ -157,5 +161,15 @@ public class RocksDBConfiguration {
    */
   public Optional<Double> getBlobGarbageCollectionForceThreshold() {
     return blobGarbageCollectionForceThreshold;
+  }
+
+  /**
+   * Indicates whether to use a separate database instance per column.
+   *
+   * @return {@code true} if each column should have its own database; {@code false} to use column
+   *     families in a single database.
+   */
+  public boolean useSeparateDatabasePerColumn() {
+    return useSeparateDatabasePerColumn;
   }
 }
