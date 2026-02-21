@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinitions;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneType;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -45,10 +46,9 @@ public class ProtocolScheduleBuilder {
   private final GenesisConfigOptions config;
   private final Optional<BigInteger> defaultChainId;
   private final ProtocolSpecAdapters protocolSpecAdapters;
-  private final boolean isRevertReasonEnabled;
+  private final DataStorageConfiguration dataStorageConfiguration;
   private final EvmConfiguration evmConfiguration;
   private final BadBlockManager badBlockManager;
-  private final boolean isParallelTxProcessingEnabled;
   private final BalConfiguration balConfiguration;
   private final MetricsSystem metricsSystem;
   private final MiningConfiguration miningConfiguration;
@@ -57,20 +57,18 @@ public class ProtocolScheduleBuilder {
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
       final ProtocolSpecAdapters protocolSpecAdapters,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
-    this.isRevertReasonEnabled = isRevertReasonEnabled;
+    this.dataStorageConfiguration = dataStorageConfiguration;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
     this.badBlockManager = badBlockManager;
-    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.balConfiguration = balConfiguration;
     this.metricsSystem = metricsSystem;
     this.miningConfiguration = miningConfiguration;
@@ -88,12 +86,11 @@ public class ProtocolScheduleBuilder {
     final MainnetProtocolSpecFactory specFactory =
         new MainnetProtocolSpecFactory(
             protocolSchedule.getChainId(),
-            isRevertReasonEnabled,
             config,
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
             miningConfiguration,
-            isParallelTxProcessingEnabled,
+            dataStorageConfiguration,
             balConfiguration,
             metricsSystem);
 

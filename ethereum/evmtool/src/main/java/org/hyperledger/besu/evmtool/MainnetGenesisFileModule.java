@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -78,12 +80,16 @@ class MainnetGenesisFileModule extends GenesisFileModule {
       }
     }
 
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .revertReasonEnabled(revertReasonEnabled)
+            .build();
     return MainnetProtocolSchedule.fromConfig(
         configOptions,
         evmConfiguration,
         MiningConfiguration.newDefault(),
         new BadBlockManager(),
-        false,
+        dataStorageConfiguration,
         BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }
@@ -206,11 +212,10 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 options,
                 options.getChainId(),
                 ProtocolSpecAdapters.create(0, Function.identity()),
-                false,
+                DataStorageConfiguration.DEFAULT_CONFIG,
                 EvmConfiguration.DEFAULT,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
-                false,
                 BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options.storage;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_REVERT_REASON_ENABLED;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
@@ -53,6 +54,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       description =
           "Convenience option to enable online history pruning and configure BlobDB garbage collection settings (default: ${DEFAULT-VALUE}). \"--history-expiry-prune\" is deprecated and will be removed in a future release.")
   private Boolean historyExpiryPrune = false;
+
+  @Option(
+      names = {"--revert-reason-enabled"},
+      description =
+          "Enable passing the revert reason back through TransactionReceipts (default: ${DEFAULT-VALUE})")
+  private Boolean revertReasonEnabled = DEFAULT_REVERT_REASON_ENABLED;
 
   /**
    * Options specific to path-based storage modes. Holds the necessary parameters to configure
@@ -97,6 +104,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         PathBasedExtraStorageOptions.fromConfig(
             domainObject.getPathBasedExtraStorageConfiguration());
     dataStorageOptions.historyExpiryPrune = domainObject.getHistoryExpiryPruneEnabled();
+    dataStorageOptions.revertReasonEnabled = domainObject.getRevertReasonEnabled();
     return dataStorageOptions;
   }
 
@@ -107,6 +115,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             .dataStorageFormat(dataStorageFormat)
             .receiptCompactionEnabled(receiptCompactionEnabled)
             .historyExpiryPruneEnabled(historyExpiryPrune)
+            .revertReasonEnabled(revertReasonEnabled)
             .pathBasedExtraStorageConfiguration(pathBasedExtraStorageOptions.toDomainObject());
     return builder.build();
   }

@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -121,11 +122,10 @@ public class CliqueMinerExecutorTest {
             GENESIS_CONFIG_OPTIONS,
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);

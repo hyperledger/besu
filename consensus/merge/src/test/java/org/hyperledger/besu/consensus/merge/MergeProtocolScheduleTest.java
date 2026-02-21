@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
@@ -56,10 +57,9 @@ public class MergeProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
@@ -79,10 +79,9 @@ public class MergeProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
@@ -122,10 +121,9 @@ public class MergeProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
@@ -157,10 +155,9 @@ public class MergeProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);
@@ -193,10 +190,9 @@ public class MergeProtocolScheduleTest {
     final ProtocolSpec london =
         MergeProtocolSchedule.create(
                 GenesisConfig.DEFAULT.getConfigOptions(),
-                false,
+                DataStorageConfiguration.DEFAULT_CONFIG,
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
-                false,
                 BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem(),
                 EvmConfiguration.DEFAULT)
@@ -249,10 +245,9 @@ public class MergeProtocolScheduleTest {
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
             config,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem(),
             EvmConfiguration.DEFAULT);

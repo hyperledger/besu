@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
@@ -187,11 +188,10 @@ public class IbftBlockHeightManagerTest {
             new StubGenesisConfigOptions(),
             Optional.empty(),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 

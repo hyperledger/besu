@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
@@ -192,9 +193,9 @@ public class WebSocketServiceLoginTest {
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
                         genesisConfigOptions,
+                        DataStorageConfiguration.DEFAULT_CONFIG,
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
-                        false,
                         BalConfiguration.DEFAULT,
                         new NoOpMetricsSystem()),
                     mock(ProtocolContext.class),

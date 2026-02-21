@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -58,11 +59,10 @@ public class CliqueProtocolSchedule {
    * @param config the config
    * @param forksSchedule the transitions
    * @param nodeKey the node key
-   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param dataStorageConfiguration the data storage configuration
    * @param evmConfiguration the evm configuration
    * @param miningConfiguration the mining configuration
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param balConfiguration configuration related to block-level access lists
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
@@ -72,11 +72,10 @@ public class CliqueProtocolSchedule {
       final GenesisConfigOptions config,
       final ForksSchedule<CliqueConfigOptions> forksSchedule,
       final NodeKey nodeKey,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
 
@@ -110,11 +109,10 @@ public class CliqueProtocolSchedule {
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             specAdapters,
-            isRevertReasonEnabled,
+            dataStorageConfiguration,
             evmConfiguration,
             miningConfiguration,
             badBlockManager,
-            isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
         .createProtocolSchedule();

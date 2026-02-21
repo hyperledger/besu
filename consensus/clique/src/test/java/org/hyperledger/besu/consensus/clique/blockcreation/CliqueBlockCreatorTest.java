@@ -65,6 +65,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTran
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -114,11 +115,10 @@ public class CliqueBlockCreatorTest {
             GenesisConfig.DEFAULT.getConfigOptions(),
             new ForksSchedule<>(List.of()),
             proposerNodeKey,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 

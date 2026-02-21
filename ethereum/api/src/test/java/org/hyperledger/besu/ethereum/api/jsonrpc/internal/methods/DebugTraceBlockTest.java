@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -99,11 +100,10 @@ public class DebugTraceBlockTest {
                         genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
-                        false,
+                        DataStorageConfiguration.DEFAULT_CONFIG,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
-                        false,
                         BalConfiguration.DEFAULT,
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())

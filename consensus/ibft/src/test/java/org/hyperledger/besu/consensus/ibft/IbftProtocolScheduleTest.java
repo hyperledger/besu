@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -123,12 +124,11 @@ public class IbftProtocolScheduleTest {
     return IbftProtocolScheduleBuilder.create(
         genesisConfig,
         forkSched,
-        false,
+        DataStorageConfiguration.DEFAULT_CONFIG,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         MiningConfiguration.MINING_DISABLED,
         new BadBlockManager(),
-        false,
         BalConfiguration.DEFAULT,
         new NoOpMetricsSystem());
   }

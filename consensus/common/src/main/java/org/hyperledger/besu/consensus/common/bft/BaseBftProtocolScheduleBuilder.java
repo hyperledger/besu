@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -54,12 +55,11 @@ public abstract class BaseBftProtocolScheduleBuilder {
    *
    * @param config the config
    * @param forksSchedule the forks schedule
-   * @param isRevertReasonEnabled the is revert reason enabled
+   * @param dataStorageConfiguration the data storage configuration
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
    * @param miningConfiguration the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param balConfiguration configuration related to block access lists.
    * @param metricsSystem metricsSystem A metricSystem instance to be able to expose metrics in the
    *     underlying calls
@@ -68,12 +68,11 @@ public abstract class BaseBftProtocolScheduleBuilder {
   public BftProtocolSchedule createProtocolSchedule(
       final GenesisConfigOptions config,
       final ForksSchedule<? extends BftConfigOptions> forksSchedule,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
       final MiningConfiguration miningConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
@@ -93,11 +92,10 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 config,
                 Optional.of(DEFAULT_CHAIN_ID),
                 specAdapters,
-                isRevertReasonEnabled,
+                dataStorageConfiguration,
                 evmConfiguration,
                 miningConfiguration,
                 badBlockManager,
-                isParallelTxProcessingEnabled,
                 balConfiguration,
                 metricsSystem)
             .createProtocolSchedule();

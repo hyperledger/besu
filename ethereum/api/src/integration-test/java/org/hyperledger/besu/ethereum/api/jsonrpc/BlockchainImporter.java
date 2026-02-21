@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.util.RawBlockIterator;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.net.URL;
@@ -48,9 +49,9 @@ public class BlockchainImporter {
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
             GenesisConfig.fromConfig(genesisJson).getConfigOptions(),
+            DataStorageConfiguration.DEFAULT_CONFIG,
             MiningConfiguration.newDefault(),
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final BlockHeaderFunctions blockHeaderFunctions =

@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -83,9 +84,9 @@ public class BackwardSyncStepTest {
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           new StubGenesisConfigOptions(),
+          DataStorageConfiguration.DEFAULT_CONFIG,
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
-          false,
           BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
 

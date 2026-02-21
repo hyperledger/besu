@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -44,10 +45,9 @@ public class ProtocolScheduleModule {
    *
    * @param config the genesis config options
    * @param protocolSpecAdapters the protocol spec adapters
-   * @param isRevertReasonEnabled whether revert reason is enabled
+   * @param dataStorageConfiguration the data storage configuration
    * @param evmConfiguration the EVM configuration
    * @param badBlockManager the bad block manager
-   * @param isParallelTxProcessingEnabled whether parallel tx processing is enabled
    * @param balConfiguration configuration for block-level access lists
    * @param metricsSystem the metrics system
    * @param miningConfiguration the mining parameters
@@ -58,10 +58,9 @@ public class ProtocolScheduleModule {
   public ProtocolScheduleBuilder provideProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final ProtocolSpecAdapters protocolSpecAdapters,
-      final boolean isRevertReasonEnabled,
+      final DataStorageConfiguration dataStorageConfiguration,
       final EvmConfiguration evmConfiguration,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem,
       final MiningConfiguration miningConfiguration) {
@@ -71,11 +70,10 @@ public class ProtocolScheduleModule {
             config,
             config.getChainId(),
             protocolSpecAdapters,
-            isRevertReasonEnabled,
+            dataStorageConfiguration,
             evmConfiguration,
             miningConfiguration,
             badBlockManager,
-            isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem);
 

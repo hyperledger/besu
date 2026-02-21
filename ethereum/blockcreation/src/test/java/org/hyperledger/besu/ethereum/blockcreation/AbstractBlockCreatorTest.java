@@ -86,6 +86,7 @@ import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -424,11 +425,10 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                         genesisConfig.getConfigOptions(),
                         Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
-                        false,
+                        DataStorageConfiguration.DEFAULT_CONFIG,
                         EvmConfiguration.DEFAULT,
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
-                        false,
                         ImmutableBalConfiguration.builder().build(),
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())

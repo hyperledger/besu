@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -77,11 +78,10 @@ class ProtocolScheduleBuilderTest {
             configOptions,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(0, Function.identity()),
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
   }
@@ -357,11 +357,10 @@ class ProtocolScheduleBuilderTest {
             configOptions,
             Optional.of(CHAIN_ID),
             ProtocolSpecAdapters.create(blockNumber, modifier),
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 

@@ -300,12 +300,11 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
     return IbftProtocolScheduleBuilder.create(
         genesisConfigOptions,
         forksSchedule,
-        isRevertReasonEnabled,
+        dataStorageConfiguration,
         bftExtraDataCodec,
         evmConfiguration,
         miningConfiguration,
         badBlockManager,
-        isParallelTxProcessingEnabled,
         balConfiguration,
         metricsSystem);
   }

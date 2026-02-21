@@ -170,9 +170,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   /** The Node key. */
   protected NodeKey nodeKey;
 
-  /** The Is revert reason enabled. */
-  protected boolean isRevertReasonEnabled;
-
   /** The Storage provider. */
   protected StorageProvider storageProvider;
 
@@ -213,9 +210,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   private int numberOfBlocksToCache = 0;
   private int numberOfBlockHeadersToCache = 0;
   private boolean isCacheLastBlockHeadersPreloadEnabled;
-
-  /** whether parallel transaction processing is enabled or not */
-  protected boolean isParallelTxProcessingEnabled;
 
   /** Configuration flags related to block access lists. */
   protected BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
@@ -407,17 +401,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   }
 
   /**
-   * Is revert reason enabled besu controller builder.
-   *
-   * @param isRevertReasonEnabled the is revert reason enabled
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
-    this.isRevertReasonEnabled = isRevertReasonEnabled;
-    return this;
-  }
-
-  /**
    * Required blocks besu controller builder.
    *
    * @param requiredBlocks the required blocks
@@ -551,20 +534,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
    */
   public BesuControllerBuilder randomPeerPriority(final Boolean randomPeerPriority) {
     this.randomPeerPriority = randomPeerPriority;
-    return this;
-  }
-
-  /**
-   * Sets whether parallel transaction processing is enabled. When parallel transaction processing
-   * is enabled, transactions within a block can be processed in parallel and potentially improving
-   * performance
-   *
-   * @param isParallelTxProcessingEnabled true to enable parallel transaction
-   * @return the besu controller
-   */
-  public BesuControllerBuilder isParallelTxProcessingEnabled(
-      final boolean isParallelTxProcessingEnabled) {
-    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     return this;
   }
 

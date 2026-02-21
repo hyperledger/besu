@@ -235,7 +235,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =

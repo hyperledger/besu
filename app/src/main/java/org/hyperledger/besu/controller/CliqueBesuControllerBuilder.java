@@ -131,11 +131,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfigOptions,
         forksSchedule,
         nodeKey,
-        isRevertReasonEnabled,
+        dataStorageConfiguration,
         evmConfiguration,
         miningConfiguration,
         badBlockManager,
-        isParallelTxProcessingEnabled,
         balConfiguration,
         metricsSystem);
   }

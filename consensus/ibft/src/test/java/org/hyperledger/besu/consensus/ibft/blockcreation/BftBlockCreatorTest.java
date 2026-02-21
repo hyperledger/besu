@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -118,12 +119,11 @@ public class BftBlockCreatorTest {
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
             forksSchedule,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
@@ -265,12 +265,11 @@ public class BftBlockCreatorTest {
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
             forksSchedule,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
@@ -399,12 +398,11 @@ public class BftBlockCreatorTest {
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
             forksSchedule,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =
@@ -534,12 +532,11 @@ public class BftBlockCreatorTest {
         bftProtocolSchedule.createProtocolSchedule(
             configOptions,
             forksSchedule,
-            false,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
     final ProtocolContext protContext =

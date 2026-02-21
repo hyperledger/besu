@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -58,17 +59,15 @@ public class DefaultProtocolScheduleTest {
   public void setup() {
     config = new StubGenesisConfigOptions();
     config.chainId(DEFAULT_CHAIN_ID);
-    boolean isRevertReasonEnabled = false;
     builder =
         new ProtocolScheduleBuilder(
             config,
             Optional.of(DEFAULT_CHAIN_ID),
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
-            isRevertReasonEnabled,
+            DataStorageConfiguration.DEFAULT_CONFIG,
             evmConfiguration,
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
-            false,
             BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
   }
