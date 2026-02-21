@@ -74,6 +74,7 @@ public class ConfigurationOverviewBuilder {
 
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
+  private static final String MINIMUM_GLIBC_VERSION = "2.28";
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -552,6 +553,9 @@ public class ConfigurationOverviewBuilder {
 
     if (SystemInfo.getCurrentPlatform() == PlatformEnum.LINUX) {
       final String glibcVersion = PlatformDetector.getGlibc();
+
+      checkGlibcVersion(glibcVersion);
+
       if (glibcVersion != null) {
         lines.add("glibc: " + glibcVersion);
       }
@@ -606,6 +610,66 @@ public class ConfigurationOverviewBuilder {
                     "jemalloc library not found, memory usage may be reduced by installing it");
               }
             });
+  }
+
+  /**
+   * Checks if the glibc version meets the minimum required version.
+   *
+   * @param glibcVersion the detected glibc version
+   */
+  private void checkGlibcVersion(final String glibcVersion) {
+    if (glibcVersion == null) {
+      logger.warn(
+          "Unable to determine glibc version. Minimum required version is {}",
+          MINIMUM_GLIBC_VERSION);
+      return;
+    }
+
+    if (!isGlibcVersionSufficient(glibcVersion, MINIMUM_GLIBC_VERSION)) {
+      logger.error(
+          "Insufficient glibc version detected. Required: {} or higher, Found: {}. Please upgrade your system's glibc.",
+          MINIMUM_GLIBC_VERSION,
+          glibcVersion);
+      throw new RuntimeException(
+          "Besu requires glibc version "
+              + MINIMUM_GLIBC_VERSION
+              + " or higher. Found: "
+              + glibcVersion);
+    }
+  }
+
+  /**
+   * Compares glibc version strings.
+   *
+   * @param current the current glibc version
+   * @param required the required minimum version
+   * @return true if current version is sufficient, false otherwise
+   */
+  private boolean isGlibcVersionSufficient(final String current, final String required) {
+    try {
+      final String[] currentParts = current.split("\\.");
+      final String[] requiredParts = required.split("\\.");
+
+      final int compareLength = Math.max(currentParts.length, requiredParts.length);
+
+      for (int i = 0; i < compareLength; i++) {
+        final int currentNum =
+            i < currentParts.length ? Integer.parseInt(currentParts[i].trim()) : 0;
+        final int requiredNum =
+            i < requiredParts.length ? Integer.parseInt(requiredParts[i].trim()) : 0;
+
+        if (currentNum > requiredNum) {
+          return true;
+        }
+        if (currentNum < requiredNum) {
+          return false;
+        }
+      }
+      return true;
+    } catch (final NumberFormatException e) {
+      logger.warn("Unable to parse glibc version: {}", current, e);
+      return true;
+    }
   }
 
   /**
