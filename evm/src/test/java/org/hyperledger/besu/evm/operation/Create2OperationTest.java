@@ -210,10 +210,10 @@ public class Create2OperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM myEVM = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, myEVM);
+    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
-    final ContractCreationProcessor ccp = new ContractCreationProcessor(myEVM, false, List.of(), 0);
+    final ContractCreationProcessor ccp = new ContractCreationProcessor(evm, false, List.of(), 0);
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
@@ -241,6 +241,69 @@ public class Create2OperationTest {
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
+  }
+
+  @Test
+  void amsterdamMaxInitCodeSizeCreate() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.fromHexString("0x10000");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
+
+    when(account.getNonce()).thenReturn(55L);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isNull();
+  }
+
+  @Test
+  void amsterdamMaxInitCodeSizePlus1Create() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.fromHexString("0x10001");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
+
+    when(account.getNonce()).thenReturn(55L);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
+  }
+
+  @Test
+  void amsterdamBetweenOldAndNewInitCodeLimitCreate() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.fromHexString("0xC001");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
+
+    when(account.getNonce()).thenReturn(55L);
+    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
+    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
+
+    final EVM evm = MainnetEVMs.amsterdam(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isNull();
   }
 
   @NotNull

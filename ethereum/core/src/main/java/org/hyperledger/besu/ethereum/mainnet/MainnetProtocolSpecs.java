@@ -206,7 +206,6 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .isBlockAccessListEnabled(balConfiguration.isBalApiEnabled())
         .balConfiguration(balConfiguration)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
@@ -1220,8 +1219,7 @@ public abstract class MainnetProtocolSpecs {
                             new CodeDelegationService()))
                     .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
                     .build())
-        .blockAccessListFactory(
-            new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
+        .blockAccessListFactory(new BlockAccessListFactory())
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
         // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
