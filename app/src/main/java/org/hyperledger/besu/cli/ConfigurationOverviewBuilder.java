@@ -59,7 +59,8 @@ public class ConfigurationOverviewBuilder {
   private boolean isHighSpec = false;
   private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
-  private Integer trieLogsPruningWindowSize = null;
+  private Integer trieLogsPruningBatchSize = null;
+  private boolean isTrieLogsPruningBatchSizeExplicitlySet = false;
   private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
@@ -259,13 +260,16 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets trie logs pruning window size
+   * Sets trie logs pruning batch size
    *
    * @param size the max number of blocks to load and prune trie logs for at startup
+   * @param explicitlySet whether this value was explicitly set by the user (not default)
    * @return the builder
    */
-  public ConfigurationOverviewBuilder setTrieLogsPruningWindowSize(final int size) {
-    trieLogsPruningWindowSize = size;
+  public ConfigurationOverviewBuilder setTrieLogsPruningBatchSize(
+      final int size, final boolean explicitlySet) {
+    trieLogsPruningBatchSize = size;
+    isTrieLogsPruningBatchSizeExplicitlySet = explicitlySet;
     return this;
   }
 
@@ -480,8 +484,8 @@ public class ConfigurationOverviewBuilder {
       trieLogPruningString
           .append("Limit trie logs enabled: retention: ")
           .append(trieLogRetentionLimit);
-      if (trieLogsPruningWindowSize != null) {
-        trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
+      if (isTrieLogsPruningBatchSizeExplicitlySet && trieLogsPruningBatchSize != null) {
+        trieLogPruningString.append("; batch size: ").append(trieLogsPruningBatchSize);
       }
       lines.add(trieLogPruningString.toString());
     }
