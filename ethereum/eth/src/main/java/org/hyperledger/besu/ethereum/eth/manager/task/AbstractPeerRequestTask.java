@@ -42,6 +42,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   private final String protocolName;
   private final int requestCode;
   private volatile PendingPeerRequest responseStream;
+  private long startTimeNanos;
 
   protected AbstractPeerRequestTask(
       final EthContext ethContext,
@@ -64,6 +65,7 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     responseStream = sendRequest();
     responseStream.then(
         stream -> {
+          startTimeNanos = System.nanoTime();
           // Start the timeout now that the request has actually been sent
           ethContext.getScheduler().failAfterTimeout(promise, timeout);
 
@@ -108,17 +110,28 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
       final Optional<R> result = processResponse(streamClosed, message, peer);
       result.ifPresent(
           r -> {
+            final double durationMs = (System.nanoTime() - startTimeNanos) / 1_000_000.0;
+            if (peer != null) {
+              peer.recordLatency(durationMs);
+              if (message != null) {
+                peer.recordThroughput(message.getSize(), durationMs);
+              }
+              peer.recordUsefulResponse();
+            }
             promise.complete(r);
-            peer.recordUsefulResponse();
           });
     } catch (final RLPException e) {
       // Peer sent us malformed data - disconnect
       LOG.debug(
-          "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
-          peer.getLoggableId(),
+          "Disconnecting with BREACH_OF_PROTOCOL due to malformed message from peer: {}",
+          (peer == null) ? "unknown" : peer.getLoggableId(),
           e);
-      LOG.trace("Peer {} Malformed message data: {}", peer, message.getData());
-      peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+      if (message != null) {
+        LOG.trace("Peer {} Malformed message data: {}", peer, message.getData());
+      }
+      if (peer != null) {
+        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+      }
       promise.completeExceptionally(new PeerBreachedProtocolException());
     }
   }
