@@ -48,12 +48,12 @@ public class OrOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
+    final Bytes value0 = frame.popStackBytes();
+    final Bytes value1 = frame.popStackBytes();
 
     final Bytes result = value0.or(value1);
 
-    frame.pushStackItem(result);
+    frame.pushStackBytes(result);
 
     return orSuccess;
   }

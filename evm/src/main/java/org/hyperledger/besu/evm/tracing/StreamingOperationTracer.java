@@ -108,7 +108,7 @@ public class StreamingOperationTracer implements OperationTracer {
     }
     stack = new ArrayList<>(messageFrame.stackSize());
     for (int i = messageFrame.stackSize() - 1; i >= 0; i--) {
-      stack.add("\"" + shortBytes(messageFrame.getStackItem(i)) + "\"");
+      stack.add("\"" + shortBytes(messageFrame.getStackBytes(i)) + "\"");
     }
     pc = messageFrame.getPC();
     gas = messageFrame.getRemainingGas();

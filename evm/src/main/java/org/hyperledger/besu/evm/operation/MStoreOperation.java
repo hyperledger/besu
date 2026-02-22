@@ -37,8 +37,8 @@ public class MStoreOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long location = clampedToLong(frame.popStackItem());
-    final Bytes value = frame.popStackItem();
+    final long location = clampedToLong(frame.popStackBytes());
+    final Bytes value = frame.popStackBytes();
 
     final long cost = gasCalculator().mStoreOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {

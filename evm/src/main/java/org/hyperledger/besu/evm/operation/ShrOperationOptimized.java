@@ -14,21 +14,12 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
-
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-
-/**
- * The optimized SHR (Shift Right Logical) operation.
- *
- * <p>This implementation uses direct byte[] manipulation instead of Tuweni's Bytes.shiftRight() to
- * avoid intermediate object allocation and improve performance.
- */
+/** The optimized SHR (Shift Right Logical) operation. */
 public class ShrOperationOptimized extends AbstractFixedCostOperation {
 
   /** The Shr operation success result. */
@@ -56,61 +47,16 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = frame.popStackItem();
-    if (value.isZero()) {
-      frame.pushStackItem(Bytes.EMPTY);
-      return shrSuccess;
+    final UInt256 shiftAmount = frame.popStackItem();
+    final UInt256 value = frame.popStackItem();
+
+    if (value.isZero()
+        || !shiftAmount.isUInt64()
+        || Long.compareUnsigned(shiftAmount.longValue(), 256) >= 0) {
+      frame.pushStackItem(UInt256.ZERO);
+    } else {
+      frame.pushStackItem(value.shr((int) shiftAmount.longValue()));
     }
-
-    final byte[] valueBytes = Bytes32.leftPad(value).toArrayUnsafe();
-    final byte[] shiftBytes = shiftAmount.toArrayUnsafe();
-
-    // shift >= 256, push All 0s
-    if (isShiftOverflow(shiftBytes)) {
-      frame.pushStackItem(Bytes.EMPTY);
-      return shrSuccess;
-    }
-
-    final int shift = shiftBytes.length == 0 ? 0 : (shiftBytes[shiftBytes.length - 1] & 0xFF);
-
-    frame.pushStackItem(shr256(valueBytes, shift));
     return shrSuccess;
-  }
-
-  /**
-   * Performs a 256-bit logical right shift (EVM SHR).
-   *
-   * <p>The shift amount is in the range {@code [0..255]} and is assumed to have been validated by
-   * the caller. For shift values >= 256, zero is returned by the caller.
-   *
-   * @param in the raw 32-byte array of the input value
-   * @param shift the right shift amount in bits (0–255)
-   * @return the shifted 256-bit value
-   */
-  private static Bytes shr256(final byte[] in, final int shift) {
-    if (shift == 0) {
-      return Bytes.wrap(in);
-    }
-
-    final int shiftBytes = shift >>> 3; // /8
-    final int shiftBits = shift & 7; // %8
-
-    final byte[] out = new byte[32];
-
-    // Shift right: bytes move to higher indices (towards index 31)
-    // Bytes below shiftBytes are guaranteed zero (already from new byte[32])
-    for (int i = 31; i >= shiftBytes; i--) {
-      final int srcIndex = i - shiftBytes;
-      final int curr = in[srcIndex] & 0xFF;
-      if (shiftBits == 0) {
-        out[i] = (byte) curr;
-      } else {
-        final int prev = (srcIndex - 1 >= 0) ? (in[srcIndex - 1] & 0xFF) : 0;
-        out[i] = (byte) ((curr >>> shiftBits) | (prev << (8 - shiftBits)));
-      }
-    }
-
-    return Bytes.wrap(out);
   }
 }

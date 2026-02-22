@@ -465,10 +465,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     if (isZero() || other.isZero()) return ZERO;
     if (other.isOne()) return this;
     if (this.isOne()) return other;
-    if (u3 != 0) return mul256(other).UInt256Value();
-    if (u2 != 0) return mul192(other).UInt256Value();
-    if (u1 != 0) return mul128(other);
-    return mul64(other);
+    return mul256(other).UInt256Value();
   }
 
   /**
@@ -538,6 +535,479 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     if (modulus.u2 != 0) return modulus.asModulus192().mul(this, other);
     if (modulus.u1 != 0) return modulus.asModulus128().mul(this, other);
     return modulus.asModulus64().mul(this, other);
+  }
+
+  /** The constant 1. */
+  public static final UInt256 ONE = new UInt256(0, 0, 0, 1);
+
+  /**
+   * Subtraction
+   *
+   * <p>Compute the wrapping difference of 2 256-bits integers.
+   *
+   * @param other Integer to subtract from this integer.
+   * @return The difference (this - other), wrapping on underflow.
+   */
+  public UInt256 sub(final UInt256 other) {
+    if (other.isZero()) return this;
+    return this.add(other.neg());
+  }
+
+  /**
+   * Unsigned division.
+   *
+   * <p>Compute the quotient of this / divisor as unsigned integers.
+   *
+   * @param divisor The divisor.
+   * @return The quotient.
+   */
+  public UInt256 div(final UInt256 divisor) {
+    if (divisor.isZero()) return ZERO;
+    if (divisor.isOne()) return this;
+    if (this.isZero()) return ZERO;
+    int cmp = compare(this, divisor);
+    if (cmp < 0) return ZERO;
+    if (cmp == 0) return ONE;
+    // Single-limb divisor fast path
+    if (divisor.u3 == 0 && divisor.u2 == 0 && divisor.u1 == 0) {
+      return divBy1(this, divisor.u0);
+    }
+    // General multi-limb: Knuth Algorithm D
+    return divGeneral(this, divisor);
+  }
+
+  private static UInt256 divBy1(final UInt256 dividend, final long divisor) {
+    int shift = Long.numberOfLeadingZeros(divisor);
+    long nd = divisor << shift;
+    long yInv = reciprocal(nd);
+
+    // Normalize dividend (shift left by 'shift' bits)
+    long u0, u1, u2, u3, u4;
+    if (shift == 0) {
+      u0 = dividend.u0;
+      u1 = dividend.u1;
+      u2 = dividend.u2;
+      u3 = dividend.u3;
+      u4 = 0;
+    } else {
+      int invShift = 64 - shift;
+      u0 = dividend.u0 << shift;
+      u1 = (dividend.u1 << shift) | (dividend.u0 >>> invShift);
+      u2 = (dividend.u2 << shift) | (dividend.u1 >>> invShift);
+      u3 = (dividend.u3 << shift) | (dividend.u2 >>> invShift);
+      u4 = dividend.u3 >>> invShift;
+    }
+
+    // Divide from MSB to LSB, threading remainder
+    DivEstimate qr;
+    qr = div2by1(u4, u3, nd, yInv);
+    long q3 = qr.q;
+    qr = div2by1(qr.r, u2, nd, yInv);
+    long q2 = qr.q;
+    qr = div2by1(qr.r, u1, nd, yInv);
+    long q1 = qr.q;
+    qr = div2by1(qr.r, u0, nd, yInv);
+    long q0 = qr.q;
+
+    return new UInt256(q3, q2, q1, q0);
+  }
+
+  private static UInt256 divGeneral(final UInt256 dividend, final UInt256 divisor) {
+    // Determine n (number of significant divisor limbs, >= 2)
+    int n;
+    if (divisor.u3 != 0) n = 4;
+    else if (divisor.u2 != 0) n = 3;
+    else n = 2;
+
+    int m = 4 - n; // number of extra quotient limbs (loop produces m+1 digits)
+
+    // D1: Normalize — shift so MSB of top divisor limb is set
+    long topDivisor = (n == 4) ? divisor.u3 : (n == 3) ? divisor.u2 : divisor.u1;
+    int shift = Long.numberOfLeadingZeros(topDivisor);
+
+    // Normalized divisor (little-endian: dn[0] = LSB)
+    long[] dn = new long[n];
+    dn[0] = divisor.u0;
+    if (n >= 2) dn[1] = divisor.u1;
+    if (n >= 3) dn[2] = divisor.u2;
+    if (n >= 4) dn[3] = divisor.u3;
+
+    // Normalized dividend (5 limbs: un[0] = LSB, un[4] = overflow from shift)
+    long[] un = new long[5];
+    un[0] = dividend.u0;
+    un[1] = dividend.u1;
+    un[2] = dividend.u2;
+    un[3] = dividend.u3;
+
+    if (shift > 0) {
+      int invShift = 64 - shift;
+      // Shift divisor
+      for (int i = n - 1; i > 0; i--) {
+        dn[i] = (dn[i] << shift) | (dn[i - 1] >>> invShift);
+      }
+      dn[0] <<= shift;
+      // Shift dividend
+      un[4] = un[3] >>> invShift;
+      for (int i = 3; i > 0; i--) {
+        un[i] = (un[i] << shift) | (un[i - 1] >>> invShift);
+      }
+      un[0] <<= shift;
+    }
+
+    long yInv = reciprocal(dn[n - 1]);
+    long q0 = 0, q1 = 0, q2 = 0;
+
+    // D2-D7: Main loop — one quotient digit per iteration
+    for (int j = m; j >= 0; j--) {
+      // D3: Trial division with Knuth refinement
+      long qhat;
+      long rhat;
+      if (un[j + n] == dn[n - 1]) {
+        qhat = -1L; // 0xFFFFFFFFFFFFFFFF
+        rhat = un[j + n - 1] + dn[n - 1];
+        // If rhat overflowed, skip refinement (qhat is already at most 1 too large)
+        if (Long.compareUnsigned(rhat, dn[n - 1]) < 0) {
+          rhat = -1L; // signal overflow: skip refinement loop
+        }
+      } else {
+        DivEstimate est = div2by1(un[j + n], un[j + n - 1], dn[n - 1], yInv);
+        qhat = est.q;
+        rhat = est.r;
+      }
+      // Knuth D3 refinement: reduce qhat while qhat * dn[n-2] > (rhat, un[j+n-2])
+      // This guarantees qhat is at most 1 too large, so a single add-back suffices.
+      if (rhat != -1L) {
+        long dn2 = (n >= 2) ? dn[n - 2] : 0;
+        long unJN2 = un[j + n - 2];
+        // Compare 128-bit: (qhat * dn2) vs (rhat, unJN2)
+        long prodHi = Math.unsignedMultiplyHigh(qhat, dn2);
+        long prodLo = qhat * dn2;
+        while (Long.compareUnsigned(prodHi, rhat) > 0
+            || (prodHi == rhat && Long.compareUnsigned(prodLo, unJN2) > 0)) {
+          qhat--;
+          rhat += dn[n - 1];
+          // If rhat overflowed past 64 bits, stop
+          if (Long.compareUnsigned(rhat, dn[n - 1]) < 0) break;
+          prodHi = Math.unsignedMultiplyHigh(qhat, dn2);
+          prodLo = qhat * dn2;
+        }
+      }
+
+      // D4: Multiply and subtract — un[j..j+n] -= qhat * dn[0..n-1]
+      // Use separate carry (mul chain, up to 2^64-1) and borrow (sub chain, 0 or 1)
+      // to avoid overflow when both reach their maximums simultaneously.
+      long carry = 0;
+      long borrow = 0;
+      for (int i = 0; i < n; i++) {
+        long prodLo = qhat * dn[i];
+        long prodHi = Math.unsignedMultiplyHigh(qhat, dn[i]);
+        // Add multiplication carry from previous iteration
+        long prevLo = prodLo;
+        prodLo += carry;
+        if (Long.compareUnsigned(prodLo, prevLo) < 0) prodHi++;
+        carry = prodHi;
+        // Subtract prodLo and borrow from dividend
+        long prev = un[j + i];
+        long diff = prev - prodLo;
+        long b1 = (Long.compareUnsigned(diff, prev) > 0) ? 1L : 0L;
+        un[j + i] = diff - borrow;
+        long b2 = (Long.compareUnsigned(un[j + i], diff) > 0) ? 1L : 0L;
+        borrow = b1 + b2;
+      }
+      // Apply carry and borrow to top word; detect over-subtraction without overflow
+      // Over-subtracted when carry + borrow > prevTop (as true integers, up to 2^64)
+      long prevTop = un[j + n];
+      un[j + n] = prevTop - carry - borrow;
+      boolean overSubtracted =
+          (borrow == 0)
+              ? Long.compareUnsigned(carry, prevTop) > 0
+              : Long.compareUnsigned(carry, prevTop) >= 0;
+
+      // D5-D6: If over-subtracted, add back (rare: probability < 2/B)
+      if (overSubtracted) {
+        qhat--;
+        long addCarry = 0;
+        for (int i = 0; i < n; i++) {
+          long prev = un[j + i];
+          un[j + i] = prev + dn[i] + addCarry;
+          if (addCarry == 0) {
+            addCarry = (Long.compareUnsigned(un[j + i], prev) < 0) ? 1L : 0L;
+          } else {
+            addCarry = (Long.compareUnsigned(un[j + i], prev) <= 0) ? 1L : 0L;
+          }
+        }
+        un[j + n] += addCarry;
+      }
+
+      // D7: Store quotient digit
+      switch (j) {
+        case 0:
+          q0 = qhat;
+          break;
+        case 1:
+          q1 = qhat;
+          break;
+        case 2:
+          q2 = qhat;
+          break;
+        default:
+          break;
+      }
+    }
+
+    return new UInt256(0, q2, q1, q0);
+  }
+
+  /**
+   * Signed division.
+   *
+   * <p>Compute the quotient of this / divisor as signed two's complement integers.
+   *
+   * @param divisor The divisor.
+   * @return The signed quotient.
+   */
+  public UInt256 signedDiv(final UInt256 divisor) {
+    if (divisor.isZero()) return ZERO;
+    boolean thisNeg = this.isNegative();
+    boolean otherNeg = divisor.isNegative();
+    UInt256 absThis = thisNeg ? this.neg() : this;
+    UInt256 absOther = otherNeg ? divisor.neg() : divisor;
+    UInt256 quotient = absThis.div(absOther);
+    return (thisNeg != otherNeg) ? quotient.neg() : quotient;
+  }
+
+  /**
+   * Signed comparison.
+   *
+   * <p>Compare two UInt256 values as signed two's complement integers.
+   *
+   * @param a left UInt256
+   * @param b right UInt256
+   * @return negative if a &lt; b, 0 if a == b, positive if a &gt; b (signed).
+   */
+  public static int signedCompare(final UInt256 a, final UInt256 b) {
+    boolean aNeg = a.isNegative();
+    boolean bNeg = b.isNegative();
+    if (aNeg && !bNeg) return -1;
+    if (!aNeg && bNeg) return 1;
+    // Same sign: unsigned compare gives correct result
+    return compare(a, b);
+  }
+
+  /**
+   * Full-range shift left (0-255).
+   *
+   * <p>For EVM SHL opcode. Handles shifts across limb boundaries.
+   *
+   * @param shift The number of bits to shift left (0-255).
+   * @return The shifted UInt256. Returns ZERO for shift >= 256.
+   */
+  public UInt256 shl(final int shift) {
+    if (shift == 0) return this;
+    if (shift >= 256) return ZERO;
+
+    int limbShift = shift / 64;
+    int bitShift = shift % 64;
+
+    long z0 = 0, z1 = 0, z2 = 0, z3 = 0;
+    // Source limbs after limb shift
+    long s0 = limbShift <= 0 ? u0 : 0;
+    long s1 = limbShift <= 1 ? (limbShift == 0 ? u1 : limbShift == 1 ? u0 : 0) : 0;
+    long s2, s3;
+    switch (limbShift) {
+      case 0:
+        s2 = u2;
+        s3 = u3;
+        break;
+      case 1:
+        s2 = u1;
+        s3 = u2;
+        break;
+      case 2:
+        s2 = u0;
+        s3 = u1;
+        break;
+      case 3:
+        s2 = 0;
+        s3 = u0;
+        break;
+      default:
+        s2 = 0;
+        s3 = 0;
+    }
+
+    if (bitShift == 0) {
+      z0 = s0;
+      z1 = s1;
+      z2 = s2;
+      z3 = s3;
+    } else {
+      // Shift each limb and carry from below
+      long[] src = new long[4];
+      switch (limbShift) {
+        case 0:
+          src[0] = u0;
+          src[1] = u1;
+          src[2] = u2;
+          src[3] = u3;
+          break;
+        case 1:
+          src[0] = 0;
+          src[1] = u0;
+          src[2] = u1;
+          src[3] = u2;
+          break;
+        case 2:
+          src[0] = 0;
+          src[1] = 0;
+          src[2] = u0;
+          src[3] = u1;
+          break;
+        case 3:
+          src[0] = 0;
+          src[1] = 0;
+          src[2] = 0;
+          src[3] = u0;
+          break;
+        default:
+          break;
+      }
+      int invShift = 64 - bitShift;
+      z0 = src[0] << bitShift;
+      z1 = (src[1] << bitShift) | (src[0] >>> invShift);
+      z2 = (src[2] << bitShift) | (src[1] >>> invShift);
+      z3 = (src[3] << bitShift) | (src[2] >>> invShift);
+    }
+    return new UInt256(z3, z2, z1, z0);
+  }
+
+  /**
+   * Full-range logical shift right (0-255).
+   *
+   * <p>For EVM SHR opcode. Handles shifts across limb boundaries.
+   *
+   * @param shift The number of bits to shift right (0-255).
+   * @return The shifted UInt256. Returns ZERO for shift >= 256.
+   */
+  public UInt256 shr(final int shift) {
+    if (shift == 0) return this;
+    if (shift >= 256) return ZERO;
+
+    int limbShift = shift / 64;
+    int bitShift = shift % 64;
+
+    long[] src = {u0, u1, u2, u3};
+    long z0 = (limbShift < 4) ? src[limbShift] : 0;
+    long z1 = (limbShift + 1 < 4) ? src[limbShift + 1] : 0;
+    long z2 = (limbShift + 2 < 4) ? src[limbShift + 2] : 0;
+    long z3 = (limbShift + 3 < 4) ? src[limbShift + 3] : 0;
+
+    if (bitShift == 0) {
+      return new UInt256(z3, z2, z1, z0);
+    }
+
+    int invShift = 64 - bitShift;
+    long r0 = (z0 >>> bitShift) | (z1 << invShift);
+    long r1 = (z1 >>> bitShift) | (z2 << invShift);
+    long r2 = (z2 >>> bitShift) | (z3 << invShift);
+    long r3 = (z3 >>> bitShift);
+    return new UInt256(r3, r2, r1, r0);
+  }
+
+  /**
+   * Full-range arithmetic shift right (0-255).
+   *
+   * <p>For EVM SAR opcode. Sign-extends from the left.
+   *
+   * @param shift The number of bits to shift right (0-255).
+   * @return The arithmetically shifted UInt256.
+   */
+  public UInt256 sar(final int shift) {
+    if (shift == 0) return this;
+    boolean negative = isNegative();
+    if (shift >= 256) return negative ? MAX : ZERO;
+
+    int limbShift = shift / 64;
+    int bitShift = shift % 64;
+
+    long fill = negative ? -1L : 0L;
+    long[] src = {u0, u1, u2, u3};
+    long z0 = (limbShift < 4) ? src[limbShift] : fill;
+    long z1 = (limbShift + 1 < 4) ? src[limbShift + 1] : fill;
+    long z2 = (limbShift + 2 < 4) ? src[limbShift + 2] : fill;
+    long z3 = (limbShift + 3 < 4) ? src[limbShift + 3] : fill;
+
+    if (bitShift == 0) {
+      return new UInt256(z3, z2, z1, z0);
+    }
+
+    int invShift = 64 - bitShift;
+    long r0 = (z0 >>> bitShift) | (z1 << invShift);
+    long r1 = (z1 >>> bitShift) | (z2 << invShift);
+    long r2 = (z2 >>> bitShift) | (z3 << invShift);
+    long r3 = (z3 >> bitShift); // Arithmetic shift for top limb
+    return new UInt256(r3, r2, r1, r0);
+  }
+
+  /**
+   * Convert from BigInteger.
+   *
+   * @param bi BigInteger to convert.
+   * @return The UInt256 equivalent.
+   */
+  public static UInt256 fromBigInteger(final BigInteger bi) {
+    return fromBytesBE(toUnsigned32Bytes(bi));
+  }
+
+  /**
+   * Convert BigInteger to unsigned 32-byte big-endian array.
+   *
+   * @param bi the BigInteger value
+   * @return 32-byte array, zero-padded or truncated
+   */
+  private static byte[] toUnsigned32Bytes(final BigInteger bi) {
+    byte[] raw = bi.toByteArray();
+    if (raw.length == 32) return raw;
+    byte[] result = new byte[32];
+    if (raw.length > 32) {
+      System.arraycopy(raw, raw.length - 32, result, 0, 32);
+    } else {
+      if (bi.signum() < 0) {
+        java.util.Arrays.fill(result, 0, 32 - raw.length, (byte) 0xFF);
+      }
+      System.arraycopy(raw, 0, result, 32 - raw.length, raw.length);
+    }
+    return result;
+  }
+
+  /**
+   * Number of significant bytes needed to represent this value.
+   *
+   * @return the number of bytes (0 for ZERO, up to 32 for MAX).
+   */
+  public int byteLength() {
+    if (u3 != 0) return 24 + byteLen(u3);
+    if (u2 != 0) return 16 + byteLen(u2);
+    if (u1 != 0) return 8 + byteLen(u1);
+    if (u0 != 0) return byteLen(u0);
+    return 0;
+  }
+
+  private static int byteLen(final long v) {
+    return (64 - Long.numberOfLeadingZeros(v) + 7) / 8;
+  }
+
+  /**
+   * Number of significant bits.
+   *
+   * @return the number of bits (0 for ZERO).
+   */
+  public int bitLength() {
+    if (u3 != 0) return 192 + (64 - Long.numberOfLeadingZeros(u3));
+    if (u2 != 0) return 128 + (64 - Long.numberOfLeadingZeros(u2));
+    if (u1 != 0) return 64 + (64 - Long.numberOfLeadingZeros(u1));
+    if (u0 != 0) return 64 - Long.numberOfLeadingZeros(u0);
+    return 0;
   }
 
   // --------------------------------------------------------------------------

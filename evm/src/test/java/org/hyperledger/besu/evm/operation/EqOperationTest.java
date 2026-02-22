@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -100,6 +99,7 @@ public class EqOperationTest {
 
     operation.executeFixedCostOperation(frame, mock(EVM.class));
 
-    assertThat(UInt256.valueOf(expectedResult.ordinal())).isEqualTo(frame.popStackItem());
+    assertThat(frame.popStackItem())
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromInt(expectedResult.ordinal()));
   }
 }

@@ -171,11 +171,11 @@ class SarOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
     when(frame.getRemainingGas()).thenReturn(100L);
-    when(frame.popStackItem())
+    when(frame.popStackBytes())
         .thenReturn(Bytes32.fromHexStringLenient(shift))
         .thenReturn(Bytes.fromHexString(number));
     operation.execute(frame, null);
-    verify(frame).pushStackItem(Bytes.fromHexString(expectedResult));
+    verify(frame).pushStackBytes(Bytes.fromHexString(expectedResult));
   }
 
   @Test

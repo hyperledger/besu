@@ -185,7 +185,7 @@ public class MessageFrameTestFixture {
                             .createBlockHashLookup(localBlockchain, localBlockHeader)))
             .maxStackSize(maxStackSize)
             .build();
-    stackItems.forEach(frame::pushStackItem);
+    stackItems.forEach(frame::pushStackBytes);
     return frame;
   }
 

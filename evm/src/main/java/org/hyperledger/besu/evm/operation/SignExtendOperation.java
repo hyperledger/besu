@@ -49,8 +49,8 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem().trimLeadingZeros();
-    final Bytes value1 = Bytes32.leftPad(frame.popStackItem());
+    final Bytes value0 = frame.popStackBytes().trimLeadingZeros();
+    final Bytes value1 = Bytes32.leftPad(frame.popStackBytes());
 
     final MutableBytes32 result = MutableBytes32.create();
 
@@ -58,13 +58,13 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
     // but copying the 0th byte to itself is only so useful).
     int value0size = value0.size();
     if (value0size > 1) {
-      frame.pushStackItem(value1);
+      frame.pushStackBytes(value1);
       return signExtendSuccess;
     }
 
     int value0Value = value0.toInt();
     if (value0Value >= 31) {
-      frame.pushStackItem(value1);
+      frame.pushStackBytes(value1);
       return signExtendSuccess;
     }
 
@@ -72,7 +72,7 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
     final byte toSet = value1.get(byteIndex) < 0 ? (byte) 0xFF : 0x00;
     result.mutableSlice(0, byteIndex).fill(toSet);
     value1.slice(byteIndex).copyTo(result, byteIndex);
-    frame.pushStackItem(result);
+    frame.pushStackBytes(result);
 
     return signExtendSuccess;
   }

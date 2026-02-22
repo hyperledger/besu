@@ -35,6 +35,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
@@ -72,8 +73,8 @@ class TStoreOperationTest {
     final TStoreOperation operation = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(UInt256.ZERO);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.EMPTY);
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(INSUFFICIENT_GAS);
@@ -86,8 +87,8 @@ class TStoreOperationTest {
     final TStoreOperation operation = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(UInt256.ZERO);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.EMPTY);
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
@@ -101,10 +102,10 @@ class TStoreOperationTest {
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
 
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
     final OperationResult tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    var tloadValue = frame.popStackItem();
+    var tloadValue = frame.popStackBytes();
     assertThat(tloadValue).isEqualTo(Bytes32.ZERO);
   }
 
@@ -115,25 +116,25 @@ class TStoreOperationTest {
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(UInt256.ONE);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     final OperationResult result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     TLoadOperation tload = new TLoadOperation(gasCalculator);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
     OperationResult tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    UInt256 tloadValue = UInt256.fromBytes(frame.popStackItem());
-    assertThat(tloadValue).isEqualTo(UInt256.ONE);
+    Bytes tloadValue = frame.popStackBytes();
+    assertThat(UInt256.fromBytes(tloadValue)).isEqualTo(UInt256.ONE);
 
     // Loading from a different location returns default value
-    frame.pushStackItem(UInt256.fromHexString("0x02"));
+    frame.pushStackBytes(Bytes.fromHexString("0x02"));
     tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    tloadValue = UInt256.fromBytes(frame.popStackItem());
-    assertThat(tloadValue).isEqualTo(UInt256.ZERO);
+    tloadValue = frame.popStackBytes();
+    assertThat(UInt256.fromBytes(tloadValue)).isEqualTo(UInt256.ZERO);
   }
 
   @Test
@@ -143,25 +144,25 @@ class TStoreOperationTest {
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(UInt256.ONE);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     OperationResult result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     // Store 2 at position 1
-    frame.pushStackItem(UInt256.fromHexString("0x02"));
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x02"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
     final OperationResult tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    UInt256 tloadValue = UInt256.fromBytes(frame.popStackItem());
-    assertThat(tloadValue).isEqualTo(UInt256.fromHexString("0x02"));
+    Bytes tloadValue = frame.popStackBytes();
+    assertThat(UInt256.fromBytes(tloadValue)).isEqualTo(UInt256.fromHexString("0x02"));
   }
 
   // Zeroing out a transient storage slot does not result in gas refund
@@ -172,15 +173,15 @@ class TStoreOperationTest {
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(UInt256.ONE);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     OperationResult result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     // Reset value to 0
-    frame.pushStackItem(UInt256.fromHexString("0x00"));
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.fromHexString("0x00"));
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();

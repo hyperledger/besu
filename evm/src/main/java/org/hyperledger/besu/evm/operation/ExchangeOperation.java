@@ -90,10 +90,10 @@ public class ExchangeOperation extends AbstractFixedCostOperation {
     try {
       // Swap the (n+1)'th item (index n) with the (m+1)'th item (index m)
       // In Besu's 0-indexed stack, (n+1)'th is index n, (m+1)'th is index m
-      final Bytes itemN = frame.getStackItem(n);
-      final Bytes itemM = frame.getStackItem(m);
-      frame.setStackItem(n, itemM);
-      frame.setStackItem(m, itemN);
+      final Bytes itemN = frame.getStackBytes(n);
+      final Bytes itemM = frame.getStackBytes(m);
+      frame.setStackBytes(n, itemM);
+      frame.setStackBytes(m, itemN);
       return EXCHANGE_SUCCESS;
     } catch (final UnderflowException ufe) {
       return UNDERFLOW_RESPONSE;

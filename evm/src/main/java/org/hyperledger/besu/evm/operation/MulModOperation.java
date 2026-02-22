@@ -50,12 +50,12 @@ public class MulModOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
-    final Bytes value2 = frame.popStackItem();
+    final Bytes value0 = frame.popStackBytes();
+    final Bytes value1 = frame.popStackBytes();
+    final Bytes value2 = frame.popStackBytes();
 
     if (value2.isZero()) {
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackBytes(Bytes.EMPTY);
     } else {
       BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
       BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());
@@ -70,7 +70,7 @@ public class MulModOperation extends AbstractFixedCostOperation {
       final byte[] padding = new byte[32 - resultBytes.size()];
       Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
 
-      frame.pushStackItem(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
+      frame.pushStackBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
     }
 
     return mulModSuccess;

@@ -19,16 +19,14 @@ import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-
-/** The XOR operation. */
+/** The OR operation. */
 public class OrOperationOptimized extends AbstractFixedCostOperation {
 
-  /** The XOR operation success result. */
-  static final OperationResult xorSuccess = new OperationResult(3, null);
+  /** The OR operation success result. */
+  static final OperationResult orSuccess = new OperationResult(3, null);
 
   /**
-   * Instantiates a new Xor operation.
+   * Instantiates a new Or operation.
    *
    * @param gasCalculator the gas calculator
    */
@@ -42,19 +40,15 @@ public class OrOperationOptimized extends AbstractFixedCostOperation {
   }
 
   /**
-   * Performs XOR operation.
+   * Performs OR operation.
    *
    * @param frame the frame
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
-    UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
-    UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
-    UInt256 result = b0.or(b1);
-    byte[] resultArray = result.toBytesBE();
-    frame.pushStackItem(Bytes.wrap(resultArray));
-    return xorSuccess;
+    final UInt256 value0 = frame.popStackItem();
+    final UInt256 value1 = frame.popStackItem();
+    frame.pushStackItem(value0.or(value1));
+    return orSuccess;
   }
 }

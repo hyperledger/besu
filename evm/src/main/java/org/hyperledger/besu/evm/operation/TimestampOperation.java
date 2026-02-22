@@ -35,7 +35,7 @@ public class TimestampOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final long timestamp = frame.getBlockValues().getTimestamp();
-    frame.pushStackItem(Words.longBytes(timestamp));
+    frame.pushStackBytes(Words.longBytes(timestamp));
 
     return successResponse;
   }

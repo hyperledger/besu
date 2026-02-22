@@ -54,7 +54,7 @@ class ChainIdOperationTest {
     when(messageFrame.getRemainingGas()).thenReturn(100L);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();
-    Mockito.verify(messageFrame).pushStackItem(arg.capture());
+    Mockito.verify(messageFrame).pushStackBytes(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
     assertThat(arg.getValue()).isEqualTo(chainId);
   }

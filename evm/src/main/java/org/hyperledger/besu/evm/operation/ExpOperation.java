@@ -15,13 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Exp operation. */
 public class ExpOperation extends AbstractOperation {
@@ -51,30 +50,22 @@ public class ExpOperation extends AbstractOperation {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final GasCalculator gasCalculator) {
-    final Bytes number = frame.popStackItem();
-    final Bytes power = frame.popStackItem();
+    final UInt256 number = frame.popStackItem();
+    final UInt256 power = frame.popStackItem();
 
-    final int numBytes = (power.bitLength() + 7) / 8;
+    final int numBytes = power.byteLength();
 
     final long cost = gasCalculator.expOperationGasCost(numBytes);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    byte[] numberBytes = number.toArrayUnsafe();
-    BigInteger numBI = numberBytes.length > 0 ? new BigInteger(1, numberBytes) : BigInteger.ZERO;
-    byte[] powBytes = power.toArrayUnsafe();
-    BigInteger powBI = powBytes.length > 0 ? new BigInteger(1, powBytes) : BigInteger.ZERO;
-
+    // Use BigInteger for modPow - complex to implement natively
+    final BigInteger numBI = number.toBigInteger();
+    final BigInteger powBI = power.toBigInteger();
     final BigInteger result = numBI.modPow(powBI, MOD_BASE);
+    frame.pushStackItem(UInt256.fromBigInteger(result));
 
-    byte[] resultArray = result.toByteArray();
-    int length = resultArray.length;
-    if (length > 32) {
-      frame.pushStackItem(Bytes.wrap(resultArray, length - 32, 32));
-    } else {
-      frame.pushStackItem(Bytes.wrap(resultArray));
-    }
     return new OperationResult(cost, null);
   }
 }

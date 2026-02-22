@@ -34,7 +34,7 @@ public class PCOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(Words.intBytes(frame.getPC()));
+    frame.pushStackBytes(Words.intBytes(frame.getPC()));
 
     return successResponse;
   }

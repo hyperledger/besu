@@ -43,7 +43,6 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -132,9 +131,8 @@ public class Create2OperationTest {
 
   public void setUp(final String sender, final String salt, final String code) {
 
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final int memoryOffset = 0xFF;
     final Bytes codeBytes = Bytes.fromHexString(code);
-    final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
     messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -154,12 +152,12 @@ public class Create2OperationTest {
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(UInt256.fromHexString(salt));
-    messageFrame.pushStackItem(memoryLength);
-    messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(UInt256.ZERO);
+    messageFrame.pushStackBytes(Bytes.fromHexString(salt));
+    messageFrame.pushStackBytes(Bytes.ofUnsignedLong(codeBytes.size()));
+    messageFrame.pushStackBytes(Bytes.fromHexString("0xFF"));
+    messageFrame.pushStackBytes(Bytes.EMPTY);
     messageFrame.expandMemory(0, 500);
-    messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), code.length(), codeBytes);
+    messageFrame.writeMemory(memoryOffset, code.length(), codeBytes);
 
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
@@ -196,8 +194,8 @@ public class Create2OperationTest {
 
   @Test
   void shanghaiMaxInitCodeSizeCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0xc000");
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0xc000");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
@@ -224,8 +222,8 @@ public class Create2OperationTest {
 
   @Test
   void shanghaiMaxInitCodeSizePlus1Create() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0xc001");
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0xc001");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
@@ -245,8 +243,8 @@ public class Create2OperationTest {
 
   @Test
   void amsterdamMaxInitCodeSizeCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0x10000");
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0x010000");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
@@ -266,8 +264,8 @@ public class Create2OperationTest {
 
   @Test
   void amsterdamMaxInitCodeSizePlus1Create() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0x10001");
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0x010001");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
@@ -287,8 +285,8 @@ public class Create2OperationTest {
 
   @Test
   void amsterdamBetweenOldAndNewInitCodeLimitCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0xC001");
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0xC001");
     final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
@@ -307,7 +305,7 @@ public class Create2OperationTest {
   }
 
   @NotNull
-  private MessageFrame testMemoryFrame(final UInt256 memoryOffset, final UInt256 memoryLength) {
+  private MessageFrame testMemoryFrame(final Bytes memoryOffset, final Bytes memoryLength) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -327,13 +325,13 @@ public class Create2OperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(Bytes.EMPTY);
-    messageFrame.pushStackItem(memoryLength);
-    messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(UInt256.ZERO);
+    messageFrame.pushStackBytes(Bytes.EMPTY);
+    messageFrame.pushStackBytes(memoryLength);
+    messageFrame.pushStackBytes(memoryOffset);
+    messageFrame.pushStackBytes(Bytes.EMPTY);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
-        memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
+        memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     if (messageFrameStack.isEmpty()) {
       messageFrameStack.push(messageFrame);

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.ArrayDeque;
@@ -370,7 +371,20 @@ public class SarOperationPropertyBasedTest {
     stack.push(value);
     stack.push(shift);
 
-    when(frame.popStackItem()).thenAnswer(invocation -> stack.pop());
+    when(frame.popStackBytes()).thenAnswer(invocation -> stack.pop());
+
+    // Also mock popStackItem for optimized operations that use UInt256
+    when(frame.popStackItem())
+        .thenAnswer(
+            invocation -> {
+              Bytes b = stack.pop();
+              if (b.size() == 0) return UInt256.ZERO;
+              byte[] padded =
+                  b.size() >= 32
+                      ? b.slice(b.size() - 32, 32).toArrayUnsafe()
+                      : Bytes32.leftPad(b).toArrayUnsafe();
+              return UInt256.fromBytesBE(padded);
+            });
 
     final Bytes[] result = new Bytes[1];
     doAnswer(
@@ -379,7 +393,17 @@ public class SarOperationPropertyBasedTest {
               return null;
             })
         .when(frame)
-        .pushStackItem(any(Bytes.class));
+        .pushStackBytes(any(Bytes.class));
+
+    // Also mock pushStackItem for optimized operations that use UInt256
+    doAnswer(
+            invocation -> {
+              UInt256 val = invocation.getArgument(0);
+              result[0] = Bytes.wrap(val.toBytesBE());
+              return null;
+            })
+        .when(frame)
+        .pushStackItem(any(UInt256.class));
 
     executor.execute(frame);
     return result[0];

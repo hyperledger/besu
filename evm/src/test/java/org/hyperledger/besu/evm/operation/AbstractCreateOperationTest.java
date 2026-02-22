@@ -46,7 +46,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 class AbstractCreateOperationTest {
@@ -93,8 +92,8 @@ class AbstractCreateOperationTest {
 
     @Override
     public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-      final int inputOffset = clampedToInt(frame.getStackItem(1));
-      final int inputSize = clampedToInt(frame.getStackItem(2));
+      final int inputOffset = clampedToInt(frame.getStackBytes(1));
+      final int inputSize = clampedToInt(frame.getStackBytes(2));
       return clampedAdd(
           clampedAdd(
               gasCalculator().txCreateCost(),
@@ -114,8 +113,8 @@ class AbstractCreateOperationTest {
 
     @Override
     protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-      final long inputOffset = clampedToLong(frame.getStackItem(1));
-      final long inputSize = clampedToLong(frame.getStackItem(2));
+      final long inputOffset = clampedToLong(frame.getStackBytes(1));
+      final long inputSize = clampedToLong(frame.getStackBytes(2));
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       return new Code(inputData);
     }
@@ -135,7 +134,6 @@ class AbstractCreateOperationTest {
   }
 
   private void executeOperation(final Bytes contract, final EVM evm) {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -156,11 +154,11 @@ class AbstractCreateOperationTest {
             .worldUpdater(worldUpdater)
             .build();
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    messageFrame.pushStackItem(Bytes.ofUnsignedLong(contract.size()));
-    messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(Bytes.EMPTY);
+    messageFrame.pushStackBytes(Bytes.ofUnsignedLong(contract.size()));
+    messageFrame.pushStackBytes(Bytes.fromHexString("0xFF"));
+    messageFrame.pushStackBytes(Bytes.EMPTY);
     messageFrame.expandMemory(0, 500);
-    messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), contract.size(), contract);
+    messageFrame.writeMemory(0xFF, contract.size(), contract);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);

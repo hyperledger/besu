@@ -42,7 +42,6 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 class CreateOperationTest {
@@ -74,9 +73,9 @@ class CreateOperationTest {
   void createFromMemoryMutationSafe() {
 
     // Given: Execute a CREATE operation with a contract that logs in the constructor
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -100,7 +99,7 @@ class CreateOperationTest {
 
     // WHEN the memory that the create operation was executed from is altered.
     messageFrame.writeMemory(
-        memoryOffset.trimLeadingZeros().toInt(),
+        memoryOffset.toInt(),
         SIMPLE_CREATE.size(),
         Bytes.random(SIMPLE_CREATE.size()));
 
@@ -111,9 +110,9 @@ class CreateOperationTest {
 
   @Test
   void nonceTooLarge() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -122,15 +121,15 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(messageFrame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
   void messageFrameStackTooDeep() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1025);
+        testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1025);
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -139,15 +138,15 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(messageFrame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
   void notEnoughValue() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.valueOf(1), 1);
+        testMemoryFrame(memoryOffset, memoryLength, Bytes.of(1), 1);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     for (int i = 0; i < 1025; i++) {
       messageFrameStack.add(messageFrame);
@@ -160,14 +159,14 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(messageFrame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
   void shanghaiMaxInitCodeSizeCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0xc000");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0xc000");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -193,9 +192,9 @@ class CreateOperationTest {
 
   @Test
   void shanghaiMaxInitCodeSizePlus1Create() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0xc001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0xc001");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -213,9 +212,9 @@ class CreateOperationTest {
 
   @Test
   void amsterdamMaxInitCodeSizeCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0x10000");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0x010000");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -234,9 +233,9 @@ class CreateOperationTest {
 
   @Test
   void amsterdamMaxInitCodeSizePlus1Create() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0x10001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0x010001");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -254,9 +253,9 @@ class CreateOperationTest {
 
   @Test
   void amsterdamBetweenOldAndNewInitCodeLimitCreate() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.fromHexString("0xC001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes memoryOffset = Bytes.fromHexString("0xFF");
+    final Bytes memoryLength = Bytes.fromHexString("0xC001");
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -275,9 +274,9 @@ class CreateOperationTest {
 
   @NotNull
   private MessageFrame testMemoryFrame(
-      final UInt256 memoryOffset,
-      final UInt256 memoryLength,
-      final UInt256 value,
+      final Bytes memoryOffset,
+      final Bytes memoryLength,
+      final Bytes value,
       final int depth) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
@@ -298,12 +297,12 @@ class CreateOperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(memoryLength);
-    messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(value);
+    messageFrame.pushStackBytes(memoryLength);
+    messageFrame.pushStackBytes(memoryOffset);
+    messageFrame.pushStackBytes(value);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
-        memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
+        memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     while (messageFrameStack.size() < depth) {
       messageFrameStack.push(messageFrame);

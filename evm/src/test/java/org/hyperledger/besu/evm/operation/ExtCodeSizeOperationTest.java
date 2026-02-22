@@ -108,7 +108,7 @@ class ExtCodeSizeOperationTest {
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(3);
+    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(3);
   }
 
   @Test
@@ -122,17 +122,17 @@ class ExtCodeSizeOperationTest {
 
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
+    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(9);
 
     final MessageFrame frameIstanbul = createMessageFrame(value);
     operationIstanbul.execute(frameIstanbul, null);
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
+    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(9);
   }
 
   private Bytes executeOperation(final Address requestedAddress) {
     final MessageFrame frame = createMessageFrame(requestedAddress);
     operation.execute(frame, null);
-    return frame.getStackItem(0);
+    return frame.getStackBytes(0);
   }
 
   private MessageFrame createMessageFrame(final Address requestedAddress) {
@@ -140,7 +140,7 @@ class ExtCodeSizeOperationTest {
     return createMessageFrame(stackItem);
   }
 
-  private MessageFrame createMessageFrame(final UInt256 stackItem) {
+  private MessageFrame createMessageFrame(final Bytes stackItem) {
     final BlockValues blockValues = new FakeBlockValues(1337);
     final MessageFrame frame =
         new TestMessageFrameBuilder()
@@ -148,7 +148,7 @@ class ExtCodeSizeOperationTest {
             .blockValues(blockValues)
             .build();
 
-    frame.pushStackItem(stackItem);
+    frame.pushStackBytes(stackItem);
     return frame;
   }
 }

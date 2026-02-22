@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -80,7 +81,7 @@ class DupNOperationTest {
     assertThat(result.getGasCost()).isEqualTo(3);
     assertThat(result.getPcIncrement()).isEqualTo(2);
     // Top of stack should now be a copy of item 17 (value 17)
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(17));
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(17)));
     // Stack should have 18 items now
     assertThat(frame.stackSize()).isEqualTo(18);
   }
@@ -104,7 +105,7 @@ class DupNOperationTest {
     assertThat(result.getHaltReason()).isNull();
     assertThat(result.getPcIncrement()).isEqualTo(2);
     // Should duplicate item 107 (value 107)
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(107);
+    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(107);
   }
 
   @Test
@@ -123,7 +124,7 @@ class DupNOperationTest {
     final OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getHaltReason()).isNull();
-    assertThat(frame.getStackItem(0).toInt()).isEqualTo(108);
+    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(108);
   }
 
   @ParameterizedTest
@@ -183,7 +184,7 @@ class DupNOperationTest {
 
     // Immediate 0 is valid, should succeed
     assertThat(result.getHaltReason()).isNull();
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(17));
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(17)));
   }
 
   @Test
@@ -247,8 +248,8 @@ class DupNOperationTest {
     final MessageFrame frame = builder.build();
 
     assertThat(frame.stackSize()).isEqualTo(18);
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(0)); // top
-    assertThat(frame.getStackItem(17)).isEqualTo(Bytes.of(1)); // bottom
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(0))); // top
+    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(1))); // bottom
 
     final OperationResult result = operation.execute(frame, null);
 
@@ -256,7 +257,7 @@ class DupNOperationTest {
     assertThat(result.getPcIncrement()).isEqualTo(2);
     // DUPN 0 -> n=17, duplicates stack[16] which is 0
     assertThat(frame.stackSize()).isEqualTo(19);
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(0)); // duplicated value
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(0))); // duplicated value
   }
 
   /**
@@ -285,7 +286,7 @@ class DupNOperationTest {
     // Implicit immediate 0 is valid, should behave same as explicit 0
     assertThat(result.getHaltReason()).isNull();
     assertThat(frame.stackSize()).isEqualTo(19);
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes.of(0));
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(0)));
   }
 
   /**

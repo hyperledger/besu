@@ -53,7 +53,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Address address = Words.toAddress(frame.popStackItem());
+      final Address address = Words.toAddress(frame.popStackBytes());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(accountIsWarm);
@@ -64,9 +64,9 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final Account account = getAccount(address, frame);
 
       if (account == null || account.isEmpty()) {
-        frame.pushStackItem(Bytes.EMPTY);
+        frame.pushStackBytes(Bytes.EMPTY);
       } else {
-        frame.pushStackItem(account.getCodeHash().getBytes());
+        frame.pushStackBytes(account.getCodeHash().getBytes());
       }
       return new OperationResult(cost, null);
 

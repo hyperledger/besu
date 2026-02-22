@@ -35,7 +35,7 @@ public class SlotNumOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final long slotNumber = frame.getBlockValues().getSlotNumber();
-    frame.pushStackItem(Words.longBytes(slotNumber));
+    frame.pushStackBytes(Words.longBytes(slotNumber));
 
     return successResponse;
   }

@@ -90,7 +90,7 @@ public class SelfDestructOperationTest {
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(Bytes.fromHexString(beneficiary));
+    messageFrame.pushStackBytes(Bytes.fromHexString(beneficiary));
     if (newContract) {
       messageFrame.addCreate(originatorAddress);
     }

@@ -19,13 +19,11 @@ import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /** The And operation. */
 public class AndOperationOptimized extends AbstractFixedCostOperation {
 
   /** The And operation success result. */
-  static final OperationResult addSuccess = new OperationResult(3, null);
+  static final OperationResult andSuccess = new OperationResult(3, null);
 
   /**
    * Instantiates a new And operation.
@@ -49,17 +47,9 @@ public class AndOperationOptimized extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
-
-    UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
-    UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
-
-    UInt256 result = b0.and(b1);
-    byte[] resultArray = result.toBytesBE();
-    frame.pushStackItem(Bytes.wrap(resultArray));
-
-    return addSuccess;
+    final UInt256 value0 = frame.popStackItem();
+    final UInt256 value1 = frame.popStackItem();
+    frame.pushStackItem(value0.and(value1));
+    return andSuccess;
   }
 }

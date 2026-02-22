@@ -90,7 +90,7 @@ class CodeTest {
             .build();
 
     frame.setPC(CURRENT_PC);
-    frame.pushStackItem(UInt256.fromHexString("0x03"));
+    frame.pushStackBytes(Bytes.fromHexString("0x03"));
     return frame;
   }
 }

@@ -15,10 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Push operation. */
 public class PushOperation extends AbstractFixedCostOperation {
@@ -69,22 +68,15 @@ public class PushOperation extends AbstractFixedCostOperation {
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
     final int copyStart = pc + 1;
-    Bytes push;
     if (code.length <= copyStart) {
-      push = Bytes.EMPTY;
+      frame.pushStackItem(UInt256.ZERO);
     } else {
       final int copyLength = Math.min(pushSize, code.length - pc - 1);
-      final int rightPad = pushSize - copyLength;
-      if (rightPad == 0) {
-        push = Bytes.wrap(code, copyStart, copyLength);
-      } else {
-        // Right Pad the push with 0s up to pushSize if greater than the copyLength
-        var bytecodeLocal = new byte[pushSize];
-        System.arraycopy(code, copyStart, bytecodeLocal, 0, copyLength);
-        push = Bytes.wrap(bytecodeLocal);
-      }
+      // Build a byte array of exactly pushSize, right-padded with zeros
+      final byte[] pushBytes = new byte[pushSize];
+      System.arraycopy(code, copyStart, pushBytes, 0, copyLength);
+      frame.pushStackItem(UInt256.fromBytesBE(pushBytes));
     }
-    frame.pushStackItem(push);
     frame.setPC(pc + pushSize);
     return pushSuccess;
   }

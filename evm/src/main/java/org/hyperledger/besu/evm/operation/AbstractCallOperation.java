@@ -76,7 +76,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @return the additional gas to provide the call operation
    */
   protected long gas(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(0));
+    return clampedToLong(frame.getStackBytes(0));
   }
 
   /**
@@ -255,7 +255,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
       frame.incrementRemainingGas(gasAvailableForChildCall + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
+      frame.pushStackBytes(LEGACY_FAILURE_STACK_ITEM);
       final SoftFailureReason softFailureReason =
           insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
       return new OperationResult(cost, 1, softFailureReason, gasAvailableForChildCall);
@@ -330,7 +330,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     Bytes resultItem;
 
     resultItem = getCallResultStackItem(childFrame);
-    frame.pushStackItem(resultItem);
+    frame.pushStackBytes(resultItem);
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);

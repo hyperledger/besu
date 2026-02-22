@@ -166,7 +166,7 @@ public class TestMessageFrameBuilder {
             .isStatic(isStatic)
             .build();
     frame.setPC(pc);
-    stackItems.forEach(frame::pushStackItem);
+    stackItems.forEach(frame::pushStackBytes);
     frame.writeMemory(0, memory.size(), memory);
     return frame;
   }

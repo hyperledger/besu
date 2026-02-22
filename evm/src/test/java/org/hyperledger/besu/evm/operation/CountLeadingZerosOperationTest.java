@@ -61,9 +61,9 @@ class CountLeadingZerosOperationTest {
     Bytes input = Bytes.fromHexString(value);
     Bytes expected = Words.intBytes(expectedLeadingZeros);
 
-    when(frame.popStackItem()).thenReturn(input);
+    when(frame.popStackBytes()).thenReturn(input);
 
     operation.executeFixedCostOperation(frame, mock(EVM.class));
-    verify(frame).pushStackItem(expected);
+    verify(frame).pushStackBytes(expected);
   }
 }

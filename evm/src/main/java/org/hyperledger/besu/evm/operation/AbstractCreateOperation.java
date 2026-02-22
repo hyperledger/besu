@@ -82,7 +82,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    final Wei value = Wei.wrap(frame.getStackItem(0));
+    final Wei value = Wei.wrap(frame.getStackBytes(0));
 
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = getMutableAccount(address, frame);
@@ -161,15 +161,15 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param frame the current execution frame
    */
   protected void fail(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final long inputOffset = clampedToLong(frame.getStackBytes(1));
+    final long inputSize = clampedToLong(frame.getStackBytes(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(Bytes.EMPTY);
+    frame.pushStackBytes(Bytes.EMPTY);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code) {
-    final Wei value = Wei.wrap(parent.getStackItem(0));
+    final Wei value = Wei.wrap(parent.getStackBytes(0));
 
     final Address contractAddress = generateTargetContractAddress(parent, code);
     final Bytes inputData = getInputData(parent);
@@ -224,12 +224,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       Address createdAddress = childFrame.getContractAddress();
-      frame.pushStackItem(Words.fromAddress(createdAddress));
+      frame.pushStackBytes(Words.fromAddress(createdAddress));
       frame.setReturnData(Bytes.EMPTY);
       onSuccess(frame, createdAddress);
     } else {
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackBytes(Bytes.EMPTY);
       onFailure(frame, childFrame.getExceptionalHaltReason());
     }
 

@@ -46,7 +46,7 @@ class SlotNumOperationTest {
     final MessageFrame frame = createMessageFrame(100L, expectedSlotNumber);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(Words.longBytes(expectedSlotNumber));
+    verify(frame).pushStackBytes(Words.longBytes(expectedSlotNumber));
     assertSuccessResult(result);
   }
 
@@ -55,7 +55,7 @@ class SlotNumOperationTest {
     final MessageFrame frame = createMessageFrame(100L, 0L);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(Words.longBytes(0L));
+    verify(frame).pushStackBytes(Words.longBytes(0L));
     assertSuccessResult(result);
   }
 
@@ -65,7 +65,7 @@ class SlotNumOperationTest {
     final MessageFrame frame = createMessageFrame(100L, maxSlotNumber);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(Words.longBytes(maxSlotNumber));
+    verify(frame).pushStackBytes(Words.longBytes(maxSlotNumber));
     assertSuccessResult(result);
   }
 

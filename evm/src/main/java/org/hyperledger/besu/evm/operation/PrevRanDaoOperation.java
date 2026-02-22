@@ -32,7 +32,7 @@ public class PrevRanDaoOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getBlockValues().getMixHashOrPrevRandao());
+    frame.pushStackBytes(frame.getBlockValues().getMixHashOrPrevRandao());
     return successResponse;
   }
 }

@@ -27,7 +27,6 @@ import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -119,11 +118,11 @@ class ShrOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
     when(frame.getRemainingGas()).thenReturn(100L);
-    when(frame.popStackItem())
-        .thenReturn(UInt256.fromBytes(Bytes32.fromHexStringLenient(shift)))
-        .thenReturn(UInt256.fromHexString(number));
+    when(frame.popStackBytes())
+        .thenReturn(Bytes32.fromHexStringLenient(shift))
+        .thenReturn(Bytes.fromHexString(number));
     operation.execute(frame, null);
-    verify(frame).pushStackItem(Bytes.fromHexString(expectedResult));
+    verify(frame).pushStackBytes(Bytes.fromHexString(expectedResult));
   }
 
   @Test

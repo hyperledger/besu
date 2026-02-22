@@ -109,7 +109,7 @@ class ExtCodeHashOperationTest {
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code).getBytes());
+    assertThat(frame.getStackBytes(0)).isEqualTo(Hash.hash(code).getBytes());
   }
 
   @Test
@@ -123,17 +123,17 @@ class ExtCodeHashOperationTest {
 
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code).getBytes());
+    assertThat(frame.getStackBytes(0)).isEqualTo(Hash.hash(code).getBytes());
 
     final MessageFrame frameIstanbul = createMessageFrame(value);
     operationIstanbul.execute(frameIstanbul, null);
-    assertThat(frameIstanbul.getStackItem(0)).isEqualTo(Hash.hash(code).getBytes());
+    assertThat(frameIstanbul.getStackBytes(0)).isEqualTo(Hash.hash(code).getBytes());
   }
 
   private Bytes executeOperation(final Address requestedAddress) {
     final MessageFrame frame = createMessageFrame(requestedAddress);
     operation.execute(frame, null);
-    return frame.getStackItem(0);
+    return frame.getStackBytes(0);
   }
 
   private MessageFrame createMessageFrame(final Address requestedAddress) {
@@ -141,7 +141,7 @@ class ExtCodeHashOperationTest {
     return createMessageFrame(stackItem);
   }
 
-  private MessageFrame createMessageFrame(final UInt256 stackItem) {
+  private MessageFrame createMessageFrame(final Bytes stackItem) {
     final BlockValues blockValues = new FakeBlockValues(1337);
     final MessageFrame frame =
         new TestMessageFrameBuilder()
@@ -149,7 +149,7 @@ class ExtCodeHashOperationTest {
             .blockValues(blockValues)
             .build();
 
-    frame.pushStackItem(stackItem);
+    frame.pushStackBytes(stackItem);
     return frame;
   }
 }

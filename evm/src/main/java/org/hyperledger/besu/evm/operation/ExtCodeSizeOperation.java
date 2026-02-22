@@ -53,7 +53,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Address address = Words.toAddress(frame.popStackItem());
+      final Address address = Words.toAddress(frame.popStackBytes());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(accountIsWarm);
@@ -63,7 +63,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         final Account account = getAccount(address, frame);
 
         Bytes codeSize = (account == null) ? Bytes.EMPTY : Words.intBytes(account.getCode().size());
-        frame.pushStackItem(codeSize);
+        frame.pushStackBytes(codeSize);
 
         return new OperationResult(cost, null);
       }

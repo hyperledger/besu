@@ -32,7 +32,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 
-import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -82,8 +82,8 @@ class SStoreOperationTest {
     final SStoreOperation operation = new SStoreOperation(gasCalculator, minimumGasAvailable);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(UInt256.ZERO);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackBytes(Bytes.EMPTY);
+    frame.pushStackBytes(Bytes.fromHexString("0x01"));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(expectedHalt);

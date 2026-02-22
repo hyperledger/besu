@@ -42,7 +42,7 @@ class Push0OperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new Push0Operation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    Mockito.verify(frame).pushStackItem(Bytes.EMPTY);
+    Mockito.verify(frame).pushStackBytes(Bytes.EMPTY);
     assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
     assertSuccessResult(result);
   }

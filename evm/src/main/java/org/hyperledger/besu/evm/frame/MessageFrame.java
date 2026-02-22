@@ -51,7 +51,6 @@ import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
-import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * A container object for all the states associated with a message.
@@ -423,7 +422,7 @@ public class MessageFrame {
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
    */
-  public Bytes getStackItem(final int offset) {
+  public org.hyperledger.besu.evm.UInt256 getStackItem(final int offset) {
     return stack.get(offset);
   }
 
@@ -433,7 +432,7 @@ public class MessageFrame {
    * @return the item at the top of the stack
    * @throws UnderflowException if the stack is empty
    */
-  public Bytes popStackItem() {
+  public org.hyperledger.besu.evm.UInt256 popStackItem() {
     return stack.pop();
   }
 
@@ -451,7 +450,7 @@ public class MessageFrame {
    *
    * @param value The value to push onto the stack.
    */
-  public void pushStackItem(final Bytes value) {
+  public void pushStackItem(final org.hyperledger.besu.evm.UInt256 value) {
     stack.push(value);
   }
 
@@ -462,9 +461,75 @@ public class MessageFrame {
    * @param value The value to set the stack item to
    * @throws IllegalStateException if the stack is too small
    */
-  public void setStackItem(final int offset, final Bytes value) {
+  public void setStackItem(final int offset, final org.hyperledger.besu.evm.UInt256 value) {
     stack.set(offset, value);
   }
+
+  // region Bytes wrapper methods for non-converted operations
+  // --------------------------------------------------------------------------
+
+  /**
+   * Pops a stack item and converts it to Bytes. For non-phase-1 operations that still work with
+   * Bytes.
+   *
+   * @return the top stack item as Bytes
+   */
+  public Bytes popStackBytes() {
+    return Bytes.wrap(stack.pop().toBytesBE());
+  }
+
+  /**
+   * Pushes a Bytes value onto the stack by converting it to UInt256 first. For non-phase-1
+   * operations that still work with Bytes.
+   *
+   * @param value The Bytes value to push
+   */
+  public void pushStackBytes(final Bytes value) {
+    byte[] padded;
+    if (value.size() >= 32) {
+      padded = value.slice(value.size() - 32, 32).toArrayUnsafe();
+    } else if (value.size() == 0) {
+      stack.push(org.hyperledger.besu.evm.UInt256.ZERO);
+      return;
+    } else {
+      padded = Bytes32.leftPad(value).toArrayUnsafe();
+    }
+    stack.push(org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
+  }
+
+  /**
+   * Returns the stack item at the specified offset as Bytes. For non-phase-1 operations that still
+   * work with Bytes.
+   *
+   * @param offset The item's position relative to the top of the stack
+   * @return The item as Bytes
+   */
+  public Bytes getStackBytes(final int offset) {
+    return Bytes.wrap(stack.get(offset).toBytesBE());
+  }
+
+  /**
+   * Sets the stack item at the specified offset from a Bytes value. For non-phase-1 operations that
+   * still work with Bytes.
+   *
+   * @param offset The item's position relative to the top of the stack
+   * @param value The Bytes value to set
+   */
+  public void setStackBytes(final int offset, final Bytes value) {
+    byte[] padded;
+    if (value.size() >= 32) {
+      padded = value.slice(value.size() - 32, 32).toArrayUnsafe();
+    } else if (value.size() == 0) {
+      stack.set(offset, org.hyperledger.besu.evm.UInt256.ZERO);
+      return;
+    } else {
+      padded = Bytes32.leftPad(value).toArrayUnsafe();
+    }
+    stack.set(offset, org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
+  }
+
+  // --------------------------------------------------------------------------
+  // endregion
 
   /**
    * Return the current stack size.
@@ -749,7 +814,8 @@ public class MessageFrame {
    * @param storageAddress the storage address
    * @param value the value
    */
-  public void storageWasUpdated(final UInt256 storageAddress, final Bytes value) {
+  public void storageWasUpdated(
+      final org.apache.tuweni.units.bigints.UInt256 storageAddress, final Bytes value) {
     maybeUpdatedStorage = Optional.of(new StorageEntry(storageAddress, value));
   }
 

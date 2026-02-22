@@ -148,14 +148,14 @@ class BlockchainBasedBlockHashLookupTest {
 
     BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
     when(messageFrameMock.getRemainingGas()).thenReturn(10_000_000L);
-    when(messageFrameMock.popStackItem()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
+    when(messageFrameMock.popStackBytes()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
     when(messageFrameMock.getBlockValues()).thenReturn(blockValuesMock);
     when(messageFrameMock.getBlockHashLookup()).thenReturn(lookup);
     when(blockValuesMock.getNumber()).thenReturn((long) CURRENT_BLOCK_NUMBER);
 
     op.execute(messageFrameMock, null);
 
-    verify(messageFrameMock).pushStackItem(hash.getBytes());
+    verify(messageFrameMock).pushStackBytes(hash.getBytes());
   }
 
   private BlockHeader createHeader(final int blockNumber, final BlockHeader parentHeader) {

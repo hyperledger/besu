@@ -37,7 +37,7 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Bytes returnData = frame.getReturnData();
-    frame.pushStackItem(Words.longBytes(returnData.size()));
+    frame.pushStackBytes(Words.longBytes(returnData.size()));
 
     return successResponse;
   }

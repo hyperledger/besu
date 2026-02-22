@@ -62,10 +62,10 @@ public class ExtCodeCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final Address address = Words.toAddress(frame.popStackItem());
-    final long memOffset = clampedToLong(frame.popStackItem());
-    final long sourceOffset = clampedToLong(frame.popStackItem());
-    final long numBytes = clampedToLong(frame.popStackItem());
+    final Address address = Words.toAddress(frame.popStackBytes());
+    final long memOffset = clampedToLong(frame.popStackBytes());
+    final long sourceOffset = clampedToLong(frame.popStackBytes());
+    final long numBytes = clampedToLong(frame.popStackBytes());
 
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);

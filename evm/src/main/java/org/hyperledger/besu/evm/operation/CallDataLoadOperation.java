@@ -37,19 +37,19 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final Bytes startWord = frame.popStackItem().trimLeadingZeros();
+    final Bytes startWord = frame.popStackBytes().trimLeadingZeros();
 
     // If the start index doesn't fit in an int, it comes after anything in data, and so the
     // returned
     // word should be zero.
     if (startWord.size() > 4) {
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackBytes(Bytes.EMPTY);
       return successResponse;
     }
 
     final int offset = startWord.toInt();
     if (offset < 0) {
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackBytes(Bytes.EMPTY);
       return successResponse;
     }
     final Bytes data = frame.getInputData();
@@ -57,9 +57,9 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
     if (offset < data.size()) {
       final Bytes toCopy = data.slice(offset, Math.min(Bytes32.SIZE, data.size() - offset));
       toCopy.copyTo(res, 0);
-      frame.pushStackItem(res.copy());
+      frame.pushStackBytes(res.copy());
     } else {
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackBytes(Bytes.EMPTY);
     }
 
     return successResponse;

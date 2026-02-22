@@ -65,13 +65,13 @@ public class ByteOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
+    final Bytes value0 = frame.popStackBytes();
+    final Bytes value1 = frame.popStackBytes();
 
     // Stack items are reversed for the BYTE operation.
     final Bytes result = getByte(value1, value0);
 
-    frame.pushStackItem(result);
+    frame.pushStackBytes(result);
 
     return byteSuccess;
   }

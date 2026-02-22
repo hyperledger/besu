@@ -50,18 +50,18 @@ public class ShlOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    Bytes shiftAmount = frame.popStackItem();
+    Bytes shiftAmount = frame.popStackBytes();
     if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
-      frame.popStackItem();
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.popStackBytes();
+      frame.pushStackBytes(Bytes.EMPTY);
     } else {
       final int shiftAmountInt = shiftAmount.toInt();
-      final Bytes value = leftPad(frame.popStackItem());
+      final Bytes value = leftPad(frame.popStackBytes());
 
       if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
-        frame.pushStackItem(Bytes.EMPTY);
+        frame.pushStackBytes(Bytes.EMPTY);
       } else {
-        frame.pushStackItem(value.shiftLeft(shiftAmountInt));
+        frame.pushStackBytes(value.shiftLeft(shiftAmountInt));
       }
     }
     return shlSuccess;

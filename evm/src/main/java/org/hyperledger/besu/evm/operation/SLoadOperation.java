@@ -55,13 +55,13 @@ public class SLoadOperation extends AbstractOperation {
     try {
       final Account account = getAccount(frame.getRecipientAddress(), frame);
       final Address address = account.getAddress();
-      final Bytes32 key = UInt256.fromBytes(frame.popStackItem());
+      final Bytes32 key = UInt256.fromBytes(frame.popStackBytes());
       final boolean slotIsWarm = frame.warmUpStorage(address, key);
       final long cost = slotIsWarm ? warmCost : coldCost;
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        frame.pushStackItem(getStorageValue(account, UInt256.fromBytes(key), frame));
+        frame.pushStackBytes(getStorageValue(account, UInt256.fromBytes(key), frame));
         return slotIsWarm ? warmSuccess : coldSuccess;
       }
     } catch (final UnderflowException ufe) {

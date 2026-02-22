@@ -181,11 +181,11 @@ class Eip7709BlockHashLookupTest {
     clearInvocations(frame);
 
     BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
-    when(frame.popStackItem()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
+    when(frame.popStackBytes()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
 
     op.execute(frame, null);
 
-    verify(frame).pushStackItem(hash.getBytes());
+    verify(frame).pushStackBytes(hash.getBytes());
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {

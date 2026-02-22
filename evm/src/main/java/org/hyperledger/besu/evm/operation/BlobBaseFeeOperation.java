@@ -35,7 +35,7 @@ public class BlobBaseFeeOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
 
     final Wei blobGasPrice = frame.getBlobGasPrice();
-    frame.pushStackItem(blobGasPrice.toBytes());
+    frame.pushStackBytes(blobGasPrice.toBytes());
     return successResponse;
   }
 }

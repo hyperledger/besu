@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /** The Mul mod operation. */
 public class MulModOperationOptimized extends AbstractFixedCostOperation {
 
@@ -48,21 +46,16 @@ public class MulModOperationOptimized extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackItem();
-    final Bytes value1 = frame.popStackItem();
-    final Bytes value2 = frame.popStackItem();
+    final UInt256 value0 = frame.popStackItem();
+    final UInt256 value1 = frame.popStackItem();
+    final UInt256 value2 = frame.popStackItem();
 
-    Bytes resultBytes;
     if (value2.isZero()) {
-      resultBytes = Bytes.EMPTY;
+      frame.pushStackItem(UInt256.ZERO);
     } else {
-      UInt256 b0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
-      UInt256 b1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
-      UInt256 b2 = UInt256.fromBytesBE(value2.toArrayUnsafe());
-      resultBytes = Bytes.wrap(b0.mulMod(b1, b2).toBytesBE());
+      frame.pushStackItem(value0.mulMod(value1, value2));
     }
 
-    frame.pushStackItem(resultBytes);
     return mulModSuccess;
   }
 }

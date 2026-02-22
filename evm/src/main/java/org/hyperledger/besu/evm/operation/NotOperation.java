@@ -49,11 +49,11 @@ public class NotOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value = Bytes32.leftPad(frame.popStackItem());
+    final Bytes value = Bytes32.leftPad(frame.popStackBytes());
 
     final Bytes result = value.not();
 
-    frame.pushStackItem(result);
+    frame.pushStackBytes(result);
 
     return notSuccess;
   }

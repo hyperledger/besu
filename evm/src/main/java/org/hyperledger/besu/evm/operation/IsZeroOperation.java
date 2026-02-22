@@ -15,10 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Is zero operation. */
 public class IsZeroOperation extends AbstractFixedCostOperation {
@@ -48,10 +47,8 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value = frame.popStackItem().trimLeadingZeros();
-
-    frame.pushStackItem((value.size() == 0) ? BYTES_ONE : Bytes.EMPTY);
-
+    final UInt256 value = frame.popStackItem();
+    frame.pushStackItem(value.isZero() ? UInt256.ONE : UInt256.ZERO);
     return isZeroSuccess;
   }
 }

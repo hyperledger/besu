@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.evm.internal;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.UInt256;
 
 /** The Operand stack. */
-public class OperandStack extends FlexStack<Bytes> {
+public class OperandStack extends FlexStack<UInt256> {
 
   /**
    * Instantiates a new Operand stack.
@@ -25,6 +25,6 @@ public class OperandStack extends FlexStack<Bytes> {
    * @param maxSize the max size
    */
   public OperandStack(final int maxSize) {
-    super(maxSize, Bytes.class);
+    super(maxSize, UInt256.class);
   }
 }

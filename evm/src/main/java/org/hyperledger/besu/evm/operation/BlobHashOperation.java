@@ -47,24 +47,24 @@ public class BlobHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    Bytes versionedHashIndexParam = frame.popStackItem();
+    Bytes versionedHashIndexParam = frame.popStackBytes();
     if (frame.getVersionedHashes().isPresent()) {
       List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
       Bytes trimmedIndex = versionedHashIndexParam.trimLeadingZeros();
       if (trimmedIndex.size() > 4) {
         // won't fit in an int
-        frame.pushStackItem(Bytes.EMPTY);
+        frame.pushStackBytes(Bytes.EMPTY);
         return new OperationResult(3, null);
       }
       int versionedHashIndex = trimmedIndex.toInt();
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
         VersionedHash requested = versionedHashes.get(versionedHashIndex);
-        frame.pushStackItem(requested.getBytes());
+        frame.pushStackBytes(requested.getBytes());
       } else {
-        frame.pushStackItem(Bytes.EMPTY);
+        frame.pushStackBytes(Bytes.EMPTY);
       }
     } else {
-      frame.pushStackItem(Bytes.EMPTY);
+      frame.pushStackBytes(Bytes.EMPTY);
     }
     return new OperationResult(3, null);
   }

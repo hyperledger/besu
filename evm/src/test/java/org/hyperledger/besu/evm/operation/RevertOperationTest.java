@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,9 +40,9 @@ class RevertOperationTest {
 
   @BeforeEach
   void setUp() {
-    when(messageFrame.popStackItem())
-        .thenReturn(UInt256.fromHexString("0x00"))
-        .thenReturn(UInt256.fromHexString("0x0e"));
+    when(messageFrame.popStackBytes())
+        .thenReturn(Bytes.fromHexString("0x00"))
+        .thenReturn(Bytes.fromHexString("0x0e"));
     when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);
     when(messageFrame.memoryWordSize()).thenReturn(0);
     when(messageFrame.calculateMemoryExpansion(anyLong(), anyLong())).thenReturn(14L);

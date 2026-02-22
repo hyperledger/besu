@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -130,7 +131,7 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(stackItem);
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(stackItem));
 
     Account recipientAccount = worldUpdater.get(recipientAddress);
     if (recipientAccount != null) {
@@ -284,7 +285,7 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(stackItem);
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(stackItem));
 
     assertThat(senderAccount.getBalance()).isEqualTo(senderBalance);
     assertThat(worldUpdater.getAccount(recipientAddress).getBalance()).isEqualTo(recipientBalance);
@@ -394,7 +395,7 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(stackItem);
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(stackItem));
 
     assertThat(senderAccount.getBalance()).isEqualTo(senderBalance);
     assertThat(recipientAccount.getBalance()).isEqualTo(recipientBalance);
@@ -469,6 +470,6 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(gasCost);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(stackItem);
+    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(stackItem));
   }
 }

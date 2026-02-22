@@ -302,7 +302,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Bytes[] stackContents = new Bytes[frame.stackSize()];
     for (int i = 0; i < stackContents.length; i++) {
       // Record stack contents in reverse
-      stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
+      stackContents[i] = frame.getStackBytes(stackContents.length - i - 1);
     }
     return Optional.of(stackContents);
   }

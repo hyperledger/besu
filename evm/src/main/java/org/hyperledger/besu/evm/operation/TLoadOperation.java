@@ -39,11 +39,11 @@ public class TLoadOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long cost = gasCalculator().getTransientLoadOperationGasCost();
     try {
-      final Bytes32 slot = UInt256.fromBytes(frame.popStackItem());
+      final Bytes32 slot = UInt256.fromBytes(frame.popStackBytes());
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        frame.pushStackItem(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
+        frame.pushStackBytes(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
 
         return new OperationResult(cost, null);
       }

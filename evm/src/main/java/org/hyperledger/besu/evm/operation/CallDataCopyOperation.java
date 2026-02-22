@@ -37,9 +37,9 @@ public class CallDataCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long memOffset = clampedToLong(frame.popStackItem());
-    final Bytes sourceOffsetBytes = frame.popStackItem();
-    final long numBytes = clampedToLong(frame.popStackItem());
+    final long memOffset = clampedToLong(frame.popStackBytes());
+    final Bytes sourceOffsetBytes = frame.popStackBytes();
+    final long numBytes = clampedToLong(frame.popStackBytes());
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);

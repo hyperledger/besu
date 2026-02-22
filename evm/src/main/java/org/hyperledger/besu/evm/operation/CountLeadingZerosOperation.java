@@ -49,14 +49,14 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    Bytes value = frame.popStackItem();
+    Bytes value = frame.popStackBytes();
     final int numberOfLeadingZeros;
     if (value.size() > Bytes32.SIZE) {
       // should not happen but trim just in case
       value = value.slice(value.size() - Bytes32.SIZE, Bytes32.SIZE);
     }
     numberOfLeadingZeros = value.numberOfLeadingZeros() + (Bytes32.SIZE - value.size()) * 8;
-    frame.pushStackItem(Words.intBytes(numberOfLeadingZeros));
+    frame.pushStackBytes(Words.intBytes(numberOfLeadingZeros));
     return clzSuccess;
   }
 }

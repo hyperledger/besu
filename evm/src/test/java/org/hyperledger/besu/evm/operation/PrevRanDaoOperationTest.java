@@ -43,7 +43,7 @@ class PrevRanDaoOperationTest {
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNull();
-    verify(messageFrame).pushStackItem(prevRandao);
+    verify(messageFrame).pushStackBytes(prevRandao);
   }
 
   @Test
@@ -59,6 +59,6 @@ class PrevRanDaoOperationTest {
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNull();
-    verify(messageFrame).pushStackItem(prevRandao);
+    verify(messageFrame).pushStackBytes(prevRandao);
   }
 }

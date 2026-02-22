@@ -88,7 +88,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
     try {
       // Duplicate the n'th stack item (1-indexed) to the top
       // In Besu's 0-indexed stack, the n'th item is at index n-1
-      frame.pushStackItem(frame.getStackItem(n - 1));
+      frame.pushStackBytes(frame.getStackBytes(n - 1));
       return DUPN_SUCCESS;
     } catch (final UnderflowException ufe) {
       return UNDERFLOW_RESPONSE;

@@ -33,7 +33,7 @@ public class AddressOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(frame.getRecipientAddress().getBytes());
+    frame.pushStackBytes(frame.getRecipientAddress().getBytes());
 
     return successResponse;
   }

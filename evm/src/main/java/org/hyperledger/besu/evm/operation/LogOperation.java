@@ -46,8 +46,8 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long dataLocation = clampedToLong(frame.popStackItem());
-    final long numBytes = clampedToLong(frame.popStackItem());
+    final long dataLocation = clampedToLong(frame.popStackBytes());
+    final long numBytes = clampedToLong(frame.popStackBytes());
 
     if (frame.isStatic()) {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
@@ -65,7 +65,7 @@ public class LogOperation extends AbstractOperation {
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(leftPad(frame.popStackItem())));
+      builder.add(LogTopic.create(leftPad(frame.popStackBytes())));
     }
 
     frame.addLog(new Log(address, data, builder.build()));

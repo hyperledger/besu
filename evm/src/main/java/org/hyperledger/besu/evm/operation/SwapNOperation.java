@@ -85,10 +85,10 @@ public class SwapNOperation extends AbstractFixedCostOperation {
     try {
       // Swap the top of stack (index 0) with the (n+1)'th item (index n)
       // In Besu's 0-indexed stack, top is index 0, (n+1)'th is index n
-      final Bytes top = frame.getStackItem(0);
-      final Bytes nthItem = frame.getStackItem(n);
-      frame.setStackItem(0, nthItem);
-      frame.setStackItem(n, top);
+      final Bytes top = frame.getStackBytes(0);
+      final Bytes nthItem = frame.getStackBytes(n);
+      frame.setStackBytes(0, nthItem);
+      frame.setStackBytes(n, top);
       return SWAPN_SUCCESS;
     } catch (final UnderflowException ufe) {
       return UNDERFLOW_RESPONSE;

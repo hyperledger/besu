@@ -52,7 +52,7 @@ public class ChainIdOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(chainId);
+    frame.pushStackBytes(chainId);
 
     return successResponse;
   }

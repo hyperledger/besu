@@ -52,8 +52,8 @@ public class JumpiOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes dest = frame.popStackItem().trimLeadingZeros();
-    final Bytes condition = frame.popStackItem().trimLeadingZeros();
+    final Bytes dest = frame.popStackBytes().trimLeadingZeros();
+    final Bytes condition = frame.popStackBytes().trimLeadingZeros();
 
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
     if (condition.size() == 0) {

@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 class BlockHashOperationTest {
@@ -73,7 +72,7 @@ class BlockHashOperationTest {
       final BlockHashLookup blockHashLookup,
       final long initialGas) {
     assertBlockHash(
-        UInt256.valueOf(requestedBlock),
+        Bytes32.leftPad(Bytes.ofUnsignedLong(requestedBlock)),
         expectedOutput,
         currentBlockNumber,
         blockHashLookup,
@@ -90,11 +89,11 @@ class BlockHashOperationTest {
         new TestMessageFrameBuilder()
             .blockHashLookup(blockHashLookup)
             .blockValues(new FakeBlockValues(currentBlockNumber))
-            .pushStackItem(UInt256.fromBytes(input))
+            .pushStackItem(input)
             .initialGas(initialGas)
             .build();
     blockHashOperation.execute(frame, null);
-    final Bytes result = frame.popStackItem();
+    final Bytes result = frame.popStackBytes();
     assertThat(result).isEqualTo(expectedOutput);
     assertThat(frame.stackSize()).isZero();
   }
@@ -109,7 +108,7 @@ class BlockHashOperationTest {
         new TestMessageFrameBuilder()
             .blockHashLookup(blockHashLookup)
             .blockValues(new FakeBlockValues(currentBlockNumber))
-            .pushStackItem(UInt256.fromBytes(input))
+            .pushStackItem(input)
             .initialGas(initialGas)
             .build();
     Operation.OperationResult operationResult = blockHashOperation.execute(frame, null);

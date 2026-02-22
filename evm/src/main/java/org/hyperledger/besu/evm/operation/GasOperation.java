@@ -38,7 +38,7 @@ public class GasOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     final long gasRemaining = frame.getRemainingGas() - gasCost;
     final Bytes value = Words.longBytes(gasRemaining);
-    frame.pushStackItem(value);
+    frame.pushStackBytes(value);
 
     return successResponse;
   }

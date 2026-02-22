@@ -49,7 +49,7 @@ public class Push0Operation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    frame.pushStackItem(Bytes.EMPTY);
+    frame.pushStackBytes(Bytes.EMPTY);
     return push0Success;
   }
 }

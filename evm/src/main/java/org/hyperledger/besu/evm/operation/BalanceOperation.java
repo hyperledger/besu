@@ -54,7 +54,7 @@ public class BalanceOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Address address = Words.toAddress(frame.popStackItem());
+      final Address address = Words.toAddress(frame.popStackBytes());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(accountIsWarm);
@@ -62,7 +62,7 @@ public class BalanceOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         final Account account = getAccount(address, frame);
-        frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());
+        frame.pushStackBytes(account == null ? Bytes.EMPTY : account.getBalance());
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

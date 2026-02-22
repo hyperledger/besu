@@ -53,16 +53,16 @@ public class SarOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    Bytes shiftAmount = frame.popStackItem();
-    final Bytes value = leftPad(frame.popStackItem());
+    Bytes shiftAmount = frame.popStackBytes();
+    final Bytes value = leftPad(frame.popStackBytes());
     final boolean negativeNumber = value.get(0) < 0;
     if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
-      frame.pushStackItem(negativeNumber ? ALL_BITS : Bytes.EMPTY);
+      frame.pushStackBytes(negativeNumber ? ALL_BITS : Bytes.EMPTY);
     } else {
       final int shiftAmountInt = shiftAmount.toInt();
 
       if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
-        frame.pushStackItem(negativeNumber ? ALL_BITS : Bytes.EMPTY);
+        frame.pushStackBytes(negativeNumber ? ALL_BITS : Bytes.EMPTY);
       } else {
         // first perform standard shift right.
         Bytes result = value.shiftRight(shiftAmountInt);
@@ -72,7 +72,7 @@ public class SarOperation extends AbstractFixedCostOperation {
           final Bytes significantBits = ALL_BITS.shiftLeft(256 - shiftAmountInt);
           result = result.or(significantBits);
         }
-        frame.pushStackItem(result);
+        frame.pushStackBytes(result);
       }
     }
     return sarSuccess;

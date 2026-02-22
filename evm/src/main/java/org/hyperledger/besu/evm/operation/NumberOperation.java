@@ -35,7 +35,7 @@ public class NumberOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final long number = frame.getBlockValues().getNumber();
-    frame.pushStackItem(Words.longBytes(number));
+    frame.pushStackBytes(Words.longBytes(number));
 
     return successResponse;
   }

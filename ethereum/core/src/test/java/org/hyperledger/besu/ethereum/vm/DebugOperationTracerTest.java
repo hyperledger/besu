@@ -112,9 +112,9 @@ class DebugOperationTracerTest {
     final UInt256 stackItem1 = UInt256.fromHexString("0x01");
     final UInt256 stackItem2 = UInt256.fromHexString("0x02");
     final UInt256 stackItem3 = UInt256.fromHexString("0x03");
-    frame.pushStackItem(stackItem1);
-    frame.pushStackItem(stackItem2);
-    frame.pushStackItem(stackItem3);
+    frame.pushStackBytes(stackItem1);
+    frame.pushStackBytes(stackItem2);
+    frame.pushStackBytes(stackItem3);
     final TraceFrame traceFrame =
         traceFrame(
             frame,

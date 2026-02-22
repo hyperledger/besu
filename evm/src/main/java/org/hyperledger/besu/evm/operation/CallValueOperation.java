@@ -35,7 +35,7 @@ public class CallValueOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Wei value = frame.getApparentValue();
-    frame.pushStackItem(value.toBytes());
+    frame.pushStackBytes(value.toBytes());
 
     return successResponse;
   }
