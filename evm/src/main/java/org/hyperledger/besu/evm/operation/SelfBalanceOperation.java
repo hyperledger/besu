@@ -39,7 +39,7 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     final Address accountAddress = frame.getRecipientAddress();
     final Account account = getAccount(accountAddress, frame);
-    frame.pushStackBytes(account == null ? Bytes.EMPTY : account.getBalance());
+    frame.pushStackItem(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getBalance().toArrayUnsafe()));
 
     return successResponse;
   }

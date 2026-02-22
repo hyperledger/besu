@@ -24,7 +24,6 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,13 +49,13 @@ class ChainIdOperationTest {
   void shouldReturnChainId(final String chainIdString, final int expectedGas) {
     Bytes32 chainId = Bytes32.fromHexString(chainIdString);
     ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
-    final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
+    final ArgumentCaptor<org.hyperledger.besu.evm.UInt256> arg = ArgumentCaptor.forClass(org.hyperledger.besu.evm.UInt256.class);
     when(messageFrame.getRemainingGas()).thenReturn(100L);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();
-    Mockito.verify(messageFrame).pushStackBytes(arg.capture());
+    Mockito.verify(messageFrame).pushStackItem(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
-    assertThat(arg.getValue()).isEqualTo(chainId);
+    assertThat(arg.getValue()).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(chainId.toArrayUnsafe()));
   }
 
   @ParameterizedTest

@@ -33,7 +33,7 @@ public class OriginOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackBytes(frame.getOriginatorAddress().getBytes());
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getOriginatorAddress().getBytes().toArrayUnsafe()));
 
     return successResponse;
   }

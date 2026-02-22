@@ -37,15 +37,15 @@ public class MStoreOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long location = clampedToLong(frame.popStackBytes());
-    final Bytes value = frame.popStackBytes();
+    final long location = clampedToLong(frame.popStackItem());
+    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
 
     final long cost = gasCalculator().mStoreOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    frame.writeMemoryRightAligned(location, 32, value, true);
+    frame.writeMemory(location, 32, org.apache.tuweni.bytes.Bytes.wrap(value.toBytesBE()), true);
     return new OperationResult(cost, null);
   }
 }

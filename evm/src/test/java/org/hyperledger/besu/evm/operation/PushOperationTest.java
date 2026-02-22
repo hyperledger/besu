@@ -60,27 +60,27 @@ public class PushOperationTest {
   @Test
   void unpaddedPushDoesntReachEndCode() {
     staticOperation(frame, byteCode, 0, byteCode.length - 2);
-    assertThat(frame.getStackBytes(0).trimLeadingZeros())
-        .isEqualTo(Bytes.fromHexString("0x0102"));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x0102").toArrayUnsafe()));
   }
 
   @Test
   void unpaddedPushUpReachesEndCode() {
     staticOperation(frame, byteCode, 0, byteCode.length - 1);
-    assertThat(frame.getStackBytes(0).trimLeadingZeros())
-        .isEqualTo(Bytes.fromHexString("0x010203"));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x010203").toArrayUnsafe()));
   }
 
   @Test
   void paddedPush() {
     staticOperation(frame, byteCode, 1, byteCode.length - 1);
-    assertThat(frame.getStackBytes(0).trimLeadingZeros())
-        .isEqualTo(Bytes.fromHexString("0x020300"));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x020300").toArrayUnsafe()));
   }
 
   @Test
   void oobPush() {
     staticOperation(frame, byteCode, byteCode.length, byteCode.length - 1);
-    assertThat(frame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 }

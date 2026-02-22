@@ -38,8 +38,8 @@ public class ReturnOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long from = clampedToLong(frame.popStackBytes());
-    final long length = clampedToLong(frame.popStackBytes());
+    final long from = clampedToLong(frame.popStackItem());
+    final long length = clampedToLong(frame.popStackItem());
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {

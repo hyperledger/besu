@@ -35,7 +35,7 @@ public class GasPriceOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Wei gasPrice = frame.getGasPrice();
-    frame.pushStackBytes(gasPrice.toBytes());
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(gasPrice.toBytes().toArrayUnsafe()));
 
     return successResponse;
   }

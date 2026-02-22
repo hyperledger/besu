@@ -49,30 +49,23 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackBytes().trimLeadingZeros();
-    final Bytes value1 = Bytes32.leftPad(frame.popStackBytes());
+    final org.hyperledger.besu.evm.UInt256 value0 = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 value1 = frame.popStackItem();
 
-    final MutableBytes32 result = MutableBytes32.create();
-
-    // Any value >= 31 imply an index <= 0, so no work to do (note that 0 itself is a valid index,
-    // but copying the 0th byte to itself is only so useful).
-    int value0size = value0.size();
-    if (value0size > 1) {
-      frame.pushStackBytes(value1);
+    // Any value >= 31 means no sign extension needed
+    if (value0.u3() != 0 || value0.u2() != 0 || value0.u1() != 0 || value0.u0() >= 31) {
+      frame.pushStackItem(value1);
       return signExtendSuccess;
     }
 
-    int value0Value = value0.toInt();
-    if (value0Value >= 31) {
-      frame.pushStackBytes(value1);
-      return signExtendSuccess;
+    final int b = (int) value0.u0(); // byte index (0..30)
+    final int byteIndex = 31 - b;
+    final byte[] bytes = value1.toBytesBE();
+    final byte signByte = (bytes[byteIndex] & 0x80) != 0 ? (byte) 0xFF : 0x00;
+    for (int i = 0; i < byteIndex; i++) {
+      bytes[i] = signByte;
     }
-
-    final int byteIndex = 31 - value0.toInt();
-    final byte toSet = value1.get(byteIndex) < 0 ? (byte) 0xFF : 0x00;
-    result.mutableSlice(0, byteIndex).fill(toSet);
-    value1.slice(byteIndex).copyTo(result, byteIndex);
-    frame.pushStackBytes(result);
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(bytes));
 
     return signExtendSuccess;
   }

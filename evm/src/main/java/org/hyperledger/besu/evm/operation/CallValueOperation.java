@@ -35,7 +35,7 @@ public class CallValueOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Wei value = frame.getApparentValue();
-    frame.pushStackBytes(value.toBytes());
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toBytes().toArrayUnsafe()));
 
     return successResponse;
   }

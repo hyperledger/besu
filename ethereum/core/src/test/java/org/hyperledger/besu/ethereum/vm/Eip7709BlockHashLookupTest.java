@@ -181,11 +181,11 @@ class Eip7709BlockHashLookupTest {
     clearInvocations(frame);
 
     BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
-    when(frame.popStackBytes()).thenReturn(Bytes.ofUnsignedInt(blockNumber));
+    when(frame.popStackItem()).thenReturn(org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
 
     op.execute(frame, null);
 
-    verify(frame).pushStackBytes(hash.getBytes());
+    verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe()));
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {

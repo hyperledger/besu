@@ -34,7 +34,7 @@ public class GasLimitOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackBytes(Words.longBytes(frame.getBlockValues().getGasLimit()));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(frame.getBlockValues().getGasLimit()));
 
     return successResponse;
   }

@@ -35,23 +35,6 @@ public class ByteOperation extends AbstractFixedCostOperation {
     super(0x1A, "BYTE", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
-  private static Bytes getByte(final Bytes seq, final Bytes offset) {
-    Bytes trimmedOffset = offset.trimLeadingZeros();
-    if (trimmedOffset.size() > 1) {
-      return Bytes.EMPTY;
-    }
-    final int index = trimmedOffset.toInt();
-
-    int size = seq.size();
-    int pos = index - 32 + size;
-    if (pos >= size || pos < 0) {
-      return Bytes.EMPTY;
-    } else {
-      final byte b = seq.get(pos);
-      return Bytes.of(b);
-    }
-  }
-
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
@@ -65,13 +48,18 @@ public class ByteOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackBytes();
-    final Bytes value1 = frame.popStackBytes();
+    final org.hyperledger.besu.evm.UInt256 offset = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
 
-    // Stack items are reversed for the BYTE operation.
-    final Bytes result = getByte(value1, value0);
+    // offset must be 0..31 to select a byte from the 32-byte value
+    if (offset.u3() != 0 || offset.u2() != 0 || offset.u1() != 0 || offset.u0() >= 32) {
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      return byteSuccess;
+    }
 
-    frame.pushStackBytes(result);
+    final int index = (int) offset.u0();
+    final byte[] bytes = value.toBytesBE();
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(bytes[index] & 0xFF));
 
     return byteSuccess;
   }

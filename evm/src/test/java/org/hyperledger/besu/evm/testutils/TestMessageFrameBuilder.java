@@ -166,7 +166,7 @@ public class TestMessageFrameBuilder {
             .isStatic(isStatic)
             .build();
     frame.setPC(pc);
-    stackItems.forEach(frame::pushStackBytes);
+    stackItems.forEach(item -> frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(item.toArrayUnsafe())));
     frame.writeMemory(0, memory.size(), memory);
     return frame;
   }

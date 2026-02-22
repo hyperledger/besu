@@ -36,12 +36,12 @@ public class CallCodeOperation extends AbstractCallOperation {
 
   @Override
   protected Address to(final MessageFrame frame) {
-    return Words.toAddress(frame.getStackBytes(1));
+    return Words.toAddress(frame.getStackItem(1));
   }
 
   @Override
   protected Wei value(final MessageFrame frame) {
-    return Wei.wrap(frame.getStackBytes(2));
+    return Wei.wrap(org.apache.tuweni.bytes.Bytes.wrap(frame.getStackItem(2).toBytesBE()));
   }
 
   @Override
@@ -51,22 +51,22 @@ public class CallCodeOperation extends AbstractCallOperation {
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackBytes(3));
+    return clampedToLong(frame.getStackItem(3));
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackBytes(4));
+    return clampedToLong(frame.getStackItem(4));
   }
 
   @Override
   protected long outputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackBytes(5));
+    return clampedToLong(frame.getStackItem(5));
   }
 
   @Override
   protected long outputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackBytes(6));
+    return clampedToLong(frame.getStackItem(6));
   }
 
   @Override

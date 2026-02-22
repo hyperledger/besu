@@ -49,12 +49,8 @@ public class NotOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value = Bytes32.leftPad(frame.popStackBytes());
-
-    final Bytes result = value.not();
-
-    frame.pushStackBytes(result);
-
+    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
+    frame.pushStackItem(value.not());
     return notSuccess;
   }
 }

@@ -34,8 +34,7 @@ public class TimestampOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final long timestamp = frame.getBlockValues().getTimestamp();
-    frame.pushStackBytes(Words.longBytes(timestamp));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(frame.getBlockValues().getTimestamp()));
 
     return successResponse;
   }

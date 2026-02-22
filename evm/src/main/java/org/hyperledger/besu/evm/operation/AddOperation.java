@@ -50,19 +50,9 @@ public class AddOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final BigInteger value0 = new BigInteger(1, frame.popStackBytes().toArrayUnsafe());
-    final BigInteger value1 = new BigInteger(1, frame.popStackBytes().toArrayUnsafe());
-
-    final BigInteger result = value0.add(value1);
-
-    byte[] resultArray = result.toByteArray();
-    int length = resultArray.length;
-    if (length > 32) {
-      frame.pushStackBytes(Bytes.wrap(resultArray, length - 32, 32));
-    } else {
-      frame.pushStackBytes(Bytes.wrap(resultArray));
-    }
-
+    final org.hyperledger.besu.evm.UInt256 value0 = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 value1 = frame.popStackItem();
+    frame.pushStackItem(value0.add(value1));
     return addSuccess;
   }
 }

@@ -50,14 +50,14 @@ public class PayOperation extends AbstractOperation {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 
-    final Bytes toAddressBytes = frame.getStackBytes(0);
-    final int numberOfLowBytes = toAddressBytes.size() - toAddressBytes.numberOfLeadingZeroBytes();
-    if (numberOfLowBytes > 20) {
+    final org.hyperledger.besu.evm.UInt256 toAddrUint = frame.getStackItem(0);
+    // Check if value has more than 20 bytes of significant data (u3 must be 0, upper 32 bits of u2 must be 0)
+    if (toAddrUint.u3() != 0 || (toAddrUint.u2() >>> 32) != 0) {
       return new OperationResult(0, ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
 
-    final Address to = Words.toAddress(toAddressBytes);
-    final Wei value = Wei.wrap(frame.getStackBytes(1));
+    final Address to = Words.toAddress(toAddrUint);
+    final Wei value = Wei.wrap(Bytes.wrap(frame.getStackItem(1).toBytesBE()));
     final boolean hasValue = value.greaterThan(Wei.ZERO);
     final Account recipient = getAccount(to, frame);
 
@@ -70,14 +70,14 @@ public class PayOperation extends AbstractOperation {
 
     if (!hasValue || Objects.equals(frame.getSenderAddress(), to)) {
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackBytes(LEGACY_SUCCESS_STACK_ITEM);
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(1));
       return new OperationResult(cost, null);
     }
 
     final MutableAccount senderAccount = getSenderAccount(frame);
     if (value.compareTo(senderAccount.getBalance()) > 0) {
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackBytes(LEGACY_FAILURE_STACK_ITEM);
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
       return new OperationResult(cost, null);
     }
 
@@ -86,7 +86,7 @@ public class PayOperation extends AbstractOperation {
     recipientAccount.incrementBalance(value);
 
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackBytes(LEGACY_SUCCESS_STACK_ITEM);
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(1));
     return new OperationResult(cost, null);
   }
 

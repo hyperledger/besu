@@ -43,8 +43,8 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-    final int inputOffset = clampedToInt(frame.getStackBytes(1));
-    final int inputSize = clampedToInt(frame.getStackBytes(2));
+    final int inputOffset = clampedToInt(frame.getStackItem(1));
+    final int inputSize = clampedToInt(frame.getStackItem(2));
     return clampedAdd(
         clampedAdd(
             gasCalculator().txCreateCost(),
@@ -61,8 +61,8 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-    final long inputOffset = clampedToLong(frame.getStackBytes(1));
-    final long inputSize = clampedToLong(frame.getStackBytes(2));
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.

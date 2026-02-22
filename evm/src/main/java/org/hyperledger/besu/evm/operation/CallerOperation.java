@@ -33,7 +33,7 @@ public class CallerOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackBytes(frame.getSenderAddress().getBytes());
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getSenderAddress().getBytes().toArrayUnsafe()));
 
     return successResponse;
   }

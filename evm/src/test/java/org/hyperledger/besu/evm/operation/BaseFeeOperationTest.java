@@ -25,12 +25,9 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
 import java.util.Optional;
-
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 class BaseFeeOperationTest {
@@ -50,7 +47,7 @@ class BaseFeeOperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackBytes(Wei.of(5L));
+    verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Wei.of(5L).toBytes().toArrayUnsafe()));
     assertSuccessResult(result);
   }
 

@@ -56,4 +56,34 @@ public class JumpService {
     frame.setPC(jumpDestination);
     return validJumpResponse;
   }
+
+  /**
+   * Performs the jump operation with a native UInt256 destination.
+   *
+   * @param frame the MessageFrame containing the code and PC
+   * @param dest the jump destination as UInt256
+   * @param validJumpResponse the response to return in case the jump is successful
+   * @param invalidJumpResponse the response to return in case the jump failed
+   * @return either validJumpResponse or invalidJumpResponse depending on the result
+   */
+  public Operation.OperationResult performJump(
+      final MessageFrame frame,
+      final org.hyperledger.besu.evm.UInt256 dest,
+      final Operation.OperationResult validJumpResponse,
+      final Operation.OperationResult invalidJumpResponse) {
+    if (dest.u3() != 0 || dest.u2() != 0 || dest.u1() != 0
+        || dest.u0() < 0 || dest.u0() > Integer.MAX_VALUE) {
+      return invalidJumpResponse;
+    }
+    final int jumpDestination = (int) dest.u0();
+
+    final Code code = frame.getCode();
+
+    if (code.isJumpDestInvalid(jumpDestination)) {
+      return invalidJumpResponse;
+    }
+
+    frame.setPC(jumpDestination);
+    return validJumpResponse;
+  }
 }

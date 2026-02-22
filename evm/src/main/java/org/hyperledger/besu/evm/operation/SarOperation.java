@@ -14,22 +14,16 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.apache.tuweni.bytes.Bytes32.leftPad;
-
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Sar operation. */
 public class SarOperation extends AbstractFixedCostOperation {
 
   /** The Sar operation success result. */
   static final OperationResult sarSuccess = new OperationResult(3, null);
-
-  private static final Bytes ALL_BITS =
-      Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
   /**
    * Instantiates a new Sar operation.
@@ -53,27 +47,13 @@ public class SarOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    Bytes shiftAmount = frame.popStackBytes();
-    final Bytes value = leftPad(frame.popStackBytes());
-    final boolean negativeNumber = value.get(0) < 0;
-    if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
-      frame.pushStackBytes(negativeNumber ? ALL_BITS : Bytes.EMPTY);
+    final UInt256 shiftAmount = frame.popStackItem();
+    final UInt256 value = frame.popStackItem();
+
+    if (!shiftAmount.isUInt64() || Long.compareUnsigned(shiftAmount.longValue(), 256) >= 0) {
+      frame.pushStackItem(value.isNegative() ? UInt256.MAX : UInt256.ZERO);
     } else {
-      final int shiftAmountInt = shiftAmount.toInt();
-
-      if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
-        frame.pushStackBytes(negativeNumber ? ALL_BITS : Bytes.EMPTY);
-      } else {
-        // first perform standard shift right.
-        Bytes result = value.shiftRight(shiftAmountInt);
-
-        // if a negative number, carry through the sign.
-        if (negativeNumber) {
-          final Bytes significantBits = ALL_BITS.shiftLeft(256 - shiftAmountInt);
-          result = result.or(significantBits);
-        }
-        frame.pushStackBytes(result);
-      }
+      frame.pushStackItem(value.sar((int) shiftAmount.longValue()));
     }
     return sarSuccess;
   }

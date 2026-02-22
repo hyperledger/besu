@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The SStore operation. */
@@ -64,8 +65,8 @@ public class SStoreOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
-    final UInt256 key = UInt256.fromBytes(frame.popStackBytes());
-    final UInt256 newValue = UInt256.fromBytes(frame.popStackBytes());
+    final org.hyperledger.besu.evm.UInt256 keyNative = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 newValueNative = frame.popStackItem();
 
     final MutableAccount account = getMutableAccount(frame.getRecipientAddress(), frame);
     if (account == null) {
@@ -82,8 +83,12 @@ public class SStoreOperation extends AbstractOperation {
       return new OperationResult(minimumGasRemaining, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
+    // Convert to tuweni types for storage API boundary
+    final UInt256 key = keyNative.toTuweni();
+    final UInt256 newValue = newValueNative.toTuweni();
+
     final Address address = account.getAddress();
-    final boolean slotIsWarm = frame.warmUpStorage(address, key);
+    final boolean slotIsWarm = frame.warmUpStorage(address, keyNative.toBytes32());
     final Supplier<UInt256> currentValueSupplier =
         Suppliers.memoize(() -> getStorageValue(account, key, frame));
     final Supplier<UInt256> originalValueSupplier =
@@ -102,7 +107,7 @@ public class SStoreOperation extends AbstractOperation {
             .calculateStorageRefundAmount(newValue, currentValueSupplier, originalValueSupplier));
 
     account.setStorageValue(key, newValue);
-    frame.storageWasUpdated(key, newValue);
+    frame.storageWasUpdated(key, Bytes.wrap(newValueNative.toBytesBE()));
     frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(address, key));
 
     return new OperationResult(cost, null);

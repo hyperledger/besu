@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -42,7 +41,7 @@ class Push0OperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new Push0Operation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    Mockito.verify(frame).pushStackBytes(Bytes.EMPTY);
+    Mockito.verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
     assertSuccessResult(result);
   }

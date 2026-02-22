@@ -20,9 +20,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
-
 /** Implements the TLOAD operation defined in EIP-1153 */
 public class TLoadOperation extends AbstractOperation {
 
@@ -39,12 +36,15 @@ public class TLoadOperation extends AbstractOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long cost = gasCalculator().getTransientLoadOperationGasCost();
     try {
-      final Bytes32 slot = UInt256.fromBytes(frame.popStackBytes());
+      final org.hyperledger.besu.evm.UInt256 slot = frame.popStackItem();
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
-        frame.pushStackBytes(frame.getTransientStorageValue(frame.getRecipientAddress(), slot));
-
+        frame.pushStackItem(
+            org.hyperledger.besu.evm.UInt256.fromBytesBE(
+                frame
+                    .getTransientStorageValue(frame.getRecipientAddress(), slot.toBytes32())
+                    .toArrayUnsafe()));
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

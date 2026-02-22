@@ -35,7 +35,7 @@ public class CoinbaseOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     final Address coinbase = frame.getMiningBeneficiary();
-    frame.pushStackBytes(coinbase.getBytes());
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(coinbase.getBytes().toArrayUnsafe()));
 
     return successResponse;
   }

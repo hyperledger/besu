@@ -59,6 +59,17 @@ public interface Words {
   }
 
   /**
+   * Extract an address from a native UInt256 value.
+   *
+   * @param value The UInt256 to extract the address from.
+   * @return An address built from the right-most 160-bits of the value.
+   */
+  static Address toAddress(final org.hyperledger.besu.evm.UInt256 value) {
+    final byte[] bytes = value.toBytesBE();
+    return Address.wrap(Bytes.wrap(bytes, 12, 20));
+  }
+
+  /**
    * The number of words corresponding to the provided input.
    *
    * <p>In other words, this computes {@code input.size() / 32} but rounded up.
@@ -91,6 +102,33 @@ public interface Words {
    * @param uint the unsigned integer
    * @return the least of the integer value or Long.MAX_VALUE
    */
+  /**
+   * Clamp a native UInt256 value to a long, returning Long.MAX_VALUE if it doesn't fit.
+   *
+   * @param uint the unsigned integer
+   * @return the least of the value or Long.MAX_VALUE
+   */
+  static long clampedToLong(final org.hyperledger.besu.evm.UInt256 uint) {
+    if (uint.u3() != 0 || uint.u2() != 0 || uint.u1() != 0 || uint.u0() < 0) {
+      return Long.MAX_VALUE;
+    }
+    return uint.u0();
+  }
+
+  /**
+   * Clamp a native UInt256 value to an int, returning Integer.MAX_VALUE if it doesn't fit.
+   *
+   * @param uint the unsigned integer
+   * @return the least of the value or Integer.MAX_VALUE
+   */
+  static int clampedToInt(final org.hyperledger.besu.evm.UInt256 uint) {
+    if (uint.u3() != 0 || uint.u2() != 0 || uint.u1() != 0
+        || uint.u0() < 0 || uint.u0() > Integer.MAX_VALUE) {
+      return Integer.MAX_VALUE;
+    }
+    return (int) uint.u0();
+  }
+
   static long clampedToLong(final Bytes uint) {
     if (uint.size() <= 8) {
       final long result = uint.toLong();

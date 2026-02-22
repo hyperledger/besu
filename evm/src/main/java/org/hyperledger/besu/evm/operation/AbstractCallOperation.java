@@ -76,7 +76,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @return the additional gas to provide the call operation
    */
   protected long gas(final MessageFrame frame) {
-    return clampedToLong(frame.getStackBytes(0));
+    return clampedToLong(frame.getStackItem(0));
   }
 
   /**
@@ -255,7 +255,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
       frame.incrementRemainingGas(gasAvailableForChildCall + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackBytes(LEGACY_FAILURE_STACK_ITEM);
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
       final SoftFailureReason softFailureReason =
           insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
       return new OperationResult(cost, 1, softFailureReason, gasAvailableForChildCall);
@@ -327,20 +327,17 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.incrementRemainingGas(gasRemaining);
 
     frame.popStackItems(getStackItemsConsumed());
-    Bytes resultItem;
-
-    resultItem = getCallResultStackItem(childFrame);
-    frame.pushStackBytes(resultItem);
+    frame.pushStackItem(getCallResultStackItem(childFrame));
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);
   }
 
-  Bytes getCallResultStackItem(final MessageFrame childFrame) {
+  org.hyperledger.besu.evm.UInt256 getCallResultStackItem(final MessageFrame childFrame) {
     if (childFrame.getState() == State.COMPLETED_SUCCESS) {
-      return LEGACY_SUCCESS_STACK_ITEM;
+      return org.hyperledger.besu.evm.UInt256.fromInt(1);
     } else {
-      return LEGACY_FAILURE_STACK_ITEM;
+      return org.hyperledger.besu.evm.UInt256.ZERO;
     }
   }
 

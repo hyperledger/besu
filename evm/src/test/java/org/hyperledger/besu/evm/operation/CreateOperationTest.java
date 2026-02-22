@@ -121,7 +121,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(messageFrame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
@@ -138,7 +138,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(messageFrame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
@@ -159,7 +159,7 @@ class CreateOperationTest {
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
     operation.execute(messageFrame, evm);
 
-    assertThat(messageFrame.getStackBytes(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(messageFrame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
@@ -297,9 +297,9 @@ class CreateOperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackBytes(memoryLength);
-    messageFrame.pushStackBytes(memoryOffset);
-    messageFrame.pushStackBytes(value);
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);

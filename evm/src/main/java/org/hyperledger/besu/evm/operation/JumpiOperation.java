@@ -52,11 +52,11 @@ public class JumpiOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes dest = frame.popStackBytes().trimLeadingZeros();
-    final Bytes condition = frame.popStackBytes().trimLeadingZeros();
+    final org.hyperledger.besu.evm.UInt256 dest = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 condition = frame.popStackItem();
 
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
-    if (condition.size() == 0) {
+    if (condition.isZero()) {
       return nojumpResponse;
     }
 

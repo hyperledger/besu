@@ -36,8 +36,7 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final Bytes returnData = frame.getReturnData();
-    frame.pushStackBytes(Words.longBytes(returnData.size()));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(frame.getReturnData().size()));
 
     return successResponse;
   }

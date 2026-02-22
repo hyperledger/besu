@@ -19,13 +19,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 
 import java.util.Arrays;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -118,11 +118,15 @@ class ShrOperationTest {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
     when(frame.getRemainingGas()).thenReturn(100L);
-    when(frame.popStackBytes())
-        .thenReturn(Bytes32.fromHexStringLenient(shift))
-        .thenReturn(Bytes.fromHexString(number));
+    when(frame.popStackItem())
+        .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(shift).toArrayUnsafe()))
+        .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(number).toArrayUnsafe()));
     operation.execute(frame, null);
-    verify(frame).pushStackBytes(Bytes.fromHexString(expectedResult));
+    if (expectedResult.equals("0x") || expectedResult.equals("0x0")) {
+      verify(frame).pushStackItem(UInt256.ZERO);
+    } else {
+      verify(frame).pushStackItem(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(expectedResult).toArrayUnsafe()));
+    }
   }
 
   @Test

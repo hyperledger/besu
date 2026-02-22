@@ -51,6 +51,6 @@ public class JumpOperation extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     return jumpService.performJump(
-        frame, frame.popStackBytes().trimLeadingZeros(), jumpResponse, invalidJumpResponse);
+        frame, frame.popStackItem(), jumpResponse, invalidJumpResponse);
   }
 }

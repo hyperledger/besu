@@ -37,9 +37,9 @@ public class MStore8Operation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long location = clampedToLong(frame.popStackBytes());
-    final Bytes value = frame.popStackBytes();
-    final byte theByte = (value.size() > 0) ? value.get(value.size() - 1) : 0;
+    final long location = clampedToLong(frame.popStackItem());
+    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
+    final byte theByte = (byte) (value.u0() & 0xFF);
 
     final long cost = gasCalculator().mStore8OperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {

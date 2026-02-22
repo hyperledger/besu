@@ -34,7 +34,7 @@ public class MSizeOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackBytes(Words.longBytes(frame.memoryByteSize()));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(frame.memoryByteSize()));
 
     return successResponse;
   }

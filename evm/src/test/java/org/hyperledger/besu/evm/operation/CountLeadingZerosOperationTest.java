@@ -19,13 +19,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -58,12 +59,17 @@ class CountLeadingZerosOperationTest {
   @ParameterizedTest
   @MethodSource("provideClzTestCases")
   void testClzOperation(final String value, final int expectedLeadingZeros) {
-    Bytes input = Bytes.fromHexString(value);
-    Bytes expected = Words.intBytes(expectedLeadingZeros);
+    Bytes raw = Bytes.fromHexString(value);
+    // Truncate to lower 32 bytes if longer (as the EVM stack would)
+    byte[] padded =
+        raw.size() >= 32
+            ? raw.slice(raw.size() - 32, 32).toArrayUnsafe()
+            : Bytes32.leftPad(raw).toArrayUnsafe();
+    UInt256 input = UInt256.fromBytesBE(padded);
 
-    when(frame.popStackBytes()).thenReturn(input);
+    when(frame.popStackItem()).thenReturn(input);
 
     operation.executeFixedCostOperation(frame, mock(EVM.class));
-    verify(frame).pushStackBytes(expected);
+    verify(frame).pushStackItem(UInt256.fromInt(expectedLeadingZeros));
   }
 }

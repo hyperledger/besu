@@ -152,10 +152,10 @@ public class Create2OperationTest {
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackBytes(Bytes.fromHexString(salt));
-    messageFrame.pushStackBytes(Bytes.ofUnsignedLong(codeBytes.size()));
-    messageFrame.pushStackBytes(Bytes.fromHexString("0xFF"));
-    messageFrame.pushStackBytes(Bytes.EMPTY);
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString(salt).toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(codeBytes.size()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(memoryOffset, code.length(), codeBytes);
 
@@ -325,10 +325,10 @@ public class Create2OperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackBytes(Bytes.EMPTY);
-    messageFrame.pushStackBytes(memoryLength);
-    messageFrame.pushStackBytes(memoryOffset);
-    messageFrame.pushStackBytes(Bytes.EMPTY);
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);

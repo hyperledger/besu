@@ -36,8 +36,7 @@ public class CallDataSizeOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final Bytes callData = frame.getInputData();
-    frame.pushStackBytes(Words.intBytes(callData.size()));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(frame.getInputData().size()));
 
     return successResponse;
   }

@@ -61,32 +61,32 @@ class ExtCodeSizeOperationTest {
 
   @Test
   void shouldReturnZeroWhenAccountDoesNotExist() {
-    final Bytes result = executeOperation(REQUESTED_ADDRESS);
-    assertThat(result.trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    final org.hyperledger.besu.evm.UInt256 result = executeOperation(REQUESTED_ADDRESS);
+    assertThat(result).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
   void shouldReturnSizeOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
-    assertThat(executeOperation(REQUESTED_ADDRESS).toInt()).isZero();
+    assertThat(executeOperation(REQUESTED_ADDRESS).intValue()).isZero();
   }
 
   @Test
   void shouldReturnZeroWhenAccountExistsButIsEmpty() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    assertThat(executeOperation(REQUESTED_ADDRESS).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
   void shouldReturnZeroWhenPrecompiledContractHasNoBalance() {
-    assertThat(executeOperation(Address.ECREC).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+    assertThat(executeOperation(Address.ECREC)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
   void shouldReturnEmptyCodeSizeWhenPrecompileHasBalance() {
     // Sending money to a precompile causes it to exist in the world state archive.
     worldStateUpdater.getOrCreate(Address.ECREC).setBalance(Wei.of(10));
-    assertThat(executeOperation(Address.ECREC).toInt()).isZero();
+    assertThat(executeOperation(Address.ECREC).intValue()).isZero();
   }
 
   @Test
@@ -94,7 +94,7 @@ class ExtCodeSizeOperationTest {
     final Bytes code = Bytes.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
-    assertThat(executeOperation(REQUESTED_ADDRESS).toInt()).isEqualTo(3);
+    assertThat(executeOperation(REQUESTED_ADDRESS).intValue()).isEqualTo(3);
   }
 
   @Test
@@ -108,7 +108,7 @@ class ExtCodeSizeOperationTest {
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(3);
+    assertThat(frame.getStackItem(0).intValue()).isEqualTo(3);
   }
 
   @Test
@@ -122,17 +122,17 @@ class ExtCodeSizeOperationTest {
 
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(9);
+    assertThat(frame.getStackItem(0).intValue()).isEqualTo(9);
 
     final MessageFrame frameIstanbul = createMessageFrame(value);
     operationIstanbul.execute(frameIstanbul, null);
-    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(9);
+    assertThat(frame.getStackItem(0).intValue()).isEqualTo(9);
   }
 
-  private Bytes executeOperation(final Address requestedAddress) {
+  private org.hyperledger.besu.evm.UInt256 executeOperation(final Address requestedAddress) {
     final MessageFrame frame = createMessageFrame(requestedAddress);
     operation.execute(frame, null);
-    return frame.getStackBytes(0);
+    return frame.getStackItem(0);
   }
 
   private MessageFrame createMessageFrame(final Address requestedAddress) {
@@ -148,7 +148,9 @@ class ExtCodeSizeOperationTest {
             .blockValues(blockValues)
             .build();
 
-    frame.pushStackBytes(stackItem);
+    frame.pushStackItem(
+        org.hyperledger.besu.evm.UInt256.fromBytesBE(
+            org.apache.tuweni.bytes.Bytes32.leftPad(stackItem).toArrayUnsafe()));
     return frame;
   }
 }

@@ -77,7 +77,7 @@ public class SelfDestructOperation extends AbstractOperation {
     }
 
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
-    final Address beneficiaryAddress = Words.toAddress(frame.popStackBytes());
+    final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
     final long beneficiaryAccessCost =

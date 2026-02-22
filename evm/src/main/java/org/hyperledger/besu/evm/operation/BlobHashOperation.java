@@ -47,24 +47,24 @@ public class BlobHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    Bytes versionedHashIndexParam = frame.popStackBytes();
+    final org.hyperledger.besu.evm.UInt256 indexParam = frame.popStackItem();
     if (frame.getVersionedHashes().isPresent()) {
       List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
-      Bytes trimmedIndex = versionedHashIndexParam.trimLeadingZeros();
-      if (trimmedIndex.size() > 4) {
-        // won't fit in an int
-        frame.pushStackBytes(Bytes.EMPTY);
+      // If index doesn't fit in a positive int, it's out of range
+      if (indexParam.u3() != 0 || indexParam.u2() != 0 || indexParam.u1() != 0
+          || indexParam.u0() < 0 || indexParam.u0() > Integer.MAX_VALUE) {
+        frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
         return new OperationResult(3, null);
       }
-      int versionedHashIndex = trimmedIndex.toInt();
+      int versionedHashIndex = (int) indexParam.u0();
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
         VersionedHash requested = versionedHashes.get(versionedHashIndex);
-        frame.pushStackBytes(requested.getBytes());
+        frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(requested.getBytes().toArrayUnsafe()));
       } else {
-        frame.pushStackBytes(Bytes.EMPTY);
+        frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
       }
     } else {
-      frame.pushStackBytes(Bytes.EMPTY);
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     }
     return new OperationResult(3, null);
   }

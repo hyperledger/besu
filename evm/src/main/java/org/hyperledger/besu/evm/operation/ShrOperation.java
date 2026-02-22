@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.apache.tuweni.bytes.Bytes32.leftPad;
-
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Shr (Shift Right) operation. */
 public class ShrOperation extends AbstractFixedCostOperation {
@@ -50,19 +47,15 @@ public class ShrOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    Bytes shiftAmount = frame.popStackBytes();
-    if (shiftAmount.size() > 4 && (shiftAmount = shiftAmount.trimLeadingZeros()).size() > 4) {
-      frame.popStackBytes();
-      frame.pushStackBytes(Bytes.EMPTY);
-    } else {
-      final int shiftAmountInt = shiftAmount.toInt();
-      final Bytes value = leftPad(frame.popStackBytes());
+    final UInt256 shiftAmount = frame.popStackItem();
+    final UInt256 value = frame.popStackItem();
 
-      if (shiftAmountInt >= 256 || shiftAmountInt < 0) {
-        frame.pushStackBytes(Bytes.EMPTY);
-      } else {
-        frame.pushStackBytes(value.shiftRight(shiftAmountInt));
-      }
+    if (value.isZero()
+        || !shiftAmount.isUInt64()
+        || Long.compareUnsigned(shiftAmount.longValue(), 256) >= 0) {
+      frame.pushStackItem(UInt256.ZERO);
+    } else {
+      frame.pushStackItem(value.shr((int) shiftAmount.longValue()));
     }
     return shrSuccess;
   }

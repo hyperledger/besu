@@ -15,14 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** The Mod operation. */
 public class ModOperation extends AbstractFixedCostOperation {
@@ -51,25 +46,9 @@ public class ModOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackBytes();
-    final Bytes value1 = frame.popStackBytes();
-    if (value1.isZero()) {
-      frame.pushStackBytes(Bytes32.ZERO);
-    } else {
-      BigInteger b1 = new BigInteger(1, value0.toArrayUnsafe());
-      BigInteger b2 = new BigInteger(1, value1.toArrayUnsafe());
-      final BigInteger result = b1.mod(b2);
-
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-      }
-
-      final byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
-    }
+    final UInt256 value0 = frame.popStackItem();
+    final UInt256 value1 = frame.popStackItem();
+    frame.pushStackItem(value0.mod(value1));
     return modSuccess;
   }
 }

@@ -34,8 +34,7 @@ public class NumberOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final long number = frame.getBlockValues().getNumber();
-    frame.pushStackBytes(Words.longBytes(number));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(frame.getBlockValues().getNumber()));
 
     return successResponse;
   }

@@ -35,9 +35,9 @@ public class MCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long dst = clampedToLong(frame.popStackBytes());
-    final long src = clampedToLong(frame.popStackBytes());
-    final long length = clampedToLong(frame.popStackBytes());
+    final long dst = clampedToLong(frame.popStackItem());
+    final long src = clampedToLong(frame.popStackItem());
+    final long length = clampedToLong(frame.popStackItem());
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, Math.max(src, dst), length);
     if (frame.getRemainingGas() < cost) {

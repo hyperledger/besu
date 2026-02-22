@@ -35,8 +35,7 @@ public class CodeSizeOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final Code code = frame.getCode();
-    frame.pushStackBytes(Words.intBytes(code.getSize()));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(frame.getCode().getSize()));
 
     return successResponse;
   }

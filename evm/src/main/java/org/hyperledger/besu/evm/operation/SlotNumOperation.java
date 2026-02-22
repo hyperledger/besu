@@ -34,8 +34,7 @@ public class SlotNumOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final long slotNumber = frame.getBlockValues().getSlotNumber();
-    frame.pushStackBytes(Words.longBytes(slotNumber));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(frame.getBlockValues().getSlotNumber()));
 
     return successResponse;
   }

@@ -50,27 +50,14 @@ public class MulModOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final Bytes value0 = frame.popStackBytes();
-    final Bytes value1 = frame.popStackBytes();
-    final Bytes value2 = frame.popStackBytes();
+    final org.hyperledger.besu.evm.UInt256 value0 = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 value1 = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 value2 = frame.popStackItem();
 
     if (value2.isZero()) {
-      frame.pushStackBytes(Bytes.EMPTY);
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     } else {
-      BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
-      BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());
-      BigInteger b2 = new BigInteger(1, value2.toArrayUnsafe());
-
-      BigInteger result = b0.multiply(b1).mod(b2);
-      Bytes resultBytes = Bytes.wrap(result.toByteArray());
-      if (resultBytes.size() > 32) {
-        resultBytes = resultBytes.slice(resultBytes.size() - 32, 32);
-      }
-
-      final byte[] padding = new byte[32 - resultBytes.size()];
-      Arrays.fill(padding, result.signum() < 0 ? (byte) 0xFF : 0x00);
-
-      frame.pushStackBytes(Bytes.concatenate(Bytes.wrap(padding), resultBytes));
+      frame.pushStackItem(value0.mulMod(value1, value2));
     }
 
     return mulModSuccess;

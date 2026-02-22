@@ -92,8 +92,8 @@ class AbstractCreateOperationTest {
 
     @Override
     public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-      final int inputOffset = clampedToInt(frame.getStackBytes(1));
-      final int inputSize = clampedToInt(frame.getStackBytes(2));
+      final int inputOffset = clampedToInt(frame.getStackItem(1));
+      final int inputSize = clampedToInt(frame.getStackItem(2));
       return clampedAdd(
           clampedAdd(
               gasCalculator().txCreateCost(),
@@ -113,8 +113,8 @@ class AbstractCreateOperationTest {
 
     @Override
     protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-      final long inputOffset = clampedToLong(frame.getStackBytes(1));
-      final long inputSize = clampedToLong(frame.getStackBytes(2));
+      final long inputOffset = clampedToLong(frame.getStackItem(1));
+      final long inputSize = clampedToLong(frame.getStackItem(2));
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       return new Code(inputData);
     }
@@ -154,9 +154,9 @@ class AbstractCreateOperationTest {
             .worldUpdater(worldUpdater)
             .build();
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    messageFrame.pushStackBytes(Bytes.ofUnsignedLong(contract.size()));
-    messageFrame.pushStackBytes(Bytes.fromHexString("0xFF"));
-    messageFrame.pushStackBytes(Bytes.EMPTY);
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(contract.size()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
+    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(0xFF, contract.size(), contract);
 

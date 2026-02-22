@@ -22,12 +22,9 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractOperation {
-  private static final int MAX_BLOCK_ARG_SIZE = 8;
 
   /**
    * Instantiates a new Block hash operation.
@@ -45,14 +42,14 @@ public class BlockHashOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    // Make sure we can convert to long
-    final Bytes blockArg = frame.popStackBytes().trimLeadingZeros();
-    if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
-      frame.pushStackBytes(Hash.ZERO.getBytes());
+    final org.hyperledger.besu.evm.UInt256 blockArg = frame.popStackItem();
+    // If blockArg doesn't fit in a long, it's out of range
+    if (blockArg.u3() != 0 || blockArg.u2() != 0 || blockArg.u1() != 0 || blockArg.u0() < 0) {
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
       return new OperationResult(cost, null);
     }
 
-    final long soughtBlock = blockArg.toLong();
+    final long soughtBlock = blockArg.u0();
     final BlockValues blockValues = frame.getBlockValues();
     final long currentBlockNumber = blockValues.getNumber();
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
@@ -62,10 +59,10 @@ public class BlockHashOperation extends AbstractOperation {
     if (soughtBlock < 0
         || soughtBlock >= currentBlockNumber
         || soughtBlock < (currentBlockNumber - blockHashLookup.getLookback())) {
-      frame.pushStackBytes(Bytes32.ZERO);
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     } else {
       final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
-      frame.pushStackBytes(blockHash.getBytes());
+      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(blockHash.getBytes().toArrayUnsafe()));
     }
 
     return new OperationResult(cost, null);

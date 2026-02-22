@@ -53,7 +53,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     try {
-      final Address address = Words.toAddress(frame.popStackBytes());
+      final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(accountIsWarm);
@@ -61,9 +61,7 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         final Account account = getAccount(address, frame);
-
-        Bytes codeSize = (account == null) ? Bytes.EMPTY : Words.intBytes(account.getCode().size());
-        frame.pushStackBytes(codeSize);
+        frame.pushStackItem(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromInt(account.getCode().size()));
 
         return new OperationResult(cost, null);
       }

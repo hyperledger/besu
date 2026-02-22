@@ -49,14 +49,18 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    Bytes value = frame.popStackBytes();
+    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
     final int numberOfLeadingZeros;
-    if (value.size() > Bytes32.SIZE) {
-      // should not happen but trim just in case
-      value = value.slice(value.size() - Bytes32.SIZE, Bytes32.SIZE);
+    if (value.u3() != 0) {
+      numberOfLeadingZeros = Long.numberOfLeadingZeros(value.u3());
+    } else if (value.u2() != 0) {
+      numberOfLeadingZeros = 64 + Long.numberOfLeadingZeros(value.u2());
+    } else if (value.u1() != 0) {
+      numberOfLeadingZeros = 128 + Long.numberOfLeadingZeros(value.u1());
+    } else {
+      numberOfLeadingZeros = 192 + Long.numberOfLeadingZeros(value.u0());
     }
-    numberOfLeadingZeros = value.numberOfLeadingZeros() + (Bytes32.SIZE - value.size()) * 8;
-    frame.pushStackBytes(Words.intBytes(numberOfLeadingZeros));
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(numberOfLeadingZeros));
     return clzSuccess;
   }
 }

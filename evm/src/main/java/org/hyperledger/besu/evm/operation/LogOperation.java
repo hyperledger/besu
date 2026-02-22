@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Log operation. */
 public class LogOperation extends AbstractOperation {
@@ -46,8 +47,8 @@ public class LogOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long dataLocation = clampedToLong(frame.popStackBytes());
-    final long numBytes = clampedToLong(frame.popStackBytes());
+    final long dataLocation = clampedToLong(frame.popStackItem());
+    final long numBytes = clampedToLong(frame.popStackItem());
 
     if (frame.isStatic()) {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
@@ -65,7 +66,7 @@ public class LogOperation extends AbstractOperation {
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(leftPad(frame.popStackBytes())));
+      builder.add(LogTopic.create(Bytes32.wrap(frame.popStackItem().toBytesBE())));
     }
 
     frame.addLog(new Log(address, data, builder.build()));

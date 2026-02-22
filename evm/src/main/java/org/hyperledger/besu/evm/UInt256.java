@@ -99,6 +99,35 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   /**
+   * Converts a Tuweni UInt256 to a native UInt256.
+   *
+   * @param tuweni the Tuweni UInt256 value
+   * @return the native UInt256 equivalent
+   */
+  public static UInt256 fromTuweni(final org.apache.tuweni.units.bigints.UInt256 tuweni) {
+    return fromBytesBE(tuweni.toArrayUnsafe());
+  }
+
+  /**
+   * Converts this native UInt256 to a Tuweni UInt256.
+   *
+   * @return the Tuweni UInt256 equivalent
+   */
+  public org.apache.tuweni.units.bigints.UInt256 toTuweni() {
+    return org.apache.tuweni.units.bigints.UInt256.fromBytes(
+        org.apache.tuweni.bytes.Bytes32.wrap(toBytesBE()));
+  }
+
+  /**
+   * Converts this native UInt256 to a Tuweni Bytes32.
+   *
+   * @return the Tuweni Bytes32 equivalent
+   */
+  public org.apache.tuweni.bytes.Bytes32 toBytes32() {
+    return org.apache.tuweni.bytes.Bytes32.wrap(toBytesBE());
+  }
+
+  /**
    * Instantiates a new UInt256 from an int.
    *
    * @param value int value to convert to UInt256.
@@ -376,34 +405,116 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   /**
    * Bitwise shift left.
    *
-   * @param shift The number of bits to shift left (at most 64).
+   * @param shift The number of bits to shift left (0-255).
    * @return The shifted UInt256.
    */
   public UInt256 shiftLeft(final int shift) {
-    // Unchecked: 0 <= shift < 64
     if (shift == 0) return this;
-    int invShift = (N_BITS_PER_LIMB - shift);
-    long z0 = (u0 << shift);
-    long z1 = (u1 << shift) | u0 >>> invShift;
-    long z2 = (u2 << shift) | u1 >>> invShift;
-    long z3 = (u3 << shift) | u2 >>> invShift;
+    if (shift >= 256) return ZERO;
+
+    // First handle whole-limb shifts
+    final int limbShift = shift >>> 6; // shift / 64
+    final int bitShift = shift & 63; // shift % 64
+
+    // Shift limbs
+    long a0, a1, a2, a3;
+    switch (limbShift) {
+      case 0:
+        a0 = u0;
+        a1 = u1;
+        a2 = u2;
+        a3 = u3;
+        break;
+      case 1:
+        a0 = 0;
+        a1 = u0;
+        a2 = u1;
+        a3 = u2;
+        break;
+      case 2:
+        a0 = 0;
+        a1 = 0;
+        a2 = u0;
+        a3 = u1;
+        break;
+      case 3:
+        a0 = 0;
+        a1 = 0;
+        a2 = 0;
+        a3 = u0;
+        break;
+      default:
+        return ZERO;
+    }
+
+    if (bitShift == 0) {
+      return new UInt256(a3, a2, a1, a0);
+    }
+
+    // Then handle sub-limb bit shifts
+    int invShift = 64 - bitShift;
+    long z0 = (a0 << bitShift);
+    long z1 = (a1 << bitShift) | (a0 >>> invShift);
+    long z2 = (a2 << bitShift) | (a1 >>> invShift);
+    long z3 = (a3 << bitShift) | (a2 >>> invShift);
     return new UInt256(z3, z2, z1, z0);
   }
 
   /**
    * Bitwise shift right.
    *
-   * @param shift The number of bits to shift right (at most 64).
+   * @param shift The number of bits to shift right (0-255).
    * @return The shifted UInt256.
    */
   public UInt256 shiftRight(final int shift) {
-    // Unchecked: 0 <= shift < 64
     if (shift == 0) return this;
-    int invShift = (N_BITS_PER_LIMB - shift);
-    long z3 = (u3 >>> shift);
-    long z2 = (u2 >>> shift) | u3 << invShift;
-    long z1 = (u1 >>> shift) | u2 << invShift;
-    long z0 = (u0 >>> shift) | u1 << invShift;
+    if (shift >= 256) return ZERO;
+
+    // First handle whole-limb shifts
+    final int limbShift = shift >>> 6; // shift / 64
+    final int bitShift = shift & 63; // shift % 64
+
+    // Shift limbs
+    long a0, a1, a2, a3;
+    switch (limbShift) {
+      case 0:
+        a0 = u0;
+        a1 = u1;
+        a2 = u2;
+        a3 = u3;
+        break;
+      case 1:
+        a0 = u1;
+        a1 = u2;
+        a2 = u3;
+        a3 = 0;
+        break;
+      case 2:
+        a0 = u2;
+        a1 = u3;
+        a2 = 0;
+        a3 = 0;
+        break;
+      case 3:
+        a0 = u3;
+        a1 = 0;
+        a2 = 0;
+        a3 = 0;
+        break;
+      default:
+        return ZERO;
+    }
+
+    if (bitShift == 0) {
+      return new UInt256(a3, a2, a1, a0);
+    }
+
+    // Then handle sub-limb bit shifts
+    int invShift = 64 - bitShift;
+    long z3 = (a3 >>> bitShift);
+    long z2 = (a2 >>> bitShift) | (a3 << invShift);
+    long z1 = (a1 >>> bitShift) | (a2 << invShift);
+    long z0 = (a0 >>> bitShift) | (a1 << invShift);
     return new UInt256(z3, z2, z1, z0);
   }
 

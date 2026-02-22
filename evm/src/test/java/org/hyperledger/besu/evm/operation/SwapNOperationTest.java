@@ -23,8 +23,9 @@ import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
+import org.hyperledger.besu.evm.UInt256;
+
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -70,8 +71,8 @@ class SwapNOperationTest {
     final MessageFrame frame = builder.build();
 
     // Before: stack[0]=1, stack[17]=18
-    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(1)));
-    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(18)));
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(1));
+    assertThat(frame.getStackItem(17)).isEqualTo(UInt256.fromInt(18));
 
     final OperationResult result = operation.execute(frame, null);
 
@@ -80,8 +81,8 @@ class SwapNOperationTest {
     assertThat(result.getPcIncrement()).isEqualTo(2);
 
     // After: stack[0]=18, stack[17]=1
-    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(18)));
-    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(1)));
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(18));
+    assertThat(frame.getStackItem(17)).isEqualTo(UInt256.fromInt(1));
     // Stack size unchanged
     assertThat(frame.stackSize()).isEqualTo(18);
   }
@@ -100,16 +101,16 @@ class SwapNOperationTest {
     final MessageFrame frame = builder.build();
 
     // Before: stack[0]=1, stack[108]=109
-    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(1);
-    assertThat(frame.getStackBytes(108).toInt()).isEqualTo(109);
+    assertThat(frame.getStackItem(0).intValue()).isEqualTo(1);
+    assertThat(frame.getStackItem(108).intValue()).isEqualTo(109);
 
     final OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getHaltReason()).isNull();
 
     // After: swapped
-    assertThat(frame.getStackBytes(0).toInt()).isEqualTo(109);
-    assertThat(frame.getStackBytes(108).toInt()).isEqualTo(1);
+    assertThat(frame.getStackItem(0).intValue()).isEqualTo(109);
+    assertThat(frame.getStackItem(108).intValue()).isEqualTo(1);
   }
 
   @ParameterizedTest
@@ -165,8 +166,8 @@ class SwapNOperationTest {
     // Immediate 0 is valid
     assertThat(result.getHaltReason()).isNull();
     // Verify swap happened
-    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(18)));
-    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(1)));
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(18));
+    assertThat(frame.getStackItem(17)).isEqualTo(UInt256.fromInt(1));
   }
 
   @Test
@@ -207,8 +208,8 @@ class SwapNOperationTest {
     final MessageFrame frame = builder.build();
 
     assertThat(frame.stackSize()).isEqualTo(18);
-    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(2))); // top
-    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(1))); // bottom
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(2)); // top
+    assertThat(frame.getStackItem(17)).isEqualTo(UInt256.fromInt(1)); // bottom
 
     final OperationResult result = operation.execute(frame, null);
 
@@ -216,8 +217,8 @@ class SwapNOperationTest {
     assertThat(result.getPcIncrement()).isEqualTo(2);
     // After SWAPN: stack[0]=1, stack[17]=2
     assertThat(frame.stackSize()).isEqualTo(18); // size unchanged
-    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(1))); // swapped
-    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(2))); // swapped
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(1)); // swapped
+    assertThat(frame.getStackItem(17)).isEqualTo(UInt256.fromInt(2)); // swapped
   }
 
   /**
@@ -244,8 +245,8 @@ class SwapNOperationTest {
 
     // Implicit immediate 0 is valid
     assertThat(result.getHaltReason()).isNull();
-    assertThat(frame.getStackBytes(0)).isEqualTo(Bytes32.leftPad(Bytes.of(1)));
-    assertThat(frame.getStackBytes(17)).isEqualTo(Bytes32.leftPad(Bytes.of(2)));
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(1));
+    assertThat(frame.getStackItem(17)).isEqualTo(UInt256.fromInt(2));
   }
 
   /**

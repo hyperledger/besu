@@ -49,7 +49,7 @@ public class Push0Operation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    frame.pushStackBytes(Bytes.EMPTY);
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
     return push0Success;
   }
 }

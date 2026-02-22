@@ -35,7 +35,7 @@ public class BlobBaseFeeOperation extends AbstractFixedCostOperation {
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
 
     final Wei blobGasPrice = frame.getBlobGasPrice();
-    frame.pushStackBytes(blobGasPrice.toBytes());
+    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(blobGasPrice.toBytes().toArrayUnsafe()));
     return successResponse;
   }
 }
