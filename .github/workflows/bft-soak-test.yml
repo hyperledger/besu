@@ -5,7 +5,7 @@ on:
       consensus-type:
         description: 'Consensus type to test'
         required: false
-        default: 'all'
+        default: 'qbft'
         type: choice
         options:
           - all
