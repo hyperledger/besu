@@ -109,11 +109,10 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
       final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
       if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
-        // TODO should this be null result or invalid params?
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
       } else if (blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
-        // return null if a future block is requested
+        // return block not found if a future block is requested
         return blockNotFoundResponse(requestContext);
       }
 
