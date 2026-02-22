@@ -210,8 +210,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     }
 
     final String address = config.discoveryConfiguration().getAdvertisedHost();
-    final int configuredDiscoveryPort = config.discoveryConfiguration().getBindPort();
-    final int configuredRlpxPort = config.rlpxConfiguration().getBindPort();
 
     Optional.ofNullable(config.discoveryConfiguration().getDNSDiscoveryURL())
         .ifPresent(
@@ -248,13 +246,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
             });
 
     final int listeningPort = rlpxAgent.start().join();
-    final int discoveryPort =
-        peerDiscoveryAgent
-            .start(
-                (configuredDiscoveryPort == 0 && configuredRlpxPort == 0)
-                    ? listeningPort
-                    : configuredDiscoveryPort)
-            .join();
+    // Pass the effective RLPx TCP port so that the discovery agent can write the correct tcp/tcp6
+    // values into the local ENR.  The discovery agent reads its own UDP bind port independently.
+    final int discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
 
     final Consumer<? super NatManager> natAction =
         natManager -> {

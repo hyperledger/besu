@@ -710,6 +710,8 @@ public class RunnerBuilder {
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
+            .setBindHostIpv6(p2pListenInterfaceIpv6)
+            .setBindPortIpv6(p2pListenInterfaceIpv6.map(ignored -> p2pListenPortIpv6))
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuVersionUtils.nodeName(identityString));
     networkingConfiguration =

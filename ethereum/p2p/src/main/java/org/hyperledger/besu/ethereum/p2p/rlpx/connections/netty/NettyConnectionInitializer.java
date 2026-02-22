@@ -37,6 +37,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,10 +57,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import jakarta.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NettyConnectionInitializer
     implements ConnectionInitializer, HandshakerProvider, FramerProvider {
 
+  private static final Logger LOG = LoggerFactory.getLogger(NettyConnectionInitializer.class);
   private static final int TIMEOUT_SECONDS = 10;
 
   private final NodeKey nodeKey;
@@ -71,6 +75,7 @@ public class NettyConnectionInitializer
   private final PeerLookup peerLookup;
 
   private ChannelFuture server;
+  private ChannelFuture serverIpv6;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
   private final EventLoopGroup workers = new NioEventLoopGroup(10);
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -119,6 +124,7 @@ public class NettyConnectionInitializer
             .channel(NioServerSocketChannel.class)
             .childHandler(inboundChannelInitializer())
             .bind(config.getBindHost(), config.getBindPort());
+
     server.addListener(
         future -> {
           final InetSocketAddress socketAddress =
@@ -133,10 +139,46 @@ public class NettyConnectionInitializer
             return;
           }
 
+          // Bind IPv6 socket when dual-stack is configured, using the same shared event loops.
+          if (config.isDualStackEnabled()) {
+            final String ipv6Host = config.getBindHostIpv6().orElseThrow();
+            final int ipv6Port = config.getBindPortIpv6().orElse(config.getBindPort());
+            this.serverIpv6 =
+                new ServerBootstrap()
+                    .group(boss, workers)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(inboundChannelInitializer())
+                    .bind(ipv6Host, ipv6Port);
+            serverIpv6.addListener(
+                ipv6Future -> {
+                  if (ipv6Future.isSuccess()) {
+                    final InetSocketAddress ipv6Address =
+                        (InetSocketAddress) serverIpv6.channel().localAddress();
+                    LOG.info("P2P RLPx agent also listening on IPv6: {}", ipv6Address);
+                  } else {
+                    LOG.warn(
+                        "Failed to bind IPv6 RLPx socket on {}:{}, continuing with IPv4 only: {}",
+                        ipv6Host,
+                        ipv6Port,
+                        ipv6Future.cause().getMessage());
+                    serverIpv6 = null;
+                  }
+                });
+          }
+
           listeningPortFuture.complete(socketAddress);
         });
 
     return listeningPortFuture;
+  }
+
+  @Override
+  public Optional<InetSocketAddress> getIpv6LocalAddress() {
+    if (serverIpv6 == null) {
+      return Optional.empty();
+    }
+    final InetSocketAddress addr = (InetSocketAddress) serverIpv6.channel().localAddress();
+    return Optional.ofNullable(addr);
   }
 
   @Override
@@ -150,17 +192,46 @@ public class NettyConnectionInitializer
 
     workers.shutdownGracefully();
     boss.shutdownGracefully();
+
+    final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
     server
         .channel()
         .closeFuture()
         .addListener(
-            (future) -> {
+            future -> {
               if (future.isSuccess()) {
-                stoppedFuture.complete(null);
+                ipv4Close.complete(null);
               } else {
-                stoppedFuture.completeExceptionally(future.cause());
+                ipv4Close.completeExceptionally(future.cause());
               }
             });
+
+    if (serverIpv6 != null) {
+      final CompletableFuture<Void> ipv6Close = new CompletableFuture<>();
+      serverIpv6
+          .channel()
+          .closeFuture()
+          .addListener(future -> ipv6Close.complete(null)); // best-effort
+      CompletableFuture.allOf(ipv4Close, ipv6Close)
+          .whenComplete(
+              (v, err) -> {
+                if (err != null) {
+                  stoppedFuture.completeExceptionally(err);
+                } else {
+                  stoppedFuture.complete(null);
+                }
+              });
+    } else {
+      ipv4Close.whenComplete(
+          (v, err) -> {
+            if (err != null) {
+              stoppedFuture.completeExceptionally(err);
+            } else {
+              stoppedFuture.complete(null);
+            }
+          });
+    }
+
     return stoppedFuture;
   }
 

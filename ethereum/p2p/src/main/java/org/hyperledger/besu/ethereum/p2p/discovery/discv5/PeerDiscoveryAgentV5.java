@@ -14,17 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -34,8 +40,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.ethereum.beacon.discovery.AddressAccessPolicy;
+import org.ethereum.beacon.discovery.DiscoverySystemBuilder;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
@@ -67,12 +78,15 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   public static final int DISCOVERY_TIMEOUT_SECONDS = 30;
 
-  private final MutableDiscoverySystem discoverySystem;
+  private final NodeKey nodeKey;
   private final DiscoveryConfiguration discoveryConfig;
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
   private final boolean preferIpv6Outbound;
+
+  // Initialized lazily in start() once the RLPx TCP port is known.
+  private final AtomicReference<MutableDiscoverySystem> discoverySystem = new AtomicReference<>();
 
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
@@ -87,23 +101,26 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   /**
    * Creates a new DiscV5 peer discovery agent.
    *
-   * @param discoverySystem the underlying mutable DiscV5 discovery system
-   * @param config the networking configuration
+   * <p>The {@link MutableDiscoverySystem} is not built at construction time. It is built lazily
+   * during {@link #start(int)} once the actual RLPx TCP port is known, so that the local node
+   * record (ENR) carries the correct {@code tcp}/{@code tcp6} values.
+   *
+   * @param nodeKey the local node key used for identity and signing
+   * @param config the full networking configuration
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
    * @param preferIpv6Outbound if true, prefer IPv6 when a peer advertises both address families
    */
   public PeerDiscoveryAgentV5(
-      final MutableDiscoverySystem discoverySystem,
+      final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
       final boolean preferIpv6Outbound) {
 
-    this.discoverySystem =
-        Objects.requireNonNull(discoverySystem, "discoverySystem must not be null");
+    this.nodeKey = Objects.requireNonNull(nodeKey, "nodeKey must not be null");
     this.discoveryConfig =
         Objects.requireNonNull(config, "config must not be null").discoveryConfiguration();
     this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
@@ -116,8 +133,12 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   /**
    * Starts the DiscV5 discovery system and the adaptive discovery loop.
    *
-   * @param tcpPort the local TCP port used for RLPx connections
-   * @return a future completed with the TCP port once discovery has started
+   * <p>The local node record (ENR) is initialized here using the supplied {@code tcpPort}, ensuring
+   * the {@code tcp} and {@code tcp6} ENR fields reflect the actual RLPx listening port rather than
+   * the discovery bind port.
+   *
+   * @param tcpPort the local RLPx TCP port used for inbound peer connections
+   * @return a future completed with the UDP discovery port once discovery has started
    */
   @Override
   public CompletableFuture<Integer> start(final int tcpPort) {
@@ -126,14 +147,40 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       return CompletableFuture.completedFuture(0);
     }
     LOG.info("Starting DiscV5 peer discovery agent ...");
+
+    final NodeRecord localNodeRecord = initializeLocalNodeRecord(tcpPort);
+
+    final DiscoverySystemBuilder builder =
+        new DiscoverySystemBuilder()
+            .signer(new LocalNodeKeySigner(nodeKey))
+            .localNodeRecord(localNodeRecord)
+            .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
+            .newAddressHandler((nodeRecord, newAddress) -> Optional.of(nodeRecord))
+            // TODO Integrate address filtering based on peer permissions
+            .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL);
+
+    if (discoveryConfig.isDualStackEnabled()) {
+      final InetSocketAddress ipv4 =
+          new InetSocketAddress(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
+      final InetSocketAddress ipv6 =
+          new InetSocketAddress(
+              discoveryConfig.getBindHostIpv6().orElseThrow(), discoveryConfig.getBindPortIpv6());
+      builder.listen(ipv4, ipv6);
+    } else {
+      builder.listen(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
+    }
+
+    final MutableDiscoverySystem system = builder.buildMutable();
+    discoverySystem.set(system);
+
     running = true;
     scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
-    return discoverySystem
+    return system
         .start()
         .thenApply(
             v -> {
               final int localPort =
-                  discoverySystem.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
+                  system.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
@@ -157,7 +204,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     running = false;
     stopped = true;
     scheduler.shutdownNow();
-    discoverySystem.stop();
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system != null) {
+      system.stop();
+    }
     return CompletableFuture.completedFuture(null);
   }
 
@@ -193,7 +243,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return discoverySystem
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      return Stream.empty();
+    }
+    return system
         .streamLiveNodes()
         .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
   }
@@ -205,7 +259,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public void dropPeer(final PeerId peerId) {
-    discoverySystem.deleteNodeRecord(peerId.getId());
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system != null) {
+      system.deleteNodeRecord(peerId.getId());
+    }
   }
 
   /**
@@ -235,7 +292,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public void addPeer(final Peer peer) {
-    peer.getNodeRecord().ifPresent(discoverySystem::addNodeRecord);
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system != null) {
+      peer.getNodeRecord().ifPresent(system::addNodeRecord);
+    }
   }
 
   /**
@@ -246,7 +306,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
-    return discoverySystem
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      return Optional.empty();
+    }
+    return system
         .lookupNode(peerId.getId())
         .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
   }
@@ -269,7 +333,12 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     if (!discoveryInProgress.compareAndSet(false, true)) {
       return;
     }
-    discoverySystem
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      discoveryInProgress.set(false);
+      return;
+    }
+    system
         .searchForNewPeers()
         .orTimeout(DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .whenComplete(
@@ -292,8 +361,13 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.trace("Discovered {} new peers", newPeers.size());
     }
 
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      return Stream.empty();
+    }
+
     // Combine newly discovered peers with known peers and filter for suitability
-    final Stream<NodeRecord> knownPeers = discoverySystem.streamLiveNodes();
+    final Stream<NodeRecord> knownPeers = system.streamLiveNodes();
     final List<DiscoveryPeer> candidates =
         Stream.concat(newPeers.stream(), knownPeers)
             .distinct()
@@ -305,5 +379,88 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.trace("Total unique peers eligible for connection: {}", candidates.size());
     }
     return candidates.stream();
+  }
+
+  /**
+   * Initializes the local node record with the correct RLPx TCP ports.
+   *
+   * <p>Both {@code tcpPort} (IPv4) and the IPv6 TCP port come from the actual bound sockets on the
+   * {@link RlpxAgent}, so ephemeral ports (0) are resolved to the OS-assigned values before they
+   * are written into the ENR. When no IPv6 RLPx socket was bound, the IPv4 port is used as a
+   * fallback for the {@code tcp6} ENR field.
+   *
+   * @param tcpPort the effective IPv4 RLPx TCP port returned by {@link RlpxAgent#start()}
+   * @return the initialized local {@link NodeRecord}
+   */
+  private NodeRecord initializeLocalNodeRecord(final int tcpPort) {
+    // Use the effective port from the actual bound IPv6 socket, falling back to the IPv4 port
+    // when RLPx dual-stack is not enabled.
+    final int ipv6TcpPort = rlpxAgent.getIpv6ListeningPort().orElse(tcpPort);
+
+    nodeRecordManager.initializeLocalNode(
+        new HostEndpoint(
+            discoveryConfig.getAdvertisedHost(), discoveryConfig.getBindPort(), tcpPort),
+        discoveryConfig
+            .getAdvertisedHostIpv6()
+            .map(host -> new HostEndpoint(host, discoveryConfig.getBindPortIpv6(), ipv6TcpPort)));
+
+    return nodeRecordManager
+        .getLocalNode()
+        .flatMap(DiscoveryPeer::getNodeRecord)
+        .orElseThrow(() -> new IllegalStateException("Local node record not initialized"));
+  }
+
+  /**
+   * An implementation of the {@link org.ethereum.beacon.discovery.crypto.Signer} interface that
+   * uses a local {@link NodeKey} for signing and key agreement.
+   */
+  private static class LocalNodeKeySigner implements org.ethereum.beacon.discovery.crypto.Signer {
+    private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+    private final NodeKey nodeKey;
+
+    /**
+     * Creates a new LocalNodeKeySigner.
+     *
+     * @param nodeKey the node key to use for signing and key agreement
+     */
+    public LocalNodeKeySigner(final NodeKey nodeKey) {
+      this.nodeKey = nodeKey;
+    }
+
+    /**
+     * Derives a shared secret using ECDH with the given peer public key.
+     *
+     * @param remotePubKey the destination peer's public key
+     * @return the derived shared secret
+     */
+    @Override
+    public Bytes deriveECDHKeyAgreement(final Bytes remotePubKey) {
+      SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(remotePubKey);
+      return nodeKey.calculateECDHKeyAgreement(publicKey);
+    }
+
+    /**
+     * Creates a signature of message `x`.
+     *
+     * @param messageHash message, hashed
+     * @return ECDSA signature with properties merged together: r || s
+     */
+    @Override
+    public Bytes sign(final Bytes32 messageHash) {
+      Bytes signature = nodeKey.sign(messageHash).encodedBytes();
+      return signature.slice(0, 64);
+    }
+
+    /**
+     * Derives the compressed public key corresponding to the private key held by this module.
+     *
+     * @return the compressed public key
+     */
+    @Override
+    public Bytes deriveCompressedPublicKeyFromPrivate() {
+      return Bytes.wrap(
+          signatureAlgorithm.publicKeyAsEcPoint(nodeKey.getPublicKey()).getEncoded(true));
+    }
   }
 }

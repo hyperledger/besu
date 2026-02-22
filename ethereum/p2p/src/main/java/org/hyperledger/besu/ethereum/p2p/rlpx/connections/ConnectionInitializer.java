@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public interface ConnectionInitializer {
@@ -29,6 +30,17 @@ public interface ConnectionInitializer {
    * @return The address on which we're listening for incoming connections.
    */
   CompletableFuture<InetSocketAddress> start();
+
+  /**
+   * Returns the local IPv6 address this initializer is bound to, if dual-stack is active.
+   *
+   * <p>Only valid after {@link #start()} has completed. Returns empty if no IPv6 socket was bound.
+   *
+   * @return the bound IPv6 {@link InetSocketAddress}, or empty
+   */
+  default Optional<InetSocketAddress> getIpv6LocalAddress() {
+    return Optional.empty();
+  }
 
   /**
    * Shutdown the connection initializer. Stop listening for incoming connections and stop

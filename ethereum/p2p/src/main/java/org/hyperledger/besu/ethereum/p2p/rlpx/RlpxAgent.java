@@ -127,6 +127,17 @@ public class RlpxAgent {
             });
   }
 
+  /**
+   * Returns the local IPv6 listening port after startup, if dual-stack is active.
+   *
+   * <p>Only valid after {@link #start()} has completed.
+   *
+   * @return the bound IPv6 port, or empty if no IPv6 socket was bound
+   */
+  public Optional<Integer> getIpv6ListeningPort() {
+    return connectionInitializer.getIpv6LocalAddress().map(addr -> addr.getPort());
+  }
+
   public CompletableFuture<Void> stop() {
     if (!started.get() || !stopped.compareAndSet(false, true)) {
       return CompletableFuture.failedFuture(

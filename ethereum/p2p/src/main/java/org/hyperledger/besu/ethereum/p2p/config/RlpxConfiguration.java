@@ -21,12 +21,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class RlpxConfiguration {
   public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.6f;
   private String clientId = "TestClient/1.0.0";
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
+  private Optional<String> bindHostIpv6 = Optional.empty();
+  private Optional<Integer> bindPortIpv6 = Optional.empty();
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
 
   public static RlpxConfiguration create() {
@@ -63,6 +66,28 @@ public class RlpxConfiguration {
   public RlpxConfiguration setBindPort(final int bindPort) {
     this.bindPort = bindPort;
     return this;
+  }
+
+  public Optional<String> getBindHostIpv6() {
+    return bindHostIpv6;
+  }
+
+  public RlpxConfiguration setBindHostIpv6(final Optional<String> bindHostIpv6) {
+    this.bindHostIpv6 = bindHostIpv6;
+    return this;
+  }
+
+  public Optional<Integer> getBindPortIpv6() {
+    return bindPortIpv6;
+  }
+
+  public RlpxConfiguration setBindPortIpv6(final Optional<Integer> bindPortIpv6) {
+    this.bindPortIpv6 = bindPortIpv6;
+    return this;
+  }
+
+  public boolean isDualStackEnabled() {
+    return bindHostIpv6.isPresent();
   }
 
   public String getClientId() {
