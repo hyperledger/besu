@@ -384,25 +384,37 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   /**
    * Initializes the local node record with the correct RLPx TCP ports.
    *
-   * <p>Both {@code tcpPort} (IPv4) and the IPv6 TCP port come from the actual bound sockets on the
-   * {@link RlpxAgent}, so ephemeral ports (0) are resolved to the OS-assigned values before they
-   * are written into the ENR. When no IPv6 RLPx socket was bound, the IPv4 port is used as a
-   * fallback for the {@code tcp6} ENR field.
+   * <p>The IPv4 {@code tcpPort} is the effective port returned by {@link RlpxAgent#start()}. The
+   * IPv6 TCP port is the effective port from the bound IPv6 RLPx socket, obtained via {@link
+   * RlpxAgent#getIpv6ListeningPort()}. Both resolve ephemeral ports (0) to the OS-assigned values
+   * before they are written into the ENR.
+   *
+   * <p>The IPv6 {@link HostEndpoint} is only included when <em>both</em> an IPv6 advertised host is
+   * configured <em>and</em> an IPv6 RLPx socket is actually bound. If discovery dual-stack is
+   * active but RLPx dual-stack is not, the IPv6 ENR fields are omitted rather than advertising an
+   * incorrect port.
    *
    * @param tcpPort the effective IPv4 RLPx TCP port returned by {@link RlpxAgent#start()}
    * @return the initialized local {@link NodeRecord}
    */
   private NodeRecord initializeLocalNodeRecord(final int tcpPort) {
-    // Use the effective port from the actual bound IPv6 socket, falling back to the IPv4 port
-    // when RLPx dual-stack is not enabled.
-    final int ipv6TcpPort = rlpxAgent.getIpv6ListeningPort().orElse(tcpPort);
+    final Optional<Integer> ipv6TcpPort = rlpxAgent.getIpv6ListeningPort();
+
+    // Include IPv6 ENR fields only when both an advertised IPv6 host is configured and an IPv6
+    // RLPx socket was successfully bound.  Omitting them when the socket is absent avoids
+    // advertising an incorrect tcp6 value to remote peers.
+    final Optional<HostEndpoint> ipv6Endpoint =
+        discoveryConfig
+            .getAdvertisedHostIpv6()
+            .flatMap(
+                host ->
+                    ipv6TcpPort.map(
+                        port -> new HostEndpoint(host, discoveryConfig.getBindPortIpv6(), port)));
 
     nodeRecordManager.initializeLocalNode(
         new HostEndpoint(
             discoveryConfig.getAdvertisedHost(), discoveryConfig.getBindPort(), tcpPort),
-        discoveryConfig
-            .getAdvertisedHostIpv6()
-            .map(host -> new HostEndpoint(host, discoveryConfig.getBindPortIpv6(), ipv6TcpPort)));
+        ipv6Endpoint);
 
     return nodeRecordManager
         .getLocalNode()

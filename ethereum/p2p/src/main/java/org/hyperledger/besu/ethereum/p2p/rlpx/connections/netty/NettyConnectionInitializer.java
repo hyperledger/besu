@@ -140,6 +140,8 @@ public class NettyConnectionInitializer
           }
 
           // Bind IPv6 socket when dual-stack is configured, using the same shared event loops.
+          // The outer future must not complete until the IPv6 bind is also resolved so that
+          // callers can rely on getIpv6LocalAddress() returning the actual bound port.
           if (config.isDualStackEnabled()) {
             final String ipv6Host = config.getBindHostIpv6().orElseThrow();
             final int ipv6Port = config.getBindPortIpv6().orElse(config.getBindPort());
@@ -163,10 +165,13 @@ public class NettyConnectionInitializer
                         ipv6Future.cause().getMessage());
                     serverIpv6 = null;
                   }
+                  // Complete after IPv6 bind resolves (success or failure) so the effective
+                  // IPv6 port is available via getIpv6LocalAddress() before callers proceed.
+                  listeningPortFuture.complete(socketAddress);
                 });
+          } else {
+            listeningPortFuture.complete(socketAddress);
           }
-
-          listeningPortFuture.complete(socketAddress);
         });
 
     return listeningPortFuture;
