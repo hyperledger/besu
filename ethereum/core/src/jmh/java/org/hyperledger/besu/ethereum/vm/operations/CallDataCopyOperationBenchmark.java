@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.CallDataCopyOperation;
@@ -58,9 +59,9 @@ public class CallDataCopyOperationBenchmark {
   @Param({"false", "true"})
   public boolean nonZeroData;
 
-  protected Bytes[] destOffsetPool;
-  protected Bytes[] srcOffsetPool;
-  protected Bytes[] sizePool;
+  protected UInt256[] destOffsetPool;
+  protected UInt256[] srcOffsetPool;
+  protected UInt256[] sizePool;
   protected int index;
   protected MessageFrame frame;
   protected Bytes callData;
@@ -72,9 +73,9 @@ public class CallDataCopyOperationBenchmark {
     frame = BenchmarkHelper.createMessageCallFrameWithCallData(callData);
 
     // Initialize parameter pools
-    destOffsetPool = new Bytes[SAMPLE_SIZE];
-    srcOffsetPool = new Bytes[SAMPLE_SIZE];
-    sizePool = new Bytes[SAMPLE_SIZE];
+    destOffsetPool = new UInt256[SAMPLE_SIZE];
+    srcOffsetPool = new UInt256[SAMPLE_SIZE];
+    sizePool = new UInt256[SAMPLE_SIZE];
 
     // Fill pools with appropriate values based on test parameters
     BenchmarkHelper.fillPoolsForCallData(

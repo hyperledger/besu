@@ -24,14 +24,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -80,11 +79,11 @@ public class TransientStorageOperationBenchmark {
   }
 
   @Benchmark
-  public Bytes executeOperation() {
-    frame.pushStackItem(UInt256.ONE);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+  public UInt256 executeOperation() {
+    frame.pushStackItem(UInt256.fromInt(1));
+    frame.pushStackItem(UInt256.fromInt(1));
     tstore.execute(frame, null);
-    frame.pushStackItem(UInt256.fromHexString("0x01"));
+    frame.pushStackItem(UInt256.fromInt(1));
     tload.execute(frame, null);
     return frame.popStackItem();
   }

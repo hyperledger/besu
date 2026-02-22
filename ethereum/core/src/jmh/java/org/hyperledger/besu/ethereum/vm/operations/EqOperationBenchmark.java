@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.EqOperation;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -54,72 +55,74 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
   public void setUp() {
     frame = BenchmarkHelper.createMessageCallFrame();
 
-    aPool = new Bytes[SAMPLE_SIZE];
-    bPool = new Bytes[SAMPLE_SIZE];
+    // Use temporary Bytes[] arrays for the complex scenario generation logic,
+    // then convert to UInt256[] at the end.
+    Bytes[] tmpA = new Bytes[SAMPLE_SIZE];
+    Bytes[] tmpB = new Bytes[SAMPLE_SIZE];
     switch (mode) {
       case EMPTY_INPUTS:
-        Arrays.fill(aPool, Bytes.EMPTY);
-        Arrays.fill(bPool, Bytes.EMPTY);
+        Arrays.fill(tmpA, Bytes.EMPTY);
+        Arrays.fill(tmpB, Bytes.EMPTY);
         break;
       case ONE_EMPTY_INPUT:
-        Arrays.fill(aPool, Bytes.EMPTY);
-        BenchmarkHelper.fillPool(bPool, () -> 16);
-        bPool = Arrays.stream(bPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
+        Arrays.fill(tmpA, Bytes.EMPTY);
+        BenchmarkHelper.fillPool(tmpB, () -> 16);
+        tmpB = Arrays.stream(tmpB).map(Bytes32::leftPad).toArray(Bytes[]::new);
         break;
       case BYTES1_EQUAL:
-        BenchmarkHelper.fillPool(aPool, () -> 1);
-        bPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 1);
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
                 .toArray(Bytes[]::new);
         break;
       case BYTES1_NOT_EQUAL:
         BenchmarkHelper.fillPools(
-            aPool, bPool, () -> 1, () -> 1, (value1, value2) -> !value1.equals(value2));
+            tmpA, tmpB, () -> 1, () -> 1, (value1, value2) -> !value1.equals(value2));
         break;
       case BYTES1_EQUAL_WITH_ZEROS:
-        BenchmarkHelper.fillPool(aPool, () -> 1);
-        aPool = Arrays.stream(aPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
-        bPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 1);
+        tmpA = Arrays.stream(tmpA).map(Bytes32::leftPad).toArray(Bytes[]::new);
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
                 .toArray(Bytes[]::new);
         break;
       case BYTES1_NOT_EQUAL_WITH_ZEROS:
         BenchmarkHelper.fillPools(
-            aPool, bPool, () -> 1, () -> 1, (value1, value2) -> !value1.equals(value2));
-        aPool = Arrays.stream(aPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
-        bPool = Arrays.stream(bPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
+            tmpA, tmpB, () -> 1, () -> 1, (value1, value2) -> !value1.equals(value2));
+        tmpA = Arrays.stream(tmpA).map(Bytes32::leftPad).toArray(Bytes[]::new);
+        tmpB = Arrays.stream(tmpB).map(Bytes32::leftPad).toArray(Bytes[]::new);
         break;
       case BYTES16_EQUAL:
-        BenchmarkHelper.fillPool(aPool, () -> 16);
-        bPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 16);
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
                 .toArray(Bytes[]::new);
         break;
       case BYTES16_NOT_EQUAL:
         BenchmarkHelper.fillPools(
-            aPool, bPool, () -> 16, () -> 16, (value1, value2) -> !value1.equals(value2));
+            tmpA, tmpB, () -> 16, () -> 16, (value1, value2) -> !value1.equals(value2));
         break;
       case BYTES16_EQUAL_WITH_ZEROS:
-        BenchmarkHelper.fillPool(aPool, () -> 16);
-        aPool = Arrays.stream(aPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
-        bPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 16);
+        tmpA = Arrays.stream(tmpA).map(Bytes32::leftPad).toArray(Bytes[]::new);
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
                 .toArray(Bytes[]::new);
         break;
       case BYTES16_NOT_EQUAL_WITH_ZEROS:
         BenchmarkHelper.fillPools(
-            aPool, bPool, () -> 16, () -> 16, (value1, value2) -> !value1.equals(value2));
-        aPool = Arrays.stream(aPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
-        bPool = Arrays.stream(bPool).map(Bytes32::leftPad).toArray(Bytes[]::new);
+            tmpA, tmpB, () -> 16, () -> 16, (value1, value2) -> !value1.equals(value2));
+        tmpA = Arrays.stream(tmpA).map(Bytes32::leftPad).toArray(Bytes[]::new);
+        tmpB = Arrays.stream(tmpB).map(Bytes32::leftPad).toArray(Bytes[]::new);
         break;
       case BYTES32_NOT_EQUAL_MOST_SIGNIFICANT:
-        BenchmarkHelper.fillPool(aPool, () -> 32, value -> value.get(0) != 0);
-        bPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 32, value -> value.get(0) != 0);
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(
                     bytes -> {
                       final MutableBytes mutableBytes = bytes.mutableCopy();
@@ -130,9 +133,9 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
                 .toArray(Bytes[]::new);
         break;
       case BYTES32_NOT_EQUAL_LEAST_SIGNIFICANT:
-        BenchmarkHelper.fillPool(aPool, () -> 32, value -> value.get(0) != 0);
-        bPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 32, value -> value.get(0) != 0);
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(
                     bytes -> {
                       final MutableBytes mutableBytes = bytes.mutableCopy();
@@ -144,17 +147,17 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
                 .toArray(Bytes[]::new);
         break;
       case BYTES32_RANDOM:
-        BenchmarkHelper.fillPool(aPool, () -> 32, value -> value.get(0) != 0);
-        BenchmarkHelper.fillPool(bPool, () -> 32, value -> value.get(0) != 0);
+        BenchmarkHelper.fillPool(tmpA, () -> 32, value -> value.get(0) != 0);
+        BenchmarkHelper.fillPool(tmpB, () -> 32, value -> value.get(0) != 0);
         break;
       case BYTES30_BYTES16_RANDOM:
-        BenchmarkHelper.fillPool(aPool, () -> 30, value -> value.get(0) != 0);
-        BenchmarkHelper.fillPool(bPool, () -> 16, value -> value.get(0) != 0);
+        BenchmarkHelper.fillPool(tmpA, () -> 30, value -> value.get(0) != 0);
+        BenchmarkHelper.fillPool(tmpB, () -> 16, value -> value.get(0) != 0);
         break;
       case BYTES32_EQUAL_BYTE_REPEAT:
-        BenchmarkHelper.fillPool(aPool, () -> 1);
-        aPool =
-            Arrays.stream(aPool)
+        BenchmarkHelper.fillPool(tmpA, () -> 1);
+        tmpA =
+            Arrays.stream(tmpA)
                 .map(
                     bytes -> {
                       final byte[] newPool = new byte[32];
@@ -162,12 +165,30 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
                       return Bytes.wrap(newPool);
                     })
                 .toArray(Bytes[]::new);
-        bPool =
-            Arrays.stream(aPool)
+        tmpB =
+            Arrays.stream(tmpA)
                 .map(bytes -> Bytes.wrap(bytes.toArrayUnsafe()))
                 .toArray(Bytes[]::new);
     }
+
+    // Convert temporary Bytes[] to UInt256[]
+    aPool = new UInt256[SAMPLE_SIZE];
+    bPool = new UInt256[SAMPLE_SIZE];
+    for (int i = 0; i < SAMPLE_SIZE; i++) {
+      aPool[i] = bytesToUInt256(tmpA[i]);
+      bPool[i] = bytesToUInt256(tmpB[i]);
+    }
     index = 0;
+  }
+
+  private static UInt256 bytesToUInt256(final Bytes bytes) {
+    if (bytes.isEmpty()) {
+      return UInt256.ZERO;
+    }
+    final byte[] padded = new byte[32];
+    final byte[] raw = bytes.toArrayUnsafe();
+    System.arraycopy(raw, 0, padded, 32 - raw.length, raw.length);
+    return UInt256.fromBytesBE(padded);
   }
 
   @Override

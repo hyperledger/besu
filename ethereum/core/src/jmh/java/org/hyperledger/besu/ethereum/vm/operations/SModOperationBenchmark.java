@@ -14,14 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.SModOperationOptimized;
+import org.hyperledger.besu.evm.operation.SModOperation;
 
 import java.math.BigInteger;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
@@ -89,8 +89,8 @@ public class SModOperationBenchmark extends BinaryOperationBenchmark {
     frame = BenchmarkHelper.createMessageCallFrame();
 
     Case scenario = Case.valueOf(caseName);
-    aPool = new Bytes[SAMPLE_SIZE];
-    bPool = new Bytes[SAMPLE_SIZE];
+    aPool = new UInt256[SAMPLE_SIZE];
+    bPool = new UInt256[SAMPLE_SIZE];
 
     final ThreadLocalRandom random = ThreadLocalRandom.current();
     int aSize;
@@ -109,17 +109,17 @@ public class SModOperationBenchmark extends BinaryOperationBenchmark {
 
       // Swap a and b if necessary
       if ((scenario.divSize != scenario.modSize)) {
-        aPool[i] = Bytes.wrap(a);
-        bPool[i] = Bytes.wrap(b);
+        aPool[i] = BenchmarkHelper.bytesToUInt256(a);
+        bPool[i] = BenchmarkHelper.bytesToUInt256(b);
       } else {
         BigInteger aInt = new BigInteger(a);
         BigInteger bInt = new BigInteger(b);
         if ((aInt.abs().compareTo(bInt.abs()) < 0)) {
-          aPool[i] = Bytes.wrap(b);
-          bPool[i] = Bytes.wrap(a);
+          aPool[i] = BenchmarkHelper.bytesToUInt256(b);
+          bPool[i] = BenchmarkHelper.bytesToUInt256(a);
         } else {
-          aPool[i] = Bytes.wrap(a);
-          bPool[i] = Bytes.wrap(b);
+          aPool[i] = BenchmarkHelper.bytesToUInt256(a);
+          bPool[i] = BenchmarkHelper.bytesToUInt256(b);
         }
       }
     }
@@ -128,6 +128,6 @@ public class SModOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return SModOperationOptimized.staticOperation(frame);
+    return SModOperation.staticOperation(frame);
   }
 }

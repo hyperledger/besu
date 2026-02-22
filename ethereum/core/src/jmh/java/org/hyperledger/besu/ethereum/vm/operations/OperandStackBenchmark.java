@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.OperandStack;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
@@ -42,8 +42,14 @@ public class OperandStackBenchmark {
   @Param({"6", "15", "34", "100", "234", "500", "800", "1024"})
   private int stackDepth;
 
-  private static final Bytes BYTES =
-      Bytes.fromHexString("0x3232323232323232323232323232323232323232323232323232323232323232");
+  private static final UInt256 VALUE =
+      UInt256.fromBytesBE(
+          new byte[] {
+            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
+            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
+            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
+            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32
+          });
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
@@ -51,7 +57,7 @@ public class OperandStackBenchmark {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
       OperandStack stack = new OperandStack(MessageFrame.DEFAULT_MAX_STACK_SIZE);
       for (int j = 0; j < stackDepth; j++) {
-        stack.push(BYTES);
+        stack.push(VALUE);
       }
     }
   }

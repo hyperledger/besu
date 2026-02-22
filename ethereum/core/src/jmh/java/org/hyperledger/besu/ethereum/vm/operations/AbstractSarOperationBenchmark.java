@@ -14,13 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomNegativeValue;
-import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomPositiveValue;
-import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomValue;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.bytesToUInt256;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomNegativeUInt256Value;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomPositiveUInt256Value;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomUInt256Value;
+
+import org.hyperledger.besu.evm.UInt256;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
@@ -58,10 +60,6 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
     FULL_RANDOM
   }
 
-  /** All bits set (32 bytes of 0xFF) - represents -1 in two's complement. */
-  protected static final Bytes ALL_BITS =
-      Bytes.fromHexString("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
   @Param({
     "SHIFT_0",
     "NEGATIVE_SHIFT_1",
@@ -83,76 +81,70 @@ public abstract class AbstractSarOperationBenchmark extends BinaryOperationBench
     frame = BenchmarkHelper.createMessageCallFrame();
 
     final Case scenario = Case.valueOf(caseName);
-    aPool = new Bytes[SAMPLE_SIZE]; // shift amount (pushed second, popped first)
-    bPool = new Bytes[SAMPLE_SIZE]; // value (pushed first, popped second)
+    aPool = new UInt256[SAMPLE_SIZE]; // shift amount (pushed second, popped first)
+    bPool = new UInt256[SAMPLE_SIZE]; // value (pushed first, popped second)
 
     final ThreadLocalRandom random = ThreadLocalRandom.current();
 
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       switch (scenario) {
         case SHIFT_0:
-          aPool[i] = Bytes.of(0);
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(0);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case NEGATIVE_SHIFT_1:
-          // shiftAmount = 0x1, value = 0xfff...fff (negative, tests OR path)
-          aPool[i] = Bytes.of(1);
-          bPool[i] = randomNegativeValue(random);
+          aPool[i] = UInt256.fromInt(1);
+          bPool[i] = randomNegativeUInt256Value(random);
           break;
 
         case ALL_BITS_SHIFT_1:
-          // shiftAmount = 0x1, value = 0xfff...fff (negative, tests OR path)
-          aPool[i] = Bytes.of(1);
-          bPool[i] = ALL_BITS;
+          aPool[i] = UInt256.fromInt(1);
+          bPool[i] = UInt256.MAX;
           break;
 
         case POSITIVE_SHIFT_1:
-          // shiftAmount = 0x1, random positive value (no sign extension)
-          aPool[i] = Bytes.of(1);
-          bPool[i] = randomPositiveValue(random);
+          aPool[i] = UInt256.fromInt(1);
+          bPool[i] = randomPositiveUInt256Value(random);
           break;
 
         case NEGATIVE_SHIFT_128:
-          aPool[i] = Bytes.of(128);
-          bPool[i] = randomNegativeValue(random);
+          aPool[i] = UInt256.fromInt(128);
+          bPool[i] = randomNegativeUInt256Value(random);
           break;
 
         case NEGATIVE_SHIFT_255:
-          aPool[i] = Bytes.of(255);
-          bPool[i] = randomNegativeValue(random);
+          aPool[i] = UInt256.fromInt(255);
+          bPool[i] = randomNegativeUInt256Value(random);
           break;
 
         case POSITIVE_SHIFT_128:
-          aPool[i] = Bytes.of(128);
-          bPool[i] = randomPositiveValue(random);
+          aPool[i] = UInt256.fromInt(128);
+          bPool[i] = randomPositiveUInt256Value(random);
           break;
         case POSITIVE_SHIFT_255:
-          aPool[i] = Bytes.of(255);
-          bPool[i] = randomPositiveValue(random);
+          aPool[i] = UInt256.fromInt(255);
+          bPool[i] = randomPositiveUInt256Value(random);
           break;
 
         case OVERFLOW_SHIFT_256:
-          // Shift of exactly 256 - overflow path
-          aPool[i] = Bytes.fromHexString("0x0100"); // 256
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(256);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case OVERFLOW_LARGE_SHIFT:
-          // Shift amount > 4 bytes - overflow path
-          aPool[i] = Bytes.fromHexString("0x010000000000"); // > 4 bytes
-          bPool[i] = randomValue(random);
+          aPool[i] = bytesToUInt256(new byte[] {0x01, 0x00, 0x00, 0x00, 0x00, 0x00});
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case FULL_RANDOM:
         default:
-          // Original random behavior
           final byte[] shift = new byte[1 + random.nextInt(2)];
           final byte[] value = new byte[1 + random.nextInt(32)];
           random.nextBytes(shift);
           random.nextBytes(value);
-          aPool[i] = Bytes.wrap(shift);
-          bPool[i] = Bytes.wrap(value);
+          aPool[i] = bytesToUInt256(shift);
+          bPool[i] = bytesToUInt256(value);
           break;
       }
     }

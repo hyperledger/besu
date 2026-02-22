@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
+import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
@@ -131,9 +131,9 @@ public class MulModOperationBenchmark extends TernaryOperationBenchmark {
     frame = BenchmarkHelper.createMessageCallFrame();
 
     Case scenario = Case.valueOf(caseName);
-    aPool = new Bytes[SAMPLE_SIZE];
-    bPool = new Bytes[SAMPLE_SIZE];
-    cPool = new Bytes[SAMPLE_SIZE];
+    aPool = new UInt256[SAMPLE_SIZE];
+    bPool = new UInt256[SAMPLE_SIZE];
+    cPool = new UInt256[SAMPLE_SIZE];
 
     final ThreadLocalRandom random = ThreadLocalRandom.current();
     int aSize;
@@ -154,15 +154,15 @@ public class MulModOperationBenchmark extends TernaryOperationBenchmark {
       random.nextBytes(a);
       random.nextBytes(b);
       random.nextBytes(c);
-      aPool[i] = Bytes.wrap(a);
-      bPool[i] = Bytes.wrap(b);
-      cPool[i] = Bytes.wrap(c);
+      aPool[i] = BenchmarkHelper.bytesToUInt256(a);
+      bPool[i] = BenchmarkHelper.bytesToUInt256(b);
+      cPool[i] = BenchmarkHelper.bytesToUInt256(c);
     }
     index = 0;
   }
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return MulModOperationOptimized.staticOperation(frame);
+    return MulModOperation.staticOperation(frame);
   }
 }

@@ -16,12 +16,11 @@ package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.vm.BlockchainBasedBlockHashLookup;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
@@ -56,14 +55,14 @@ public class BlockHashOperationBenchmark {
   }
 
   @Benchmark
-  public Bytes executeOperation() {
-    frame.pushStackItem(UInt256.valueOf(blockNumber));
+  public UInt256 executeOperation() {
+    frame.pushStackItem(UInt256.fromLong(blockNumber));
     operation.execute(frame, null);
     return frame.popStackItem();
   }
 
   @Benchmark
-  public Bytes executeOperationWithEmptyHashCache() {
+  public UInt256 executeOperationWithEmptyHashCache() {
     final MessageFrame cleanFrame =
         operationBenchmarkHelper
             .createMessageFrameBuilder()
@@ -72,7 +71,7 @@ public class BlockHashOperationBenchmark {
                     (ProcessableBlockHeader) frame.getBlockValues(),
                     operationBenchmarkHelper.getBlockchain()))
             .build();
-    cleanFrame.pushStackItem(UInt256.valueOf(blockNumber));
+    cleanFrame.pushStackItem(UInt256.fromLong(blockNumber));
     operation.execute(cleanFrame, null);
     return cleanFrame.popStackItem();
   }

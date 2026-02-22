@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
@@ -47,7 +47,7 @@ public abstract class ImmediateByteOperationBenchmark {
   protected static final int SAMPLE_SIZE = 30_000;
   protected static final int STACK_DEPTH = 50;
 
-  protected Bytes[] valuePool;
+  protected UInt256[] valuePool;
   protected int index;
   protected MessageFrame frame;
   protected byte[] code;
@@ -55,8 +55,8 @@ public abstract class ImmediateByteOperationBenchmark {
   @Setup
   public void setUp() {
     frame = BenchmarkHelper.createMessageCallFrame();
-    valuePool = new Bytes[SAMPLE_SIZE];
-    BenchmarkHelper.fillPool(valuePool);
+    valuePool = new UInt256[SAMPLE_SIZE];
+    BenchmarkHelper.fillUInt256Pool(valuePool);
     index = 0;
 
     code = new byte[] {(byte) getOpcode(), getImmediate()};

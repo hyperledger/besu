@@ -14,11 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomValue;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.bytesToUInt256;
+import static org.hyperledger.besu.ethereum.vm.operations.BenchmarkHelper.randomUInt256Value;
+
+import org.hyperledger.besu.evm.UInt256;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Level;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
@@ -65,41 +67,41 @@ public abstract class AbstractShiftOperationBenchmark extends BinaryOperationBen
     frame = BenchmarkHelper.createMessageCallFrame();
 
     final Case scenario = Case.valueOf(caseName);
-    aPool = new Bytes[SAMPLE_SIZE]; // shift amount (pushed second, popped first)
-    bPool = new Bytes[SAMPLE_SIZE]; // value (pushed first, popped second)
+    aPool = new UInt256[SAMPLE_SIZE]; // shift amount (pushed second, popped first)
+    bPool = new UInt256[SAMPLE_SIZE]; // value (pushed first, popped second)
 
     final ThreadLocalRandom random = ThreadLocalRandom.current();
 
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       switch (scenario) {
         case SHIFT_0:
-          aPool[i] = Bytes.of(0);
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(0);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case SHIFT_1:
-          aPool[i] = Bytes.of(1);
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(1);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case SHIFT_128:
-          aPool[i] = Bytes.of(128);
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(128);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case SHIFT_255:
-          aPool[i] = Bytes.of(255);
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(255);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case OVERFLOW_SHIFT_256:
-          aPool[i] = Bytes.fromHexString("0x0100"); // 256
-          bPool[i] = randomValue(random);
+          aPool[i] = UInt256.fromInt(256);
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case OVERFLOW_LARGE_SHIFT:
-          aPool[i] = Bytes.fromHexString("0x010000000000"); // > 4 bytes
-          bPool[i] = randomValue(random);
+          aPool[i] = bytesToUInt256(new byte[] {0x01, 0x00, 0x00, 0x00, 0x00, 0x00});
+          bPool[i] = randomUInt256Value(random);
           break;
 
         case FULL_RANDOM:
@@ -108,8 +110,8 @@ public abstract class AbstractShiftOperationBenchmark extends BinaryOperationBen
           final byte[] value = new byte[1 + random.nextInt(32)];
           random.nextBytes(shift);
           random.nextBytes(value);
-          aPool[i] = Bytes.wrap(shift);
-          bPool[i] = Bytes.wrap(value);
+          aPool[i] = bytesToUInt256(shift);
+          bPool[i] = bytesToUInt256(value);
           break;
       }
     }

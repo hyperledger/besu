@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BenchmarkHelper {
   /**
@@ -205,22 +204,49 @@ public class BenchmarkHelper {
    * @param fixedSrcDst whether to use fixed zero source/destination offsets
    */
   static void fillPoolsForCallData(
-      final Bytes[] sizePool,
-      final Bytes[] destOffsetPool,
-      final Bytes[] srcOffsetPool,
+      final org.hyperledger.besu.evm.UInt256[] sizePool,
+      final org.hyperledger.besu.evm.UInt256[] destOffsetPool,
+      final org.hyperledger.besu.evm.UInt256[] srcOffsetPool,
       final int dataSize,
       final boolean fixedSrcDst) {
     for (int i = 0; i < sizePool.length; i++) {
-      sizePool[i] = Bytes.wrap(UInt256.valueOf(dataSize));
+      sizePool[i] = org.hyperledger.besu.evm.UInt256.fromInt(dataSize);
 
       if (fixedSrcDst) {
-        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
-        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
+        destOffsetPool[i] = org.hyperledger.besu.evm.UInt256.ZERO;
+        srcOffsetPool[i] = org.hyperledger.besu.evm.UInt256.ZERO;
       } else {
-        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf((i * 32) % 1024));
-        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize)));
+        destOffsetPool[i] = org.hyperledger.besu.evm.UInt256.fromInt((i * 32) % 1024);
+        srcOffsetPool[i] =
+            org.hyperledger.besu.evm.UInt256.fromInt(i % Math.max(1, dataSize));
       }
     }
+  }
+
+  /**
+   * Fills an array with random UInt256 values.
+   *
+   * @param pool the destination array
+   */
+  public static void fillUInt256Pool(final org.hyperledger.besu.evm.UInt256[] pool) {
+    final Random random = new Random();
+    for (int i = 0; i < pool.length; i++) {
+      final byte[] a = new byte[1 + random.nextInt(32)];
+      random.nextBytes(a);
+      pool[i] = bytesToUInt256(a);
+    }
+  }
+
+  /**
+   * Converts a byte array to UInt256 (left-pads to 32 bytes).
+   *
+   * @param bytes the byte array
+   * @return the UInt256 value
+   */
+  static org.hyperledger.besu.evm.UInt256 bytesToUInt256(final byte[] bytes) {
+    final byte[] padded = new byte[32];
+    System.arraycopy(bytes, 0, padded, 32 - bytes.length, bytes.length);
+    return org.hyperledger.besu.evm.UInt256.fromBytesBE(padded);
   }
 
   /**
@@ -233,6 +259,46 @@ public class BenchmarkHelper {
     final byte[] value = new byte[32];
     random.nextBytes(value);
     return Bytes.wrap(value);
+  }
+
+  /**
+   * Generates a random UInt256 value.
+   *
+   * @param random thread-local random source
+   * @return random UInt256 value
+   */
+  static org.hyperledger.besu.evm.UInt256 randomUInt256Value(final ThreadLocalRandom random) {
+    final byte[] value = new byte[32];
+    random.nextBytes(value);
+    return org.hyperledger.besu.evm.UInt256.fromBytesBE(value);
+  }
+
+  /**
+   * Generates a random positive signed 256-bit UInt256 value (sign bit cleared).
+   *
+   * @param random thread-local random source
+   * @return random positive UInt256 value
+   */
+  static org.hyperledger.besu.evm.UInt256 randomPositiveUInt256Value(
+      final ThreadLocalRandom random) {
+    final byte[] value = new byte[32];
+    random.nextBytes(value);
+    value[0] = (byte) (value[0] & 0x7F);
+    return org.hyperledger.besu.evm.UInt256.fromBytesBE(value);
+  }
+
+  /**
+   * Generates a random negative signed 256-bit UInt256 value (sign bit set).
+   *
+   * @param random thread-local random source
+   * @return random negative UInt256 value
+   */
+  static org.hyperledger.besu.evm.UInt256 randomNegativeUInt256Value(
+      final ThreadLocalRandom random) {
+    final byte[] value = new byte[32];
+    random.nextBytes(value);
+    value[0] = (byte) (value[0] | 0x80);
+    return org.hyperledger.besu.evm.UInt256.fromBytesBE(value);
   }
 
   /**

@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
@@ -40,21 +40,21 @@ public abstract class TernaryOperationBenchmark {
 
   protected static final int SAMPLE_SIZE = 30_000;
 
-  protected Bytes[] aPool;
-  protected Bytes[] bPool;
-  protected Bytes[] cPool;
+  protected UInt256[] aPool;
+  protected UInt256[] bPool;
+  protected UInt256[] cPool;
   protected int index;
   protected MessageFrame frame;
 
   @Setup()
   public void setUp() {
     frame = BenchmarkHelper.createMessageCallFrame();
-    aPool = new Bytes[SAMPLE_SIZE];
-    bPool = new Bytes[SAMPLE_SIZE];
-    cPool = new Bytes[SAMPLE_SIZE];
-    BenchmarkHelper.fillPool(aPool);
-    BenchmarkHelper.fillPool(bPool);
-    BenchmarkHelper.fillPool(cPool);
+    aPool = new UInt256[SAMPLE_SIZE];
+    bPool = new UInt256[SAMPLE_SIZE];
+    cPool = new UInt256[SAMPLE_SIZE];
+    BenchmarkHelper.fillUInt256Pool(aPool);
+    BenchmarkHelper.fillUInt256Pool(bPool);
+    BenchmarkHelper.fillUInt256Pool(cPool);
     index = 0;
   }
 

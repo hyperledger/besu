@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
@@ -27,7 +28,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -63,7 +63,7 @@ public class CountLeadingZerosOperationBenchmark {
   })
   private String bytesHex;
 
-  private Bytes bytes;
+  private UInt256 value;
 
   private MessageFrame frame;
 
@@ -89,14 +89,18 @@ public class CountLeadingZerosOperationBenchmark {
             .code(Code.EMPTY_CODE)
             .completer(messageFrame -> {})
             .build();
-    bytes = Bytes.fromHexString(bytesHex);
+    final org.apache.tuweni.bytes.Bytes rawBytes = org.apache.tuweni.bytes.Bytes.fromHexString(bytesHex);
+    final byte[] padded = new byte[32];
+    final byte[] raw = rawBytes.toArrayUnsafe();
+    System.arraycopy(raw, 0, padded, 32 - raw.length, raw.length);
+    value = UInt256.fromBytesBE(padded);
   }
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void executeOperation() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      frame.pushStackItem(bytes);
+      frame.pushStackItem(value);
       CountLeadingZerosOperation.staticOperation(frame);
       frame.popStackItem();
     }
@@ -106,7 +110,7 @@ public class CountLeadingZerosOperationBenchmark {
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void baseline() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      frame.pushStackItem(bytes);
+      frame.pushStackItem(value);
       frame.popStackItem();
     }
   }
