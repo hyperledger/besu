@@ -1339,7 +1339,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcIpcConfiguration,
         inProcessRpcConfiguration,
         apiConfigurationSupplier.get(),
-        balConfigurationOptions.toDomainObject(),
         metricsConfiguration,
         permissioningConfiguration,
         staticNodes,
@@ -2402,7 +2401,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
       final InProcessRpcConfiguration inProcessRpcConfiguration,
       final ApiConfiguration apiConfiguration,
-      final BalConfiguration balConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
       final Collection<EnodeURL> staticNodes,
@@ -2431,7 +2429,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .jsonRpcIpcConfiguration(jsonRpcIpcConfiguration)
             .inProcessRpcConfiguration(inProcessRpcConfiguration)
             .apiConfiguration(apiConfiguration)
-            .balConfiguration(balConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
             .bannedNodeIds(p2PDiscoveryConfig.bannedNodeIds())

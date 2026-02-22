@@ -93,7 +93,6 @@ public class ProtocolSpecBuilder {
   private boolean isPoS = false;
   private Duration slotDuration;
   private boolean isReplayProtectionSupported = false;
-  private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
   private BlockAccessListFactory blockAccessListFactory;
   private StateRootCommitterFactory stateRootCommitterFactory =
@@ -304,11 +303,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
-    return this;
-  }
-
   public ProtocolSpecBuilder blockAccessListFactory(
       final BlockAccessListFactory blockAccessListFactory) {
     this.blockAccessListFactory = blockAccessListFactory;
@@ -411,16 +405,12 @@ public class ProtocolSpecBuilder {
 
     final boolean isStackedModeEnabled =
         evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.STACKED;
-    BlockAccessListFactory finalBalFactory = isStackedModeEnabled ? blockAccessListFactory : null;
+    final boolean balForkActivated = blockAccessListFactory != null;
 
-    if (isStackedModeEnabled && isBlockAccessListEnabled) {
-      // Ensure we have a factory and its CLI flag reflects the CLI setting.
-      final boolean forkActivated = finalBalFactory != null && finalBalFactory.isForkActivated();
-      final boolean cliActivated = finalBalFactory != null && finalBalFactory.isCliActivated();
-
-      if (!cliActivated) {
-        finalBalFactory = new BlockAccessListFactory(true, forkActivated);
-      }
+    if (balForkActivated && !isStackedModeEnabled) {
+      throw new IllegalStateException(
+          "Block Access List (BAL) is activated by fork but world updater mode is not STACKED. "
+              + "BAL requires STACKED world updater mode.");
     }
 
     return new ProtocolSpec(
@@ -454,7 +444,7 @@ public class ProtocolSpecBuilder {
         slotDuration,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
-        Optional.ofNullable(finalBalFactory),
+        Optional.ofNullable(blockAccessListFactory),
         stateRootCommitterFactory,
         blockGasAccountingStrategy,
         blockGasUsedValidator);
