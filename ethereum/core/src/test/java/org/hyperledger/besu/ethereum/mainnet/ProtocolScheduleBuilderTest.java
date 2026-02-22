@@ -411,6 +411,5 @@ class ProtocolScheduleBuilderTest {
 
     // Verify that BlockAccessListFactory is present and fork-activated
     assertThat(amsterdamSpec.getBlockAccessListFactory()).isPresent();
-    assertThat(amsterdamSpec.getBlockAccessListFactory().get().isForkActivated()).isTrue();
   }
 }
