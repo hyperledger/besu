@@ -204,7 +204,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
     if (config.discoveryConfiguration().isDiscoveryV5Enabled()) {
       LOG.warn(
           "Discovery Protocol v5 is enabled via --Xv5-discovery-enabled. This is an experimental feature and may not be fully stable.");
-      warnIfEphemeralPortsWithDiscV5();
     } else {
       warnIfIpv6OptionsWithDiscV4();
     }
@@ -469,22 +468,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
           "--p2p-host-ipv6 and --p2p-interface-ipv6 are only supported with DiscV5 "
               + "(--Xv5-discovery-enabled). These options are ignored by DiscV4.");
     }
-  }
-
-  private void warnIfEphemeralPortsWithDiscV5() {
-    final DiscoveryConfiguration disc = config.discoveryConfiguration();
-    final boolean ipv4Ephemeral = disc.getBindPort() == 0;
-    final boolean ipv6Ephemeral = disc.isDualStackEnabled() && disc.getBindPortIpv6() == 0;
-    if (!ipv4Ephemeral && !ipv6Ephemeral) {
-      return;
-    }
-    final String which =
-        (ipv4Ephemeral && ipv6Ephemeral) ? "IPv4 and IPv6" : ipv4Ephemeral ? "IPv4" : "IPv6";
-    LOG.warn(
-        "Ephemeral port (0) specified for {} with DiscV5 enabled. "
-            + "Ephemeral port support with DiscV5 may not work as expected and will be addressed in a future release. "
-            + "Specify explicit port numbers to ensure correct peer advertisement.",
-        which);
   }
 
   private void setLocalNode(

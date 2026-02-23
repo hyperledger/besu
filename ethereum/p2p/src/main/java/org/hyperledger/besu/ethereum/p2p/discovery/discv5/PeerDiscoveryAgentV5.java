@@ -155,7 +155,12 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
             .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
-            .newAddressHandler((nodeRecord, newAddress) -> Optional.of(nodeRecord))
+            // Reject external address changes suggested by peers — Besu manages its own
+            // advertised address via configuration.
+            // TODO: confirm intent with original contributor; previously returned
+            // Optional.of(nodeRecord) which accepted the call but stored the old record
+            // unchanged (a silent no-op). Changed to Optional.empty() to correctly reject.
+            .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
             // TODO Integrate address filtering based on peer permissions
             .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL);
 
@@ -389,10 +394,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * always the real OS-assigned ports, so ephemeral port configuration (port 0) is handled
    * correctly for TCP.
    *
-   * <p>The {@code udp} and {@code udp6} fields are set from the configured discovery bind ports.
-   * The effective UDP ports are only known after the discovery system starts and binds its sockets,
-   * which happens after this method returns. Ephemeral UDP ports (port 0) should therefore be
-   * avoided with DiscV5.
+   * <p>The {@code udp} and {@code udp6} fields are initially set from the configured discovery bind
+   * ports. When port 0 is configured, the discovery library resolves the actual OS-assigned port
+   * after bind via {@code onBoundPortResolved} and updates the ENR automatically.
    *
    * <p>The IPv6 {@link HostEndpoint} is only included when <em>both</em> an IPv6 advertised host is
    * configured <em>and</em> an IPv6 RLPx socket is actually bound. If discovery dual-stack is
