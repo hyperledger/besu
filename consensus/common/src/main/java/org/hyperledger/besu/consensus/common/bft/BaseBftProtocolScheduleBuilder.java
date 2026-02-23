@@ -133,10 +133,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 createBlockHeaderRuleset(configOptions, feeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(
-            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
-                MainnetBlockValidatorBuilder.frontier(
-                    blockHeaderValidator, blockBodyValidator, blockProcessor))
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent) -> BigInteger.ONE)
         .skipZeroBlockRewards(true)

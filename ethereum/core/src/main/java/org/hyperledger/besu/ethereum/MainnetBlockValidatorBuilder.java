@@ -34,17 +34,19 @@ public class MainnetBlockValidatorBuilder {
    * @param blockHeaderValidator the block header validator
    * @param blockBodyValidator the block body validator
    * @param blockProcessor the block processor
+   * @param blockAccessListValidator the block access list validator
    * @return a BlockValidator instance
    */
   public static BlockValidator frontier(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
-      final BlockProcessor blockProcessor) {
+      final BlockProcessor blockProcessor,
+      final BlockAccessListValidator blockAccessListValidator) {
     return new MainnetBlockValidator(
         blockHeaderValidator,
         blockBodyValidator,
         blockProcessor,
-        BlockAccessListValidator.REJECT_ANY_BAL,
+        blockAccessListValidator,
         Integer.MAX_VALUE);
   }
 
@@ -54,30 +56,10 @@ public class MainnetBlockValidatorBuilder {
    * @param blockHeaderValidator the block header validator
    * @param blockBodyValidator the block body validator
    * @param blockProcessor the block processor
+   * @param blockAccessListValidator the block access list validator
    * @return a BlockValidator instance with Osaka-specific settings
    */
   public static BlockValidator osaka(
-      final BlockHeaderValidator blockHeaderValidator,
-      final BlockBodyValidator blockBodyValidator,
-      final BlockProcessor blockProcessor) {
-    return new MainnetBlockValidator(
-        blockHeaderValidator,
-        blockBodyValidator,
-        blockProcessor,
-        BlockAccessListValidator.REJECT_ANY_BAL,
-        OSAKA_MAX_RLP_BLOCK_SIZE);
-  }
-
-  /**
-   * Creates a block validator for the Amsterdam network with a specific block size limit.
-   *
-   * @param blockHeaderValidator the block header validator
-   * @param blockBodyValidator the block body validator
-   * @param blockProcessor the block processor
-   * @param blockAccessListValidator the block access list validator
-   * @return a BlockValidator instance with Amsterdam-specific settings
-   */
-  public static BlockValidator amsterdam(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,

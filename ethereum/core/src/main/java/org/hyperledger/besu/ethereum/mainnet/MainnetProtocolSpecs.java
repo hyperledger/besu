@@ -213,10 +213,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
                 : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
-        .blockValidatorBuilder(
-            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
-                MainnetBlockValidatorBuilder.frontier(
-                    blockHeaderValidator, blockBodyValidator, blockProcessor))
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
@@ -1045,10 +1042,7 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .transactionPoolPreProcessor(new OsakaTransactionPoolPreProcessor())
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::osaka)
-        .blockValidatorBuilder(
-            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
-                MainnetBlockValidatorBuilder.osaka(
-                    blockHeaderValidator, blockBodyValidator, blockProcessor))
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::osaka)
         .hardforkId(OSAKA);
   }
 
@@ -1231,7 +1225,6 @@ public abstract class MainnetProtocolSpecs {
         .blockAccessListFactory(new BlockAccessListFactory())
         .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
-        .blockValidatorBuilder(MainnetBlockValidatorBuilder::amsterdam)
 
         // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)

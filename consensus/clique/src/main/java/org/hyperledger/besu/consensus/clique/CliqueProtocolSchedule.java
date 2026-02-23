@@ -137,10 +137,7 @@ public class CliqueProtocolSchedule {
                 getBlockHeaderValidator(
                     epochManager, secondsBetweenBlocks, createEmptyBlocks, baseFeeMarket))
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockValidatorBuilder(
-            (blockHeaderValidator, blockBodyValidator, blockProcessor, __) ->
-                MainnetBlockValidatorBuilder.frontier(
-                    blockHeaderValidator, blockBodyValidator, blockProcessor))
+        .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator(new CliqueDifficultyCalculator(localNodeAddress))
         .blockReward(Wei.ZERO)

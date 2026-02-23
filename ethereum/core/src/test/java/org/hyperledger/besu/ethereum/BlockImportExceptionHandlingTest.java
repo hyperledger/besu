@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -83,6 +84,8 @@ class BlockImportExceptionHandlingTest {
           BalConfiguration.DEFAULT);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
+  private final BlockAccessListValidator blockAccessListValidator =
+      mock(BlockAccessListValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);
@@ -130,7 +133,7 @@ class BlockImportExceptionHandlingTest {
         .thenReturn(new StateRootCommitterFactoryDefault());
     mainnetBlockValidator =
         MainnetBlockValidatorBuilder.frontier(
-            blockHeaderValidator, blockBodyValidator, blockProcessor);
+            blockHeaderValidator, blockBodyValidator, blockProcessor, blockAccessListValidator);
   }
 
   @Test
