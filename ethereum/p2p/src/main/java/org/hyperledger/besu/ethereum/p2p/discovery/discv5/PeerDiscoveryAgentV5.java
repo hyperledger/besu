@@ -160,14 +160,14 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
                   // When onBoundPortResolved resolves ephemeral (port 0) UDP ports, propagate
                   // the actual ports to NodeRecordManager so the on-disk ENR stays correct.
                   final Optional<Integer> ipv4ResolvedPort =
-                      previous.getUdpAddress().map(a -> a.getPort() == 0).orElse(false)
+                      hasEphemeralPort(previous.getUdpAddress())
                           ? updated
                               .getUdpAddress()
                               .filter(a -> a.getPort() != 0)
                               .map(InetSocketAddress::getPort)
                           : Optional.empty();
                   final Optional<Integer> ipv6ResolvedPort =
-                      previous.getUdp6Address().map(a -> a.getPort() == 0).orElse(false)
+                      hasEphemeralPort(previous.getUdp6Address())
                           ? updated
                               .getUdp6Address()
                               .filter(a -> a.getPort() != 0)
@@ -180,10 +180,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
                   // listener once.  Defer the on-disk ENR write until the updated library
                   // record shows no remaining port-0 UDP addresses, so the seq counter only
                   // increments once for the combined port-resolution event.
-                  final boolean udpStillPending =
-                      updated.getUdpAddress().map(a -> a.getPort() == 0).orElse(false);
-                  final boolean udp6StillPending =
-                      updated.getUdp6Address().map(a -> a.getPort() == 0).orElse(false);
+                  final boolean udpStillPending = hasEphemeralPort(updated.getUdpAddress());
+                  final boolean udp6StillPending = hasEphemeralPort(updated.getUdp6Address());
                   if (!udpStillPending && !udp6StillPending) {
                     nodeRecordManager.updateNodeRecord();
                   }
@@ -350,6 +348,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     return system
         .lookupNode(peerId.getId())
         .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
+  }
+
+  /** Returns {@code true} if the address is present and bound to an ephemeral (port 0) port. */
+  private static boolean hasEphemeralPort(final Optional<InetSocketAddress> address) {
+    return address.map(a -> a.getPort() == 0).orElse(false);
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */
