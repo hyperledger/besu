@@ -209,7 +209,14 @@ public class NettyConnectionInitializer
       serverIpv6
           .channel()
           .closeFuture()
-          .addListener(future -> ipv6Close.complete(null)); // best-effort
+          .addListener(
+              future -> {
+                if (!future.isSuccess()) {
+                  LOG.warn(
+                      "Failed to close IPv6 RLPx socket cleanly: {}", future.cause().getMessage());
+                }
+                ipv6Close.complete(null); // best-effort: don't block shutdown on IPv6 close failure
+              });
       CompletableFuture.allOf(ipv4Close, ipv6Close)
           .whenComplete(
               (v, err) -> {
