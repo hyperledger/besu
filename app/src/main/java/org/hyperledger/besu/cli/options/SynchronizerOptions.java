@@ -57,8 +57,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-transactions-parallelism";
   private static final String COMPUTATION_PARALLELISM_FLAG =
       "--Xsynchronizer-computation-parallelism";
-  private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG =
-      "--Xsynchronizer-fast-sync-pivot-distance";
+  private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG = "--Xsynchronizer-pivot-distance";
   private static final String WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG =
       "--Xsynchronizer-world-state-hash-count-per-request";
   private static final String WORLD_STATE_REQUEST_PARALLELISM_FLAG =
