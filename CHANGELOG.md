@@ -55,6 +55,7 @@
 - EVM optimisations - Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 
 ### Bug fixes
+- Fix epoch reset not clearing DROP votes in Clique/IBFT/QBFT consensus [#9870](https://github.com/hyperledger/besu/pull/9870)
 - Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 - Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
