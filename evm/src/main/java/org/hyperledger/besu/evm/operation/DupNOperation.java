@@ -18,6 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /**
  * The DUPN operation (EIP-8024).
@@ -60,19 +61,21 @@ public class DupNOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame, frame.getCode().getBytes().toArrayUnsafe(), frame.getPC());
+    return staticOperation(
+        frame, frame.stackData(), frame.getCode().getBytes().toArrayUnsafe(), frame.getPC());
   }
 
   /**
    * Performs DUPN operation directly for hot-path execution.
    *
    * @param frame the message frame
+   * @param s the stack data array
    * @param code the bytecode array
    * @param pc the current program counter
    * @return the operation result
    */
   public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
+      final MessageFrame frame, final long[] s, final byte[] code, final int pc) {
     // Get immediate byte, treating end-of-code as 0
     final int imm = (pc + 1 >= code.length) ? 0 : code[pc + 1] & 0xFF;
 
@@ -90,9 +93,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
     if (!frame.stackHasSpace(1)) {
       return OVERFLOW_RESPONSE;
     }
-    // Duplicate the n'th stack item (1-indexed) to the top
-    // In Besu's 0-indexed stack, the n'th item is at index n-1
-    frame.pushStackItemUnsafe(frame.getStackItem(n - 1));
+    frame.setTop(StackMath.dup(s, frame.stackTop(), n));
     return DUPN_SUCCESS;
   }
 

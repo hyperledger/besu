@@ -22,6 +22,6 @@ public class XorOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return XorOperation.staticOperation(frame);
+    return XorOperation.staticOperation(frame, frame.stackData());
   }
 }

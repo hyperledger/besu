@@ -20,7 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Ext code hash operation. */
 public class ExtCodeHashOperation extends AbstractOperation {
@@ -51,7 +51,9 @@ public class ExtCodeHashOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final Address address = Words.toAddress(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final Address address = StackMath.toAddressAt(s, top, 0);
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(accountIsWarm);
@@ -61,10 +63,12 @@ public class ExtCodeHashOperation extends AbstractOperation {
 
     final Account account = getAccount(address, frame);
 
+    // Overwrite in place (pop 1, push 1)
     if (account == null || account.isEmpty()) {
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+      StackMath.putAt(s, top, 0, 0L, 0L, 0L, 0L);
     } else {
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getCodeHash().getBytes().toArrayUnsafe()));
+      final byte[] hashBytes = account.getCodeHash().getBytes().toArrayUnsafe();
+      StackMath.fromBytesAt(s, top, 0, hashBytes, 0, hashBytes.length);
     }
     return new OperationResult(cost, null);
   }

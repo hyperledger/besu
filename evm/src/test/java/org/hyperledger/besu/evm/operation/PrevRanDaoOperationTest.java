@@ -16,13 +16,12 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -33,34 +32,30 @@ class PrevRanDaoOperationTest {
 
   @Test
   void pushesPrevRandaoWhenDifficultyZero() {
-    PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
-    MessageFrame messageFrame = mock(MessageFrame.class);
-    BlockValues blockHeader = mock(BlockValues.class);
-    Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
+    final PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
+    final Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
+    final BlockValues blockHeader = mock(BlockValues.class);
     when(blockHeader.getDifficultyBytes()).thenReturn(UInt256.ZERO);
     when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
-    when(messageFrame.getBlockValues()).thenReturn(blockHeader);
-    when(messageFrame.stackHasSpace(1)).thenReturn(true);
-    EVM evm = mock(EVM.class);
-    Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
+    final MessageFrame frame = new TestMessageFrameBuilder().blockValues(blockHeader).build();
+    final Operation.OperationResult r = op.executeFixedCostOperation(frame, null);
     assertThat(r.getHaltReason()).isNull();
-    verify(messageFrame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
   }
 
   @Test
   void pushesPrevRandDaoWhenDifficultyPresent() {
-    PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
-    MessageFrame messageFrame = mock(MessageFrame.class);
-    BlockValues blockHeader = mock(BlockValues.class);
-    Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
-    Bytes difficulty = Bytes.random(32);
+    final PrevRanDaoOperation op = new PrevRanDaoOperation(new LondonGasCalculator());
+    final Bytes32 prevRandao = Bytes32.fromHexString("0xb0b0face");
+    final Bytes difficulty = Bytes.random(32);
+    final BlockValues blockHeader = mock(BlockValues.class);
     when(blockHeader.getDifficultyBytes()).thenReturn(difficulty);
     when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
-    when(messageFrame.getBlockValues()).thenReturn(blockHeader);
-    when(messageFrame.stackHasSpace(1)).thenReturn(true);
-    EVM evm = mock(EVM.class);
-    Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
+    final MessageFrame frame = new TestMessageFrameBuilder().blockValues(blockHeader).build();
+    final Operation.OperationResult r = op.executeFixedCostOperation(frame, null);
     assertThat(r.getHaltReason()).isNull();
-    verify(messageFrame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
   }
 }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
@@ -255,7 +254,8 @@ public class UInt256MulDivTest {
     UInt256 reconstructed = q.mul(ub).add(r);
 
     assertThat(reconstructed)
-        .as("invariant a=(a/b)*b+(a%%b) failed: a=%s b=%s q=%s r=%s",
+        .as(
+            "invariant a=(a/b)*b+(a%%b) failed: a=%s b=%s q=%s r=%s",
             ua.toHexString(), ub.toHexString(), q.toHexString(), r.toHexString())
         .isEqualTo(ua);
   }
@@ -385,8 +385,7 @@ public class UInt256MulDivTest {
   @Test
   void div_borrowOverflowCase2() {
     // Divisor with top limb = 0xFFFFFFFFFFFFFFFF and dividend = MAX
-    BigInteger divisor =
-        new BigInteger("FFFFFFFFFFFFFFFF0000000000000000", 16);
+    BigInteger divisor = new BigInteger("FFFFFFFFFFFFFFFF0000000000000000", 16);
     assertDivMatchesBigInteger(MAX_UINT256, divisor);
   }
 
@@ -394,8 +393,7 @@ public class UInt256MulDivTest {
   void div_borrowOverflowCase3() {
     // 4-limb divisor with all-ones pattern
     BigInteger divisor =
-        new BigInteger(
-            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE", 16);
+        new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE", 16);
     assertDivMatchesBigInteger(MAX_UINT256, divisor);
   }
 

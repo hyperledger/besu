@@ -35,7 +35,7 @@ public class DupNOperationBenchmark extends ImmediateByteOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(
       final MessageFrame frame, final byte[] code, final int pc) {
-    return DupNOperation.staticOperation(frame, code, pc);
+    return DupNOperation.staticOperation(frame, frame.stackData(), code, pc);
   }
 
   @Override

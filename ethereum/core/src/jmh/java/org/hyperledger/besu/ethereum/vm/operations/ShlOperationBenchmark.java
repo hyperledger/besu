@@ -23,6 +23,6 @@ public class ShlOperationBenchmark extends AbstractShiftOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return ShlOperation.staticOperation(frame);
+    return ShlOperation.staticOperation(frame, frame.stackData());
   }
 }

@@ -163,6 +163,6 @@ public class MulModOperationBenchmark extends TernaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return MulModOperation.staticOperation(frame);
+    return MulModOperation.staticOperation(frame, frame.stackData());
   }
 }

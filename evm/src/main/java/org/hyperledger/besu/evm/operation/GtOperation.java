@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The GT operation. */
 public class GtOperation extends AbstractFixedCostOperation {
@@ -37,7 +37,7 @@ public class GtOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
@@ -46,12 +46,9 @@ public class GtOperation extends AbstractFixedCostOperation {
    * @param frame the frame
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
-    final UInt256 value0 = frame.peekStackItemUnsafe(0);
-    final UInt256 value1 = frame.peekStackItemUnsafe(1);
-    frame.shrinkStackUnsafe(1);
-    frame.overwriteStackItemUnsafe(0, UInt256.compare(value0, value1) > 0 ? UInt256.ONE : UInt256.ZERO);
+    frame.setTop(StackMath.gt(s, frame.stackTop()));
     return gtSuccess;
   }
 }

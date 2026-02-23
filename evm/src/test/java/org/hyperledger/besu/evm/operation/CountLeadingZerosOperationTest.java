@@ -14,35 +14,27 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 class CountLeadingZerosOperationTest {
 
-  private CountLeadingZerosOperation operation;
-  private MessageFrame frame;
-
-  @BeforeEach
-  void setUp() {
-    operation = new CountLeadingZerosOperation(mock(GasCalculator.class));
-    frame = mock(MessageFrame.class);
-    when(frame.stackHasItems(1)).thenReturn(true);
-  }
+  private final GasCalculator gasCalculator = new SpuriousDragonGasCalculator();
+  private final CountLeadingZerosOperation operation =
+      new CountLeadingZerosOperation(gasCalculator);
 
   static Stream<Arguments> provideClzTestCases() {
     return Stream.of(
@@ -66,11 +58,10 @@ class CountLeadingZerosOperationTest {
         raw.size() >= 32
             ? raw.slice(raw.size() - 32, 32).toArrayUnsafe()
             : Bytes32.leftPad(raw).toArrayUnsafe();
-    UInt256 input = UInt256.fromBytesBE(padded);
 
-    when(frame.peekStackItemUnsafe(0)).thenReturn(input);
-
-    operation.executeFixedCostOperation(frame, mock(EVM.class));
-    verify(frame).overwriteStackItemUnsafe(0, UInt256.fromInt(expectedLeadingZeros));
+    final MessageFrame frame =
+        new TestMessageFrameBuilder().pushStackItem(Bytes.wrap(padded)).build();
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.fromInt(expectedLeadingZeros));
   }
 }

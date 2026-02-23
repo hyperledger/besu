@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -154,9 +155,11 @@ class AbstractCreateOperationTest {
             .worldUpdater(worldUpdater)
             .build();
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(contract.size()));
-    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
-    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    messageFrame.setTop(
+        StackMath.pushLong(messageFrame.stackData(), messageFrame.stackTop(), contract.size()));
+    messageFrame.setTop(
+        StackMath.pushLong(messageFrame.stackData(), messageFrame.stackTop(), 0xFF));
+    messageFrame.setTop(StackMath.pushZero(messageFrame.stackData(), messageFrame.stackTop()));
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(0xFF, contract.size(), contract);
 

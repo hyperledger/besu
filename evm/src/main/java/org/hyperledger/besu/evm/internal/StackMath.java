@@ -1,0 +1,996 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.evm.internal;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.UInt256;
+
+import java.math.BigInteger;
+
+/**
+ * Static utility operating directly on the flat {@code long[]} operand stack. Each slot occupies 4
+ * consecutive longs in big-endian limb order: {@code [u3, u2, u1, u0]} where u3 is the most
+ * significant limb.
+ *
+ * <p>All methods take {@code (long[] s, int top)} and return the new {@code top}. The caller
+ * (operation) is responsible for underflow/overflow checks before calling.
+ */
+public final class StackMath {
+
+  private StackMath() {}
+
+  // ── Binary ops (pop 2, push 1, return top-1) ──────────────────────────
+
+  /** ADD: s[top-2] = s[top-1] + s[top-2], return top-1. */
+  public static int add(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    long a0 = s[a + 3], a1 = s[a + 2], a2 = s[a + 1], a3 = s[a];
+    long b0 = s[b + 3], b1 = s[b + 2], b2 = s[b + 1], b3 = s[b];
+    long z0 = a0 + b0;
+    long c = Long.compareUnsigned(z0, a0) < 0 ? 1L : 0L;
+    long z1 = a1 + b1 + c;
+    c = (Long.compareUnsigned(z1, a1) < 0 || (z1 == a1 && c != 0)) ? 1L : 0L;
+    long z2 = a2 + b2 + c;
+    c = (Long.compareUnsigned(z2, a2) < 0 || (z2 == a2 && c != 0)) ? 1L : 0L;
+    long z3 = a3 + b3 + c;
+    s[b] = z3;
+    s[b + 1] = z2;
+    s[b + 2] = z1;
+    s[b + 3] = z0;
+    return top - 1;
+  }
+
+  /** SUB: s[top-2] = s[top-1] - s[top-2], return top-1. */
+  public static int sub(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // first operand (top)
+    final int b = (top - 2) << 2; // second operand
+    long a0 = s[a + 3], a1 = s[a + 2], a2 = s[a + 1], a3 = s[a];
+    long b0 = s[b + 3], b1 = s[b + 2], b2 = s[b + 1], b3 = s[b];
+    // a - b with borrow chain
+    long z0 = a0 - b0;
+    long borrow = Long.compareUnsigned(a0, b0) < 0 ? 1L : 0L;
+    long z1 = a1 - b1 - borrow;
+    borrow = (Long.compareUnsigned(a1, b1) < 0 || (a1 == b1 && borrow != 0)) ? 1L : 0L;
+    long z2 = a2 - b2 - borrow;
+    borrow = (Long.compareUnsigned(a2, b2) < 0 || (a2 == b2 && borrow != 0)) ? 1L : 0L;
+    long z3 = a3 - b3 - borrow;
+    s[b] = z3;
+    s[b + 1] = z2;
+    s[b + 2] = z1;
+    s[b + 3] = z0;
+    return top - 1;
+  }
+
+  /** MUL: s[top-2] = s[top-1] * s[top-2], return top-1. Delegates to UInt256 for now. */
+  public static int mul(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 r = va.mul(vb);
+    s[b] = r.u3();
+    s[b + 1] = r.u2();
+    s[b + 2] = r.u1();
+    s[b + 3] = r.u0();
+    return top - 1;
+  }
+
+  /** DIV: s[top-2] = s[top-1] / s[top-2], return top-1. Delegates to UInt256. */
+  public static int div(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 r = va.div(vb);
+    s[b] = r.u3();
+    s[b + 1] = r.u2();
+    s[b + 2] = r.u1();
+    s[b + 3] = r.u0();
+    return top - 1;
+  }
+
+  /** SDIV: s[top-2] = s[top-1] sdiv s[top-2], return top-1. Delegates to UInt256. */
+  public static int signedDiv(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 r = va.signedDiv(vb);
+    s[b] = r.u3();
+    s[b + 1] = r.u2();
+    s[b + 2] = r.u1();
+    s[b + 3] = r.u0();
+    return top - 1;
+  }
+
+  /** MOD: s[top-2] = s[top-1] mod s[top-2], return top-1. Delegates to UInt256. */
+  public static int mod(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 r = va.mod(vb);
+    s[b] = r.u3();
+    s[b + 1] = r.u2();
+    s[b + 2] = r.u1();
+    s[b + 3] = r.u0();
+    return top - 1;
+  }
+
+  /** SMOD: s[top-2] = s[top-1] smod s[top-2], return top-1. Delegates to UInt256. */
+  public static int signedMod(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 r = va.signedMod(vb);
+    s[b] = r.u3();
+    s[b + 1] = r.u2();
+    s[b + 2] = r.u1();
+    s[b + 3] = r.u0();
+    return top - 1;
+  }
+
+  /** AND: s[top-2] = s[top-1] & s[top-2], return top-1. */
+  public static int and(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    s[b] = s[a] & s[b];
+    s[b + 1] = s[a + 1] & s[b + 1];
+    s[b + 2] = s[a + 2] & s[b + 2];
+    s[b + 3] = s[a + 3] & s[b + 3];
+    return top - 1;
+  }
+
+  /** OR: s[top-2] = s[top-1] | s[top-2], return top-1. */
+  public static int or(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    s[b] = s[a] | s[b];
+    s[b + 1] = s[a + 1] | s[b + 1];
+    s[b + 2] = s[a + 2] | s[b + 2];
+    s[b + 3] = s[a + 3] | s[b + 3];
+    return top - 1;
+  }
+
+  /** XOR: s[top-2] = s[top-1] ^ s[top-2], return top-1. */
+  public static int xor(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    s[b] = s[a] ^ s[b];
+    s[b + 1] = s[a + 1] ^ s[b + 1];
+    s[b + 2] = s[a + 2] ^ s[b + 2];
+    s[b + 3] = s[a + 3] ^ s[b + 3];
+    return top - 1;
+  }
+
+  /** LT: s[top-2] = (s[top-1] < s[top-2]) ? 1 : 0, return top-1. Unsigned. */
+  public static int lt(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    boolean less = unsignedLt(s, a, s, b);
+    s[b] = 0;
+    s[b + 1] = 0;
+    s[b + 2] = 0;
+    s[b + 3] = less ? 1L : 0L;
+    return top - 1;
+  }
+
+  /** GT: s[top-2] = (s[top-1] > s[top-2]) ? 1 : 0, return top-1. Unsigned. */
+  public static int gt(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    boolean greater = unsignedLt(s, b, s, a);
+    s[b] = 0;
+    s[b + 1] = 0;
+    s[b + 2] = 0;
+    s[b + 3] = greater ? 1L : 0L;
+    return top - 1;
+  }
+
+  /** SLT: s[top-2] = (s[top-1] <s s[top-2]) ? 1 : 0, return top-1. Signed. */
+  public static int slt(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    int cmp = signedCompare(s, a, s, b);
+    s[b] = 0;
+    s[b + 1] = 0;
+    s[b + 2] = 0;
+    s[b + 3] = cmp < 0 ? 1L : 0L;
+    return top - 1;
+  }
+
+  /** SGT: s[top-2] = (s[top-1] >s s[top-2]) ? 1 : 0, return top-1. Signed. */
+  public static int sgt(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    int cmp = signedCompare(s, a, s, b);
+    s[b] = 0;
+    s[b + 1] = 0;
+    s[b + 2] = 0;
+    s[b + 3] = cmp > 0 ? 1L : 0L;
+    return top - 1;
+  }
+
+  /** EQ: s[top-2] = (s[top-1] == s[top-2]) ? 1 : 0, return top-1. */
+  public static int eq(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    boolean equal =
+        s[a] == s[b] && s[a + 1] == s[b + 1] && s[a + 2] == s[b + 2] && s[a + 3] == s[b + 3];
+    s[b] = 0;
+    s[b + 1] = 0;
+    s[b + 2] = 0;
+    s[b + 3] = equal ? 1L : 0L;
+    return top - 1;
+  }
+
+  /** SHL: s[top-2] = s[top-2] << s[top-1], return top-1. */
+  public static int shl(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // shift amount
+    final int b = (top - 2) << 2; // value
+    // If shift amount > 255 or value is zero, result is zero
+    if (s[a] != 0
+        || s[a + 1] != 0
+        || s[a + 2] != 0
+        || Long.compareUnsigned(s[a + 3], 256) >= 0
+        || (s[b] == 0 && s[b + 1] == 0 && s[b + 2] == 0 && s[b + 3] == 0)) {
+      s[b] = 0;
+      s[b + 1] = 0;
+      s[b + 2] = 0;
+      s[b + 3] = 0;
+      return top - 1;
+    }
+    int shift = (int) s[a + 3];
+    shiftLeftInPlace(s, b, shift);
+    return top - 1;
+  }
+
+  /** SHR: s[top-2] = s[top-2] >>> s[top-1], return top-1. */
+  public static int shr(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // shift amount
+    final int b = (top - 2) << 2; // value
+    if (s[a] != 0
+        || s[a + 1] != 0
+        || s[a + 2] != 0
+        || Long.compareUnsigned(s[a + 3], 256) >= 0
+        || (s[b] == 0 && s[b + 1] == 0 && s[b + 2] == 0 && s[b + 3] == 0)) {
+      s[b] = 0;
+      s[b + 1] = 0;
+      s[b + 2] = 0;
+      s[b + 3] = 0;
+      return top - 1;
+    }
+    int shift = (int) s[a + 3];
+    shiftRightInPlace(s, b, shift);
+    return top - 1;
+  }
+
+  /** SAR: s[top-2] = s[top-2] >> s[top-1] (arithmetic), return top-1. */
+  public static int sar(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // shift amount
+    final int b = (top - 2) << 2; // value
+    boolean negative = s[b] < 0; // MSB of u3
+
+    if (s[a] != 0 || s[a + 1] != 0 || s[a + 2] != 0 || Long.compareUnsigned(s[a + 3], 256) >= 0) {
+      long fill = negative ? -1L : 0L;
+      s[b] = fill;
+      s[b + 1] = fill;
+      s[b + 2] = fill;
+      s[b + 3] = fill;
+      return top - 1;
+    }
+    int shift = (int) s[a + 3];
+    sarInPlace(s, b, shift, negative);
+    return top - 1;
+  }
+
+  /** BYTE: s[top-2] = byte at offset s[top-1] of s[top-2], return top-1. */
+  public static int byte_(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // offset
+    final int b = (top - 2) << 2; // value
+    // offset must be 0..31
+    if (s[a] != 0 || s[a + 1] != 0 || s[a + 2] != 0 || s[a + 3] < 0 || s[a + 3] >= 32) {
+      s[b] = 0;
+      s[b + 1] = 0;
+      s[b + 2] = 0;
+      s[b + 3] = 0;
+      return top - 1;
+    }
+    int idx = (int) s[a + 3]; // 0..31, big-endian byte index
+    // Determine which limb and bit position
+    // byte 0 is the MSB of u3, byte 31 is the LSB of u0
+    int limbIdx = idx >> 3; // which limb offset from base (0=u3, 3=u0)
+    int byteInLimb = 7 - (idx & 7); // byte position within limb (7=MSB, 0=LSB)
+    long limb = s[b + limbIdx];
+    long result = (limb >>> (byteInLimb << 3)) & 0xFFL;
+    s[b] = 0;
+    s[b + 1] = 0;
+    s[b + 2] = 0;
+    s[b + 3] = result;
+    return top - 1;
+  }
+
+  /** SIGNEXTEND: sign-extend s[top-2] from byte s[top-1], return top-1. */
+  public static int signExtend(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // byte index b
+    final int b = (top - 2) << 2; // value
+    // If b >= 31, no extension needed
+    if (s[a] != 0 || s[a + 1] != 0 || s[a + 2] != 0 || s[a + 3] >= 31) {
+      // result is just the value unchanged
+      return top - 1;
+    }
+    int byteIdx = (int) s[a + 3]; // 0..30
+    // The sign bit is at bit (byteIdx * 8 + 7) from LSB
+    int signBit = byteIdx * 8 + 7;
+    int limbIdx = signBit >> 6; // which limb (0=u0/LSB)
+    int bitInLimb = signBit & 63;
+    // Read from the value slot - limbs are stored [u3, u2, u1, u0] at [b, b+1, b+2, b+3]
+    long limb = s[b + 3 - limbIdx];
+    boolean isNeg = ((limb >>> bitInLimb) & 1L) != 0;
+    if (isNeg) {
+      // Set all bits above signBit to 1
+      s[b + 3 - limbIdx] = limb | (-1L << bitInLimb);
+      for (int i = limbIdx + 1; i < 4; i++) {
+        s[b + 3 - i] = -1L;
+      }
+    } else {
+      // Clear all bits above signBit to 0
+      if (bitInLimb < 63) {
+        s[b + 3 - limbIdx] = limb & ((1L << (bitInLimb + 1)) - 1);
+      }
+      for (int i = limbIdx + 1; i < 4; i++) {
+        s[b + 3 - i] = 0;
+      }
+    }
+    return top - 1;
+  }
+
+  // ── Unary ops (pop 1, push 1, return top) ─────────────────────────────
+
+  /** NOT: s[top-1] = ~s[top-1], return top. */
+  public static int not(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    s[a] = ~s[a];
+    s[a + 1] = ~s[a + 1];
+    s[a + 2] = ~s[a + 2];
+    s[a + 3] = ~s[a + 3];
+    return top;
+  }
+
+  /** ISZERO: s[top-1] = (s[top-1] == 0) ? 1 : 0, return top. */
+  public static int isZero(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    boolean zero = (s[a] | s[a + 1] | s[a + 2] | s[a + 3]) == 0;
+    s[a] = 0;
+    s[a + 1] = 0;
+    s[a + 2] = 0;
+    s[a + 3] = zero ? 1L : 0L;
+    return top;
+  }
+
+  /** CLZ: s[top-1] = count leading zeros of s[top-1], return top. */
+  public static int clz(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    int result;
+    if (s[a] != 0) {
+      result = Long.numberOfLeadingZeros(s[a]);
+    } else if (s[a + 1] != 0) {
+      result = 64 + Long.numberOfLeadingZeros(s[a + 1]);
+    } else if (s[a + 2] != 0) {
+      result = 128 + Long.numberOfLeadingZeros(s[a + 2]);
+    } else {
+      result = 192 + Long.numberOfLeadingZeros(s[a + 3]);
+    }
+    s[a] = 0;
+    s[a + 1] = 0;
+    s[a + 2] = 0;
+    s[a + 3] = result;
+    return top;
+  }
+
+  // ── Ternary ops (pop 3, push 1, return top-2) ─────────────────────────
+
+  /** ADDMOD: s[top-3] = (s[top-1] + s[top-2]) mod s[top-3], return top-2. */
+  public static int addMod(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    final int c = (top - 3) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 vc = new UInt256(s[c], s[c + 1], s[c + 2], s[c + 3]);
+    UInt256 r = vc.isZero() ? UInt256.ZERO : va.addMod(vb, vc);
+    s[c] = r.u3();
+    s[c + 1] = r.u2();
+    s[c + 2] = r.u1();
+    s[c + 3] = r.u0();
+    return top - 2;
+  }
+
+  /** MULMOD: s[top-3] = (s[top-1] * s[top-2]) mod s[top-3], return top-2. */
+  public static int mulMod(final long[] s, final int top) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 2) << 2;
+    final int c = (top - 3) << 2;
+    UInt256 va = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 vb = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    UInt256 vc = new UInt256(s[c], s[c + 1], s[c + 2], s[c + 3]);
+    UInt256 r = vc.isZero() ? UInt256.ZERO : va.mulMod(vb, vc);
+    s[c] = r.u3();
+    s[c + 1] = r.u2();
+    s[c + 2] = r.u1();
+    s[c + 3] = r.u0();
+    return top - 2;
+  }
+
+  /** EXP: s[top-2] = s[top-1] ** s[top-2] mod 2^256, return top-1. */
+  public static int exp(final long[] s, final int top) {
+    final int a = (top - 1) << 2; // base
+    final int b = (top - 2) << 2; // exponent
+    UInt256 base = new UInt256(s[a], s[a + 1], s[a + 2], s[a + 3]);
+    UInt256 power = new UInt256(s[b], s[b + 1], s[b + 2], s[b + 3]);
+    BigInteger result = base.toBigInteger().modPow(power.toBigInteger(), BigInteger.TWO.pow(256));
+    UInt256 r = UInt256.fromBigInteger(result);
+    s[b] = r.u3();
+    s[b + 1] = r.u2();
+    s[b + 2] = r.u1();
+    s[b + 3] = r.u0();
+    return top - 1;
+  }
+
+  // ── Stack manipulation ─────────────────────────────────────────────────
+
+  /** DUP: copy slot at depth → new top, return top+1. depth is 1-based (DUP1 = depth 1). */
+  public static int dup(final long[] s, final int top, final int depth) {
+    final int src = (top - depth) << 2;
+    final int dst = top << 2;
+    s[dst] = s[src];
+    s[dst + 1] = s[src + 1];
+    s[dst + 2] = s[src + 2];
+    s[dst + 3] = s[src + 3];
+    return top + 1;
+  }
+
+  /** SWAP: swap top ↔ slot at depth, return top. depth is 1-based (SWAP1 = depth 1). */
+  public static int swap(final long[] s, final int top, final int depth) {
+    final int a = (top - 1) << 2;
+    final int b = (top - 1 - depth) << 2;
+    long t;
+    t = s[a];
+    s[a] = s[b];
+    s[b] = t;
+    t = s[a + 1];
+    s[a + 1] = s[b + 1];
+    s[b + 1] = t;
+    t = s[a + 2];
+    s[a + 2] = s[b + 2];
+    s[b + 2] = t;
+    t = s[a + 3];
+    s[a + 3] = s[b + 3];
+    s[b + 3] = t;
+    return top;
+  }
+
+  /** EXCHANGE: swap slot at n ↔ slot at m (both 0-indexed from top), return top. */
+  public static int exchange(final long[] s, final int top, final int n, final int m) {
+    final int a = (top - 1 - n) << 2;
+    final int b = (top - 1 - m) << 2;
+    long t;
+    t = s[a];
+    s[a] = s[b];
+    s[b] = t;
+    t = s[a + 1];
+    s[a + 1] = s[b + 1];
+    s[b + 1] = t;
+    t = s[a + 2];
+    s[a + 2] = s[b + 2];
+    s[b + 2] = t;
+    t = s[a + 3];
+    s[a + 3] = s[b + 3];
+    s[b + 3] = t;
+    return top;
+  }
+
+  /** PUSH0: push zero, return top+1. */
+  public static int pushZero(final long[] s, final int top) {
+    final int dst = top << 2;
+    s[dst] = 0;
+    s[dst + 1] = 0;
+    s[dst + 2] = 0;
+    s[dst + 3] = 0;
+    return top + 1;
+  }
+
+  /** PUSH1..PUSH32: decode bytes from code into a new top slot, return top+1. */
+  public static int pushFromBytes(
+      final long[] s, final int top, final byte[] code, final int start, final int len) {
+    final int dst = top << 2;
+
+    if (start >= code.length) {
+      s[dst] = 0;
+      s[dst + 1] = 0;
+      s[dst + 2] = 0;
+      s[dst + 3] = 0;
+      return top + 1;
+    }
+    final int copyLen = Math.min(len, code.length - start);
+
+    s[dst] = 0;
+    s[dst + 1] = 0;
+    s[dst + 2] = 0;
+    s[dst + 3] = 0;
+
+    if (copyLen == len) {
+      // Fast path: all bytes available (common case — not near end of code)
+      if (len <= 8) {
+        s[dst + 3] = buildLong(code, start, len);
+      } else if (len <= 16) {
+        final int hiLen = len - 8;
+        s[dst + 2] = buildLong(code, start, hiLen);
+        s[dst + 3] = bytesToLong(code, start + hiLen);
+      } else if (len <= 24) {
+        final int hiLen = len - 16;
+        s[dst + 1] = buildLong(code, start, hiLen);
+        s[dst + 2] = bytesToLong(code, start + hiLen);
+        s[dst + 3] = bytesToLong(code, start + hiLen + 8);
+      } else {
+        final int hiLen = len - 24;
+        s[dst] = buildLong(code, start, hiLen);
+        s[dst + 1] = bytesToLong(code, start + hiLen);
+        s[dst + 2] = bytesToLong(code, start + hiLen + 8);
+        s[dst + 3] = bytesToLong(code, start + hiLen + 16);
+      }
+    } else {
+      // Truncated push (rare: near end of code). Right-pad with zeros.
+      int bytePos = len - 1;
+      for (int i = 0; i < copyLen; i++) {
+        int limbOffset = 3 - (bytePos >> 3);
+        int shift = (bytePos & 7) << 3;
+        s[dst + limbOffset] |= (code[start + i] & 0xFFL) << shift;
+        bytePos--;
+      }
+    }
+    return top + 1;
+  }
+
+  /** Build a long from 1-8 big-endian bytes. */
+  private static long buildLong(final byte[] src, final int off, final int len) {
+    long v = 0;
+    for (int i = off, end = off + len; i < end; i++) {
+      v = (v << 8) | (src[i] & 0xFFL);
+    }
+    return v;
+  }
+
+  /** Push a long value (GAS, NUMBER, etc.), return top+1. */
+  public static int pushLong(final long[] s, final int top, final long value) {
+    final int dst = top << 2;
+    s[dst] = 0;
+    s[dst + 1] = 0;
+    s[dst + 2] = 0;
+    s[dst + 3] = value;
+    return top + 1;
+  }
+
+  /** Push an Address (20 bytes), return top+1. */
+  public static int pushAddress(final long[] s, final int top, final Address addr) {
+    final int dst = top << 2;
+    byte[] bytes = addr.getBytes().toArrayUnsafe();
+    // Address is 20 bytes: fits in u2(4 bytes) + u1(8 bytes) + u0(8 bytes)
+    s[dst] = 0; // u3
+    s[dst + 1] = // u2 (top 4 bytes of address)
+        ((bytes[0] & 0xFFL) << 24)
+            | ((bytes[1] & 0xFFL) << 16)
+            | ((bytes[2] & 0xFFL) << 8)
+            | (bytes[3] & 0xFFL);
+    s[dst + 2] = // u1
+        ((bytes[4] & 0xFFL) << 56)
+            | ((bytes[5] & 0xFFL) << 48)
+            | ((bytes[6] & 0xFFL) << 40)
+            | ((bytes[7] & 0xFFL) << 32)
+            | ((bytes[8] & 0xFFL) << 24)
+            | ((bytes[9] & 0xFFL) << 16)
+            | ((bytes[10] & 0xFFL) << 8)
+            | (bytes[11] & 0xFFL);
+    s[dst + 3] = // u0
+        ((bytes[12] & 0xFFL) << 56)
+            | ((bytes[13] & 0xFFL) << 48)
+            | ((bytes[14] & 0xFFL) << 40)
+            | ((bytes[15] & 0xFFL) << 32)
+            | ((bytes[16] & 0xFFL) << 24)
+            | ((bytes[17] & 0xFFL) << 16)
+            | ((bytes[18] & 0xFFL) << 8)
+            | (bytes[19] & 0xFFL);
+    return top + 1;
+  }
+
+  // ── Boundary helpers (read/write slots without changing top) ───────────
+
+  /** Extract u0 (LSB limb) of slot at depth from top. */
+  public static long longAt(final long[] s, final int top, final int depth) {
+    return s[((top - 1 - depth) << 2) + 3];
+  }
+
+  /** Check if slot at depth is zero. */
+  public static boolean isZeroAt(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    return (s[off] | s[off + 1] | s[off + 2] | s[off + 3]) == 0;
+  }
+
+  /** Check if slot at depth fits in a non-negative int. */
+  public static boolean fitsInInt(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    return s[off] == 0
+        && s[off + 1] == 0
+        && s[off + 2] == 0
+        && s[off + 3] >= 0
+        && s[off + 3] <= Integer.MAX_VALUE;
+  }
+
+  /** Check if slot at depth fits in a non-negative long. */
+  public static boolean fitsInLong(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    return s[off] == 0 && s[off + 1] == 0 && s[off + 2] == 0 && s[off + 3] >= 0;
+  }
+
+  /**
+   * Clamp slot at depth to long, returning Long.MAX_VALUE if it doesn't fit in a non-negative long.
+   */
+  public static long clampedToLong(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    if (s[off] != 0 || s[off + 1] != 0 || s[off + 2] != 0 || s[off + 3] < 0) {
+      return Long.MAX_VALUE;
+    }
+    return s[off + 3];
+  }
+
+  /**
+   * Clamp slot at depth to int, returning Integer.MAX_VALUE if it doesn't fit in a non-negative
+   * int.
+   */
+  public static int clampedToInt(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    if (s[off] != 0
+        || s[off + 1] != 0
+        || s[off + 2] != 0
+        || s[off + 3] < 0
+        || s[off + 3] > Integer.MAX_VALUE) {
+      return Integer.MAX_VALUE;
+    }
+    return (int) s[off + 3];
+  }
+
+  /** Write 32 big-endian bytes from slot at depth into dst. */
+  public static void toBytesAt(final long[] s, final int top, final int depth, final byte[] dst) {
+    final int off = (top - 1 - depth) << 2;
+    longIntoBytes(dst, 0, s[off]);
+    longIntoBytes(dst, 8, s[off + 1]);
+    longIntoBytes(dst, 16, s[off + 2]);
+    longIntoBytes(dst, 24, s[off + 3]);
+  }
+
+  /** Read bytes into slot at depth from src[srcOff..srcOff+len). Pads with zeros. */
+  public static void fromBytesAt(
+      final long[] s,
+      final int top,
+      final int depth,
+      final byte[] src,
+      final int srcOff,
+      final int len) {
+    final int off = (top - 1 - depth) << 2;
+    // Fast path: full 32-byte read — decode 8 bytes per limb
+    if (len >= 32 && srcOff + 32 <= src.length) {
+      s[off] = bytesToLong(src, srcOff);
+      s[off + 1] = bytesToLong(src, srcOff + 8);
+      s[off + 2] = bytesToLong(src, srcOff + 16);
+      s[off + 3] = bytesToLong(src, srcOff + 24);
+      return;
+    }
+    // Slow path: variable-length, byte-by-byte
+    s[off] = 0;
+    s[off + 1] = 0;
+    s[off + 2] = 0;
+    s[off + 3] = 0;
+    int end = srcOff + Math.min(len, 32);
+    if (end > src.length) end = src.length;
+    int pos = 0;
+    for (int i = srcOff; i < end; i++, pos++) {
+      int limbIdx = pos >> 3;
+      int shift = (7 - (pos & 7)) << 3;
+      s[off + limbIdx] |= (src[i] & 0xFFL) << shift;
+    }
+  }
+
+  /** Decode 8 big-endian bytes from src[off] into a long. */
+  private static long bytesToLong(final byte[] src, final int off) {
+    return ((src[off] & 0xFFL) << 56)
+        | ((src[off + 1] & 0xFFL) << 48)
+        | ((src[off + 2] & 0xFFL) << 40)
+        | ((src[off + 3] & 0xFFL) << 32)
+        | ((src[off + 4] & 0xFFL) << 24)
+        | ((src[off + 5] & 0xFFL) << 16)
+        | ((src[off + 6] & 0xFFL) << 8)
+        | (src[off + 7] & 0xFFL);
+  }
+
+  /** Extract 20-byte Address from slot at depth. */
+  public static Address toAddressAt(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    byte[] bytes = new byte[20];
+    // u2 has top 4 bytes, u1 has next 8, u0 has last 8
+    long u2 = s[off + 1];
+    long u1 = s[off + 2];
+    long u0 = s[off + 3];
+    bytes[0] = (byte) (u2 >>> 24);
+    bytes[1] = (byte) (u2 >>> 16);
+    bytes[2] = (byte) (u2 >>> 8);
+    bytes[3] = (byte) u2;
+    longIntoBytes(bytes, 4, u1);
+    longIntoBytes(bytes, 12, u0);
+    return Address.wrap(org.apache.tuweni.bytes.Bytes.wrap(bytes));
+  }
+
+  /** Materialize UInt256 record from slot at depth (boundary only). */
+  public static UInt256 getAt(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    return new UInt256(s[off], s[off + 1], s[off + 2], s[off + 3]);
+  }
+
+  /** Write UInt256 record into slot at depth. */
+  public static void putAt(final long[] s, final int top, final int depth, final UInt256 val) {
+    final int off = (top - 1 - depth) << 2;
+    s[off] = val.u3();
+    s[off + 1] = val.u2();
+    s[off + 2] = val.u1();
+    s[off + 3] = val.u0();
+  }
+
+  /** Write raw limbs into slot at depth. */
+  public static void putAt(
+      final long[] s,
+      final int top,
+      final int depth,
+      final long u3,
+      final long u2,
+      final long u1,
+      final long u0) {
+    final int off = (top - 1 - depth) << 2;
+    s[off] = u3;
+    s[off + 1] = u2;
+    s[off + 2] = u1;
+    s[off + 3] = u0;
+  }
+
+  /** Number of significant bytes in slot at depth. Used by EXP gas calculation. */
+  public static int byteLengthAt(final long[] s, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    if (s[off] != 0) return 24 + byteLen(s[off]);
+    if (s[off + 1] != 0) return 16 + byteLen(s[off + 1]);
+    if (s[off + 2] != 0) return 8 + byteLen(s[off + 2]);
+    if (s[off + 3] != 0) return byteLen(s[off + 3]);
+    return 0;
+  }
+
+  // ── Internal helpers ───────────────────────────────────────────────────
+
+  private static int byteLen(final long v) {
+    return (64 - Long.numberOfLeadingZeros(v) + 7) / 8;
+  }
+
+  private static void longIntoBytes(final byte[] bytes, final int offset, final long value) {
+    bytes[offset] = (byte) (value >>> 56);
+    bytes[offset + 1] = (byte) (value >>> 48);
+    bytes[offset + 2] = (byte) (value >>> 40);
+    bytes[offset + 3] = (byte) (value >>> 32);
+    bytes[offset + 4] = (byte) (value >>> 24);
+    bytes[offset + 5] = (byte) (value >>> 16);
+    bytes[offset + 6] = (byte) (value >>> 8);
+    bytes[offset + 7] = (byte) value;
+  }
+
+  /** Unsigned less-than comparison of two slots. */
+  private static boolean unsignedLt(
+      final long[] s1, final int off1, final long[] s2, final int off2) {
+    // Compare u3 first (MSB)
+    if (s1[off1] != s2[off2]) return Long.compareUnsigned(s1[off1], s2[off2]) < 0;
+    if (s1[off1 + 1] != s2[off2 + 1]) return Long.compareUnsigned(s1[off1 + 1], s2[off2 + 1]) < 0;
+    if (s1[off1 + 2] != s2[off2 + 2]) return Long.compareUnsigned(s1[off1 + 2], s2[off2 + 2]) < 0;
+    return Long.compareUnsigned(s1[off1 + 3], s2[off2 + 3]) < 0;
+  }
+
+  /** Signed comparison of two slots. */
+  private static int signedCompare(
+      final long[] s1, final int off1, final long[] s2, final int off2) {
+    boolean aNeg = s1[off1] < 0;
+    boolean bNeg = s2[off2] < 0;
+    if (aNeg && !bNeg) return -1;
+    if (!aNeg && bNeg) return 1;
+    // Same sign: unsigned compare gives correct result
+    if (s1[off1] != s2[off2]) return Long.compareUnsigned(s1[off1], s2[off2]);
+    if (s1[off1 + 1] != s2[off2 + 1]) return Long.compareUnsigned(s1[off1 + 1], s2[off2 + 1]);
+    if (s1[off1 + 2] != s2[off2 + 2]) return Long.compareUnsigned(s1[off1 + 2], s2[off2 + 2]);
+    return Long.compareUnsigned(s1[off1 + 3], s2[off2 + 3]);
+  }
+
+  /** Shift left in place. shift must be 0..255. */
+  private static void shiftLeftInPlace(final long[] s, final int off, final int shift) {
+    if (shift == 0) return;
+    int limbShift = shift >>> 6;
+    int bitShift = shift & 63;
+
+    // Move limbs (stored as [u3, u2, u1, u0] at [off, off+1, off+2, off+3])
+    // u3=off, u2=off+1, u1=off+2, u0=off+3
+    long u0 = s[off + 3], u1 = s[off + 2], u2 = s[off + 1], u3 = s[off];
+    long a0, a1, a2, a3;
+    switch (limbShift) {
+      case 0:
+        a0 = u0;
+        a1 = u1;
+        a2 = u2;
+        a3 = u3;
+        break;
+      case 1:
+        a0 = 0;
+        a1 = u0;
+        a2 = u1;
+        a3 = u2;
+        break;
+      case 2:
+        a0 = 0;
+        a1 = 0;
+        a2 = u0;
+        a3 = u1;
+        break;
+      case 3:
+        a0 = 0;
+        a1 = 0;
+        a2 = 0;
+        a3 = u0;
+        break;
+      default:
+        s[off] = 0;
+        s[off + 1] = 0;
+        s[off + 2] = 0;
+        s[off + 3] = 0;
+        return;
+    }
+
+    if (bitShift == 0) {
+      s[off] = a3;
+      s[off + 1] = a2;
+      s[off + 2] = a1;
+      s[off + 3] = a0;
+    } else {
+      int inv = 64 - bitShift;
+      s[off + 3] = a0 << bitShift;
+      s[off + 2] = (a1 << bitShift) | (a0 >>> inv);
+      s[off + 1] = (a2 << bitShift) | (a1 >>> inv);
+      s[off] = (a3 << bitShift) | (a2 >>> inv);
+    }
+  }
+
+  /** Logical shift right in place. shift must be 0..255. */
+  private static void shiftRightInPlace(final long[] s, final int off, final int shift) {
+    if (shift == 0) return;
+    int limbShift = shift >>> 6;
+    int bitShift = shift & 63;
+
+    long u0 = s[off + 3], u1 = s[off + 2], u2 = s[off + 1], u3 = s[off];
+    long a0, a1, a2, a3;
+    switch (limbShift) {
+      case 0:
+        a0 = u0;
+        a1 = u1;
+        a2 = u2;
+        a3 = u3;
+        break;
+      case 1:
+        a0 = u1;
+        a1 = u2;
+        a2 = u3;
+        a3 = 0;
+        break;
+      case 2:
+        a0 = u2;
+        a1 = u3;
+        a2 = 0;
+        a3 = 0;
+        break;
+      case 3:
+        a0 = u3;
+        a1 = 0;
+        a2 = 0;
+        a3 = 0;
+        break;
+      default:
+        s[off] = 0;
+        s[off + 1] = 0;
+        s[off + 2] = 0;
+        s[off + 3] = 0;
+        return;
+    }
+
+    if (bitShift == 0) {
+      s[off] = a3;
+      s[off + 1] = a2;
+      s[off + 2] = a1;
+      s[off + 3] = a0;
+    } else {
+      int inv = 64 - bitShift;
+      s[off] = a3 >>> bitShift;
+      s[off + 1] = (a2 >>> bitShift) | (a3 << inv);
+      s[off + 2] = (a1 >>> bitShift) | (a2 << inv);
+      s[off + 3] = (a0 >>> bitShift) | (a1 << inv);
+    }
+  }
+
+  /** Arithmetic shift right in place. shift must be 0..255. */
+  private static void sarInPlace(
+      final long[] s, final int off, final int shift, final boolean negative) {
+    if (shift == 0) return;
+    int limbShift = shift >>> 6;
+    int bitShift = shift & 63;
+    long fill = negative ? -1L : 0L;
+
+    long u0 = s[off + 3], u1 = s[off + 2], u2 = s[off + 1], u3 = s[off];
+    long a0, a1, a2, a3;
+    switch (limbShift) {
+      case 0:
+        a0 = u0;
+        a1 = u1;
+        a2 = u2;
+        a3 = u3;
+        break;
+      case 1:
+        a0 = u1;
+        a1 = u2;
+        a2 = u3;
+        a3 = fill;
+        break;
+      case 2:
+        a0 = u2;
+        a1 = u3;
+        a2 = fill;
+        a3 = fill;
+        break;
+      case 3:
+        a0 = u3;
+        a1 = fill;
+        a2 = fill;
+        a3 = fill;
+        break;
+      default:
+        s[off] = fill;
+        s[off + 1] = fill;
+        s[off + 2] = fill;
+        s[off + 3] = fill;
+        return;
+    }
+
+    if (bitShift == 0) {
+      s[off] = a3;
+      s[off + 1] = a2;
+      s[off + 2] = a1;
+      s[off + 3] = a0;
+    } else {
+      int inv = 64 - bitShift;
+      s[off] = a3 >> bitShift; // arithmetic shift for MSB
+      s[off + 1] = (a2 >>> bitShift) | (a3 << inv);
+      s[off + 2] = (a1 >>> bitShift) | (a2 << inv);
+      s[off + 3] = (a0 >>> bitShift) | (a1 << inv);
+    }
+  }
+}

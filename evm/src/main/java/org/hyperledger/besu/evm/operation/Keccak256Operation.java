@@ -15,12 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -41,8 +41,10 @@ public class Keccak256Operation extends AbstractOperation {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final long from = clampedToLong(frame.popStackItemUnsafe());
-    final long length = clampedToLong(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long from = StackMath.clampedToLong(s, top, 0);
+    final long length = StackMath.clampedToLong(s, top, 1);
 
     final long cost = gasCalculator().keccak256OperationGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
@@ -50,7 +52,11 @@ public class Keccak256Operation extends AbstractOperation {
     }
 
     final Bytes bytes = frame.readMutableMemory(from, length);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(keccak256(bytes).toArrayUnsafe()));
+    final byte[] hashBytes = keccak256(bytes).toArrayUnsafe();
+    // Pop 2, push 1: net effect is top - 1
+    final int newTop = top - 1;
+    frame.setTop(newTop);
+    StackMath.fromBytesAt(s, newTop, 0, hashBytes, 0, hashBytes.length);
     return new OperationResult(cost, null);
   }
 }

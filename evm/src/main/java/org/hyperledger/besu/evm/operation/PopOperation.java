@@ -47,7 +47,7 @@ public class PopOperation extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
     if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
-    frame.shrinkStackUnsafe(1);
+    frame.setTop(frame.stackTop() - 1);
     return popSuccess;
   }
 }

@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Push operation. */
 public class PushOperation extends AbstractFixedCostOperation {
@@ -53,31 +53,27 @@ public class PushOperation extends AbstractFixedCostOperation {
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    return staticOperation(frame, code, frame.getPC(), length);
+    return staticOperation(frame, frame.stackData(), code, frame.getPC(), length);
   }
 
   /**
    * Performs Push operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @param code the code
    * @param pc the pc
    * @param pushSize the push size
    * @return the operation result
    */
   public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+      final MessageFrame frame,
+      final long[] s,
+      final byte[] code,
+      final int pc,
+      final int pushSize) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    final int copyStart = pc + 1;
-    if (code.length <= copyStart) {
-      frame.pushStackItemUnsafe(UInt256.ZERO);
-    } else {
-      final int copyLength = Math.min(pushSize, code.length - pc - 1);
-      // Build a byte array of exactly pushSize, right-padded with zeros
-      final byte[] pushBytes = new byte[pushSize];
-      System.arraycopy(code, copyStart, pushBytes, 0, copyLength);
-      frame.pushStackItemUnsafe(UInt256.fromBytesBE(pushBytes));
-    }
+    frame.setTop(StackMath.pushFromBytes(s, frame.stackTop(), code, pc + 1, pushSize));
     frame.setPC(pc + pushSize);
     return pushSuccess;
   }

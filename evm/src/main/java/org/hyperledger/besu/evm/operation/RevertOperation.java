@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -43,8 +42,11 @@ public class RevertOperation extends AbstractOperation {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final long from = clampedToLong(frame.popStackItemUnsafe());
-    final long length = clampedToLong(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long from = StackMath.clampedToLong(s, top, 0);
+    final long length = StackMath.clampedToLong(s, top, 1);
+    frame.setTop(top - 2);
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {

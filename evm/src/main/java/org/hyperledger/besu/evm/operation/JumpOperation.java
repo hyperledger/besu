@@ -40,18 +40,21 @@ public class JumpOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
    * Performs Jump operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
-    return jumpService.performJump(
-        frame, frame.popStackItemUnsafe(), jumpResponse, invalidJumpResponse);
+    final int top = frame.stackTop();
+    final int destOff = (top - 1) << 2;
+    frame.setTop(top - 1);
+    return jumpService.performJump(frame, s, destOff, jumpResponse, invalidJumpResponse);
   }
 }

@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Coinbase operation. */
 public class CoinbaseOperation extends AbstractFixedCostOperation {
@@ -36,7 +37,7 @@ public class CoinbaseOperation extends AbstractFixedCostOperation {
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
     final Address coinbase = frame.getMiningBeneficiary();
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(coinbase.getBytes().toArrayUnsafe()));
+    frame.setTop(StackMath.pushAddress(frame.stackData(), frame.stackTop(), coinbase));
 
     return successResponse;
   }

@@ -23,6 +23,6 @@ public class SarOperationBenchmark extends AbstractSarOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return SarOperation.staticOperation(frame);
+    return SarOperation.staticOperation(frame, frame.stackData());
   }
 }

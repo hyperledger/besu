@@ -15,8 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM;
-import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_SUCCESS_STACK_ITEM;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -26,7 +24,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.Objects;
 
@@ -53,14 +51,18 @@ public class PayOperation extends AbstractOperation {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 
-    final org.hyperledger.besu.evm.UInt256 toAddrUint = frame.getStackItem(0);
-    // Check if value has more than 20 bytes of significant data (u3 must be 0, upper 32 bits of u2 must be 0)
-    if (toAddrUint.u3() != 0 || (toAddrUint.u2() >>> 32) != 0) {
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final int addrOff = (top - 1) << 2;
+
+    // Check if value has more than 20 bytes of significant data (u3 must be 0, upper 32 bits of u2
+    // must be 0)
+    if (s[addrOff] != 0 || (s[addrOff + 1] >>> 32) != 0) {
       return new OperationResult(0, ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
     }
 
-    final Address to = Words.toAddress(toAddrUint);
-    final Wei value = Wei.wrap(Bytes.wrap(frame.getStackItem(1).toBytesBE()));
+    final Address to = StackMath.toAddressAt(s, top, 0);
+    final Wei value = Wei.wrap(Bytes.wrap(StackMath.getAt(s, top, 1).toBytesBE()));
     final boolean hasValue = value.greaterThan(Wei.ZERO);
     final Account recipient = getAccount(to, frame);
 
@@ -72,15 +74,15 @@ public class PayOperation extends AbstractOperation {
     }
 
     if (!hasValue || Objects.equals(frame.getSenderAddress(), to)) {
-      frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromInt(1));
+      StackMath.putAt(s, top, 1, 0, 0, 0, 1);
+      frame.setTop(top - 1);
       return new OperationResult(cost, null);
     }
 
     final MutableAccount senderAccount = getSenderAccount(frame);
     if (value.compareTo(senderAccount.getBalance()) > 0) {
-      frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+      StackMath.putAt(s, top, 1, 0, 0, 0, 0);
+      frame.setTop(top - 1);
       return new OperationResult(cost, null);
     }
 
@@ -88,8 +90,8 @@ public class PayOperation extends AbstractOperation {
     senderAccount.decrementBalance(value);
     recipientAccount.incrementBalance(value);
 
-    frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromInt(1));
+    StackMath.putAt(s, top, 1, 0, 0, 0, 1);
+    frame.setTop(top - 1);
     return new OperationResult(cost, null);
   }
 

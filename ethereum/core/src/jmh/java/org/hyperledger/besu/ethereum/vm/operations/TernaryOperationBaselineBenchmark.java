@@ -23,8 +23,7 @@ public class TernaryOperationBaselineBenchmark extends TernaryOperationBenchmark
   protected Operation.OperationResult invoke(final MessageFrame frame) {
     // Approximate baseline by popping the two extra inputs and doing nothing
     // third pop is done by the caller
-    frame.popStackItemUnsafe();
-    frame.popStackItemUnsafe();
+    frame.setTop(frame.stackTop() - 2);
     return null;
   }
 }

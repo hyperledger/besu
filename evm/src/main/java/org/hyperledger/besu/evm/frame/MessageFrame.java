@@ -27,13 +27,14 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
-import org.hyperledger.besu.evm.internal.OperandStack;
+import org.hyperledger.besu.evm.internal.StackPool;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -205,7 +206,9 @@ public class MessageFrame {
   private long gasRemaining;
   private int pc;
   private final Memory memory = new Memory();
-  private final OperandStack stack;
+  private long[] stackData;
+  private int stackTop;
+  private final int stackMaxSize;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -272,7 +275,9 @@ public class MessageFrame {
     this.type = type;
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
-    this.stack = OperandStack.borrow(txValues.maxStackSize());
+    this.stackMaxSize = txValues.maxStackSize();
+    this.stackData = StackPool.borrow(stackMaxSize);
+    this.stackTop = 0;
     this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -414,6 +419,39 @@ public class MessageFrame {
     setReturnData(Bytes.EMPTY);
   }
 
+  // region Raw long[] stack access (used by StackMath and operations)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Returns the backing long[] array of the operand stack.
+   *
+   * @return the raw data array
+   */
+  public long[] stackData() {
+    return stackData;
+  }
+
+  /**
+   * Returns the current stack top (item count, 0 = empty).
+   *
+   * @return the item count
+   */
+  public int stackTop() {
+    return stackTop;
+  }
+
+  /**
+   * Sets the stack top (item count). Used after StackMath operations.
+   *
+   * @param newTop the new item count
+   */
+  public void setTop(final int newTop) {
+    this.stackTop = newTop;
+  }
+
+  // ---------------------------------------------------------------------------
+  // endregion
+
   /**
    * Returns the item at the specified offset in the stack without bounds check. Caller must
    * pre-validate via {@link #stackHasItems}.
@@ -422,31 +460,12 @@ public class MessageFrame {
    * @return The item at the specified offset in the stack
    */
   public org.hyperledger.besu.evm.UInt256 getStackItem(final int offset) {
-    return stack.getUnsafe(offset);
+    final int off = (stackTop - 1 - offset) << 2;
+    return new org.hyperledger.besu.evm.UInt256(
+        stackData[off], stackData[off + 1], stackData[off + 2], stackData[off + 3]);
   }
 
-  /**
-   * Sets the stack item at the specified offset from the top of the stack without bounds check.
-   * Caller must pre-validate via {@link #stackHasItems}.
-   *
-   * @param offset The item's position relative to the top of the stack
-   * @param value The value to set the stack item to
-   */
-  public void setStackItem(final int offset, final org.hyperledger.besu.evm.UInt256 value) {
-    stack.overwriteUnsafe(offset, value);
-  }
-
-  /**
-   * Shrinks the stack by n entries without bounds check. Caller must pre-validate via {@link
-   * #stackHasItems}.
-   *
-   * @param n The number of items to remove from the top of the stack
-   */
-  public void popStackItems(final int n) {
-    stack.shrinkUnsafe(n);
-  }
-
-  // region Unsafe stack methods (pre-validated by AbstractFixedCostOperation)
+  // region Stack validation methods
   // ---------------------------------------------------------------------------
 
   /**
@@ -456,7 +475,7 @@ public class MessageFrame {
    * @return true if the stack contains at least n items
    */
   public boolean stackHasItems(final int n) {
-    return stack.hasItems(n);
+    return stackTop >= n;
   }
 
   /**
@@ -466,55 +485,7 @@ public class MessageFrame {
    * @return true if the stack can accommodate n more items
    */
   public boolean stackHasSpace(final int n) {
-    return stack.hasSpace(n);
-  }
-
-  /**
-   * Pop without bounds check. Caller must pre-validate via {@link #stackHasItems}.
-   *
-   * @return the top stack item
-   */
-  public org.hyperledger.besu.evm.UInt256 popStackItemUnsafe() {
-    return stack.popUnsafe();
-  }
-
-  /**
-   * Push without bounds check. Caller must pre-validate via {@link #stackHasSpace}.
-   *
-   * @param value the value to push
-   */
-  public void pushStackItemUnsafe(final org.hyperledger.besu.evm.UInt256 value) {
-    stack.pushUnsafe(value);
-  }
-
-  /**
-   * Peek at depth from top without bounds check.
-   *
-   * @param depth the depth (0 = top)
-   * @return the stack item at given depth
-   */
-  public org.hyperledger.besu.evm.UInt256 peekStackItemUnsafe(final int depth) {
-    return stack.peekUnsafe(depth);
-  }
-
-  /**
-   * Overwrite entry at depth from top without bounds check.
-   *
-   * @param depth the depth (0 = top)
-   * @param value the value to write
-   */
-  public void overwriteStackItemUnsafe(
-      final int depth, final org.hyperledger.besu.evm.UInt256 value) {
-    stack.overwriteUnsafe(depth, value);
-  }
-
-  /**
-   * Shrink the stack by n entries without bounds check.
-   *
-   * @param n the number of entries to remove
-   */
-  public void shrinkStackUnsafe(final int n) {
-    stack.shrinkUnsafe(n);
+    return stackTop + n <= stackMaxSize;
   }
 
   // ---------------------------------------------------------------------------
@@ -530,7 +501,12 @@ public class MessageFrame {
    * @return the top stack item as Bytes
    */
   public Bytes popStackBytes() {
-    return Bytes.wrap(stack.popUnsafe().toBytesBE());
+    stackTop--;
+    final int off = stackTop << 2;
+    return Bytes.wrap(
+        new org.hyperledger.besu.evm.UInt256(
+                stackData[off], stackData[off + 1], stackData[off + 2], stackData[off + 3])
+            .toBytesBE());
   }
 
   /**
@@ -540,16 +516,23 @@ public class MessageFrame {
    * @param value The Bytes value to push
    */
   public void pushStackBytes(final Bytes value) {
-    byte[] padded;
+    org.hyperledger.besu.evm.UInt256 operand;
     if (value.size() >= 32) {
-      padded = value.slice(value.size() - 32, 32).toArrayUnsafe();
+      operand =
+          org.hyperledger.besu.evm.UInt256.fromBytesBE(
+              value.slice(value.size() - 32, 32).toArrayUnsafe());
     } else if (value.size() == 0) {
-      stack.pushUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
-      return;
+      operand = org.hyperledger.besu.evm.UInt256.ZERO;
     } else {
-      padded = Bytes32.leftPad(value).toArrayUnsafe();
+      operand =
+          org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes32.leftPad(value).toArrayUnsafe());
     }
-    stack.pushUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
+    final int off = stackTop << 2;
+    stackData[off] = operand.u3();
+    stackData[off + 1] = operand.u2();
+    stackData[off + 2] = operand.u1();
+    stackData[off + 3] = operand.u0();
+    stackTop++;
   }
 
   /**
@@ -560,7 +543,11 @@ public class MessageFrame {
    * @return The item as Bytes
    */
   public Bytes getStackBytes(final int offset) {
-    return Bytes.wrap(stack.getUnsafe(offset).toBytesBE());
+    final int off = (stackTop - 1 - offset) << 2;
+    return Bytes.wrap(
+        new org.hyperledger.besu.evm.UInt256(
+                stackData[off], stackData[off + 1], stackData[off + 2], stackData[off + 3])
+            .toBytesBE());
   }
 
   /**
@@ -571,16 +558,22 @@ public class MessageFrame {
    * @param value The Bytes value to set
    */
   public void setStackBytes(final int offset, final Bytes value) {
-    byte[] padded;
+    org.hyperledger.besu.evm.UInt256 operand;
     if (value.size() >= 32) {
-      padded = value.slice(value.size() - 32, 32).toArrayUnsafe();
+      operand =
+          org.hyperledger.besu.evm.UInt256.fromBytesBE(
+              value.slice(value.size() - 32, 32).toArrayUnsafe());
     } else if (value.size() == 0) {
-      stack.overwriteUnsafe(offset, org.hyperledger.besu.evm.UInt256.ZERO);
-      return;
+      operand = org.hyperledger.besu.evm.UInt256.ZERO;
     } else {
-      padded = Bytes32.leftPad(value).toArrayUnsafe();
+      operand =
+          org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes32.leftPad(value).toArrayUnsafe());
     }
-    stack.overwriteUnsafe(offset, org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
+    final int off = (stackTop - 1 - offset) << 2;
+    stackData[off] = operand.u3();
+    stackData[off + 1] = operand.u2();
+    stackData[off + 2] = operand.u1();
+    stackData[off + 3] = operand.u0();
   }
 
   // --------------------------------------------------------------------------
@@ -592,7 +585,7 @@ public class MessageFrame {
    * @return The current stack size
    */
   public int stackSize() {
-    return stack.size();
+    return stackTop;
   }
 
   /**
@@ -1202,7 +1195,12 @@ public class MessageFrame {
 
   /** Returns this frame's operand stack to the thread-local pool for reuse. */
   public void returnStackToPool() {
-    OperandStack.release(stack);
+    if (stackTop > 0) {
+      Arrays.fill(stackData, 0, stackTop << 2, 0L);
+    }
+    stackTop = 0;
+    StackPool.release(stackData, stackMaxSize);
+    stackData = null;
   }
 
   /** Performs updates based on the message frame's execution. */

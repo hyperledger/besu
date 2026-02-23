@@ -163,6 +163,6 @@ public class AddModOperationBenchmark extends TernaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return AddModOperation.staticOperation(frame);
+    return AddModOperation.staticOperation(frame, frame.stackData());
   }
 }

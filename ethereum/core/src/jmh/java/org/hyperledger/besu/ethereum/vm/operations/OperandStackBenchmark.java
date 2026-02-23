@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations;
 
-import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.OperandStack;
 
 import java.util.concurrent.TimeUnit;
 
@@ -42,22 +40,24 @@ public class OperandStackBenchmark {
   @Param({"6", "15", "34", "100", "234", "500", "800", "1024"})
   private int stackDepth;
 
-  private static final UInt256 VALUE =
-      UInt256.fromBytesBE(
-          new byte[] {
-            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
-            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
-            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32,
-            0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32, 0x32
-          });
+  private static final long U3 = 0x3232323232323232L;
+  private static final long U2 = 0x3232323232323232L;
+  private static final long U1 = 0x3232323232323232L;
+  private static final long U0 = 0x3232323232323232L;
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void fillUp() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      OperandStack stack = new OperandStack(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+      long[] data = new long[MessageFrame.DEFAULT_MAX_STACK_SIZE << 2];
+      int top = 0;
       for (int j = 0; j < stackDepth; j++) {
-        stack.pushUnsafe(VALUE);
+        final int off = top << 2;
+        data[off] = U3;
+        data[off + 1] = U2;
+        data[off + 2] = U1;
+        data[off + 3] = U0;
+        top++;
       }
     }
   }

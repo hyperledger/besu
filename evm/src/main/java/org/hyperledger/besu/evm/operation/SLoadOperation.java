@@ -16,10 +16,12 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The SLoad operation. */
 public class SLoadOperation extends AbstractOperation {
@@ -50,17 +52,19 @@ public class SLoadOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(warmCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
     final Account account = getAccount(frame.getRecipientAddress(), frame);
     final Address address = account.getAddress();
-    final org.hyperledger.besu.evm.UInt256 key = frame.popStackItemUnsafe();
+    final UInt256 key = StackMath.getAt(s, top, 0);
     final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes32());
     final long cost = slotIsWarm ? warmCost : coldCost;
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    frame.pushStackItemUnsafe(
-        org.hyperledger.besu.evm.UInt256.fromTuweni(
-            getStorageValue(account, key.toTuweni(), frame)));
+    // Overwrite in place (pop 1, push 1)
+    final UInt256 result = UInt256.fromTuweni(getStorageValue(account, key.toTuweni(), frame));
+    StackMath.putAt(s, top, 0, result);
     return slotIsWarm ? warmSuccess : coldSuccess;
   }
 }

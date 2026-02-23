@@ -17,13 +17,12 @@ package org.hyperledger.besu.evm.operation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
-
-import org.hyperledger.besu.evm.UInt256;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;

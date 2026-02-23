@@ -17,70 +17,49 @@ package org.hyperledger.besu.evm.operation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.operation.PushOperation.staticOperation;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.toy.ToyBlockValues;
-import org.hyperledger.besu.evm.toy.ToyWorld;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 public class PushOperationTest {
 
   private static final byte[] byteCode = new byte[] {0x00, 0x01, 0x02, 0x03};
-  private static final MessageFrame frame =
-      MessageFrame.builder()
-          .worldUpdater(new ToyWorld())
-          .originator(Address.ZERO)
-          .gasPrice(Wei.ONE)
-          .blobGasPrice(Wei.ONE)
-          .blockValues(new ToyBlockValues())
-          .miningBeneficiary(Address.ZERO)
-          .blockHashLookup((__, ___) -> Hash.ZERO)
-          .type(MessageFrame.Type.MESSAGE_CALL)
-          .initialGas(1)
-          .address(Address.ZERO)
-          .contract(Address.ZERO)
-          .inputData(Bytes32.ZERO)
-          .sender(Address.ZERO)
-          .value(Wei.ZERO)
-          .apparentValue(Wei.ZERO)
-          .code(Code.EMPTY_CODE)
-          .completer(messageFrame -> {})
-          .build();
-  ;
+
+  private MessageFrame createFrame() {
+    return new TestMessageFrameBuilder().build();
+  }
 
   @Test
   void unpaddedPushDoesntReachEndCode() {
-    staticOperation(frame, byteCode, 0, byteCode.length - 2);
+    final MessageFrame frame = createFrame();
+    staticOperation(frame, frame.stackData(), byteCode, 0, byteCode.length - 2);
     assertThat(frame.getStackItem(0))
-        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x0102").toArrayUnsafe()));
+        .isEqualTo(UInt256.fromBytesBE(Bytes.fromHexString("0x0102").toArrayUnsafe()));
   }
 
   @Test
   void unpaddedPushUpReachesEndCode() {
-    staticOperation(frame, byteCode, 0, byteCode.length - 1);
+    final MessageFrame frame = createFrame();
+    staticOperation(frame, frame.stackData(), byteCode, 0, byteCode.length - 1);
     assertThat(frame.getStackItem(0))
-        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x010203").toArrayUnsafe()));
+        .isEqualTo(UInt256.fromBytesBE(Bytes.fromHexString("0x010203").toArrayUnsafe()));
   }
 
   @Test
   void paddedPush() {
-    staticOperation(frame, byteCode, 1, byteCode.length - 1);
+    final MessageFrame frame = createFrame();
+    staticOperation(frame, frame.stackData(), byteCode, 1, byteCode.length - 1);
     assertThat(frame.getStackItem(0))
-        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x020300").toArrayUnsafe()));
+        .isEqualTo(UInt256.fromBytesBE(Bytes.fromHexString("0x020300").toArrayUnsafe()));
   }
 
   @Test
   void oobPush() {
-    staticOperation(frame, byteCode, byteCode.length, byteCode.length - 1);
-    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
+    final MessageFrame frame = createFrame();
+    staticOperation(frame, frame.stackData(), byteCode, byteCode.length, byteCode.length - 1);
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.ZERO);
   }
 }

@@ -14,13 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Self balance operation. */
 public class SelfBalanceOperation extends AbstractFixedCostOperation {
@@ -38,9 +36,14 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    final Address accountAddress = frame.getRecipientAddress();
-    final Account account = getAccount(accountAddress, frame);
-    frame.pushStackItemUnsafe(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getBalance().toArrayUnsafe()));
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
+    if (account == null) {
+      frame.setTop(StackMath.pushZero(frame.stackData(), frame.stackTop()));
+    } else {
+      final byte[] bytes = account.getBalance().toBytes().toArrayUnsafe();
+      frame.setTop(
+          StackMath.pushFromBytes(frame.stackData(), frame.stackTop(), bytes, 0, bytes.length));
+    }
 
     return successResponse;
   }

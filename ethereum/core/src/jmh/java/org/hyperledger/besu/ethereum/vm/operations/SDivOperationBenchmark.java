@@ -21,6 +21,6 @@ import org.hyperledger.besu.evm.operation.SDivOperation;
 public class SDivOperationBenchmark extends BinaryOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return SDivOperation.staticOperation(frame);
+    return SDivOperation.staticOperation(frame, frame.stackData());
   }
 }

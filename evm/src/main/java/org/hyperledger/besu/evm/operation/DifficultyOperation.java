@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Difficulty operation. */
 public class DifficultyOperation extends AbstractFixedCostOperation {
@@ -34,7 +35,9 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getBlockValues().getDifficultyBytes().toArrayUnsafe()));
+    final byte[] bytes = frame.getBlockValues().getDifficultyBytes().toArrayUnsafe();
+    frame.setTop(
+        StackMath.pushFromBytes(frame.stackData(), frame.stackTop(), bytes, 0, bytes.length));
     return successResponse;
   }
 }

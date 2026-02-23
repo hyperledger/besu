@@ -316,8 +316,7 @@ public class MainnetEVMs {
    * @param gasCalculator the gas calculator
    */
   private static void registerHomesteadOperations(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator) {
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
     registerFrontierOperations(registry, gasCalculator);
     registry.put(new DelegateCallOperation(gasCalculator));
   }
@@ -397,8 +396,7 @@ public class MainnetEVMs {
    * @param gasCalculator the gas calculator
    */
   private static void registerByzantiumOperations(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator) {
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
     registerHomesteadOperations(registry, gasCalculator);
     registry.put(new ReturnDataCopyOperation(gasCalculator));
     registry.put(new ReturnDataSizeOperation(gasCalculator));
@@ -434,10 +432,7 @@ public class MainnetEVMs {
       final EvmConfiguration evmConfiguration,
       final EvmSpecVersion version) {
     return new EVM(
-        constantinopleOperations(gasCalculator),
-        gasCalculator,
-        evmConfiguration,
-        version);
+        constantinopleOperations(gasCalculator), gasCalculator, evmConfiguration, version);
   }
 
   /**
@@ -459,8 +454,7 @@ public class MainnetEVMs {
    * @param gasCalculator the gas calculator
    */
   private static void registerConstantinopleOperations(
-      final OperationRegistry registry,
-      final GasCalculator gasCalculator) {
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
     registerByzantiumOperations(registry, gasCalculator);
     registry.put(new Create2Operation(gasCalculator));
     registry.put(new ShlOperation(gasCalculator));

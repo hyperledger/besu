@@ -22,6 +22,6 @@ public class MulOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return MulOperation.staticOperation(frame);
+    return MulOperation.staticOperation(frame, frame.stackData());
   }
 }

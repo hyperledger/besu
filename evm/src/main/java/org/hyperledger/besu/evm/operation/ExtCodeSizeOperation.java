@@ -20,7 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
@@ -51,7 +51,9 @@ public class ExtCodeSizeOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final Address address = Words.toAddress(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final Address address = StackMath.toAddressAt(s, top, 0);
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(accountIsWarm);
@@ -59,7 +61,9 @@ public class ExtCodeSizeOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Account account = getAccount(address, frame);
-    frame.pushStackItemUnsafe(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromInt(account.getCode().size()));
+    // Overwrite in place (pop 1, push 1)
+    final long codeSize = account == null ? 0L : account.getCode().size();
+    StackMath.putAt(s, top, 0, 0L, 0L, 0L, codeSize);
     return new OperationResult(cost, null);
   }
 }

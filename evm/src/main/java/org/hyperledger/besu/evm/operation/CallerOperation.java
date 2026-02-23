@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Caller operation. */
 public class CallerOperation extends AbstractFixedCostOperation {
@@ -34,7 +35,8 @@ public class CallerOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getSenderAddress().getBytes().toArrayUnsafe()));
+    frame.setTop(
+        StackMath.pushAddress(frame.stackData(), frame.stackTop(), frame.getSenderAddress()));
 
     return successResponse;
   }

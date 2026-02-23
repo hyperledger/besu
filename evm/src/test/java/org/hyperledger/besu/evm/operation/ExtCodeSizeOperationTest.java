@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
@@ -74,7 +75,8 @@ class ExtCodeSizeOperationTest {
   @Test
   void shouldReturnZeroWhenAccountExistsButIsEmpty() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
+    assertThat(executeOperation(REQUESTED_ADDRESS))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
@@ -148,9 +150,9 @@ class ExtCodeSizeOperationTest {
             .blockValues(blockValues)
             .build();
 
-    frame.pushStackItemUnsafe(
-        org.hyperledger.besu.evm.UInt256.fromBytesBE(
-            org.apache.tuweni.bytes.Bytes32.leftPad(stackItem).toArrayUnsafe()));
+    final byte[] padded = org.apache.tuweni.bytes.Bytes32.leftPad(stackItem).toArrayUnsafe();
+    frame.setTop(
+        StackMath.pushFromBytes(frame.stackData(), frame.stackTop(), padded, 0, padded.length));
     return frame;
   }
 }

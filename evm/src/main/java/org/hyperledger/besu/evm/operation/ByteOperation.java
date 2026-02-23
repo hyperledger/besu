@@ -17,8 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Byte operation. */
 public class ByteOperation extends AbstractFixedCostOperation {
@@ -38,7 +37,7 @@ public class ByteOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
@@ -47,22 +46,9 @@ public class ByteOperation extends AbstractFixedCostOperation {
    * @param frame the frame
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
-    final org.hyperledger.besu.evm.UInt256 offset = frame.peekStackItemUnsafe(0);
-    final org.hyperledger.besu.evm.UInt256 value = frame.peekStackItemUnsafe(1);
-    frame.shrinkStackUnsafe(1);
-
-    // offset must be 0..31 to select a byte from the 32-byte value
-    if (offset.u3() != 0 || offset.u2() != 0 || offset.u1() != 0 || offset.u0() >= 32) {
-      frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.ZERO);
-      return byteSuccess;
-    }
-
-    final int index = (int) offset.u0();
-    final byte[] bytes = value.toBytesBE();
-    frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.fromInt(bytes[index] & 0xFF));
-
+    frame.setTop(StackMath.byte_(s, frame.stackTop()));
     return byteSuccess;
   }
 }

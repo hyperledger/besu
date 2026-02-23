@@ -14,13 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Delegate call operation. */
 public class DelegateCallOperation extends AbstractCallOperation {
@@ -36,7 +34,7 @@ public class DelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected Address to(final MessageFrame frame) {
-    return Words.toAddress(frame.getStackItem(1));
+    return StackMath.toAddressAt(frame.stackData(), frame.stackTop(), 1);
   }
 
   @Override
@@ -51,22 +49,22 @@ public class DelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(2));
+    return StackMath.clampedToLong(frame.stackData(), frame.stackTop(), 2);
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(3));
+    return StackMath.clampedToLong(frame.stackData(), frame.stackTop(), 3);
   }
 
   @Override
   protected long outputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(4));
+    return StackMath.clampedToLong(frame.stackData(), frame.stackTop(), 4);
   }
 
   @Override
   protected long outputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(5));
+    return StackMath.clampedToLong(frame.stackData(), frame.stackTop(), 5);
   }
 
   @Override

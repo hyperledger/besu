@@ -22,6 +22,6 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return DivOperation.staticOperation(frame);
+    return DivOperation.staticOperation(frame, frame.stackData());
   }
 }

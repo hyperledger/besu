@@ -16,11 +16,12 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Balance operation. */
 public class BalanceOperation extends AbstractOperation {
@@ -52,7 +53,9 @@ public class BalanceOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final Address address = Words.toAddress(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final Address address = StackMath.toAddressAt(s, top, 0);
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(accountIsWarm);
@@ -60,7 +63,12 @@ public class BalanceOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Account account = getAccount(address, frame);
-    frame.pushStackItemUnsafe(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getBalance().toArrayUnsafe()));
+    // Overwrite in place (pop 1, push 1)
+    if (account == null) {
+      StackMath.putAt(s, top, 0, UInt256.ZERO);
+    } else {
+      StackMath.putAt(s, top, 0, UInt256.fromBytesBE(account.getBalance().toArrayUnsafe()));
+    }
     return new OperationResult(cost, null);
   }
 }

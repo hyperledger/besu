@@ -22,6 +22,6 @@ public class OrOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return OrOperation.staticOperation(frame);
+    return OrOperation.staticOperation(frame, frame.stackData());
   }
 }

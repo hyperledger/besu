@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -82,8 +82,8 @@ class SStoreOperationTest {
     final SStoreOperation operation = new SStoreOperation(gasCalculator, minimumGasAvailable);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushZero(frame.stackData(), frame.stackTop()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(expectedHalt);

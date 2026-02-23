@@ -26,13 +26,13 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -90,7 +90,7 @@ class CodeTest {
             .build();
 
     frame.setPC(CURRENT_PC);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x03").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 3));
     return frame;
   }
 }

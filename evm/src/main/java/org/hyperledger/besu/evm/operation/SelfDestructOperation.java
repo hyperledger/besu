@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.log.TransferLogEmitter;
 
 /** The Self destruct operation. */
@@ -81,7 +81,11 @@ public class SelfDestructOperation extends AbstractOperation {
     }
 
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
-    final Address beneficiaryAddress = Words.toAddress(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final Address beneficiaryAddress = StackMath.toAddressAt(s, top, 0);
+    // Pop 1
+    frame.setTop(top - 1);
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
     final long beneficiaryAccessCost =

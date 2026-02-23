@@ -60,13 +60,13 @@ public abstract class TernaryOperationBenchmark {
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItemUnsafe(cPool[index]);
-    frame.pushStackItemUnsafe(bPool[index]);
-    frame.pushStackItemUnsafe(aPool[index]);
+    BenchmarkHelper.pushUInt256(frame, cPool[index]);
+    BenchmarkHelper.pushUInt256(frame, bPool[index]);
+    BenchmarkHelper.pushUInt256(frame, aPool[index]);
 
     blackhole.consume(invoke(frame));
 
-    frame.popStackItemUnsafe();
+    frame.setTop(frame.stackTop() - 1);
 
     index = (index + 1) % SAMPLE_SIZE;
   }

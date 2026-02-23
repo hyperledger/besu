@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Sar operation. */
 public class SarOperation extends AbstractFixedCostOperation {
@@ -37,7 +37,7 @@ public class SarOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
@@ -46,17 +46,9 @@ public class SarOperation extends AbstractFixedCostOperation {
    * @param frame the frame
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
-    final UInt256 shiftAmount = frame.peekStackItemUnsafe(0);
-    final UInt256 value = frame.peekStackItemUnsafe(1);
-    frame.shrinkStackUnsafe(1);
-
-    if (!shiftAmount.isUInt64() || Long.compareUnsigned(shiftAmount.longValue(), 256) >= 0) {
-      frame.overwriteStackItemUnsafe(0, value.isNegative() ? UInt256.MAX : UInt256.ZERO);
-    } else {
-      frame.overwriteStackItemUnsafe(0, value.sar((int) shiftAmount.longValue()));
-    }
+    frame.setTop(StackMath.sar(s, frame.stackTop()));
     return sarSuccess;
   }
 }

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
@@ -23,7 +22,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -65,10 +64,13 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     if (!frame.stackHasItems(4)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final Address address = Words.toAddress(frame.popStackItemUnsafe());
-    final long memOffset = clampedToLong(frame.popStackItemUnsafe());
-    final long sourceOffset = clampedToLong(frame.popStackItemUnsafe());
-    final long numBytes = clampedToLong(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final Address address = StackMath.toAddressAt(s, top, 0);
+    final long memOffset = StackMath.clampedToLong(s, top, 1);
+    final long sourceOffset = StackMath.clampedToLong(s, top, 2);
+    final long numBytes = StackMath.clampedToLong(s, top, 3);
+    frame.setTop(top - 4);
 
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);

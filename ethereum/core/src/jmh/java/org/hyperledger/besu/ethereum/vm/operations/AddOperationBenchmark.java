@@ -22,6 +22,6 @@ public class AddOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return AddOperation.staticOperation(frame);
+    return AddOperation.staticOperation(frame, frame.stackData());
   }
 }

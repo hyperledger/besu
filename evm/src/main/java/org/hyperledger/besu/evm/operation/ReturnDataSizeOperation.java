@@ -17,9 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Return data size operation. */
 public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
@@ -37,7 +35,8 @@ public class ReturnDataSizeOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromInt(frame.getReturnData().size()));
+    frame.setTop(
+        StackMath.pushLong(frame.stackData(), frame.stackTop(), frame.getReturnData().size()));
 
     return successResponse;
   }

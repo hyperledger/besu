@@ -14,9 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.apache.tuweni.bytes.Bytes32.leftPad;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.LogTopic;
@@ -24,6 +21,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.tuweni.bytes.Bytes;
@@ -50,8 +48,10 @@ public class LogOperation extends AbstractOperation {
     if (!frame.stackHasItems(2 + numTopics)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final long dataLocation = clampedToLong(frame.popStackItemUnsafe());
-    final long numBytes = clampedToLong(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long dataLocation = StackMath.clampedToLong(s, top, 0);
+    final long numBytes = StackMath.clampedToLong(s, top, 1);
 
     if (frame.isStatic()) {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
@@ -69,8 +69,11 @@ public class LogOperation extends AbstractOperation {
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {
-      builder.add(LogTopic.create(Bytes32.wrap(frame.popStackItemUnsafe().toBytesBE())));
+      final byte[] buf = new byte[32];
+      StackMath.toBytesAt(s, top, 2 + i, buf);
+      builder.add(LogTopic.create(Bytes32.wrap(buf)));
     }
+    frame.setTop(top - 2 - numTopics);
 
     frame.addLog(new Log(address, data, builder.build()));
     return new OperationResult(cost, null);

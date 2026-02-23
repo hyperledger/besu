@@ -40,26 +40,28 @@ public class JumpiOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
    * Performs Jump operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
-    final org.hyperledger.besu.evm.UInt256 dest = frame.peekStackItemUnsafe(0);
-    final org.hyperledger.besu.evm.UInt256 condition = frame.peekStackItemUnsafe(1);
-    frame.shrinkStackUnsafe(2);
+    final int top = frame.stackTop();
+    final int destOff = (top - 1) << 2;
+    final int condOff = (top - 2) << 2;
+    frame.setTop(top - 2);
 
-    // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
-    if (condition.isZero()) {
+    // If condition is zero (false), no jump will be performed.
+    if (s[condOff] == 0 && s[condOff + 1] == 0 && s[condOff + 2] == 0 && s[condOff + 3] == 0) {
       return nojumpResponse;
     }
 
-    return jumpService.performJump(frame, dest, jumpiResponse, invalidJumpResponse);
+    return jumpService.performJump(frame, s, destOff, jumpiResponse, invalidJumpResponse);
   }
 }

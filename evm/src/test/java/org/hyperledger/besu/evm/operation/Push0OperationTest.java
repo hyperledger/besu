@@ -15,22 +15,15 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.frame.BlockValues;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.testutils.FakeBlockValues;
-
-import java.util.Optional;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class Push0OperationTest {
 
@@ -38,26 +31,12 @@ class Push0OperationTest {
 
   @Test
   void shouldPush0OntoStack() {
-    final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
+    final MessageFrame frame = new TestMessageFrameBuilder().build();
     final Operation operation = new Push0Operation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    Mockito.verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    assertThat(frame.getStackItem(0)).isEqualTo(UInt256.ZERO);
     assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
-    assertSuccessResult(result);
-  }
-
-  private void assertSuccessResult(final OperationResult result) {
     assertThat(result).isNotNull();
     assertThat(result.getHaltReason()).isNull();
-  }
-
-  private MessageFrame createMessageFrame(final long initialGas, final Optional<Wei> baseFee) {
-    final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.getRemainingGas()).thenReturn(initialGas);
-    final BlockValues blockValues = new FakeBlockValues(baseFee);
-    when(frame.getBlockValues()).thenReturn(blockValues);
-    when(frame.getCode()).thenReturn(Code.EMPTY_CODE);
-    when(frame.stackHasSpace(1)).thenReturn(true);
-    return frame;
   }
 }

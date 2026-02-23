@@ -71,11 +71,49 @@ public class JumpService {
       final org.hyperledger.besu.evm.UInt256 dest,
       final Operation.OperationResult validJumpResponse,
       final Operation.OperationResult invalidJumpResponse) {
-    if (dest.u3() != 0 || dest.u2() != 0 || dest.u1() != 0
-        || dest.u0() < 0 || dest.u0() > Integer.MAX_VALUE) {
+    if (dest.u3() != 0
+        || dest.u2() != 0
+        || dest.u1() != 0
+        || dest.u0() < 0
+        || dest.u0() > Integer.MAX_VALUE) {
       return invalidJumpResponse;
     }
     final int jumpDestination = (int) dest.u0();
+
+    final Code code = frame.getCode();
+
+    if (code.isJumpDestInvalid(jumpDestination)) {
+      return invalidJumpResponse;
+    }
+
+    frame.setPC(jumpDestination);
+    return validJumpResponse;
+  }
+
+  /**
+   * Performs the jump operation reading the destination directly from the raw stack array.
+   *
+   * @param frame the MessageFrame containing the code and PC
+   * @param s the raw stack long array
+   * @param off the offset of the destination slot in the array (4 longs: u3, u2, u1, u0)
+   * @param validJumpResponse the response to return in case the jump is successful
+   * @param invalidJumpResponse the response to return in case the jump failed
+   * @return either validJumpResponse or invalidJumpResponse depending on the result
+   */
+  public Operation.OperationResult performJump(
+      final MessageFrame frame,
+      final long[] s,
+      final int off,
+      final Operation.OperationResult validJumpResponse,
+      final Operation.OperationResult invalidJumpResponse) {
+    if (s[off] != 0
+        || s[off + 1] != 0
+        || s[off + 2] != 0
+        || s[off + 3] < 0
+        || s[off + 3] > Integer.MAX_VALUE) {
+      return invalidJumpResponse;
+    }
+    final int jumpDestination = (int) s[off + 3];
 
     final Code code = frame.getCode();
 

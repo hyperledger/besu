@@ -18,6 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** Implements the TLOAD operation defined in EIP-1153 */
 public class TLoadOperation extends AbstractOperation {
@@ -37,15 +38,18 @@ public class TLoadOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final org.hyperledger.besu.evm.UInt256 slot = frame.popStackItemUnsafe();
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final org.hyperledger.besu.evm.UInt256 slot = StackMath.getAt(s, top, 0);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    frame.pushStackItemUnsafe(
-        org.hyperledger.besu.evm.UInt256.fromBytesBE(
-            frame
-                .getTransientStorageValue(frame.getRecipientAddress(), slot.toBytes32())
-                .toArrayUnsafe()));
+    // Overwrite in place (pop 1, push 1)
+    final byte[] result =
+        frame
+            .getTransientStorageValue(frame.getRecipientAddress(), slot.toBytes32())
+            .toArrayUnsafe();
+    StackMath.fromBytesAt(s, top, 0, result, 0, result.length);
     return new OperationResult(cost, null);
   }
 }

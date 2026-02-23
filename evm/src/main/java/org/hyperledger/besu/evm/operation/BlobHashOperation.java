@@ -19,10 +19,9 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.List;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /**
  * The BlobHash operation. As specified in <a
@@ -51,24 +50,25 @@ public class BlobHashOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final org.hyperledger.besu.evm.UInt256 indexParam = frame.popStackItemUnsafe();
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
     if (frame.getVersionedHashes().isPresent()) {
-      List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
+      final List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
       // If index doesn't fit in a positive int, it's out of range
-      if (indexParam.u3() != 0 || indexParam.u2() != 0 || indexParam.u1() != 0
-          || indexParam.u0() < 0 || indexParam.u0() > Integer.MAX_VALUE) {
-        frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+      if (!StackMath.fitsInInt(s, top, 0)) {
+        StackMath.putAt(s, top, 0, 0L, 0L, 0L, 0L);
         return new OperationResult(3, null);
       }
-      int versionedHashIndex = (int) indexParam.u0();
+      final int versionedHashIndex = (int) StackMath.longAt(s, top, 0);
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
-        VersionedHash requested = versionedHashes.get(versionedHashIndex);
-        frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(requested.getBytes().toArrayUnsafe()));
+        final VersionedHash requested = versionedHashes.get(versionedHashIndex);
+        final byte[] hashBytes = requested.getBytes().toArrayUnsafe();
+        StackMath.fromBytesAt(s, top, 0, hashBytes, 0, hashBytes.length);
       } else {
-        frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+        StackMath.putAt(s, top, 0, 0L, 0L, 0L, 0L);
       }
     } else {
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+      StackMath.putAt(s, top, 0, 0L, 0L, 0L, 0L);
     }
     return new OperationResult(3, null);
   }

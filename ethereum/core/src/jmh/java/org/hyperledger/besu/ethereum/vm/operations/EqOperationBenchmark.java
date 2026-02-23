@@ -193,6 +193,6 @@ public class EqOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return EqOperation.staticOperation(frame);
+    return EqOperation.staticOperation(frame, frame.stackData());
   }
 }

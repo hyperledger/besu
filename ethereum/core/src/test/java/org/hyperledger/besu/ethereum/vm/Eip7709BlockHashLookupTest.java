@@ -35,13 +35,13 @@ import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -181,12 +181,17 @@ class Eip7709BlockHashLookupTest {
     clearInvocations(frame);
 
     BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
+    long[] s = new long[4 * 4];
+    StackMath.putAt(s, 1, 0, org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
     when(frame.stackHasItems(1)).thenReturn(true);
-    when(frame.popStackItemUnsafe()).thenReturn(org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
+    when(frame.stackData()).thenReturn(s);
+    when(frame.stackTop()).thenReturn(1);
 
     op.execute(frame, null);
 
-    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe()));
+    org.hyperledger.besu.evm.UInt256 expected =
+        org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe());
+    assertThat(StackMath.getAt(s, 1, 0)).isEqualTo(expected);
   }
 
   private BlockHeader createHeader(final long blockNumber, final BlockHeader parentHeader) {

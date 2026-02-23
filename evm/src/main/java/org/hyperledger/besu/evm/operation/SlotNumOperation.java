@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The SLOTNUM operation (EIP-7843). */
 public class SlotNumOperation extends AbstractFixedCostOperation {
@@ -35,7 +35,9 @@ public class SlotNumOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(frame.getBlockValues().getSlotNumber()));
+    frame.setTop(
+        StackMath.pushLong(
+            frame.stackData(), frame.stackTop(), frame.getBlockValues().getSlotNumber()));
 
     return successResponse;
   }

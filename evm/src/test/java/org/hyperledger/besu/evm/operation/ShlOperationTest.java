@@ -15,14 +15,12 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import java.util.Arrays;
 
@@ -104,20 +102,19 @@ class ShlOperationTest {
   @ParameterizedTest
   @MethodSource("data")
   void shiftOperation(final String number, final String shift, final String expectedResult) {
-    final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.stackSize()).thenReturn(2);
-    when(frame.stackHasItems(2)).thenReturn(true);
-    when(frame.getRemainingGas()).thenReturn(100L);
-    when(frame.peekStackItemUnsafe(0))
-        .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(shift).toArrayUnsafe()));
-    when(frame.peekStackItemUnsafe(1))
-        .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(number).toArrayUnsafe()));
+    final MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .pushStackItem(Bytes32.fromHexStringLenient(number))
+            .pushStackItem(Bytes32.fromHexStringLenient(shift))
+            .build();
     operation.execute(frame, null);
+    UInt256 expected;
     if (expectedResult.equals("0x") || expectedResult.equals("0x0")) {
-      verify(frame).overwriteStackItemUnsafe(0, UInt256.ZERO);
+      expected = UInt256.ZERO;
     } else {
-      verify(frame).overwriteStackItemUnsafe(0, UInt256.fromBytesBE(Bytes32.fromHexStringLenient(expectedResult).toArrayUnsafe()));
+      expected = UInt256.fromBytesBE(Bytes32.fromHexStringLenient(expectedResult).toArrayUnsafe());
     }
+    assertThat(frame.getStackItem(0)).isEqualTo(expected);
   }
 
   @Test

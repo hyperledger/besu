@@ -217,10 +217,36 @@ public class BenchmarkHelper {
         srcOffsetPool[i] = org.hyperledger.besu.evm.UInt256.ZERO;
       } else {
         destOffsetPool[i] = org.hyperledger.besu.evm.UInt256.fromInt((i * 32) % 1024);
-        srcOffsetPool[i] =
-            org.hyperledger.besu.evm.UInt256.fromInt(i % Math.max(1, dataSize));
+        srcOffsetPool[i] = org.hyperledger.besu.evm.UInt256.fromInt(i % Math.max(1, dataSize));
       }
     }
+  }
+
+  /**
+   * Pushes a UInt256 value onto the frame's stack by writing limbs directly.
+   *
+   * @param frame the message frame
+   * @param value the UInt256 value to push
+   */
+  static void pushUInt256(final MessageFrame frame, final org.hyperledger.besu.evm.UInt256 value) {
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final int dst = top << 2;
+    s[dst] = value.u3();
+    s[dst + 1] = value.u2();
+    s[dst + 2] = value.u1();
+    s[dst + 3] = value.u0();
+    frame.setTop(top + 1);
+  }
+
+  /**
+   * Pops (discards) n items from the frame's stack using direct top manipulation.
+   *
+   * @param frame the message frame
+   * @param n the number of items to discard
+   */
+  static void popItems(final MessageFrame frame, final int n) {
+    frame.setTop(frame.stackTop() - n);
   }
 
   /**

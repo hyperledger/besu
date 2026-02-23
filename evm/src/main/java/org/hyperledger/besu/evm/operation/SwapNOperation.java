@@ -18,6 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /**
  * The SWAPN operation (EIP-8024).
@@ -56,19 +57,21 @@ public class SwapNOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame, frame.getCode().getBytes().toArrayUnsafe(), frame.getPC());
+    return staticOperation(
+        frame, frame.stackData(), frame.getCode().getBytes().toArrayUnsafe(), frame.getPC());
   }
 
   /**
    * Performs SWAPN operation directly for hot-path execution.
    *
    * @param frame the message frame
+   * @param s the stack data array
    * @param code the bytecode array
    * @param pc the current program counter
    * @return the operation result
    */
   public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
+      final MessageFrame frame, final long[] s, final byte[] code, final int pc) {
     // Get immediate byte, treating end-of-code as 0
     final int imm = (pc + 1 >= code.length) ? 0 : code[pc + 1] & 0xFF;
 
@@ -82,12 +85,7 @@ public class SwapNOperation extends AbstractFixedCostOperation {
     if (!frame.stackHasItems(n + 1)) {
       return UNDERFLOW_RESPONSE;
     }
-    // Swap the top of stack (index 0) with the (n+1)'th item (index n)
-    // In Besu's 0-indexed stack, top is index 0, (n+1)'th is index n
-    final org.hyperledger.besu.evm.UInt256 top = frame.getStackItem(0);
-    final org.hyperledger.besu.evm.UInt256 nthItem = frame.getStackItem(n);
-    frame.setStackItem(0, nthItem);
-    frame.setStackItem(n, top);
+    StackMath.swap(s, frame.stackTop(), n);
     return SWAPN_SUCCESS;
   }
 

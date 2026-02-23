@@ -15,19 +15,18 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.testutils.FakeBlockValues;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 class BaseFeeOperationTest {
@@ -35,48 +34,35 @@ class BaseFeeOperationTest {
 
   @Test
   void shouldReturnGasCost() {
-    final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
+    final MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .blockValues(new FakeBlockValues(Optional.of(Wei.of(5L))))
+            .build();
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
-    assertSuccessResult(result);
+    assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void shouldWriteBaseFeeToStack() {
-    final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
+    final MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .blockValues(new FakeBlockValues(Optional.of(Wei.of(5L))))
+            .build();
     final Operation operation = new BaseFeeOperation(gasCalculator);
-    final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Wei.of(5L).toBytes().toArrayUnsafe()));
-    assertSuccessResult(result);
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(
+            org.hyperledger.besu.evm.UInt256.fromBytesBE(Wei.of(5L).toBytes().toArrayUnsafe()));
   }
 
   @Test
   void shouldHaltIfNoBaseFeeInBlockHeader() {
-    final MessageFrame frame = createMessageFrame(100, Optional.empty());
+    final MessageFrame frame =
+        new TestMessageFrameBuilder().blockValues(new FakeBlockValues(Optional.empty())).build();
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    assertExceptionalHalt(result, ExceptionalHaltReason.INVALID_OPERATION);
-  }
-
-  private void assertSuccessResult(final OperationResult result) {
-    assertThat(result).isNotNull();
-    assertThat(result.getHaltReason()).isNull();
-  }
-
-  private void assertExceptionalHalt(
-      final OperationResult result, final ExceptionalHaltReason reason) {
-    assertThat(result).isNotNull();
-    assertThat(result.getHaltReason()).isEqualTo(reason);
-  }
-
-  private MessageFrame createMessageFrame(final long initialGas, final Optional<Wei> baseFee) {
-    final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.getRemainingGas()).thenReturn(initialGas);
-    final BlockValues blockHeader = mock(BlockValues.class);
-    when(blockHeader.getBaseFee()).thenReturn(baseFee);
-    when(frame.getBlockValues()).thenReturn(blockHeader);
-    when(frame.stackHasSpace(1)).thenReturn(true);
-    return frame;
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
   }
 }

@@ -128,6 +128,6 @@ public class ModOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return ModOperation.staticOperation(frame);
+    return ModOperation.staticOperation(frame, frame.stackData());
   }
 }

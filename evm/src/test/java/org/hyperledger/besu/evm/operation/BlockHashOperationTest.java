@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
@@ -93,9 +94,11 @@ class BlockHashOperationTest {
             .initialGas(initialGas)
             .build();
     blockHashOperation.execute(frame, null);
-    final org.hyperledger.besu.evm.UInt256 result = frame.popStackItemUnsafe();
-    assertThat(result).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(expectedOutput.toArrayUnsafe()));
-    assertThat(frame.stackSize()).isZero();
+    final org.hyperledger.besu.evm.UInt256 result =
+        StackMath.getAt(frame.stackData(), frame.stackTop(), 0);
+    assertThat(result)
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(expectedOutput.toArrayUnsafe()));
+    assertThat(frame.stackSize()).isOne();
   }
 
   private void assertFailure(

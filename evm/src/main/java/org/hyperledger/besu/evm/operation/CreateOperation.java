@@ -15,8 +15,6 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Code;
@@ -24,6 +22,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.function.Supplier;
 
@@ -43,8 +42,10 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-    final int inputOffset = clampedToInt(frame.getStackItem(1));
-    final int inputSize = clampedToInt(frame.getStackItem(2));
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final int inputOffset = StackMath.clampedToInt(s, top, 1);
+    final int inputSize = StackMath.clampedToInt(s, top, 2);
     return clampedAdd(
         clampedAdd(
             gasCalculator().txCreateCost(),
@@ -61,8 +62,10 @@ public class CreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long inputOffset = StackMath.clampedToLong(s, top, 1);
+    final long inputSize = StackMath.clampedToLong(s, top, 2);
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.

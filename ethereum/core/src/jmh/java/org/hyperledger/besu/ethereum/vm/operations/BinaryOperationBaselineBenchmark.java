@@ -23,7 +23,7 @@ public class BinaryOperationBaselineBenchmark extends BinaryOperationBenchmark {
   protected Operation.OperationResult invoke(final MessageFrame frame) {
     // Approximate baseline by popping the extra input and doing nothing
     // second pop is done by the caller
-    frame.popStackItemUnsafe();
+    frame.setTop(frame.stackTop() - 1);
     return null;
   }
 }

@@ -17,10 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The CLZ operation. */
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
@@ -39,7 +36,7 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
@@ -48,20 +45,9 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @param frame the frame
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
-    final org.hyperledger.besu.evm.UInt256 value = frame.peekStackItemUnsafe(0);
-    final int numberOfLeadingZeros;
-    if (value.u3() != 0) {
-      numberOfLeadingZeros = Long.numberOfLeadingZeros(value.u3());
-    } else if (value.u2() != 0) {
-      numberOfLeadingZeros = 64 + Long.numberOfLeadingZeros(value.u2());
-    } else if (value.u1() != 0) {
-      numberOfLeadingZeros = 128 + Long.numberOfLeadingZeros(value.u1());
-    } else {
-      numberOfLeadingZeros = 192 + Long.numberOfLeadingZeros(value.u0());
-    }
-    frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.fromInt(numberOfLeadingZeros));
+    frame.setTop(StackMath.clz(s, frame.stackTop()));
     return clzSuccess;
   }
 }

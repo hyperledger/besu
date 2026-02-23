@@ -122,8 +122,11 @@ public interface Words {
    * @return the least of the value or Integer.MAX_VALUE
    */
   static int clampedToInt(final org.hyperledger.besu.evm.UInt256 uint) {
-    if (uint.u3() != 0 || uint.u2() != 0 || uint.u1() != 0
-        || uint.u0() < 0 || uint.u0() > Integer.MAX_VALUE) {
+    if (uint.u3() != 0
+        || uint.u2() != 0
+        || uint.u1() != 0
+        || uint.u0() < 0
+        || uint.u0() > Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
     }
     return (int) uint.u0();

@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -24,6 +23,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,40 +32,39 @@ class SlotNumOperationTest {
 
   @Test
   void shouldReturnGasCost() {
-    final MessageFrame frame = createMessageFrame(100L, 42L);
+    final MessageFrame frame = createMessageFrame(42L);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
-    assertSuccessResult(result);
+    assertThat(result.getHaltReason()).isNull();
   }
 
   @Test
   void shouldWriteSlotNumberToStack() {
     final long expectedSlotNumber = 12345L;
-    final MessageFrame frame = createMessageFrame(100L, expectedSlotNumber);
+    final MessageFrame frame = createMessageFrame(expectedSlotNumber);
     final Operation operation = new SlotNumOperation(gasCalculator);
-    final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(expectedSlotNumber));
-    assertSuccessResult(result);
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromLong(expectedSlotNumber));
   }
 
   @Test
   void shouldHandleZeroSlotNumber() {
-    final MessageFrame frame = createMessageFrame(100L, 0L);
+    final MessageFrame frame = createMessageFrame(0L);
     final Operation operation = new SlotNumOperation(gasCalculator);
-    final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(0L));
-    assertSuccessResult(result);
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   @Test
   void shouldHandleLargeSlotNumber() {
     final long maxSlotNumber = Long.MAX_VALUE;
-    final MessageFrame frame = createMessageFrame(100L, maxSlotNumber);
+    final MessageFrame frame = createMessageFrame(maxSlotNumber);
     final Operation operation = new SlotNumOperation(gasCalculator);
-    final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(maxSlotNumber));
-    assertSuccessResult(result);
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromLong(maxSlotNumber));
   }
 
   @Test
@@ -87,18 +86,9 @@ class SlotNumOperationTest {
     assertThat(operation.getStackItemsProduced()).isEqualTo(1);
   }
 
-  private void assertSuccessResult(final OperationResult result) {
-    assertThat(result).isNotNull();
-    assertThat(result.getHaltReason()).isNull();
-  }
-
-  private MessageFrame createMessageFrame(final long initialGas, final long slotNumber) {
-    final MessageFrame frame = mock(MessageFrame.class);
-    when(frame.getRemainingGas()).thenReturn(initialGas);
+  private MessageFrame createMessageFrame(final long slotNumber) {
     final BlockValues blockValues = mock(BlockValues.class);
     when(blockValues.getSlotNumber()).thenReturn(slotNumber);
-    when(frame.getBlockValues()).thenReturn(blockValues);
-    when(frame.stackHasSpace(1)).thenReturn(true);
-    return frame;
+    return new TestMessageFrameBuilder().blockValues(blockValues).build();
   }
 }

@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.math.BigInteger;
 
@@ -38,25 +39,27 @@ public class ExpOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame, gasCalculator());
+    return staticOperation(frame, frame.stackData(), gasCalculator());
   }
 
   /**
    * Performs exp operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @param gasCalculator the gas calculator
    * @return the operation result
    */
   public static OperationResult staticOperation(
-      final MessageFrame frame, final GasCalculator gasCalculator) {
+      final MessageFrame frame, final long[] s, final GasCalculator gasCalculator) {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final UInt256 number = frame.popStackItemUnsafe();
-    final UInt256 power = frame.popStackItemUnsafe();
+    final int top = frame.stackTop();
+    final UInt256 number = StackMath.getAt(s, top, 0);
+    final UInt256 power = StackMath.getAt(s, top, 1);
 
-    final int numBytes = power.byteLength();
+    final int numBytes = StackMath.byteLengthAt(s, top, 1);
 
     final long cost = gasCalculator.expOperationGasCost(numBytes);
     if (frame.getRemainingGas() < cost) {
@@ -67,7 +70,10 @@ public class ExpOperation extends AbstractOperation {
     final BigInteger numBI = number.toBigInteger();
     final BigInteger powBI = power.toBigInteger();
     final BigInteger result = numBI.modPow(powBI, MOD_BASE);
-    frame.pushStackItemUnsafe(UInt256.fromBigInteger(result));
+    // Pop 2, push 1: net effect is top - 1
+    final int newTop = top - 1;
+    frame.setTop(newTop);
+    StackMath.putAt(s, newTop, 0, UInt256.fromBigInteger(result));
 
     return new OperationResult(cost, null);
   }

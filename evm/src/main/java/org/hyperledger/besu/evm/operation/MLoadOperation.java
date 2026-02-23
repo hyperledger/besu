@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The M load operation. */
 public class MLoadOperation extends AbstractOperation {
@@ -40,16 +37,18 @@ public class MLoadOperation extends AbstractOperation {
     if (!frame.stackHasItems(1)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final long location = clampedToLong(frame.popStackItemUnsafe());
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long location = StackMath.clampedToLong(s, top, 0);
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Bytes value = frame.readMutableMemory(location, 32, true).copy();
-
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
+    final byte[] value = frame.readMutableMemory(location, 32, true).toArrayUnsafe();
+    // Overwrite the top slot in-place (pop offset, push value = same slot)
+    StackMath.fromBytesAt(s, top, 0, value, 0, 32);
     return new OperationResult(cost, null);
   }
 }

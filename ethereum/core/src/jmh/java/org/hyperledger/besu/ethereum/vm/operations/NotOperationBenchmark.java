@@ -22,6 +22,6 @@ public class NotOperationBenchmark extends UnaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return NotOperation.staticOperation(frame);
+    return NotOperation.staticOperation(frame, frame.stackData());
   }
 }

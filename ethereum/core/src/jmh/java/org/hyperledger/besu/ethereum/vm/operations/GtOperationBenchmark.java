@@ -22,6 +22,6 @@ public class GtOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return GtOperation.staticOperation(frame);
+    return GtOperation.staticOperation(frame, frame.stackData());
   }
 }

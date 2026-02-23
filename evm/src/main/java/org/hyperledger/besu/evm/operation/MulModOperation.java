@@ -17,11 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Mul mod operation. */
 public class MulModOperation extends AbstractFixedCostOperation {
@@ -40,7 +36,7 @@ public class MulModOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
@@ -49,19 +45,9 @@ public class MulModOperation extends AbstractFixedCostOperation {
    * @param frame the frame
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasItems(3)) return UNDERFLOW_RESPONSE;
-    final org.hyperledger.besu.evm.UInt256 value0 = frame.peekStackItemUnsafe(0);
-    final org.hyperledger.besu.evm.UInt256 value1 = frame.peekStackItemUnsafe(1);
-    final org.hyperledger.besu.evm.UInt256 value2 = frame.peekStackItemUnsafe(2);
-
-    frame.shrinkStackUnsafe(2);
-    if (value2.isZero()) {
-      frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.ZERO);
-    } else {
-      frame.overwriteStackItemUnsafe(0, value0.mulMod(value1, value2));
-    }
-
+    frame.setTop(StackMath.mulMod(s, frame.stackTop()));
     return mulModSuccess;
   }
 }

@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.INVALID_STATE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -28,7 +27,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -82,7 +81,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    final Wei value = Wei.wrap(Bytes.wrap(frame.getStackItem(0).toBytesBE()));
+    final Wei value =
+        Wei.wrap(Bytes.wrap(StackMath.getAt(frame.stackData(), frame.stackTop(), 0).toBytesBE()));
 
     final Address address = frame.getRecipientAddress();
     final MutableAccount account = getMutableAccount(address, frame);
@@ -92,7 +92,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     Code code = codeSupplier.get();
 
     if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
-      frame.popStackItems(getStackItemsConsumed());
+      frame.setTop(frame.stackTop() - getStackItemsConsumed());
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
 
@@ -161,15 +161,19 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param frame the current execution frame
    */
   protected void fail(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long inputOffset = StackMath.clampedToLong(s, top, 1);
+    final long inputSize = StackMath.clampedToLong(s, top, 2);
     frame.readMutableMemory(inputOffset, inputSize);
-    frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    final int newTop = top - getStackItemsConsumed() + 1;
+    StackMath.putAt(s, newTop, 0, 0, 0, 0, 0);
+    frame.setTop(newTop);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code) {
-    final Wei value = Wei.wrap(Bytes.wrap(parent.getStackItem(0).toBytesBE()));
+    final Wei value =
+        Wei.wrap(Bytes.wrap(StackMath.getAt(parent.stackData(), parent.stackTop(), 0).toBytesBE()));
 
     final Address contractAddress = generateTargetContractAddress(parent, code);
     final Bytes inputData = getInputData(parent);
@@ -220,16 +224,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.addLogs(childFrame.getLogs());
     frame.addSelfDestructs(childFrame.getSelfDestructs());
     frame.addCreates(childFrame.getCreates());
-    frame.popStackItems(getStackItemsConsumed());
+    final long[] s = frame.stackData();
+    final int newTop = frame.stackTop() - getStackItemsConsumed() + 1;
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      Address createdAddress = childFrame.getContractAddress();
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(createdAddress.getBytes().toArrayUnsafe()));
+      final Address createdAddress = childFrame.getContractAddress();
+      frame.setTop(StackMath.pushAddress(s, newTop - 1, createdAddress));
       frame.setReturnData(Bytes.EMPTY);
       onSuccess(frame, createdAddress);
     } else {
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+      StackMath.putAt(s, newTop, 0, 0, 0, 0, 0);
+      frame.setTop(newTop);
       onFailure(frame, childFrame.getExceptionalHaltReason());
     }
 

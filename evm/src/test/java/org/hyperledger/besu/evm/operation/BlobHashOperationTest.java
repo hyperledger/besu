@@ -16,22 +16,20 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
-import org.hyperledger.besu.evm.UInt256;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
@@ -41,20 +39,35 @@ class BlobHashOperationTest {
   private static final String testVersionedHash =
       "0x01cafebabeb0b0facedeadbeefbeef0001cafebabeb0b0facedeadbeefbeef00";
 
+  /** Helper: create a stack with one UInt256 value pushed. Returns stack with top=1. */
+  private static long[] stackWithValue(final UInt256 val) {
+    final long[] s = new long[4 * 4]; // room for 4 slots
+    StackMath.putAt(s, 1, 0, val);
+    return s;
+  }
+
+  /** Helper: read the top slot as UInt256. */
+  private static UInt256 readTop(final long[] s, final int top) {
+    return StackMath.getAt(s, top, 0);
+  }
+
   @Test
   void putsHashOnStack() {
     VersionedHash version0Hash = new VersionedHash(Bytes32.fromHexStringStrict(testVersionedHash));
     List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     BlobHashOperation getHash = new BlobHashOperation(new LondonGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
+    long[] s = stackWithValue(UInt256.ZERO);
     when(frame.stackHasItems(1)).thenReturn(true);
-    when(frame.popStackItemUnsafe()).thenReturn(UInt256.ZERO);
+    when(frame.stackData()).thenReturn(s);
+    when(frame.stackTop()).thenReturn(1);
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
     assertThat(r.getHaltReason()).isNull();
-    verify(frame).pushStackItemUnsafe(UInt256.fromBytesBE(version0Hash.getBytes().toArrayUnsafe()));
+    assertThat(readTop(s, 1))
+        .isEqualTo(UInt256.fromBytesBE(version0Hash.getBytes().toArrayUnsafe()));
   }
 
   @Test
@@ -64,20 +77,26 @@ class BlobHashOperationTest {
 
     BlobHashOperation getHash = new BlobHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
+    long[] s = stackWithValue(UInt256.ZERO);
     when(frame.stackHasItems(1)).thenReturn(true);
-    when(frame.popStackItemUnsafe()).thenReturn(UInt256.ZERO);
+    when(frame.stackData()).thenReturn(s);
+    when(frame.stackTop()).thenReturn(1);
     when(frame.getVersionedHashes()).thenReturn(Optional.empty());
 
     Operation.OperationResult failed1 = getHash.execute(frame, fakeEVM);
     assertThat(failed1.getGasCost()).isEqualTo(3);
     assertThat(failed1.getHaltReason()).isNull();
+    assertThat(readTop(s, 1)).isEqualTo(UInt256.ZERO);
 
-    when(frame.popStackItemUnsafe()).thenReturn(UInt256.ZERO);
+    // Reset stack for second call
+    s = stackWithValue(UInt256.ZERO);
+    when(frame.stackData()).thenReturn(s);
+    when(frame.stackTop()).thenReturn(1);
     when(frame.getVersionedHashes()).thenReturn(Optional.of(new ArrayList<>()));
     Operation.OperationResult failed2 = getHash.execute(frame, fakeEVM);
     assertThat(failed2.getGasCost()).isEqualTo(3);
     assertThat(failed2.getHaltReason()).isNull();
-    verify(frame, times(2)).pushStackItemUnsafe(UInt256.ZERO);
+    assertThat(readTop(s, 1)).isEqualTo(UInt256.ZERO);
   }
 
   @Test
@@ -86,14 +105,16 @@ class BlobHashOperationTest {
     List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     BlobHashOperation getHash = new BlobHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
+    long[] s = stackWithValue(UInt256.fromInt(1));
     when(frame.stackHasItems(1)).thenReturn(true);
-    when(frame.popStackItemUnsafe()).thenReturn(UInt256.fromInt(1));
+    when(frame.stackData()).thenReturn(s);
+    when(frame.stackTop()).thenReturn(1);
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
     assertThat(r.getHaltReason()).isNull();
-    verify(frame).pushStackItemUnsafe(UInt256.ZERO);
+    assertThat(readTop(s, 1)).isEqualTo(UInt256.ZERO);
   }
 
   @Test
@@ -102,13 +123,15 @@ class BlobHashOperationTest {
     List<VersionedHash> versionedHashes = Arrays.asList(version0Hash);
     BlobHashOperation getHash = new BlobHashOperation(new CancunGasCalculator());
     MessageFrame frame = mock(MessageFrame.class);
+    long[] s = stackWithValue(UInt256.fromBytesBE(Bytes32.repeat((byte) 0x2C).toArrayUnsafe()));
     when(frame.stackHasItems(1)).thenReturn(true);
-    when(frame.popStackItemUnsafe()).thenReturn(UInt256.fromBytesBE(Bytes32.repeat((byte) 0x2C).toArrayUnsafe()));
+    when(frame.stackData()).thenReturn(s);
+    when(frame.stackTop()).thenReturn(1);
     when(frame.getVersionedHashes()).thenReturn(Optional.of(versionedHashes));
     EVM fakeEVM = mock(EVM.class);
     Operation.OperationResult r = getHash.execute(frame, fakeEVM);
     assertThat(r.getGasCost()).isEqualTo(3);
     assertThat(r.getHaltReason()).isNull();
-    verify(frame).pushStackItemUnsafe(UInt256.ZERO);
+    assertThat(readTop(s, 1)).isEqualTo(UInt256.ZERO);
   }
 }

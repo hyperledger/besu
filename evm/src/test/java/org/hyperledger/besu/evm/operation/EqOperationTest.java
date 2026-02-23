@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import java.util.Arrays;
@@ -99,7 +100,7 @@ public class EqOperationTest {
 
     operation.executeFixedCostOperation(frame, mock(EVM.class));
 
-    assertThat(frame.popStackItemUnsafe())
+    assertThat(StackMath.getAt(frame.stackData(), frame.stackTop(), 0))
         .isEqualTo(org.hyperledger.besu.evm.UInt256.fromInt(expectedResult.ordinal()));
   }
 }

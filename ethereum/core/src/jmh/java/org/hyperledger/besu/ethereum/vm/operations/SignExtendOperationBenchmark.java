@@ -22,6 +22,6 @@ public class SignExtendOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return SignExtendOperation.staticOperation(frame);
+    return SignExtendOperation.staticOperation(frame, frame.stackData());
   }
 }

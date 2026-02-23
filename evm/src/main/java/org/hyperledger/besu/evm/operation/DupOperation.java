@@ -18,6 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Dup operation. */
 public class DupOperation extends AbstractFixedCostOperation {
@@ -55,21 +56,22 @@ public class DupOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame, index);
+    return staticOperation(frame, frame.stackData(), index);
   }
 
   /**
    * Performs Dup operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @param index the index
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame, final int index) {
+  public static OperationResult staticOperation(
+      final MessageFrame frame, final long[] s, final int index) {
     if (!frame.stackHasItems(index)) return UNDERFLOW_RESPONSE;
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(frame.peekStackItemUnsafe(index - 1));
-
+    frame.setTop(StackMath.dup(s, frame.stackTop(), index));
     return dupSuccess;
   }
 }

@@ -19,6 +19,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.Optional;
 
@@ -42,7 +43,9 @@ public class BaseFeeOperation extends AbstractFixedCostOperation {
     if (maybeBaseFee.isEmpty()) {
       return new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_OPERATION);
     }
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(maybeBaseFee.orElseThrow().toBytes().toArrayUnsafe()));
+    final byte[] bytes = maybeBaseFee.orElseThrow().toBytes().toArrayUnsafe();
+    frame.setTop(
+        StackMath.pushFromBytes(frame.stackData(), frame.stackTop(), bytes, 0, bytes.length));
     return successResponse;
   }
 }

@@ -35,7 +35,7 @@ public class SwapNOperationBenchmark extends ImmediateByteOperationBenchmark {
   @Override
   protected Operation.OperationResult invoke(
       final MessageFrame frame, final byte[] code, final int pc) {
-    return SwapNOperation.staticOperation(frame, code, pc);
+    return SwapNOperation.staticOperation(frame, frame.stackData(), code, pc);
   }
 
   @Override

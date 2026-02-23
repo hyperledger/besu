@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.ByteCodeBuilder;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.stream.Stream;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,8 +72,8 @@ class TStoreOperationTest {
     final TStoreOperation operation = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushZero(frame.stackData(), frame.stackTop()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(INSUFFICIENT_GAS);
@@ -86,8 +86,8 @@ class TStoreOperationTest {
     final TStoreOperation operation = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushZero(frame.stackData(), frame.stackTop()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
@@ -101,10 +101,10 @@ class TStoreOperationTest {
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
 
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
     final OperationResult tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    var tloadValue = frame.popStackItemUnsafe();
+    var tloadValue = StackMath.getAt(frame.stackData(), frame.stackTop(), 0);
     assertThat(tloadValue).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
@@ -115,24 +115,27 @@ class TStoreOperationTest {
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     final OperationResult result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     TLoadOperation tload = new TLoadOperation(gasCalculator);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
     OperationResult tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    org.hyperledger.besu.evm.UInt256 tloadValue = frame.popStackItemUnsafe();
+    org.hyperledger.besu.evm.UInt256 tloadValue =
+        StackMath.getAt(frame.stackData(), frame.stackTop(), 0);
+    frame.setTop(frame.stackTop() - 1);
     assertThat(tloadValue).isEqualTo(org.hyperledger.besu.evm.UInt256.fromLong(1));
 
     // Loading from a different location returns default value
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x02").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 2));
     tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    tloadValue = frame.popStackItemUnsafe();
+    tloadValue = StackMath.getAt(frame.stackData(), frame.stackTop(), 0);
+    frame.setTop(frame.stackTop() - 1);
     assertThat(tloadValue).isEqualTo(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
@@ -143,24 +146,26 @@ class TStoreOperationTest {
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     OperationResult result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     // Store 2 at position 1
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x02").toArrayUnsafe()));
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 2));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     final TLoadOperation tload = new TLoadOperation(gasCalculator);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
     final OperationResult tloadResult = tload.execute(frame, null);
     assertThat(tloadResult.getHaltReason()).isNull();
-    org.hyperledger.besu.evm.UInt256 tloadValue = frame.popStackItemUnsafe();
+    org.hyperledger.besu.evm.UInt256 tloadValue =
+        StackMath.getAt(frame.stackData(), frame.stackTop(), 0);
+    frame.setTop(frame.stackTop() - 1);
     assertThat(tloadValue).isEqualTo(org.hyperledger.besu.evm.UInt256.fromLong(2));
   }
 
@@ -172,15 +177,15 @@ class TStoreOperationTest {
     final TStoreOperation tstore = new TStoreOperation(gasCalculator);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     OperationResult result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();
 
     // Reset value to 0
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.setTop(StackMath.pushZero(frame.stackData(), frame.stackTop()));
+    frame.setTop(StackMath.pushLong(frame.stackData(), frame.stackTop(), 1));
 
     result = tstore.execute(frame, null);
     assertThat(result.getHaltReason()).isNull();

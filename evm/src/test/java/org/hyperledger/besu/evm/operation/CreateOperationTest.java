@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -75,7 +76,7 @@ class CreateOperationTest {
     // Given: Execute a CREATE operation with a contract that logs in the constructor
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -99,9 +100,7 @@ class CreateOperationTest {
 
     // WHEN the memory that the create operation was executed from is altered.
     messageFrame.writeMemory(
-        memoryOffset.toInt(),
-        SIMPLE_CREATE.size(),
-        Bytes.random(SIMPLE_CREATE.size()));
+        memoryOffset.toInt(), SIMPLE_CREATE.size(), Bytes.random(SIMPLE_CREATE.size()));
 
     // THEN the logs still have the expected topic
     final String calculatedTopicAfter = log.getTopics().get(0).getBytes().toUnprefixedHexString();
@@ -112,7 +111,7 @@ class CreateOperationTest {
   void nonceTooLarge() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -129,7 +128,7 @@ class CreateOperationTest {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1025);
+        testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1025);
 
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -145,8 +144,7 @@ class CreateOperationTest {
   void notEnoughValue() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.ofUnsignedInt(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, Bytes.of(1), 1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.of(1), 1);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     for (int i = 0; i < 1025; i++) {
       messageFrameStack.add(messageFrame);
@@ -166,7 +164,7 @@ class CreateOperationTest {
   void shanghaiMaxInitCodeSizeCreate() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.fromHexString("0xc000");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -194,7 +192,7 @@ class CreateOperationTest {
   void shanghaiMaxInitCodeSizePlus1Create() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.fromHexString("0xc001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -214,7 +212,7 @@ class CreateOperationTest {
   void amsterdamMaxInitCodeSizeCreate() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.fromHexString("0x010000");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -235,7 +233,7 @@ class CreateOperationTest {
   void amsterdamMaxInitCodeSizePlus1Create() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.fromHexString("0x010001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -255,7 +253,7 @@ class CreateOperationTest {
   void amsterdamBetweenOldAndNewInitCodeLimitCreate() {
     final Bytes memoryOffset = Bytes.fromHexString("0xFF");
     final Bytes memoryLength = Bytes.fromHexString("0xC001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY,1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, Bytes.EMPTY, 1);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -274,10 +272,7 @@ class CreateOperationTest {
 
   @NotNull
   private MessageFrame testMemoryFrame(
-      final Bytes memoryOffset,
-      final Bytes memoryLength,
-      final Bytes value,
-      final int depth) {
+      final Bytes memoryOffset, final Bytes memoryLength, final Bytes value, final int depth) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -297,12 +292,26 @@ class CreateOperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
-    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
-    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
+    {
+      final byte[] lenBytes = memoryLength.toArrayUnsafe();
+      messageFrame.setTop(
+          StackMath.pushFromBytes(
+              messageFrame.stackData(), messageFrame.stackTop(), lenBytes, 0, lenBytes.length));
+    }
+    {
+      final byte[] offBytes = memoryOffset.toArrayUnsafe();
+      messageFrame.setTop(
+          StackMath.pushFromBytes(
+              messageFrame.stackData(), messageFrame.stackTop(), offBytes, 0, offBytes.length));
+    }
+    {
+      final byte[] valBytes = value.toArrayUnsafe();
+      messageFrame.setTop(
+          StackMath.pushFromBytes(
+              messageFrame.stackData(), messageFrame.stackTop(), valBytes, 0, valBytes.length));
+    }
     messageFrame.expandMemory(0, 500);
-    messageFrame.writeMemory(
-        memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
+    messageFrame.writeMemory(memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     while (messageFrameStack.size() < depth) {
       messageFrameStack.push(messageFrame);

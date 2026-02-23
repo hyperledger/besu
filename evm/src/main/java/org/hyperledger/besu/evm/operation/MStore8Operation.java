@@ -14,14 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The M store8 operation. */
 public class MStore8Operation extends AbstractOperation {
@@ -40,9 +37,11 @@ public class MStore8Operation extends AbstractOperation {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final long location = clampedToLong(frame.popStackItemUnsafe());
-    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItemUnsafe();
-    final byte theByte = (byte) (value.u0() & 0xFF);
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long location = StackMath.clampedToLong(s, top, 0);
+    // Low byte of value slot
+    final byte theByte = (byte) (s[((top - 2) << 2) + 3] & 0xFF);
 
     final long cost = gasCalculator().mStore8OperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
@@ -50,6 +49,7 @@ public class MStore8Operation extends AbstractOperation {
     }
 
     frame.writeMemory(location, theByte, true);
+    frame.setTop(top - 2);
     return new OperationResult(cost, null);
   }
 }

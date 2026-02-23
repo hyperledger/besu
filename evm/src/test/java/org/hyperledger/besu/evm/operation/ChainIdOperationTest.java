@@ -15,12 +15,11 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import java.util.List;
 
@@ -29,12 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 class ChainIdOperationTest {
-
-  private final MessageFrame messageFrame = mock(MessageFrame.class);
 
   static Iterable<Arguments> params() {
     return List.of(
@@ -47,26 +42,15 @@ class ChainIdOperationTest {
   @ParameterizedTest
   @MethodSource("params")
   void shouldReturnChainId(final String chainIdString, final int expectedGas) {
-    Bytes32 chainId = Bytes32.fromHexString(chainIdString);
-    ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
-    final ArgumentCaptor<org.hyperledger.besu.evm.UInt256> arg = ArgumentCaptor.forClass(org.hyperledger.besu.evm.UInt256.class);
-    when(messageFrame.getRemainingGas()).thenReturn(100L);
-    when(messageFrame.stackHasSpace(1)).thenReturn(true);
-    operation.execute(messageFrame, null);
-    Mockito.verify(messageFrame).getRemainingGas();
-    Mockito.verify(messageFrame).stackHasSpace(1);
-    Mockito.verify(messageFrame).pushStackItemUnsafe(arg.capture());
-    Mockito.verifyNoMoreInteractions(messageFrame);
-    assertThat(arg.getValue()).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(chainId.toArrayUnsafe()));
-  }
-
-  @ParameterizedTest
-  @MethodSource("params")
-  void shouldCalculateGasPrice(final String chainIdString, final int expectedGas) {
-    Bytes32 chainId = Bytes32.fromHexString(chainIdString);
-    ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
-    final OperationResult result = operation.execute(messageFrame, null);
+    final Bytes32 chainId = Bytes32.fromHexString(chainIdString);
+    final ChainIdOperation operation =
+        new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
+    final MessageFrame frame = new TestMessageFrameBuilder().build();
+    final OperationResult result = operation.execute(frame, null);
+    assertThat(result.getHaltReason()).isNull();
     assertThat(result.getGasCost()).isEqualTo(expectedGas);
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(chainId.toArrayUnsafe()));
   }
 
   @Test

@@ -26,6 +26,6 @@ public class ExpOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return ExpOperation.staticOperation(frame, PRAGUE_GAS_CALCULATOR);
+    return ExpOperation.staticOperation(frame, frame.stackData(), PRAGUE_GAS_CALCULATOR);
   }
 }

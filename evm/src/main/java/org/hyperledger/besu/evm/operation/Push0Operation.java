@@ -19,8 +19,7 @@ import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
-import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Push0 operation. */
 public class Push0Operation extends AbstractFixedCostOperation {
@@ -39,18 +38,19 @@ public class Push0Operation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    return staticOperation(frame, frame.stackData());
   }
 
   /**
    * Performs push0 operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
+  public static OperationResult staticOperation(final MessageFrame frame, final long[] s) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    frame.setTop(StackMath.pushZero(s, frame.stackTop()));
     return push0Success;
   }
 }

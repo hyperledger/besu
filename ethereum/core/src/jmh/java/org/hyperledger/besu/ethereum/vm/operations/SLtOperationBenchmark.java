@@ -22,6 +22,6 @@ public class SLtOperationBenchmark extends BinaryOperationBenchmark {
 
   @Override
   protected Operation.OperationResult invoke(final MessageFrame frame) {
-    return SLtOperation.staticOperation(frame);
+    return SLtOperation.staticOperation(frame, frame.stackData());
   }
 }

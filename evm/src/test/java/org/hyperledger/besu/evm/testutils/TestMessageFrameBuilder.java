@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -166,7 +167,12 @@ public class TestMessageFrameBuilder {
             .isStatic(isStatic)
             .build();
     frame.setPC(pc);
-    stackItems.forEach(item -> frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(item.toArrayUnsafe())));
+    stackItems.forEach(
+        item -> {
+          final byte[] bytes = item.toArrayUnsafe();
+          frame.setTop(
+              StackMath.pushFromBytes(frame.stackData(), frame.stackTop(), bytes, 0, bytes.length));
+        });
     frame.writeMemory(0, memory.size(), memory);
     return frame;
   }

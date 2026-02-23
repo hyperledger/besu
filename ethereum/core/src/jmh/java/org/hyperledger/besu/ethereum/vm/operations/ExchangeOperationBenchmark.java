@@ -36,7 +36,7 @@ public class ExchangeOperationBenchmark extends ImmediateByteOperationBenchmark 
   @Override
   protected Operation.OperationResult invoke(
       final MessageFrame frame, final byte[] code, final int pc) {
-    return ExchangeOperation.staticOperation(frame, code, pc);
+    return ExchangeOperation.staticOperation(frame, frame.stackData(), code, pc);
   }
 
   @Override

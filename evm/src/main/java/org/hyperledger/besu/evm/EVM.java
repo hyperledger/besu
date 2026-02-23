@@ -197,6 +197,7 @@ public class EVM {
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+    final long[] s = frame.stackData();
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -219,42 +220,42 @@ public class EVM {
         result =
             switch (opcode) {
               case 0x00 -> StopOperation.staticOperation(frame);
-              case 0x01 -> AddOperation.staticOperation(frame);
-              case 0x02 -> MulOperation.staticOperation(frame);
-              case 0x03 -> SubOperation.staticOperation(frame);
-              case 0x04 -> DivOperation.staticOperation(frame);
-              case 0x05 -> SDivOperation.staticOperation(frame);
-              case 0x06 -> ModOperation.staticOperation(frame);
-              case 0x07 -> SModOperation.staticOperation(frame);
-              case 0x08 -> AddModOperation.staticOperation(frame);
-              case 0x09 -> MulModOperation.staticOperation(frame);
-              case 0x0a -> ExpOperation.staticOperation(frame, gasCalculator);
-              case 0x0b -> SignExtendOperation.staticOperation(frame);
+              case 0x01 -> AddOperation.staticOperation(frame, s);
+              case 0x02 -> MulOperation.staticOperation(frame, s);
+              case 0x03 -> SubOperation.staticOperation(frame, s);
+              case 0x04 -> DivOperation.staticOperation(frame, s);
+              case 0x05 -> SDivOperation.staticOperation(frame, s);
+              case 0x06 -> ModOperation.staticOperation(frame, s);
+              case 0x07 -> SModOperation.staticOperation(frame, s);
+              case 0x08 -> AddModOperation.staticOperation(frame, s);
+              case 0x09 -> MulModOperation.staticOperation(frame, s);
+              case 0x0a -> ExpOperation.staticOperation(frame, s, gasCalculator);
+              case 0x0b -> SignExtendOperation.staticOperation(frame, s);
               case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
-              case 0x10 -> LtOperation.staticOperation(frame);
-              case 0x11 -> GtOperation.staticOperation(frame);
-              case 0x12 -> SLtOperation.staticOperation(frame);
-              case 0x13 -> SGtOperation.staticOperation(frame);
-              case 0x15 -> IsZeroOperation.staticOperation(frame);
-              case 0x16 -> AndOperation.staticOperation(frame);
-              case 0x17 -> OrOperation.staticOperation(frame);
-              case 0x18 -> XorOperation.staticOperation(frame);
-              case 0x19 -> NotOperation.staticOperation(frame);
-              case 0x1a -> ByteOperation.staticOperation(frame);
-              case 0x1b -> ShlOperation.staticOperation(frame);
-              case 0x1c -> ShrOperation.staticOperation(frame);
-              case 0x1d -> SarOperation.staticOperation(frame);
+              case 0x10 -> LtOperation.staticOperation(frame, s);
+              case 0x11 -> GtOperation.staticOperation(frame, s);
+              case 0x12 -> SLtOperation.staticOperation(frame, s);
+              case 0x13 -> SGtOperation.staticOperation(frame, s);
+              case 0x15 -> IsZeroOperation.staticOperation(frame, s);
+              case 0x16 -> AndOperation.staticOperation(frame, s);
+              case 0x17 -> OrOperation.staticOperation(frame, s);
+              case 0x18 -> XorOperation.staticOperation(frame, s);
+              case 0x19 -> NotOperation.staticOperation(frame, s);
+              case 0x1a -> ByteOperation.staticOperation(frame, s);
+              case 0x1b -> ShlOperation.staticOperation(frame, s);
+              case 0x1c -> ShrOperation.staticOperation(frame, s);
+              case 0x1d -> SarOperation.staticOperation(frame, s);
               case 0x1e ->
                   enableOsaka
-                      ? CountLeadingZerosOperation.staticOperation(frame)
+                      ? CountLeadingZerosOperation.staticOperation(frame, s)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0x50 -> PopOperation.staticOperation(frame);
-              case 0x56 -> JumpOperation.staticOperation(frame);
-              case 0x57 -> JumpiOperation.staticOperation(frame);
+              case 0x56 -> JumpOperation.staticOperation(frame, s);
+              case 0x57 -> JumpiOperation.staticOperation(frame, s);
               case 0x5b -> JumpDestOperation.JUMPDEST_SUCCESS;
               case 0x5f ->
                   enableShanghai
-                      ? Push0Operation.staticOperation(frame)
+                      ? Push0Operation.staticOperation(frame, s)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0x60, // PUSH1-32
                   0x61,
@@ -288,7 +289,7 @@ public class EVM {
                   0x7d,
                   0x7e,
                   0x7f ->
-                  PushOperation.staticOperation(frame, code, pc, opcode - PUSH_BASE);
+                  PushOperation.staticOperation(frame, s, code, pc, opcode - PUSH_BASE);
               case 0x80, // DUP1-16
                   0x81,
                   0x82,
@@ -305,7 +306,7 @@ public class EVM {
                   0x8d,
                   0x8e,
                   0x8f ->
-                  DupOperation.staticOperation(frame, opcode - DupOperation.DUP_BASE);
+                  DupOperation.staticOperation(frame, s, opcode - DupOperation.DUP_BASE);
               case 0x90, // SWAP1-16
                   0x91,
                   0x92,
@@ -322,18 +323,18 @@ public class EVM {
                   0x9d,
                   0x9e,
                   0x9f ->
-                  SwapOperation.staticOperation(frame, opcode - SWAP_BASE);
+                  SwapOperation.staticOperation(frame, s, opcode - SWAP_BASE);
               case 0xe6 -> // DUPN (EIP-8024)
                   enableAmsterdam
-                      ? DupNOperation.staticOperation(frame, code, pc)
+                      ? DupNOperation.staticOperation(frame, s, code, pc)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0xe7 -> // SWAPN (EIP-8024)
                   enableAmsterdam
-                      ? SwapNOperation.staticOperation(frame, code, pc)
+                      ? SwapNOperation.staticOperation(frame, s, code, pc)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0xe8 -> // EXCHANGE (EIP-8024)
                   enableAmsterdam
-                      ? ExchangeOperation.staticOperation(frame, code, pc)
+                      ? ExchangeOperation.staticOperation(frame, s, code, pc)
                       : InvalidOperation.invalidOperationResult(opcode);
               default -> { // unoptimized operations
                 frame.setCurrentOperation(currentOperation);

@@ -15,46 +15,33 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeEach;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
 class RevertOperationTest {
 
-  @Mock private MessageFrame messageFrame;
   private final RevertOperation operation = new RevertOperation(new ConstantinopleGasCalculator());
-
-  private final Bytes revertReasonBytes = Bytes.fromHexString("726576657274206d657373616765");
-
-  @BeforeEach
-  void setUp() {
-    when(messageFrame.stackHasItems(2)).thenReturn(true);
-    when(messageFrame.popStackItemUnsafe())
-        .thenReturn(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x00").toArrayUnsafe()))
-        .thenReturn(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x0e").toArrayUnsafe()));
-    when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);
-    when(messageFrame.memoryWordSize()).thenReturn(0);
-    when(messageFrame.calculateMemoryExpansion(anyLong(), anyLong())).thenReturn(14L);
-    when(messageFrame.getRemainingGas()).thenReturn(10_000L);
-  }
 
   @Test
   void shouldReturnReason() {
-    final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
-    operation.execute(messageFrame, null);
-    Mockito.verify(messageFrame).setRevertReason(arg.capture());
-    assertThat(arg.getValue()).isEqualTo(revertReasonBytes);
+    final Bytes revertReasonBytes = Bytes.fromHexString("726576657274206d657373616765");
+    final MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .pushStackItem(Bytes32.fromHexStringLenient("0x0e")) // length = 14
+            .pushStackItem(Bytes32.fromHexStringLenient("0x00")) // from = 0
+            .initialGas(10_000L)
+            .build();
+    // Write revert reason to memory
+    frame.writeMemory(0, 14, revertReasonBytes, true);
+    operation.execute(frame, null);
+    assertThat(frame.getRevertReason()).isPresent();
+    assertThat(frame.getRevertReason().get()).isEqualTo(revertReasonBytes);
+    assertThat(frame.getState()).isEqualTo(MessageFrame.State.REVERT);
   }
 }

@@ -14,12 +14,11 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -40,15 +39,20 @@ public class MStoreOperation extends AbstractOperation {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final long location = clampedToLong(frame.popStackItemUnsafe());
-    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItemUnsafe();
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final long location = StackMath.clampedToLong(s, top, 0);
 
     final long cost = gasCalculator().mStoreOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    frame.writeMemory(location, 32, org.apache.tuweni.bytes.Bytes.wrap(value.toBytesBE()), true);
+    // Write 32 bytes from the value slot (top-2) to memory
+    final byte[] buf = new byte[32];
+    StackMath.toBytesAt(s, top, 1, buf);
+    frame.writeMemory(location, 32, Bytes.wrap(buf), true);
+    frame.setTop(top - 2);
     return new OperationResult(cost, null);
   }
 }

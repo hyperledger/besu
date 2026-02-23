@@ -131,7 +131,10 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes32.leftPad(stackItem).toArrayUnsafe()));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(
+            org.hyperledger.besu.evm.UInt256.fromBytesBE(
+                Bytes32.leftPad(stackItem).toArrayUnsafe()));
 
     Account recipientAccount = worldUpdater.get(recipientAddress);
     if (recipientAccount != null) {
@@ -285,7 +288,10 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes32.leftPad(stackItem).toArrayUnsafe()));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(
+            org.hyperledger.besu.evm.UInt256.fromBytesBE(
+                Bytes32.leftPad(stackItem).toArrayUnsafe()));
 
     assertThat(senderAccount.getBalance()).isEqualTo(senderBalance);
     assertThat(worldUpdater.getAccount(recipientAddress).getBalance()).isEqualTo(recipientBalance);
@@ -395,7 +401,10 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes32.leftPad(stackItem).toArrayUnsafe()));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(
+            org.hyperledger.besu.evm.UInt256.fromBytesBE(
+                Bytes32.leftPad(stackItem).toArrayUnsafe()));
 
     assertThat(senderAccount.getBalance()).isEqualTo(senderBalance);
     assertThat(recipientAccount.getBalance()).isEqualTo(recipientBalance);
@@ -470,6 +479,9 @@ public class PayOperationTest {
     assertThat(result.getGasCost()).isEqualTo(gasCost);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
 
-    assertThat(frame.getStackItem(0)).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes32.leftPad(stackItem).toArrayUnsafe()));
+    assertThat(frame.getStackItem(0))
+        .isEqualTo(
+            org.hyperledger.besu.evm.UInt256.fromBytesBE(
+                Bytes32.leftPad(stackItem).toArrayUnsafe()));
   }
 }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import java.util.function.Supplier;
 
@@ -68,8 +69,12 @@ public class SStoreOperation extends AbstractOperation {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final org.hyperledger.besu.evm.UInt256 keyNative = frame.popStackItemUnsafe();
-    final org.hyperledger.besu.evm.UInt256 newValueNative = frame.popStackItemUnsafe();
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final org.hyperledger.besu.evm.UInt256 keyNative = StackMath.getAt(s, top, 0);
+    final org.hyperledger.besu.evm.UInt256 newValueNative = StackMath.getAt(s, top, 1);
+    // Pop 2
+    frame.setTop(top - 2);
 
     final MutableAccount account = getMutableAccount(frame.getRecipientAddress(), frame);
     if (account == null) {

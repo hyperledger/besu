@@ -17,7 +17,6 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.hasCodeDelegation;
 
@@ -32,6 +31,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationHelper;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -76,7 +76,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @return the additional gas to provide the call operation
    */
   protected long gas(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(0));
+    return StackMath.clampedToLong(frame.stackData(), frame.stackTop(), 0);
   }
 
   /**
@@ -254,8 +254,10 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       // charged. If we return zero then the traces don't have the right per-opcode cost.
       final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
       frame.incrementRemainingGas(gasAvailableForChildCall + cost);
-      frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+      final long[] s = frame.stackData();
+      final int newTop = frame.stackTop() - getStackItemsConsumed() + 1;
+      StackMath.putAt(s, newTop, 0, 0, 0, 0, 0);
+      frame.setTop(newTop);
       final SoftFailureReason softFailureReason =
           insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
       return new OperationResult(cost, 1, softFailureReason, gasAvailableForChildCall);
@@ -326,19 +328,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final long gasRemaining = childFrame.getRemainingGas();
     frame.incrementRemainingGas(gasRemaining);
 
-    frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItemUnsafe(getCallResultStackItem(childFrame));
+    final long[] s = frame.stackData();
+    final int newTop = frame.stackTop() - getStackItemsConsumed() + 1;
+    final long resultU0 = childFrame.getState() == State.COMPLETED_SUCCESS ? 1L : 0L;
+    StackMath.putAt(s, newTop, 0, 0, 0, 0, resultU0);
+    frame.setTop(newTop);
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);
-  }
-
-  org.hyperledger.besu.evm.UInt256 getCallResultStackItem(final MessageFrame childFrame) {
-    if (childFrame.getState() == State.COMPLETED_SUCCESS) {
-      return org.hyperledger.besu.evm.UInt256.fromInt(1);
-    } else {
-      return org.hyperledger.besu.evm.UInt256.ZERO;
-    }
   }
 
   /**

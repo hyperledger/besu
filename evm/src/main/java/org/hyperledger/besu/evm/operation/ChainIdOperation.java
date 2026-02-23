@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -28,7 +29,7 @@ public class ChainIdOperation extends AbstractFixedCostOperation {
   public static final int OPCODE = 0x46;
 
   private final Bytes32 chainId;
-  private final org.hyperledger.besu.evm.UInt256 chainIdUInt256;
+  private final byte[] chainIdBytes;
 
   /**
    * Instantiates a new Chain id operation.
@@ -39,7 +40,7 @@ public class ChainIdOperation extends AbstractFixedCostOperation {
   public ChainIdOperation(final GasCalculator gasCalculator, final Bytes32 chainId) {
     super(OPCODE, "CHAINID", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
     this.chainId = chainId;
-    this.chainIdUInt256 = org.hyperledger.besu.evm.UInt256.fromBytesBE(chainId.toArrayUnsafe());
+    this.chainIdBytes = chainId.toArrayUnsafe();
   }
 
   /**
@@ -55,7 +56,7 @@ public class ChainIdOperation extends AbstractFixedCostOperation {
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
-    frame.pushStackItemUnsafe(chainIdUInt256);
+    frame.setTop(StackMath.pushFromBytes(frame.stackData(), frame.stackTop(), chainIdBytes, 0, 32));
 
     return successResponse;
   }

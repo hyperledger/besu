@@ -15,10 +15,10 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** The Swap operation. */
 public class SwapOperation extends AbstractFixedCostOperation {
@@ -56,22 +56,21 @@ public class SwapOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame, index);
+    return staticOperation(frame, frame.stackData(), index);
   }
 
   /**
    * Performs swap operation.
    *
    * @param frame the frame
+   * @param s the stack data array
    * @param index the index
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame, final int index) {
+  public static OperationResult staticOperation(
+      final MessageFrame frame, final long[] s, final int index) {
     if (!frame.stackHasItems(index + 1)) return UNDERFLOW_RESPONSE;
-    final UInt256 tmp = frame.peekStackItemUnsafe(0);
-    frame.overwriteStackItemUnsafe(0, frame.peekStackItemUnsafe(index));
-    frame.overwriteStackItemUnsafe(index, tmp);
-
+    StackMath.swap(s, frame.stackTop(), index);
     return swapSuccess;
   }
 }

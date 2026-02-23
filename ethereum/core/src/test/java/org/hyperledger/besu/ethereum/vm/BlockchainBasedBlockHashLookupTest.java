@@ -31,11 +31,11 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -147,16 +147,21 @@ class BlockchainBasedBlockHashLookupTest {
     clearInvocations(messageFrameMock, blockValuesMock);
 
     BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
+    long[] s = new long[4 * 4];
+    StackMath.putAt(s, 1, 0, org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
     when(messageFrameMock.getRemainingGas()).thenReturn(10_000_000L);
     when(messageFrameMock.stackHasItems(1)).thenReturn(true);
-    when(messageFrameMock.popStackItemUnsafe()).thenReturn(org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
+    when(messageFrameMock.stackData()).thenReturn(s);
+    when(messageFrameMock.stackTop()).thenReturn(1);
     when(messageFrameMock.getBlockValues()).thenReturn(blockValuesMock);
     when(messageFrameMock.getBlockHashLookup()).thenReturn(lookup);
     when(blockValuesMock.getNumber()).thenReturn((long) CURRENT_BLOCK_NUMBER);
 
     op.execute(messageFrameMock, null);
 
-    verify(messageFrameMock).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe()));
+    org.hyperledger.besu.evm.UInt256 expected =
+        org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe());
+    assertThat(StackMath.getAt(s, 1, 0)).isEqualTo(expected);
   }
 
   private BlockHeader createHeader(final int blockNumber, final BlockHeader parentHeader) {

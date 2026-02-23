@@ -20,9 +20,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.internal.StackMath;
 import org.hyperledger.besu.evm.operation.CountLeadingZerosOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -63,7 +63,7 @@ public class CountLeadingZerosOperationBenchmark {
   })
   private String bytesHex;
 
-  private UInt256 value;
+  private byte[] valueBytes;
 
   private MessageFrame frame;
 
@@ -89,29 +89,31 @@ public class CountLeadingZerosOperationBenchmark {
             .code(Code.EMPTY_CODE)
             .completer(messageFrame -> {})
             .build();
-    final org.apache.tuweni.bytes.Bytes rawBytes = org.apache.tuweni.bytes.Bytes.fromHexString(bytesHex);
-    final byte[] padded = new byte[32];
+    final org.apache.tuweni.bytes.Bytes rawBytes =
+        org.apache.tuweni.bytes.Bytes.fromHexString(bytesHex);
+    valueBytes = new byte[32];
     final byte[] raw = rawBytes.toArrayUnsafe();
-    System.arraycopy(raw, 0, padded, 32 - raw.length, raw.length);
-    value = UInt256.fromBytesBE(padded);
+    System.arraycopy(raw, 0, valueBytes, 32 - raw.length, raw.length);
   }
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void executeOperation() {
+    final long[] sd = frame.stackData();
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      frame.pushStackItemUnsafe(value);
-      CountLeadingZerosOperation.staticOperation(frame);
-      frame.popStackItemUnsafe();
+      frame.setTop(StackMath.pushFromBytes(sd, frame.stackTop(), valueBytes, 0, 32));
+      CountLeadingZerosOperation.staticOperation(frame, frame.stackData());
+      frame.setTop(frame.stackTop() - 1);
     }
   }
 
   @Benchmark
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void baseline() {
+    final long[] sd = frame.stackData();
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      frame.pushStackItemUnsafe(value);
-      frame.popStackItemUnsafe();
+      frame.setTop(StackMath.pushFromBytes(sd, frame.stackTop(), valueBytes, 0, 32));
+      frame.setTop(frame.stackTop() - 1);
     }
   }
 }

@@ -18,7 +18,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-
+import org.hyperledger.besu.evm.internal.StackMath;
 
 /** Implements the TLOAD operation defined in EIP-1153 */
 public class TStoreOperation extends AbstractOperation {
@@ -37,8 +37,12 @@ public class TStoreOperation extends AbstractOperation {
     if (!frame.stackHasItems(2)) {
       return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     }
-    final org.hyperledger.besu.evm.UInt256 key = frame.popStackItemUnsafe();
-    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItemUnsafe();
+    final long[] s = frame.stackData();
+    final int top = frame.stackTop();
+    final org.hyperledger.besu.evm.UInt256 key = StackMath.getAt(s, top, 0);
+    final org.hyperledger.besu.evm.UInt256 value = StackMath.getAt(s, top, 1);
+    // Pop 2
+    frame.setTop(top - 2);
 
     final long cost = gasCalculator().getTransientStoreOperationGasCost();
 
