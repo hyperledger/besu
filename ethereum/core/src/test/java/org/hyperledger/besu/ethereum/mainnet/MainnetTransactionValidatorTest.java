@@ -49,6 +49,7 @@ import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -577,6 +578,58 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
         .isEqualTo(TransactionInvalidReason.INITCODE_TOO_LARGE);
     assertThat(validationResult.getErrorMessage())
         .isEqualTo("Initcode size of 49153 exceeds maximum size of 49152");
+  }
+
+  @Test
+  public void shouldAcceptInitcodeAtAmsterdamLimit() {
+    final int maxInitcodeSize = EvmSpecVersion.AMSTERDAM.getMaxInitcodeSize();
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            maxInitcodeSize);
+
+    var transaction =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(maxInitcodeSize)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(
+            transaction, Optional.empty(), Optional.empty(), transactionProcessingParams);
+
+    assertThat(validationResult.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldRejectInitcodeAboveAmsterdamLimit() {
+    final int maxInitcodeSize = EvmSpecVersion.AMSTERDAM.getMaxInitcodeSize();
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            maxInitcodeSize);
+
+    var transaction =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(maxInitcodeSize + 1)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(
+            transaction, Optional.empty(), Optional.empty(), transactionProcessingParams);
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INITCODE_TOO_LARGE);
   }
 
   @Test

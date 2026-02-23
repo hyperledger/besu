@@ -156,7 +156,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                 : future.get(balProcessingTimeout.toNanos(), TimeUnit.NANOSECONDS);
 
         if (ctx == null) {
-          LOG.error("Transaction context for transaction {} is empty.", txIndex);
+          LOG.trace("Transaction context for transaction {} is empty.", txIndex);
           return Optional.empty();
         }
 

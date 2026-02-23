@@ -265,17 +265,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     maybeSlowBlockTracer.ifPresent(
         sbt -> sbt.traceStartBlock(worldState, blockHeader, miningBeneficiary));
 
-    final Optional<BlockAccessListFactory> maybeBalFactory =
-        protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
-
     final StateRootCommitter stateRootCommitter =
         blockProcessingMetrics.wrapStateRootCommitter(
             protocolSpec
                 .getStateRootCommitterFactory()
                 .forBlock(protocolContext, blockHeader, blockAccessList));
 
-    Optional<BlockAccessListBuilder> blockAccessListBuilder =
-        maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
+    final Optional<BlockAccessListBuilder> blockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     try {
       final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =

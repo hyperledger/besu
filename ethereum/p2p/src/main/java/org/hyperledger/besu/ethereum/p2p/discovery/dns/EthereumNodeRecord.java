@@ -38,6 +38,9 @@ public record EthereumNodeRecord(
     InetAddress ip,
     Optional<Integer> tcp,
     Optional<Integer> udp,
+    Optional<InetAddress> ipv6,
+    Optional<Integer> tcpV6,
+    Optional<Integer> udpV6,
     NodeRecord nodeRecord) {
 
   /**
@@ -65,6 +68,9 @@ public record EthereumNodeRecord(
         initIPAddr(fields),
         initTCP(fields),
         initUDP(fields),
+        initIPv6Addr(fields),
+        initTCPV6(fields),
+        initUDPV6(fields),
         nodeRecord);
   }
 
@@ -121,6 +127,26 @@ public record EthereumNodeRecord(
     return extractInt(fields, "udp").or(() -> initTCP(fields));
   }
 
+  static Optional<InetAddress> initIPv6Addr(final Map<String, Object> fields) {
+    final Object value = fields.get("ip6");
+    if (value instanceof Bytes ipBytes) {
+      try {
+        return Optional.of(InetAddress.getByAddress(ipBytes.toArrayUnsafe()));
+      } catch (final Exception e) {
+        return Optional.empty();
+      }
+    }
+    return Optional.empty();
+  }
+
+  static Optional<Integer> initTCPV6(final Map<String, Object> fields) {
+    return extractInt(fields, "tcp6");
+  }
+
+  static Optional<Integer> initUDPV6(final Map<String, Object> fields) {
+    return extractInt(fields, "udp6").or(() -> initTCPV6(fields));
+  }
+
   private static Optional<Integer> extractInt(final Map<String, Object> fields, final String key) {
     final Object value = fields.get(key);
     if (value instanceof Integer integer) {
@@ -139,7 +165,7 @@ public record EthereumNodeRecord(
 
   @Override
   public int hashCode() {
-    return Objects.hash(publicKey, ip, tcp, udp, nodeRecord);
+    return Objects.hash(publicKey, ip, tcp, udp, ipv6, tcpV6, udpV6, nodeRecord);
   }
 
   @Override
@@ -155,6 +181,9 @@ public record EthereumNodeRecord(
         && Objects.equals(this.ip, other.ip)
         && Objects.equals(this.tcp, other.tcp)
         && Objects.equals(this.udp, other.udp)
+        && Objects.equals(this.ipv6, other.ipv6)
+        && Objects.equals(this.tcpV6, other.tcpV6)
+        && Objects.equals(this.udpV6, other.udpV6)
         && Objects.equals(this.nodeRecord, other.nodeRecord);
   }
 }

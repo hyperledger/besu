@@ -230,7 +230,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<BlockAccessListBuilder> blockAccessListBuilder =
           newProtocolSpec
               .getBlockAccessListFactory()
-              .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
       final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
           blockAccessListBuilder.map(
