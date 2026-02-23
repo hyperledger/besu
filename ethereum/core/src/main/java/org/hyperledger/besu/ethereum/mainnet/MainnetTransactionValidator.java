@@ -104,7 +104,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transactionType, acceptedTransactionTypes));
     }
 
-    if (transaction.getNonce() == MAX_NONCE) {
+    if (!transactionValidationParams.isAllowFutureNonce() && transaction.getNonce() == MAX_NONCE) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_OVERFLOW, "Nonce must be less than 2^64-1");
     }
