@@ -602,10 +602,6 @@ public interface GasCalculator {
   /**
    * Returns the gas cost per item for the block access list size constraint (EIP-7928).
    *
-   * <p>The block access list is constrained by: bal_items <= block_gas_limit / ITEM_COST. This
-   * value is set below the minimum cost to add an item (e.g. cold SLOAD) to create a buffer for
-   * system contract execution and withdrawal recipients that do not consume block gas.
-   *
    * @return the cost per BAL item (address or storage key) for the size limit; 0 if BAL size
    *     constraint is not applicable for this fork
    */
