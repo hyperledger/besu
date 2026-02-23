@@ -64,7 +64,6 @@ import com.google.common.io.Resources;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -84,28 +83,6 @@ public abstract class JsonBlockImporterTest {
     this.genesisConfig = GenesisConfig.fromConfig(genesisData);
   }
 
-  public static class SingletonTests extends JsonBlockImporterTest {
-
-    @BeforeEach
-    public void setup() throws IOException {
-      super.setup("unsupported");
-    }
-
-    @Test
-    public void importChain_unsupportedConsensusAlgorithm() throws IOException {
-      final BesuController controller = createController();
-      final JsonBlockImporter importer = new JsonBlockImporter(controller);
-
-      final String jsonData = getFileContents("clique", "blocks-import-valid.json");
-
-      assertThatThrownBy(() -> importer.importChain(jsonData))
-          .isInstanceOf(IllegalArgumentException.class)
-          .hasMessage(
-              "Unable to create block using current consensus engine: "
-                  + genesisConfig.getConfigOptions().getConsensusEngine());
-    }
-  }
-
   public static class ParameterizedTests extends JsonBlockImporterTest {
 
     @Override
@@ -114,7 +91,7 @@ public abstract class JsonBlockImporterTest {
     }
 
     public static Stream<Arguments> getParameters() {
-      return Stream.of(Arguments.of("clique"));
+      return Stream.of(Arguments.of("mainnet"));
     }
 
     @ParameterizedTest(name = "{index}: {0}")
@@ -402,7 +379,7 @@ public abstract class JsonBlockImporterTest {
 
   protected BesuController createController(final GenesisConfig genesisConfig) {
     return new BesuController.Builder()
-        .fromGenesisFile(genesisConfig, SyncMode.FAST)
+        .fromGenesisFile(genesisConfig, SyncMode.SNAP)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .storageProvider(new InMemoryKeyValueStorageProvider())

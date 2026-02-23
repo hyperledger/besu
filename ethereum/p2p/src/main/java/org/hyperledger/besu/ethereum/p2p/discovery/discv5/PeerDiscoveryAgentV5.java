@@ -72,6 +72,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
+  private final boolean preferIpv6Outbound;
 
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
@@ -91,13 +92,15 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
+   * @param preferIpv6Outbound if true, prefer IPv6 when a peer advertises both address families
    */
   public PeerDiscoveryAgentV5(
       final MutableDiscoverySystem discoverySystem,
       final NetworkingConfiguration config,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
-      final RlpxAgent rlpxAgent) {
+      final RlpxAgent rlpxAgent,
+      final boolean preferIpv6Outbound) {
 
     this.discoverySystem =
         Objects.requireNonNull(discoverySystem, "discoverySystem must not be null");
@@ -107,6 +110,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
     this.rlpxAgent = Objects.requireNonNull(rlpxAgent, "rlpxAgent must not be null");
+    this.preferIpv6Outbound = preferIpv6Outbound;
   }
 
   /**
@@ -121,7 +125,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.debug("DiscV5 peer discovery is disabled; not starting agent");
       return CompletableFuture.completedFuture(0);
     }
-    LOG.info("Starting DiscV5 peer discovery agent on TCP port {}", tcpPort);
+    LOG.info("Starting DiscV5 peer discovery agent ...");
     running = true;
     scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
     return discoverySystem
@@ -129,7 +133,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .thenApply(
             v -> {
               final int localPort =
-                  discoverySystem.getLocalNodeRecord().getTcpAddress().orElseThrow().getPort();
+                  discoverySystem.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
@@ -189,7 +193,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return discoverySystem.streamLiveNodes().map(DiscoveryPeerFactory::fromNodeRecord);
+    return discoverySystem
+        .streamLiveNodes()
+        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
   }
 
   /**
@@ -240,7 +246,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
-    return discoverySystem.lookupNode(peerId.getId()).map(DiscoveryPeerFactory::fromNodeRecord);
+    return discoverySystem
+        .lookupNode(peerId.getId())
+        .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */
@@ -289,7 +297,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     final List<DiscoveryPeer> candidates =
         Stream.concat(newPeers.stream(), knownPeers)
             .distinct()
-            .map(DiscoveryPeerFactory::fromNodeRecord)
+            .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound))
             .filter(DiscoveryPeer::isReadyForConnections)
             .filter(peer -> peer.getForkId().map(forkIdManager::peerCheck).orElse(true))
             .toList();
