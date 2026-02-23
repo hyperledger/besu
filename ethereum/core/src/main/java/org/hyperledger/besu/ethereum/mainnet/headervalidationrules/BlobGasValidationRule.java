@@ -44,6 +44,11 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
    */
   @Override
   public boolean validate(final BlockHeader header, final BlockHeader parent) {
+    if (header.getExcessBlobGas().isEmpty() || header.getBlobGasUsed().isEmpty()) {
+      LOG.info("Invalid block header: missing mandatory blob gas fields for post-Cancun block");
+      return false;
+    }
+
     long headerExcessBlobGas = header.getExcessBlobGas().map(BlobGas::toLong).orElse(0L);
     long parentExcessBlobGas = parent.getExcessBlobGas().map(BlobGas::toLong).orElse(0L);
     long parentBlobGasUsed = parent.getBlobGasUsed().orElse(0L);
