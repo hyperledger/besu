@@ -67,7 +67,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
     final Optional<Hash> headerBalHash = blockHeader.getBalHash();
 
     if (headerBalHash.isEmpty()) {
-      LOG.warn("Header is missing balHash for block {}", blockHeader.toLogString());
+      LOG.warn("Header is missing balHash for block {}", blockHeader.getBlockHash());
       return false;
     }
 
@@ -76,7 +76,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
     if (!headerBalHash.get().equals(providedBalHash)) {
       LOG.warn(
           "Block access list hash mismatch for block {}: provided={}, header={}",
-          blockHeader.toLogString(),
+          blockHeader.getBlockHash(),
           providedBalHash.toHexString(),
           headerBalHash.get().toHexString());
       return false;
@@ -97,7 +97,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
     if (balItems > maxItems) {
       LOG.warn(
           "Block access list size exceeds maximum allowed items for block {} with gas limit {}",
-          blockHeader.toLogString(),
+          blockHeader.getBlockHash(),
           blockHeader.getGasLimit());
       return false;
     }
@@ -106,7 +106,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
     if (!validateUniquenessConstraints(bal, blockHeader)) {
       return false;
     }
-
+    LOG.trace("Block access list validated successfully for block {}", blockHeader.getNumber());
     return true;
   }
 
@@ -125,7 +125,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
         LOG.warn(
             "Block access list has duplicate address {} for block {}",
             account.address().toHexString(),
-            blockHeader.toLogString());
+            blockHeader.getBlockHash());
         return false;
       }
 
@@ -135,7 +135,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
           LOG.warn(
               "Block access list has duplicate storage key in storage_changes for address {} block {}",
               account.address().toHexString(),
-              blockHeader.toLogString());
+              blockHeader.getBlockHash());
           return false;
         }
         seenTxIndices.clear();
@@ -144,7 +144,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
             LOG.warn(
                 "Block access list has duplicate block_access_index in storage_changes for address {} block {}",
                 account.address().toHexString(),
-                blockHeader.toLogString());
+                blockHeader.getBlockHash());
             return false;
           }
         }
@@ -157,14 +157,14 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
           LOG.warn(
               "Block access list has storage key in both storage_changes and storage_reads for address {} block {}",
               account.address().toHexString(),
-              blockHeader.toLogString());
+              blockHeader.getBlockHash());
           return false;
         }
         if (!storageReadSlots.add(slot)) {
           LOG.warn(
               "Block access list has duplicate storage key in storage_reads for address {} block {}",
               account.address().toHexString(),
-              blockHeader.toLogString());
+              blockHeader.getBlockHash());
           return false;
         }
       }
@@ -175,7 +175,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
           LOG.warn(
               "Block access list has duplicate block_access_index in balance_changes for address {} block {}",
               account.address().toHexString(),
-              blockHeader.toLogString());
+              blockHeader.getBlockHash());
           return false;
         }
       }
@@ -185,7 +185,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
           LOG.warn(
               "Block access list has duplicate block_access_index in nonce_changes for address {} block {}",
               account.address().toHexString(),
-              blockHeader.toLogString());
+              blockHeader.getBlockHash());
           return false;
         }
       }
@@ -195,7 +195,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
           LOG.warn(
               "Block access list has duplicate block_access_index in code_changes for address {} block {}",
               account.address().toHexString(),
-              blockHeader.toLogString());
+              blockHeader.getBlockHash());
           return false;
         }
       }
