@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredState;
@@ -102,8 +101,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         protocolContext.getBlockchain(),
         this::calculateTrailingPeerRequirements);
 
-    if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP) {
       SnapServerChecker.createAndSetSnapServerChecker(ethContext, metricsSystem);
     }
 
@@ -140,21 +138,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
     this.fastSyncFactory =
         switch (syncConfig.getSyncMode()) {
-          case CHECKPOINT ->
-              () ->
-                  CheckpointDownloaderFactory.createCheckpointDownloader(
-                      new SnapSyncStatePersistenceManager(storageProvider),
-                      pivotBlockSelector,
-                      syncConfig,
-                      dataDirectory,
-                      protocolSchedule,
-                      protocolContext,
-                      metricsSystem,
-                      ethContext,
-                      worldStateStorageCoordinator,
-                      syncState,
-                      clock,
-                      syncDurationMetrics);
           case SNAP ->
               () ->
                   SnapDownloaderFactory.createSnapDownloader(

@@ -23,14 +23,14 @@ import java.util.regex.Pattern
 
 plugins {
   id 'com.diffplug.spotless' version '7.0.3'
-  id 'com.github.jk1.dependency-license-report' version '3.0.1'
+  id 'com.github.jk1.dependency-license-report' version '3.1.1'
   id 'com.jfrog.artifactory' version '5.2.5'
   id 'me.champeau.jmh' version '0.7.3' apply false
   id 'net.ltgt.errorprone' version '4.2.0'
   id 'maven-publish'
   id 'jacoco'
   id 'jacoco-report-aggregation'
-  id 'org.sonarqube' version '6.2.0.5505'
+  id 'org.sonarqube' version '7.2.2.6593'
   id 'de.undercouch.download' version '5.6.0'
 }
 

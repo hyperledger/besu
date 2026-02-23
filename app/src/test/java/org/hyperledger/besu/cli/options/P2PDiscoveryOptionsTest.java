@@ -16,18 +16,25 @@ package org.hyperledger.besu.cli.options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.CommandTestAbstract;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
+
+  @Captor private ArgumentCaptor<Optional<String>> optionalStringArgumentCaptor;
 
   @Test
   public void p2pHostAndPortOptionsAreRespectedAndNotLeakedWithMetricsEnabled() {
@@ -40,6 +47,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -70,6 +78,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(ip);
@@ -92,6 +101,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     parseCommand("--p2p-host", host);
 
     verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -111,6 +121,7 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
     verify(mockRunnerBuilder).metricsConfiguration(metricsConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).jsonRpcConfiguration(jsonRpcConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
     verify(mockRunnerBuilder).build();
 
     assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
@@ -129,5 +140,164 @@ public class P2PDiscoveryOptionsTest extends CommandTestAbstract {
     assertThat(metricsConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
     assertThat(metricsConfigArgumentCaptor.getValue().getPushHost()).isEqualTo(defaultHost);
     assertThat(jsonRpcConfigArgumentCaptor.getValue().getHost()).isEqualTo(defaultHost);
+  }
+
+  @Test
+  public void dualStackWithIpv4PrimaryAndIpv6SecondaryIsValid() {
+    final String ipv4Host = "192.0.2.1";
+    final String ipv6Host = "2001:db8::1";
+    parseCommand("--p2p-host", ipv4Host, "--p2p-host-ipv6", ipv6Host);
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void dualStackWithIpv6PrimaryAndIpv6SecondaryIsInvalid() {
+    final String ipv6Primary = "2001:db8::1";
+    final String ipv6Secondary = "2001:db8::2";
+    parseCommand("--p2p-host", ipv6Primary, "--p2p-host-ipv6", ipv6Secondary);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("When --p2p-host-ipv6 is specified for dual-stack configuration")
+        .contains("--p2p-host must be an IPv4 address")
+        .contains(ipv6Primary);
+  }
+
+  @Test
+  public void ipv6OnlyConfigurationIsValid() {
+    final String ipv6Host = "2001:db8::1";
+    parseCommand("--p2p-host", ipv6Host);
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv6Host);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void p2pHostIpv6MustBeValidIpv6Address() {
+    final String ipv4Primary = "192.0.2.1";
+    final String invalidIpv6 = "192.0.2.2";
+    parseCommand("--p2p-host", ipv4Primary, "--p2p-host-ipv6", invalidIpv6);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--p2p-host-ipv6 must be an IPv6 address")
+        .contains(invalidIpv6);
+  }
+
+  @Test
+  public void dualStackInterfaceWithIpv4PrimaryAndIpv6SecondaryIsValid() {
+    final String ipv4Interface = "0.0.0.0";
+    final String ipv6Interface = "::";
+    parseCommand("--p2p-interface", ipv4Interface, "--p2p-interface-ipv6", ipv6Interface);
+
+    verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Interface);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void dualStackInterfaceWithIpv6PrimaryAndIpv6SecondaryIsInvalid() {
+    final String ipv6Primary = "2001:db8::1";
+    final String ipv6Secondary = "::";
+    parseCommand("--p2p-interface", ipv6Primary, "--p2p-interface-ipv6", ipv6Secondary);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("When --p2p-interface-ipv6 is specified for dual-stack configuration")
+        .contains("--p2p-interface must be an IPv4 address or 0.0.0.0")
+        .contains(ipv6Primary);
+  }
+
+  @Test
+  public void p2pInterfaceIpv6MustBeValidIpv6Address() {
+    final String ipv4Interface = "0.0.0.0";
+    final String invalidIpv6 = "192.0.2.1";
+    parseCommand("--p2p-interface", ipv4Interface, "--p2p-interface-ipv6", invalidIpv6);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--p2p-interface-ipv6 must be an IPv6 address")
+        .contains(invalidIpv6);
+  }
+
+  @Test
+  public void smartDefaultAppliesIpv6InterfaceWhenOnlyHostIpv6IsSpecified() {
+    final String ipv4Host = "192.0.2.1";
+    final String ipv6Host = "2001:db8::1";
+    parseCommand("--p2p-host", ipv4Host, "--p2p-host-ipv6", ipv6Host);
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pListenInterfaceIpv6(optionalStringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
+    // Smart default should auto-set interface-ipv6 to :: (0:0:0:0:0:0:0:0)
+    assertThat(optionalStringArgumentCaptor.getValue()).isPresent();
+    assertThat(optionalStringArgumentCaptor.getValue().get()).isEqualTo("0:0:0:0:0:0:0:0");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void smartDefaultDoesNotOverrideExplicitIpv6Interface() {
+    final String ipv4Host = "192.0.2.1";
+    final String ipv6Host = "2001:db8::1";
+    final String customIpv6Interface = "fe80::1";
+    parseCommand(
+        "--p2p-host",
+        ipv4Host,
+        "--p2p-host-ipv6",
+        ipv6Host,
+        "--p2p-interface-ipv6",
+        customIpv6Interface);
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pListenInterfaceIpv6(optionalStringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
+    // Should use the explicitly specified interface, not the smart default
+    assertThat(optionalStringArgumentCaptor.getValue()).isPresent();
+    assertThat(optionalStringArgumentCaptor.getValue().get()).isEqualTo(customIpv6Interface);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void ipv4OnlyConfigurationDoesNotApplySmartDefault() {
+    final String ipv4Host = "192.0.2.1";
+    parseCommand("--p2p-host", ipv4Host);
+
+    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pListenInterfaceIpv6(optionalStringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).preferIpv6Outbound(anyBoolean());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ipv4Host);
+    // No IPv6 options specified, so interface-ipv6 should be empty
+    assertThat(optionalStringArgumentCaptor.getValue()).isEmpty();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 }
