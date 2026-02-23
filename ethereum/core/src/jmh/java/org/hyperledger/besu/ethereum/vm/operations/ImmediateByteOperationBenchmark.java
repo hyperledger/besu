@@ -62,7 +62,7 @@ public abstract class ImmediateByteOperationBenchmark {
     code = new byte[] {(byte) getOpcode(), getImmediate()};
 
     for (int i = 0; i < STACK_DEPTH; i++) {
-      frame.pushStackItem(valuePool[i]);
+      frame.pushStackItemUnsafe(valuePool[i]);
     }
   }
 
@@ -105,11 +105,11 @@ public abstract class ImmediateByteOperationBenchmark {
     int delta = getStackDelta();
     if (delta > 0) {
       for (int i = 0; i < delta; i++) {
-        frame.popStackItem();
+        frame.popStackItemUnsafe();
       }
     } else if (delta < 0) {
       for (int i = 0; i < -delta; i++) {
-        frame.pushStackItem(valuePool[index]);
+        frame.pushStackItemUnsafe(valuePool[index]);
         index = (index + 1) % SAMPLE_SIZE;
       }
     }

@@ -18,8 +18,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 
 /**
  * The DUPN operation (EIP-8024).
@@ -85,16 +83,17 @@ public class DupNOperation extends AbstractFixedCostOperation {
 
     final int n = Eip8024Decoder.DECODE_SINGLE[imm];
 
-    try {
-      // Duplicate the n'th stack item (1-indexed) to the top
-      // In Besu's 0-indexed stack, the n'th item is at index n-1
-      frame.pushStackItem(frame.getStackItem(n - 1));
-      return DUPN_SUCCESS;
-    } catch (final UnderflowException ufe) {
+    // Need n items to read from, plus space for 1 more
+    if (!frame.stackHasItems(n)) {
       return UNDERFLOW_RESPONSE;
-    } catch (final OverflowException ofe) {
+    }
+    if (!frame.stackHasSpace(1)) {
       return OVERFLOW_RESPONSE;
     }
+    // Duplicate the n'th stack item (1-indexed) to the top
+    // In Besu's 0-indexed stack, the n'th item is at index n-1
+    frame.pushStackItemUnsafe(frame.getStackItem(n - 1));
+    return DUPN_SUCCESS;
   }
 
   /**

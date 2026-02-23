@@ -20,11 +20,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
 public class ExtCodeHashOperation extends AbstractOperation {
@@ -52,28 +48,24 @@ public class ExtCodeHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final Address address = Words.toAddress(frame.popStackItem());
-      final boolean accountIsWarm =
-          frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      }
-
-      final Account account = getAccount(address, frame);
-
-      if (account == null || account.isEmpty()) {
-        frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
-      } else {
-        frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getCodeHash().getBytes().toArrayUnsafe()));
-      }
-      return new OperationResult(cost, null);
-
-    } catch (final UnderflowException ufe) {
+    if (!frame.stackHasItems(1)) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
+    final Address address = Words.toAddress(frame.popStackItemUnsafe());
+    final boolean accountIsWarm =
+        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
+    final long cost = cost(accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    final Account account = getAccount(address, frame);
+
+    if (account == null || account.isEmpty()) {
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    } else {
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getCodeHash().getBytes().toArrayUnsafe()));
+    }
+    return new OperationResult(cost, null);
   }
 }

@@ -34,8 +34,9 @@ public class CallValueOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
     final Wei value = frame.getApparentValue();
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toBytes().toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toBytes().toArrayUnsafe()));
 
     return successResponse;
   }

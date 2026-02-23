@@ -33,7 +33,8 @@ public class DifficultyOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getBlockValues().getDifficultyBytes().toArrayUnsafe()));
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getBlockValues().getDifficultyBytes().toArrayUnsafe()));
     return successResponse;
   }
 }

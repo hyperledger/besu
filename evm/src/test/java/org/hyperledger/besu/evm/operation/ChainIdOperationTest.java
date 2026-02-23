@@ -51,9 +51,11 @@ class ChainIdOperationTest {
     ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
     final ArgumentCaptor<org.hyperledger.besu.evm.UInt256> arg = ArgumentCaptor.forClass(org.hyperledger.besu.evm.UInt256.class);
     when(messageFrame.getRemainingGas()).thenReturn(100L);
+    when(messageFrame.stackHasSpace(1)).thenReturn(true);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();
-    Mockito.verify(messageFrame).pushStackItem(arg.capture());
+    Mockito.verify(messageFrame).stackHasSpace(1);
+    Mockito.verify(messageFrame).pushStackItemUnsafe(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
     assertThat(arg.getValue()).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(chainId.toArrayUnsafe()));
   }

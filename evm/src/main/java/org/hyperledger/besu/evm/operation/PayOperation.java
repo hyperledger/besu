@@ -46,6 +46,9 @@ public class PayOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (!frame.stackHasItems(2)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
     if (frame.isStatic()) {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
@@ -70,14 +73,14 @@ public class PayOperation extends AbstractOperation {
 
     if (!hasValue || Objects.equals(frame.getSenderAddress(), to)) {
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(1));
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromInt(1));
       return new OperationResult(cost, null);
     }
 
     final MutableAccount senderAccount = getSenderAccount(frame);
     if (value.compareTo(senderAccount.getBalance()) > 0) {
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
       return new OperationResult(cost, null);
     }
 
@@ -86,7 +89,7 @@ public class PayOperation extends AbstractOperation {
     recipientAccount.incrementBalance(value);
 
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(1));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromInt(1));
     return new OperationResult(cost, null);
   }
 

@@ -165,7 +165,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final long inputSize = clampedToLong(frame.getStackItem(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code) {
@@ -224,12 +224,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
       Address createdAddress = childFrame.getContractAddress();
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(createdAddress.getBytes().toArrayUnsafe()));
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(createdAddress.getBytes().toArrayUnsafe()));
       frame.setReturnData(Bytes.EMPTY);
       onSuccess(frame, createdAddress);
     } else {
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
       onFailure(frame, childFrame.getExceptionalHaltReason());
     }
 

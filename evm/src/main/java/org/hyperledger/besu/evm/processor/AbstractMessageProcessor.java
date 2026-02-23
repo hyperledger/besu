@@ -164,6 +164,7 @@ public abstract class AbstractMessageProcessor {
   private void completedSuccess(final MessageFrame frame) {
     frame.getWorldUpdater().commit();
     frame.getMessageFrameStack().removeFirst();
+    frame.returnStackToPool();
     frame.notifyCompletion();
   }
 
@@ -174,6 +175,7 @@ public abstract class AbstractMessageProcessor {
    */
   private void completedFailed(final MessageFrame frame) {
     frame.getMessageFrameStack().removeFirst();
+    frame.returnStackToPool();
     frame.notifyCompletion();
   }
 

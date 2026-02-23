@@ -40,8 +40,11 @@ public class RevertOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long from = clampedToLong(frame.popStackItem());
-    final long length = clampedToLong(frame.popStackItem());
+    if (!frame.stackHasItems(2)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    final long from = clampedToLong(frame.popStackItemUnsafe());
+    final long length = clampedToLong(frame.popStackItemUnsafe());
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {

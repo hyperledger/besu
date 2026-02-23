@@ -148,7 +148,7 @@ class ExtCodeSizeOperationTest {
             .blockValues(blockValues)
             .build();
 
-    frame.pushStackItem(
+    frame.pushStackItemUnsafe(
         org.hyperledger.besu.evm.UInt256.fromBytesBE(
             org.apache.tuweni.bytes.Bytes32.leftPad(stackItem).toArrayUnsafe()));
     return frame;

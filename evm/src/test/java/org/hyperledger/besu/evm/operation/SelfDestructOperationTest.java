@@ -90,7 +90,7 @@ public class SelfDestructOperationTest {
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString(beneficiary).toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString(beneficiary).toArrayUnsafe()));
     if (newContract) {
       messageFrame.addCreate(originatorAddress);
     }

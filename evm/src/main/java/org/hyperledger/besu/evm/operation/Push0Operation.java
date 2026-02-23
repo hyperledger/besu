@@ -49,7 +49,8 @@ public class Push0Operation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
     return push0Success;
   }
 }

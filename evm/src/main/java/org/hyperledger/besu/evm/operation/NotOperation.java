@@ -49,8 +49,9 @@ public class NotOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
-    frame.pushStackItem(value.not());
+    if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 value = frame.peekStackItemUnsafe(0);
+    frame.overwriteStackItemUnsafe(0, value.not());
     return notSuccess;
   }
 }

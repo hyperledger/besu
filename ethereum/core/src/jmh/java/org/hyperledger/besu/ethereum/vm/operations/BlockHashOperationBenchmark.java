@@ -56,9 +56,9 @@ public class BlockHashOperationBenchmark {
 
   @Benchmark
   public UInt256 executeOperation() {
-    frame.pushStackItem(UInt256.fromLong(blockNumber));
+    frame.pushStackItemUnsafe(UInt256.fromLong(blockNumber));
     operation.execute(frame, null);
-    return frame.popStackItem();
+    return frame.popStackItemUnsafe();
   }
 
   @Benchmark
@@ -71,8 +71,8 @@ public class BlockHashOperationBenchmark {
                     (ProcessableBlockHeader) frame.getBlockValues(),
                     operationBenchmarkHelper.getBlockchain()))
             .build();
-    cleanFrame.pushStackItem(UInt256.fromLong(blockNumber));
+    cleanFrame.pushStackItemUnsafe(UInt256.fromLong(blockNumber));
     operation.execute(cleanFrame, null);
-    return cleanFrame.popStackItem();
+    return cleanFrame.popStackItemUnsafe();
   }
 }

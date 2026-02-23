@@ -59,6 +59,9 @@ public interface ExceptionalHaltReason {
   /** The constant ADDRESS_OUT_OF_RANGE. */
   ExceptionalHaltReason ADDRESS_OUT_OF_RANGE = DefaultExceptionalHaltReason.ADDRESS_OUT_OF_RANGE;
 
+  /** The constant STACK_OUT_OF_BOUNDS. */
+  ExceptionalHaltReason STACK_OUT_OF_BOUNDS = DefaultExceptionalHaltReason.STACK_OUT_OF_BOUNDS;
+
   /**
    * Name string.
    *
@@ -127,7 +130,9 @@ public interface ExceptionalHaltReason {
     /** The Precompile error. */
     PRECOMPILE_ERROR("Precompile error"),
     /** The Address out of range. */
-    ADDRESS_OUT_OF_RANGE("Address out of range");
+    ADDRESS_OUT_OF_RANGE("Address out of range"),
+    /** Stack index out of bounds (safety net for missing pre-validation). */
+    STACK_OUT_OF_BOUNDS("Stack index out of bounds");
 
     /** The Description. */
     final String description;

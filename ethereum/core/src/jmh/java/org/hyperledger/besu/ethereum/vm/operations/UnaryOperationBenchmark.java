@@ -53,9 +53,9 @@ public abstract class UnaryOperationBenchmark {
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(valuePool[index]);
+    frame.pushStackItemUnsafe(valuePool[index]);
     blackhole.consume(invoke(frame));
-    frame.popStackItem();
+    frame.popStackItemUnsafe();
     index = (index + 1) % SAMPLE_SIZE;
   }
 

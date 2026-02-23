@@ -37,9 +37,10 @@ public class SelfBalanceOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
     final Address accountAddress = frame.getRecipientAddress();
     final Account account = getAccount(accountAddress, frame);
-    frame.pushStackItem(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getBalance().toArrayUnsafe()));
+    frame.pushStackItemUnsafe(account == null ? org.hyperledger.besu.evm.UInt256.ZERO : org.hyperledger.besu.evm.UInt256.fromBytesBE(account.getBalance().toArrayUnsafe()));
 
     return successResponse;
   }

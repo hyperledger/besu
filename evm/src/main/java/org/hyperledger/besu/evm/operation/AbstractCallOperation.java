@@ -255,7 +255,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
       frame.incrementRemainingGas(gasAvailableForChildCall + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
       final SoftFailureReason softFailureReason =
           insufficientBalance ? LEGACY_INSUFFICIENT_BALANCE : LEGACY_MAX_CALL_DEPTH;
       return new OperationResult(cost, 1, softFailureReason, gasAvailableForChildCall);
@@ -327,7 +327,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.incrementRemainingGas(gasRemaining);
 
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(getCallResultStackItem(childFrame));
+    frame.pushStackItemUnsafe(getCallResultStackItem(childFrame));
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);

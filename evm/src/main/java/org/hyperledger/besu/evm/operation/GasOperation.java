@@ -36,8 +36,9 @@ public class GasOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
     final long gasRemaining = frame.getRemainingGas() - gasCost;
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(gasRemaining));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(gasRemaining));
 
     return successResponse;
   }

@@ -49,7 +49,8 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
+    if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 value = frame.peekStackItemUnsafe(0);
     final int numberOfLeadingZeros;
     if (value.u3() != 0) {
       numberOfLeadingZeros = Long.numberOfLeadingZeros(value.u3());
@@ -60,7 +61,7 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
     } else {
       numberOfLeadingZeros = 192 + Long.numberOfLeadingZeros(value.u0());
     }
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(numberOfLeadingZeros));
+    frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.fromInt(numberOfLeadingZeros));
     return clzSuccess;
   }
 }

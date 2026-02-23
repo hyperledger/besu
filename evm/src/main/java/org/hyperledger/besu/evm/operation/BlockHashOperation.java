@@ -38,14 +38,17 @@ public class BlockHashOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     final long cost = gasCalculator().getBlockHashOperationGasCost();
+    if (!frame.stackHasItems(1)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final org.hyperledger.besu.evm.UInt256 blockArg = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 blockArg = frame.popStackItemUnsafe();
     // If blockArg doesn't fit in a long, it's out of range
     if (blockArg.u3() != 0 || blockArg.u2() != 0 || blockArg.u1() != 0 || blockArg.u0() < 0) {
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
       return new OperationResult(cost, null);
     }
 
@@ -59,10 +62,10 @@ public class BlockHashOperation extends AbstractOperation {
     if (soughtBlock < 0
         || soughtBlock >= currentBlockNumber
         || soughtBlock < (currentBlockNumber - blockHashLookup.getLookback())) {
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
     } else {
       final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(blockHash.getBytes().toArrayUnsafe()));
+      frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(blockHash.getBytes().toArrayUnsafe()));
     }
 
     return new OperationResult(cost, null);

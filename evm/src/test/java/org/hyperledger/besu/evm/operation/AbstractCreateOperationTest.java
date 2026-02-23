@@ -154,9 +154,9 @@ class AbstractCreateOperationTest {
             .worldUpdater(worldUpdater)
             .build();
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(contract.size()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(contract.size()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(0xFF, contract.size(), contract);
 

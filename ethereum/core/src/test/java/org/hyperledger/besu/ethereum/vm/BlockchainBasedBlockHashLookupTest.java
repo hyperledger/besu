@@ -148,14 +148,15 @@ class BlockchainBasedBlockHashLookupTest {
 
     BlockHashOperation op = new BlockHashOperation(new CancunGasCalculator());
     when(messageFrameMock.getRemainingGas()).thenReturn(10_000_000L);
-    when(messageFrameMock.popStackItem()).thenReturn(org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
+    when(messageFrameMock.stackHasItems(1)).thenReturn(true);
+    when(messageFrameMock.popStackItemUnsafe()).thenReturn(org.hyperledger.besu.evm.UInt256.fromInt(blockNumber));
     when(messageFrameMock.getBlockValues()).thenReturn(blockValuesMock);
     when(messageFrameMock.getBlockHashLookup()).thenReturn(lookup);
     when(blockValuesMock.getNumber()).thenReturn((long) CURRENT_BLOCK_NUMBER);
 
     op.execute(messageFrameMock, null);
 
-    verify(messageFrameMock).pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe()));
+    verify(messageFrameMock).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(hash.getBytes().toArrayUnsafe()));
   }
 
   private BlockHeader createHeader(final int blockNumber, final BlockHeader parentHeader) {

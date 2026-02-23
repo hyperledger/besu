@@ -170,15 +170,17 @@ class SarOperationTest {
   void shiftOperation(final String number, final String shift, final String expectedResult) {
     final MessageFrame frame = mock(MessageFrame.class);
     when(frame.stackSize()).thenReturn(2);
+    when(frame.stackHasItems(2)).thenReturn(true);
     when(frame.getRemainingGas()).thenReturn(100L);
-    when(frame.popStackItem())
-        .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(shift).toArrayUnsafe()))
+    when(frame.peekStackItemUnsafe(0))
+        .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(shift).toArrayUnsafe()));
+    when(frame.peekStackItemUnsafe(1))
         .thenReturn(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(number).toArrayUnsafe()));
     operation.execute(frame, null);
     if (expectedResult.equals("0x") || expectedResult.equals("0x0")) {
-      verify(frame).pushStackItem(UInt256.ZERO);
+      verify(frame).overwriteStackItemUnsafe(0, UInt256.ZERO);
     } else {
-      verify(frame).pushStackItem(UInt256.fromBytesBE(Bytes32.fromHexStringLenient(expectedResult).toArrayUnsafe()));
+      verify(frame).overwriteStackItemUnsafe(0, UInt256.fromBytesBE(Bytes32.fromHexStringLenient(expectedResult).toArrayUnsafe()));
     }
   }
 

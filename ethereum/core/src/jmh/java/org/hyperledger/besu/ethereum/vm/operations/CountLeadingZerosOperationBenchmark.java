@@ -100,9 +100,9 @@ public class CountLeadingZerosOperationBenchmark {
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void executeOperation() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      frame.pushStackItem(value);
+      frame.pushStackItemUnsafe(value);
       CountLeadingZerosOperation.staticOperation(frame);
-      frame.popStackItem();
+      frame.popStackItemUnsafe();
     }
   }
 
@@ -110,8 +110,8 @@ public class CountLeadingZerosOperationBenchmark {
   @OperationsPerInvocation(OPERATIONS_PER_INVOCATION)
   public void baseline() {
     for (int i = 0; i < OPERATIONS_PER_INVOCATION; i++) {
-      frame.pushStackItem(value);
-      frame.popStackItem();
+      frame.pushStackItemUnsafe(value);
+      frame.popStackItemUnsafe();
     }
   }
 }

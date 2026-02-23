@@ -82,8 +82,8 @@ class SStoreOperationTest {
     final SStoreOperation operation = new SStoreOperation(gasCalculator, minimumGasAvailable);
     final MessageFrame frame =
         createMessageFrame(Address.fromHexString("0x18675309"), initialGas, remainingGas);
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x01").toArrayUnsafe()));
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(expectedHalt);

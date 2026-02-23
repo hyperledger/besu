@@ -80,11 +80,11 @@ public class TransientStorageOperationBenchmark {
 
   @Benchmark
   public UInt256 executeOperation() {
-    frame.pushStackItem(UInt256.fromInt(1));
-    frame.pushStackItem(UInt256.fromInt(1));
+    frame.pushStackItemUnsafe(UInt256.fromInt(1));
+    frame.pushStackItemUnsafe(UInt256.fromInt(1));
     tstore.execute(frame, null);
-    frame.pushStackItem(UInt256.fromInt(1));
+    frame.pushStackItemUnsafe(UInt256.fromInt(1));
     tload.execute(frame, null);
-    return frame.popStackItem();
+    return frame.popStackItemUnsafe();
   }
 }

@@ -34,8 +34,9 @@ public class GasPriceOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
     final Wei gasPrice = frame.getGasPrice();
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(gasPrice.toBytes().toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(gasPrice.toBytes().toArrayUnsafe()));
 
     return successResponse;
   }

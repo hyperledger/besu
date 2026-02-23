@@ -76,8 +76,12 @@ public class SelfDestructOperation extends AbstractOperation {
       return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     }
 
+    if (!frame.stackHasItems(1)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
-    final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
+    final Address beneficiaryAddress = Words.toAddress(frame.popStackItemUnsafe());
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
     final long beneficiaryAccessCost =

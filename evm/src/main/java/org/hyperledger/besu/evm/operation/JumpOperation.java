@@ -34,7 +34,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public JumpOperation(final GasCalculator gasCalculator) {
-    super(0x56, "JUMP", 2, 0, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x56, "JUMP", 1, 0, gasCalculator, gasCalculator.getMidTierGasCost());
   }
 
   @Override
@@ -50,7 +50,8 @@ public class JumpOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
     return jumpService.performJump(
-        frame, frame.popStackItem(), jumpResponse, invalidJumpResponse);
+        frame, frame.popStackItemUnsafe(), jumpResponse, invalidJumpResponse);
   }
 }

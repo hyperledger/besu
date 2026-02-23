@@ -45,7 +45,7 @@ class SlotNumOperationTest {
     final MessageFrame frame = createMessageFrame(100L, expectedSlotNumber);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(expectedSlotNumber));
+    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(expectedSlotNumber));
     assertSuccessResult(result);
   }
 
@@ -54,7 +54,7 @@ class SlotNumOperationTest {
     final MessageFrame frame = createMessageFrame(100L, 0L);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(0L));
+    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(0L));
     assertSuccessResult(result);
   }
 
@@ -64,7 +64,7 @@ class SlotNumOperationTest {
     final MessageFrame frame = createMessageFrame(100L, maxSlotNumber);
     final Operation operation = new SlotNumOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(maxSlotNumber));
+    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(maxSlotNumber));
     assertSuccessResult(result);
   }
 
@@ -98,6 +98,7 @@ class SlotNumOperationTest {
     final BlockValues blockValues = mock(BlockValues.class);
     when(blockValues.getSlotNumber()).thenReturn(slotNumber);
     when(frame.getBlockValues()).thenReturn(blockValues);
+    when(frame.stackHasSpace(1)).thenReturn(true);
     return frame;
   }
 }

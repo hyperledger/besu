@@ -40,7 +40,8 @@ class RevertOperationTest {
 
   @BeforeEach
   void setUp() {
-    when(messageFrame.popStackItem())
+    when(messageFrame.stackHasItems(2)).thenReturn(true);
+    when(messageFrame.popStackItemUnsafe())
         .thenReturn(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x00").toArrayUnsafe()))
         .thenReturn(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x0e").toArrayUnsafe()));
     when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);

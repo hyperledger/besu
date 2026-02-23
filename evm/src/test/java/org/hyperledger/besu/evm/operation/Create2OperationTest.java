@@ -152,10 +152,10 @@ public class Create2OperationTest {
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString(salt).toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromLong(codeBytes.size()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString(salt).toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromLong(codeBytes.size()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0xFF").toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(memoryOffset, code.length(), codeBytes);
 
@@ -325,10 +325,10 @@ public class Create2OperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);

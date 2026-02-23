@@ -48,18 +48,20 @@ public class ByteOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final org.hyperledger.besu.evm.UInt256 offset = frame.popStackItem();
-    final org.hyperledger.besu.evm.UInt256 value = frame.popStackItem();
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 offset = frame.peekStackItemUnsafe(0);
+    final org.hyperledger.besu.evm.UInt256 value = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(1);
 
     // offset must be 0..31 to select a byte from the 32-byte value
     if (offset.u3() != 0 || offset.u2() != 0 || offset.u1() != 0 || offset.u0() >= 32) {
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.ZERO);
       return byteSuccess;
     }
 
     final int index = (int) offset.u0();
     final byte[] bytes = value.toBytesBE();
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromInt(bytes[index] & 0xFF));
+    frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.fromInt(bytes[index] & 0xFF));
 
     return byteSuccess;
   }

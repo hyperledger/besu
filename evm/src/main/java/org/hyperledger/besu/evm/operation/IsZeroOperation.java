@@ -47,8 +47,9 @@ public class IsZeroOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final UInt256 value = frame.popStackItem();
-    frame.pushStackItem(value.isZero() ? UInt256.ONE : UInt256.ZERO);
+    if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
+    final UInt256 value = frame.peekStackItemUnsafe(0);
+    frame.overwriteStackItemUnsafe(0, value.isZero() ? UInt256.ONE : UInt256.ZERO);
     return isZeroSuccess;
   }
 }

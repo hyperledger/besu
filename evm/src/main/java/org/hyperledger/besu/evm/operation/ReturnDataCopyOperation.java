@@ -45,9 +45,12 @@ public class ReturnDataCopyOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long memOffset = clampedToLong(frame.popStackItem());
-    final long sourceOffset = clampedToLong(frame.popStackItem());
-    final long numBytes = clampedToLong(frame.popStackItem());
+    if (!frame.stackHasItems(3)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    final long memOffset = clampedToLong(frame.popStackItemUnsafe());
+    final long sourceOffset = clampedToLong(frame.popStackItemUnsafe());
+    final long numBytes = clampedToLong(frame.popStackItemUnsafe());
     final Bytes returnData = frame.getReturnData();
     final int returnDataLength = returnData.size();
 

@@ -65,8 +65,11 @@ public class SStoreOperation extends AbstractOperation {
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
 
-    final org.hyperledger.besu.evm.UInt256 keyNative = frame.popStackItem();
-    final org.hyperledger.besu.evm.UInt256 newValueNative = frame.popStackItem();
+    if (!frame.stackHasItems(2)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    final org.hyperledger.besu.evm.UInt256 keyNative = frame.popStackItemUnsafe();
+    final org.hyperledger.besu.evm.UInt256 newValueNative = frame.popStackItemUnsafe();
 
     final MutableAccount account = getMutableAccount(frame.getRecipientAddress(), frame);
     if (account == null) {

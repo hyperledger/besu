@@ -41,7 +41,7 @@ class Push0OperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new Push0Operation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    Mockito.verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+    Mockito.verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
     assertThat(result.getGasCost()).isEqualTo(gasCalculator.getBaseTierGasCost());
     assertSuccessResult(result);
   }
@@ -57,6 +57,7 @@ class Push0OperationTest {
     final BlockValues blockValues = new FakeBlockValues(baseFee);
     when(frame.getBlockValues()).thenReturn(blockValues);
     when(frame.getCode()).thenReturn(Code.EMPTY_CODE);
+    when(frame.stackHasSpace(1)).thenReturn(true);
     return frame;
   }
 }

@@ -47,9 +47,11 @@ public class EqOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final UInt256 value0 = frame.popStackItem();
-    final UInt256 value1 = frame.popStackItem();
-    frame.pushStackItem(value0.equals(value1) ? UInt256.ONE : UInt256.ZERO);
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final UInt256 value0 = frame.peekStackItemUnsafe(0);
+    final UInt256 value1 = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(1);
+    frame.overwriteStackItemUnsafe(0, value0.equals(value1) ? UInt256.ONE : UInt256.ZERO);
     return eqSuccess;
   }
 }

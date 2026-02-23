@@ -47,13 +47,15 @@ public class SarOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final UInt256 shiftAmount = frame.popStackItem();
-    final UInt256 value = frame.popStackItem();
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final UInt256 shiftAmount = frame.peekStackItemUnsafe(0);
+    final UInt256 value = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(1);
 
     if (!shiftAmount.isUInt64() || Long.compareUnsigned(shiftAmount.longValue(), 256) >= 0) {
-      frame.pushStackItem(value.isNegative() ? UInt256.MAX : UInt256.ZERO);
+      frame.overwriteStackItemUnsafe(0, value.isNegative() ? UInt256.MAX : UInt256.ZERO);
     } else {
-      frame.pushStackItem(value.sar((int) shiftAmount.longValue()));
+      frame.overwriteStackItemUnsafe(0, value.sar((int) shiftAmount.longValue()));
     }
     return sarSuccess;
   }

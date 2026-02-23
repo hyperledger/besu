@@ -66,7 +66,9 @@ public class DupOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame, final int index) {
-    frame.pushStackItem(frame.getStackItem(index - 1));
+    if (!frame.stackHasItems(index)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
+    frame.pushStackItemUnsafe(frame.peekStackItemUnsafe(index - 1));
 
     return dupSuccess;
   }

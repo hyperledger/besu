@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.hyperledger.besu.evm.UInt256;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 class OperandStackTest {
 
@@ -37,149 +35,243 @@ class OperandStackTest {
   }
 
   @Test
-  void push_StackOverflow() {
-    final OperandStack stack = new OperandStack(1);
-    stack.push(UInt256.fromInt(1));
-    final UInt256 operand = UInt256.fromInt(2);
-    assertThatThrownBy(() -> stack.push(operand)).isInstanceOf(OverflowException.class);
-  }
-
-  @Test
-  void pop_StackUnderflow() {
-    final OperandStack stack = new OperandStack(1);
-    assertThatThrownBy(stack::pop).isInstanceOf(UnderflowException.class);
-  }
-
-  @Test
-  void pushPop() {
-    final OperandStack stack = new OperandStack(1);
-    stack.push(UInt256.fromInt(1));
+  void pushPopUnsafe() {
+    final OperandStack stack = new OperandStack(2);
+    stack.pushUnsafe(UInt256.fromInt(42));
     assertThat(stack.size()).isEqualTo(1);
-    assertThat(stack.pop()).isEqualTo(UInt256.fromInt(1));
+    stack.pushUnsafe(UInt256.fromInt(99));
+    assertThat(stack.size()).isEqualTo(2);
+    assertThat(stack.popUnsafe()).isEqualTo(UInt256.fromInt(99));
+    assertThat(stack.popUnsafe()).isEqualTo(UInt256.fromInt(42));
+    assertThat(stack.size()).isZero();
   }
 
   @Test
-  void get_NegativeOffset() {
+  void pushUnsafe_StackOverflow_AIOOBE() {
     final OperandStack stack = new OperandStack(1);
-    assertThatThrownBy(() -> stack.get(-1)).isInstanceOf(UnderflowException.class);
+    stack.pushUnsafe(UInt256.fromInt(1));
+    assertThatThrownBy(() -> stack.pushUnsafe(UInt256.fromInt(2)))
+        .isInstanceOf(ArrayIndexOutOfBoundsException.class);
   }
 
   @Test
-  void get_IndexGreaterThanSize() {
+  void popUnsafe_StackUnderflow_AIOOBE() {
     final OperandStack stack = new OperandStack(1);
-    stack.push(UInt256.fromInt(1));
-    assertThatThrownBy(() -> stack.get(2)).isInstanceOf(UnderflowException.class);
+    assertThatThrownBy(stack::popUnsafe).isInstanceOf(ArrayIndexOutOfBoundsException.class);
   }
 
   @Test
-  void get() {
+  void getUnsafe() {
     final OperandStack stack = new OperandStack(3);
-    stack.push(UInt256.fromInt(1));
-    stack.push(UInt256.fromInt(2));
-    stack.push(UInt256.fromInt(3));
+    stack.pushUnsafe(UInt256.fromInt(1));
+    stack.pushUnsafe(UInt256.fromInt(2));
+    stack.pushUnsafe(UInt256.fromInt(3));
     assertThat(stack.size()).isEqualTo(3);
-    assertThat(stack.get(0)).isEqualTo(UInt256.fromInt(3));
-    assertThat(stack.get(1)).isEqualTo(UInt256.fromInt(2));
-    assertThat(stack.get(2)).isEqualTo(UInt256.fromInt(1));
+    assertThat(stack.getUnsafe(0)).isEqualTo(UInt256.fromInt(3));
+    assertThat(stack.getUnsafe(1)).isEqualTo(UInt256.fromInt(2));
+    assertThat(stack.getUnsafe(2)).isEqualTo(UInt256.fromInt(1));
   }
 
   @Test
-  void set_NegativeOffset() {
-    final OperandStack stack = new OperandStack(1);
-    final UInt256 operand = UInt256.fromInt(1);
-    assertThatThrownBy(() -> stack.set(-1, operand)).isInstanceOf(UnderflowException.class);
-  }
-
-  @Test
-  void set_IndexGreaterThanSize() {
-    final OperandStack stack = new OperandStack(1);
-    stack.push(UInt256.fromInt(1));
-    final UInt256 operand = UInt256.fromInt(1);
-    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(OverflowException.class);
-  }
-
-  @Test
-  void set_IndexGreaterThanCurrentSize() {
-    final OperandStack stack = new OperandStack(1024);
-    stack.push(UInt256.fromInt(1));
-    final UInt256 operand = UInt256.fromInt(1);
-    assertThatThrownBy(() -> stack.set(2, operand)).isInstanceOf(OverflowException.class);
-  }
-
-  @Test
-  void set() {
+  void peekUnsafe() {
     final OperandStack stack = new OperandStack(3);
-    stack.push(UInt256.fromInt(1));
-    stack.push(UInt256.fromInt(2));
-    stack.push(UInt256.fromInt(3));
-    stack.set(2, UInt256.fromInt(4));
-    assertThat(stack.size()).isEqualTo(3);
-    assertThat(stack.get(0)).isEqualTo(UInt256.fromInt(3));
-    assertThat(stack.get(1)).isEqualTo(UInt256.fromInt(2));
-    assertThat(stack.get(2)).isEqualTo(UInt256.fromInt(4));
+    stack.pushUnsafe(UInt256.fromInt(1));
+    stack.pushUnsafe(UInt256.fromInt(2));
+    stack.pushUnsafe(UInt256.fromInt(3));
+    assertThat(stack.peekUnsafe(0)).isEqualTo(UInt256.fromInt(3));
+    assertThat(stack.peekUnsafe(1)).isEqualTo(UInt256.fromInt(2));
+    assertThat(stack.peekUnsafe(2)).isEqualTo(UInt256.fromInt(1));
   }
 
   @Test
-  void bulkPop() {
-    final OperandStack stack = new OperandStack(8);
-    stack.push(UInt256.fromInt(1));
-    stack.push(UInt256.fromInt(2));
-    stack.push(UInt256.fromInt(3));
-    stack.push(UInt256.fromInt(4));
-    stack.push(UInt256.fromInt(5));
-    stack.push(UInt256.fromInt(6));
-    stack.push(UInt256.fromInt(7));
-    stack.push(UInt256.fromInt(8));
-    assertThat(stack.size()).isEqualTo(8);
-    stack.bulkPop(2);
-    assertThat(stack.get(0)).isEqualTo(UInt256.fromInt(6));
-    stack.bulkPop(6);
+  void overwriteUnsafe() {
+    final OperandStack stack = new OperandStack(3);
+    stack.pushUnsafe(UInt256.fromInt(1));
+    stack.pushUnsafe(UInt256.fromInt(2));
+    stack.pushUnsafe(UInt256.fromInt(3));
+    stack.overwriteUnsafe(0, UInt256.fromInt(30));
+    stack.overwriteUnsafe(2, UInt256.fromInt(10));
+    assertThat(stack.getUnsafe(0)).isEqualTo(UInt256.fromInt(30));
+    assertThat(stack.getUnsafe(1)).isEqualTo(UInt256.fromInt(2));
+    assertThat(stack.getUnsafe(2)).isEqualTo(UInt256.fromInt(10));
+  }
+
+  @Test
+  void shrinkUnsafe() {
+    final OperandStack stack = new OperandStack(4);
+    stack.pushUnsafe(UInt256.fromInt(1));
+    stack.pushUnsafe(UInt256.fromInt(2));
+    stack.pushUnsafe(UInt256.fromInt(3));
+    stack.pushUnsafe(UInt256.fromInt(4));
+    assertThat(stack.size()).isEqualTo(4);
+    stack.shrinkUnsafe(2);
+    assertThat(stack.size()).isEqualTo(2);
+    assertThat(stack.getUnsafe(0)).isEqualTo(UInt256.fromInt(2));
+    assertThat(stack.getUnsafe(1)).isEqualTo(UInt256.fromInt(1));
+  }
+
+  // --- Validation helpers ---
+
+  @Test
+  void hasItems() {
+    final OperandStack stack = new OperandStack(4);
+    assertThat(stack.hasItems(0)).isTrue();
+    assertThat(stack.hasItems(1)).isFalse();
+    stack.pushUnsafe(UInt256.fromInt(1));
+    assertThat(stack.hasItems(1)).isTrue();
+    assertThat(stack.hasItems(2)).isFalse();
+    stack.pushUnsafe(UInt256.fromInt(2));
+    assertThat(stack.hasItems(2)).isTrue();
+  }
+
+  @Test
+  void hasSpace() {
+    final OperandStack stack = new OperandStack(2);
+    assertThat(stack.hasSpace(1)).isTrue();
+    assertThat(stack.hasSpace(2)).isTrue();
+    assertThat(stack.hasSpace(3)).isFalse();
+    stack.pushUnsafe(UInt256.fromInt(1));
+    assertThat(stack.hasSpace(1)).isTrue();
+    assertThat(stack.hasSpace(2)).isFalse();
+    stack.pushUnsafe(UInt256.fromInt(2));
+    assertThat(stack.hasSpace(1)).isFalse();
+  }
+
+  // --- Operation patterns ---
+
+  @Test
+  void binaryOpPattern() {
+    final OperandStack stack = new OperandStack(4);
+    stack.pushUnsafe(UInt256.fromInt(10));
+    stack.pushUnsafe(UInt256.fromInt(20));
+    final UInt256 a = stack.peekUnsafe(0);
+    final UInt256 b = stack.peekUnsafe(1);
+    stack.shrinkUnsafe(1);
+    stack.overwriteUnsafe(0, a.add(b));
+    assertThat(stack.size()).isEqualTo(1);
+    assertThat(stack.getUnsafe(0)).isEqualTo(UInt256.fromInt(30));
+  }
+
+  @Test
+  void unaryOpPattern() {
+    final OperandStack stack = new OperandStack(4);
+    stack.pushUnsafe(UInt256.fromInt(42));
+    final UInt256 v = stack.peekUnsafe(0);
+    stack.overwriteUnsafe(0, UInt256.fromInt(v.isZero() ? 1 : 0));
+    assertThat(stack.size()).isEqualTo(1);
+    assertThat(stack.getUnsafe(0)).isEqualTo(UInt256.ZERO);
+  }
+
+  @Test
+  void largeValues() {
+    final OperandStack stack = new OperandStack(2);
+    final UInt256 large = UInt256.MAX;
+    stack.pushUnsafe(large);
+    assertThat(stack.popUnsafe()).isEqualTo(large);
+  }
+
+  @Test
+  void isFull() {
+    final OperandStack stack = new OperandStack(1);
+    assertThat(stack.isFull()).isFalse();
+    stack.pushUnsafe(UInt256.ONE);
+    assertThat(stack.isFull()).isTrue();
+  }
+
+  @Test
+  void isEmpty() {
+    final OperandStack stack = new OperandStack(1);
     assertThat(stack.isEmpty()).isTrue();
+    stack.pushUnsafe(UInt256.ONE);
+    assertThat(stack.isEmpty()).isFalse();
+  }
+
+  // --- StackPool tests ---
+
+  @Test
+  void pool_borrowAndRelease_reusesStacks() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    OperandStack s1 = pool.borrow();
+    pool.release(s1);
+    OperandStack s2 = pool.borrow();
+    assertThat(s2).isSameAs(s1);
   }
 
   @Test
-  void preserveTop() {
-    final OperandStack stack = new OperandStack(8);
-    stack.push(UInt256.fromInt(1));
-    stack.push(UInt256.fromInt(2));
-    stack.push(UInt256.fromInt(3));
-    stack.push(UInt256.fromInt(4));
-    stack.push(UInt256.fromInt(5));
-    stack.push(UInt256.fromInt(6));
-    stack.push(UInt256.fromInt(7));
-    stack.push(UInt256.fromInt(8));
-    assertThat(stack.size()).isEqualTo(8);
-    stack.preserveTop(6, 1);
-    assertThat(stack.get(0)).isEqualTo(UInt256.fromInt(8));
-    assertThat(stack.get(1)).isEqualTo(UInt256.fromInt(6));
-    assertThat(stack.size()).isEqualTo(7);
-    stack.preserveTop(1, 3);
-    assertThat(stack.get(0)).isEqualTo(UInt256.fromInt(8));
-    assertThat(stack.get(1)).isEqualTo(UInt256.fromInt(6));
-    assertThat(stack.get(2)).isEqualTo(UInt256.fromInt(5));
-    assertThat(stack.get(3)).isEqualTo(UInt256.fromInt(1));
-    assertThat(stack.size()).isEqualTo(4);
-
-    stack.preserveTop(4, 0);
-    assertThat(stack.size()).isEqualTo(4);
-    assertThatThrownBy(() -> stack.preserveTop(4, 2)).isInstanceOf(UnderflowException.class);
-    stack.preserveTop(2, 2);
-    assertThat(stack.size()).isEqualTo(4);
-    stack.preserveTop(0, 2);
-    assertThat(stack.get(0)).isEqualTo(UInt256.fromInt(8));
-    assertThat(stack.get(1)).isEqualTo(UInt256.fromInt(6));
-
-    assertThatThrownBy(() -> stack.preserveTop(5, 1)).isInstanceOf(UnderflowException.class);
-    assertThatThrownBy(() -> stack.preserveTop(1, 5)).isInstanceOf(UnderflowException.class);
+  void pool_borrowMultiple_tracksOutstanding() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    OperandStack s1 = pool.borrow();
+    OperandStack s2 = pool.borrow();
+    assertThat(pool.outstanding).isEqualTo(2);
+    pool.release(s2);
+    pool.release(s1);
+    assertThat(pool.outstanding).isZero();
   }
 
-  @ParameterizedTest
-  @ValueSource(ints = {5, 31, 32, 33, 1023, 1024, 1025})
-  void largeOverflows(final int n) {
-    final OperandStack stack = new OperandStack(n);
-    for (int i = 0; i < n; i++) {
-      stack.push(UInt256.ONE);
+  @Test
+  void pool_borrowBeyondInitialCapacity_allocatesNew() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    OperandStack[] borrowed = new OperandStack[20];
+    for (int i = 0; i < 20; i++) {
+      borrowed[i] = pool.borrow();
     }
-    assertThatThrownBy(() -> stack.push(UInt256.ONE)).isInstanceOf(OverflowException.class);
+    assertThat(pool.outstanding).isEqualTo(20);
+    for (int i = 19; i >= 0; i--) {
+      pool.release(borrowed[i]);
+    }
+    assertThat(pool.size).isEqualTo(16);
+  }
+
+  @Test
+  void pool_maintain_shrinksAfterLowUsage() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    for (int cycle = 0; cycle < 10; cycle++) {
+      pool.peakThisCycle = 1;
+      pool.idleCount = 256;
+      pool.maintain();
+    }
+    assertThat(pool.capacity).isEqualTo(16);
+  }
+
+  @Test
+  void pool_maintain_growsAfterHighUsage() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    for (int cycle = 0; cycle < 10; cycle++) {
+      pool.peakThisCycle = 100;
+      pool.idleCount = 256;
+      pool.maintain();
+    }
+    assertThat(pool.capacity).isEqualTo(256);
+  }
+
+  @Test
+  void pool_maintain_shrinksFromSpike() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    pool.peakThisCycle = 512;
+    pool.idleCount = 256;
+    pool.maintain();
+    int capacityAfterSpike = pool.capacity;
+    assertThat(capacityAfterSpike).isGreaterThan(16);
+
+    for (int cycle = 0; cycle < 50; cycle++) {
+      pool.peakThisCycle = 1;
+      pool.idleCount = 256;
+      pool.maintain();
+    }
+    assertThat(pool.capacity).isLessThan(capacityAfterSpike);
+    assertThat(pool.capacity).isEqualTo(16);
+  }
+
+  @Test
+  void pool_releaseTriggersMaintenanceAtInterval() {
+    final OperandStack.StackPool pool = new OperandStack.StackPool();
+    for (int i = 0; i < 255; i++) {
+      OperandStack s = pool.borrow();
+      pool.release(s);
+    }
+    assertThat(pool.idleCount).isEqualTo(255);
+    OperandStack s = pool.borrow();
+    pool.release(s);
+    assertThat(pool.idleCount).isZero();
   }
 }

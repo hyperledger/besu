@@ -20,8 +20,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 
 /** The SLoad operation. */
 public class SLoadOperation extends AbstractOperation {
@@ -49,24 +47,20 @@ public class SLoadOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    try {
-      final Account account = getAccount(frame.getRecipientAddress(), frame);
-      final Address address = account.getAddress();
-      final org.hyperledger.besu.evm.UInt256 key = frame.popStackItem();
-      final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes32());
-      final long cost = slotIsWarm ? warmCost : coldCost;
-      if (frame.getRemainingGas() < cost) {
-        return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        frame.pushStackItem(
-            org.hyperledger.besu.evm.UInt256.fromTuweni(
-                getStorageValue(account, key.toTuweni(), frame)));
-        return slotIsWarm ? warmSuccess : coldSuccess;
-      }
-    } catch (final UnderflowException ufe) {
+    if (!frame.stackHasItems(1)) {
       return new OperationResult(warmCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    } catch (final OverflowException ofe) {
-      return new OperationResult(warmCost, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
+    final Account account = getAccount(frame.getRecipientAddress(), frame);
+    final Address address = account.getAddress();
+    final org.hyperledger.besu.evm.UInt256 key = frame.popStackItemUnsafe();
+    final boolean slotIsWarm = frame.warmUpStorage(address, key.toBytes32());
+    final long cost = slotIsWarm ? warmCost : coldCost;
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+    frame.pushStackItemUnsafe(
+        org.hyperledger.besu.evm.UInt256.fromTuweni(
+            getStorageValue(account, key.toTuweni(), frame)));
+    return slotIsWarm ? warmSuccess : coldSuccess;
   }
 }

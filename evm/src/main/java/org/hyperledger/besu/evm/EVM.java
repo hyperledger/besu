@@ -25,8 +25,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.JumpDestOnlyCodeCache;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
@@ -82,13 +80,9 @@ import org.slf4j.LoggerFactory;
 public class EVM {
   private static final Logger LOG = LoggerFactory.getLogger(EVM.class);
 
-  /** The constant OVERFLOW_RESPONSE. */
-  protected static final OperationResult OVERFLOW_RESPONSE =
-      new OperationResult(0L, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
-
-  /** The constant UNDERFLOW_RESPONSE. */
-  protected static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+  /** Safety-net response for missing pre-validation in new opcodes. */
+  private static final OperationResult STACK_OUT_OF_BOUNDS_RESPONSE =
+      new OperationResult(0L, ExceptionalHaltReason.STACK_OUT_OF_BOUNDS);
 
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
@@ -346,10 +340,8 @@ public class EVM {
                 yield currentOperation.execute(frame, this);
               }
             };
-      } catch (final OverflowException oe) {
-        result = OVERFLOW_RESPONSE;
-      } catch (final UnderflowException ue) {
-        result = UNDERFLOW_RESPONSE;
+      } catch (final ArrayIndexOutOfBoundsException aioobe) {
+        result = STACK_OUT_OF_BOUNDS_RESPONSE;
       }
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {

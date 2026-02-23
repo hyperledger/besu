@@ -48,9 +48,11 @@ public class OrOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final org.hyperledger.besu.evm.UInt256 value0 = frame.popStackItem();
-    final org.hyperledger.besu.evm.UInt256 value1 = frame.popStackItem();
-    frame.pushStackItem(value0.or(value1));
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 value0 = frame.peekStackItemUnsafe(0);
+    final org.hyperledger.besu.evm.UInt256 value1 = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(1);
+    frame.overwriteStackItemUnsafe(0, value0.or(value1));
     return orSuccess;
   }
 }

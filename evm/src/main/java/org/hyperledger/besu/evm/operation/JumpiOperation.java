@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /** The JUMPI operation. */
 public class JumpiOperation extends AbstractFixedCostOperation {
 
@@ -52,8 +50,10 @@ public class JumpiOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final org.hyperledger.besu.evm.UInt256 dest = frame.popStackItem();
-    final org.hyperledger.besu.evm.UInt256 condition = frame.popStackItem();
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 dest = frame.peekStackItemUnsafe(0);
+    final org.hyperledger.besu.evm.UInt256 condition = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(2);
 
     // If condition is zero (false), no jump is will be performed. Therefore, skip the test.
     if (condition.isZero()) {

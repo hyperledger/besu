@@ -57,12 +57,12 @@ public abstract class BinaryOperationBenchmark {
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(bPool[index]);
-    frame.pushStackItem(aPool[index]);
+    frame.pushStackItemUnsafe(bPool[index]);
+    frame.pushStackItemUnsafe(aPool[index]);
 
     blackhole.consume(invoke(frame));
 
-    frame.popStackItem();
+    frame.popStackItemUnsafe();
 
     index = (index + 1) % SAMPLE_SIZE;
   }

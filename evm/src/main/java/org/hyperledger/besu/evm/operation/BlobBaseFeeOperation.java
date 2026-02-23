@@ -33,9 +33,9 @@ public class BlobBaseFeeOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
     final Wei blobGasPrice = frame.getBlobGasPrice();
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(blobGasPrice.toBytes().toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(blobGasPrice.toBytes().toArrayUnsafe()));
     return successResponse;
   }
 }

@@ -41,6 +41,7 @@ class CountLeadingZerosOperationTest {
   void setUp() {
     operation = new CountLeadingZerosOperation(mock(GasCalculator.class));
     frame = mock(MessageFrame.class);
+    when(frame.stackHasItems(1)).thenReturn(true);
   }
 
   static Stream<Arguments> provideClzTestCases() {
@@ -67,9 +68,9 @@ class CountLeadingZerosOperationTest {
             : Bytes32.leftPad(raw).toArrayUnsafe();
     UInt256 input = UInt256.fromBytesBE(padded);
 
-    when(frame.popStackItem()).thenReturn(input);
+    when(frame.peekStackItemUnsafe(0)).thenReturn(input);
 
     operation.executeFixedCostOperation(frame, mock(EVM.class));
-    verify(frame).pushStackItem(UInt256.fromInt(expectedLeadingZeros));
+    verify(frame).overwriteStackItemUnsafe(0, UInt256.fromInt(expectedLeadingZeros));
   }
 }

@@ -297,9 +297,9 @@ class CreateOperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
-    messageFrame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryLength.toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(memoryOffset.toArrayUnsafe()));
+    messageFrame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);

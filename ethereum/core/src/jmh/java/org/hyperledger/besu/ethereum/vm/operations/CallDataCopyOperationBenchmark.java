@@ -86,21 +86,21 @@ public class CallDataCopyOperationBenchmark {
 
   @Benchmark
   public void baseline() {
-    frame.pushStackItem(sizePool[index]);
-    frame.pushStackItem(srcOffsetPool[index]);
-    frame.pushStackItem(destOffsetPool[index]);
+    frame.pushStackItemUnsafe(sizePool[index]);
+    frame.pushStackItemUnsafe(srcOffsetPool[index]);
+    frame.pushStackItemUnsafe(destOffsetPool[index]);
 
-    frame.popStackItem();
-    frame.popStackItem();
-    frame.popStackItem();
+    frame.popStackItemUnsafe();
+    frame.popStackItemUnsafe();
+    frame.popStackItemUnsafe();
     index = (index + 1) % SAMPLE_SIZE;
   }
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(sizePool[index]);
-    frame.pushStackItem(srcOffsetPool[index]);
-    frame.pushStackItem(destOffsetPool[index]);
+    frame.pushStackItemUnsafe(sizePool[index]);
+    frame.pushStackItemUnsafe(srcOffsetPool[index]);
+    frame.pushStackItemUnsafe(destOffsetPool[index]);
 
     blackhole.consume(callDataCopyOperation.execute(frame, null));
 

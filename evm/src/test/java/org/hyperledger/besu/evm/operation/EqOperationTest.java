@@ -99,7 +99,7 @@ public class EqOperationTest {
 
     operation.executeFixedCostOperation(frame, mock(EVM.class));
 
-    assertThat(frame.popStackItem())
+    assertThat(frame.popStackItemUnsafe())
         .isEqualTo(org.hyperledger.besu.evm.UInt256.fromInt(expectedResult.ordinal()));
   }
 }

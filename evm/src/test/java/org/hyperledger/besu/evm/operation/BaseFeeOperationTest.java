@@ -47,7 +47,7 @@ class BaseFeeOperationTest {
     final MessageFrame frame = createMessageFrame(100, Optional.of(Wei.of(5L)));
     final Operation operation = new BaseFeeOperation(gasCalculator);
     final OperationResult result = operation.execute(frame, null);
-    verify(frame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Wei.of(5L).toBytes().toArrayUnsafe()));
+    verify(frame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Wei.of(5L).toBytes().toArrayUnsafe()));
     assertSuccessResult(result);
   }
 
@@ -76,6 +76,7 @@ class BaseFeeOperationTest {
     final BlockValues blockHeader = mock(BlockValues.class);
     when(blockHeader.getBaseFee()).thenReturn(baseFee);
     when(frame.getBlockValues()).thenReturn(blockHeader);
+    when(frame.stackHasSpace(1)).thenReturn(true);
     return frame;
   }
 }

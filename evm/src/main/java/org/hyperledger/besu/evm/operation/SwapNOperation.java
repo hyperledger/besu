@@ -18,9 +18,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.UnderflowException;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /**
  * The SWAPN operation (EIP-8024).
@@ -82,17 +79,16 @@ public class SwapNOperation extends AbstractFixedCostOperation {
 
     final int n = Eip8024Decoder.DECODE_SINGLE[imm];
 
-    try {
-      // Swap the top of stack (index 0) with the (n+1)'th item (index n)
-      // In Besu's 0-indexed stack, top is index 0, (n+1)'th is index n
-      final org.hyperledger.besu.evm.UInt256 top = frame.getStackItem(0);
-      final org.hyperledger.besu.evm.UInt256 nthItem = frame.getStackItem(n);
-      frame.setStackItem(0, nthItem);
-      frame.setStackItem(n, top);
-      return SWAPN_SUCCESS;
-    } catch (final UnderflowException ufe) {
+    if (!frame.stackHasItems(n + 1)) {
       return UNDERFLOW_RESPONSE;
     }
+    // Swap the top of stack (index 0) with the (n+1)'th item (index n)
+    // In Besu's 0-indexed stack, top is index 0, (n+1)'th is index n
+    final org.hyperledger.besu.evm.UInt256 top = frame.getStackItem(0);
+    final org.hyperledger.besu.evm.UInt256 nthItem = frame.getStackItem(n);
+    frame.setStackItem(0, nthItem);
+    frame.setStackItem(n, top);
+    return SWAPN_SUCCESS;
   }
 
   /**

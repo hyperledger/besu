@@ -90,7 +90,7 @@ class CodeTest {
             .build();
 
     frame.setPC(CURRENT_PC);
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x03").toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(Bytes.fromHexString("0x03").toArrayUnsafe()));
     return frame;
   }
 }

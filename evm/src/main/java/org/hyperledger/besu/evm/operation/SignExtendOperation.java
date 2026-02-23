@@ -49,12 +49,14 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final org.hyperledger.besu.evm.UInt256 value0 = frame.popStackItem();
-    final org.hyperledger.besu.evm.UInt256 value1 = frame.popStackItem();
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 value0 = frame.peekStackItemUnsafe(0);
+    final org.hyperledger.besu.evm.UInt256 value1 = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(1);
 
     // Any value >= 31 means no sign extension needed
     if (value0.u3() != 0 || value0.u2() != 0 || value0.u1() != 0 || value0.u0() >= 31) {
-      frame.pushStackItem(value1);
+      frame.overwriteStackItemUnsafe(0, value1);
       return signExtendSuccess;
     }
 
@@ -65,7 +67,7 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
     for (int i = 0; i < byteIndex; i++) {
       bytes[i] = signByte;
     }
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(bytes));
+    frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.fromBytesBE(bytes));
 
     return signExtendSuccess;
   }

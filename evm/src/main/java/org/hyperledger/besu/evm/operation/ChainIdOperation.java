@@ -54,7 +54,8 @@ public class ChainIdOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(chainIdUInt256);
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
+    frame.pushStackItemUnsafe(chainIdUInt256);
 
     return successResponse;
   }

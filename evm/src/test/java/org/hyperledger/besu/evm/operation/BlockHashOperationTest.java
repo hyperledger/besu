@@ -93,7 +93,7 @@ class BlockHashOperationTest {
             .initialGas(initialGas)
             .build();
     blockHashOperation.execute(frame, null);
-    final org.hyperledger.besu.evm.UInt256 result = frame.popStackItem();
+    final org.hyperledger.besu.evm.UInt256 result = frame.popStackItemUnsafe();
     assertThat(result).isEqualTo(org.hyperledger.besu.evm.UInt256.fromBytesBE(expectedOutput.toArrayUnsafe()));
     assertThat(frame.stackSize()).isZero();
   }

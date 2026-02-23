@@ -110,7 +110,7 @@ public class SelfBalanceOperationBenchmark {
   public void executeOperation() {
     final MessageFrame executingFrame = frames[executingFrameIndex++];
     operation.execute(executingFrame, null);
-    executingFrame.popStackItem();
+    executingFrame.popStackItemUnsafe();
     executingFrameIndex = executingFrameIndex % NUMBER_ADDRESSES;
   }
 }

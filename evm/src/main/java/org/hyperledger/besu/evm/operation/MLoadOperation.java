@@ -37,7 +37,10 @@ public class MLoadOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long location = clampedToLong(frame.popStackItem());
+    if (!frame.stackHasItems(1)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    final long location = clampedToLong(frame.popStackItemUnsafe());
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
@@ -46,7 +49,7 @@ public class MLoadOperation extends AbstractOperation {
 
     final Bytes value = frame.readMutableMemory(location, 32, true).copy();
 
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(value.toArrayUnsafe()));
     return new OperationResult(cost, null);
   }
 }

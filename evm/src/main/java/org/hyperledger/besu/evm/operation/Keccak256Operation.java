@@ -38,8 +38,11 @@ public class Keccak256Operation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final long from = clampedToLong(frame.popStackItem());
-    final long length = clampedToLong(frame.popStackItem());
+    if (!frame.stackHasItems(2)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    final long from = clampedToLong(frame.popStackItemUnsafe());
+    final long length = clampedToLong(frame.popStackItemUnsafe());
 
     final long cost = gasCalculator().keccak256OperationGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
@@ -47,7 +50,7 @@ public class Keccak256Operation extends AbstractOperation {
     }
 
     final Bytes bytes = frame.readMutableMemory(from, length);
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(keccak256(bytes).toArrayUnsafe()));
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(keccak256(bytes).toArrayUnsafe()));
     return new OperationResult(cost, null);
   }
 }

@@ -40,10 +40,11 @@ class PrevRanDaoOperationTest {
     when(blockHeader.getDifficultyBytes()).thenReturn(UInt256.ZERO);
     when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
+    when(messageFrame.stackHasSpace(1)).thenReturn(true);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNull();
-    verify(messageFrame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
+    verify(messageFrame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
   }
 
   @Test
@@ -56,9 +57,10 @@ class PrevRanDaoOperationTest {
     when(blockHeader.getDifficultyBytes()).thenReturn(difficulty);
     when(blockHeader.getMixHashOrPrevRandao()).thenReturn(prevRandao);
     when(messageFrame.getBlockValues()).thenReturn(blockHeader);
+    when(messageFrame.stackHasSpace(1)).thenReturn(true);
     EVM evm = mock(EVM.class);
     Operation.OperationResult r = op.executeFixedCostOperation(messageFrame, evm);
     assertThat(r.getHaltReason()).isNull();
-    verify(messageFrame).pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
+    verify(messageFrame).pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(prevRandao.toArrayUnsafe()));
   }
 }

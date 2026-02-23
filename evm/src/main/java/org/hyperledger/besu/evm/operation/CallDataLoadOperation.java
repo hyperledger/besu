@@ -19,8 +19,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes32;
 
 /** The Call data load operation. */
 public class CallDataLoadOperation extends AbstractFixedCostOperation {
@@ -37,12 +35,13 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final org.hyperledger.besu.evm.UInt256 startWord = frame.popStackItem();
+    if (!frame.stackHasItems(1)) return UNDERFLOW_RESPONSE;
+    final org.hyperledger.besu.evm.UInt256 startWord = frame.peekStackItemUnsafe(0);
 
     // If the start index doesn't fit in a positive int, it comes after anything in data
     if (startWord.u3() != 0 || startWord.u2() != 0 || startWord.u1() != 0
         || startWord.u0() < 0 || startWord.u0() > Integer.MAX_VALUE) {
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.ZERO);
       return successResponse;
     }
 
@@ -52,9 +51,9 @@ public class CallDataLoadOperation extends AbstractFixedCostOperation {
       final byte[] result = new byte[32];
       final int toCopy = Math.min(32, data.size() - offset);
       System.arraycopy(data.slice(offset, toCopy).toArrayUnsafe(), 0, result, 0, toCopy);
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(result));
+      frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.fromBytesBE(result));
     } else {
-      frame.pushStackItem(org.hyperledger.besu.evm.UInt256.ZERO);
+      frame.overwriteStackItemUnsafe(0, org.hyperledger.besu.evm.UInt256.ZERO);
     }
 
     return successResponse;

@@ -47,15 +47,17 @@ public class ShrOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    final UInt256 shiftAmount = frame.popStackItem();
-    final UInt256 value = frame.popStackItem();
+    if (!frame.stackHasItems(2)) return UNDERFLOW_RESPONSE;
+    final UInt256 shiftAmount = frame.peekStackItemUnsafe(0);
+    final UInt256 value = frame.peekStackItemUnsafe(1);
+    frame.shrinkStackUnsafe(1);
 
     if (value.isZero()
         || !shiftAmount.isUInt64()
         || Long.compareUnsigned(shiftAmount.longValue(), 256) >= 0) {
-      frame.pushStackItem(UInt256.ZERO);
+      frame.overwriteStackItemUnsafe(0, UInt256.ZERO);
     } else {
-      frame.pushStackItem(value.shr((int) shiftAmount.longValue()));
+      frame.overwriteStackItemUnsafe(0, value.shr((int) shiftAmount.longValue()));
     }
     return shrSuccess;
   }

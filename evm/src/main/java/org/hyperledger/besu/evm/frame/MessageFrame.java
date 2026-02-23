@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -273,7 +272,7 @@ public class MessageFrame {
     this.type = type;
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
-    this.stack = new OperandStack(txValues.maxStackSize());
+    this.stack = OperandStack.borrow(txValues.maxStackSize());
     this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -416,54 +415,110 @@ public class MessageFrame {
   }
 
   /**
-   * Returns the item at the specified offset in the stack.
+   * Returns the item at the specified offset in the stack without bounds check. Caller must
+   * pre-validate via {@link #stackHasItems}.
    *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
-   * @throws UnderflowException if the offset is out of range
    */
   public org.hyperledger.besu.evm.UInt256 getStackItem(final int offset) {
-    return stack.get(offset);
+    return stack.getUnsafe(offset);
   }
 
   /**
-   * Removes the item at the top of the stack.
-   *
-   * @return the item at the top of the stack
-   * @throws UnderflowException if the stack is empty
-   */
-  public org.hyperledger.besu.evm.UInt256 popStackItem() {
-    return stack.pop();
-  }
-
-  /**
-   * Removes the corresponding number of items from the top of the stack.
-   *
-   * @param n The number of items to pop off the stack
-   */
-  public void popStackItems(final int n) {
-    stack.bulkPop(n);
-  }
-
-  /**
-   * Pushes the corresponding item onto the top of the stack
-   *
-   * @param value The value to push onto the stack.
-   */
-  public void pushStackItem(final org.hyperledger.besu.evm.UInt256 value) {
-    stack.push(value);
-  }
-
-  /**
-   * Sets the stack item at the specified offset from the top of the stack to the value
+   * Sets the stack item at the specified offset from the top of the stack without bounds check.
+   * Caller must pre-validate via {@link #stackHasItems}.
    *
    * @param offset The item's position relative to the top of the stack
    * @param value The value to set the stack item to
-   * @throws IllegalStateException if the stack is too small
    */
   public void setStackItem(final int offset, final org.hyperledger.besu.evm.UInt256 value) {
-    stack.set(offset, value);
+    stack.overwriteUnsafe(offset, value);
   }
+
+  /**
+   * Shrinks the stack by n entries without bounds check. Caller must pre-validate via {@link
+   * #stackHasItems}.
+   *
+   * @param n The number of items to remove from the top of the stack
+   */
+  public void popStackItems(final int n) {
+    stack.shrinkUnsafe(n);
+  }
+
+  // region Unsafe stack methods (pre-validated by AbstractFixedCostOperation)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Returns true if the stack has at least {@code n} items.
+   *
+   * @param n the number of items required
+   * @return true if the stack contains at least n items
+   */
+  public boolean stackHasItems(final int n) {
+    return stack.hasItems(n);
+  }
+
+  /**
+   * Returns true if the stack has space for {@code n} more items.
+   *
+   * @param n the number of additional items
+   * @return true if the stack can accommodate n more items
+   */
+  public boolean stackHasSpace(final int n) {
+    return stack.hasSpace(n);
+  }
+
+  /**
+   * Pop without bounds check. Caller must pre-validate via {@link #stackHasItems}.
+   *
+   * @return the top stack item
+   */
+  public org.hyperledger.besu.evm.UInt256 popStackItemUnsafe() {
+    return stack.popUnsafe();
+  }
+
+  /**
+   * Push without bounds check. Caller must pre-validate via {@link #stackHasSpace}.
+   *
+   * @param value the value to push
+   */
+  public void pushStackItemUnsafe(final org.hyperledger.besu.evm.UInt256 value) {
+    stack.pushUnsafe(value);
+  }
+
+  /**
+   * Peek at depth from top without bounds check.
+   *
+   * @param depth the depth (0 = top)
+   * @return the stack item at given depth
+   */
+  public org.hyperledger.besu.evm.UInt256 peekStackItemUnsafe(final int depth) {
+    return stack.peekUnsafe(depth);
+  }
+
+  /**
+   * Overwrite entry at depth from top without bounds check.
+   *
+   * @param depth the depth (0 = top)
+   * @param value the value to write
+   */
+  public void overwriteStackItemUnsafe(
+      final int depth, final org.hyperledger.besu.evm.UInt256 value) {
+    stack.overwriteUnsafe(depth, value);
+  }
+
+  /**
+   * Shrink the stack by n entries without bounds check.
+   *
+   * @param n the number of entries to remove
+   */
+  public void shrinkStackUnsafe(final int n) {
+    stack.shrinkUnsafe(n);
+  }
+
+  // ---------------------------------------------------------------------------
+  // endregion
 
   // region Bytes wrapper methods for non-converted operations
   // --------------------------------------------------------------------------
@@ -475,7 +530,7 @@ public class MessageFrame {
    * @return the top stack item as Bytes
    */
   public Bytes popStackBytes() {
-    return Bytes.wrap(stack.pop().toBytesBE());
+    return Bytes.wrap(stack.popUnsafe().toBytesBE());
   }
 
   /**
@@ -489,12 +544,12 @@ public class MessageFrame {
     if (value.size() >= 32) {
       padded = value.slice(value.size() - 32, 32).toArrayUnsafe();
     } else if (value.size() == 0) {
-      stack.push(org.hyperledger.besu.evm.UInt256.ZERO);
+      stack.pushUnsafe(org.hyperledger.besu.evm.UInt256.ZERO);
       return;
     } else {
       padded = Bytes32.leftPad(value).toArrayUnsafe();
     }
-    stack.push(org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
+    stack.pushUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
   }
 
   /**
@@ -505,7 +560,7 @@ public class MessageFrame {
    * @return The item as Bytes
    */
   public Bytes getStackBytes(final int offset) {
-    return Bytes.wrap(stack.get(offset).toBytesBE());
+    return Bytes.wrap(stack.getUnsafe(offset).toBytesBE());
   }
 
   /**
@@ -520,12 +575,12 @@ public class MessageFrame {
     if (value.size() >= 32) {
       padded = value.slice(value.size() - 32, 32).toArrayUnsafe();
     } else if (value.size() == 0) {
-      stack.set(offset, org.hyperledger.besu.evm.UInt256.ZERO);
+      stack.overwriteUnsafe(offset, org.hyperledger.besu.evm.UInt256.ZERO);
       return;
     } else {
       padded = Bytes32.leftPad(value).toArrayUnsafe();
     }
-    stack.set(offset, org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
+    stack.overwriteUnsafe(offset, org.hyperledger.besu.evm.UInt256.fromBytesBE(padded));
   }
 
   // --------------------------------------------------------------------------
@@ -1143,6 +1198,11 @@ public class MessageFrame {
    */
   public BlockValues getBlockValues() {
     return txValues.blockValues();
+  }
+
+  /** Returns this frame's operand stack to the thread-local pool for reuse. */
+  public void returnStackToPool() {
+    OperandStack.release(stack);
   }
 
   /** Performs updates based on the message frame's execution. */

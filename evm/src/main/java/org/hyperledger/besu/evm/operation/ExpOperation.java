@@ -50,8 +50,11 @@ public class ExpOperation extends AbstractOperation {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final GasCalculator gasCalculator) {
-    final UInt256 number = frame.popStackItem();
-    final UInt256 power = frame.popStackItem();
+    if (!frame.stackHasItems(2)) {
+      return new OperationResult(0, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    final UInt256 number = frame.popStackItemUnsafe();
+    final UInt256 power = frame.popStackItemUnsafe();
 
     final int numBytes = power.byteLength();
 
@@ -64,7 +67,7 @@ public class ExpOperation extends AbstractOperation {
     final BigInteger numBI = number.toBigInteger();
     final BigInteger powBI = power.toBigInteger();
     final BigInteger result = numBI.modPow(powBI, MOD_BASE);
-    frame.pushStackItem(UInt256.fromBigInteger(result));
+    frame.pushStackItemUnsafe(UInt256.fromBigInteger(result));
 
     return new OperationResult(cost, null);
   }

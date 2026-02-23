@@ -32,7 +32,8 @@ public class PrevRanDaoOperation extends AbstractFixedCostOperation {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    frame.pushStackItem(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getBlockValues().getMixHashOrPrevRandao().toArrayUnsafe()));
+    if (!frame.stackHasSpace(1)) return OVERFLOW_RESPONSE;
+    frame.pushStackItemUnsafe(org.hyperledger.besu.evm.UInt256.fromBytesBE(frame.getBlockValues().getMixHashOrPrevRandao().toArrayUnsafe()));
     return successResponse;
   }
 }
