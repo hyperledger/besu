@@ -65,12 +65,12 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
       Bytes32.fromHexString("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
 
   /**
-   * The Selfdestruct event signature topic: keccak256('Selfdestruct(address,uint256)').
+   * The Burn event signature topic: keccak256('Burn(address,uint256)').
    *
    * <p>Used for SELFDESTRUCT to self and for account closures with remaining balance.
    */
-  public static final Bytes32 SELFDESTRUCT_TOPIC =
-      Bytes32.fromHexString("0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083");
+  public static final Bytes32 BURN_TOPIC =
+      Bytes32.fromHexString("0xcc16f5dbb4873280815c1ee09dbd06736cffcc184412cf7a71a0fdb75d397ca5");
 
   /** Private constructor to enforce singleton usage. */
   private EIP7708TransferLogEmitter() {}
@@ -98,15 +98,15 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
   }
 
   /**
-   * Creates an EIP-7708 compliant selfdestruct log (LOG2).
+   * Creates an EIP-7708 compliant burn log (LOG2).
    *
    * <p>Used when SELFDESTRUCT targets itself or for account closures with remaining balance.
    *
    * @param closedAddress the address of the contract being closed
-   * @param value the balance being destroyed in Wei
-   * @return the selfdestruct log
+   * @param value the balance being burned in Wei
+   * @return the burn log
    */
-  public static Log createSelfdestructLog(final Address closedAddress, final Wei value) {
+  public static Log createBurnLog(final Address closedAddress, final Wei value) {
     // Zero-pad address to 32 bytes for topic
     final LogTopic addressTopic = LogTopic.create(leftPad(closedAddress.getBytes()));
 
@@ -114,9 +114,7 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
     final Bytes32 data = leftPad(value);
 
     return new Log(
-        EIP7708_SYSTEM_ADDRESS,
-        data,
-        ImmutableList.of(LogTopic.create(SELFDESTRUCT_TOPIC), addressTopic));
+        EIP7708_SYSTEM_ADDRESS, data, ImmutableList.of(LogTopic.create(BURN_TOPIC), addressTopic));
   }
 
   @Override
@@ -135,8 +133,8 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
       final Wei value) {
     if (value.greaterThan(Wei.ZERO)) {
       if (originator.equals(beneficiary)) {
-        // SELFDESTRUCT to self → Selfdestruct log (LOG2)
-        frame.addLog(createSelfdestructLog(originator, value));
+        // SELFDESTRUCT to self → Burn log (LOG2)
+        frame.addLog(createBurnLog(originator, value));
       } else {
         // SELFDESTRUCT to other → Transfer log (LOG3)
         frame.addLog(createTransferLog(originator, beneficiary, value));
@@ -149,7 +147,7 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
       final WorldUpdater worldState,
       final Set<Address> selfDestructs,
       final Consumer<Log> logConsumer) {
-    // Collect selfdestruct addresses with nonzero balances, sorted lexicographically
+    // Collect addresses with nonzero balances, sorted lexicographically
     final List<Map.Entry<Address, Wei>> closures =
         selfDestructs.stream()
             .map(
@@ -163,8 +161,7 @@ public class EIP7708TransferLogEmitter implements TransferLogEmitter {
             .sorted(Comparator.comparing(e -> e.getKey().getBytes().toHexString()))
             .toList();
 
-    // Emit Selfdestruct log for each closure
-    closures.forEach(
-        entry -> logConsumer.accept(createSelfdestructLog(entry.getKey(), entry.getValue())));
+    // Emit Burn log for each closure
+    closures.forEach(entry -> logConsumer.accept(createBurnLog(entry.getKey(), entry.getValue())));
   }
 }
