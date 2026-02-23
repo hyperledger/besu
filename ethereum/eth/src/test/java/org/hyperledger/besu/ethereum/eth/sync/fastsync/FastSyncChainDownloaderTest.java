@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
@@ -145,14 +144,17 @@ public class FastSyncChainDownloaderTest {
             (invocationOnMock) -> {
               GetSyncReceiptsFromPeerTask task =
                   invocationOnMock.getArgument(0, GetSyncReceiptsFromPeerTask.class);
-              Map<BlockHeader, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
+              Map<SyncBlock, List<SyncTransactionReceipt>> getReceiptsFromPeerTaskResult =
                   new HashMap<>();
-              task.getBlockHeaders()
+              task.getRequestedBlocks()
                   .forEach(
-                      (bh) ->
+                      (block) ->
                           getReceiptsFromPeerTaskResult.put(
-                              bh,
-                              otherBlockchain.getTxReceipts(bh.getHash()).get().stream()
+                              block,
+                              otherBlockchain
+                                  .getTxReceipts(block.getHeader().getHash())
+                                  .get()
+                                  .stream()
                                   .map(
                                       (tr) ->
                                           syncTransactionReceiptDecoder.decode(
