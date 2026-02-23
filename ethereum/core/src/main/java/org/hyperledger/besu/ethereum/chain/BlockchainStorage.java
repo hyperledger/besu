@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
@@ -64,7 +65,23 @@ public interface BlockchainStorage {
 
     void putTransactionLocation(Hash transactionHash, TransactionLocation transactionLocation);
 
+    /**
+     * Puts the supplied TransactionReceipts in the database against the supplied block Hash
+     *
+     * @param blockHash The block hash to store the receipts against
+     * @param transactionReceipts The receipts to be stored
+     */
     void putTransactionReceipts(Hash blockHash, List<TransactionReceipt> transactionReceipts);
+
+    /**
+     * Puts the supplied SyncTransactionReceipts' rawRlp in the database against the supplied block
+     * Hash. This is done for performance reasons during sync.
+     *
+     * @param blockHash The block hash to store the receipts against
+     * @param transactionReceipts The receipts to be stored
+     */
+    void putSyncTransactionReceipts(
+        Hash blockHash, List<SyncTransactionReceipt> transactionReceipts);
 
     void putBlockHash(long blockNumber, Hash blockHash);
 

@@ -26,7 +26,7 @@ import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -56,7 +56,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
   public MessageCallProcessor(
       final EVM evm,
       final PrecompileContractRegistry precompiles,
-      final Collection<Address> forceCommitAddresses) {
+      final Set<Address> forceCommitAddresses) {
     this(evm, precompiles, forceCommitAddresses, TransferLogEmitter.NOOP);
   }
 
@@ -67,7 +67,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
    * @param precompiles the precompiles
    */
   public MessageCallProcessor(final EVM evm, final PrecompileContractRegistry precompiles) {
-    this(evm, precompiles, Set.of(), TransferLogEmitter.NOOP);
+    this(evm, precompiles, Collections.emptySet(), TransferLogEmitter.NOOP);
   }
 
   /**
@@ -81,7 +81,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
   public MessageCallProcessor(
       final EVM evm,
       final PrecompileContractRegistry precompiles,
-      final Collection<Address> forceCommitAddresses,
+      final Set<Address> forceCommitAddresses,
       final TransferLogEmitter transferLogEmitter) {
     super(evm, forceCommitAddresses);
     this.precompiles = precompiles;

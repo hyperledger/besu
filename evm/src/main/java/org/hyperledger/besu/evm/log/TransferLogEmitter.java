@@ -15,8 +15,13 @@
 package org.hyperledger.besu.evm.log;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Strategy interface for emitting ETH transfer logs.
@@ -28,7 +33,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
  *   <li>{@link EIP7708TransferLogEmitter} - EIP-7708 compliant implementation for Amsterdam+
  * </ul>
  */
-@FunctionalInterface
 public interface TransferLogEmitter {
 
   /**
@@ -40,6 +44,47 @@ public interface TransferLogEmitter {
    * @param value the amount transferred in Wei
    */
   void emitTransferLog(MessageFrame frame, Address from, Address to, Wei value);
+
+  /**
+   * Emit a log for a SELFDESTRUCT operation.
+   *
+   * <p>The behavior depends on the originator and beneficiary:
+   *
+   * <ul>
+   *   <li>If originator equals beneficiary: emits a Burn log (LOG2)
+   *   <li>Otherwise: emits a Transfer log (LOG3)
+   * </ul>
+   *
+   * @param frame the message frame to add the log to
+   * @param originator the address of the contract being selfdestructed
+   * @param beneficiary the address receiving the balance
+   * @param value the amount being transferred in Wei
+   */
+  default void emitSelfDestructLog(
+      final MessageFrame frame,
+      final Address originator,
+      final Address beneficiary,
+      final Wei value) {
+    // Default implementation delegates to emitTransferLog for backward compatibility
+    emitTransferLog(frame, originator, beneficiary, value);
+  }
+
+  /**
+   * Emit Burn logs for accounts being closed at the end of a transaction.
+   *
+   * <p>For each selfdestructed account with a nonzero balance, a Burn log (LOG2) is emitted. Logs
+   * are emitted in lexicographical order by address.
+   *
+   * @param worldState the world state to query account balances
+   * @param selfDestructs the set of addresses marked for selfdestruct
+   * @param logConsumer consumer to receive the generated logs
+   */
+  default void emitClosureLogs(
+      final WorldUpdater worldState,
+      final Set<Address> selfDestructs,
+      final Consumer<Log> logConsumer) {
+    // No-op by default (pre-Amsterdam)
+  }
 
   /** No-op implementation. Used for pre-Amsterdam forks. */
   TransferLogEmitter NOOP = (frame, from, to, value) -> {};

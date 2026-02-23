@@ -24,11 +24,9 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
-import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
@@ -100,13 +98,10 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     ChainHeadTracker.trackChainHeadForPeers(
         ethContext,
         protocolSchedule,
-        syncConfig,
         protocolContext.getBlockchain(),
-        this::calculateTrailingPeerRequirements,
-        metricsSystem);
+        this::calculateTrailingPeerRequirements);
 
-    if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP) {
       SnapServerChecker.createAndSetSnapServerChecker(ethContext, metricsSystem);
     }
 
@@ -143,35 +138,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
     this.fastSyncFactory =
         switch (syncConfig.getSyncMode()) {
-          case FAST ->
-              () ->
-                  FastDownloaderFactory.create(
-                      pivotBlockSelector,
-                      syncConfig,
-                      dataDirectory,
-                      protocolSchedule,
-                      protocolContext,
-                      metricsSystem,
-                      ethContext,
-                      worldStateStorageCoordinator,
-                      syncState,
-                      clock,
-                      syncDurationMetrics);
-          case CHECKPOINT ->
-              () ->
-                  CheckpointDownloaderFactory.createCheckpointDownloader(
-                      new SnapSyncStatePersistenceManager(storageProvider),
-                      pivotBlockSelector,
-                      syncConfig,
-                      dataDirectory,
-                      protocolSchedule,
-                      protocolContext,
-                      metricsSystem,
-                      ethContext,
-                      worldStateStorageCoordinator,
-                      syncState,
-                      clock,
-                      syncDurationMetrics);
           case SNAP ->
               () ->
                   SnapDownloaderFactory.createSnapDownloader(

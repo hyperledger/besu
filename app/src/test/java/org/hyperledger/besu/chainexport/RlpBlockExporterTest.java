@@ -89,7 +89,7 @@ public final class RlpBlockExporterTest {
   private static BesuController createController(final @TempDir Path dataDir) throws IOException {
     return new BesuController.Builder()
         .fromEthNetworkConfig(
-            EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
+            EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FULL)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -101,7 +101,7 @@ public final class RlpBlockExporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .besuComponent(mock(BesuComponent.class))
         .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();

@@ -34,16 +34,6 @@ public class NetworkDeprecationMessage {
       throw new AssertionError("Deprecation date is not set. Cannot print a deprecation message");
     }
 
-    // ETC support deprecated in besu
-    if (network.name().equals("CLASSIC") || network.name().equals("MORDOR")) {
-      return FramedLogMessage.generateCentered(
-          List.of(
-              "Besu support for ETC "
-                  + network.normalize()
-                  + " is deprecated as of "
-                  + network.getDeprecationDate().get()));
-    }
-
     // network is being shutdown
     return FramedLogMessage.generateCentered(
         List.of(

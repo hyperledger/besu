@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.FrontierTransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -31,6 +33,20 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class ReceiptsMessage extends AbstractMessageData {
+  /**
+   * This default decoder instance is used for performance reasons to avoid creating a new decoder
+   * for every ReceiptsMessage
+   */
+  private static final SyncTransactionReceiptDecoder DEFAULT_SYNC_TRANSACTION_RECEIPT_DECODER =
+      new SyncTransactionReceiptDecoder();
+
+  private final SyncTransactionReceiptDecoder syncTransactionReceiptDecoder;
+
+  private ReceiptsMessage(
+      final Bytes data, final SyncTransactionReceiptDecoder syncTransactionReceiptDecoder) {
+    super(data);
+    this.syncTransactionReceiptDecoder = syncTransactionReceiptDecoder;
+  }
 
   public static ReceiptsMessage readFrom(final MessageData message) {
     if (message instanceof ReceiptsMessage) {
@@ -41,7 +57,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a ReceiptsMessage.", code));
     }
-    return new ReceiptsMessage(message.getData());
+    return new ReceiptsMessage(message.getData(), DEFAULT_SYNC_TRANSACTION_RECEIPT_DECODER);
   }
 
   @VisibleForTesting
@@ -57,7 +73,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
           tmp.endList();
         });
     tmp.endList();
-    return new ReceiptsMessage(tmp.encoded());
+    return new ReceiptsMessage(tmp.encoded(), DEFAULT_SYNC_TRANSACTION_RECEIPT_DECODER);
   }
 
   /**
@@ -68,11 +84,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
    * @return A new ReceiptsMessage
    */
   public static ReceiptsMessage createUnsafe(final Bytes data) {
-    return new ReceiptsMessage(data);
-  }
-
-  private ReceiptsMessage(final Bytes data) {
-    super(data);
+    return new ReceiptsMessage(data, DEFAULT_SYNC_TRANSACTION_RECEIPT_DECODER);
   }
 
   @Override
@@ -88,12 +100,31 @@ public final class ReceiptsMessage extends AbstractMessageData {
       final int setSize = input.enterList();
       final List<TransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(FrontierTransactionReceiptDecoder.readFrom(input, false));
+        receiptSet.add(TransactionReceiptDecoder.readFrom(input, false));
       }
       input.leaveList();
       receipts.add(receiptSet);
     }
     input.leaveList();
     return receipts;
+  }
+
+  public List<List<SyncTransactionReceipt>> syncReceipts() {
+    final RLPInput input = new BytesValueRLPInput(data, false);
+    input.enterList();
+    final List<List<SyncTransactionReceipt>> receiptsForBodies = new ArrayList<>();
+    while (input.nextIsList()) {
+      final int setSize = input.enterList();
+      final List<SyncTransactionReceipt> receiptSet = new ArrayList<>(setSize);
+      for (int i = 0; i < setSize; i++) {
+        receiptSet.add(
+            syncTransactionReceiptDecoder.decode(
+                input.nextIsList() ? input.currentListAsBytes() : input.readBytes()));
+      }
+      input.leaveList();
+      receiptsForBodies.add(receiptSet);
+    }
+    input.leaveList();
+    return receiptsForBodies;
   }
 }
