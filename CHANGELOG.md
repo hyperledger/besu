@@ -36,7 +36,7 @@
     - Proof of Work consensus (PoW)
     - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
     - Fast Sync
-- CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync, as SNAP sync performance is better. The following CLI option is deprecated: [#9857](https://github.com/hyperledger/besu/pull/9857)
+- CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync, as SNAP sync performance is better. The following CLI option is deprecated: [#9857](https://github.com/hyperledger/besu/pull/9857), [#9814](https://github.com/hyperledger/besu/pull/9814)
   - `--Xcheckpoint-post-merge-enabled`
 
 
