@@ -154,7 +154,39 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         new DiscoverySystemBuilder()
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
-            .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
+            .localNodeRecordListener(
+                (previous, updated) -> {
+                  // When onBoundPortResolved resolves ephemeral (port 0) UDP ports, propagate
+                  // the actual ports to NodeRecordManager so the on-disk ENR stays correct.
+                  final Optional<Integer> ipv4ResolvedPort =
+                      previous.getUdpAddress().map(a -> a.getPort() == 0).orElse(false)
+                          ? updated
+                              .getUdpAddress()
+                              .filter(a -> a.getPort() != 0)
+                              .map(InetSocketAddress::getPort)
+                          : Optional.empty();
+                  final Optional<Integer> ipv6ResolvedPort =
+                      previous.getUdp6Address().map(a -> a.getPort() == 0).orElse(false)
+                          ? updated
+                              .getUdp6Address()
+                              .filter(a -> a.getPort() != 0)
+                              .map(InetSocketAddress::getPort)
+                          : Optional.empty();
+                  if (ipv4ResolvedPort.isPresent() || ipv6ResolvedPort.isPresent()) {
+                    nodeRecordManager.onDiscoveryPortResolved(ipv4ResolvedPort, ipv6ResolvedPort);
+                  }
+                  // In dual-stack mode both UDP servers bind concurrently, each firing this
+                  // listener once.  Defer the on-disk ENR write until the updated library
+                  // record shows no remaining port-0 UDP addresses, so the seq counter only
+                  // increments once for the combined port-resolution event.
+                  final boolean udpStillPending =
+                      updated.getUdpAddress().map(a -> a.getPort() == 0).orElse(false);
+                  final boolean udp6StillPending =
+                      updated.getUdp6Address().map(a -> a.getPort() == 0).orElse(false);
+                  if (!udpStillPending && !udp6StillPending) {
+                    nodeRecordManager.updateNodeRecord();
+                  }
+                })
             // Reject external address changes suggested by peers — Besu manages its own
             // advertised address via configuration.
             // TODO: confirm intent with original contributor; previously returned
