@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -57,10 +58,11 @@ public class MockConnectionInitializer implements ConnectionInitializer {
   }
 
   @Override
-  public CompletableFuture<InetSocketAddress> start() {
+  public CompletableFuture<ListeningAddresses> start() {
     final InetSocketAddress socketAddress =
         new InetSocketAddress(InetAddress.getLoopbackAddress(), NEXT_PORT.incrementAndGet());
-    return CompletableFuture.completedFuture(socketAddress);
+    return CompletableFuture.completedFuture(
+        new ListeningAddresses(socketAddress, Optional.empty()));
   }
 
   @Override

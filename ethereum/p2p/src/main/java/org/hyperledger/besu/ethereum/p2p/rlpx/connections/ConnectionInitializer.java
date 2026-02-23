@@ -24,23 +24,21 @@ import java.util.concurrent.CompletableFuture;
 public interface ConnectionInitializer {
 
   /**
+   * Holds the bound listening addresses after a successful {@link #start()}.
+   *
+   * @param ipv4Address the IPv4 socket address the RLPx server is bound to
+   * @param ipv6Address the IPv6 socket address, present only when dual-stack is active
+   */
+  record ListeningAddresses(
+      InetSocketAddress ipv4Address, Optional<InetSocketAddress> ipv6Address) {}
+
+  /**
    * Start the connection initializer. Begins listening for incoming connections. Start allowing
    * outbound connections.
    *
-   * @return The address on which we're listening for incoming connections.
+   * @return The addresses on which we're listening for incoming connections.
    */
-  CompletableFuture<InetSocketAddress> start();
-
-  /**
-   * Returns the local IPv6 address this initializer is bound to, if dual-stack is active.
-   *
-   * <p>Only valid after {@link #start()} has completed. Returns empty if no IPv6 socket was bound.
-   *
-   * @return the bound IPv6 {@link InetSocketAddress}, or empty
-   */
-  default Optional<InetSocketAddress> getIpv6LocalAddress() {
-    return Optional.empty();
-  }
+  CompletableFuture<ListeningAddresses> start();
 
   /**
    * Shutdown the connection initializer. Stop listening for incoming connections and stop

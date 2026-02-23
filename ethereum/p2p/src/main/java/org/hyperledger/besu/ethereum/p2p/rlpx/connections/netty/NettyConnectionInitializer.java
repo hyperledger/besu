@@ -109,13 +109,13 @@ public class NettyConnectionInitializer
   }
 
   @Override
-  public CompletableFuture<InetSocketAddress> start() {
-    final CompletableFuture<InetSocketAddress> listeningPortFuture = new CompletableFuture<>();
+  public CompletableFuture<ListeningAddresses> start() {
+    final CompletableFuture<ListeningAddresses> listeningAddressesFuture = new CompletableFuture<>();
     if (!started.compareAndSet(false, true)) {
-      listeningPortFuture.completeExceptionally(
+      listeningAddressesFuture.completeExceptionally(
           new IllegalStateException(
               "Attempt to start an already started " + this.getClass().getSimpleName()));
-      return listeningPortFuture;
+      return listeningAddressesFuture;
     }
 
     this.server =
@@ -134,14 +134,14 @@ public class NettyConnectionInitializer
                 String.format(
                     "Unable to start listening on %s:%s. Check for port conflicts.",
                     config.getBindHost(), config.getBindPort());
-            listeningPortFuture.completeExceptionally(
+            listeningAddressesFuture.completeExceptionally(
                 new IllegalStateException(message, future.cause()));
             return;
           }
 
           // Bind IPv6 socket when dual-stack is configured, using the same shared event loops.
           // The outer future must not complete until the IPv6 bind is also resolved so that
-          // callers can rely on getIpv6LocalAddress() returning the actual bound port.
+          // callers receive both bound addresses atomically.
           if (config.isDualStackEnabled()) {
             final String ipv6Host = config.getBindHostIpv6().orElseThrow();
             final int ipv6Port = config.getBindPortIpv6().orElse(config.getBindPort());
@@ -156,7 +156,8 @@ public class NettyConnectionInitializer
                   if (ipv6Future.isSuccess()) {
                     final InetSocketAddress ipv6Address =
                         (InetSocketAddress) serverIpv6.channel().localAddress();
-                    LOG.info("P2P RLPx agent also listening on IPv6: {}", ipv6Address);
+                    listeningAddressesFuture.complete(
+                        new ListeningAddresses(socketAddress, Optional.of(ipv6Address)));
                   } else {
                     LOG.warn(
                         "Failed to bind IPv6 RLPx socket on {}:{}, continuing with IPv4 only: {}",
@@ -164,26 +165,17 @@ public class NettyConnectionInitializer
                         ipv6Port,
                         ipv6Future.cause().getMessage());
                     serverIpv6 = null;
+                    listeningAddressesFuture.complete(
+                        new ListeningAddresses(socketAddress, Optional.empty()));
                   }
-                  // Complete after IPv6 bind resolves (success or failure) so the effective
-                  // IPv6 port is available via getIpv6LocalAddress() before callers proceed.
-                  listeningPortFuture.complete(socketAddress);
                 });
           } else {
-            listeningPortFuture.complete(socketAddress);
+            listeningAddressesFuture.complete(
+                new ListeningAddresses(socketAddress, Optional.empty()));
           }
         });
 
-    return listeningPortFuture;
-  }
-
-  @Override
-  public Optional<InetSocketAddress> getIpv6LocalAddress() {
-    if (serverIpv6 == null) {
-      return Optional.empty();
-    }
-    final InetSocketAddress addr = (InetSocketAddress) serverIpv6.channel().localAddress();
-    return Optional.ofNullable(addr);
+    return listeningAddressesFuture;
   }
 
   @Override

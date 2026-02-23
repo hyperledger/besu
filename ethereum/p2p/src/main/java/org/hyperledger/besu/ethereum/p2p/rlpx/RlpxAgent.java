@@ -37,6 +37,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,7 @@ public class RlpxAgent {
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
+  private volatile ConnectionInitializer.ListeningAddresses listeningAddresses;
   private final int maxPeers;
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
@@ -113,9 +115,14 @@ public class RlpxAgent {
     return connectionInitializer
         .start()
         .thenApply(
-            (socketAddress) -> {
-              LOG.info("P2P RLPx agent started and listening on {}.", socketAddress);
-              return socketAddress.getPort();
+            (addresses) -> {
+              this.listeningAddresses = addresses;
+              LOG.info("P2P RLPx agent started and listening on {}.", addresses.ipv4Address());
+              addresses
+                  .ipv6Address()
+                  .ifPresent(
+                      ipv6 -> LOG.info("P2P RLPx agent also listening on IPv6: {}", ipv6));
+              return addresses.ipv4Address().getPort();
             })
         .whenComplete(
             (res, err) -> {
@@ -135,7 +142,10 @@ public class RlpxAgent {
    * @return the bound IPv6 port, or empty if no IPv6 socket was bound
    */
   public Optional<Integer> getIpv6ListeningPort() {
-    return connectionInitializer.getIpv6LocalAddress().map(addr -> addr.getPort());
+    if (listeningAddresses == null) {
+      return Optional.empty();
+    }
+    return listeningAddresses.ipv6Address().map(InetSocketAddress::getPort);
   }
 
   public CompletableFuture<Void> stop() {
