@@ -129,6 +129,7 @@ class BlockImportExceptionHandlingTest {
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
+    when(blockAccessListValidator.validate(any(), any())).thenReturn(true);
     when(protocolSpec.getStateRootCommitterFactory())
         .thenReturn(new StateRootCommitterFactoryDefault());
     mainnetBlockValidator =
