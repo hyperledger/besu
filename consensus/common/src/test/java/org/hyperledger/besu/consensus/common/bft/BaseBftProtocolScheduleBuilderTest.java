@@ -203,12 +203,7 @@ public class BaseBftProtocolScheduleBuilderTest {
   }
 
   @Test
-  public void ensureNotApplicable
-    
-    
-    
-    
-    IsUsed() {
+  public void ensureNotApplicableWithdrawalsValidatorIsUsed() {
     final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
     final BftConfigOptions configOptions = createBftConfig(arbitraryBlockReward);
     when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
