@@ -457,7 +457,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "Synchronization mode, possible values are ${COMPLETION-CANDIDATES} (default: SNAP if a --network is supplied. FULL otherwise.)")
   void setSyncMode(final String value) {
     final String normalized = value.toUpperCase(Locale.ROOT);
-    if (SyncMode.CHECKPOINT.name().equals(normalized)) {
+    if ("CHECKPOINT".equals(normalized)) {
       logger.warn(
           "CHECKPOINT sync mode is deprecated and has been removed. "
               + "Using SNAP sync mode instead. Your checkpoint configuration will be used automatically.");
@@ -1960,7 +1960,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--p2p-port",
             "--remote-connections-max-percentage"));
 
-    if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
+    if (getDefaultSyncModeIfNotSet() == SyncMode.FULL
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
     }
@@ -1998,7 +1998,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
-            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+            hostsAllowlist, p2PDiscoveryConfig.p2pHost(), unstableRPCOptions.getHttpTimeoutSec());
     logger.info("RPC HTTP JSON-RPC config: {}", jsonRpcConfiguration);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration = createEngineJsonRpcConfiguration();
@@ -2014,7 +2014,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
-            hostsAllowlist, p2PDiscoveryOptions.p2pHost, unstableRPCOptions.getHttpTimeoutSec());
+            hostsAllowlist, p2PDiscoveryConfig.p2pHost(), unstableRPCOptions.getHttpTimeoutSec());
 
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
@@ -2222,7 +2222,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     metricsConfigurationBuilder
         .host(
             Strings.isNullOrEmpty(metricsOptions.getMetricsHost())
-                ? p2PDiscoveryOptions.p2pHost
+                ? p2PDiscoveryConfig.p2pHost()
                 : metricsOptions.getMetricsHost())
         .pushHost(
             Strings.isNullOrEmpty(metricsOptions.getMetricsPushHost())
@@ -2421,6 +2421,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .p2pAdvertisedHost(p2pAdvertisedHost)
             .p2pListenInterface(p2pListenInterface)
             .p2pListenPort(p2pListenPort)
+            .p2pAdvertisedHostIpv6(p2PDiscoveryConfig.p2pHostIpv6())
+            .p2pListenInterfaceIpv6(p2PDiscoveryConfig.p2pInterfaceIpv6())
+            .p2pListenPortIpv6(p2PDiscoveryConfig.p2pPortIpv6())
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .graphQLConfiguration(graphQLConfiguration)
             .jsonRpcConfiguration(jsonRpcConfiguration)
@@ -2445,6 +2448,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .allowedSubnets(p2PDiscoveryConfig.allowedSubnets())
             .poaDiscoveryRetryBootnodes(p2PDiscoveryConfig.poaDiscoveryRetryBootnodes())
+            .preferIpv6Outbound(p2PDiscoveryConfig.preferIpv6Outbound())
             .transactionValidatorService(transactionValidatorServiceImpl)
             .build();
 

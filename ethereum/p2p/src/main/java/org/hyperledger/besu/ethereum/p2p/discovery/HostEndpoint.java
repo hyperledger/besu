@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync;
+package org.hyperledger.besu.ethereum.p2p.discovery;
 
-import java.util.Locale;
-
-import org.apache.commons.lang3.StringUtils;
-
-public enum SyncMode {
-  // Fully validate all blocks as they sync
-  FULL,
-  // Perform snapsync
-  SNAP;
-
-  public String normalize() {
-    return StringUtils.capitalize(this.toString().toLowerCase(Locale.ROOT));
-  }
-}
+/**
+ * Groups the network endpoint information (host address and ports) for a discovery node.
+ *
+ * @param host the advertised host or IP address
+ * @param discoveryPort the UDP discovery port
+ * @param tcpPort the TCP listening port
+ */
+public record HostEndpoint(String host, int discoveryPort, int tcpPort) {}
