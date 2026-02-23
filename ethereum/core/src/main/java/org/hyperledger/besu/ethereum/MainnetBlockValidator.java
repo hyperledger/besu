@@ -200,7 +200,7 @@ public class MainnetBlockValidator implements BlockValidator {
             new BlockProcessingResult(
                 String.format(
                     "Block access list validation failed for block %s",
-                    block.getHeader().toLogString()));
+                    block.getHeader().getBlockHash()));
         handleFailedBlockProcessing(block, blockAccessList, result, shouldRecordBadBlock, context);
         return result;
       }
