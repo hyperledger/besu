@@ -92,6 +92,11 @@ public class SynchronizerOptionsTest
   }
 
   @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"fastSyncFullValidationRate", "checkpointPostMergeEnabled"};
+  }
+
+  @Override
   protected SynchronizerOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getSynchronizerOptions();
   }

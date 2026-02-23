@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -304,6 +305,15 @@ public class BesuController implements java.io.Closeable {
    */
   public TransactionSimulator getTransactionSimulator() {
     return transactionSimulator;
+  }
+
+  /**
+   * Gets the eth scheduler.
+   *
+   * @return the eth scheduler
+   */
+  public EthScheduler getEthScheduler() {
+    return ethProtocolManager.ethContext().getScheduler();
   }
 
   /** The type Builder. */

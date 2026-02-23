@@ -19,8 +19,10 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
@@ -28,6 +30,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
 
+import java.net.InetSocketAddress;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -92,21 +95,34 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
     final NodeRecord localNodeRecord = initializeLocalNodeRecord();
 
-    final MutableDiscoverySystem discoverySystem =
+    final DiscoveryConfiguration disc = config.discoveryConfiguration();
+    final DiscoverySystemBuilder builder =
         new DiscoverySystemBuilder()
-            .listen(
-                config.discoveryConfiguration().getBindHost(),
-                config.discoveryConfiguration().getBindPort())
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
             .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
             .newAddressHandler((nodeRecord, newAddress) -> Optional.of(nodeRecord))
             // TODO Integrate address filtering based on peer permissions
-            .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
-            .buildMutable();
+            .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL);
+
+    if (disc.isDualStackEnabled()) {
+      final InetSocketAddress ipv4 = new InetSocketAddress(disc.getBindHost(), disc.getBindPort());
+      final InetSocketAddress ipv6 =
+          new InetSocketAddress(disc.getBindHostIpv6().orElseThrow(), disc.getBindPortIpv6());
+      builder.listen(ipv4, ipv6);
+    } else {
+      builder.listen(disc.getBindHost(), disc.getBindPort());
+    }
+
+    final MutableDiscoverySystem discoverySystem = builder.buildMutable();
 
     return new PeerDiscoveryAgentV5(
-        discoverySystem, config, forkIdManager, nodeRecordManager, rlpxAgent);
+        discoverySystem,
+        config,
+        forkIdManager,
+        nodeRecordManager,
+        rlpxAgent,
+        disc.isPreferIpv6Outbound());
   }
 
   /**
@@ -116,10 +132,11 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    * @throws IllegalStateException if the local node record has not been initialized
    */
   private NodeRecord initializeLocalNodeRecord() {
+    final DiscoveryConfiguration disc = config.discoveryConfiguration();
     nodeRecordManager.initializeLocalNode(
-        config.discoveryConfiguration().getAdvertisedHost(),
-        config.discoveryConfiguration().getBindPort(),
-        config.discoveryConfiguration().getBindPort());
+        new HostEndpoint(disc.getAdvertisedHost(), disc.getBindPort(), disc.getBindPort()),
+        disc.getAdvertisedHostIpv6()
+            .map(host -> new HostEndpoint(host, disc.getBindPortIpv6(), disc.getBindPortIpv6())));
 
     return nodeRecordManager
         .getLocalNode()

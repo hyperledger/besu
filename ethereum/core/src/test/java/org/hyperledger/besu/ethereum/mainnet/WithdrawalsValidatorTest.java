@@ -95,4 +95,38 @@ public class WithdrawalsValidatorTest {
     assertThat(new WithdrawalsValidator.AllowedWithdrawals().validateWithdrawalsRoot(block))
         .isFalse();
   }
+
+  @Test
+  public void validateNotApplicableWithdrawalsWhenPresent() {
+    assertThat(
+            new WithdrawalsValidator.NotApplicableWithdrawals()
+                .validateWithdrawals(Optional.of(emptyList())))
+        .isTrue();
+  }
+
+  @Test
+  public void validateNotApplicableWithdrawalsWhenAbsent() {
+    assertThat(
+            new WithdrawalsValidator.NotApplicableWithdrawals()
+                .validateWithdrawals(Optional.empty()))
+        .isTrue();
+  }
+
+  @Test
+  public void validateNotApplicableWithdrawalsRootWhenPresent() {
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create()
+            .setWithdrawals(Optional.of(Collections.emptyList()))
+            .setWithdrawalsRoot(Hash.EMPTY_TRIE_HASH);
+    final Block block = blockDataGenerator.block(blockOptions);
+    assertThat(new WithdrawalsValidator.NotApplicableWithdrawals().validateWithdrawalsRoot(block))
+        .isTrue();
+  }
+
+  @Test
+  public void validateNotApplicableWithdrawalsRootWhenAbsent() {
+    final Block block = blockDataGenerator.block();
+    assertThat(new WithdrawalsValidator.NotApplicableWithdrawals().validateWithdrawalsRoot(block))
+        .isTrue();
+  }
 }

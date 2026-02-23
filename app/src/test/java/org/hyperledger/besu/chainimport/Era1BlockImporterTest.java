@@ -68,7 +68,7 @@ public class Era1BlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.SNAP)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())

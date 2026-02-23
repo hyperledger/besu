@@ -70,7 +70,6 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
@@ -89,6 +88,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
@@ -166,6 +166,10 @@ public class RunnerBuilder {
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
+  private Optional<String> p2pAdvertisedHostIpv6 = Optional.empty();
+  private Optional<String> p2pListenInterfaceIpv6 = Optional.empty();
+  private int p2pListenPortIpv6 = EnodeURLImpl.DEFAULT_LISTENING_PORT_IPV6;
+  private boolean preferIpv6Outbound = false;
   private NatMethod natMethod = NatMethod.AUTO;
   private boolean natMethodFallbackEnabled;
   private EthNetworkConfig ethNetworkConfig;
@@ -176,7 +180,6 @@ public class RunnerBuilder {
   private WebSocketConfiguration webSocketConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
-  private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
@@ -300,6 +303,39 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add P2P advertised host for IPv6.
+   *
+   * @param p2pAdvertisedHostIpv6 optional host name
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pAdvertisedHostIpv6(final Optional<String> p2pAdvertisedHostIpv6) {
+    this.p2pAdvertisedHostIpv6 = p2pAdvertisedHostIpv6;
+    return this;
+  }
+
+  /**
+   * Add IPv6 P2P host name/IP address for P2P to listen to.
+   *
+   * @param p2pListenInterfaceIpv6 optional host name/IP address
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pListenInterfaceIpv6(final Optional<String> p2pListenInterfaceIpv6) {
+    this.p2pListenInterfaceIpv6 = p2pListenInterfaceIpv6;
+    return this;
+  }
+
+  /**
+   * Add IPv6 port for P2P.
+   *
+   * @param p2pListenPortIpv6 the IPv6 P2P listen port
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pListenPortIpv6(final int p2pListenPortIpv6) {
+    this.p2pListenPortIpv6 = p2pListenPortIpv6;
+    return this;
+  }
+
+  /**
    * Add Nat method.
    *
    * @param natMethod the nat method
@@ -397,17 +433,6 @@ public class RunnerBuilder {
    */
   public RunnerBuilder apiConfiguration(final ApiConfiguration apiConfiguration) {
     this.apiConfiguration = apiConfiguration;
-    return this;
-  }
-
-  /**
-   * Sets the block access list configuration.
-   *
-   * @param balConfiguration the BAL configuration
-   * @return the runner builder
-   */
-  public RunnerBuilder balConfiguration(final BalConfiguration balConfiguration) {
-    this.balConfiguration = balConfiguration;
     return this;
   }
 
@@ -602,6 +627,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add IPv6 outbound preference for P2P connections.
+   *
+   * @param preferIpv6Outbound if true, prefer IPv6 when peer advertises both address families
+   * @return the runner builder
+   */
+  public RunnerBuilder preferIpv6Outbound(final boolean preferIpv6Outbound) {
+    this.preferIpv6Outbound = preferIpv6Outbound;
+    return this;
+  }
+
+  /**
    * Set the transaction validator service.
    *
    * @param transactionValidatorService the transaction validator service
@@ -627,6 +663,13 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setAdvertisedHost(p2pAdvertisedHost);
+    p2pListenInterfaceIpv6.ifPresent(
+        iface -> {
+          discoveryConfiguration.setBindHostIpv6(p2pListenInterfaceIpv6);
+          discoveryConfiguration.setBindPortIpv6(p2pListenPortIpv6);
+          discoveryConfiguration.setAdvertisedHostIpv6(p2pAdvertisedHostIpv6);
+        });
+    discoveryConfiguration.setPreferIpv6Outbound(preferIpv6Outbound);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
@@ -1310,7 +1353,6 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 apiConfiguration,
-                balConfiguration,
                 enodeDnsConfiguration,
                 transactionSimulator,
                 ethScheduler);

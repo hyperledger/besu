@@ -50,11 +50,6 @@ public class SynchronizerConfiguration {
   public static final int DEFAULT_COMPUTATION_PARALLELISM = 2;
   public static final int DEFAULT_WORLD_STATE_TASK_CACHE_SIZE =
       CachingTaskCollection.DEFAULT_CACHE_SIZE;
-  public static final long DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS =
-      TimeUnit.SECONDS.toMillis(60);
-
-  public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
-
   public static final Boolean DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED = Boolean.FALSE;
   public static final URI DEFAULT_ERA1_DATA_URI = URI.create("https://mainnet.era1.nimbus.team/");
   public static final Integer DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY = 1;
@@ -77,9 +72,6 @@ public class SynchronizerConfiguration {
   // General config
   private final SyncMode syncMode;
 
-  // Near head Checkpoint sync
-  private final boolean checkpointPostMergeEnabled;
-
   // Downloader config
   private final long downloaderChangeTargetThresholdByHeight;
   private final UInt256 downloaderChangeTargetThresholdByTd;
@@ -93,7 +85,6 @@ public class SynchronizerConfiguration {
   private final int computationParallelism;
   private final int maxTrailingPeers;
   private final long worldStateMinMillisBeforeStalling;
-  private final long propagationManagerGetBlockTimeoutMillis;
   private final boolean isPeerTaskSystemEnabled;
   private final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled;
 
@@ -125,8 +116,6 @@ public class SynchronizerConfiguration {
       final int transactionsParallelism,
       final int computationParallelism,
       final int maxTrailingPeers,
-      final long propagationManagerGetBlockTimeoutMillis,
-      final boolean checkpointPostMergeEnabled,
       final boolean isPeerTaskSystemEnabled,
       final boolean snapSyncSavePreCheckpointHeadersOnlyEnabled,
       final boolean era1ImportPrepipelineEnabled,
@@ -154,8 +143,6 @@ public class SynchronizerConfiguration {
     this.transactionsParallelism = transactionsParallelism;
     this.computationParallelism = computationParallelism;
     this.maxTrailingPeers = maxTrailingPeers;
-    this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
-    this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
     this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
     this.snapSyncSavePreCheckpointHeadersOnlyEnabled = snapSyncSavePreCheckpointHeadersOnlyEnabled;
     this.era1ImportPrepipelineEnabled = era1ImportPrepipelineEnabled;
@@ -174,10 +161,6 @@ public class SynchronizerConfiguration {
    */
   public SyncMode getSyncMode() {
     return syncMode;
-  }
-
-  public boolean isCheckpointPostMergeEnabled() {
-    return checkpointPostMergeEnabled;
   }
 
   /**
@@ -290,10 +273,6 @@ public class SynchronizerConfiguration {
     return maxTrailingPeers;
   }
 
-  public long getPropagationManagerGetBlockTimeoutMillis() {
-    return propagationManagerGetBlockTimeoutMillis;
-  }
-
   public boolean isPeerTaskSystemEnabled() {
     return isPeerTaskSystemEnabled;
   }
@@ -346,10 +325,6 @@ public class SynchronizerConfiguration {
     private boolean era1ImportPrepipelineEnabled = DEFAULT_ERA1_IMPORT_PREPIPELINE_ENABLED;
     private URI era1DataUri = DEFAULT_ERA1_DATA_URI;
     private int era1ImportPrepipelineConcurrency = DEFAULT_ERA1_IMPORT_PREPIPELINE_CONCURRENCY;
-
-    private long propagationManagerGetBlockTimeoutMillis =
-        DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
-    private boolean checkpointPostMergeEnabled = DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
     public Builder syncPivotDistance(final int distance) {
       syncPivotDistance = distance;
@@ -471,17 +446,6 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder propagationManagerGetBlockTimeoutMillis(
-        final long propagationManagerGetBlockTimeoutMillis) {
-      this.propagationManagerGetBlockTimeoutMillis = propagationManagerGetBlockTimeoutMillis;
-      return this;
-    }
-
-    public Builder checkpointPostMergeEnabled(final boolean checkpointPostMergeEnabled) {
-      this.checkpointPostMergeEnabled = checkpointPostMergeEnabled;
-      return this;
-    }
-
     public Builder isPeerTaskSystemEnabled(final boolean isPeerTaskSystemEnabled) {
       this.isPeerTaskSystemEnabled = isPeerTaskSystemEnabled;
       return this;
@@ -533,8 +497,6 @@ public class SynchronizerConfiguration {
           transactionsParallelism,
           computationParallelism,
           maxTrailingPeers,
-          propagationManagerGetBlockTimeoutMillis,
-          checkpointPostMergeEnabled,
           isPeerTaskSystemEnabled,
           snapSyncSavePreCheckpointHeadersOnlyEnabled,
           era1ImportPrepipelineEnabled,
