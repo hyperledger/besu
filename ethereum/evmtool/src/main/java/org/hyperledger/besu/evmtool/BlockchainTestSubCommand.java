@@ -59,10 +59,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -109,6 +112,17 @@ public class BlockchainTestSubCommand implements Runnable {
       names = {"--trace-output"},
       description = "Output file for traces (default: stderr). Requires --json or --trace flag.")
   private String traceOutput = null;
+
+  @Option(
+      names = {"-i", "--iterations"},
+      description =
+          "Number of iterations to measure for benchmarking. If > 1, average is displayed.")
+  private final Integer iterations = 1;
+
+  @Option(
+      names = {"-q", "--quiet"},
+      description = "Quieter logs, focussed on benchmark results")
+  private final Boolean quiet = false;
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
@@ -194,7 +208,7 @@ public class BlockchainTestSubCommand implements Runnable {
           if (file.isFile()) {
             final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests =
                 blockchainTestMapper.readValue(file, javaType);
-            executeBlockchainTest(blockchainTests, results);
+            executeBlockchainTest("stdin", blockchainTests, results);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -207,7 +221,7 @@ public class BlockchainTestSubCommand implements Runnable {
           } else {
             blockchainTests = blockchainTestMapper.readValue(blockchainTestFile.toFile(), javaType);
           }
-          executeBlockchainTest(blockchainTests, results);
+          executeBlockchainTest(blockchainTestFile.toFile().getName(), blockchainTests, results);
         }
       }
     } catch (final JsonProcessingException jpe) {
@@ -224,6 +238,7 @@ public class BlockchainTestSubCommand implements Runnable {
   }
 
   private void executeBlockchainTest(
+      final String testFileName,
       final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
       final TestResults results) {
     final Map<String, BlockchainReferenceTestCaseSpec> filteredTests =
@@ -232,19 +247,42 @@ public class BlockchainTestSubCommand implements Runnable {
                 entry -> {
                   final String test = entry.getKey();
                   if (testName != null && !matchesTestName(test)) {
-                    parentCommand.out.println("Skipping test: " + test);
+                    if (!quiet) {
+                      parentCommand.out.println("Skipping test: " + test);
+                    }
                     return false;
                   }
-                  parentCommand.out.println("Considering " + test);
+                  if (!quiet) {
+                    parentCommand.out.println("Considering " + test);
+                  }
                   return true;
                 })
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    int repeatCount = Math.max(1, parentCommand.getRepeatCount());
-    for (int i = 0; i < repeatCount; i++) {
-      boolean isLastIteration = (i == repeatCount - 1);
-      parentCommand.out.println("Running iteration " + i);
+    if (quiet) {
+      // collapse individual test printouts into one line
+      parentCommand.out.println(
+          "Running "
+              + filteredTests.size()
+              + " / "
+              + blockchainTests.size()
+              + " filtered tests for "
+              + testFileName);
+    }
+    int repeatCount = Math.max(0, parentCommand.getRepeatCount());
+    int measuredIterationCount = Math.max(1, iterations);
+    LinkedHashMap<String, List<Long>> iterationResults = new LinkedHashMap<>();
+    for (int i = 1; i <= repeatCount; i++) {
+      parentCommand.out.println("Running warmup iteration " + i);
       filteredTests.forEach(
-          (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
+          (testName, spec) ->
+              traceTestSpecs(testName, spec, results, iterationResults, false, false));
+    }
+    for (int i = 1; i <= measuredIterationCount; i++) {
+      boolean isLastIteration = (i == measuredIterationCount);
+      parentCommand.out.println("Running measured iteration " + i);
+      filteredTests.forEach(
+          (testName, spec) ->
+              traceTestSpecs(testName, spec, results, iterationResults, true, isLastIteration));
     }
   }
 
@@ -263,6 +301,8 @@ public class BlockchainTestSubCommand implements Runnable {
       final String test,
       final BlockchainReferenceTestCaseSpec spec,
       final TestResults results,
+      final SequencedMap<String, List<Long>> iterationResults,
+      final boolean isMeasuredIteration,
       final boolean isLastIteration) {
     if (isLastIteration) {
       parentCommand.out.println("Running " + test);
@@ -346,6 +386,15 @@ public class BlockchainTestSubCommand implements Runnable {
 
         timer.stop();
 
+        // Block 1 is setup, Block 2 is execution
+        boolean isLastBlock = blockCount == spec.getCandidateBlocks().length;
+        if (isMeasuredIteration && isLastBlock) {
+          List<Long> resultsForTest =
+              Optional.ofNullable(iterationResults.get(test)).orElseGet(ArrayList::new);
+          resultsForTest.add(timer.elapsed(TimeUnit.NANOSECONDS));
+          iterationResults.put(test, resultsForTest);
+        }
+
         if (!isLastIteration) {
           continue;
         }
@@ -355,6 +404,7 @@ public class BlockchainTestSubCommand implements Runnable {
           totalTxCount += block.getBody().getTransactions().size();
         }
 
+        // Final iteration so print results
         if (importResult.isImported() != candidateBlock.isValid()) {
           testPassed = false;
           failureReason =
@@ -367,12 +417,21 @@ public class BlockchainTestSubCommand implements Runnable {
         } else {
           if (importResult.isImported()) {
             final long gasUsed = block.getHeader().getGasUsed();
-            final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
-            final float mGps = gasUsed * 1000.0f / timeNs;
+            double timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+            if (isLastBlock) {
+              LongStream resultsStream =
+                  iterationResults.get(test).stream().mapToLong(Long::longValue);
+              timeNs = resultsStream.average().orElseThrow(); // iterations >= 1
+            }
+            final double mGps = gasUsed * 1000.0f / timeNs;
             final double timeMs = timeNs / 1_000_000.0;
+            final String averageMsg =
+                iterationResults.get(test) != null && iterationResults.get(test).size() > 1
+                    ? String.format(" [avg of %d iterations] ", iterationResults.get(test).size())
+                    : "";
             parentCommand.out.printf(
-                "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%n",
-                block.getHeader().getNumber(), block.getHash(), timeMs, mGps);
+                "Block %d (%s) Imported in %.2f ms (%.2f MGas/s)%s%n",
+                block.getHeader().getNumber(), block.getHash(), timeMs, mGps, averageMsg);
           } else {
             parentCommand.out.printf(
                 "Block %d (%s) Rejected (correctly)%n",
@@ -397,6 +456,7 @@ public class BlockchainTestSubCommand implements Runnable {
       return;
     }
 
+    // Final iteration so print results
     if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
       testPassed = false;
       failureReason =
@@ -407,7 +467,9 @@ public class BlockchainTestSubCommand implements Runnable {
           "Chain header mismatch, have %s want %s%n",
           blockchain.getChainHeadHash(), spec.getLastBlockHash());
     } else {
-      parentCommand.out.println("Chain import successful");
+      if (!quiet) {
+        parentCommand.out.println("Chain import successful");
+      }
     }
 
     if (parentCommand.showJsonResults) {
