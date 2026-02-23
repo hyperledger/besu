@@ -190,10 +190,13 @@ public class NodeRecordManager {
             .filter(
                 record ->
                     nodeId.equals(record.get(EnrField.PKEY_SECP256K1))
-                        && primaryAddressMatches(
-                            record, ipAddressBytes, discoveryPort, listeningPort, primaryIsIpv4)
+                        && (primaryIsIpv4
+                            ? primaryIpv4AddressMatches(
+                                record, ipAddressBytes, discoveryPort, listeningPort)
+                            : primaryIpv6AddressMatches(
+                                record, ipAddressBytes, discoveryPort, listeningPort))
                         && forkId.equals(record.get(FORK_ID_ENR_FIELD))
-                        && ipv6FieldsMatch(record, ipv6AddressBytes, primaryIsIpv4))
+                        && (!primaryIsIpv4 || ipv6FieldsMatch(record, ipv6AddressBytes)))
             // Otherwise, create a new ENR with an incremented sequence number,
             // sign it with the local node key, and persist it to disk.
             .orElseGet(
@@ -209,37 +212,37 @@ public class NodeRecordManager {
     localNode.get().setNodeRecord(nodeRecord);
   }
 
-  private boolean primaryAddressMatches(
+  private boolean primaryIpv4AddressMatches(
       final NodeRecord record,
       final Bytes ipAddressBytes,
       final int discoveryPort,
-      final int listeningPort,
-      final boolean primaryIsIpv4) {
-    if (primaryIsIpv4) {
-      return ipAddressBytes.equals(record.get(EnrField.IP_V4))
-          && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP))
-          && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP));
-    }
+      final int listeningPort) {
+    return ipAddressBytes.equals(record.get(EnrField.IP_V4))
+        && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP))
+        && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP));
+  }
+
+  private boolean primaryIpv6AddressMatches(
+      final NodeRecord record,
+      final Bytes ipAddressBytes,
+      final int discoveryPort,
+      final int listeningPort) {
     return ipAddressBytes.equals(record.get(EnrField.IP_V6))
         && Integer.valueOf(discoveryPort).equals(record.get(EnrField.UDP_V6))
         && Integer.valueOf(listeningPort).equals(record.get(EnrField.TCP_V6));
   }
 
-  private boolean ipv6FieldsMatch(
-      final NodeRecord record,
-      final Optional<Bytes> ipv6AddressBytes,
-      final boolean primaryIsIpv4) {
+  /**
+   * Checks whether the IPv6 dual-stack fields in an existing ENR match the current configuration.
+   *
+   * <p>Only called when the primary address is IPv4. When {@code ipv6AddressBytes} is empty, the
+   * ENR must not contain an {@code ip6} field (no dual-stack). When present, all three IPv6 fields
+   * ({@code ip6}, {@code udp6}, {@code tcp6}) must match the current {@link #ipv6Endpoint}.
+   */
+  private boolean ipv6FieldsMatch(final NodeRecord record, final Optional<Bytes> ipv6AddressBytes) {
     if (ipv6AddressBytes.isEmpty()) {
-      // No separate IPv6 configured. If primary is IPv4, IP_V6 should be absent.
-      // If primary is IPv6, the IP_V6 field is already checked by primaryAddressMatches.
-      return !primaryIsIpv4 || record.get(EnrField.IP_V6) == null;
-    }
-
-    // Only validate ipv6Endpoint fields when primary is IPv4 (dual-stack).
-    // When primary is IPv6, ipv6Endpoint is ignored during ENR creation,
-    // so we should not validate against it.
-    if (!primaryIsIpv4) {
-      return true;
+      // No separate IPv6 endpoint configured; IP_V6 must be absent from the ENR.
+      return record.get(EnrField.IP_V6) == null;
     }
 
     final HostEndpoint ipv6 =
