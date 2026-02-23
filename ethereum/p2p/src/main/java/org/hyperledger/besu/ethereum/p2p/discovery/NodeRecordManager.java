@@ -170,42 +170,6 @@ public class NodeRecordManager {
    * @throws IllegalStateException if the local node has not been initialized
    */
   /**
-   * Updates the stored discovery port after the OS assigns an actual port for an ephemeral (port 0)
-   * bind, then persists the updated ENR to disk.
-   *
-   * <p>Called from the {@code localNodeRecordListener} in {@code PeerDiscoveryAgentV5} when the
-   * discovery library resolves a bound port via {@code onBoundPortResolved}. At that point the
-   * library's {@code LocalNodeRecordStore} already holds the updated record; this method ensures
-   * Besu's own {@link NodeRecordManager} state and the on-disk ENR are kept consistent.
-   *
-   * <p>This is a no-op if the currently stored discovery port is already non-zero.
-   *
-   * @param resolvedPort the actual OS-assigned port
-   * @param isIpv6 {@code true} to update the IPv6 endpoint, {@code false} for IPv4
-   */
-  public void onDiscoveryPortResolved(final int resolvedPort, final boolean isIpv6) {
-    lock.lock();
-    try {
-      if (isIpv6) {
-        if (ipv6Endpoint.map(ep -> ep.discoveryPort() != 0).orElse(false)) {
-          return;
-        }
-        ipv6Endpoint =
-            ipv6Endpoint.map(ep -> new HostEndpoint(ep.host(), resolvedPort, ep.tcpPort()));
-      } else {
-        if (primaryEndpoint.discoveryPort() != 0) {
-          return;
-        }
-        primaryEndpoint =
-            new HostEndpoint(primaryEndpoint.host(), resolvedPort, primaryEndpoint.tcpPort());
-      }
-      updateNodeRecord();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  /**
    * Updates the stored discovery endpoints with the actual OS-assigned ports after an ephemeral
    * (port 0) bind.
    *
