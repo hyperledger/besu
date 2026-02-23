@@ -38,6 +38,7 @@
     - Fast Sync
 
 ### Additions and Improvements
+- Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763)
 - Support substring and glob matching for `--test-name` in `block-test` evmtool subcommand [#9790](https://github.com/hyperledger/besu/pull/9790)
 - Improve performance of snap sync chain download [#9510](https://github.com/hyperledger/besu/pull/9510) and [#9621](https://github.com/hyperledger/besu/pull/9621)
 - Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
@@ -54,6 +55,7 @@
 - Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 - Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
+- Allow nonce to be max value when `isAllowFutureNonce` is true [#9759](https://github.com/hyperledger/besu/pull/9759)
 
 ## 26.1.0
 
