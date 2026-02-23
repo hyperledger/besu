@@ -37,6 +37,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class EnodeURLImpl implements EnodeURL {
 
   public static final int DEFAULT_LISTENING_PORT = 30303;
+  public static final int DEFAULT_LISTENING_PORT_IPV6 = 30404;
   public static final int NODE_ID_SIZE = 64;
   private static final Pattern DISCPORT_QUERY_STRING_REGEX =
       Pattern.compile("^discport=([0-9]{1,5})$");
