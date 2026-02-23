@@ -75,8 +75,8 @@ import org.web3j.abi.datatypes.generated.Uint256;
  */
 class ExecutionStatsIntegrationTest {
 
-  // Use address 0x10 to avoid precompiles (0x01-0x0a)
-  private static final String RECIPIENT_EOA = "0x0000000000000000000000000000000000000010";
+  // Use address 0x20 to avoid all precompiles (0x01-0x13 including BLS precompiles)
+  private static final String RECIPIENT_EOA = "0x0000000000000000000000000000000000000020";
   private static final Address CONTRACT_ADDRESS =
       Address.fromHexStringStrict("0x00000000000000000000000000000000000fffff");
 
@@ -155,7 +155,7 @@ class ExecutionStatsIntegrationTest {
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(0))
             .maxFeePerGas(Wei.of(7))
-            .gasLimit(21000L)
+            .gasLimit(50_000L)
             .to(Address.fromHexStringStrict(RECIPIENT_EOA))
             .value(Wei.of(1_000_000_000_000_000_000L)) // 1 ETH
             .payload(Bytes.EMPTY)
@@ -536,7 +536,7 @@ class ExecutionStatsIntegrationTest {
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(0))
             .maxFeePerGas(Wei.of(7))
-            .gasLimit(21000L)
+            .gasLimit(50_000L)
             .to(Address.fromHexStringStrict(RECIPIENT_EOA))
             .value(Wei.of(1_000_000_000L))
             .payload(Bytes.EMPTY)
@@ -593,7 +593,7 @@ class ExecutionStatsIntegrationTest {
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(0))
             .maxFeePerGas(Wei.of(7))
-            .gasLimit(21000L)
+            .gasLimit(50_000L)
             .to(Address.fromHexStringStrict(RECIPIENT_EOA))
             .value(Wei.of(1_000_000_000_000_000_000L))
             .payload(Bytes.EMPTY)
@@ -684,7 +684,7 @@ class ExecutionStatsIntegrationTest {
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(0))
             .maxFeePerGas(Wei.of(7))
-            .gasLimit(21000L)
+            .gasLimit(50_000L)
             .to(Address.fromHexStringStrict(RECIPIENT_EOA))
             .value(Wei.of(1_000_000_000_000_000_000L))
             .payload(Bytes.EMPTY)
