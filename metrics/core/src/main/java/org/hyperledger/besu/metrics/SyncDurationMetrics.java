@@ -70,7 +70,7 @@ public class SyncDurationMetrics {
   /** Enum representing the different synchronization phases. */
   public enum Labels {
     /**
-     * Total time taken to get into sync. It is useful for SNAP and CHECKPOINT sync-modes only.
+     * Total time taken to get into sync. It is useful for SNAP sync mode only.
      *
      * <p>Total sync duration includes the separate stages mentioned below, some of which occur in
      * parallel.
