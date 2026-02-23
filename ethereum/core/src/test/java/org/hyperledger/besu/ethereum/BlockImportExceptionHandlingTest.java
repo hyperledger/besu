@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -129,7 +130,7 @@ class BlockImportExceptionHandlingTest {
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
-    when(blockAccessListValidator.validate(any(), any())).thenReturn(true);
+    when(blockAccessListValidator.validate(any(), any(), anyInt())).thenReturn(true);
     when(protocolSpec.getStateRootCommitterFactory())
         .thenReturn(new StateRootCommitterFactoryDefault());
     mainnetBlockValidator =

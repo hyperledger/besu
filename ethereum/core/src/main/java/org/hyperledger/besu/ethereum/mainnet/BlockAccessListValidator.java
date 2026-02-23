@@ -27,14 +27,17 @@ public interface BlockAccessListValidator {
    * Amsterdam, where blocks must not contain a block access list.
    */
   BlockAccessListValidator ALWAYS_REJECT_BAL =
-      (blockAccessList, header) -> blockAccessList.isEmpty() && header.getBalHash().isEmpty();
+      (blockAccessList, header, nbTransactions) ->
+          blockAccessList.isEmpty() && header.getBalHash().isEmpty();
 
   /**
    * Validates a block access list against protocol constraints.
    *
    * @param blockAccessList the optional block access list to validate (empty if block has no BAL)
    * @param blockHeader the block header containing gas limit and other context
+   * @param nbTransactions number of transactions in the block (must be &ge; 0)
    * @return true if the block access list is valid or absent, false otherwise
    */
-  boolean validate(Optional<BlockAccessList> blockAccessList, BlockHeader blockHeader);
+  boolean validate(
+      Optional<BlockAccessList> blockAccessList, BlockHeader blockHeader, int nbTransactions);
 }
