@@ -384,10 +384,15 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   /**
    * Initializes the local node record with the correct RLPx TCP ports.
    *
-   * <p>The IPv4 {@code tcpPort} is the effective port returned by {@link RlpxAgent#start()}. The
-   * IPv6 TCP port is the effective port from the bound IPv6 RLPx socket, obtained via {@link
-   * RlpxAgent#getIpv6ListeningPort()}. Both resolve ephemeral ports (0) to the OS-assigned values
-   * before they are written into the ENR.
+   * <p>The {@code tcp} and {@code tcp6} ENR fields are set from the effective ports returned by
+   * {@link RlpxAgent#start()} and {@link RlpxAgent#getIpv6ListeningPort()} respectively. These are
+   * always the real OS-assigned ports, so ephemeral port configuration (port 0) is handled
+   * correctly for TCP.
+   *
+   * <p>The {@code udp} and {@code udp6} fields are set from the configured discovery bind ports.
+   * The effective UDP ports are only known after the discovery system starts and binds its sockets,
+   * which happens after this method returns. Ephemeral UDP ports (port 0) should therefore be
+   * avoided with DiscV5.
    *
    * <p>The IPv6 {@link HostEndpoint} is only included when <em>both</em> an IPv6 advertised host is
    * configured <em>and</em> an IPv6 RLPx socket is actually bound. If discovery dual-stack is

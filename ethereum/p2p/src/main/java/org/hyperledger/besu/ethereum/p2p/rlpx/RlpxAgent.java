@@ -120,8 +120,7 @@ public class RlpxAgent {
               LOG.info("P2P RLPx agent started and listening on {}.", addresses.ipv4Address());
               addresses
                   .ipv6Address()
-                  .ifPresent(
-                      ipv6 -> LOG.info("P2P RLPx agent also listening on IPv6: {}", ipv6));
+                  .ifPresent(ipv6 -> LOG.info("P2P RLPx agent also listening on IPv6: {}", ipv6));
               return addresses.ipv4Address().getPort();
             })
         .whenComplete(

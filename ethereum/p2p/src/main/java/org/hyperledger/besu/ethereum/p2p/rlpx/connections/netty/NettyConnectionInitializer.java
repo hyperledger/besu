@@ -110,7 +110,8 @@ public class NettyConnectionInitializer
 
   @Override
   public CompletableFuture<ListeningAddresses> start() {
-    final CompletableFuture<ListeningAddresses> listeningAddressesFuture = new CompletableFuture<>();
+    final CompletableFuture<ListeningAddresses> listeningAddressesFuture =
+        new CompletableFuture<>();
     if (!started.compareAndSet(false, true)) {
       listeningAddressesFuture.completeExceptionally(
           new IllegalStateException(
