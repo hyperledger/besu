@@ -59,13 +59,6 @@ public class BalConfigurationOptions {
   boolean balLogBalsOnMismatch = false;
 
   @CommandLine.Option(
-      names = {"--Xbal-api-enabled"},
-      hidden = true,
-      description =
-          "Set to enable eth_getBlockAccessList method and Block Access Lists in simulation results")
-  private final Boolean balApiEnabled = false;
-
-  @CommandLine.Option(
       names = {"--Xbal-state-root-timeout"},
       hidden = true,
       paramLabel = "<INTEGER>",
@@ -86,7 +79,6 @@ public class BalConfigurationOptions {
    */
   public BalConfiguration toDomainObject() {
     return ImmutableBalConfiguration.builder()
-        .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
         .isPerfectParallelizationEnabled(balPerfectParallelizationEnabled)
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)

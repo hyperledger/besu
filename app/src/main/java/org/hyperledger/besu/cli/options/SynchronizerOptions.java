@@ -32,7 +32,7 @@ import picocli.CommandLine;
 
 /** The Synchronizer Cli options. */
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
-  private static final Logger logger = LoggerFactory.getLogger(SynchronizerOptions.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SynchronizerOptions.class);
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
       "--Xsynchronizer-block-propagation-range";
   private static final String DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG =
@@ -348,9 +348,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description = "Enable snap sync server capability. (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
-  @SuppressWarnings("UnusedVariable")
-  private Boolean checkpointPostMergeSyncEnabled = false;
-
   @SuppressWarnings("unused")
   @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
@@ -361,10 +358,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description =
           "DEPRECATED: This option is deprecated as CHECKPOINT sync mode has been replaced by SNAP. This option no longer has any effect.")
   private void setCheckpointPostMergeSyncEnabled(final Boolean enabled) {
-    logger.warn(
+    LOG.warn(
         "{} is deprecated and has no effect. CHECKPOINT sync mode has been replaced by SNAP.",
         CHECKPOINT_POST_MERGE_FLAG);
-    this.checkpointPostMergeSyncEnabled = enabled;
   }
 
   @CommandLine.Option(
@@ -379,7 +375,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = "<Boolean>",
       arity = "0..1",
       description =
-          "Enable transaction indexing during SNAP/CHECKPOINT sync. Disabling will improve initial syncing time and disk usage. However, to support RPCs that use transaction hash for historical queries, you'll need to enable this. (default: ${DEFAULT-VALUE})")
+          "Enable transaction indexing during SNAP sync. Enabling will increase syncing time and disk usage. However, to support RPCs that use transaction hash for historical queries, you'll need to enable this. (default: ${DEFAULT-VALUE})")
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
