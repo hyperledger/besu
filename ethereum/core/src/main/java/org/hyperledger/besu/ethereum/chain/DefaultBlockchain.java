@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -668,6 +669,56 @@ public class DefaultBlockchain implements MutableBlockchain {
         indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
       }
     }
+    updater.setChainHead(chainHeader.getBlockHash());
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeImportSyncBodies(
+      final List<SyncBlock> blocks, final boolean indexTransactions) {
+    final BlockchainStorage.Updater updater = blockchainStorage.writeBatch();
+    for (final SyncBlock block : blocks) {
+      final BlockHeader header = block.getHeader();
+      final Hash blockHash = header.getHash();
+      final SyncBlockBody body = block.getBody();
+      updater.putBlockHash(header.getNumber(), blockHash);
+      updater.putSyncBlockBody(blockHash, body);
+      if (indexTransactions) {
+        final List<Hash> listOfTxHashes =
+            body.getEncodedTransactions().stream().map(Hash::hash).toList();
+        indexTransactionsForBlock(updater, blockHash, listOfTxHashes);
+      }
+    }
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeImportSyncReceipts(
+      final Map<BlockHeader, List<SyncTransactionReceipt>> receipts) {
+    final BlockchainStorage.Updater updater = blockchainStorage.writeBatch();
+    receipts.forEach(
+        (header, receiptsForBlock) ->
+            updater.putSyncTransactionReceipts(header.getBlockHash(), receiptsForBlock));
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeImportReceipts(final Map<BlockHeader, List<TransactionReceipt>> receipts) {
+    final BlockchainStorage.Updater updater = blockchainStorage.writeBatch();
+    receipts.forEach(
+        (header, receiptsForBlock) ->
+            updater.putTransactionReceipts(header.getBlockHash(), receiptsForBlock));
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeCalculateTTDAndSetChainHead(final List<BlockHeader> headers) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final BlockHeader header : headers) {
+      this.totalDifficulty = calculateTotalDifficultyForSyncing(header);
+      updater.putTotalDifficulty(header.getBlockHash(), totalDifficulty);
+    }
+    this.chainHeader = headers.getLast();
     updater.setChainHead(chainHeader.getBlockHash());
     updater.commit();
   }

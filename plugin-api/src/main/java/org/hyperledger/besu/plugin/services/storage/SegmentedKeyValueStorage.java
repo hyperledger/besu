@@ -92,6 +92,16 @@ public interface SegmentedKeyValueStorage extends Closeable {
   SegmentedKeyValueStorageTransaction startTransaction() throws StorageException;
 
   /**
+   * Begins a write batch.
+   *
+   * @return An object representing the write batch.
+   * @throws StorageException the storage exception
+   */
+  default SegmentedKeyValueStorageTransaction startWriteBatch() throws StorageException {
+    throw new UnsupportedOperationException("Write batches are not supported");
+  }
+
+  /**
    * Returns a stream of all keys for the segment.
    *
    * @param segmentIdentifier The segment identifier whose keys we want to stream.

@@ -77,6 +77,11 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     return new Updater(variables.startTransaction());
   }
 
+  @Override
+  public Updater writeBatch() {
+    return new Updater(variables.startWriteBatch());
+  }
+
   private Hash bytesToHash(final Bytes bytes) {
     return Hash.wrap(Bytes32.wrap(bytes, 0));
   }
