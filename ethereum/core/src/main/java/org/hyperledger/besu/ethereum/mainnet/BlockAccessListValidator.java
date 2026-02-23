@@ -26,7 +26,7 @@ public interface BlockAccessListValidator {
    * Rejects any block that includes a BAL (returns false when present). Used for forks before
    * Amsterdam, where blocks must not contain a block access list.
    */
-  BlockAccessListValidator REJECT_ANY_BAL =
+  BlockAccessListValidator ALWAYS_REJECT_BAL =
       (blockAccessList, header) -> blockAccessList.isEmpty() && header.getBalHash().isEmpty();
 
   /**

@@ -77,7 +77,7 @@ public class ProtocolSpecBuilder {
   private BlockProcessorBuilder blockProcessorBuilder;
   private BlockValidatorBuilder blockValidatorBuilder;
   private Function<ProtocolSchedule, BlockAccessListValidator> blockAccessListValidatorBuilder =
-      protocolSchedule -> BlockAccessListValidator.REJECT_ANY_BAL;
+      protocolSchedule -> BlockAccessListValidator.ALWAYS_REJECT_BAL;
   private BlockImporterBuilder blockImporterBuilder;
 
   private HardforkId hardforkId;

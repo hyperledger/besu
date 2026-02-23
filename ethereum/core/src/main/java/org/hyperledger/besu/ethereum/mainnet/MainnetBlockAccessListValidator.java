@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -85,21 +86,22 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
     // Validate BAL size constraint (EIP-7928): bal_items <= block_gas_limit / ITEM_COST
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
     final long itemCost = protocolSpec.getGasCalculator().getBlockAccessListItemCost();
-
-    long totalStorageKeys = 0;
-    for (BlockAccessList.AccountChanges accountChange : bal.accountChanges()) {
-      totalStorageKeys += accountChange.storageChanges().size();
-      totalStorageKeys += accountChange.storageReads().size();
-    }
-    final long totalAddresses = bal.accountChanges().size();
-    final long balItems = totalStorageKeys + totalAddresses;
-    final long maxItems = blockHeader.getGasLimit() / itemCost;
-    if (balItems > maxItems) {
-      LOG.warn(
-          "Block access list size exceeds maximum allowed items for block {} with gas limit {}",
-          blockHeader.getBlockHash(),
-          blockHeader.getGasLimit());
-      return false;
+    if (itemCost > 0) {
+      long totalStorageKeys = 0;
+      for (BlockAccessList.AccountChanges accountChange : bal.accountChanges()) {
+        totalStorageKeys += accountChange.storageChanges().size();
+        totalStorageKeys += accountChange.storageReads().size();
+      }
+      final long totalAddresses = bal.accountChanges().size();
+      final long balItems = totalStorageKeys + totalAddresses;
+      final long maxItems = blockHeader.getGasLimit() / itemCost;
+      if (balItems > maxItems) {
+        LOG.warn(
+            "Block access list size exceeds maximum allowed items for block {} with gas limit {}",
+            blockHeader.getBlockHash(),
+            blockHeader.getGasLimit());
+        return false;
+      }
     }
 
     // Uniqueness constraints
@@ -118,8 +120,9 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
    */
   private boolean validateUniquenessConstraints(
       final BlockAccessList blockAccessList, final BlockHeader blockHeader) {
-    final Set<Address> seenAddresses = new HashSet<>();
-    final Set<Integer> seenTxIndices = new HashSet<>();
+    final int accountCount = blockAccessList.accountChanges().size();
+    final Set<Address> seenAddresses = new HashSet<>(accountCount);
+    final BitSet seenTxIndices = new BitSet();
     for (BlockAccessList.AccountChanges account : blockAccessList.accountChanges()) {
       if (!seenAddresses.add(account.address())) {
         LOG.warn(
@@ -129,7 +132,7 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
         return false;
       }
 
-      final Set<StorageSlotKey> storageChangeSlots = new HashSet<>();
+      final Set<StorageSlotKey> storageChangeSlots = new HashSet<>(account.storageChanges().size());
       for (BlockAccessList.SlotChanges slotChanges : account.storageChanges()) {
         if (!storageChangeSlots.add(slotChanges.slot())) {
           LOG.warn(
@@ -140,17 +143,19 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
         }
         seenTxIndices.clear();
         for (BlockAccessList.StorageChange ch : slotChanges.changes()) {
-          if (!seenTxIndices.add(ch.txIndex())) {
+          final int txIndex = ch.txIndex();
+          if (txIndex < 0 || seenTxIndices.get(txIndex)) {
             LOG.warn(
                 "Block access list has duplicate block_access_index in storage_changes for address {} block {}",
                 account.address().toHexString(),
                 blockHeader.getBlockHash());
             return false;
           }
+          seenTxIndices.set(txIndex);
         }
       }
 
-      final Set<StorageSlotKey> storageReadSlots = new HashSet<>();
+      final Set<StorageSlotKey> storageReadSlots = new HashSet<>(account.storageReads().size());
       for (BlockAccessList.SlotRead slotRead : account.storageReads()) {
         final StorageSlotKey slot = slotRead.slot();
         if (storageChangeSlots.contains(slot)) {
@@ -171,33 +176,39 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
 
       seenTxIndices.clear();
       for (BlockAccessList.BalanceChange ch : account.balanceChanges()) {
-        if (!seenTxIndices.add(ch.txIndex())) {
+        final int txIndex = ch.txIndex();
+        if (txIndex < 0 || seenTxIndices.get(txIndex)) {
           LOG.warn(
               "Block access list has duplicate block_access_index in balance_changes for address {} block {}",
               account.address().toHexString(),
               blockHeader.getBlockHash());
           return false;
         }
+        seenTxIndices.set(txIndex);
       }
       seenTxIndices.clear();
       for (BlockAccessList.NonceChange ch : account.nonceChanges()) {
-        if (!seenTxIndices.add(ch.txIndex())) {
+        final int txIndex = ch.txIndex();
+        if (txIndex < 0 || seenTxIndices.get(txIndex)) {
           LOG.warn(
               "Block access list has duplicate block_access_index in nonce_changes for address {} block {}",
               account.address().toHexString(),
               blockHeader.getBlockHash());
           return false;
         }
+        seenTxIndices.set(txIndex);
       }
       seenTxIndices.clear();
       for (BlockAccessList.CodeChange ch : account.codeChanges()) {
-        if (!seenTxIndices.add(ch.txIndex())) {
+        final int txIndex = ch.txIndex();
+        if (txIndex < 0 || seenTxIndices.get(txIndex)) {
           LOG.warn(
               "Block access list has duplicate block_access_index in code_changes for address {} block {}",
               account.address().toHexString(),
               blockHeader.getBlockHash());
           return false;
         }
+        seenTxIndices.set(txIndex);
       }
     }
     return true;

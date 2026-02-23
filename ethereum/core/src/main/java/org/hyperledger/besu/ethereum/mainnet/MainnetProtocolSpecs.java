@@ -204,7 +204,7 @@ public abstract class MainnetProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
-        .blockAccessListValidatorBuilder(__ -> BlockAccessListValidator.REJECT_ANY_BAL)
+        .blockAccessListValidatorBuilder(__ -> BlockAccessListValidator.ALWAYS_REJECT_BAL)
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
