@@ -1,0 +1,402 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.core.Utils.receiptToSyncReceipt;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
+
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.SyncBlock;
+import org.hyperledger.besu.ethereum.core.SyncBlockBody;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.core.Utils;
+import org.hyperledger.besu.ethereum.eth.manager.ChainState;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
+import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.MalformedRlpFromPeerException;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
+import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
+import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
+import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
+
+public class GetSyncReceiptsFromPeerTaskTest {
+  private static ProtocolSchedule protocolSchedule;
+
+  @BeforeAll
+  public static void setup() {
+    protocolSchedule = mock(ProtocolSchedule.class);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    when(protocolSpec.isPoS()).thenReturn(false);
+    when(protocolSchedule.getByBlockHeader(Mockito.any())).thenReturn(protocolSpec);
+    when(protocolSchedule.anyMatch(Mockito.any())).thenReturn(false);
+  }
+
+  @Test
+  public void testGetSubProtocol() {
+    final BlockHeader blockHeader = mockBlockHeader(1);
+    final TransactionReceipt receipt =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader.getReceiptsRoot()).thenReturn(BodyValidation.receiptsRoot(List.of(receipt)));
+    final SyncBlockBody syncBlockBody = mock(SyncBlockBody.class);
+    when(syncBlockBody.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock = new SyncBlock(blockHeader, syncBlockBody);
+
+    final var task = createTask(List.of(syncBlock), protocolSchedule);
+    assertEquals(EthProtocol.get(), task.getSubProtocol());
+  }
+
+  @Test
+  public void testGetRequestMessage() {
+    final BlockHeader blockHeader1 = mockBlockHeader(1);
+    final TransactionReceipt receipt1_forBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    final TransactionReceipt receipt2_forBlock1 =
+        new TransactionReceipt(1, 321, Collections.emptyList(), Optional.empty());
+    when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receipt1_forBlock1, receipt2_forBlock1)));
+    final SyncBlockBody syncBlockBody1 = mock(SyncBlockBody.class);
+    when(syncBlockBody1.getTransactionCount()).thenReturn(2);
+    final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
+
+    BlockHeader blockHeader2 = mockBlockHeader(2);
+    TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+    final SyncBlockBody syncBlockBody2 = mock(SyncBlockBody.class);
+    when(syncBlockBody2.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock2 = new SyncBlock(blockHeader2, syncBlockBody2);
+
+    BlockHeader blockHeader3 = mockBlockHeader(3);
+    TransactionReceipt receiptForBlock3 =
+        new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty());
+    when(blockHeader3.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock3)));
+    final SyncBlockBody syncBlockBody3 = mock(SyncBlockBody.class);
+    when(syncBlockBody3.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock3 = new SyncBlock(blockHeader3, syncBlockBody3);
+
+    final List<SyncBlock> blocks = List.of(syncBlock1, syncBlock2, syncBlock3);
+
+    final var task = createTask(blocks, protocolSchedule);
+
+    final var messageData = task.getRequestMessage();
+    final var getReceiptsMessage = GetReceiptsMessage.readFrom(messageData);
+
+    assertEquals(EthProtocolMessages.GET_RECEIPTS, getReceiptsMessage.getCode());
+
+    List<Hash> hashesInMessage = getReceiptsMessage.hashes();
+    List<Hash> expectedHashes = blocks.stream().map(SyncBlock::getHash).toList();
+
+    assertThat(expectedHashes).containsExactlyElementsOf(hashesInMessage);
+  }
+
+  @Test
+  public void testParseResponseWithNullResponseMessage() {
+    final BlockHeader blockHeader = mockBlockHeader(1);
+    final TransactionReceipt receipt =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader.getReceiptsRoot()).thenReturn(BodyValidation.receiptsRoot(List.of(receipt)));
+    final SyncBlockBody syncBlockBody = mock(SyncBlockBody.class);
+    when(syncBlockBody.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock = new SyncBlock(blockHeader, syncBlockBody);
+
+    final var task = createTask(List.of(syncBlock), protocolSchedule);
+    Assertions.assertThrows(
+        InvalidPeerTaskResponseException.class, () -> task.processResponse(null));
+  }
+
+  @Test
+  public void testParseResponse()
+      throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
+    BlockHeader blockHeader1 = mockBlockHeader(1);
+    TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+    final SyncBlockBody syncBlockBody1 = mock(SyncBlockBody.class);
+    when(syncBlockBody1.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
+
+    BlockHeader blockHeader2 = mockBlockHeader(2);
+    TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+    final SyncBlockBody syncBlockBody2 = mock(SyncBlockBody.class);
+    when(syncBlockBody2.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock2 = new SyncBlock(blockHeader2, syncBlockBody2);
+
+    BlockHeader blockHeader3 = mockBlockHeader(3);
+    TransactionReceipt receiptForBlock3 =
+        new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty());
+    when(blockHeader3.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock3)));
+    final SyncBlockBody syncBlockBody3 = mock(SyncBlockBody.class);
+    when(syncBlockBody3.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock3 = new SyncBlock(blockHeader3, syncBlockBody3);
+
+    final var task = createTask(List.of(syncBlock1, syncBlock2, syncBlock3), protocolSchedule);
+
+    ReceiptsMessage receiptsMessage =
+        ReceiptsMessage.create(
+            List.of(
+                List.of(receiptForBlock1), List.of(receiptForBlock2), List.of(receiptForBlock3)),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+
+    final var response = task.processResponse(receiptsMessage);
+
+    assertThat(response).hasSize(3);
+    assertThat(response.get(syncBlock1))
+        .usingElementComparator(Utils::compareSyncReceipts)
+        .containsExactly(toResponseReceipt(receiptForBlock1));
+    assertThat(response.get(syncBlock2))
+        .usingElementComparator(Utils::compareSyncReceipts)
+        .containsExactly(toResponseReceipt(receiptForBlock2));
+    assertThat(response.get(syncBlock3))
+        .usingElementComparator(Utils::compareSyncReceipts)
+        .containsExactly(toResponseReceipt(receiptForBlock3));
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  public void testGetPeerRequirementFilter(final boolean isPoS) {
+    reset(protocolSchedule);
+    when(protocolSchedule.anyMatch(any())).thenReturn(isPoS);
+
+    BlockHeader blockHeader1 = mockBlockHeader(1);
+    TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+    final SyncBlockBody syncBlockBody1 = mock(SyncBlockBody.class);
+    when(syncBlockBody1.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
+
+    BlockHeader blockHeader2 = mockBlockHeader(2);
+    TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+    final SyncBlockBody syncBlockBody2 = mock(SyncBlockBody.class);
+    when(syncBlockBody2.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock2 = new SyncBlock(blockHeader2, syncBlockBody2);
+
+    final var task = createTask(List.of(syncBlock1, syncBlock2), protocolSchedule);
+
+    EthPeer failForShortChainHeight = mockPeer(1);
+    EthPeer successfulCandidate = mockPeer(5);
+
+    assertThat(
+            task.getPeerRequirementFilter()
+                .test(EthPeerImmutableAttributes.from(failForShortChainHeight)))
+        .isEqualTo(isPoS);
+    Assertions.assertTrue(
+        task.getPeerRequirementFilter().test(EthPeerImmutableAttributes.from(successfulCandidate)));
+  }
+
+  @Test
+  public void validateResultFailsWhenNoResultAreReturned() {
+    final BlockHeader blockHeader = mockBlockHeader(1);
+    final TransactionReceipt receiptForBlock =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock)));
+    final SyncBlockBody syncBlockBody = mock(SyncBlockBody.class);
+    when(syncBlockBody.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock = new SyncBlock(blockHeader, syncBlockBody);
+
+    final var task = createTask(List.of(syncBlock), protocolSchedule);
+
+    assertEquals(PeerTaskValidationResponse.NO_RESULTS_RETURNED, task.validateResult(Map.of()));
+  }
+
+  @Test
+  public void testValidateResultForFullSuccess() {
+    final BlockHeader blockHeader = mockBlockHeader(1);
+    final TransactionReceipt receiptForBlock =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock)));
+    final SyncBlockBody syncBlockBody = mock(SyncBlockBody.class);
+    when(syncBlockBody.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock = new SyncBlock(blockHeader, syncBlockBody);
+
+    final var task = createTask(List.of(syncBlock), protocolSchedule);
+
+    assertEquals(
+        PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD,
+        task.validateResult(Map.of(syncBlock, List.of(toResponseReceipt(receiptForBlock)))));
+  }
+
+  @Test
+  public void testParseResponseForInvalidResponse() {
+    // Too many block-lists in the response (4 for 3 requested blocks) must be rejected at parse
+    // time by processResponse, not deferred to validateResult.
+    final BlockHeader blockHeader1 = mockBlockHeader(1);
+    final TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+    final SyncBlockBody syncBlockBody1 = mock(SyncBlockBody.class);
+    when(syncBlockBody1.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
+
+    final BlockHeader blockHeader2 = mockBlockHeader(2);
+    final TransactionReceipt receiptForBlock2 =
+        new TransactionReceipt(1, 456, Collections.emptyList(), Optional.empty());
+    when(blockHeader2.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock2)));
+    final SyncBlockBody syncBlockBody2 = mock(SyncBlockBody.class);
+    when(syncBlockBody2.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock2 = new SyncBlock(blockHeader2, syncBlockBody2);
+
+    final BlockHeader blockHeader3 = mockBlockHeader(3);
+    final TransactionReceipt receiptForBlock3 =
+        new TransactionReceipt(1, 789, Collections.emptyList(), Optional.empty());
+    when(blockHeader3.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock3)));
+    final SyncBlockBody syncBlockBody3 = mock(SyncBlockBody.class);
+    when(syncBlockBody3.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock3 = new SyncBlock(blockHeader3, syncBlockBody3);
+
+    final var task = createTask(List.of(syncBlock1, syncBlock2, syncBlock3), protocolSchedule);
+
+    final ReceiptsMessage receiptsMessage =
+        ReceiptsMessage.create(
+            List.of(
+                List.of(receiptForBlock1),
+                List.of(receiptForBlock2),
+                List.of(receiptForBlock3),
+                List.of(
+                    new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))),
+            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+
+    Assertions.assertThrows(
+        InvalidPeerTaskResponseException.class, () -> task.processResponse(receiptsMessage));
+  }
+
+  @Test
+  public void validateResultFailsWhenTooManyBlocksReturned() {
+    // A block with 1 transaction that receives 2 receipts must be rejected.
+    final BlockHeader blockHeader1 = mockBlockHeader(1);
+    final TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+    final SyncBlockBody syncBlockBody1 = mock(SyncBlockBody.class);
+    when(syncBlockBody1.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
+
+    final TransactionReceipt extraReceipt =
+        new TransactionReceipt(1, 321, Collections.emptyList(), Optional.empty());
+
+    final var task = createTask(List.of(syncBlock1), protocolSchedule);
+
+    assertEquals(
+        PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED,
+        task.validateResult(
+            Map.of(
+                syncBlock1,
+                List.of(toResponseReceipt(receiptForBlock1), toResponseReceipt(extraReceipt)))));
+  }
+
+  @Test
+  public void validateResultFailsReceiptRootDoesNotMatch() {
+    final BlockHeader blockHeader1 = mockBlockHeader(1);
+    final TransactionReceipt receiptForBlock1 =
+        new TransactionReceipt(1, 123, Collections.emptyList(), Optional.empty());
+    when(blockHeader1.getReceiptsRoot())
+        .thenReturn(BodyValidation.receiptsRoot(List.of(receiptForBlock1)));
+    final SyncBlockBody syncBlockBody1 = mock(SyncBlockBody.class);
+    when(syncBlockBody1.getTransactionCount()).thenReturn(1);
+    final SyncBlock syncBlock1 = new SyncBlock(blockHeader1, syncBlockBody1);
+
+    final TransactionReceipt returnedReceiptForBlock1 =
+        new TransactionReceipt(1, 321, Collections.emptyList(), Optional.empty());
+
+    final var task = createTask(List.of(syncBlock1), protocolSchedule);
+
+    assertEquals(
+        PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY,
+        task.validateResult(
+            Map.of(syncBlock1, List.of(toResponseReceipt(returnedReceiptForBlock1)))));
+  }
+
+  private static BlockHeader mockBlockHeader(final long blockNumber) {
+    BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getNumber()).thenReturn(blockNumber);
+    // second to last hex digit indicates the blockNumber, last hex digit indicates the usage of the
+    // hash
+    when(blockHeader.getHash())
+        .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "1"));
+
+    return blockHeader;
+  }
+
+  private EthPeer mockPeer(final long chainHeight) {
+    EthPeer ethPeer = mock(EthPeer.class);
+    ChainState chainState = mock(ChainState.class);
+
+    when(ethPeer.chainState()).thenReturn(chainState);
+    when(chainState.getEstimatedHeight()).thenReturn(chainHeight);
+    when(chainState.getEstimatedTotalDifficulty()).thenReturn(Difficulty.of(0));
+    when(ethPeer.getReputation()).thenReturn(new PeerReputation());
+    PeerConnection connection = mock(PeerConnection.class);
+    when(ethPeer.getConnection()).thenReturn(connection);
+    return ethPeer;
+  }
+
+  private GetSyncReceiptsFromPeerTask createTask(
+      final List<SyncBlock> blocks, final ProtocolSchedule protocolSchedule) {
+    return new GetSyncReceiptsFromPeerTask(
+        blocks, protocolSchedule, new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+  }
+
+  private SyncTransactionReceipt toResponseReceipt(final TransactionReceipt receipt) {
+    return receiptToSyncReceipt(receipt, TransactionReceiptEncodingConfiguration.DEFAULT);
+  }
+}
