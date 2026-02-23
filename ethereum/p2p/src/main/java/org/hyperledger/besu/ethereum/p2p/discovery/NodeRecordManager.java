@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -69,6 +70,8 @@ public class NodeRecordManager {
   private final Bytes nodeId;
   private final Supplier<List<Bytes>> forkIdSupplier;
   private final NatService natService;
+
+  private final ReentrantLock lock = new ReentrantLock();
 
   private Optional<DiscoveryPeerV4> localNode = Optional.empty();
   private HostEndpoint primaryEndpoint;
@@ -166,50 +169,122 @@ public class NodeRecordManager {
    *
    * @throws IllegalStateException if the local node has not been initialized
    */
+  /**
+   * Updates the stored discovery port after the OS assigns an actual port for an ephemeral (port 0)
+   * bind, then persists the updated ENR to disk.
+   *
+   * <p>Called from the {@code localNodeRecordListener} in {@code PeerDiscoveryAgentV5} when the
+   * discovery library resolves a bound port via {@code onBoundPortResolved}. At that point the
+   * library's {@code LocalNodeRecordStore} already holds the updated record; this method ensures
+   * Besu's own {@link NodeRecordManager} state and the on-disk ENR are kept consistent.
+   *
+   * <p>This is a no-op if the currently stored discovery port is already non-zero.
+   *
+   * @param resolvedPort the actual OS-assigned port
+   * @param isIpv6 {@code true} to update the IPv6 endpoint, {@code false} for IPv4
+   */
+  public void onDiscoveryPortResolved(final int resolvedPort, final boolean isIpv6) {
+    lock.lock();
+    try {
+      if (isIpv6) {
+        if (ipv6Endpoint.map(ep -> ep.discoveryPort() != 0).orElse(false)) {
+          return;
+        }
+        ipv6Endpoint =
+            ipv6Endpoint.map(ep -> new HostEndpoint(ep.host(), resolvedPort, ep.tcpPort()));
+      } else {
+        if (primaryEndpoint.discoveryPort() != 0) {
+          return;
+        }
+        primaryEndpoint =
+            new HostEndpoint(primaryEndpoint.host(), resolvedPort, primaryEndpoint.tcpPort());
+      }
+      updateNodeRecord();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Updates the stored discovery endpoints with the actual OS-assigned ports after an ephemeral
+   * (port 0) bind.
+   *
+   * <p>Each argument is only applied when present and only if the currently stored port is 0. The
+   * caller is responsible for invoking {@link #updateNodeRecord()} afterwards to persist the
+   * change.
+   *
+   * @param resolvedIpv4Port the actual OS-assigned IPv4 UDP port, or empty if unchanged
+   * @param resolvedIpv6Port the actual OS-assigned IPv6 UDP port, or empty if unchanged
+   */
+  public void onDiscoveryPortResolved(
+      final Optional<Integer> resolvedIpv4Port, final Optional<Integer> resolvedIpv6Port) {
+    lock.lock();
+    try {
+      if (resolvedIpv4Port.isPresent() && primaryEndpoint.discoveryPort() == 0) {
+        primaryEndpoint =
+            new HostEndpoint(
+                primaryEndpoint.host(), resolvedIpv4Port.get(), primaryEndpoint.tcpPort());
+      }
+      if (resolvedIpv6Port.isPresent()
+          && ipv6Endpoint.map(ep -> ep.discoveryPort() == 0).orElse(false)) {
+        ipv6Endpoint =
+            ipv6Endpoint.map(
+                ep -> new HostEndpoint(ep.host(), resolvedIpv6Port.get(), ep.tcpPort()));
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
+
   public void updateNodeRecord() {
-    final NodeRecordFactory factory = NodeRecordFactory.DEFAULT;
+    lock.lock();
+    try {
+      final NodeRecordFactory factory = NodeRecordFactory.DEFAULT;
 
-    final Optional<NodeRecord> existingRecord =
-        variablesStorage.getLocalEnrSeqno().map(factory::fromBytes);
+      final Optional<NodeRecord> existingRecord =
+          variablesStorage.getLocalEnrSeqno().map(factory::fromBytes);
 
-    final Bytes ipAddressBytes =
-        Bytes.of(InetAddresses.forString(primaryEndpoint.host()).getAddress());
+      final Bytes ipAddressBytes =
+          Bytes.of(InetAddresses.forString(primaryEndpoint.host()).getAddress());
 
-    final int discoveryPort = primaryEndpoint.discoveryPort();
-    final int listeningPort = primaryEndpoint.tcpPort();
-    final List<Bytes> forkId = forkIdSupplier.get();
+      final int discoveryPort = primaryEndpoint.discoveryPort();
+      final int listeningPort = primaryEndpoint.tcpPort();
+      final List<Bytes> forkId = forkIdSupplier.get();
 
-    final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
+      final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
 
-    final Optional<Bytes> ipv6AddressBytes =
-        ipv6Endpoint.map(ep -> Bytes.of(InetAddresses.forString(ep.host()).getAddress()));
+      final Optional<Bytes> ipv6AddressBytes =
+          ipv6Endpoint.map(ep -> Bytes.of(InetAddresses.forString(ep.host()).getAddress()));
 
-    // Reuse the existing ENR if all relevant fields are unchanged.
-    final NodeRecord nodeRecord =
-        existingRecord
-            .filter(
-                record ->
-                    nodeId.equals(record.get(EnrField.PKEY_SECP256K1))
-                        && (primaryIsIpv4
-                            ? primaryIpv4AddressMatches(
-                                record, ipAddressBytes, discoveryPort, listeningPort)
-                            : primaryIpv6AddressMatches(
-                                record, ipAddressBytes, discoveryPort, listeningPort))
-                        && forkId.equals(record.get(FORK_ID_ENR_FIELD))
-                        && (!primaryIsIpv4 || ipv6FieldsMatch(record, ipv6AddressBytes)))
-            // Otherwise, create a new ENR with an incremented sequence number,
-            // sign it with the local node key, and persist it to disk.
-            .orElseGet(
-                () ->
-                    createAndPersistNodeRecord(
-                        factory,
-                        existingRecord,
-                        ipAddressBytes,
-                        discoveryPort,
-                        listeningPort,
-                        forkId));
+      // Reuse the existing ENR if all relevant fields are unchanged.
+      final NodeRecord nodeRecord =
+          existingRecord
+              .filter(
+                  record ->
+                      nodeId.equals(record.get(EnrField.PKEY_SECP256K1))
+                          && (primaryIsIpv4
+                              ? primaryIpv4AddressMatches(
+                                  record, ipAddressBytes, discoveryPort, listeningPort)
+                              : primaryIpv6AddressMatches(
+                                  record, ipAddressBytes, discoveryPort, listeningPort))
+                          && forkId.equals(record.get(FORK_ID_ENR_FIELD))
+                          && (!primaryIsIpv4 || ipv6FieldsMatch(record, ipv6AddressBytes)))
+              // Otherwise, create a new ENR with an incremented sequence number,
+              // sign it with the local node key, and persist it to disk.
+              .orElseGet(
+                  () ->
+                      createAndPersistNodeRecord(
+                          factory,
+                          existingRecord,
+                          ipAddressBytes,
+                          discoveryPort,
+                          listeningPort,
+                          forkId));
 
-    localNode.get().setNodeRecord(nodeRecord);
+      localNode.get().setNodeRecord(nodeRecord);
+    } finally {
+      lock.unlock();
+    }
   }
 
   private boolean primaryIpv4AddressMatches(
