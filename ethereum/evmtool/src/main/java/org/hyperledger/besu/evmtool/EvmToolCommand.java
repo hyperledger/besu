@@ -253,7 +253,8 @@ public class EvmToolCommand implements Runnable {
 
   @Option(
       names = {"-w", "--warm-iterations", "--repeat"},
-      description = "Number of times to repeat for benchmarking. Not measured for block-test subcommand")
+      description =
+          "Number of times to repeat for benchmarking. Not measured for block-test subcommand")
   private final Integer repeat = 0;
 
   @Option(
