@@ -154,7 +154,9 @@ public interface BlockHeader extends ProcessableBlockHeader {
   Optional<? extends Long> getBlobGasUsed();
 
   /**
-   * @return Returns a human-readable string for logging
+   * Returns a human-readable string for logging.
+   *
+   * @return the log string.
    */
   default String toLogString() {
     return getNumber() + " (" + getBlockHash() + ")";
