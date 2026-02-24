@@ -213,7 +213,9 @@ public class RlpxAgent {
     }
 
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
-    if (checkWhetherToConnect(peer, false)) {
+    final Optional<DisconnectReason> maybeDisconnectReason = checkWhetherToConnect(peer, false);
+
+    if (maybeDisconnectReason.isEmpty()) {
       try {
         synchronized (this) {
           peerConnectionCompletableFuture =
@@ -246,9 +248,12 @@ public class RlpxAgent {
     return peerConnectionCompletableFuture;
   }
 
-  private boolean checkWhetherToConnect(final Peer peer, final boolean incoming) {
+  private Optional<DisconnectReason> checkWhetherToConnect(
+      final Peer peer, final boolean incoming) {
     return connectRequestSubscribers.stream()
-        .anyMatch(callback -> callback.shouldConnect(peer, incoming));
+        .map(callback -> callback.shouldConnect(peer, incoming))
+        .flatMap(Optional::stream)
+        .findFirst();
   }
 
   private void setupListeners() {
@@ -324,7 +329,8 @@ public class RlpxAgent {
       return;
     }
 
-    if (checkWhetherToConnect(peer, true)) {
+    final Optional<DisconnectReason> maybeDisconnectReason = checkWhetherToConnect(peer, true);
+    if (maybeDisconnectReason.isEmpty()) {
       dispatchConnect(peerConnection);
     } else {
       peerConnection.disconnect(DisconnectReason.UNKNOWN);

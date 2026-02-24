@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -148,7 +149,9 @@ public class P2PPlainNetworkTest {
         final P2PNetwork connector2 = createP2PNetwork()) {
       listener.getRlpxAgent().subscribeConnectRequest(testCallback);
       connector1.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector2.getRlpxAgent().subscribeConnectRequest((p, d) -> false);
+      connector2
+          .getRlpxAgent()
+          .subscribeConnectRequest((p, d) -> Optional.of(DisconnectReason.TOO_MANY_PEERS));
 
       // Setup listener and first connection
       listener.start();
@@ -300,7 +303,7 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  private final ShouldConnectCallback testCallback = (p, d) -> true;
+  private final ShouldConnectCallback testCallback = (p, d) -> Optional.empty();
 
   private Peer createPeer(final Bytes nodeId, final int listenPort) {
     return DefaultPeer.fromEnodeURL(

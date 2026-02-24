@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -50,14 +51,14 @@ public class NetworkRunner implements AutoCloseable {
   private final List<ProtocolManager> protocolManagers;
   private final LabelledMetric<Counter> inboundMessageCounter;
   private final LabelledMetric<Counter> inboundBytesCounter;
-  private final BiFunction<Peer, Boolean, Boolean> ethPeersShouldConnect;
+  private final BiFunction<Peer, Boolean, Optional<DisconnectReason>> ethPeersShouldConnect;
 
   private NetworkRunner(
       final P2PNetwork network,
       final Map<String, SubProtocol> subProtocols,
       final List<ProtocolManager> protocolManagers,
       final MetricsSystem metricsSystem,
-      final BiFunction<Peer, Boolean, Boolean> ethPeersShouldConnect) {
+      final BiFunction<Peer, Boolean, Optional<DisconnectReason>> ethPeersShouldConnect) {
     this.network = network;
     this.protocolManagers = protocolManagers;
     this.subProtocols = subProtocols;
@@ -205,7 +206,7 @@ public class NetworkRunner implements AutoCloseable {
     List<ProtocolManager> protocolManagers = new ArrayList<>();
     List<SubProtocol> subProtocols = new ArrayList<>();
     MetricsSystem metricsSystem;
-    private BiFunction<Peer, Boolean, Boolean> ethPeersShouldConnect;
+    private BiFunction<Peer, Boolean, Optional<DisconnectReason>> ethPeersShouldConnect;
 
     public NetworkRunner build() {
       final Map<String, SubProtocol> subProtocolMap = new HashMap<>();
@@ -252,7 +253,8 @@ public class NetworkRunner implements AutoCloseable {
       return this;
     }
 
-    public Builder ethPeersShouldConnect(final BiFunction<Peer, Boolean, Boolean> shouldConnect) {
+    public Builder ethPeersShouldConnect(
+        final BiFunction<Peer, Boolean, Optional<DisconnectReason>> shouldConnect) {
       this.ethPeersShouldConnect = shouldConnect;
       return this;
     }
