@@ -426,7 +426,7 @@ public class BlockchainTestSubCommand implements Runnable {
             final double mGps = gasUsed * 1000.0f / timeNs;
             final double timeMs = timeNs / 1_000_000.0;
             final String averageMsg =
-                iterationResults.get(test) != null && iterationResults.get(test).size() > 1
+                iterationResults.get(test) != null && isLastBlock && iterationResults.get(test).size() > 1
                     ? String.format(" [avg of %d iterations] ", iterationResults.get(test).size())
                     : "";
             parentCommand.out.printf(
