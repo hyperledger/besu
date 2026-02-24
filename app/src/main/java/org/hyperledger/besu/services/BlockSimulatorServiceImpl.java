@@ -49,7 +49,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
   private final BlockSimulator blockSimulator;
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
-  private final boolean executionMetricsEnabled;
+  private final boolean collectExecutionMetrics;
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -70,7 +70,8 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
    * @param transactionSimulator the transaction simulator
    * @param protocolSchedule the protocol schedule
    * @param blockchain the blockchain
-   * @param executionMetricsEnabled whether to collect detailed execution metrics
+   * @param slowBlockThresholdMs the slow block threshold in milliseconds; non-negative enables
+   *     execution metrics collection
    */
   public BlockSimulatorServiceImpl(
       final WorldStateArchive worldStateArchive,
@@ -78,9 +79,9 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final TransactionSimulator transactionSimulator,
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
-      final boolean executionMetricsEnabled) {
+      final long slowBlockThresholdMs) {
     this.blockchain = blockchain;
-    this.executionMetricsEnabled = executionMetricsEnabled;
+    this.collectExecutionMetrics = slowBlockThresholdMs >= 0;
     blockSimulator =
         new BlockSimulator(
             worldStateArchive,
@@ -182,7 +183,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
               .blockStateCalls(List.of(blockStateCall))
               .validation(true)
               .fakeSignature(FAKE_SIGNATURE)
-              .collectExecutionMetrics(executionMetricsEnabled)
+              .collectExecutionMetrics(collectExecutionMetrics)
               .build();
 
       List<BlockSimulationResult> results =

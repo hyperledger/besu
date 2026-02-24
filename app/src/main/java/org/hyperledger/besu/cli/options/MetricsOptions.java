@@ -60,8 +60,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
         .pushHost(getMetricsPushHost())
         .pushPort(getMetricsPushPort())
         .pushInterval(getMetricsPushInterval())
-        .prometheusJob(getMetricsPrometheusJob())
-        .executionMetricsEnabled(getExecutionMetricsEnabled());
+        .prometheusJob(getMetricsPrometheusJob());
     return builder;
   }
 
@@ -89,8 +88,6 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
     metricsOptions.metricsPushHost = config.getPushHost();
     metricsOptions.metricsPushPort = config.getPushPort();
     metricsOptions.metricsPushInterval = config.getPushInterval();
-    metricsOptions.isExecutionMetricsEnabled = config.isExecutionMetricsEnabled();
-
     return metricsOptions;
   }
 
@@ -164,12 +161,6 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
       names = {"--metrics-push-prometheus-job"},
       description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})")
   private String metricsPrometheusJob = "besu-client";
-
-  @CommandLine.Option(
-      names = {"--enable-execution-metrics"},
-      description =
-          "Enable detailed execution metrics collection for transaction processing (default: ${DEFAULT-VALUE})")
-  private Boolean isExecutionMetricsEnabled = false;
 
   @CommandLine.Option(
       names = {"--slow-block-threshold"},
@@ -282,15 +273,6 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
    */
   public String getMetricsPrometheusJob() {
     return metricsPrometheusJob;
-  }
-
-  /**
-   * Returns whether execution metrics are enabled.
-   *
-   * @return true if execution metrics are enabled, otherwise false
-   */
-  public Boolean getExecutionMetricsEnabled() {
-    return isExecutionMetricsEnabled;
   }
 
   /**

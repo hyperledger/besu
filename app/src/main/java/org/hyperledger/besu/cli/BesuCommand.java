@@ -1410,7 +1410,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getTransactionSimulator(),
             besuController.getProtocolSchedule(),
             besuController.getProtocolContext().getBlockchain(),
-            metricsConfiguration.isExecutionMetricsEnabled()));
+            metricsOptions.getSlowBlockThresholdMs()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
