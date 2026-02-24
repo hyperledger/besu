@@ -48,6 +48,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.AddressAccessPolicy;
 import org.ethereum.beacon.discovery.DiscoverySystemBuilder;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
+import org.ethereum.beacon.discovery.crypto.Signer;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -440,10 +441,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   }
 
   /**
-   * An implementation of the {@link org.ethereum.beacon.discovery.crypto.Signer} interface that
-   * uses a local {@link NodeKey} for signing and key agreement.
+   * An implementation of the {@link Signer} interface that uses a local {@link NodeKey} for signing
+   * and key agreement.
    */
-  private static class LocalNodeKeySigner implements org.ethereum.beacon.discovery.crypto.Signer {
+  private static class LocalNodeKeySigner implements Signer {
     private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     private final NodeKey nodeKey;
