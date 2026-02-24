@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
-- Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. Users of pure Clique networks must migrate to PoS, QBFT or IBFT2. [#9852](https://github.com/hyperledger/besu/pull/9852)
+- Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Syncing networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. [#9852](https://github.com/hyperledger/besu/pull/9852)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
