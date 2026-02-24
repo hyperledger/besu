@@ -91,6 +91,9 @@ testing {
             setSystemProperties(getSystemProperties())
             systemProperty 'acctests.runBesuAsProcess', 'true'
             systemProperty 'java.security.properties', "${buildDir}/resources/acceptanceTest/acceptanceTesting.security"
+            if (System.getProperty('acctests.consensusType')) {
+              systemProperty 'acctests.consensusType', System.getProperty('acctests.consensusType')
+            }
             def javaProjects = rootProject.subprojects - project(':platform')
             mustRunAfter javaProjects.test
             description = 'Runs ALL Besu acceptance tests (excluding bftsoak).'
@@ -112,15 +115,31 @@ testing {
 
         acceptanceTestBftSoak {
           testTask.configure {
+            // Clear the exclude inherited from the 'all' block
+            excludes.clear()
             include '**/bftsoak/**'
 
-            // Set to any time > 60 minutes to run the soak test for longer
-            // systemProperty 'acctests.soakTimeMins', '120'
+            dependsOn(rootProject.installDist)
+            setSystemProperties(getSystemProperties())
+            systemProperty 'acctests.runBesuAsProcess', 'true'
+            systemProperty 'java.security.properties', "${buildDir}/resources/acceptanceTest/acceptanceTesting.security"
+            if (System.getProperty('acctests.consensusType')) {
+              systemProperty 'acctests.consensusType', System.getProperty('acctests.consensusType')
+            }
             description = 'Runs BFT soak test.'
+            group = 'verification'
+
+            jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
 
             testLogging {
+              exceptionFormat = 'full'
+              showStackTraces = true
               showStandardStreams = true
+              showExceptions = true
+              showCauses = true
             }
+
+            doFirst { mkdir "${buildDir}/jvmErrorLogs" }
           }
         }
       }

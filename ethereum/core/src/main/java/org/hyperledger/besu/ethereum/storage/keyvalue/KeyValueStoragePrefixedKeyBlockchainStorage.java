@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -66,6 +67,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   private static final Bytes TOTAL_DIFFICULTY_PREFIX = Bytes.of(6);
   private static final Bytes TRANSACTION_LOCATION_PREFIX = Bytes.of(7);
   private static final Bytes BLOCK_ACCESS_LIST_PREFIX = Bytes.of(8);
+  private static final SimpleNoCopyRlpEncoder NO_COPY_RLP_ENCODER = new SimpleNoCopyRlpEncoder();
+
   final KeyValueStorage blockchainStorage;
   final VariablesStorage variablesStorage;
   final BlockHeaderFunctions blockHeaderFunctions;
@@ -361,7 +364,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       set(
           TRANSACTION_RECEIPTS_PREFIX,
           blockHash.getBytes(),
-          Bytes.wrap(
+          NO_COPY_RLP_ENCODER.encodeList(
               transactionReceipts.stream().map(SyncTransactionReceipt::getRlpBytes).toList()));
     }
 

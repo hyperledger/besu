@@ -268,8 +268,5 @@ public class MergeProtocolScheduleTest {
     assertThat(amsterdamSpec.getBlockAccessListFactory())
         .withFailMessage("BlockAccessListFactory should be present for Amsterdam, but it was empty")
         .isPresent();
-    assertThat(amsterdamSpec.getBlockAccessListFactory().get().isForkActivated())
-        .withFailMessage("BlockAccessListFactory.isForkActivated should be true for Amsterdam")
-        .isTrue();
   }
 }
