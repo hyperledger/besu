@@ -214,7 +214,8 @@ public class NettyConnectionInitializer
                 if (!future.isSuccess()) {
                   LOG.warn("Failed to close IPv6 RLPx socket cleanly", future.cause());
                 }
-                ipv6Close.complete(null); // best-effort: don't block shutdown on IPv6 close failure
+                ipv6Close.complete(
+                    null); // best-effort: doesn't block shutdown on IPv6 close failure
               });
       CompletableFuture.allOf(ipv4Close, ipv6Close)
           .whenComplete(
