@@ -706,9 +706,10 @@ public class RunnerBuilder {
             .flatMap(protocolManager -> protocolManager.getSupportedCapabilities().stream())
             .collect(Collectors.toSet());
 
-    // Only enable RLPx IPv6 dual-stack when DiscV5 is active. DiscV4 cannot advertise IPv6
-    // addresses, so binding a second TCP socket would serve no purpose and could surprise
-    // operators. When DiscV4 is eventually removed this guard can be dropped.
+    // IPv6 dual-stack support (a second UDP socket + a second TCP socket) was introduced
+    // alongside DiscV5. Besu does not implement dual-stack for DiscV4, so RLPx should only
+    // bind a second TCP socket when DiscV5 is active. This guard can be dropped once DiscV4
+    // is removed.
     final boolean rlpxDualStackEnabled =
         discoveryEnabled && networkingConfiguration.discoveryConfiguration().isDiscoveryV5Enabled();
     final RlpxConfiguration rlpxConfiguration =
