@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
+import org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -58,25 +58,17 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
 
   private final long slowBlockThresholdMs;
   private ExecutionStats executionStats;
-  private ExecutionMetricsTracer metricsTracer;
+  private EVMExecutionMetricsTracer metricsTracer;
 
   /**
-   * Creates a new SlowBlockTracer.
+   * Creates a new SlowBlockTracer. Only instantiate when slow block tracing is enabled (threshold
+   * &gt;= 0). When disabled, callers should not create a SlowBlockTracer at all.
    *
-   * @param slowBlockThresholdMs the threshold in milliseconds beyond which blocks are logged.
-   *     Negative values disable logging, zero logs all blocks.
+   * @param slowBlockThresholdMs the threshold in milliseconds beyond which blocks are logged. Zero
+   *     logs all blocks.
    */
   public SlowBlockTracer(final long slowBlockThresholdMs) {
     this.slowBlockThresholdMs = slowBlockThresholdMs;
-  }
-
-  /**
-   * Returns whether slow block tracing is enabled.
-   *
-   * @return true if threshold is non-negative
-   */
-  public boolean isEnabled() {
-    return slowBlockThresholdMs >= 0;
   }
 
   @Override
@@ -85,9 +77,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final BlockHeader blockHeader,
       final BlockBody blockBody,
       final Address miningBeneficiary) {
-    if (!isEnabled()) {
-      return;
-    }
     executionStats = new ExecutionStats();
     executionStats.startExecution();
     ExecutionStatsHolder.set(executionStats);
@@ -97,8 +86,8 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       pws.setStateMetricsCollector(executionStats);
     }
 
-    // Create ExecutionMetricsTracer for this block
-    metricsTracer = new ExecutionMetricsTracer();
+    // Create EVMExecutionMetricsTracer for this block
+    metricsTracer = new EVMExecutionMetricsTracer();
   }
 
   @Override
@@ -106,9 +95,6 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final WorldView worldView,
       final ProcessableBlockHeader processableBlockHeader,
       final Address miningBeneficiary) {
-    if (!isEnabled()) {
-      return;
-    }
     executionStats = new ExecutionStats();
     executionStats.startExecution();
     ExecutionStatsHolder.set(executionStats);
@@ -118,8 +104,8 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       pws.setStateMetricsCollector(executionStats);
     }
 
-    // Create ExecutionMetricsTracer for this block
-    metricsTracer = new ExecutionMetricsTracer();
+    // Create EVMExecutionMetricsTracer for this block
+    metricsTracer = new EVMExecutionMetricsTracer();
   }
 
   @Override
@@ -132,36 +118,29 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
       final long gasUsed,
       final Set<Address> selfDestructs,
       final long timeNs) {
-    if (!isEnabled() || executionStats == null) {
-      return;
-    }
     executionStats.incrementTransactionCount();
     executionStats.addGasUsed(gasUsed);
   }
 
   @Override
   public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
-    if (isEnabled() && executionStats != null) {
-      try {
-        // Collect EVM operation counters from ExecutionMetricsTracer
-        if (metricsTracer != null) {
-          executionStats.collectMetricsFromTracer(metricsTracer);
-        }
-        // Use block header's gas_used (post-refund) instead of accumulated pre-refund gas
-        executionStats.setGasUsed(blockHeader.getGasUsed());
-        // End execution timing
-        executionStats.endExecution();
+    try {
+      // Collect EVM operation counters from EVMExecutionMetricsTracer
+      executionStats.collectMetricsFromTracer(metricsTracer);
+      // Use block header's gas_used (post-refund) instead of accumulated pre-refund gas
+      executionStats.setGasUsed(blockHeader.getGasUsed());
+      // End execution timing
+      executionStats.endExecution();
 
-        // Log if slow
-        if (executionStats.isSlowBlock(slowBlockThresholdMs)) {
-          logSlowBlock(blockHeader, executionStats);
-        }
-      } finally {
-        // Clean up thread-local state
-        ExecutionStatsHolder.clear();
-        executionStats = null;
-        metricsTracer = null;
+      // Log if slow
+      if (executionStats.isSlowBlock(slowBlockThresholdMs)) {
+        logSlowBlock(blockHeader, executionStats);
       }
+    } finally {
+      // Clean up thread-local state
+      ExecutionStatsHolder.clear();
+      executionStats = null;
+      metricsTracer = null;
     }
   }
 
@@ -177,88 +156,68 @@ public class SlowBlockTracer implements BlockAwareOperationTracer {
   /**
    * Gets the current execution metrics tracer, if available.
    *
-   * @return the current ExecutionMetricsTracer or null if not in a block
+   * @return the current EVMExecutionMetricsTracer or null if not in a block
    */
-  public ExecutionMetricsTracer getExecutionMetricsTracer() {
+  public EVMExecutionMetricsTracer getEVMExecutionMetricsTracer() {
     return metricsTracer;
   }
 
   @Override
   public void tracePreExecution(final MessageFrame frame) {
-    if (metricsTracer != null) {
-      metricsTracer.tracePreExecution(frame);
-    }
+    metricsTracer.tracePreExecution(frame);
   }
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    if (metricsTracer != null) {
-      metricsTracer.tracePostExecution(frame, operationResult);
-    }
+    metricsTracer.tracePostExecution(frame, operationResult);
   }
 
   @Override
   public void tracePrecompileCall(
       final MessageFrame frame, final long gasRequirement, final Bytes output) {
-    if (metricsTracer != null) {
-      metricsTracer.tracePrecompileCall(frame, gasRequirement, output);
-    }
+    metricsTracer.tracePrecompileCall(frame, gasRequirement, output);
   }
 
   @Override
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    if (metricsTracer != null) {
-      metricsTracer.traceAccountCreationResult(frame, haltReason);
-    }
+    metricsTracer.traceAccountCreationResult(frame, haltReason);
   }
 
   @Override
   public void tracePrepareTransaction(final WorldView worldView, final Transaction transaction) {
-    if (metricsTracer != null) {
-      metricsTracer.tracePrepareTransaction(worldView, transaction);
-    }
+    metricsTracer.tracePrepareTransaction(worldView, transaction);
   }
 
   @Override
   public void traceStartTransaction(final WorldView worldView, final Transaction transaction) {
-    if (metricsTracer != null) {
-      metricsTracer.traceStartTransaction(worldView, transaction);
-    }
+    metricsTracer.traceStartTransaction(worldView, transaction);
   }
 
   @Override
   public void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {
-    if (metricsTracer != null) {
-      metricsTracer.traceBeforeRewardTransaction(worldView, tx, miningReward);
-    }
+    metricsTracer.traceBeforeRewardTransaction(worldView, tx, miningReward);
   }
 
   @Override
   public void traceContextEnter(final MessageFrame frame) {
-    if (metricsTracer != null) {
-      metricsTracer.traceContextEnter(frame);
-    }
+    metricsTracer.traceContextEnter(frame);
   }
 
   @Override
   public void traceContextReEnter(final MessageFrame frame) {
-    if (metricsTracer != null) {
-      metricsTracer.traceContextReEnter(frame);
-    }
+    metricsTracer.traceContextReEnter(frame);
   }
 
   @Override
   public void traceContextExit(final MessageFrame frame) {
-    if (metricsTracer != null) {
-      metricsTracer.traceContextExit(frame);
-    }
+    metricsTracer.traceContextExit(frame);
   }
 
   @Override
   public boolean isExtendedTracing() {
-    return metricsTracer != null;
+    return true;
   }
 
   /**

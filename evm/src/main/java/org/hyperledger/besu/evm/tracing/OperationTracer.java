@@ -157,14 +157,4 @@ public interface OperationTracer {
   default java.util.List<TraceFrame> getTraceFrames() {
     return java.util.Collections.emptyList();
   }
-
-  /**
-   * Get the logs collected during execution. This is primarily used for transfer logging
-   * operations.
-   *
-   * @return the list of logs, empty by default
-   */
-  default java.util.List<Log> getLogs() {
-    return java.util.Collections.emptyList();
-  }
 }

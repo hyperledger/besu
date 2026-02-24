@@ -97,7 +97,7 @@ class ExecutionStatsIntegrationTest {
   private ExecutionStats stats;
   private BlockHeader blockHeader;
   private MutableWorldState worldState;
-  private org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer evmMetricsTracer;
+  private org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer evmMetricsTracer;
 
   @BeforeEach
   void setUp() {
@@ -129,7 +129,7 @@ class ExecutionStatsIntegrationTest {
     stats = new ExecutionStats();
     stats.startExecution();
     ExecutionStatsHolder.set(stats);
-    evmMetricsTracer = new org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer();
+    evmMetricsTracer = new org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer();
 
     // Set the collector on the world state so state-layer metrics flow through
     if (worldState instanceof PathBasedWorldState pathBasedWorldState) {

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -32,17 +32,17 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer;
+import org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -139,7 +139,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
           };
 
       // Create separate background tracer for parallel execution
-      // This includes a copy of ExecutionMetricsTracer if present in the block tracer
+      // This includes a copy of EVMExecutionMetricsTracer if present in the block tracer
       final OperationTracer backgroundBlockTracer = createBackgroundTracer(blockProcessingContext);
 
       // Compose the background tracer with the mining beneficiary tracer
@@ -285,8 +285,10 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
   }
 
   /**
-   * Creates a background tracer for parallel execution by creating separate instances of tracers
-   * like ExecutionMetricsTracer that need independent state.
+   * Creates a tracer for background (parallel) transaction execution. Tracers with mutable state
+   * (e.g., EVMExecutionMetricsTracer, SlowBlockTracer) cannot be shared between threads. This
+   * method creates fresh instances for metrics tracers and skips tracers like SlowBlockTracer
+   * entirely in the background thread.
    *
    * @param blockProcessingContext the block processing context containing the original tracer
    * @return a background tracer instance, or null if no block tracer exists
@@ -302,18 +304,18 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       return null;
     }
 
-    // Check if the block tracer contains ExecutionMetricsTracer
-    if (TracerAggregator.hasTracer(blockTracer, ExecutionMetricsTracer.class)) {
-      // Create a new ExecutionMetricsTracer instance for background execution
-      final ExecutionMetricsTracer backgroundMetricsTracer = new ExecutionMetricsTracer();
+    // Check if the block tracer contains EVMExecutionMetricsTracer
+    if (TracerAggregator.hasTracer(blockTracer, EVMExecutionMetricsTracer.class)) {
+      // Create a new EVMExecutionMetricsTracer instance for background execution
+      final EVMExecutionMetricsTracer backgroundMetricsTracer = new EVMExecutionMetricsTracer();
 
-      // If the block tracer is just an ExecutionMetricsTracer, return the background copy
-      if (blockTracer instanceof ExecutionMetricsTracer) {
+      // If the block tracer is just an EVMExecutionMetricsTracer, return the background copy
+      if (blockTracer instanceof EVMExecutionMetricsTracer) {
         return backgroundMetricsTracer;
       }
 
       // If the block tracer is a TracerAggregator, create a new aggregator with
-      // the background ExecutionMetricsTracer replacing the original one
+      // the background EVMExecutionMetricsTracer replacing the original one
       if (blockTracer instanceof TracerAggregator) {
         return createBackgroundTracerAggregator(
             (TracerAggregator) blockTracer, backgroundMetricsTracer);
@@ -333,27 +335,25 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
   }
 
   /**
-   * Creates a background TracerAggregator by replacing ExecutionMetricsTracer instances with the
-   * provided background instance.
+   * Creates a background TracerAggregator by replacing EVMExecutionMetricsTracer instances with the
+   * provided background instance while preserving all other tracers.
    */
   private OperationTracer createBackgroundTracerAggregator(
       final TracerAggregator originalAggregator,
-      final ExecutionMetricsTracer backgroundMetricsTracer) {
+      final EVMExecutionMetricsTracer backgroundMetricsTracer) {
 
-    final List<OperationTracer> backgroundTracers =
-        originalAggregator.getTracers().stream()
-            .map(
-                tracer -> {
-                  if (tracer instanceof ExecutionMetricsTracer) {
-                    return backgroundMetricsTracer;
-                  } else if (tracer instanceof TracerAggregator) {
-                    return createBackgroundTracerAggregator(
-                        (TracerAggregator) tracer, backgroundMetricsTracer);
-                  } else {
-                    return tracer;
-                  }
-                })
-            .collect(Collectors.toList());
+    final List<OperationTracer> originalTracers = originalAggregator.getTracers();
+    final List<OperationTracer> backgroundTracers = new ArrayList<>(originalTracers.size());
+    for (final OperationTracer tracer : originalTracers) {
+      if (tracer instanceof EVMExecutionMetricsTracer) {
+        backgroundTracers.add(backgroundMetricsTracer);
+      } else if (tracer instanceof TracerAggregator) {
+        backgroundTracers.add(
+            createBackgroundTracerAggregator((TracerAggregator) tracer, backgroundMetricsTracer));
+      } else {
+        backgroundTracers.add(tracer);
+      }
+    }
 
     return TracerAggregator.of(backgroundTracers.toArray(new OperationTracer[0]));
   }
@@ -382,29 +382,35 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
   /**
    * Merges tracer results from parallel execution into the block's main tracer. Currently focuses
-   * on ExecutionMetricsTracer consolidation.
+   * on EVMExecutionMetricsTracer consolidation.
    */
   private void mergeTracerResults(
       final OperationTracer backgroundTracer, final OperationTracer blockTracer) {
 
-    // Find ExecutionMetricsTracer instances in both tracers
-    final Optional<ExecutionMetricsTracer> backgroundMetrics =
-        findExecutionMetricsTracer(backgroundTracer);
-    final Optional<ExecutionMetricsTracer> blockMetrics = findExecutionMetricsTracer(blockTracer);
+    // Find EVMExecutionMetricsTracer instances in both tracers
+    final Optional<EVMExecutionMetricsTracer> backgroundMetrics =
+        findEVMExecutionMetricsTracer(backgroundTracer);
+    final Optional<EVMExecutionMetricsTracer> blockMetrics =
+        findEVMExecutionMetricsTracer(blockTracer);
 
-    // Merge metrics if both tracers contain ExecutionMetricsTracer
+    // Merge metrics if both tracers contain EVMExecutionMetricsTracer
     if (backgroundMetrics.isPresent() && blockMetrics.isPresent()) {
       blockMetrics.get().mergeFrom(backgroundMetrics.get());
     }
   }
 
-  /** Helper method to find ExecutionMetricsTracer in any type of OperationTracer. */
-  private Optional<ExecutionMetricsTracer> findExecutionMetricsTracer(
+  /**
+   * Extracts an EVMExecutionMetricsTracer from a tracer, unwrapping TracerAggregator if needed.
+   *
+   * @param tracer the tracer to search within
+   * @return the EVMExecutionMetricsTracer if found
+   */
+  private Optional<EVMExecutionMetricsTracer> findEVMExecutionMetricsTracer(
       final OperationTracer tracer) {
-    if (tracer instanceof ExecutionMetricsTracer) {
-      return Optional.of((ExecutionMetricsTracer) tracer);
+    if (tracer instanceof EVMExecutionMetricsTracer) {
+      return Optional.of((EVMExecutionMetricsTracer) tracer);
     } else if (tracer instanceof TracerAggregator) {
-      return ((TracerAggregator) tracer).findTracer(ExecutionMetricsTracer.class);
+      return ((TracerAggregator) tracer).findTracer(EVMExecutionMetricsTracer.class);
     }
     return Optional.empty();
   }

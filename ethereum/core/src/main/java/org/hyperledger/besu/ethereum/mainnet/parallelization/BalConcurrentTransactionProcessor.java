@@ -103,7 +103,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                       transactionLocation));
 
       // Use the operation tracer from the block processing context if available
-      // (which may contain ExecutionMetricsTracer), otherwise use NO_TRACING
+      // (which may contain EVMExecutionMetricsTracer), otherwise use NO_TRACING
       final OperationTracer operationTracer =
           blockProcessingContext != null
               ? blockProcessingContext.getOperationTracer()

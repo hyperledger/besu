@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -41,7 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>The metrics collected by this tracer can be aggregated across parallel transaction executions
  * and provide detailed insights into block execution performance.
  */
-public class ExecutionMetricsTracer implements OperationTracer {
+public class EVMExecutionMetricsTracer implements OperationTracer {
 
   /**
    * Container for EVM operation metrics.
@@ -121,8 +121,8 @@ public class ExecutionMetricsTracer implements OperationTracer {
 
   private final ExecutionMetrics metrics = new ExecutionMetrics();
 
-  /** Create a new ExecutionMetricsTracer that tracks all available metrics. */
-  public ExecutionMetricsTracer() {
+  /** Create a new EVMExecutionMetricsTracer that tracks all available metrics. */
+  public EVMExecutionMetricsTracer() {
     // This tracer tracks all available execution metrics when instantiated
   }
 
@@ -200,9 +200,9 @@ public class ExecutionMetricsTracer implements OperationTracer {
    * parallel execution consolidation to combine metrics from background execution with the main
    * block tracer.
    *
-   * @param other the ExecutionMetricsTracer to merge metrics from
+   * @param other the EVMExecutionMetricsTracer to merge metrics from
    */
-  public void mergeFrom(final ExecutionMetricsTracer other) {
+  public void mergeFrom(final EVMExecutionMetricsTracer other) {
     this.metrics.merge(other.metrics);
   }
 }

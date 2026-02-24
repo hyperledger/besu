@@ -40,19 +40,19 @@ import org.apache.tuweni.bytes.Bytes;
  * specification.
  *
  * <p>This tracer collects detailed statistics about block execution including timing, state access
- * patterns, cache performance, and EVM operation counts. The collected metrics are made available
- * via thread-local storage for other components to access.
+ * patterns, cache performance, and EVM operation counts. The collected metrics are stored in an
+ * {@link ExecutionStats} instance and made available via {@link ExecutionStatsHolder}.
  *
  * <p>This tracer is designed to be composed with other tracers using TracerAggregator.
  */
 public class ExecutionMetricsTracer implements BlockAwareOperationTracer, OperationTracer {
 
   private ExecutionStats executionStats;
-  private final org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer evmMetricsTracer;
+  private final org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer evmMetricsTracer;
 
   /** Creates a new ExecutionMetricsTracer. */
   public ExecutionMetricsTracer() {
-    this.evmMetricsTracer = new org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer();
+    this.evmMetricsTracer = new org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer();
   }
 
   @Override
@@ -158,7 +158,7 @@ public class ExecutionMetricsTracer implements BlockAwareOperationTracer, Operat
    * @param parallelTracer the parallel transaction's ExecutionMetricsTracer to merge from
    */
   public void mergeFrom(
-      final org.hyperledger.besu.evm.tracing.ExecutionMetricsTracer parallelTracer) {
+      final org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer parallelTracer) {
     if (parallelTracer != null && evmMetricsTracer != null) {
       evmMetricsTracer.mergeFrom(parallelTracer);
     }

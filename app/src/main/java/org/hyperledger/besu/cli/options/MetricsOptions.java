@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -174,9 +174,7 @@ public class MetricsOptions implements CLIOptions<MetricsConfiguration.Builder> 
   @CommandLine.Option(
       names = {"--slow-block-threshold"},
       paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-      description =
-          "Threshold in milliseconds for logging slow blocks. Negative values disable logging, "
-              + "zero logs all blocks (default: ${DEFAULT-VALUE})")
+      description = "Threshold in milliseconds for logging slow blocks (default: ${DEFAULT-VALUE})")
   private Long slowBlockThresholdMs = 500L;
 
   /**
