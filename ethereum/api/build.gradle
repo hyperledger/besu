@@ -132,7 +132,9 @@ def dataPath = file("$buildDir/generated/data")
 def blocksBin = file("$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin")
 
 tasks.register('importTestBlocks', JavaExec) {
-  onlyIf { !blocksBin.exists() }
+  inputs.dir(srcFiles)
+  inputs.files(configurations.testResourceGeneration)
+  outputs.dir(dataPath)
   mainClass = 'org.hyperledger.besu.Besu'
   classpath = configurations.testResourceGeneration
   args = [
@@ -147,12 +149,14 @@ tasks.register('importTestBlocks', JavaExec) {
   ]
   dependsOn processTestResources
   doFirst {
+    delete dataPath
     dataPath.mkdirs()
   }
 }
 
 tasks.register('exportTestBlocks', JavaExec) {
-  onlyIf { !blocksBin.exists() }
+  inputs.dir(dataPath)
+  outputs.file(blocksBin)
   mainClass = 'org.hyperledger.besu.Besu'
   classpath = configurations.testResourceGeneration
   args = [
@@ -169,8 +173,6 @@ tasks.register('exportTestBlocks', JavaExec) {
 }
 
 tasks.register('generateTestBlockchain') {
-  inputs.dir(srcFiles)
-  outputs.file(blocksBin)
   dependsOn exportTestBlocks
 }
 test.dependsOn(generateTestBlockchain)
