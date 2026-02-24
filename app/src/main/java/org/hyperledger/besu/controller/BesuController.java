@@ -363,9 +363,8 @@ public class BesuController implements java.io.Closeable {
         if (configOptions.getTerminalTotalDifficulty().isEmpty()) {
           throw new IllegalStateException(
               """
-                 Clique consensus has been removed from Besu.
-                 Existing Clique networks cannot be started.
-                 Please migrate to PoS, QBFT or IBFT2 for Proof of Authority consensus.
+                 Clique Block Production (mining) is no longer supported.
+                 It is still possible to sync existing Clique networks if they are migrated to PoS.
                  """);
         }
         builder = new CliqueBesuControllerBuilder();
