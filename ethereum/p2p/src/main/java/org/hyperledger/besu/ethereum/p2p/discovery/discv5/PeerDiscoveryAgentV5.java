@@ -166,6 +166,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             // the only auto-discovery mechanism. A future improvement could accept
             // peer-suggested IPv6 addresses when --p2p-host-ipv6 is not explicitly configured,
             // since IPv6 has no NAT and the peer-observed address is the real routable address.
+            // See: https://github.com/hyperledger/besu/issues/9874
             .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
             // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based on
             // peer permissions is not yet integrated; all addresses are currently allowed.
