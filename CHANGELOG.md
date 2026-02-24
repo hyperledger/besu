@@ -59,14 +59,9 @@
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 - Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
 - Allow nonce to be max value when `isAllowFutureNonce` is true [#9759](https://github.com/hyperledger/besu/pull/9759)
-
-<<<<<<< bft-time-based-forks
 - BFT forks that change block period on time-based forks don't take effect [9681](https://github.com/hyperledger/besu/issues/9681)
 
-## 26.1.0-RC1
-=======
 ## 26.1.0
->>>>>>> main
 
 ### Breaking Changes
 - Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
