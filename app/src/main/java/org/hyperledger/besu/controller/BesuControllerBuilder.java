@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.chainimport.BlockHeadersCachePreload;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -60,7 +59,6 @@ import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
-import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
@@ -762,7 +760,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             metricsSystem);
     final EthContext ethContext =
         new EthContext(ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor);
-    final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final boolean fullSyncDisabled = syncConfig.getSyncMode() != SyncMode.FULL;
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     final ChainPruningStrategy pruningMode = chainPrunerConfiguration.pruningMode();
@@ -855,8 +853,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
 
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
-    if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP) {
       synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
       ethPeers.snapServerPeersNeeded(true);
     } else {
@@ -1399,18 +1396,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               requiredBlock.getValue()));
     }
 
-    final CheckpointConfigOptions checkpointConfigOptions =
-        genesisConfigOptions.getCheckpointOptions();
-    if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT && checkpointConfigOptions.isValid()) {
-      validators.add(
-          new CheckpointBlocksPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              checkpointConfigOptions.getNumber().orElseThrow(),
-              checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
-    }
     return validators;
   }
 
