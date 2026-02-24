@@ -12,9 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.worldstate;
-
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+package org.hyperledger.besu.plugin.services.storage;
 
 import java.util.Collection;
 
