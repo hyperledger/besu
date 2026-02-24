@@ -66,12 +66,9 @@ public class ForksSchedule<C> {
    */
   public ForkSpec<C> getFork(final long blockNumber, final long blockTimestamp) {
     for (final ForkSpec<C> f : forks) {
-      if (f.getForkType() == ScheduledProtocolSpec.ScheduleType.BLOCK
-          && blockNumber >= f.getBlock()) {
-        return f;
-      }
-      if (f.getForkType() == ScheduledProtocolSpec.ScheduleType.TIME
-          && blockTimestamp >= f.getBlock()) {
+      final long blockValue =
+          f.getForkType() == ScheduledProtocolSpec.ScheduleType.TIME ? blockTimestamp : blockNumber;
+      if (blockValue >= f.getBlock()) {
         return f;
       }
     }

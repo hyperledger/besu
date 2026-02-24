@@ -87,17 +87,12 @@ public class BlockTimer {
       final ConsensusRoundIdentifier round, final Supplier<Long> headerTimestamp) {
     cancelTimer();
 
+    final BftConfigOptions currentForkOptions =
+        forksSchedule.getFork(round.getSequenceNumber(), headerTimestamp.get()).getValue();
+
     final long expiryTime;
-    int currentBlockPeriodSeconds =
-        forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get())
-            .getValue()
-            .getBlockPeriodSeconds();
-    final int nextBlockPeriodSeconds =
-        forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get() + currentBlockPeriodSeconds)
-            .getValue()
-            .getBlockPeriodSeconds();
+    int currentBlockPeriodSeconds = currentForkOptions.getBlockPeriodSeconds();
+    final int nextBlockPeriodSeconds = currentForkOptions.getBlockPeriodSeconds();
 
     // If the block period seconds change between the current block and the next one we need to
     // produce this block on the longer of the two values,
@@ -107,11 +102,7 @@ public class BlockTimer {
     }
 
     // Experimental option for test scenarios only. Not for production use.
-    final long blockPeriodMilliseconds =
-        forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get())
-            .getValue()
-            .getBlockPeriodMilliseconds();
+    final long blockPeriodMilliseconds = currentForkOptions.getBlockPeriodMilliseconds();
     if (blockPeriodMilliseconds > 0) {
       // Experimental mode for setting < 1 second block periods e.g. for CI/CD pipelines
       // running tests against Besu
@@ -125,11 +116,7 @@ public class BlockTimer {
       expiryTime = headerTimestamp.get() * 1_000 + minimumTimeBetweenBlocksMillis;
     }
 
-    final int emptyBlockPeriodSeconds =
-        forksSchedule
-            .getFork(round.getSequenceNumber(), headerTimestamp.get())
-            .getValue()
-            .getEmptyBlockPeriodSeconds();
+    final int emptyBlockPeriodSeconds = currentForkOptions.getEmptyBlockPeriodSeconds();
     setBlockTimes(currentBlockPeriodSeconds, emptyBlockPeriodSeconds);
 
     startTimer(round, expiryTime);
