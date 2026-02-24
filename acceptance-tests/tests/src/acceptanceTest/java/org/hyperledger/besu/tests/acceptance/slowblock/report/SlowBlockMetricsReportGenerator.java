@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,8 +15,8 @@
 package org.hyperledger.besu.tests.acceptance.slowblock.report;
 
 import org.hyperledger.besu.tests.acceptance.slowblock.model.ExpectedMetrics;
+import org.hyperledger.besu.tests.acceptance.slowblock.model.MetricsTestScenario;
 import org.hyperledger.besu.tests.acceptance.slowblock.model.TaggedBlock;
-import org.hyperledger.besu.tests.acceptance.slowblock.model.TransactionType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -145,7 +145,7 @@ public class SlowBlockMetricsReportGenerator {
             LocalDateTime.now(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
         .append("\n");
-    report.append("**Client:** Hyperledger Besu\n");
+    report.append("**Client:** Besu\n");
     report.append("**Consensus:** ").append(nodeType).append("\n\n");
   }
 
@@ -153,9 +153,9 @@ public class SlowBlockMetricsReportGenerator {
     report.append("## Executive Summary\n\n");
 
     // Count unique transaction types
-    Set<TransactionType> txTypes = new HashSet<>();
+    Set<MetricsTestScenario> txTypes = new HashSet<>();
     for (TaggedBlock block : taggedBlocks) {
-      txTypes.add(block.getTransactionType());
+      txTypes.add(block.getMetricsTestScenario());
     }
 
     // Count validations
@@ -226,7 +226,7 @@ public class SlowBlockMetricsReportGenerator {
     report.append("### Test Environment\n\n");
     report.append("| Setting | Value |\n");
     report.append("|---------|-------|\n");
-    report.append("| Client | Hyperledger Besu |\n");
+    report.append("| Client | Besu |\n");
     report.append("| Consensus | ").append(nodeType).append(" |\n");
     report.append("| Slow Block Threshold | 0ms (capture ALL blocks) |\n");
     report.append("| Configuration | `--slow-block-threshold=0` |\n\n");
@@ -234,16 +234,16 @@ public class SlowBlockMetricsReportGenerator {
     report.append("### Transaction Types Executed\n\n");
 
     // Count transactions by type
-    Map<TransactionType, Integer> typeCounts = new HashMap<>();
+    Map<MetricsTestScenario, Integer> typeCounts = new HashMap<>();
     for (TaggedBlock block : taggedBlocks) {
-      TransactionType type = block.getTransactionType();
+      MetricsTestScenario type = block.getMetricsTestScenario();
       typeCounts.put(type, typeCounts.getOrDefault(type, 0) + 1);
     }
 
     report.append("| # | Transaction Type | Description | Blocks |\n");
     report.append("|---|------------------|-------------|--------|\n");
     int i = 1;
-    for (TransactionType type : TransactionType.values()) {
+    for (MetricsTestScenario type : MetricsTestScenario.values()) {
       if (typeCounts.containsKey(type)) {
         report
             .append("| ")
@@ -495,12 +495,13 @@ public class SlowBlockMetricsReportGenerator {
     // Show only significant blocks (with transactions)
     int runNumber = 1;
     for (TaggedBlock block : taggedBlocks) {
-      if (block.getTxCount() > 0 || block.getTransactionType() != TransactionType.EMPTY_BLOCK) {
+      if (block.getTxCount() > 0
+          || block.getMetricsTestScenario() != MetricsTestScenario.EMPTY_BLOCK) {
         report
             .append("| ")
             .append(runNumber++)
             .append(" | ")
-            .append(block.getTransactionType().getDisplayName())
+            .append(block.getMetricsTestScenario().getDisplayName())
             .append(" | #")
             .append(block.getBlockNumber())
             .append(" | ")
@@ -519,7 +520,7 @@ public class SlowBlockMetricsReportGenerator {
     for (TaggedBlock block : representativeBlocks) {
       report
           .append("**")
-          .append(block.getTransactionType().getDisplayName())
+          .append(block.getMetricsTestScenario().getDisplayName())
           .append(" (Block #")
           .append(block.getBlockNumber())
           .append("):**\n");
@@ -532,11 +533,11 @@ public class SlowBlockMetricsReportGenerator {
   private List<TaggedBlock> getRepresentativeBlocks() {
     // Select one block of each transaction type for display
     List<TaggedBlock> representatives = new ArrayList<>();
-    Set<TransactionType> seenTypes = new HashSet<>();
+    Set<MetricsTestScenario> seenTypes = new HashSet<>();
 
     for (TaggedBlock block : taggedBlocks) {
-      TransactionType type = block.getTransactionType();
-      if (!seenTypes.contains(type) && type != TransactionType.EMPTY_BLOCK) {
+      MetricsTestScenario type = block.getMetricsTestScenario();
+      if (!seenTypes.contains(type) && type != MetricsTestScenario.EMPTY_BLOCK) {
         representatives.add(block);
         seenTypes.add(type);
       }
@@ -544,7 +545,7 @@ public class SlowBlockMetricsReportGenerator {
 
     // Also include one empty block for completeness
     for (TaggedBlock block : taggedBlocks) {
-      if (block.getTransactionType() == TransactionType.EMPTY_BLOCK) {
+      if (block.getMetricsTestScenario() == MetricsTestScenario.EMPTY_BLOCK) {
         representatives.add(block);
         break;
       }
@@ -637,7 +638,7 @@ public class SlowBlockMetricsReportGenerator {
           .append("<summary>Block #")
           .append(block.getBlockNumber())
           .append(": ")
-          .append(block.getTransactionType().getDisplayName())
+          .append(block.getMetricsTestScenario().getDisplayName())
           .append("</summary>\n\n");
 
       report.append("**Key-Value Format:**\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,10 +15,10 @@
 package org.hyperledger.besu.tests.acceptance.slowblock.model;
 
 /**
- * Enum representing the different transaction types tested for slow block metrics validation. Each
- * type targets specific metrics that should be triggered during block execution.
+ * Enum representing the different test scenarios for slow block metrics validation. Each scenario
+ * targets specific metrics that should be triggered during block execution.
  */
-public enum TransactionType {
+public enum MetricsTestScenario {
   /** Genesis block - no transactions, baseline metrics */
   GENESIS("Genesis Block", "Initial block with no transactions"),
 
@@ -52,7 +52,7 @@ public enum TransactionType {
   private final String displayName;
   private final String description;
 
-  TransactionType(final String displayName, final String description) {
+  MetricsTestScenario(final String displayName, final String description) {
     this.displayName = displayName;
     this.description = description;
   }

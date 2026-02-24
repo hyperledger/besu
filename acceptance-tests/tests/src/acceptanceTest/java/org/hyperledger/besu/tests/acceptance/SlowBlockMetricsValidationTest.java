@@ -21,8 +21,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 import org.hyperledger.besu.tests.acceptance.slowblock.model.ExpectedMetrics;
+import org.hyperledger.besu.tests.acceptance.slowblock.model.MetricsTestScenario;
 import org.hyperledger.besu.tests.acceptance.slowblock.model.TaggedBlock;
-import org.hyperledger.besu.tests.acceptance.slowblock.model.TransactionType;
 import org.hyperledger.besu.tests.acceptance.slowblock.report.SlowBlockMetricsReportGenerator;
 import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
 
@@ -146,7 +146,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
         .isEmpty();
 
     // Tag blocks with their transaction types and generate comprehensive report
-    List<TaggedBlock> taggedBlocks = tagBlocksWithTransactionTypes(slowBlocks);
+    List<TaggedBlock> taggedBlocks = tagBlocksWithMetricsTestScenarios(slowBlocks);
     generateComprehensiveReport(taggedBlocks);
 
     // Also print legacy console report for quick verification
@@ -170,7 +170,7 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
    *   <li>ETH transfer (transactions without contract code interaction)
    * </ol>
    */
-  private List<TaggedBlock> tagBlocksWithTransactionTypes(final List<JsonNode> slowBlocks) {
+  private List<TaggedBlock> tagBlocksWithMetricsTestScenarios(final List<JsonNode> slowBlocks) {
     List<TaggedBlock> taggedBlocks = new ArrayList<>();
 
     for (int i = 0; i < slowBlocks.size(); i++) {
@@ -185,34 +185,34 @@ public class SlowBlockMetricsValidationTest extends AcceptanceTestBase {
       long calls = block.at("/evm/calls").asLong();
 
       // Determine transaction type based on block metrics
-      TransactionType txType;
+      MetricsTestScenario txType;
       if (blockNumber == 0) {
         // Genesis block
-        txType = TransactionType.GENESIS;
+        txType = MetricsTestScenario.GENESIS;
       } else if (txCount == 0) {
         // Empty consensus block (no user transactions)
-        txType = TransactionType.EMPTY_BLOCK;
+        txType = MetricsTestScenario.EMPTY_BLOCK;
       } else if (creates > 0 || codeWrites > 0) {
         // Contract deployment: CREATE/CREATE2 opcode executed or code written to state
-        txType = TransactionType.CONTRACT_DEPLOY;
+        txType = MetricsTestScenario.CONTRACT_DEPLOY;
       } else if (sload > 0 && sstore > 0 && codeReads > 0) {
         // Storage read-modify-write: contract reads then writes storage
-        txType = TransactionType.STORAGE_WRITE;
+        txType = MetricsTestScenario.STORAGE_WRITE;
       } else if (sstore > 0 && codeReads > 0) {
         // Storage write only: contract writes to storage slot
-        txType = TransactionType.STORAGE_WRITE;
+        txType = MetricsTestScenario.STORAGE_WRITE;
       } else if (sload > 0 && sstore == 0 && codeReads > 0) {
         // Storage read only: contract reads storage without writing
-        txType = TransactionType.STORAGE_READ;
+        txType = MetricsTestScenario.STORAGE_READ;
       } else if (calls > 0 && codeReads > 0) {
         // Contract call without storage access
-        txType = TransactionType.CONTRACT_CALL;
+        txType = MetricsTestScenario.CONTRACT_CALL;
       } else if (txCount > 0) {
         // Simple ETH transfer: has transactions but no contract code interaction
-        txType = TransactionType.ETH_TRANSFER;
+        txType = MetricsTestScenario.ETH_TRANSFER;
       } else {
         // Fallback for unidentified patterns
-        txType = TransactionType.EMPTY_BLOCK;
+        txType = MetricsTestScenario.EMPTY_BLOCK;
       }
 
       taggedBlocks.add(new TaggedBlock(block, txType));

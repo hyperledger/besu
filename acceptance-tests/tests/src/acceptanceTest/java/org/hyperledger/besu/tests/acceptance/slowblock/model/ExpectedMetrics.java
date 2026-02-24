@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,8 +22,8 @@ import java.util.Map;
 import com.google.common.collect.ImmutableList;
 
 /**
- * Defines expected metric values for each transaction type. Used to validate that slow block
- * metrics are correctly populated for different operation types.
+ * Defines expected metric values for each test scenario. Used to validate that slow block metrics
+ * are correctly populated for different operation types.
  *
  * <p>Each expectation can be:
  *
@@ -131,11 +131,11 @@ public class ExpectedMetrics {
     METRIC_CATEGORIES.put("evm/creates", "EVM");
   }
 
-  private static final EnumMap<TransactionType, Map<String, String>> EXPECTATIONS =
-      new EnumMap<>(TransactionType.class);
+  private static final EnumMap<MetricsTestScenario, Map<String, String>> EXPECTATIONS =
+      new EnumMap<>(MetricsTestScenario.class);
 
   static {
-    // Initialize base expectations that apply to all transaction types
+    // Initialize base expectations that apply to all test scenarios
     Map<String, String> baseExpectations = createBaseExpectations();
 
     // Genesis block - minimal activity
@@ -143,13 +143,13 @@ public class ExpectedMetrics {
     genesis.put("block/number", "= 0");
     genesis.put("block/tx_count", "= 0");
     genesis.put("block/gas_used", "= 0");
-    EXPECTATIONS.put(TransactionType.GENESIS, genesis);
+    EXPECTATIONS.put(MetricsTestScenario.GENESIS, genesis);
 
     // Empty block - consensus only, no user transactions
     Map<String, String> emptyBlock = new HashMap<>(baseExpectations);
     emptyBlock.put("block/tx_count", "= 0");
     emptyBlock.put("block/gas_used", "= 0");
-    EXPECTATIONS.put(TransactionType.EMPTY_BLOCK, emptyBlock);
+    EXPECTATIONS.put(MetricsTestScenario.EMPTY_BLOCK, emptyBlock);
 
     // ETH Transfer - account reads/writes only
     Map<String, String> ethTransfer = new HashMap<>(baseExpectations);
@@ -167,7 +167,7 @@ public class ExpectedMetrics {
     ethTransfer.put("evm/sstore", "= 0");
     ethTransfer.put("evm/calls", "= 0");
     ethTransfer.put("evm/creates", "= 0");
-    EXPECTATIONS.put(TransactionType.ETH_TRANSFER, ethTransfer);
+    EXPECTATIONS.put(MetricsTestScenario.ETH_TRANSFER, ethTransfer);
 
     // Contract Deploy - code write + create
     Map<String, String> contractDeploy = new HashMap<>(baseExpectations);
@@ -179,7 +179,7 @@ public class ExpectedMetrics {
     contractDeploy.put("state_writes/code_bytes", ">= 1");
     contractDeploy.put("evm/creates", ">= 1");
     contractDeploy.put("unique/contracts", ">= 1");
-    EXPECTATIONS.put(TransactionType.CONTRACT_DEPLOY, contractDeploy);
+    EXPECTATIONS.put(MetricsTestScenario.CONTRACT_DEPLOY, contractDeploy);
 
     // Storage Write (SSTORE) - storage slot write
     Map<String, String> storageWrite = new HashMap<>(baseExpectations);
@@ -190,7 +190,7 @@ public class ExpectedMetrics {
     storageWrite.put("state_writes/storage_slots", ">= 1");
     storageWrite.put("evm/sstore", ">= 1");
     storageWrite.put("unique/storage_slots", ">= 1");
-    EXPECTATIONS.put(TransactionType.STORAGE_WRITE, storageWrite);
+    EXPECTATIONS.put(MetricsTestScenario.STORAGE_WRITE, storageWrite);
 
     // Storage Read (SLOAD) - storage slot read
     Map<String, String> storageRead = new HashMap<>(baseExpectations);
@@ -200,7 +200,7 @@ public class ExpectedMetrics {
     storageRead.put("state_reads/code", ">= 1");
     storageRead.put("state_reads/storage_slots", ">= 1");
     storageRead.put("evm/sload", ">= 1");
-    EXPECTATIONS.put(TransactionType.STORAGE_READ, storageRead);
+    EXPECTATIONS.put(MetricsTestScenario.STORAGE_READ, storageRead);
 
     // Contract Call (CALL opcode)
     Map<String, String> contractCall = new HashMap<>(baseExpectations);
@@ -209,7 +209,7 @@ public class ExpectedMetrics {
     contractCall.put("state_reads/accounts", ">= 3"); // sender + caller + callee
     contractCall.put("state_reads/code", ">= 2"); // caller + callee code
     contractCall.put("evm/calls", ">= 1");
-    EXPECTATIONS.put(TransactionType.CONTRACT_CALL, contractCall);
+    EXPECTATIONS.put(MetricsTestScenario.CONTRACT_CALL, contractCall);
 
     // Code Read (EXTCODESIZE)
     Map<String, String> codeRead = new HashMap<>(baseExpectations);
@@ -217,19 +217,19 @@ public class ExpectedMetrics {
     codeRead.put("block/gas_used", ">= 21000");
     codeRead.put("state_reads/accounts", ">= 2");
     codeRead.put("state_reads/code", ">= 1");
-    EXPECTATIONS.put(TransactionType.CODE_READ, codeRead);
+    EXPECTATIONS.put(MetricsTestScenario.CODE_READ, codeRead);
 
     // EIP-7702 Delegation Set
     Map<String, String> eip7702Set = new HashMap<>(baseExpectations);
     eip7702Set.put("block/tx_count", ">= 1");
     eip7702Set.put("state_writes/eip7702_delegations_set", ">= 1");
-    EXPECTATIONS.put(TransactionType.EIP7702_DELEGATION_SET, eip7702Set);
+    EXPECTATIONS.put(MetricsTestScenario.EIP7702_DELEGATION_SET, eip7702Set);
 
     // EIP-7702 Delegation Clear
     Map<String, String> eip7702Clear = new HashMap<>(baseExpectations);
     eip7702Clear.put("block/tx_count", ">= 1");
     eip7702Clear.put("state_writes/eip7702_delegations_cleared", ">= 1");
-    EXPECTATIONS.put(TransactionType.EIP7702_DELEGATION_CLEAR, eip7702Clear);
+    EXPECTATIONS.put(MetricsTestScenario.EIP7702_DELEGATION_CLEAR, eip7702Clear);
   }
 
   private static Map<String, String> createBaseExpectations() {
@@ -295,12 +295,12 @@ public class ExpectedMetrics {
   }
 
   /**
-   * Get the expected metric values for a given transaction type.
+   * Get the expected metric values for a given test scenario.
    *
-   * @param type the transaction type
+   * @param type the test scenario
    * @return map of metric path to expected value expression
    */
-  public static Map<String, String> getExpectations(final TransactionType type) {
+  public static Map<String, String> getExpectations(final MetricsTestScenario type) {
     return EXPECTATIONS.getOrDefault(type, createBaseExpectations());
   }
 

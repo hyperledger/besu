@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,24 +22,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Splitter;
 
 /**
- * Wraps a slow block JSON with its transaction type and validation results. This class is used to
+ * Wraps a slow block JSON with its test scenario and validation results. This class is used to
  * associate each captured slow block log with its expected metrics and track validation outcomes.
  */
 public class TaggedBlock {
 
   private final JsonNode jsonNode;
-  private final TransactionType transactionType;
+  private final MetricsTestScenario scenario;
   private final Map<String, ValidationResult> validationResults;
 
   /**
    * Creates a new TaggedBlock.
    *
    * @param jsonNode the parsed slow block JSON
-   * @param transactionType the type of transaction in this block
+   * @param scenario the test scenario for this block
    */
-  public TaggedBlock(final JsonNode jsonNode, final TransactionType transactionType) {
+  public TaggedBlock(final JsonNode jsonNode, final MetricsTestScenario scenario) {
     this.jsonNode = jsonNode;
-    this.transactionType = transactionType;
+    this.scenario = scenario;
     this.validationResults = new HashMap<>();
   }
 
@@ -90,13 +90,13 @@ public class TaggedBlock {
   }
 
   /**
-   * Validate all metrics against expected values for this block's transaction type.
+   * Validate all metrics against expected values for this block's test scenario.
    *
    * @return true if all validations passed
    */
   public boolean validate() {
     validationResults.clear();
-    Map<String, String> expectations = ExpectedMetrics.getExpectations(transactionType);
+    Map<String, String> expectations = ExpectedMetrics.getExpectations(scenario);
 
     boolean allPassed = true;
     for (String metricPath : ExpectedMetrics.ALL_METRIC_PATHS) {
@@ -174,8 +174,8 @@ public class TaggedBlock {
     return jsonNode;
   }
 
-  public TransactionType getTransactionType() {
-    return transactionType;
+  public MetricsTestScenario getMetricsTestScenario() {
+    return scenario;
   }
 
   public Map<String, ValidationResult> getValidationResults() {
