@@ -73,8 +73,7 @@ public final class AccountRangeMessageTest {
     // In slim encoding, these are replaced with 0x80 (RLP empty bytes).
     assertThat(wireBytes.toHexString())
         .doesNotContain(Hash.EMPTY_TRIE_HASH.toHexString().substring(2));
-    assertThat(wireBytes.toHexString())
-        .doesNotContain(Hash.EMPTY.toHexString().substring(2));
+    assertThat(wireBytes.toHexString()).doesNotContain(Hash.EMPTY.toHexString().substring(2));
   }
 
   @Test
