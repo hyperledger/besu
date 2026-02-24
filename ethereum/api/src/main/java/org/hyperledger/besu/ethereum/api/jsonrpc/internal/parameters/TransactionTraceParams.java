@@ -97,20 +97,29 @@ public interface TransactionTraceParams {
    * @return TraceOptions object containing the tracer type and configuration.
    */
   default TraceOptions traceOptions() {
-    var defaultTracerConfig =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceStorage(!disableStorage())
-            .traceMemory(!disableMemory())
-            .traceStack(!disableStack())
-            .traceOpcodes(opcodes())
-            .build();
-
     // Convert string tracer to TracerType enum, handling null case
     TracerType tracerType =
         tracer() != null
             ? TracerType.fromString(tracer())
             : TracerType.OPCODE_TRACER; // Default to opcode tracer when null
 
-    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig(), stateOverrides());
+    var builder = OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT);
+    // Only override defaults when the user explicitly provided a value
+    if (disableStorageNullable() != null) {
+      builder.traceStorage(!disableStorage());
+    }
+    if (disableMemoryNullable() != null) {
+      builder.traceMemory(!disableMemory());
+    } else if (tracerType != TracerType.OPCODE_TRACER) {
+      // Non-opcode tracers (e.g. callTracer) need memory capture enabled for internal
+      // operations such as extracting CREATE init code, even when disableMemory is not set
+      builder.traceMemory(true);
+    }
+    if (disableStackNullable() != null) {
+      builder.traceStack(!disableStack());
+    }
+    var opCodeTracerConfig = builder.traceOpcodes(opcodes()).build();
+
+    return new TraceOptions(tracerType, opCodeTracerConfig, tracerConfig(), stateOverrides());
   }
 }
