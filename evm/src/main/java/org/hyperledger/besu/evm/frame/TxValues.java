@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -48,6 +49,8 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param creates The set of addresses that creates
  * @param selfDestructs The set of addresses that self-destructs
  * @param gasRefunds The gas refunds
+ * @param stateGasUsed The cumulative state gas used (EIP-8037), not undone on revert
+ * @param stateGasReservoir The EIP-8037 state gas reservoir (overflow from regular gas budget)
  */
 public record TxValues(
     BlockHashLookup blockHashLookup,
@@ -64,7 +67,9 @@ public record TxValues(
     UndoTable<Address, Bytes32, Bytes32> transientStorage,
     UndoSet<Address> creates,
     UndoSet<Address> selfDestructs,
-    UndoScalar<Long> gasRefunds) {
+    UndoScalar<Long> gasRefunds,
+    AtomicLong stateGasUsed,
+    AtomicLong stateGasReservoir) {
 
   /**
    * For all data stored in this record, undo the changes since the mark.

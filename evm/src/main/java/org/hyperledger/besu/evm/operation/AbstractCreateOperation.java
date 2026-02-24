@@ -112,6 +112,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     account.incrementNonce();
     frame.decrementRemainingGas(cost);
+
+    // EIP-8037: Charge state gas for CREATE operation (new account creation: 112 * cpsb)
+    if (!gasCalculator().stateGasCostCalculator().chargeCreateStateGas(frame)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     spawnChildMessage(frame, code);
     frame.incrementRemainingGas(cost);
 

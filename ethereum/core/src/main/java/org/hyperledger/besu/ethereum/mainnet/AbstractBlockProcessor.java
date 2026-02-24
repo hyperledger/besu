@@ -217,6 +217,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
     long cumulativeBlockGasUsed = 0;
     long cumulativeReceiptGasUsed = 0;
+    long cumulativeStateGasUsed = 0;
     long currentBlobGasUsed = 0;
 
     var blockHeader = block.getHeader();
@@ -349,6 +350,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         cumulativeReceiptGasUsed +=
             BlockGasAccountingStrategy.calculateReceiptGas(
                 transaction, transactionProcessingResult);
+        // EIP-8037: Accumulate state gas used
+        cumulativeStateGasUsed += transactionProcessingResult.getStateGasUsed();
         final var optionalVersionedHashes = transaction.getVersionedHashes();
         if (optionalVersionedHashes.isPresent()) {
           final var versionedHashes = optionalVersionedHashes.get();
@@ -538,14 +541,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), e);
       }
 
+      // EIP-8037: gas_metered = max(cumulative_regular, cumulative_state)
+      final long gasMetered = Math.max(cumulativeBlockGasUsed, cumulativeStateGasUsed);
+
       return new BlockProcessingResult(
           Optional.of(
               new BlockProcessingOutputs(
-                  worldState,
-                  receipts,
-                  maybeRequests,
-                  maybeBlockAccessList,
-                  cumulativeBlockGasUsed)),
+                  worldState, receipts, maybeRequests, maybeBlockAccessList, gasMetered)),
           parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
     } finally {
       stateRootCommitter.cancel();
