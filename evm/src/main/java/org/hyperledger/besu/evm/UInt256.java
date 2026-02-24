@@ -205,22 +205,6 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return sb.toString();
   }
 
-  /**
-   * Fills an array with digits.
-   *
-   * <p>Fills an array with the integer's digits starting from the end. The array must have at least
-   * N_LIMBS elements.
-   *
-   * @param limbs The array to fill
-   */
-  public void intoArray(final long[] limbs) {
-    int len = limbs.length;
-    limbs[len--] = u0;
-    limbs[len--] = u1;
-    limbs[len--] = u2;
-    limbs[len] = u3;
-  }
-
   private UInt320 UInt320Value() {
     return new UInt320(0, u3, u2, u1, u0);
   }
@@ -1237,7 +1221,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       // Overflow case: div2by1 quotient would be <1, 0>, but adjusts to <0, MAX>
       // <p1, p0> = -1 * u0 = <u0 - 1, -u0>
       long z0 = v0 + u0;
-      long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) < 0) ? 1 : 0);
+      long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) <= 0) ? 1 : 0);
 
       long z1 = v1 + u1 - carry;
       return new UInt128(z1, z0);
@@ -1434,7 +1418,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       // Overflow case: div2by1 quotient would be <1, 0>, but adjusts to <0, -1>
       // <p1, p0> = -1 * u0 = <u0 - 1, -u0>
       long z0 = v0 + u0;
-      long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) < 0) ? 1 : 0);
+      long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) <= 0) ? 1 : 0);
 
       long res = v1 - carry;
       long z1 = res + u1;
@@ -1655,7 +1639,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       long res, borrow;
 
       long z0 = v0 + u0;
-      long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) < 0) ? 1 : 0);
+      long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) <= 0) ? 1 : 0);
 
       res = v1 - carry;
       long z1 = res + u1;
