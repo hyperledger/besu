@@ -155,11 +155,17 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
             .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
-            // Reject external address changes suggested by peers — Besu manages its own
-            // advertised address via configuration.
-            // TODO: confirm intent with original contributor; previously returned
-            // Optional.of(nodeRecord) which accepted the call but stored the old record
-            // unchanged (a silent no-op). Changed to Optional.empty() to correctly reject.
+            // Called when ≥2 peers independently report the same external address for this
+            // node via PONG responses (the discovery library requires multi-peer consensus
+            // before firing). The handler decides whether to update the local ENR with the
+            // peer-observed address.
+            //
+            // Currently returns Optional.empty() to ignore all peer feedback. This is safe
+            // for IPv4 because NatService (UPnP/NAT-PMP) handles external address discovery.
+            // For IPv6, however, NatService does not apply — peer-observed addresses would be
+            // the only auto-discovery mechanism. A future improvement could accept
+            // peer-suggested IPv6 addresses when --p2p-host-ipv6 is not explicitly configured,
+            // since IPv6 has no NAT and the peer-observed address is the real routable address.
             .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
             // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based on
             // peer permissions is not yet integrated; all addresses are currently allowed.
