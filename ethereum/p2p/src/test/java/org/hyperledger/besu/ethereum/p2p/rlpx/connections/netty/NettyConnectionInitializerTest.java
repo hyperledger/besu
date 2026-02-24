@@ -27,11 +27,14 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.net.InetAddresses;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -86,6 +89,40 @@ public class NettyConnectionInitializerTest {
     try (var conn = new Socket()) {
       conn.connect(ipv6Addr, 5_000);
       assertThat(conn.isConnected()).isTrue();
+    }
+  }
+
+  @Test
+  public void start_dualStack_degradesToIpv4WhenIpv6BindFails() throws Exception {
+    assumeTrue(NetworkUtility.isIPv6Available(), "IPv6 not available on this host");
+
+    // Pre-bind a port on ::1 to force the IPv6 bind to fail.
+    try (var blocker = new ServerSocket()) {
+      blocker.setReuseAddress(false);
+      final InetAddress ipv6Loopback = InetAddresses.forString("::1");
+      blocker.bind(new InetSocketAddress(ipv6Loopback, 0));
+      final int blockedPort = blocker.getLocalPort();
+
+      initializer =
+          createInitializer(
+              RlpxConfiguration.create()
+                  .setBindHost("127.0.0.1")
+                  .setBindPort(0)
+                  .setBindHostIpv6(Optional.of("::1"))
+                  .setBindPortIpv6(Optional.of(blockedPort)));
+
+      final ListeningAddresses addrs = initializer.start().get(10, TimeUnit.SECONDS);
+
+      // IPv4 must still be bound successfully
+      assertThat(addrs.ipv4Address().getPort()).isGreaterThan(0);
+      // IPv6 must be absent — degraded gracefully
+      assertThat(addrs.ipv6Address()).isEmpty();
+
+      // IPv4 socket must still accept connections
+      try (var conn = new Socket()) {
+        conn.connect(addrs.ipv4Address(), 5_000);
+        assertThat(conn.isConnected()).isTrue();
+      }
     }
   }
 

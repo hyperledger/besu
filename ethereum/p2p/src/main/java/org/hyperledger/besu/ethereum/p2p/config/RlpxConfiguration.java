@@ -87,7 +87,7 @@ public class RlpxConfiguration {
   }
 
   public boolean isDualStackEnabled() {
-    return bindHostIpv6.isPresent();
+    return bindHostIpv6.isPresent() && bindPortIpv6.isPresent();
   }
 
   public String getClientId() {
@@ -108,12 +108,15 @@ public class RlpxConfiguration {
       return false;
     }
     final RlpxConfiguration that = (RlpxConfiguration) o;
-    return bindPort == that.bindPort && Objects.equals(bindHost, that.bindHost);
+    return bindPort == that.bindPort
+        && Objects.equals(bindHost, that.bindHost)
+        && Objects.equals(bindHostIpv6, that.bindHostIpv6)
+        && Objects.equals(bindPortIpv6, that.bindPortIpv6);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(bindHost, bindPort);
+    return Objects.hash(bindHost, bindPort, bindHostIpv6, bindPortIpv6);
   }
 
   @Override
@@ -121,6 +124,8 @@ public class RlpxConfiguration {
     final StringBuilder sb = new StringBuilder("RlpxConfiguration{");
     sb.append("bindHost='").append(bindHost).append('\'');
     sb.append(", bindPort=").append(bindPort);
+    bindHostIpv6.ifPresent(h -> sb.append(", bindHostIpv6='").append(h).append('\''));
+    bindPortIpv6.ifPresent(p -> sb.append(", bindPortIpv6=").append(p));
     sb.append('}');
     return sb.toString();
   }

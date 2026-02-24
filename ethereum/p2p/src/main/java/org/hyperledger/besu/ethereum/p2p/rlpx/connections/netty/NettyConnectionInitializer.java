@@ -75,7 +75,7 @@ public class NettyConnectionInitializer
   private final PeerLookup peerLookup;
 
   private ChannelFuture server;
-  private ChannelFuture serverIpv6;
+  private volatile ChannelFuture serverIpv6;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
   private final EventLoopGroup workers = new NioEventLoopGroup(10);
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -145,7 +145,7 @@ public class NettyConnectionInitializer
           // callers receive both bound addresses atomically.
           if (config.isDualStackEnabled()) {
             final String ipv6Host = config.getBindHostIpv6().orElseThrow();
-            final int ipv6Port = config.getBindPortIpv6().orElse(config.getBindPort());
+            final int ipv6Port = config.getBindPortIpv6().orElseThrow();
             this.serverIpv6 =
                 new ServerBootstrap()
                     .group(boss, workers)
