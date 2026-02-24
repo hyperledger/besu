@@ -204,14 +204,17 @@ public record EthereumNodeRecord(
     return udp;
   }
 
+  @Override
   public Optional<InetAddress> getIpV6Address() {
     return ipv6;
   }
 
+  @Override
   public Optional<Integer> getIpV6TcpListeningPort() {
     return tcpV6;
   }
 
+  @Override
   public Optional<Integer> getIpV6UdpDiscoveryPort() {
     return udpV6;
   }

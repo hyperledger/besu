@@ -345,14 +345,17 @@ public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
     return getDiscoveryPort();
   }
 
+  @Override
   public Optional<InetAddress> getIpV6Address() {
     return Optional.empty();
   }
 
+  @Override
   public Optional<Integer> getIpV6TcpListeningPort() {
     return Optional.empty();
   }
 
+  @Override
   public Optional<Integer> getIpV6UdpDiscoveryPort() {
     return Optional.empty();
   }
