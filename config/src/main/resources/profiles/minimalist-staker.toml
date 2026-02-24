@@ -1,3 +1,3 @@
-sync-mode="CHECKPOINT"
+sync-mode="SNAP"
 data-storage-format="BONSAI"
 max-peers=25
