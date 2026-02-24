@@ -137,8 +137,11 @@ public class NettyConnectionInitializerTest {
     assumeTrue(
         addrs.ipv6Address().isPresent(), "IPv6 bind failed; initializer degraded to IPv4-only");
 
-    // Both sockets are bound with ephemeral ports — they should differ
-    assertThat(addrs.ipv4Address().getPort()).isNotEqualTo(addrs.ipv6Address().get().getPort());
+    // Both sockets must receive a real ephemeral port (port 0 expands independently per socket).
+    // The two ports may coincidentally be equal (different IPs share the ephemeral range), so we
+    // only assert each is non-zero rather than testing inequality.
+    assertThat(addrs.ipv4Address().getPort()).isGreaterThan(0);
+    assertThat(addrs.ipv6Address().get().getPort()).isGreaterThan(0);
   }
 
   private static RlpxConfiguration ipv4OnlyConfig() {

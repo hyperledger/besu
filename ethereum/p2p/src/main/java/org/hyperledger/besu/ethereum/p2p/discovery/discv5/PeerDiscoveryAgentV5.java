@@ -409,16 +409,20 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private NodeRecord initializeLocalNodeRecord(final int tcpPort) {
     final Optional<Integer> ipv6TcpPort = rlpxAgent.getIpv6ListeningPort();
 
-    // Include IPv6 ENR fields only when both an advertised IPv6 host is configured and an IPv6
-    // RLPx socket was successfully bound.  Omitting them when the socket is absent avoids
-    // advertising an incorrect tcp6 value to remote peers.
+    // Include IPv6 ENR fields only when the discovery layer has an active IPv6 UDP socket
+    // (isDualStackEnabled), an IPv6 host is advertised, and an IPv6 RLPx TCP socket was bound.
+    // Omitting them when any of those conditions is absent avoids advertising inconsistent ENR
+    // fields (e.g. an ip6/udp6 without a live UDP socket, or a tcp6 without a live TCP socket).
     final Optional<HostEndpoint> ipv6Endpoint =
-        discoveryConfig
-            .getAdvertisedHostIpv6()
-            .flatMap(
-                host ->
-                    ipv6TcpPort.map(
-                        port -> new HostEndpoint(host, discoveryConfig.getBindPortIpv6(), port)));
+        discoveryConfig.isDualStackEnabled()
+            ? discoveryConfig
+                .getAdvertisedHostIpv6()
+                .flatMap(
+                    host ->
+                        ipv6TcpPort.map(
+                            port ->
+                                new HostEndpoint(host, discoveryConfig.getBindPortIpv6(), port)))
+            : Optional.empty();
 
     nodeRecordManager.initializeLocalNode(
         new HostEndpoint(

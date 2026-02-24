@@ -27,7 +27,9 @@ public interface ConnectionInitializer {
    * Holds the bound listening addresses after a successful {@link #start()}.
    *
    * @param ipv4Address the IPv4 socket address the RLPx server is bound to
-   * @param ipv6Address the IPv6 socket address, present only when dual-stack is active
+   * @param ipv6Address the IPv6 socket address; present only when dual-stack is configured
+   *     <em>and</em> the IPv6 bind succeeds — absent when IPv6 binding fails and the initializer
+   *     degrades gracefully to IPv4-only
    */
   record ListeningAddresses(
       InetSocketAddress ipv4Address, Optional<InetSocketAddress> ipv6Address) {}

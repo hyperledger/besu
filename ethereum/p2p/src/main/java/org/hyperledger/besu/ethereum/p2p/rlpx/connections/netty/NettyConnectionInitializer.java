@@ -188,9 +188,6 @@ public class NettyConnectionInitializer
       return stoppedFuture;
     }
 
-    workers.shutdownGracefully();
-    boss.shutdownGracefully();
-
     final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
     server
         .channel()
@@ -220,6 +217,8 @@ public class NettyConnectionInitializer
       CompletableFuture.allOf(ipv4Close, ipv6Close)
           .whenComplete(
               (v, err) -> {
+                workers.shutdownGracefully();
+                boss.shutdownGracefully();
                 if (err != null) {
                   stoppedFuture.completeExceptionally(err);
                 } else {
@@ -229,6 +228,8 @@ public class NettyConnectionInitializer
     } else {
       ipv4Close.whenComplete(
           (v, err) -> {
+            workers.shutdownGracefully();
+            boss.shutdownGracefully();
             if (err != null) {
               stoppedFuture.completeExceptionally(err);
             } else {
