@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -36,19 +35,16 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod {
+public class EngineGetPayloadBodiesByHashV1 extends AbstractEngineGetPayloadBodies {
 
-  private static final int MAX_REQUEST_BLOCKS = 1024;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByHashV1.class);
-  private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByHashV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.blockResultFactory = blockResultFactory;
+    super(vertx, protocolContext, blockResultFactory, engineCallListener);
   }
 
   @Override
@@ -87,9 +83,5 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
             Arrays.stream(blockHashes).map(blockchain::getBlockBody).collect(Collectors.toList()));
 
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
-  }
-
-  protected int getMaxRequestBlocks() {
-    return MAX_REQUEST_BLOCKS;
   }
 }
