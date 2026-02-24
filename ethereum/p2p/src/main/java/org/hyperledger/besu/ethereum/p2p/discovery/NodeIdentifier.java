@@ -18,16 +18,24 @@ import java.net.InetAddress;
 import java.util.Optional;
 
 public interface NodeIdentifier {
-  InetAddress getInetAddress();
+  InetAddress getIpV4Address();
 
   Optional<Integer> getTcpListeningPort();
 
   Optional<Integer> getUdpDiscoveryPort();
 
+  Optional<InetAddress> getIpV6Address();
+
+  Optional<Integer> getIpV6TcpListeningPort();
+
+  Optional<Integer> getIpV6UdpDiscoveryPort();
+
   static boolean isSameListeningEndpoint(final NodeIdentifier node1, final NodeIdentifier node2) {
     return node1 != null
         && node2 != null
-        && node1.getInetAddress().equals(node2.getInetAddress())
-        && node1.getTcpListeningPort().equals(node2.getTcpListeningPort());
+        && ((node1.getIpV4Address().equals(node2.getIpV4Address())
+                && node1.getTcpListeningPort().equals(node2.getTcpListeningPort()))
+            || node1.getIpV6Address().equals(node2.getIpV6Address())
+                && node1.getIpV6TcpListeningPort().equals(node2.getIpV4Address()));
   }
 }

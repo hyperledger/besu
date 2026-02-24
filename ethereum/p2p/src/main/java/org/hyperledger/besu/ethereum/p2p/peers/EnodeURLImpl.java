@@ -154,7 +154,7 @@ public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
       return false;
     }
 
-    return Objects.equals(enodeA.getIp(), enodeB.getInetAddress())
+    return Objects.equals(enodeA.getIp(), enodeB.getIpV4Address())
         && Objects.equals(enodeA.getListeningPort(), enodeB.getTcpListeningPort());
   }
 
@@ -331,7 +331,7 @@ public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
   }
 
   @Override
-  public InetAddress getInetAddress() {
+  public InetAddress getIpV4Address() {
     return getIp();
   }
 
@@ -343,6 +343,18 @@ public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
   @Override
   public Optional<Integer> getUdpDiscoveryPort() {
     return getDiscoveryPort();
+  }
+
+  public Optional<InetAddress> getIpV6Address() {
+    return Optional.empty();
+  }
+
+  public Optional<Integer> getIpV6TcpListeningPort() {
+    return Optional.empty();
+  }
+
+  public Optional<Integer> getIpV6UdpDiscoveryPort() {
+    return Optional.empty();
   }
 
   public static class Builder {

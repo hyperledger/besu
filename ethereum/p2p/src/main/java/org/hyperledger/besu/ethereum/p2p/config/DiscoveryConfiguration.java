@@ -223,7 +223,7 @@ public class DiscoveryConfiguration {
         && Objects.equals(advertisedHost, that.advertisedHost)
         && Objects.equals(enodeBootnodes, that.enodeBootnodes)
         && Objects.equals(enrBootnodes, that.enrBootnodes)
-        && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL);
+        && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL)
         && Objects.equals(bindHostIpv6, that.bindHostIpv6)
         && Objects.equals(advertisedHostIpv6, that.advertisedHostIpv6)
         && preferIpv6Outbound == that.preferIpv6Outbound;

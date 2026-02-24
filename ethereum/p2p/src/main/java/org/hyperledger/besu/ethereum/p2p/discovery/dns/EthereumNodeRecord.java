@@ -190,7 +190,7 @@ public record EthereumNodeRecord(
   }
 
   @Override
-  public InetAddress getInetAddress() {
+  public InetAddress getIpV4Address() {
     return ip;
   }
 
@@ -202,5 +202,17 @@ public record EthereumNodeRecord(
   @Override
   public Optional<Integer> getUdpDiscoveryPort() {
     return udp;
+  }
+
+  public Optional<InetAddress> getIpV6Address() {
+    return ipv6;
+  }
+
+  public Optional<Integer> getIpV6TcpListeningPort() {
+    return tcpV6;
+  }
+
+  public Optional<Integer> getIpV6UdpDiscoveryPort() {
+    return udpV6;
   }
 }
