@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
-import java.util.BitSet;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -92,8 +91,8 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
       LOG.warn(
           "Block access list hash mismatch for block {}: provided={}, header={}",
           blockHeader.getBlockHash(),
-          providedBalHash.toHexString(),
-          headerBalHash.get().toHexString());
+          providedBalHash,
+          headerBalHash.get());
       return false;
     }
 
@@ -126,18 +125,15 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
   }
 
   /**
-   * Validates index range (indices in [0, maxIndex]), uniqueness and canonical ordering (EIP-7928)
-   * in one traversal.
+   * Validates index range (indices in [0, maxIndex]) and canonical ordering (EIP-7928) in one
+   * traversal. Strict ordering implies uniqueness; the only set kept is change slots to detect
+   * overlap with storage_reads.
    */
   private boolean validateConstraints(
       final BlockAccessList bal, final BlockHeader blockHeader, final int maxIndex) {
-    final int accountCount = bal.accountChanges().size();
-    final Set<Address> seenAddresses = new HashSet<>(accountCount);
-    final BitSet balIndices = new BitSet();
     Address prevAddress = null;
 
     for (BlockAccessList.AccountChanges account : bal.accountChanges()) {
-      // Ordering: accounts by address
       if (prevAddress != null
           && prevAddress.getBytes().compareTo(account.address().getBytes()) >= 0) {
         LOG.warn(
@@ -147,19 +143,9 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
       }
       prevAddress = account.address();
 
-      if (!seenAddresses.add(account.address())) {
-        LOG.warn(
-            "Block access list has duplicate address {} for block {}",
-            account.address().toHexString(),
-            blockHeader.getBlockHash());
-        return false;
-      }
-
-      final int storageSlotsCapacity =
-          account.storageChanges().size() + account.storageReads().size();
-      final Set<StorageSlotKey> seenStorageSlots = new HashSet<>(storageSlotsCapacity);
+      final Set<StorageSlotKey> changeSlots = new HashSet<>(account.storageChanges().size());
       StorageSlotKey prevStorageSlot = null;
-      int prevStorageTxIndex;
+      int prevStorageTxIndex = -1;
 
       for (BlockAccessList.SlotChanges slotChanges : account.storageChanges()) {
         final StorageSlotKey slot = slotChanges.slot();
@@ -167,33 +153,27 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
             && compareSlotKeysByCanonicalOrder(prevStorageSlot, slot) >= 0) {
           LOG.warn(
               "Block access list storage_changes not in canonical order (by slot) for address {} block {}",
-              account.address().toHexString(),
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
         prevStorageSlot = slot;
-        if (!seenStorageSlots.add(slot)) {
-          LOG.warn(
-              "Block access list has duplicate storage key in storage_changes for address {} block {}",
-              account.address().toHexString(),
-              blockHeader.getBlockHash());
-          return false;
-        }
+        changeSlots.add(slot);
+
         prevStorageTxIndex = -1;
-        balIndices.clear();
         for (BlockAccessList.StorageChange ch : slotChanges.changes()) {
           final int txIndex = ch.txIndex();
-          if (txIndex < 0 || balIndices.get(txIndex)) {
+          if (txIndex < 0) {
             LOG.warn(
-                "Block access list has duplicate block_access_index in storage_changes for address {} block {}",
-                account.address().toHexString(),
+                "Block access list has negative block_access_index for address {} block {}",
+                account.address(),
                 blockHeader.getBlockHash());
             return false;
           }
-          if (prevStorageTxIndex >= 0 && prevStorageTxIndex >= txIndex) {
+          if (prevStorageTxIndex >= txIndex) {
             LOG.warn(
                 "Block access list storage_changes not in canonical order (by block_access_index) for address {} block {}",
-                account.address().toHexString(),
+                account.address(),
                 blockHeader.getBlockHash());
             return false;
           }
@@ -205,7 +185,6 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
                 blockHeader.getBlockHash());
             return false;
           }
-          balIndices.set(txIndex);
           prevStorageTxIndex = txIndex;
         }
       }
@@ -216,35 +195,34 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
         if (prevReadSlot != null && compareSlotKeysByCanonicalOrder(prevReadSlot, slot) >= 0) {
           LOG.warn(
               "Block access list storage_reads not in canonical order (by slot) for address {} block {}",
-              account.address().toHexString(),
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
         prevReadSlot = slot;
-        if (!seenStorageSlots.add(slot)) {
+        if (changeSlots.contains(slot)) {
           LOG.warn(
-              "Block access list has storage key in storage_reads duplicate or overlapping storage_changes for address {} block {}",
-              account.address().toHexString(),
+              "Block access list has storage key in both storage_changes and storage_reads for address {} block {}",
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
       }
 
       int prevTxIndex = -1;
-      balIndices.clear();
       for (BlockAccessList.BalanceChange ch : account.balanceChanges()) {
         final int txIndex = ch.txIndex();
-        if (txIndex < 0 || balIndices.get(txIndex)) {
+        if (txIndex < 0) {
           LOG.warn(
-              "Block access list has duplicate block_access_index in balance_changes for address {} block {}",
-              account.address().toHexString(),
+              "Block access list has negative block_access_index in balance_changes for address {} block {}",
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
-        if (prevTxIndex >= 0 && prevTxIndex >= txIndex) {
+        if (prevTxIndex >= txIndex) {
           LOG.warn(
               "Block access list balance_changes not in canonical order (by block_access_index) for address {} block {}",
-              account.address().toHexString(),
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
@@ -256,25 +234,23 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
               blockHeader.getBlockHash());
           return false;
         }
-        balIndices.set(txIndex);
         prevTxIndex = txIndex;
       }
 
       prevTxIndex = -1;
-      balIndices.clear();
       for (BlockAccessList.NonceChange ch : account.nonceChanges()) {
         final int txIndex = ch.txIndex();
-        if (txIndex < 0 || balIndices.get(txIndex)) {
+        if (txIndex < 0) {
           LOG.warn(
-              "Block access list has duplicate block_access_index in nonce_changes for address {} block {}",
-              account.address().toHexString(),
+              "Block access list has negative block_access_index in nonce_changes for address {} block {}",
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
-        if (prevTxIndex >= 0 && prevTxIndex >= txIndex) {
+        if (prevTxIndex >= txIndex) {
           LOG.warn(
               "Block access list nonce_changes not in canonical order (by block_access_index) for address {} block {}",
-              account.address().toHexString(),
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
@@ -286,25 +262,23 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
               blockHeader.getBlockHash());
           return false;
         }
-        balIndices.set(txIndex);
         prevTxIndex = txIndex;
       }
 
       prevTxIndex = -1;
-      balIndices.clear();
       for (BlockAccessList.CodeChange ch : account.codeChanges()) {
         final int txIndex = ch.txIndex();
-        if (txIndex < 0 || balIndices.get(txIndex)) {
+        if (txIndex < 0) {
           LOG.warn(
-              "Block access list has duplicate block_access_index in code_changes for address {} block {}",
-              account.address().toHexString(),
+              "Block access list has negative block_access_index in code_changes for address {} block {}",
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
-        if (prevTxIndex >= 0 && prevTxIndex >= txIndex) {
+        if (prevTxIndex >= txIndex) {
           LOG.warn(
               "Block access list code_changes not in canonical order (by block_access_index) for address {} block {}",
-              account.address().toHexString(),
+              account.address(),
               blockHeader.getBlockHash());
           return false;
         }
@@ -316,7 +290,6 @@ public class MainnetBlockAccessListValidator implements BlockAccessListValidator
               blockHeader.getBlockHash());
           return false;
         }
-        balIndices.set(txIndex);
         prevTxIndex = txIndex;
       }
     }
