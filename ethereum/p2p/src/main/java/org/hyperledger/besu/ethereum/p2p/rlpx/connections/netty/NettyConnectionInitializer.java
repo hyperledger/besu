@@ -161,10 +161,10 @@ public class NettyConnectionInitializer
                         new ListeningAddresses(socketAddress, Optional.of(ipv6Address)));
                   } else {
                     LOG.warn(
-                        "Failed to bind IPv6 RLPx socket on {}:{}, continuing with IPv4 only: {}",
+                        "Failed to bind IPv6 RLPx socket on {}:{}, continuing with IPv4 only",
                         ipv6Host,
                         ipv6Port,
-                        ipv6Future.cause().getMessage());
+                        ipv6Future.cause());
                     serverIpv6 = null;
                     listeningAddressesFuture.complete(
                         new ListeningAddresses(socketAddress, Optional.empty()));
@@ -194,7 +194,7 @@ public class NettyConnectionInitializer
     final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
     server
         .channel()
-        .closeFuture()
+        .close()
         .addListener(
             future -> {
               if (future.isSuccess()) {
@@ -208,12 +208,11 @@ public class NettyConnectionInitializer
       final CompletableFuture<Void> ipv6Close = new CompletableFuture<>();
       serverIpv6
           .channel()
-          .closeFuture()
+          .close()
           .addListener(
               future -> {
                 if (!future.isSuccess()) {
-                  LOG.warn(
-                      "Failed to close IPv6 RLPx socket cleanly: {}", future.cause().getMessage());
+                  LOG.warn("Failed to close IPv6 RLPx socket cleanly", future.cause());
                 }
                 ipv6Close.complete(null); // best-effort: don't block shutdown on IPv6 close failure
               });
