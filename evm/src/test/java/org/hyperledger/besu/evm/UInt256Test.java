@@ -463,6 +463,25 @@ public class UInt256Test {
   }
 
   @Test
+  public void mulMod_ExecutionSpecStateTest_104() {
+    Bytes value0 =
+      Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    Bytes value1 =
+      Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    Bytes value2 =
+      Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+    BigInteger aInt = new BigInteger(1, value0.toArrayUnsafe());
+    BigInteger bInt = new BigInteger(1, value1.toArrayUnsafe());
+    BigInteger cInt = new BigInteger(1, value2.toArrayUnsafe());
+    UInt256 a = UInt256.fromBytesBE(value0.toArrayUnsafe());
+    UInt256 b = UInt256.fromBytesBE(value1.toArrayUnsafe());
+    UInt256 c = UInt256.fromBytesBE(value2.toArrayUnsafe());
+    Bytes32 remainder = Bytes32.leftPad(Bytes.wrap(a.mulMod(b, c).toBytesBE()));
+    Bytes32 expected = bigIntTo32B(aInt.multiply(bInt).mod(cInt));
+    assertThat(remainder).isEqualTo(expected);
+  }
+
+  @Test
   public void mulMod_ExecutionSpecStateTest_457() {
     Bytes value0 =
         Bytes.fromHexString("0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffff");

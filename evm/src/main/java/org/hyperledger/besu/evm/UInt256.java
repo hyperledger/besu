@@ -1407,8 +1407,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       carry = p1 + ((Long.compareUnsigned(v1, res) < 0) ? 1 : 0);
 
       // Propagate overflows (borrows)
-      long z2 = v2 - carry - borrow;
-      borrow = (Long.compareUnsigned(v2, z2) < 0) ? 1 : 0;
+      long t2 = v2 - carry;
+      long z2 = t2 - borrow;
+      borrow =
+          ((Long.compareUnsigned(v2, t2) < 0) ? 1 : 0)
+              | ((Long.compareUnsigned(t2, z2) < 0) ? 1 : 0);
 
       if (borrow != 0) return addBack(z2, z1, z0); // unlikely
       return new UInt192(z2, z1, z0);
@@ -1620,14 +1623,21 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
       p0 = u2 * q;
       p1 = Math.unsignedMultiplyHigh(u2, q);
-      res = v2 - p0 - borrow;
+      long t2 = v2 - p0;
+      res = t2 - borrow;
       long z2 = res - carry;
       borrow = (Long.compareUnsigned(res, z2) < 0) ? 1 : 0;
-      carry = p1 + ((Long.compareUnsigned(v2, res) < 0) ? 1 : 0);
+      carry =
+          p1
+              + ((Long.compareUnsigned(v2, t2) < 0) ? 1 : 0)
+              + ((Long.compareUnsigned(t2, res) < 0) ? 1 : 0);
 
       // Propagate overflows (borrows)
-      long z3 = v3 - carry - borrow;
-      borrow = (Long.compareUnsigned(v3, z3) < 0) ? 1 : 0;
+      long t3 = v3 - carry;
+      long z3 = t3 - borrow;
+      borrow =
+          ((Long.compareUnsigned(v3, t3) < 0) ? 1 : 0)
+              | ((Long.compareUnsigned(t3, z3) < 0) ? 1 : 0);
 
       if (borrow != 0) return addBack(z3, z2, z1, z0);
       return new UInt256(z3, z2, z1, z0);
