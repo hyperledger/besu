@@ -37,8 +37,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Downloads block headers in reverse direction (backward from pivot to genesis). Returns headers in
- * reverse order: [n, n-1, n-2, ...].
+ * Downloads block headers in reverse direction (backward from a pivot block toward genesis).
+ * Returns headers in reverse order: {@code [n, n-1, n-2, ...]}.
+ *
+ * <p>Each invocation of {@link #apply(Long)} downloads a contiguous batch of headers ending at the
+ * given start block number and stopping no earlier than {@code trustAnchorBlockNumber}. Headers are
+ * fetched from peers using {@link PeerTaskExecutor} and accumulated across multiple peer requests
+ * until the full batch is complete.
+ *
+ * <h2>Retry mechanism</h2>
+ *
+ * <p>The download is resilient to transient peer failures. When a peer request does not succeed,
+ * the behavior depends on the response code:
+ *
+ * <ul>
+ *   <li><b>SUCCESS</b> – the returned headers are appended to the accumulated list. If the batch is
+ *       still incomplete, the loop immediately issues another request (possibly to a different
+ *       peer) for the remaining headers.
+ *   <li><b>INTERNAL_SERVER_ERROR</b> – a fatal, non-retriable condition. The returned future is
+ *       failed immediately with a {@link RuntimeException} and no further attempts are made.
+ *   <li><b>Any other code</b> (e.g. {@code NO_PEER_AVAILABLE}, {@code PEER_DISCONNECTED}) – a
+ *       transient condition. The next attempt is scheduled after {@link #RETRY_DELAY} via {@link
+ *       EthScheduler#scheduleFutureTask}. There is no upper bound on the number of retries; the
+ *       process continues until either all headers are received or the overall {@link
+ *       #timeoutDuration} elapses.
+ * </ul>
+ *
+ * <p>The total time budget is enforced by {@link CompletableFuture#orTimeout} applied in {@link
+ * #apply(Long)}. When the deadline is exceeded a {@link java.util.concurrent.TimeoutException} is
+ * raised, which is logged at TRACE level before propagating to the caller.
+ *
+ * <p>Partial progress is preserved across retries: headers already downloaded are stored in a
+ * shared list and subsequent requests only ask for the remaining headers, so a retry after a
+ * partial success does not re-download headers that were already received.
  */
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
@@ -77,6 +108,20 @@ public class DownloadBackwardHeadersStep
     this.timeoutDuration = timeoutDuration;
   }
 
+  /**
+   * Initiates the download of a backward batch of block headers.
+   *
+   * <p>The batch starts at {@code startBlockNumber} and contains at most {@link #headerRequestSize}
+   * headers, capped so that the download does not go below {@link #trustAnchorBlockNumber}. The
+   * returned future completes with the full list of headers in reverse order once all headers in
+   * the batch have been retrieved, or fails if a fatal error occurs or the {@link #timeoutDuration}
+   * is exceeded.
+   *
+   * @param startBlockNumber the block number of the first (highest) header to download
+   * @return a future that resolves to the downloaded headers in reverse order (highest to lowest)
+   * @throws IllegalStateException if {@code startBlockNumber} is not strictly greater than {@link
+   *     #trustAnchorBlockNumber} (i.e. there are no headers left to download)
+   */
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
     final long remainingHeaders = startBlockNumber - trustAnchorBlockNumber;
@@ -107,6 +152,38 @@ public class DownloadBackwardHeadersStep
             });
   }
 
+  /**
+   * Core download loop that accumulates headers for a single batch, retrying on transient peer
+   * failures.
+   *
+   * <p>On each iteration the method asks peers for the remaining headers in the batch (i.e. {@code
+   * headersToRequest - downloadedHeaders.size()} headers starting from {@code startBlockNumber -
+   * downloadedHeaders.size()}). The loop continues synchronously as long as peer requests succeed,
+   * exiting only when the batch is complete.
+   *
+   * <p>When a peer request fails transiently, the method returns a future that fires after {@link
+   * #RETRY_DELAY} and then calls itself recursively via {@link EthScheduler#scheduleServiceTask}.
+   * The recursion carries the current {@code downloadedHeaders} list and iteration count forward,
+   * so no progress is lost between retries. A fatal {@link
+   * PeerTaskExecutorResponseCode#INTERNAL_SERVER_ERROR} skips the retry and fails the future
+   * immediately.
+   *
+   * <p>When consecutive headers from different peer responses are joined, the method verifies that
+   * the hash of the first header of the new response matches the parent hash recorded in the last
+   * already-downloaded header, ensuring chain continuity.
+   *
+   * @param currTaskId monotonically increasing identifier used in log messages to correlate entries
+   *     belonging to the same logical download task
+   * @param prevIterations number of iterations completed before this invocation (0 on the first
+   *     call; preserved across recursive retry calls so that log messages show the true attempt
+   *     count)
+   * @param startBlockNumber block number of the first (highest) header in the batch
+   * @param headersToRequest total number of headers the batch must contain
+   * @param downloadedHeaders mutable list that accumulates successfully downloaded headers; shared
+   *     across the synchronous loop iterations and across recursive retry invocations
+   * @return a future that resolves to {@code downloadedHeaders} once all {@code headersToRequest}
+   *     headers have been fetched, or fails on a fatal peer error or timeout
+   */
   private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
       final int currTaskId,
       final int prevIterations,
