@@ -103,7 +103,9 @@ public class SarOperationOptimized extends AbstractFixedCostOperation {
     long w3 = getLong(in, 24);
 
     final long fill = negative ? -1L : 0L;
+    // Number of whole 64-bit words to shift (shift / 64).
     final int wordShift = shift >>> 6;
+    // Remaining intra-word bit shift (shift % 64).
     final int bitShift = shift & 63;
 
     switch (wordShift) {

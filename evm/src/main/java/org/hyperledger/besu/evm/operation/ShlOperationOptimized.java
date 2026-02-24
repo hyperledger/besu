@@ -100,7 +100,9 @@ public class ShlOperationOptimized extends AbstractFixedCostOperation {
     long w2 = getLong(in, 16);
     long w3 = getLong(in, 24);
 
+    // Number of whole 64-bit words to shift (shift / 64).
     final int wordShift = shift >>> 6;
+    // Remaining intra-word bit shift (shift % 64).
     final int bitShift = shift & 63;
 
     switch (wordShift) {
