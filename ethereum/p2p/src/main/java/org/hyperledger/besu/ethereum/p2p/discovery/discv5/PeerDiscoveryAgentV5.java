@@ -161,9 +161,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             // Optional.of(nodeRecord) which accepted the call but stored the old record
             // unchanged (a silent no-op). Changed to Optional.empty() to correctly reject.
             .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
-            // Address filtering based on peer permissions is not yet integrated; all addresses
-            // are currently allowed. This will be addressed in
-            // https://github.com/hyperledger/besu/issues/9688
+            // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based on
+            // peer permissions is not yet integrated; all addresses are currently allowed.
             .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL);
 
     if (discoveryConfig.isDualStackEnabled()) {
