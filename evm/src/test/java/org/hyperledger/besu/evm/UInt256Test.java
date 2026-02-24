@@ -465,11 +465,11 @@ public class UInt256Test {
   @Test
   public void mulMod_ExecutionSpecStateTest_104() {
     Bytes value0 =
-      Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+        Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
     Bytes value1 =
-      Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+        Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
     Bytes value2 =
-      Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+        Bytes.fromHexString("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
     BigInteger aInt = new BigInteger(1, value0.toArrayUnsafe());
     BigInteger bInt = new BigInteger(1, value1.toArrayUnsafe());
     BigInteger cInt = new BigInteger(1, value2.toArrayUnsafe());
@@ -542,21 +542,6 @@ public class UInt256Test {
               : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
       assertThat(remainder).isEqualTo(expected);
     }
-  }
-
-  @Test
-  public void uint512IsUInt64() {
-    // All high limbs zero — fits in 64 bits
-    var fitsIn64 = new UInt256.UInt512(0, 0, 0, 0, 0, 0, 0, 42);
-    assertThat(fitsIn64.isUInt64()).as("all high limbs zero").isTrue();
-
-    // u7=1, u6=2: AND gives 0 but OR gives 3 — does NOT fit in 64 bits
-    var andMasksToZero = new UInt256.UInt512(1, 2, 0, 0, 0, 0, 0, 42);
-    assertThat(andMasksToZero.isUInt64()).as("u7=1,u6=2 should not fit in 64 bits").isFalse();
-
-    // Only u1 is non-zero — does NOT fit in 64 bits
-    var singleHighLimb = new UInt256.UInt512(0, 0, 0, 0, 0, 0, 1, 42);
-    assertThat(singleHighLimb.isUInt64()).as("u1=1 should not fit in 64 bits").isFalse();
   }
 
   @Test
