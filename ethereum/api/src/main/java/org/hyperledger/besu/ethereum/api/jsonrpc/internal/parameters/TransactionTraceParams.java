@@ -118,8 +118,8 @@ public interface TransactionTraceParams {
     if (disableStackNullable() != null) {
       builder.traceStack(!disableStack());
     }
-    var defaultTracerConfig = builder.traceOpcodes(opcodes()).build();
+    var opCodeTracerConfig = builder.traceOpcodes(opcodes()).build();
 
-    return new TraceOptions(tracerType, defaultTracerConfig, tracerConfig(), stateOverrides());
+    return new TraceOptions(tracerType, opCodeTracerConfig, tracerConfig(), stateOverrides());
   }
 }
