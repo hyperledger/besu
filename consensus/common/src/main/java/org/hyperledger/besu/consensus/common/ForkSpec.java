@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.common;
 
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
-
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -29,9 +27,13 @@ public class ForkSpec<C> {
   /** The constant COMPARATOR. */
   public static final Comparator<ForkSpec<?>> COMPARATOR = Comparator.comparing(ForkSpec::getBlock);
 
+  public enum ForkScheduleType {
+    BLOCK,
+    TIME
+  }
+
   private final long block;
-  private ScheduledProtocolSpec.ScheduleType forkType =
-      ScheduledProtocolSpec.ScheduleType.BLOCK; // Default type
+  private ForkScheduleType forkType = ForkScheduleType.BLOCK; // Default type
   private final C value;
 
   /**
@@ -59,7 +61,7 @@ public class ForkSpec<C> {
    *
    * @param forkType the fork type
    */
-  public void setForkType(final ScheduledProtocolSpec.ScheduleType forkType) {
+  public void setForkType(final ForkScheduleType forkType) {
     this.forkType = forkType;
   }
 
@@ -68,7 +70,7 @@ public class ForkSpec<C> {
    *
    * @return the fork type
    */
-  public ScheduledProtocolSpec.ScheduleType getForkType() {
+  public ForkScheduleType getForkType() {
     return forkType;
   }
 

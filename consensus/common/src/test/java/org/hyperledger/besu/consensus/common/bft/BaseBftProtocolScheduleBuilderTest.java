@@ -37,7 +37,6 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -302,16 +301,15 @@ public class BaseBftProtocolScheduleBuilderTest {
     createProtocolSchedule(forkSchedule);
 
     // Creating a protocol schedule updates the fork schedule with fork types
-    assertThat(forkSchedule.getFork(0, 0).getForkType())
-        .isEqualTo(ScheduledProtocolSpec.ScheduleType.BLOCK);
+    assertThat(forkSchedule.getFork(0, 0).getForkType()).isEqualTo(ForkSpec.ForkScheduleType.BLOCK);
     assertThat(forkSchedule.getFork(10, 0).getForkType())
-        .isEqualTo(ScheduledProtocolSpec.ScheduleType.BLOCK);
+        .isEqualTo(ForkSpec.ForkScheduleType.BLOCK);
     assertThat(forkSchedule.getFork(10, 0).getValue().getBlockPeriodSeconds()).isEqualTo(2);
     assertThat(forkSchedule.getFork(10, 123456).getForkType())
-        .isEqualTo(ScheduledProtocolSpec.ScheduleType.TIME);
+        .isEqualTo(ForkSpec.ForkScheduleType.TIME);
     assertThat(forkSchedule.getFork(10, 123456).getValue().getBlockPeriodSeconds()).isEqualTo(3);
     assertThat(forkSchedule.getFork(10, 999999).getForkType())
-        .isEqualTo(ScheduledProtocolSpec.ScheduleType.TIME);
+        .isEqualTo(ForkSpec.ForkScheduleType.TIME);
     assertThat(forkSchedule.getFork(10, 999999).getValue().getBlockPeriodSeconds()).isEqualTo(4);
   }
 

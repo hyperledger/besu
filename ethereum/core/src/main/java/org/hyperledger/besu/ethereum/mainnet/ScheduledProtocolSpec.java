@@ -22,11 +22,6 @@ import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
  */
 public interface ScheduledProtocolSpec {
 
-  enum ScheduleType {
-    BLOCK,
-    TIME
-  }
-
   boolean isOnOrAfterMilestoneBoundary(
       org.hyperledger.besu.plugin.data.ProcessableBlockHeader header);
 

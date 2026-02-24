@@ -24,7 +24,6 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Map;
 import java.util.Optional;
@@ -186,7 +185,7 @@ public abstract class BaseForksSchedulesFactoryTest<
     final ForksSchedule<C> forksSchedule = createForkSchedule(genesisConfigOptions);
 
     for (ForkSpec<C> f : forksSchedule.getForks()) {
-      f.setForkType(ScheduledProtocolSpec.ScheduleType.BLOCK);
+      f.setForkType(ForkSpec.ForkScheduleType.BLOCK);
     }
 
     // Should ignore block timestamp if forks are block type
@@ -195,7 +194,7 @@ public abstract class BaseForksSchedulesFactoryTest<
     assertThat(forksSchedule.getFork(0, 1234568).getValue().getBlockPeriodSeconds()).isEqualTo(2);
 
     for (ForkSpec<C> f : forksSchedule.getForks()) {
-      f.setForkType(ScheduledProtocolSpec.ScheduleType.TIME);
+      f.setForkType(ForkSpec.ForkScheduleType.TIME);
     }
 
     // Should ignore block timestamp if forks are block type

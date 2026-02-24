@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.common;
 
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -54,7 +53,7 @@ public class ForksSchedule<C> {
     forks.forEach(
         f ->
             f.setForkType(
-                protocolSchedule.getSpecTypeBlockNumberOrTimestamp(f.getBlock(), f.getBlock())));
+                protocolSchedule.getSpecTypeByBlockNumberOrTimestamp(f.getBlock(), f.getBlock())));
   }
 
   /**
@@ -67,7 +66,7 @@ public class ForksSchedule<C> {
   public ForkSpec<C> getFork(final long blockNumber, final long blockTimestamp) {
     for (final ForkSpec<C> f : forks) {
       final long blockValue =
-          f.getForkType() == ScheduledProtocolSpec.ScheduleType.TIME ? blockTimestamp : blockNumber;
+          f.getForkType() == ForkSpec.ForkScheduleType.TIME ? blockTimestamp : blockNumber;
       if (blockValue >= f.getBlock()) {
         return f;
       }
