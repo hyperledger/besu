@@ -18,12 +18,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.StreamingJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentelemetry.api.trace.Span;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -54,6 +58,32 @@ public class BaseJsonRpcProcessor implements JsonRpcProcessor {
       final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
       LOG.error(String.format("Error processing method: %s %s", method.getName(), params), e);
       return new JsonRpcErrorResponse(id, RpcErrorType.INTERNAL_ERROR);
+    }
+  }
+
+  @Override
+  public void streamProcess(
+      final JsonRpcRequestId id,
+      final JsonRpcMethod method,
+      final Span metricSpan,
+      final JsonRpcRequestContext request,
+      final OutputStream out,
+      final ObjectMapper mapper)
+      throws IOException {
+    try {
+      ((StreamingJsonRpcMethod) method).streamResponse(request, out, mapper);
+    } catch (final InvalidJsonRpcParameters e) {
+      LOG.debug(
+          "Invalid Params {} for method: {}, error: {}",
+          Arrays.toString(request.getRequest().getParams()),
+          method.getName(),
+          e.getRpcErrorType().getMessage(),
+          e);
+      mapper.writeValue(out, new JsonRpcErrorResponse(id, e.getRpcErrorType()));
+    } catch (final RuntimeException e) {
+      final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
+      LOG.error(String.format("Error processing method: %s %s", method.getName(), params), e);
+      mapper.writeValue(out, new JsonRpcErrorResponse(id, RpcErrorType.INTERNAL_ERROR));
     }
   }
 }
