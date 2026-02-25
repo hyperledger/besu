@@ -178,7 +178,8 @@ public class JsonRpcResponseUtils {
       final String value,
       final String v,
       final String r,
-      final String s) {
+      final String s,
+      final String blockTimestamp) {
 
     final Transaction transaction =
         Transaction.builder()
@@ -208,7 +209,7 @@ public class JsonRpcResponseUtils {
             Optional.ofNullable(baseFee),
             Hash.fromHexString(blockHash),
             unsignedInt(transactionIndex),
-            0L));
+            unsignedLong(blockTimestamp)));
   }
 
   private int unsignedInt(final String value) {
