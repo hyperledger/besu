@@ -86,6 +86,16 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
     this.blockProcessingContext = null; // For testing only
   }
 
+  @VisibleForTesting
+  public ParallelizedConcurrentTransactionProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionCollisionDetector transactionCollisionDetector,
+      final BlockProcessingContext blockProcessingContext) {
+    this.transactionProcessor = transactionProcessor;
+    this.transactionCollisionDetector = transactionCollisionDetector;
+    this.blockProcessingContext = blockProcessingContext;
+  }
+
   @Override
   @VisibleForTesting
   protected ParallelizedTransactionContext runTransaction(
