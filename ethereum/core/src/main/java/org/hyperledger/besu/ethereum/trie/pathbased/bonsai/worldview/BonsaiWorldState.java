@@ -316,6 +316,24 @@ public class BonsaiWorldState extends PathBasedWorldState {
         // block. A not-uncommon DeFi bot pattern.
         continue;
       }
+
+      if (maybeStateUpdater.isEmpty()) {
+        // When computing root hash only (e.g. frontierRootHash), we don't need to enumerate
+        // every storage slot. updateAccountStorageState already handles cleared accounts by
+        // starting from EMPTY_TRIE_HASH. We just need to ensure storageToUpdate has an entry
+        // so updateAccountStorageState gets called for this address.
+        worldStateUpdater
+            .getStorageToUpdate()
+            .computeIfAbsent(
+                address,
+                add ->
+                    new StorageConsumingMap<>(
+                        address,
+                        new ConcurrentHashMap<>(),
+                        worldStateUpdater.getStoragePreloader()));
+        continue;
+      }
+
       final Hash addressHash = address.addressHash();
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
@@ -367,14 +385,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
   @Override
   public Hash frontierRootHash() {
-    return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx,
-                noOpTx,
-                worldStateKeyValueStorage.getFlatDbStrategy(),
-                worldStateKeyValueStorage.getComposedWorldStateStorage())),
-        accumulator.copy());
+    return calculateRootHash(Optional.empty(), accumulator.copy());
   }
 
   @Override
