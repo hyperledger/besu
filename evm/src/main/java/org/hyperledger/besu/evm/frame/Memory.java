@@ -16,6 +16,9 @@ package org.hyperledger.besu.evm.frame;
 
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,6 +32,9 @@ import org.apache.tuweni.bytes.MutableBytes;
  * the Yellow Paper Revision 59dccd.
  */
 public class Memory {
+
+  private static final VarHandle LONG_BE =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
 
   // See below.
   private static final long MAX_BYTES = Integer.MAX_VALUE;
@@ -407,6 +413,38 @@ public class Memory {
     final int start = asByteIndex(location);
     ensureCapacityForBytes(start, 1);
     memBytes[start] = value;
+  }
+
+  /**
+   * Read 4 big-endian longs (32 bytes) from memory directly into a long array.
+   *
+   * @param location The offset in memory to read from.
+   * @param s The destination long array.
+   * @param off The offset in the destination array.
+   */
+  void readLimbs(final long location, final long[] s, final int off) {
+    final int start = asByteIndex(location);
+    ensureCapacityForBytes(start, 32);
+    s[off] = (long) LONG_BE.get(memBytes, start);
+    s[off + 1] = (long) LONG_BE.get(memBytes, start + 8);
+    s[off + 2] = (long) LONG_BE.get(memBytes, start + 16);
+    s[off + 3] = (long) LONG_BE.get(memBytes, start + 24);
+  }
+
+  /**
+   * Write 4 big-endian longs (32 bytes) from a long array directly into memory.
+   *
+   * @param location The offset in memory to write to.
+   * @param s The source long array.
+   * @param off The offset in the source array.
+   */
+  void writeLimbs(final long location, final long[] s, final int off) {
+    final int start = asByteIndex(location);
+    ensureCapacityForBytes(start, 32);
+    LONG_BE.set(memBytes, start, s[off]);
+    LONG_BE.set(memBytes, start + 8, s[off + 1]);
+    LONG_BE.set(memBytes, start + 16, s[off + 2]);
+    LONG_BE.set(memBytes, start + 24, s[off + 3]);
   }
 
   /**

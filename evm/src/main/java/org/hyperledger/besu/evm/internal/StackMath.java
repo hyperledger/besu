@@ -95,9 +95,11 @@ public final class StackMath {
     // Fast path: both values fit in a single limb (common case)
     if ((s[a] | s[a + 1] | s[a + 2] | s[b] | s[b + 1] | s[b + 2]) == 0) {
       long z = s[a + 3] - s[b + 3];
-      s[b] = ((~s[a + 3] & s[b + 3]) | (~(s[a + 3] ^ s[b + 3]) & z)) >>> 63;
-      s[b + 1] = s[b];
-      s[b + 2] = s[b];
+      // borrow is 0 or 1; negate to get 0 or -1L (0xFFFFFFFFFFFFFFFF) for upper limbs
+      long fill = -(((~s[a + 3] & s[b + 3]) | (~(s[a + 3] ^ s[b + 3]) & z)) >>> 63);
+      s[b] = fill;
+      s[b + 1] = fill;
+      s[b + 2] = fill;
       s[b + 3] = z;
       return top - 1;
     }

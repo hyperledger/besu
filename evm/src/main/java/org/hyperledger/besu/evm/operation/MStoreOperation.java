@@ -20,8 +20,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.StackMath;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /** The M store operation. */
 public class MStoreOperation extends AbstractOperation {
 
@@ -48,10 +46,7 @@ public class MStoreOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    // Write 32 bytes from the value slot (top-2) to memory
-    final byte[] buf = new byte[32];
-    StackMath.toBytesAt(s, top, 1, buf);
-    frame.writeMemory(location, 32, Bytes.wrap(buf), true);
+    frame.mstoreDirect(location, s, (top - 2) << 2);
     frame.setTop(top - 2);
     return new OperationResult(cost, null);
   }

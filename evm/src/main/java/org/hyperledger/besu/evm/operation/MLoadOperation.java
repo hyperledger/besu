@@ -46,9 +46,7 @@ public class MLoadOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final byte[] value = frame.readMutableMemory(location, 32, true).toArrayUnsafe();
-    // Overwrite the top slot in-place (pop offset, push value = same slot)
-    StackMath.fromBytesAt(s, top, 0, value, 0, 32);
+    frame.mloadDirect(location, s, (top - 1) << 2);
     return new OperationResult(cost, null);
   }
 }

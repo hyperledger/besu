@@ -707,6 +707,30 @@ public class MessageFrame {
   }
 
   /**
+   * Read 32 bytes from memory directly into stack limbs, bypassing intermediate buffers.
+   *
+   * @param offset The offset in memory to read from.
+   * @param s The stack long array.
+   * @param slotOff The offset in the stack array (limb index).
+   */
+  public void mloadDirect(final long offset, final long[] s, final int slotOff) {
+    memory.readLimbs(offset, s, slotOff);
+    setUpdatedMemory(offset, memory.getMutableBytes(offset, 32));
+  }
+
+  /**
+   * Write 32 bytes from stack limbs directly into memory, bypassing intermediate buffers.
+   *
+   * @param offset The offset in memory to write to.
+   * @param s The stack long array.
+   * @param slotOff The offset in the stack array (limb index).
+   */
+  public void mstoreDirect(final long offset, final long[] s, final int slotOff) {
+    memory.writeLimbs(offset, s, slotOff);
+    setUpdatedMemory(offset, memory.getMutableBytes(offset, 32));
+  }
+
+  /**
    * Write byte to memory
    *
    * @param offset The offset in memory

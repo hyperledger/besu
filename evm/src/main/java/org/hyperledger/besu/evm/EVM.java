@@ -91,6 +91,7 @@ public class EVM {
   private final EvmSpecVersion evmSpecVersion;
 
   // Optimized operation flags
+  private final boolean enableConstantinople;
   private final boolean enableShanghai;
   private final boolean enableAmsterdam;
   private final boolean enableOsaka;
@@ -117,6 +118,7 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
     this.jumpDestOnlyCodeCache = new JumpDestOnlyCodeCache(evmConfiguration);
 
+    enableConstantinople = EvmSpecVersion.CONSTANTINOPLE.ordinal() <= evmSpecVersion.ordinal();
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
     enableAmsterdam = EvmSpecVersion.AMSTERDAM.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
@@ -242,9 +244,18 @@ public class EVM {
               case 0x18 -> XorOperation.staticOperation(frame, s);
               case 0x19 -> NotOperation.staticOperation(frame, s);
               case 0x1a -> ByteOperation.staticOperation(frame, s);
-              case 0x1b -> ShlOperation.staticOperation(frame, s);
-              case 0x1c -> ShrOperation.staticOperation(frame, s);
-              case 0x1d -> SarOperation.staticOperation(frame, s);
+              case 0x1b ->
+                  enableConstantinople
+                      ? ShlOperation.staticOperation(frame, s)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0x1c ->
+                  enableConstantinople
+                      ? ShrOperation.staticOperation(frame, s)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0x1d ->
+                  enableConstantinople
+                      ? SarOperation.staticOperation(frame, s)
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x1e ->
                   enableOsaka
                       ? CountLeadingZerosOperation.staticOperation(frame, s)
