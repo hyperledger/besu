@@ -158,7 +158,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .localNodeRecordListener(
                 (previous, updated) -> {
                   // When onBoundPortResolved resolves ephemeral (port 0) UDP ports, propagate
-                  // the actual ports to NodeRecordManager so the on-disk ENR stays correct.
+                  // the resolved ports to NodeRecordManager. onDiscoveryPortResolved writes the
+                  // ENR atomically once all configured endpoints are non-zero, so concurrent
+                  // dual-stack callbacks cannot race a write against an endpoint update.
                   final Optional<Integer> ipv4ResolvedPort =
                       hasEphemeralPort(previous.getUdpAddress())
                           ? updated
@@ -175,15 +177,6 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
                           : Optional.empty();
                   if (ipv4ResolvedPort.isPresent() || ipv6ResolvedPort.isPresent()) {
                     nodeRecordManager.onDiscoveryPortResolved(ipv4ResolvedPort, ipv6ResolvedPort);
-                  }
-                  // In dual-stack mode both UDP servers bind concurrently, each firing this
-                  // listener once.  Defer the on-disk ENR write until the updated library
-                  // record shows no remaining port-0 UDP addresses, so the seq counter only
-                  // increments once for the combined port-resolution event.
-                  final boolean udpStillPending = hasEphemeralPort(updated.getUdpAddress());
-                  final boolean udp6StillPending = hasEphemeralPort(updated.getUdp6Address());
-                  if (!udpStillPending && !udp6StillPending) {
-                    nodeRecordManager.updateNodeRecord();
                   }
                 })
             // Ignore peer-reported external addresses for now (always returns Optional.empty()).
