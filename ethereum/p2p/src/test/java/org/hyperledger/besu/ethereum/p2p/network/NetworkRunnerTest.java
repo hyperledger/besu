@@ -86,6 +86,7 @@ public class NetworkRunnerTest {
 
     // Setup network mocks to allow start() to complete
     when(network.isListening()).thenReturn(true);
+    when(network.getRlpxAgent()).thenReturn(Optional.empty());
 
     BiFunction<Peer, Boolean, Optional<DisconnectMessage.DisconnectReason>> ethPeersShouldConnect =
         (peer, incoming) -> Optional.empty();

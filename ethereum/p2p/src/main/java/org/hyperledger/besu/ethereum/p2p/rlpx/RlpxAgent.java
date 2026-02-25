@@ -38,7 +38,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -64,7 +63,7 @@ public class RlpxAgent {
   private final PeerConnectionEvents connectionEvents;
   private final ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
-  private final List<ShouldConnectCallback> connectRequestSubscribers = new ArrayList<>();
+  private ShouldConnectCallback shouldConnectCallback;
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -250,10 +249,9 @@ public class RlpxAgent {
 
   private Optional<DisconnectReason> checkWhetherToConnect(
       final Peer peer, final boolean incoming) {
-    return connectRequestSubscribers.stream()
-        .map(callback -> callback.shouldConnect(peer, incoming))
-        .flatMap(Optional::stream)
-        .findFirst();
+    return shouldConnectCallback != null
+        ? shouldConnectCallback.shouldConnect(peer, incoming)
+        : Optional.empty();
   }
 
   private void setupListeners() {
@@ -333,7 +331,7 @@ public class RlpxAgent {
     if (maybeDisconnectReason.isEmpty()) {
       dispatchConnect(peerConnection);
     } else {
-      peerConnection.disconnect(DisconnectReason.UNKNOWN);
+      peerConnection.disconnect(maybeDisconnectReason.get());
     }
   }
 
@@ -345,8 +343,8 @@ public class RlpxAgent {
     connectSubscribers.subscribe(callback);
   }
 
-  public void subscribeConnectRequest(final ShouldConnectCallback callback) {
-    connectRequestSubscribers.add(callback);
+  public void setShouldConnectCallback(final ShouldConnectCallback callback) {
+    this.shouldConnectCallback = callback;
   }
 
   public void subscribeDisconnect(final DisconnectCallback callback) {

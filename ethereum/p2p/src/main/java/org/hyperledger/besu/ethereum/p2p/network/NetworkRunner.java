@@ -51,18 +51,15 @@ public class NetworkRunner implements AutoCloseable {
   private final List<ProtocolManager> protocolManagers;
   private final LabelledMetric<Counter> inboundMessageCounter;
   private final LabelledMetric<Counter> inboundBytesCounter;
-  private final BiFunction<Peer, Boolean, Optional<DisconnectReason>> ethPeersShouldConnect;
 
   private NetworkRunner(
       final P2PNetwork network,
       final Map<String, SubProtocol> subProtocols,
       final List<ProtocolManager> protocolManagers,
-      final MetricsSystem metricsSystem,
-      final BiFunction<Peer, Boolean, Optional<DisconnectReason>> ethPeersShouldConnect) {
+      final MetricsSystem metricsSystem) {
     this.network = network;
     this.protocolManagers = protocolManagers;
     this.subProtocols = subProtocols;
-    this.ethPeersShouldConnect = ethPeersShouldConnect;
     this.inboundMessageCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
@@ -179,8 +176,6 @@ public class NetworkRunner implements AutoCloseable {
             protocolManager.handleNewConnection(connection);
           });
 
-      network.subscribeConnectRequest(ethPeersShouldConnect::apply);
-
       network.subscribeDisconnect(
           (connection, disconnectReason, initiatedByPeer) -> {
             if (Collections.disjoint(
@@ -197,7 +192,7 @@ public class NetworkRunner implements AutoCloseable {
     stop();
   }
 
-  public RlpxAgent getRlpxAgent() {
+  public Optional<RlpxAgent> getRlpxAgent() {
     return network.getRlpxAgent();
   }
 
@@ -224,8 +219,10 @@ public class NetworkRunner implements AutoCloseable {
         }
       }
       final P2PNetwork network = networkProvider.build(caps);
-      return new NetworkRunner(
-          network, subProtocolMap, protocolManagers, metricsSystem, ethPeersShouldConnect);
+      network
+          .getRlpxAgent()
+          .ifPresent(agent -> agent.setShouldConnectCallback(ethPeersShouldConnect::apply));
+      return new NetworkRunner(network, subProtocolMap, protocolManagers, metricsSystem);
     }
 
     public Builder protocolManagers(final List<ProtocolManager> protocolManagers) {

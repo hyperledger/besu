@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
@@ -317,8 +316,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public RlpxAgent getRlpxAgent() {
-    return rlpxAgent;
+  public Optional<RlpxAgent> getRlpxAgent() {
+    return Optional.of(rlpxAgent);
   }
 
   @Override
@@ -418,11 +417,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   @Override
   public void subscribeConnect(final ConnectCallback callback) {
     rlpxAgent.subscribeConnect(callback);
-  }
-
-  @Override
-  public void subscribeConnectRequest(final ShouldConnectCallback callback) {
-    rlpxAgent.subscribeConnectRequest(callback);
   }
 
   @Override
