@@ -17,7 +17,10 @@ package org.hyperledger.besu.evm.internal;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.UInt256;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 
 /**
  * Static utility operating directly on the flat {@code long[]} operand stack. Each slot occupies 4
@@ -28,6 +31,27 @@ import java.math.BigInteger;
  * (operation) is responsible for underflow/overflow checks before calling.
  */
 public final class StackMath {
+
+  private static final VarHandle LONG_BE =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
+  private static final VarHandle INT_BE =
+      MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
+
+  private static long getLong(final byte[] b, final int off) {
+    return (long) LONG_BE.get(b, off);
+  }
+
+  private static void putLong(final byte[] b, final int off, final long v) {
+    LONG_BE.set(b, off, v);
+  }
+
+  private static int getInt(final byte[] b, final int off) {
+    return (int) INT_BE.get(b, off);
+  }
+
+  private static void putInt(final byte[] b, final int off, final int v) {
+    INT_BE.set(b, off, v);
+  }
 
   private StackMath() {}
 
@@ -615,29 +639,9 @@ public final class StackMath {
     byte[] bytes = addr.getBytes().toArrayUnsafe();
     // Address is 20 bytes: fits in u2(4 bytes) + u1(8 bytes) + u0(8 bytes)
     s[dst] = 0; // u3
-    s[dst + 1] = // u2 (top 4 bytes of address)
-        ((bytes[0] & 0xFFL) << 24)
-            | ((bytes[1] & 0xFFL) << 16)
-            | ((bytes[2] & 0xFFL) << 8)
-            | (bytes[3] & 0xFFL);
-    s[dst + 2] = // u1
-        ((bytes[4] & 0xFFL) << 56)
-            | ((bytes[5] & 0xFFL) << 48)
-            | ((bytes[6] & 0xFFL) << 40)
-            | ((bytes[7] & 0xFFL) << 32)
-            | ((bytes[8] & 0xFFL) << 24)
-            | ((bytes[9] & 0xFFL) << 16)
-            | ((bytes[10] & 0xFFL) << 8)
-            | (bytes[11] & 0xFFL);
-    s[dst + 3] = // u0
-        ((bytes[12] & 0xFFL) << 56)
-            | ((bytes[13] & 0xFFL) << 48)
-            | ((bytes[14] & 0xFFL) << 40)
-            | ((bytes[15] & 0xFFL) << 32)
-            | ((bytes[16] & 0xFFL) << 24)
-            | ((bytes[17] & 0xFFL) << 16)
-            | ((bytes[18] & 0xFFL) << 8)
-            | (bytes[19] & 0xFFL);
+    s[dst + 1] = getInt(bytes, 0) & 0xFFFFFFFFL; // u2 (top 4 bytes)
+    s[dst + 2] = getLong(bytes, 4); // u1
+    s[dst + 3] = getLong(bytes, 12); // u0
     return top + 1;
   }
 
@@ -740,14 +744,7 @@ public final class StackMath {
 
   /** Decode 8 big-endian bytes from src[off] into a long. */
   private static long bytesToLong(final byte[] src, final int off) {
-    return ((src[off] & 0xFFL) << 56)
-        | ((src[off + 1] & 0xFFL) << 48)
-        | ((src[off + 2] & 0xFFL) << 40)
-        | ((src[off + 3] & 0xFFL) << 32)
-        | ((src[off + 4] & 0xFFL) << 24)
-        | ((src[off + 5] & 0xFFL) << 16)
-        | ((src[off + 6] & 0xFFL) << 8)
-        | (src[off + 7] & 0xFFL);
+    return getLong(src, off);
   }
 
   /** Extract 20-byte Address from slot at depth. */
@@ -755,15 +752,9 @@ public final class StackMath {
     final int off = (top - 1 - depth) << 2;
     byte[] bytes = new byte[20];
     // u2 has top 4 bytes, u1 has next 8, u0 has last 8
-    long u2 = s[off + 1];
-    long u1 = s[off + 2];
-    long u0 = s[off + 3];
-    bytes[0] = (byte) (u2 >>> 24);
-    bytes[1] = (byte) (u2 >>> 16);
-    bytes[2] = (byte) (u2 >>> 8);
-    bytes[3] = (byte) u2;
-    longIntoBytes(bytes, 4, u1);
-    longIntoBytes(bytes, 12, u0);
+    putInt(bytes, 0, (int) s[off + 1]);
+    putLong(bytes, 4, s[off + 2]);
+    putLong(bytes, 12, s[off + 3]);
     return Address.wrap(org.apache.tuweni.bytes.Bytes.wrap(bytes));
   }
 
@@ -815,14 +806,7 @@ public final class StackMath {
   }
 
   private static void longIntoBytes(final byte[] bytes, final int offset, final long value) {
-    bytes[offset] = (byte) (value >>> 56);
-    bytes[offset + 1] = (byte) (value >>> 48);
-    bytes[offset + 2] = (byte) (value >>> 40);
-    bytes[offset + 3] = (byte) (value >>> 32);
-    bytes[offset + 4] = (byte) (value >>> 24);
-    bytes[offset + 5] = (byte) (value >>> 16);
-    bytes[offset + 6] = (byte) (value >>> 8);
-    bytes[offset + 7] = (byte) value;
+    putLong(bytes, offset, value);
   }
 
   /** Unsigned less-than comparison of two slots. */
