@@ -212,7 +212,15 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .thenApply(
             v -> {
               final int localPort =
-                  system.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
+                  system
+                      .getLocalNodeRecord()
+                      .getUdpAddress()
+                      .or(() -> system.getLocalNodeRecord().getUdp6Address())
+                      .orElseThrow(
+                          () ->
+                              new IllegalStateException(
+                                  "Local ENR has neither udp nor udp6 address after start"))
+                      .getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
