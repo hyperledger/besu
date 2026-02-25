@@ -162,28 +162,48 @@ public class NodeRecordManager {
    * Updates the stored discovery endpoints with the actual OS-assigned ports after an ephemeral
    * (port 0) bind, then writes the ENR to disk once all configured endpoints are resolved.
    *
+   * <p>Each argument carries the resolved port from the corresponding ENR UDP field ({@code udp}
+   * for IPv4, {@code udp6} for IPv6). The argument that maps to the <em>primary</em> endpoint
+   * depends on the primary's address family: for an IPv4 primary the {@code udp} port is used; for
+   * an IPv6-only primary the {@code udp6} port is used. The {@code udp6} port is additionally used
+   * for the dual-stack secondary when the primary is IPv4.
+   *
    * <p>Each argument is only applied when present and only if the currently stored port is 0. The
    * ENR write is performed atomically under the same lock as the endpoint update, so concurrent
    * callbacks from dual-stack UDP servers cannot interleave a write between an endpoint update.
    *
-   * @param resolvedIpv4Port the actual OS-assigned IPv4 UDP port, or empty if unchanged
-   * @param resolvedIpv6Port the actual OS-assigned IPv6 UDP port, or empty if unchanged
+   * @param resolvedUdpPort the OS-assigned port for the {@code udp} ENR field, or empty if
+   *     unchanged
+   * @param resolvedUdp6Port the OS-assigned port for the {@code udp6} ENR field, or empty if
+   *     unchanged
    */
   public void onDiscoveryPortResolved(
-      final Optional<Integer> resolvedIpv4Port, final Optional<Integer> resolvedIpv6Port) {
+      final Optional<Integer> resolvedUdpPort, final Optional<Integer> resolvedUdp6Port) {
     lock.lock();
     try {
-      if (resolvedIpv4Port.isPresent() && primaryEndpoint.discoveryPort() == 0) {
+      final boolean primaryIsIpv4 =
+          Bytes.of(InetAddresses.forString(primaryEndpoint.host()).getAddress()).size() == 4;
+
+      // Route the resolved port to the primary endpoint based on its address family.
+      // In single-stack IPv6 mode the primary endpoint is IPv6, so its port arrives in
+      // resolvedUdp6Port — not resolvedUdpPort as the field name might suggest.
+      final Optional<Integer> resolvedPrimaryPort =
+          primaryIsIpv4 ? resolvedUdpPort : resolvedUdp6Port;
+      if (resolvedPrimaryPort.isPresent() && primaryEndpoint.discoveryPort() == 0) {
         primaryEndpoint =
             new HostEndpoint(
-                primaryEndpoint.host(), resolvedIpv4Port.get(), primaryEndpoint.tcpPort());
+                primaryEndpoint.host(), resolvedPrimaryPort.get(), primaryEndpoint.tcpPort());
       }
-      if (resolvedIpv6Port.isPresent()
+
+      // The dual-stack secondary is always IPv6, so its port always arrives in resolvedUdp6Port.
+      if (primaryIsIpv4
+          && resolvedUdp6Port.isPresent()
           && ipv6Endpoint.map(ep -> ep.discoveryPort() == 0).orElse(false)) {
         ipv6Endpoint =
             ipv6Endpoint.map(
-                ep -> new HostEndpoint(ep.host(), resolvedIpv6Port.get(), ep.tcpPort()));
+                ep -> new HostEndpoint(ep.host(), resolvedUdp6Port.get(), ep.tcpPort()));
       }
+
       // Write the ENR only when every configured UDP endpoint has a real (non-zero) port.
       // In dual-stack mode the two UDP servers fire their callbacks concurrently; deferring
       // until both are resolved ensures the seq counter increments exactly once.

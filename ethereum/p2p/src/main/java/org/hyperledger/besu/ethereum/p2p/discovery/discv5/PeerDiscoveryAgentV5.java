@@ -161,22 +161,26 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
                   // the resolved ports to NodeRecordManager. onDiscoveryPortResolved writes the
                   // ENR atomically once all configured endpoints are non-zero, so concurrent
                   // dual-stack callbacks cannot race a write against an endpoint update.
-                  final Optional<Integer> ipv4ResolvedPort =
+                  // resolvedUdpPort corresponds to the ENR `udp` field (IPv4 or IPv4-primary);
+                  // resolvedUdp6Port corresponds to the ENR `udp6` field (IPv6 primary or
+                  // dual-stack secondary). NodeRecordManager routes each to the correct endpoint
+                  // based on the primary's address family.
+                  final Optional<Integer> resolvedUdpPort =
                       hasEphemeralPort(previous.getUdpAddress())
                           ? updated
                               .getUdpAddress()
                               .filter(a -> a.getPort() != 0)
                               .map(InetSocketAddress::getPort)
                           : Optional.empty();
-                  final Optional<Integer> ipv6ResolvedPort =
+                  final Optional<Integer> resolvedUdp6Port =
                       hasEphemeralPort(previous.getUdp6Address())
                           ? updated
                               .getUdp6Address()
                               .filter(a -> a.getPort() != 0)
                               .map(InetSocketAddress::getPort)
                           : Optional.empty();
-                  if (ipv4ResolvedPort.isPresent() || ipv6ResolvedPort.isPresent()) {
-                    nodeRecordManager.onDiscoveryPortResolved(ipv4ResolvedPort, ipv6ResolvedPort);
+                  if (resolvedUdpPort.isPresent() || resolvedUdp6Port.isPresent()) {
+                    nodeRecordManager.onDiscoveryPortResolved(resolvedUdpPort, resolvedUdp6Port);
                   }
                 })
             // Ignore peer-reported external addresses for now (always returns Optional.empty()).
