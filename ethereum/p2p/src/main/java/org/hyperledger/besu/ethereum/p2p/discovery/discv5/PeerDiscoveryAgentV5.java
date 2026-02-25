@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
@@ -162,7 +163,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
             // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based on
             // peer permissions is not yet integrated; all addresses are currently allowed.
-            .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL);
+            .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
+            .bootnodes(
+                discoveryConfig.getEnrBootnodes().stream()
+                    .map(EthereumNodeRecord::nodeRecord)
+                    .toList());
 
     if (discoveryConfig.isDualStackEnabled()) {
       final InetSocketAddress ipv4 =
