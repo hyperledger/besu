@@ -232,6 +232,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2550,11 +2551,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       try {
         final List<String> resolvedBootNodeArgs =
             BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
-        if (resolvedBootNodeArgs.getFirst().startsWith("enr:")) {
-          builder.setEnrBootNodes(
-              resolvedBootNodeArgs.stream().map(EthereumNodeRecord::fromEnr).toList());
+        if(!resolvedBootNodeArgs.isEmpty()) {
+          if (resolvedBootNodeArgs.getFirst().startsWith("enr:")) {
+            builder.setEnrBootNodes(
+                    resolvedBootNodeArgs.stream().map(EthereumNodeRecord::fromEnr).toList());
+          } else {
+            listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+          }
         } else {
-          listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+          listBootNodes = Collections.emptyList();
         }
 
       } catch (final BootnodeResolutionException e) {
