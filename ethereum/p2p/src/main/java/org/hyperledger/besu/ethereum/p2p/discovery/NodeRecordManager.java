@@ -182,7 +182,7 @@ public class NodeRecordManager {
     lock.lock();
     try {
       final boolean primaryIsIpv4 =
-          Bytes.of(InetAddresses.forString(primaryEndpoint.host()).getAddress()).size() == 4;
+          InetAddresses.forString(primaryEndpoint.host()).getAddress().length == 4;
 
       // Route the resolved port to the primary endpoint based on its address family.
       // In single-stack IPv6 mode the primary endpoint is IPv6, so its port arrives in

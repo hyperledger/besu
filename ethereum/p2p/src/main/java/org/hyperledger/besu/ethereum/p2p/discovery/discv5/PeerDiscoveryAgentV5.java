@@ -211,11 +211,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .start()
         .thenApply(
             v -> {
+              final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
               final int localPort =
-                  system
-                      .getLocalNodeRecord()
+                  startedNodeRecord
                       .getUdpAddress()
-                      .or(() -> system.getLocalNodeRecord().getUdp6Address())
+                      .or(startedNodeRecord::getUdp6Address)
                       .orElseThrow(
                           () ->
                               new IllegalStateException(
