@@ -212,6 +212,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .thenApply(
             v -> {
               final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
+              // Return the IPv4 UDP port when available (single-stack IPv4 or dual-stack).
+              // The caller uses this port for UPnP IPv4 port forwarding and for the local
+              // enode URL, both of which are IPv4-only concerns. The fallback to udp6 covers
+              // single-stack IPv6 mode where no IPv4 udp field exists in the ENR.
               final int localPort =
                   startedNodeRecord
                       .getUdpAddress()
