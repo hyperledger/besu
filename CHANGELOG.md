@@ -3,7 +3,6 @@
 ## Unreleased
 
 ### Breaking Changes
-    - Fast Sync is no longer supported, snap sync can be used instead [#9814](https://github.com/hyperledger/besu/pull/9814)
 
 ### Upcoming Breaking Changes
 
@@ -14,8 +13,6 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
   - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
-- CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync: [#9857](https://github.com/hyperledger/besu/pull/9857), [#9814](https://github.com/hyperledger/besu/pull/9814)
-  - `--Xcheckpoint-post-merge-enabled`
 
 ### Additions and Improvements
 
@@ -45,6 +42,8 @@
   - Renamed `--Xchain-pruning-blocks-retained-limit` to `--Xchain-pruning-retained-minimum` (applies to both blocks and BALs)
     - New default value: `113056` blocks (3533 epochs × 32 slots, based on Weak Subjectivity Period)
     - Previous default: `7200` blocks
+  - Fast Sync is no longer supported, snap sync can be used instead [#9814](https://github.com/hyperledger/besu/pull/9814)
+  - CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync: [#9814](https://github.com/hyperledger/besu/pull/9814)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
@@ -54,10 +53,6 @@
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
     - Proof of Work consensus (PoW)
     - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
-    - Fast Sync
-- CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync, as SNAP sync performance is better. The following CLI option is deprecated: [#9857](https://github.com/hyperledger/besu/pull/9857), [#9814](https://github.com/hyperledger/besu/pull/9814)
-  - `--Xcheckpoint-post-merge-enabled`
-
 
 ### Additions and Improvements
 - Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
