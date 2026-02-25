@@ -3,7 +3,30 @@
 ## Unreleased
 
 ### Breaking Changes
+- eth_simulateV1 returns BLOCK_NOT_FOUND instead of null success response when called with a future block [#9837](https://github.com/hyperledger/besu/pull/9837)
+- eth_simulateV1: when validation is enabled, map UPFRONT_COST_EXCEEDS_BALANCE (-38014) error code to -32602 [#9837](https://github.com/hyperledger/besu/pull/9837)
+
+### Upcoming Breaking Changes
+- RPC changes to enhance compatibility with other ELs
+  - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
+  - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+
+### Bug fixes
+- Allow nonce to be max value when `isAllowFutureNonce` is true [#9759](https://github.com/hyperledger/besu/pull/9759)
+
+### Additions and Improvements
+- Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
+
+## 26.2.0
+
+### Breaking Changes
 - ETC Classic support in Besu is removed. This includes all ETC related hardforks including Mordor and Spiral. [#9671](https://github.com/hyperledger/besu/pull/9671)
+- Forest db subcommands `x-backup-state` and `x-restore-state` are removed [#9821](https://github.com/hyperledger/besu/pull/9821)
+- Omit totalDifficulty from post-merge blockResults [#9836](https://github.com/hyperledger/besu/pull/9836)
 - **Chain pruning CLI options have been redesigned with new behavior:** [#9637](https://github.com/hyperledger/besu/pull/9637)
   - `--Xchain-pruning-enabled` now accepts three strategy values instead of boolean:
     - `ALL` - prunes both blocks and BALs (replaces the old `--Xchain-pruning-enabled=true`)
@@ -22,6 +45,8 @@
   - Renamed `--Xchain-pruning-blocks-retained-limit` to `--Xchain-pruning-retained-minimum` (applies to both blocks and BALs)
     - New default value: `113056` blocks (3533 epochs × 32 slots, based on Weak Subjectivity Period)
     - Previous default: `7200` blocks
+  - Fast Sync is no longer supported, snap sync can be used instead [#9814](https://github.com/hyperledger/besu/pull/9814)
+  - CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync: [#9814](https://github.com/hyperledger/besu/pull/9814)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
@@ -29,10 +54,8 @@
   - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
-    - ETC (Ethereum Classic) network support
     - Proof of Work consensus (PoW)
     - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
-    - Fast Sync
 
 ### Additions and Improvements
 - Support substring and glob matching for `--test-name` in `block-test` evmtool subcommand [#9790](https://github.com/hyperledger/besu/pull/9790)
@@ -45,8 +68,11 @@
 
 #### Performance
 - EVM optimisations - Improves 70% of EEST benchmarks [#9775](https://github.com/hyperledger/besu/pull/9775)
+- EVM optimisations - Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 
 ### Bug fixes
+- Fix DiscV5 ENR `tcp`/`tcp6` fields: previously these reflected the UDP discovery bind port instead of the actual RLPx listening port; ENR initialisation is now deferred until the RLPx TCP port is known [#9873](https://github.com/hyperledger/besu/pull/9873)
+- Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
 - Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
 
