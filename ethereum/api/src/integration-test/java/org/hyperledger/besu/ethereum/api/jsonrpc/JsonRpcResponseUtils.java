@@ -207,7 +207,8 @@ public class JsonRpcResponseUtils {
             unsignedLong(blockNumber),
             Optional.ofNullable(baseFee),
             Hash.fromHexString(blockHash),
-            unsignedInt(transactionIndex)));
+            unsignedInt(transactionIndex),
+            0L));
   }
 
   private int unsignedInt(final String value) {
