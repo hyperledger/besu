@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorl
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +64,8 @@ public class BalStateRootCalculator {
                 () ->
                     new IllegalStateException(
                         String.format(
-                            "Parent %s of block %s not found", parentHash, blockHeader.getHash())));
+                            "Parent %s of block %s not found",
+                            parentHash, blockHeader.getBlockHash())));
     final BonsaiWorldState ws =
         (BonsaiWorldState)
             protocolContext
