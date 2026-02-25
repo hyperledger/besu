@@ -2550,7 +2550,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       try {
         final List<String> resolvedBootNodeArgs =
             BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
-        listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+        if (resolvedBootNodeArgs.getFirst().startsWith("enr:")) {
+          builder.setEnrBootNodes(
+              resolvedBootNodeArgs.stream().map(EthereumNodeRecord::fromEnr).toList());
+        } else {
+          listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+        }
 
       } catch (final BootnodeResolutionException e) {
         throw new ParameterException(commandLine, e.getMessage(), e);
