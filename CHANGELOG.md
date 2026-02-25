@@ -3,6 +3,25 @@
 ## Unreleased
 
 ### Breaking Changes
+
+### Upcoming Breaking Changes
+
+- RPC changes to enhance compatibility with other ELs
+  - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
+  - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
+  - Fast Sync
+- CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync, as SNAP sync performance is better. The following CLI option is deprecated: [#9857](https://github.com/hyperledger/besu/pull/9857), [#9814](https://github.com/hyperledger/besu/pull/9814)
+  - `--Xcheckpoint-post-merge-enabled`
+
+### Additions and Improvements
+
+## 26.2.0
+
+### Breaking Changes
 - ETC Classic support in Besu is removed. This includes all ETC related hardforks including Mordor and Spiral. [#9671](https://github.com/hyperledger/besu/pull/9671)
 - eth_simulateV1 returns BLOCK_NOT_FOUND instead of null success response when called with a future block [#9837](https://github.com/hyperledger/besu/pull/9837)
 - eth_simulateV1: when validation is enabled, map UPFRONT_COST_EXCEEDS_BALANCE (-38014) error code to -32602 [#9837](https://github.com/hyperledger/besu/pull/9837)
