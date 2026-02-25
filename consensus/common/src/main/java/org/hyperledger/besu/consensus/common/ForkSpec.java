@@ -27,8 +27,11 @@ public class ForkSpec<C> {
   /** The constant COMPARATOR. */
   public static final Comparator<ForkSpec<?>> COMPARATOR = Comparator.comparing(ForkSpec::getBlock);
 
+  /** Fork schedule type (block or time) */
   public enum ForkScheduleType {
+    /** Block fork type (i.e pre-Shanghai) */
     BLOCK,
+    /** Time fork type (i.e. Shanghai and beyond) */
     TIME
   }
 
