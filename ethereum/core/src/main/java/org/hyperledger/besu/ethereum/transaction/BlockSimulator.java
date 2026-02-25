@@ -261,7 +261,6 @@ public class BlockSimulator {
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     Optional<AccessLocationTracker> preExecutionAccessLocationTracker =

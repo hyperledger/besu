@@ -156,7 +156,6 @@ public class JsonRpcHttpServiceTestBase {
                 ethPeersMock,
                 vertx,
                 mock(ApiConfiguration.class),
-                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());

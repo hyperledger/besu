@@ -2,6 +2,15 @@ name: bft-soak-test
 on:
   workflow_dispatch:
     inputs:
+      consensus-type:
+        description: 'Consensus type to test'
+        required: false
+        default: 'qbft'
+        type: choice
+        options:
+          - all
+          - qbft
+          - ibft2
       soak-time-mins:
         description: 'Duration of soak test in minutes (minimum 60)'
         required: false
@@ -13,7 +22,7 @@ env:
 
 jobs:
   bft-soak-test:
-    name: "BFT Soak Test"
+    name: "BFT Soak Test (${{ inputs.consensus-type }})"
     runs-on: ubuntu-22.04
     timeout-minutes: 180
     permissions:
@@ -34,16 +43,16 @@ jobs:
         with:
           cache-disabled: true
       - name: run BFT soak test
-        run: ./gradlew :acceptance-tests:tests:acceptanceTestBftSoak -Dacctests.soakTimeMins=${{ inputs['soak-time-mins'] }}
+        run: ./gradlew :acceptance-tests:tests:acceptanceTestBftSoak -Dacctests.soakTimeMins=${{ inputs['soak-time-mins'] }} -Dacctests.consensusType=${{ inputs.consensus-type }}
       - name: Upload BFT Soak Test HTML Reports
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always()
         with:
-          name: bft-soak-test-html-reports
+          name: bft-soak-test-html-reports-${{ inputs.consensus-type }}
           path: 'acceptance-tests/tests/build/reports/tests/**'
       - name: Upload BFT Soak Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always()
         with:
-          name: bft-soak-test-results
+          name: bft-soak-test-results-${{ inputs.consensus-type }}
           path: 'acceptance-tests/tests/build/test-results/**/TEST-*.xml'

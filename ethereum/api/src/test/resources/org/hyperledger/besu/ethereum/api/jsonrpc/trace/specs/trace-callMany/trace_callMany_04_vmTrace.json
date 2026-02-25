@@ -190,7 +190,7 @@
           "pc" : 5,
           "sub" : null
         }, {
-          "cost" : 5000,
+          "cost" : 800,
           "ex" : {
             "mem" : null,
             "push" : [ ],
@@ -198,7 +198,7 @@
               "key" : "0x1",
               "val" : "0x3"
             },
-            "used" : 16750630
+            "used" : 16754830
           },
           "pc" : 6,
           "sub" : null
@@ -208,7 +208,7 @@
             "mem" : null,
             "push" : [ "0x60" ],
             "store" : null,
-            "used" : 16750627
+            "used" : 16754827
           },
           "pc" : 7,
           "sub" : null
@@ -218,7 +218,7 @@
             "mem" : null,
             "push" : [ "0x4" ],
             "store" : null,
-            "used" : 16750624
+            "used" : 16754824
           },
           "pc" : 9,
           "sub" : null
@@ -228,7 +228,7 @@
             "mem" : null,
             "push" : [ "0x40" ],
             "store" : null,
-            "used" : 16750621
+            "used" : 16754821
           },
           "pc" : 10,
           "sub" : null
@@ -238,12 +238,12 @@
             "mem" : null,
             "push" : [ "0x2" ],
             "store" : null,
-            "used" : 16750618
+            "used" : 16754818
           },
           "pc" : 12,
           "sub" : null
         }, {
-          "cost" : 5000,
+          "cost" : 800,
           "ex" : {
             "mem" : null,
             "push" : [ ],
@@ -251,7 +251,7 @@
               "key" : "0x2",
               "val" : "0x4"
             },
-            "used" : 16745618
+            "used" : 16754018
           },
           "pc" : 13,
           "sub" : null
@@ -357,7 +357,7 @@
           "pc" : 12,
           "sub" : null
         }, {
-          "cost" : 5000,
+          "cost" : 800,
           "ex" : {
             "mem" : null,
             "push" : [ ],
@@ -365,7 +365,7 @@
               "key" : "0x1",
               "val" : "0x0"
             },
-            "used" : 16749830
+            "used" : 16754030
           },
           "pc" : 13,
           "sub" : null

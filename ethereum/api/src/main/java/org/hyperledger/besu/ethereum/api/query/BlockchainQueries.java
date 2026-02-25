@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -537,11 +536,7 @@ public class BlockchainQueries {
   }
 
   public boolean isBlockAccessListSupported(final BlockHeader header) {
-    return protocolSchedule
-        .getByBlockHeader(header)
-        .getBlockAccessListFactory()
-        .map(BlockAccessListFactory::isForkActivated)
-        .orElse(false);
+    return protocolSchedule.getByBlockHeader(header).getBlockAccessListFactory().isPresent();
   }
 
   public boolean blockIsOnCanonicalChain(final Hash hash) {

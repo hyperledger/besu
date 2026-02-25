@@ -143,51 +143,51 @@ public class BesuControllerTest {
   }
 
   @Test
-  public void postMergeCheckpointSyncUsesMergeControllerBuilder() {
+  public void postMergeSnapSyncWithPoSCheckpointUsesMergeControllerBuilder() {
     final GenesisConfig postMergeGenesisFile =
         GenesisConfig.fromResource("/valid_post_merge_near_head_checkpoint.json");
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(postMergeGenesisFile, SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(postMergeGenesisFile, SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
   }
 
   @Test
-  public void defaultMainnetCheckpointSyncUsesMergeControllerBuilder() {
+  public void defaultMainnetSnapSyncUsesMergeControllerBuilder() {
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
   }
 
   @Test
-  public void postMergeCheckpointSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
+  public void postMergeSnapSyncWithTotalDifficultyEqualsTTDUsesTransitionControllerBuilder()
       throws IOException {
     final GenesisConfig mergeAtGenesisFile =
         GenesisConfig.fromResource(
             "/invalid_post_merge_checkpoint_total_difficulty_same_as_TTD.json");
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(mergeAtGenesisFile, SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(mergeAtGenesisFile, SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
 
   @Test
-  public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
+  public void preMergeSnapSyncUsesTransitionControllerBuilder() {
     final GenesisConfig checkpointPreMerge =
         GenesisConfig.fromResource("/valid_pre_merge_checkpoint.json");
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(checkpointPreMerge, SyncMode.CHECKPOINT);
+        new BesuController.Builder().fromGenesisFile(checkpointPreMerge, SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
 
   @Test
-  public void nonCheckpointSyncUsesTransitionControllerBuild() {
+  public void fullSyncUsesTransitionControllerBuild() {
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.SNAP);
+        new BesuController.Builder().fromGenesisFile(GenesisConfig.mainnet(), SyncMode.FULL);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
