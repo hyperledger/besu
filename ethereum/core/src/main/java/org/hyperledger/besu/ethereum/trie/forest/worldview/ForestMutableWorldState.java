@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
@@ -179,42 +178,28 @@ public class ForestMutableWorldState implements MutableWorldState {
   public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
     final ForestWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
-    committer.computeRootAndCommit(
-        this, stateUpdater, blockHeader, WorldStateConfig.createStatefulConfigWithTrie());
+    committer.computeRoot(() -> applyAndComputeRoot(stateUpdater), this, stateUpdater, blockHeader);
   }
 
-  @Override
-  public Hash calculateOrReadRootHash(
-      final WorldStateKeyValueStorage.Updater stateUpdater,
-      final BlockHeader blockHeader,
-      final WorldStateConfig cfg) {
-
-    final ForestWorldStateKeyValueStorage.Updater forestUpdater =
-        (ForestWorldStateKeyValueStorage.Updater) stateUpdater;
-    // Store updated code
+  private Hash applyAndComputeRoot(final ForestWorldStateKeyValueStorage.Updater forestUpdater) {
     for (final Bytes code : updatedAccountCode.values()) {
       forestUpdater.putCode(code);
     }
-    // Commit account storage tries
     for (final MerkleTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
       updatedStorage.commit(
           (location, hash, value) -> forestUpdater.putAccountStorageTrieNode(hash, value));
     }
-    // Commit account updates
     accountStateTrie.commit(
         (location, hash, value) -> forestUpdater.putAccountStateTrieNode(hash, value));
 
-    // Persist preimages
     final WorldStatePreimageStorage.Updater preimageUpdater = preimageStorage.updater();
     newStorageKeyPreimages.forEach(preimageUpdater::putStorageTrieKeyPreimage);
     newAccountKeyPreimages.forEach(preimageUpdater::putAccountTrieKeyPreimage);
 
-    // Clear pending changes that we just flushed
     updatedStorageTries.clear();
     updatedAccountCode.clear();
     newStorageKeyPreimages.clear();
 
-    // Push changes to underlying storage
     preimageUpdater.commit();
     forestUpdater.commit();
 

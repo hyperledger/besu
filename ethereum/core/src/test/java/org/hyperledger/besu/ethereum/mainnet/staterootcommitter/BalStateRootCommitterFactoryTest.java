@@ -51,7 +51,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class StateRootCommitterImplBalTest {
+class BalStateRootCommitterFactoryTest {
 
   private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
@@ -106,11 +106,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -160,11 +159,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -213,11 +211,10 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(false)
             .isBalLenientOnStateRootMismatch(false)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -268,11 +265,10 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(false)
             .isBalLenientOnStateRootMismatch(false)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -319,11 +315,10 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(false)
             .isBalLenientOnStateRootMismatch(true) // Lenient mode
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -368,11 +363,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -391,53 +385,15 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
 
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.empty());
 
-    assertThat(committer).isInstanceOf(StateRootCommitterImplSync.class);
-  }
-
-  @Test
-  void factoryReturnsSync_whenBalOptimisationDisabled() {
-
-    final Address address = Address.fromHexString("0x0000000000000000000000000000000000000039");
-    final Wei newBalance = Wei.of(1_234_567L);
-
-    final BlockAccessList bal =
-        new BlockAccessList(
-            List.of(
-                new AccountChanges(
-                    address,
-                    List.of(),
-                    List.of(),
-                    List.of(new BalanceChange(0, newBalance)),
-                    List.of(),
-                    List.of())));
-
-    final BlockHeader blockHeader =
-        new BlockHeaderTestFixture()
-            .parentHash(chainHeadHeader.getHash())
-            .number(chainHeadHeader.getNumber() + 1L)
-            .buildHeader();
-
-    final BalConfiguration balConfig =
-        ImmutableBalConfiguration.builder()
-            .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(false) // Disabled
-            .balStateRootTimeout(DEFAULT_TIMEOUT)
-            .build();
-
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
-    final StateRootCommitter committer =
-        factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
-
-    assertThat(committer).isInstanceOf(StateRootCommitterImplSync.class);
+    assertThat(committer).isSameAs(StateRootCommitter.DEFAULT);
   }
 
   @Test
@@ -495,11 +451,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -539,11 +494,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -586,11 +540,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -639,11 +592,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -715,11 +667,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -783,11 +734,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -866,11 +816,10 @@ class StateRootCommitterImplBalTest {
     final BalConfiguration balConfig =
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 
@@ -927,11 +876,10 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(false) // Verification mode
             .isBalLenientOnStateRootMismatch(true) // Lenient to allow mismatch
-            .isBalOptimisationEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
-    final StateRootCommitterFactory factory = new StateRootCommitterFactoryBal(balConfig);
+    final StateRootCommitterFactory factory = new BalStateRootCommitterFactory(balConfig);
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.of(bal));
 

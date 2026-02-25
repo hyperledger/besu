@@ -20,12 +20,12 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Optional;
 
-public final class StateRootCommitterFactoryDefault implements StateRootCommitterFactory {
+public final class DefaultStateRootCommitterFactory implements StateRootCommitterFactory {
   @Override
   public StateRootCommitter forBlock(
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final Optional<BlockAccessList> maybeBal) {
-    return new StateRootCommitterImplSync();
+    return StateRootCommitter.DEFAULT;
   }
 }
