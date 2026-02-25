@@ -21,11 +21,11 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
-import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.concurrent.atomic.AtomicLong;
 

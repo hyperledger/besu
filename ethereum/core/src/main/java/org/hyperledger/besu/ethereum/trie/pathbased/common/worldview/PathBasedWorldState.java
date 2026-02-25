@@ -33,12 +33,12 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedSnap
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.Optional;
 import java.util.stream.Stream;

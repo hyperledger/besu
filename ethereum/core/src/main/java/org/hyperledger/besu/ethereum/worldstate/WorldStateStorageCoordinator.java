@@ -28,9 +28,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class WorldStateStorageCoordinator {
-  private final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage worldStateKeyValueStorage;
+  private final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage
+      worldStateKeyValueStorage;
 
-  public WorldStateStorageCoordinator(final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage worldStateKeyValueStorage) {
+  public WorldStateStorageCoordinator(
+      final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage
+          worldStateKeyValueStorage) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
   }
 
@@ -69,8 +72,8 @@ public class WorldStateStorageCoordinator {
   }
 
   @SuppressWarnings("unchecked")
-  public <STRATEGY extends org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage> STRATEGY getStrategy(
-      final Class<STRATEGY> strategyClass) {
+  public <STRATEGY extends org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage>
+      STRATEGY getStrategy(final Class<STRATEGY> strategyClass) {
     return (STRATEGY) worldStateKeyValueStorage;
   }
 
@@ -125,7 +128,8 @@ public class WorldStateStorageCoordinator {
 
   public void applyOnMatchingStrategy(
       final DataStorageFormat dataStorageFormat,
-      final Consumer<org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage> onStrategy) {
+      final Consumer<org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage>
+          onStrategy) {
     if (getDataStorageFormat().equals(dataStorageFormat)) {
       onStrategy.accept(worldStateKeyValueStorage());
     }
@@ -133,7 +137,8 @@ public class WorldStateStorageCoordinator {
 
   public void applyOnMatchingStrategies(
       final List<DataStorageFormat> dataStorageFormats,
-      final Consumer<org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage> onStrategy) {
+      final Consumer<org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage>
+          onStrategy) {
     if (dataStorageFormats.contains(getDataStorageFormat())) {
       onStrategy.accept(worldStateKeyValueStorage());
     }
@@ -178,7 +183,8 @@ public class WorldStateStorageCoordinator {
     worldStateKeyValueStorage.clear();
   }
 
-  public org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage worldStateKeyValueStorage() {
+  public org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage
+      worldStateKeyValueStorage() {
     return worldStateKeyValueStorage;
   }
 }
