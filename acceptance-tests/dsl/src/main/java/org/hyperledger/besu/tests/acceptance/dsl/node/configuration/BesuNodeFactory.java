@@ -117,9 +117,14 @@ public class BesuNodeFactory {
   public BesuNode createNode(
       final String name, final UnaryOperator<BesuNodeConfigurationBuilder> configModifier)
       throws IOException {
-    final BesuNodeConfigurationBuilder configBuilder =
-        configModifier.apply(new BesuNodeConfigurationBuilder().name(name));
-    return create(configBuilder.build());
+    final String[] enableRpcApis = new String[] {ADMIN.name()};
+
+    final BesuNodeConfigurationBuilder builder =
+        new BesuNodeConfigurationBuilder()
+            .name(name)
+            .jsonRpcConfiguration(node.createJsonRpcWithRpcApiEnabledConfig(enableRpcApis));
+
+    return create(configModifier.apply(builder).build());
   }
 
   public Node createArchiveNodeThatMustNotBeTheBootnode(final String name) throws IOException {
