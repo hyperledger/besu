@@ -58,9 +58,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for tracer handling in ParallelizedConcurrentTransactionProcessor, specifically verifying
- * that SlowBlockTracer and EVMExecutionMetricsTracer metrics are correctly captured and merged
- * during parallel transaction execution.
+ * Tests for tracer handling in parallel transaction processing, specifically verifying that
+ * SlowBlockTracer and EVMExecutionMetricsTracer metrics are correctly captured and merged during
+ * parallel transaction execution. Tests cover both the BackgroundTracerFactory utility methods and
+ * the end-to-end integration through ParallelizedConcurrentTransactionProcessor.
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 class ParallelizedConcurrentTransactionProcessorTracerTest {
@@ -135,15 +136,13 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
     return transaction;
   }
 
-  /**
-   * Creates a processor using the 3-arg test constructor that accepts both a mock collision
-   * detector and a real blockProcessingContext.
-   */
   private ParallelizedConcurrentTransactionProcessor createProcessorWithTracer(
       final BlockProcessingContext bpc) {
     return new ParallelizedConcurrentTransactionProcessor(
         transactionProcessor, collisionDetector, bpc);
   }
+
+  // ---- BackgroundTracerFactory unit tests ----
 
   @Test
   void createBackgroundTracer_withSlowBlockTracer_createsMetricsTracer() {
@@ -193,8 +192,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
 
   @Test
   void createBackgroundTracer_withEVMExecutionMetricsTracer_createsNewInstance() {
-    // When blockProcessingContext has a standalone EVMExecutionMetricsTracer,
-    // the background tracer should be a different EVMExecutionMetricsTracer instance
     final EVMExecutionMetricsTracer originalTracer = new EVMExecutionMetricsTracer();
     final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
     when(bpc.getOperationTracer()).thenReturn(originalTracer);
@@ -235,9 +232,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
 
   @Test
   void createBackgroundTracerAggregator_replacesBothSlowBlockTracerAndMetricsTracer() {
-    // When blockProcessingContext has a TracerAggregator containing both SlowBlockTracer
-    // and EVMExecutionMetricsTracer, the background aggregator should replace both with
-    // a single EVMExecutionMetricsTracer (not add duplicates)
     final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(0);
     final EVMExecutionMetricsTracer metricsTracer = new EVMExecutionMetricsTracer();
     final OperationTracer otherTracer = mock(OperationTracer.class);
@@ -252,7 +246,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
         .thenAnswer(
             invocation -> {
               final OperationTracer tracer = invocation.getArgument(4, OperationTracer.class);
-              // The composed tracer wraps the background aggregator + miningBeneficiaryTracer
               assertThat(TracerAggregator.hasTracer(tracer, EVMExecutionMetricsTracer.class))
                   .as("Background aggregator should contain EVMExecutionMetricsTracer")
                   .isTrue();
@@ -286,13 +279,11 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
         .processTransaction(any(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 
+  // ---- End-to-end integration tests through getProcessingResult ----
+
   @Test
   void consolidateTracerResults_mergesMetricsIntoSlowBlockTracer() {
-    // When a parallel tx is confirmed (no conflict), the background EVMExecutionMetricsTracer
-    // metrics should be merged into the SlowBlockTracer's EVMExecutionMetricsTracer
     final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(0);
-
-    // Initialize the SlowBlockTracer's internal state by simulating traceStartBlock
     slowBlockTracer.traceStartBlock(null, blockHeader, null, MINING_BENEFICIARY);
 
     final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
@@ -318,7 +309,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
     assertThat(result).isPresent();
     assertThat(result.get().isSuccessful()).isTrue();
 
-    // Verify that the SlowBlockTracer's ExecutionStats had tx_count incremented
     assertThat(slowBlockTracer.getExecutionStats().getTransactionCount())
         .as("SlowBlockTracer tx_count should be incremented for confirmed parallel tx")
         .isEqualTo(1);
@@ -326,7 +316,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
 
   @Test
   void consolidateTracerResults_incrementsTxCountForMultipleConfirmedTxs() {
-    // Verify tx_count is incremented for each confirmed parallel transaction
     final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(0);
     slowBlockTracer.traceStartBlock(null, blockHeader, null, MINING_BENEFICIARY);
 
@@ -349,7 +338,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
         sameThreadExecutor,
         Optional.empty());
 
-    // Confirm all three transactions
     final List<Transaction> txs = List.of(tx0, tx1, tx2);
     for (int i = 0; i < 3; i++) {
       final Optional<TransactionProcessingResult> result =
@@ -365,14 +353,12 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
 
   @Test
   void consolidateTracerResults_doesNotIncrementTxCountForFailedTx() {
-    // When a parallel tx fails, tx_count should NOT be incremented
     final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(0);
     slowBlockTracer.traceStartBlock(null, blockHeader, null, MINING_BENEFICIARY);
 
     final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
     when(bpc.getOperationTracer()).thenReturn(slowBlockTracer);
 
-    // Make the transaction fail
     when(transactionProcessor.processTransaction(
             any(), any(), any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(
@@ -403,10 +389,8 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
         processor.getProcessingResult(
             worldState, MINING_BENEFICIARY, transaction, 0, Optional.empty(), Optional.empty());
 
-    // Failed tx should be returned as empty (needs re-execution)
     assertThat(result).isEmpty();
 
-    // tx_count should NOT have been incremented
     assertThat(slowBlockTracer.getExecutionStats().getTransactionCount())
         .as("tx_count should not be incremented for failed tx")
         .isEqualTo(0);
@@ -414,8 +398,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
 
   @Test
   void consolidateTracerResults_mergesMetricsIntoSlowBlockTracerInsideAggregator() {
-    // When the block tracer is a TracerAggregator containing a SlowBlockTracer,
-    // metrics should still be merged correctly
     final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(0);
     slowBlockTracer.traceStartBlock(null, blockHeader, null, MINING_BENEFICIARY);
 
@@ -444,7 +426,6 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
 
     assertThat(result).isPresent();
 
-    // tx_count should be incremented even when SlowBlockTracer is inside an aggregator
     assertThat(slowBlockTracer.getExecutionStats().getTransactionCount())
         .as("tx_count should be incremented when SlowBlockTracer is inside TracerAggregator")
         .isEqualTo(1);
