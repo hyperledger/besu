@@ -199,12 +199,27 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     private final KeyValueStorageTransaction trieLogStorageTransaction;
     private final FlatDbStrategy flatDbStrategy;
     private final SegmentedKeyValueStorage worldStorage;
+    private final boolean isFrontierUpdater;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
         final FlatDbStrategy flatDbStrategy,
         final SegmentedKeyValueStorage worldStorage) {
+      this(
+          composedWorldStateTransaction,
+          trieLogStorageTransaction,
+          flatDbStrategy,
+          worldStorage,
+          false);
+    }
+
+    public Updater(
+        final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
+        final KeyValueStorageTransaction trieLogStorageTransaction,
+        final FlatDbStrategy flatDbStrategy,
+        final SegmentedKeyValueStorage worldStorage,
+        final boolean isFrontierUpdater) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
@@ -212,6 +227,11 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       this.worldStorage =
           worldStorage; // An update could need to read from world storage to decide how to PUT to
       // it (i.e. Bonsai archive)
+      this.isFrontierUpdater = isFrontierUpdater;
+    }
+
+    public boolean isFrontierUpdater() {
+      return isFrontierUpdater;
     }
 
     public Updater removeCode(final Hash accountHash, final Hash codeHash) {
