@@ -126,7 +126,8 @@ public class DownloadHeaderSequenceTaskTest {
                 5,
                 false,
                 SyncMode.FAST,
-                new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList())));
+                new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()),
+                0.1));
 
     final EthMessages ethMessages = new EthMessages();
     final EthScheduler ethScheduler =

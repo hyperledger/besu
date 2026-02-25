@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNot
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.time.Clock;
@@ -94,7 +95,9 @@ public class EthPeer implements Comparable<EthPeer> {
   private final AtomicInteger lastProtocolVersion = new AtomicInteger(0);
 
   private volatile long lastRequestTimestamp = 0;
-  private static final double ALPHA = 0.1;
+  private final double alpha;
+  private final Histogram latencyEmaHistogram;
+  private final Histogram throughputEmaHistogram;
   private volatile double averageLatencyMs = -1.0;
   private volatile double averageThroughputBytesPerSecond = -1.0;
 
@@ -131,7 +134,10 @@ public class EthPeer implements Comparable<EthPeer> {
       final int maxMessageSize,
       final Clock clock,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
-      final Bytes localNodeId) {
+      final Bytes localNodeId,
+      final double alpha,
+      final Histogram latencyEmaHistogram,
+      final Histogram throughputEmaHistogram) {
     this.connection = connection;
     this.maxMessageSize = maxMessageSize;
     this.clock = clock;
@@ -140,6 +146,9 @@ public class EthPeer implements Comparable<EthPeer> {
     peerValidators.forEach(peerValidator -> validationStatus.put(peerValidator, false));
     fullyValidated.set(peerValidators.isEmpty());
 
+    this.alpha = alpha;
+    this.latencyEmaHistogram = latencyEmaHistogram;
+    this.throughputEmaHistogram = throughputEmaHistogram;
     this.requestManagers = new ConcurrentHashMap<>();
     this.localNodeId = localNodeId;
     this.id = connection.getPeer().getId();
@@ -227,23 +236,62 @@ public class EthPeer implements Comparable<EthPeer> {
     reputation.recordUsefulResponse();
   }
 
+  /**
+   * Records the latency of a request to this peer and updates the exponential moving average (EMA).
+   *
+   * <p>Uses an EMA with configurable alpha parameter to smooth latency measurements over time. On
+   * first measurement, the latency is used as the initial EMA value. Subsequent measurements are
+   * weighted according to the formula: {@code newEMA = (alpha * measurement) + ((1 - alpha) *
+   * previousEMA)}
+   *
+   * @param latencyMs the latency of the request in milliseconds
+   */
   public void recordLatency(final double latencyMs) {
+    final double previousLatency = averageLatencyMs;
     if (averageLatencyMs < 0) {
       averageLatencyMs = latencyMs;
     } else {
-      averageLatencyMs = (ALPHA * latencyMs) + ((1.0 - ALPHA) * averageLatencyMs);
+      averageLatencyMs = (alpha * latencyMs) + ((1.0 - alpha) * averageLatencyMs);
     }
+    latencyEmaHistogram.observe(averageLatencyMs);
+    LOG.atDebug()
+        .setMessage("Recorded latency for peer {}: {} ms. EMA changed from {} ms to {} ms")
+        .addArgument(this::getLoggableId)
+        .addArgument(latencyMs)
+        .addArgument(previousLatency)
+        .addArgument(averageLatencyMs)
+        .log();
   }
 
+  /**
+   * Records the throughput of a request to this peer and updates the exponential moving average
+   * (EMA).
+   *
+   * <p>Throughput is calculated as bytes transferred per second. Measurements are smoothed using
+   * EMA with the formula: {@code newEMA = (alpha * measurement) + ((1 - alpha) * previousEMA)}. On
+   * first measurement, the raw value is used. Invalid durations (≤ 0) are ignored.
+   *
+   * @param bytes the number of bytes transferred in the request
+   * @param durationMs the duration of the request in milliseconds
+   */
   public void recordThroughput(final long bytes, final double durationMs) {
     if (durationMs <= 0) return;
     double throughput = (bytes * 1000.0) / durationMs;
+    final double previousThroughput = averageThroughputBytesPerSecond;
     if (averageThroughputBytesPerSecond < 0) {
       averageThroughputBytesPerSecond = throughput;
     } else {
       averageThroughputBytesPerSecond =
-          (ALPHA * throughput) + ((1.0 - ALPHA) * averageThroughputBytesPerSecond);
+          (alpha * throughput) + ((1.0 - alpha) * averageThroughputBytesPerSecond);
     }
+    throughputEmaHistogram.observe(averageThroughputBytesPerSecond);
+    LOG.atDebug()
+        .setMessage("Recorded throughput for peer {}: {} bytes/s. EMA changed from {} to {}")
+        .addArgument(this::getLoggableId)
+        .addArgument(throughput)
+        .addArgument(previousThroughput)
+        .addArgument(averageThroughputBytesPerSecond)
+        .log();
   }
 
   public double getAverageLatencyMs() {

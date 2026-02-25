@@ -545,7 +545,10 @@ public class EthPeerTest {
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         clock,
         Collections.emptyList(),
-        Bytes.random(64));
+        Bytes.random(64),
+        0.1,
+        v -> {},
+        v -> {});
   }
 
   private MockPeerConnection.PeerSendHandler getFailOnSend() {
@@ -580,7 +583,10 @@ public class EthPeerTest {
         EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
         clock,
         permissioningProviders,
-        Bytes.random(64));
+        Bytes.random(64),
+        0.1,
+        v -> {},
+        v -> {});
   }
 
   private PeerConnection getPeerConnection(final MockPeerConnection.PeerSendHandler onSend) {

@@ -29,6 +29,7 @@ public interface EthProtocolConfiguration {
   int DEFAULT_MAX_GET_POOLED_TRANSACTIONS = 256;
   int DEFAULT_MAX_CAPABILITY = Integer.MAX_VALUE;
   int DEFAULT_MIN_CAPABILITY = 0;
+  double DEFAULT_PEER_PERFORMANCE_EMA_ALPHA = 0.1;
 
   EthProtocolConfiguration DEFAULT = ImmutableEthProtocolConfiguration.builder().build();
 
@@ -75,5 +76,10 @@ public interface EthProtocolConfiguration {
   @Value.Default
   default int getMinEthCapability() {
     return DEFAULT_MIN_CAPABILITY;
+  }
+
+  @Value.Default
+  default double getPeerPerformanceEmaAlpha() {
+    return DEFAULT_PEER_PERFORMANCE_EMA_ALPHA;
   }
 }

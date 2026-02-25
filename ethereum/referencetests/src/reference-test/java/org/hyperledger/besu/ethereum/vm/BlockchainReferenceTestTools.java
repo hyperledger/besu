@@ -276,7 +276,8 @@ public class BlockchainReferenceTestTools {
               1,
               false,
               SyncMode.FULL,
-              new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
+              new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()),
+              0.1);
       final EthContext ethContext =
           new EthContext(
               ethPeers,

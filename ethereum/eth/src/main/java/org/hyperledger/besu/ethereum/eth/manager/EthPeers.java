@@ -37,6 +37,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.Histogram;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.util.Subscribers;
@@ -86,14 +88,38 @@ public class EthPeers implements PeerSelector {
       Comparator.comparing(EthPeerImmutableAttributes::outstandingRequests)
           .thenComparing(EthPeerImmutableAttributes::lastRequestTimestamp);
 
+  /**
+   * Comparator that sorts peers by their average latency (EMA).
+   *
+   * <p>Selects peers with lower latency values, as measured by exponential moving average. Peers
+   * without latency data are treated as worst-case (0.0).
+   *
+   * <p>Note: In mainnet testing, the impact of latency-based selection was within noise margins.
+   * Future improvements could integrate peer scoring and other multi-criteria selection methods to
+   * achieve more measurable performance gains.
+   */
   public static final Comparator<EthPeerImmutableAttributes> BY_LOW_LATENCY =
       Comparator.comparing(
               (final EthPeerImmutableAttributes p) ->
-                  p.averageLatencyMs() < 0 ? Double.MAX_VALUE : p.averageLatencyMs())
+                  p.averageLatencyMs() < 0 ? 0.0 : p.averageLatencyMs())
           .reversed();
 
+  /**
+   * Comparator that sorts peers by their average throughput (EMA).
+   *
+   * <p>Selects peers with higher throughput values, as measured by exponential moving average.
+   * Peers without throughput data are treated as worst-case (MAX_VALUE to sort them last).
+   *
+   * <p>Note: In mainnet testing, the impact of throughput-based selection was within noise margins.
+   * Future improvements could integrate peer scoring and other multi-criteria selection methods to
+   * achieve more measurable performance gains.
+   */
   public static final Comparator<EthPeerImmutableAttributes> BY_HIGH_THROUGHPUT =
-      Comparator.comparing(EthPeerImmutableAttributes::averageThroughputBytesPerSecond);
+      Comparator.comparing(
+          (final EthPeerImmutableAttributes p) ->
+              p.averageThroughputBytesPerSecond() < 0
+                  ? Double.MAX_VALUE
+                  : p.averageThroughputBytesPerSecond());
 
   public static final int NODE_ID_LENGTH = 64;
   public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;
@@ -121,12 +147,16 @@ public class EthPeers implements PeerSelector {
   private final ForkIdManager forkIdManager;
   private final int snapServerTargetNumber;
   private final boolean shouldLimitRemoteConnections;
+  private final double peerPerformanceEmaAlpha;
 
   private Comparator<EthPeerImmutableAttributes> bestPeerComparator;
   private final Bytes localNodeId;
   private RlpxAgent rlpxAgent;
 
   private final Counter connectedPeersCounter;
+  private final LabelledMetric<Counter> peerSelectionCounter;
+  private final LabelledMetric<Histogram> peerLatencyEmaHistogram;
+  private final LabelledMetric<Histogram> peerThroughputEmaHistogram;
   private ChainHeadTracker tracker;
   private SnapServerChecker snapServerChecker;
   private boolean snapServerPeersNeeded = false;
@@ -144,7 +174,8 @@ public class EthPeers implements PeerSelector {
       final int maxRemotelyInitiatedConnections,
       final Boolean randomPeerPriority,
       final SyncMode syncMode,
-      final ForkIdManager forkIdManager) {
+      final ForkIdManager forkIdManager,
+      final double peerPerformanceEmaAlpha) {
     this.currentProtocolSpecSupplier = currentProtocolSpecSupplier;
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
@@ -160,6 +191,7 @@ public class EthPeers implements PeerSelector {
     this.snapServerTargetNumber =
         peerUpperBound / 2; // 50% of peers should be snap servers while snap syncing
     this.shouldLimitRemoteConnections = maxRemotelyInitiatedConnections < peerUpperBound;
+    this.peerPerformanceEmaAlpha = peerPerformanceEmaAlpha;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
@@ -186,6 +218,27 @@ public class EthPeers implements PeerSelector {
     connectedPeersCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.PEERS, "connected_total", "Total number of peers connected");
+
+    peerSelectionCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.ETHEREUM,
+            "peer_performance_selection_total",
+            "Total number of times a peer was selected",
+            "reason");
+
+    peerLatencyEmaHistogram =
+        metricsSystem.createLabelledHistogram(
+            BesuMetricCategory.ETHEREUM,
+            "peer_performance_latency_ema",
+            "Histogram of peer latency EMA",
+            new double[] {10, 50, 100, 200, 500, 1000, 5000});
+
+    peerThroughputEmaHistogram =
+        metricsSystem.createLabelledHistogram(
+            BesuMetricCategory.ETHEREUM,
+            "peer_performance_throughput_ema",
+            "Histogram of peer throughput EMA (bytes/s)",
+            new double[] {1000, 10000, 100000, 1000000, 10000000});
 
     final LabelledSuppliedMetric peerClientLabelledGauge =
         metricsSystem.createLabelledSuppliedGauge(
@@ -227,7 +280,10 @@ public class EthPeers implements PeerSelector {
                     maxMessageSize,
                     clock,
                     permissioningProviders,
-                    localNodeId));
+                    localNodeId,
+                    peerPerformanceEmaAlpha,
+                    peerLatencyEmaHistogram.labels(),
+                    peerThroughputEmaHistogram.labels()));
       }
       incompleteConnections.put(newConnection, ethPeer);
     }
@@ -405,10 +461,26 @@ public class EthPeers implements PeerSelector {
 
   public Optional<EthPeer> bestPeerMatchingCriteria(
       final Predicate<EthPeerImmutableAttributes> matchesCriteria) {
-    return streamAvailablePeers()
-        .filter(matchesCriteria)
-        .max(getBestPeerComparator())
-        .map(EthPeerImmutableAttributes::ethPeer);
+    final Optional<EthPeer> selectedPeer =
+        streamAvailablePeers()
+            .filter(matchesCriteria)
+            .max(getBestPeerComparator())
+            .map(EthPeerImmutableAttributes::ethPeer);
+
+    selectedPeer.ifPresent(
+        peer -> {
+          peerSelectionCounter.labels(getBestPeerComparator().toString()).inc();
+          LOG.atDebug()
+              .setMessage(
+                  "Selected best peer {} matching criteria using comparator {}. EMA Latency: {} ms, EMA Throughput: {} bytes/s")
+              .addArgument(peer::getLoggableId)
+              .addArgument(getBestPeerComparator())
+              .addArgument(peer::getAverageLatencyMs)
+              .addArgument(peer::getAverageThroughputBytesPerSecond)
+              .log();
+        });
+
+    return selectedPeer;
   }
 
   public void setBestPeerComparator(final Comparator<EthPeerImmutableAttributes> comparator) {
@@ -512,12 +584,28 @@ public class EthPeers implements PeerSelector {
   // Part of the PeerSelector interface, to be split apart later
   @Override
   public Optional<EthPeer> getPeer(final Predicate<EthPeerImmutableAttributes> filter) {
-    return streamAvailablePeers()
-        .filter(filter)
-        .filter(EthPeerImmutableAttributes::hasAvailableRequestCapacity)
-        .filter(EthPeerImmutableAttributes::isFullyValidated)
-        .max(getBestPeerComparator())
-        .map(EthPeerImmutableAttributes::ethPeer);
+    final Optional<EthPeer> selectedPeer =
+        streamAvailablePeers()
+            .filter(filter)
+            .filter(EthPeerImmutableAttributes::hasAvailableRequestCapacity)
+            .filter(EthPeerImmutableAttributes::isFullyValidated)
+            .max(getBestPeerComparator())
+            .map(EthPeerImmutableAttributes::ethPeer);
+
+    selectedPeer.ifPresent(
+        peer -> {
+          peerSelectionCounter.labels(getBestPeerComparator().toString()).inc();
+          LOG.atDebug()
+              .setMessage(
+                  "Selected peer {} using comparator {}. EMA Latency: {} ms, EMA Throughput: {} bytes/s")
+              .addArgument(peer::getLoggableId)
+              .addArgument(getBestPeerComparator())
+              .addArgument(peer::getAverageLatencyMs)
+              .addArgument(peer::getAverageThroughputBytesPerSecond)
+              .log();
+        });
+
+    return selectedPeer;
   }
 
   // Part of the PeerSelector interface, to be split apart later

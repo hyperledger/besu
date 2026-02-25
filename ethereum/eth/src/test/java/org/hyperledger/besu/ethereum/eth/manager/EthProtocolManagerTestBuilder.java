@@ -209,7 +209,8 @@ public class EthProtocolManagerTestBuilder {
               25,
               false,
               SyncMode.FAST,
-              forkIdManager);
+              forkIdManager,
+              0.1);
     }
     ethPeers.setChainHeadTracker(EthProtocolManagerTestUtil.getChainHeadTrackerMock());
     if (ethMessages == null) {

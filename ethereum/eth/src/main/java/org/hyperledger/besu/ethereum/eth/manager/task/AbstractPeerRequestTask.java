@@ -23,7 +23,10 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerBreachedProtocol
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
@@ -41,6 +44,8 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   private Duration timeout = DEFAULT_TIMEOUT;
   private final String protocolName;
   private final int requestCode;
+  private final LabelledMetric<Counter> taskSuccessCounter;
+  private final LabelledMetric<Counter> taskFailureCounter;
   private volatile PendingPeerRequest responseStream;
   private long startTimeNanos;
 
@@ -52,6 +57,21 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
     super(ethContext, metricsSystem);
     this.protocolName = protocolName;
     this.requestCode = requestCode;
+    this.taskSuccessCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.SYNCHRONIZER,
+            "peer_request_success_total",
+            "Total number of successful peer requests",
+            "protocol",
+            "requestCode");
+    this.taskFailureCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.SYNCHRONIZER,
+            "peer_request_failure_total",
+            "Total number of failed peer requests",
+            "protocol",
+            "requestCode",
+            "reason");
   }
 
   public AbstractPeerRequestTask<R> setTimeout(final Duration timeout) {
@@ -85,9 +105,13 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
               responseStream.get().getPeer().recordRequestTimeout(protocolName, requestCode);
             }
             result.completeExceptionally(t);
+            taskFailureCounter
+                .labels(protocolName, String.valueOf(requestCode), t.getClass().getSimpleName())
+                .inc();
           } else if (r != null) {
             // If we got a response we must have had a response stream...
             result.complete(new PeerTaskResult<>(responseStream.get().getPeer(), r));
+            taskSuccessCounter.labels(protocolName, String.valueOf(requestCode)).inc();
           }
         });
   }

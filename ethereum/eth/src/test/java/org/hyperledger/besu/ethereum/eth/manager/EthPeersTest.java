@@ -142,11 +142,11 @@ public class EthPeersTest {
     assertThat(EthPeers.BY_LOW_LATENCY.compare(attrA, attrB)).isGreaterThan(0);
     assertThat(EthPeers.BY_LOW_LATENCY.compare(attrB, attrA)).isLessThan(0);
 
-    // Peer with unknown latency should be worse than any known latency
+    // Peer with unknown latency should be better than any known latency (optimistic sampling)
     final EthPeer peerC =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
     final EthPeerImmutableAttributes attrC = EthPeerImmutableAttributes.from(peerC);
-    assertThat(EthPeers.BY_LOW_LATENCY.compare(attrA, attrC)).isGreaterThan(0);
+    assertThat(EthPeers.BY_LOW_LATENCY.compare(attrA, attrC)).isLessThan(0);
   }
 
   @Test
@@ -165,6 +165,12 @@ public class EthPeersTest {
     // Larger throughput is better
     assertThat(EthPeers.BY_HIGH_THROUGHPUT.compare(attrA, attrB)).isGreaterThan(0);
     assertThat(EthPeers.BY_HIGH_THROUGHPUT.compare(attrB, attrA)).isLessThan(0);
+
+    // Peer with unknown throughput should be better than any known throughput (optimistic sampling)
+    final EthPeer peerC =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000).getEthPeer();
+    final EthPeerImmutableAttributes attrC = EthPeerImmutableAttributes.from(peerC);
+    assertThat(EthPeers.BY_HIGH_THROUGHPUT.compare(attrA, attrC)).isLessThan(0);
   }
 
   @Test

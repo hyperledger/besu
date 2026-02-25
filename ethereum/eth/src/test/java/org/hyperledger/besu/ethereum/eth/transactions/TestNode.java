@@ -173,7 +173,8 @@ public class TestNode implements Closeable {
             25,
             false,
             SyncMode.SNAP,
-            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()));
+            new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList()),
+            0.1);
 
     final ChainHeadTracker mockCHT = getChainHeadTracker();
     ethPeers.setChainHeadTracker(mockCHT);

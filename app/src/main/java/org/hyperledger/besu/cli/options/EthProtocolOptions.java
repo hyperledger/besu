@@ -35,6 +35,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
   private static final String MAX_CAPABILITY = "--Xeth-capability-max";
   private static final String MIN_CAPABILITY = "--Xeth-capability-min";
+  private static final String PEER_PERFORMANCE_EMA_ALPHA = "--Xeth-peer-performance-ema-alpha";
 
   @CommandLine.Option(
       hidden = true,
@@ -113,6 +114,15 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
       description = "Min protocol version to support")
   private int minEthCapability = EthProtocolConfiguration.DEFAULT_MIN_CAPABILITY;
 
+  @CommandLine.Option(
+      hidden = true,
+      names = {PEER_PERFORMANCE_EMA_ALPHA},
+      paramLabel = "<DOUBLE>",
+      description =
+          "The alpha value for the peer performance exponential moving average (EMA) (default: ${DEFAULT-VALUE})")
+  private double peerPerformanceEmaAlpha =
+      EthProtocolConfiguration.DEFAULT_PEER_PERFORMANCE_EMA_ALPHA;
+
   private EthProtocolOptions() {}
 
   /**
@@ -142,6 +152,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
     options.maxGetPooledTransactions = PositiveNumber.fromInt(config.getMaxGetPooledTransactions());
     options.maxEthCapability = config.getMaxEthCapability();
     options.minEthCapability = config.getMinEthCapability();
+    options.peerPerformanceEmaAlpha = config.getPeerPerformanceEmaAlpha();
     return options;
   }
 
@@ -157,6 +168,7 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
         .maxGetPooledTransactions(maxGetPooledTransactions.getValue())
         .maxEthCapability(maxEthCapability)
         .minEthCapability(minEthCapability)
+        .peerPerformanceEmaAlpha(peerPerformanceEmaAlpha)
         .build();
   }
 
