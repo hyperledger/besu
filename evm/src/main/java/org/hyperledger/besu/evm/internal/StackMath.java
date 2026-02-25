@@ -37,14 +37,25 @@ public final class StackMath {
   public static int add(final long[] s, final int top) {
     final int a = (top - 1) << 2;
     final int b = (top - 2) << 2;
+    // Fast path: both values fit in a single limb (common case)
+    if ((s[a] | s[a + 1] | s[a + 2] | s[b] | s[b + 1] | s[b + 2]) == 0) {
+      long z = s[a + 3] + s[b + 3];
+      s[b + 2] = ((s[a + 3] & s[b + 3]) | ((s[a + 3] | s[b + 3]) & ~z)) >>> 63;
+      s[b + 3] = z;
+      return top - 1;
+    }
     long a0 = s[a + 3], a1 = s[a + 2], a2 = s[a + 1], a3 = s[a];
     long b0 = s[b + 3], b1 = s[b + 2], b2 = s[b + 1], b3 = s[b];
     long z0 = a0 + b0;
-    long c = Long.compareUnsigned(z0, a0) < 0 ? 1L : 0L;
-    long z1 = a1 + b1 + c;
-    c = (Long.compareUnsigned(z1, a1) < 0 || (z1 == a1 && c != 0)) ? 1L : 0L;
-    long z2 = a2 + b2 + c;
-    c = (Long.compareUnsigned(z2, a2) < 0 || (z2 == a2 && c != 0)) ? 1L : 0L;
+    long c = ((a0 & b0) | ((a0 | b0) & ~z0)) >>> 63;
+    long t1 = a1 + b1;
+    long c1 = ((a1 & b1) | ((a1 | b1) & ~t1)) >>> 63;
+    long z1 = t1 + c;
+    c = c1 | (((t1 & c) | ((t1 | c) & ~z1)) >>> 63);
+    long t2 = a2 + b2;
+    long c2 = ((a2 & b2) | ((a2 | b2) & ~t2)) >>> 63;
+    long z2 = t2 + c;
+    c = c2 | (((t2 & c) | ((t2 | c) & ~z2)) >>> 63);
     long z3 = a3 + b3 + c;
     s[b] = z3;
     s[b + 1] = z2;
@@ -57,16 +68,29 @@ public final class StackMath {
   public static int sub(final long[] s, final int top) {
     final int a = (top - 1) << 2; // first operand (top)
     final int b = (top - 2) << 2; // second operand
+    // Fast path: both values fit in a single limb (common case)
+    if ((s[a] | s[a + 1] | s[a + 2] | s[b] | s[b + 1] | s[b + 2]) == 0) {
+      long z = s[a + 3] - s[b + 3];
+      s[b] = ((~s[a + 3] & s[b + 3]) | (~(s[a + 3] ^ s[b + 3]) & z)) >>> 63;
+      s[b + 1] = s[b];
+      s[b + 2] = s[b];
+      s[b + 3] = z;
+      return top - 1;
+    }
     long a0 = s[a + 3], a1 = s[a + 2], a2 = s[a + 1], a3 = s[a];
     long b0 = s[b + 3], b1 = s[b + 2], b2 = s[b + 1], b3 = s[b];
-    // a - b with borrow chain
+    // a - b with branchless borrow chain
     long z0 = a0 - b0;
-    long borrow = Long.compareUnsigned(a0, b0) < 0 ? 1L : 0L;
-    long z1 = a1 - b1 - borrow;
-    borrow = (Long.compareUnsigned(a1, b1) < 0 || (a1 == b1 && borrow != 0)) ? 1L : 0L;
-    long z2 = a2 - b2 - borrow;
-    borrow = (Long.compareUnsigned(a2, b2) < 0 || (a2 == b2 && borrow != 0)) ? 1L : 0L;
-    long z3 = a3 - b3 - borrow;
+    long w = ((~a0 & b0) | (~(a0 ^ b0) & z0)) >>> 63;
+    long t1 = a1 - b1;
+    long w1 = ((~a1 & b1) | (~(a1 ^ b1) & t1)) >>> 63;
+    long z1 = t1 - w;
+    w = w1 | (((~t1 & w) | (~(t1 ^ w) & z1)) >>> 63);
+    long t2 = a2 - b2;
+    long w2 = ((~a2 & b2) | (~(a2 ^ b2) & t2)) >>> 63;
+    long z2 = t2 - w;
+    w = w2 | (((~t2 & w) | (~(t2 ^ w) & z2)) >>> 63);
+    long z3 = a3 - b3 - w;
     s[b] = z3;
     s[b + 1] = z2;
     s[b + 2] = z1;
