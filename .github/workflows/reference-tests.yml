@@ -52,12 +52,12 @@ jobs:
       - name: verify reference test counts
         run: |
           total=$(wc -l < filenames.txt)
-          blockchain=$(grep -c "BlockchainReferenceTest_" filenames.txt)
-          generalstate=$(grep -c "GeneralStateReferenceTest_" filenames.txt)
-          eip_blockchain=$(grep -c "EIPBlockchainReferenceTest_" filenames.txt)
-          eip_state=$(grep -c "EIPStateReferenceTest_" filenames.txt)
-          execution_spec=$(grep -c "ExecutionSpecBlockchainTest_\|ExecutionSpecStateTest_" filenames.txt)
-          execution_spec_devnet=$(grep -c "ExecutionSpecDevnetBlockchainTest_\|ExecutionSpecDevnetStateTest_" filenames.txt)
+          blockchain=$(grep -c "BlockchainReferenceTest_" filenames.txt || true)
+          generalstate=$(grep -c "GeneralStateReferenceTest_" filenames.txt || true)
+          eip_blockchain=$(grep -c "EIPBlockchainReferenceTest_" filenames.txt || true)
+          eip_state=$(grep -c "EIPStateReferenceTest_" filenames.txt || true)
+          execution_spec=$(grep -c "ExecutionSpecBlockchainTest_\|ExecutionSpecStateTest_" filenames.txt || true)
+          execution_spec_devnet=$(grep -c "ExecutionSpecDevnetBlockchainTest_\|ExecutionSpecDevnetStateTest_" filenames.txt || true)
           echo "Total: $total"
           echo "BlockchainReferenceTest: $blockchain (expected: 908)"
           echo "GeneralStateReferenceTest: $generalstate (expected: 542)"
@@ -65,8 +65,22 @@ jobs:
           echo "EIPStateReferenceTest: $eip_state (expected: 281)"
           echo "ExecutionSpec (stable): $execution_spec (expected: 1200)"
           echo "ExecutionSpec (devnet): $execution_spec_devnet (expected: 1211)"
-          if [ "$total" -ne 4156 ]; then
-            echo "::error::Expected 4156 total reference test files but found $total. Update expected counts if test fixtures were changed."
+          failed=false
+          check_count() {
+            if [ "$1" -ne "$2" ]; then
+              echo "::error::$3: expected $2 but found $1"
+              failed=true
+            fi
+          }
+          check_count "$blockchain" 908 "BlockchainReferenceTest"
+          check_count "$generalstate" 542 "GeneralStateReferenceTest"
+          check_count "$eip_blockchain" 281 "EIPBlockchainReferenceTest"
+          check_count "$eip_state" 281 "EIPStateReferenceTest"
+          check_count "$execution_spec" 1200 "ExecutionSpec (stable)"
+          check_count "$execution_spec_devnet" 1211 "ExecutionSpec (devnet)"
+          check_count "$total" 4156 "Total"
+          if [ "$failed" = true ]; then
+            echo "::error::Reference test count mismatch. Update expected counts if test fixtures were changed."
             exit 1
           fi
       - name: Split tests

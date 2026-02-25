@@ -85,6 +85,7 @@ import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -290,21 +291,24 @@ public class EVM {
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x1b ->
                   enableConstantinople
-                      ? (evmConfiguration.enableOptimizedOpcodes()
-                          ? ShlOperationOptimized.staticOperation(frame)
-                          : ShlOperation.staticOperation(frame))
+                      ? shiftOperation(
+                          frame,
+                          ShlOperation::staticOperation,
+                          ShlOperationOptimized::staticOperation)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0x1c ->
                   enableConstantinople
-                      ? (evmConfiguration.enableOptimizedOpcodes()
-                          ? ShrOperationOptimized.staticOperation(frame)
-                          : ShrOperation.staticOperation(frame))
+                      ? shiftOperation(
+                          frame,
+                          ShrOperation::staticOperation,
+                          ShrOperationOptimized::staticOperation)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0x1d ->
                   enableConstantinople
-                      ? (evmConfiguration.enableOptimizedOpcodes()
-                          ? SarOperationOptimized.staticOperation(frame)
-                          : SarOperation.staticOperation(frame))
+                      ? shiftOperation(
+                          frame,
+                          SarOperation::staticOperation,
+                          SarOperationOptimized::staticOperation)
                       : InvalidOperation.invalidOperationResult(opcode);
               case 0x1e ->
                   enableOsaka
@@ -434,6 +438,15 @@ public class EVM {
    */
   public Operation[] getOperationsUnsafe() {
     return operations.getOperations();
+  }
+
+  private OperationResult shiftOperation(
+      final MessageFrame frame,
+      final Function<MessageFrame, OperationResult> standard,
+      final Function<MessageFrame, OperationResult> optimized) {
+    return evmConfiguration.enableOptimizedOpcodes()
+        ? optimized.apply(frame)
+        : standard.apply(frame);
   }
 
   /**

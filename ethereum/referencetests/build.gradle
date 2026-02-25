@@ -92,6 +92,7 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
   inputs.dir referenceTestsDir
+  inputs.files fileTree("src/reference-test/templates")
   outputs.dir generatedTestsDir
   doLast {
     // generate blockchain_tests grouped by hardfork/EIP:
@@ -131,6 +132,7 @@ def executionSpecDevnetTests = tasks.register("executionSpecDevnetTests") {
   final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
   inputs.dir referenceTestsDir
+  inputs.files fileTree("src/reference-test/templates")
   outputs.dir generatedTestsDir
   doLast {
     generateTestFilesGroupedByDirectory(
