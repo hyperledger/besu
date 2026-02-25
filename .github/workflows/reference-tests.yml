@@ -49,6 +49,26 @@ jobs:
         run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
       - name: list test files written
         run: find ethereum/referencetests/src/reference-test/java -name "*.java" | sort >> filenames.txt
+      - name: verify reference test counts
+        run: |
+          total=$(wc -l < filenames.txt)
+          blockchain=$(grep -c "BlockchainReferenceTest_" filenames.txt)
+          generalstate=$(grep -c "GeneralStateReferenceTest_" filenames.txt)
+          eip_blockchain=$(grep -c "EIPBlockchainReferenceTest_" filenames.txt)
+          eip_state=$(grep -c "EIPStateReferenceTest_" filenames.txt)
+          execution_spec=$(grep -c "ExecutionSpecBlockchainTest_\|ExecutionSpecStateTest_" filenames.txt)
+          execution_spec_devnet=$(grep -c "ExecutionSpecDevnetBlockchainTest_\|ExecutionSpecDevnetStateTest_" filenames.txt)
+          echo "Total: $total"
+          echo "BlockchainReferenceTest: $blockchain (expected: 908)"
+          echo "GeneralStateReferenceTest: $generalstate (expected: 542)"
+          echo "EIPBlockchainReferenceTest: $eip_blockchain (expected: 281)"
+          echo "EIPStateReferenceTest: $eip_state (expected: 281)"
+          echo "ExecutionSpec (stable): $execution_spec (expected: 1200)"
+          echo "ExecutionSpec (devnet): $execution_spec_devnet (expected: 1211)"
+          if [ "$total" -ne 4156 ]; then
+            echo "::error::Expected 4156 total reference test files but found $total. Update expected counts if test fixtures were changed."
+            exit 1
+          fi
       - name: Split tests
         run: ./.github/workflows/splitList.sh filenames.txt ${{env.total-runners}}
       - name: echo test file count

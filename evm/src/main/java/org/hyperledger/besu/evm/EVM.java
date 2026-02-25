@@ -109,6 +109,7 @@ public class EVM {
   private final EvmSpecVersion evmSpecVersion;
 
   // Optimized operation flags
+  private final boolean enableConstantinople;
   private final boolean enableShanghai;
   private final boolean enableAmsterdam;
   private final boolean enableOsaka;
@@ -135,6 +136,7 @@ public class EVM {
     this.evmSpecVersion = evmSpecVersion;
     this.jumpDestOnlyCodeCache = new JumpDestOnlyCodeCache(evmConfiguration);
 
+    enableConstantinople = EvmSpecVersion.CONSTANTINOPLE.ordinal() <= evmSpecVersion.ordinal();
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
     enableAmsterdam = EvmSpecVersion.AMSTERDAM.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
@@ -287,17 +289,23 @@ public class EVM {
                       : NotOperation.staticOperation(frame);
               case 0x1a -> ByteOperation.staticOperation(frame);
               case 0x1b ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? ShlOperationOptimized.staticOperation(frame)
-                      : ShlOperation.staticOperation(frame);
+                  enableConstantinople
+                      ? (evmConfiguration.enableOptimizedOpcodes()
+                          ? ShlOperationOptimized.staticOperation(frame)
+                          : ShlOperation.staticOperation(frame))
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x1c ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? ShrOperationOptimized.staticOperation(frame)
-                      : ShrOperation.staticOperation(frame);
+                  enableConstantinople
+                      ? (evmConfiguration.enableOptimizedOpcodes()
+                          ? ShrOperationOptimized.staticOperation(frame)
+                          : ShrOperation.staticOperation(frame))
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x1d ->
-                  evmConfiguration.enableOptimizedOpcodes()
-                      ? SarOperationOptimized.staticOperation(frame)
-                      : SarOperation.staticOperation(frame);
+                  enableConstantinople
+                      ? (evmConfiguration.enableOptimizedOpcodes()
+                          ? SarOperationOptimized.staticOperation(frame)
+                          : SarOperation.staticOperation(frame))
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x1e ->
                   enableOsaka
                       ? CountLeadingZerosOperation.staticOperation(frame)
