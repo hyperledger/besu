@@ -49,29 +49,6 @@ jobs:
         run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
       - name: list test files written
         run: find ethereum/referencetests/src/reference-test/java -name "*.java" | sort >> filenames.txt
-      - name: verify reference test counts
-        run: |
-          total=$(wc -l < filenames.txt)
-          blockchain=$(grep -c "BlockchainReferenceTest_" filenames.txt || true)
-          generalstate=$(grep -c "GeneralStateReferenceTest_" filenames.txt || true)
-          eip_blockchain=$(grep -c "EIPBlockchainReferenceTest_" filenames.txt || true)
-          eip_state=$(grep -c "EIPStateReferenceTest_" filenames.txt || true)
-          execution_spec=$(grep -c "ExecutionSpecBlockchainTest_\|ExecutionSpecStateTest_" filenames.txt || true)
-          execution_spec_devnet=$(grep -c "ExecutionSpecDevnetBlockchainTest_\|ExecutionSpecDevnetStateTest_" filenames.txt || true)
-          echo "BlockchainReferenceTest: $blockchain"
-          echo "GeneralStateReferenceTest: $generalstate"
-          echo "EIPBlockchainReferenceTest: $eip_blockchain"
-          echo "EIPStateReferenceTest: $eip_state"
-          echo "ExecutionSpec (stable): $execution_spec"
-          echo "ExecutionSpec (devnet): $execution_spec_devnet"
-          echo "Total: $total (expected: 4156)"
-          if [ "$total" -ne 4156 ]; then
-            echo "::error::Expected 4156 total reference test files but found $total. Update expected count if test fixtures were changed."
-            echo "To get correct count locally, run:"
-            echo "  ./gradlew ethereum:referencetests:referenceTestClasses"
-            echo "  { find ethereum/referencetests/build/generated/sources/reference-test -name '*.java'; find ethereum/referencetests/src/reference-test/java -name '*.java'; } | wc -l"
-            exit 1
-          fi
       - name: Split tests
         run: ./.github/workflows/splitList.sh filenames.txt ${{env.total-runners}}
       - name: echo test file count
@@ -84,6 +61,15 @@ jobs:
         run: cat refTestArgs.txt
       - name: run reference tests
         run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt`
+      - name: verify test file count matches
+        run: |
+          listed=$(wc -l < filenames.txt | tr -d ' ')
+          actual=$({ find ethereum/referencetests/build/generated/sources/reference-test -name '*.java'; find ethereum/referencetests/src/reference-test/java -name '*.java'; } | wc -l | tr -d ' ')
+          echo "Test files listed: $listed, Test files on disk: $actual"
+          if [ "$actual" -ne "$listed" ]; then
+            echo "::error::Test file count mismatch: filenames.txt has $listed entries but $actual files found on disk"
+            exit 1
+          fi
       - name: Upload Test Report
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always() # always run even if the previous step fails
