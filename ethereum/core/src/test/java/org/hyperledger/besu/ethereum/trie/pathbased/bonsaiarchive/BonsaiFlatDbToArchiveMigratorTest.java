@@ -375,6 +375,46 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     assertThat(migrator.getMigrationProgress().get()).isEqualTo((long) initialBlocks);
   }
 
+  @Test
+  public void observerFailureDoesNotCrashMigration() throws Exception {
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 5;
+    appendBlocks(initialBlocks);
+
+    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 1;
+    final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
+
+    final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
+    final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
+
+    when(trieLogManager.getTrieLogLayer(pauseHash))
+        .thenAnswer(
+            invocation -> {
+              migrationReachedTailLatch.countDown();
+              allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
+              return Optional.of(createAccountTrieLog(Wei.fromHexString("0x999")));
+            });
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
+    final CompletableFuture<Void> future = migrator.migrate();
+
+    assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+    // Append a block where trie log lookup will throw in observer
+    appendBlocks(1);
+    final long failBlock = initialBlocks + 1;
+    final Hash failHash = blockchain.getBlockHeader(failBlock).get().getHash();
+    when(trieLogManager.getTrieLogLayer(failHash))
+        .thenThrow(new RuntimeException("Observer failure"));
+
+    // Let migration finish — should complete despite observer failure
+    allowMigrationToFinishLatch.countDown();
+    future.get(30, TimeUnit.SECONDS);
+
+    // Migration should have completed successfully
+    assertThat(migrator.getMigrationProgress()).isPresent();
+    verify(worldStateStorage).upgradeToFullFlatDbMode();
+  }
+
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return DefaultBlockchain.createMutable(
         genesisBlock,
