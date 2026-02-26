@@ -80,6 +80,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     blockDataGenerator = new BlockDataGenerator();
     blockchain = createInMemoryBlockchain(blockDataGenerator.genesisBlock());
     when(worldStateStorage.getComposedWorldStateStorage()).thenReturn(storage);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
   }
 
   @AfterEach
@@ -103,7 +104,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
-    migrator.migrate(1L, 2L).get(10, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
 
     // Verify account state was written for both blocks
     assertThat(getArchivedAccountKey(1L)).isPresent();
@@ -124,7 +125,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
-    migrator.migrate(1L, 1L).get(10, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
 
     // Verify storage was written
     final byte[] naturalKey =
@@ -144,7 +145,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
-    assertThat(migrator.migrate(1L, 1L))
+    assertThat(migrator.migrate())
         .failsWithin(10, TimeUnit.SECONDS)
         .withThrowableThat()
         .havingRootCause()
@@ -170,14 +171,14 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
     // Start first migration
-    final CompletableFuture<Void> first = migrator.migrate(1L, 1L);
+    final CompletableFuture<Void> first = migrator.migrate();
 
     // Wait for migration to start
     assertThat(migrationStartedLatch.await(5, TimeUnit.SECONDS)).isTrue();
     assertThat(migrator.migrationRunning).isTrue();
 
     // Second migration should return immediately without running
-    final CompletableFuture<Void> second = migrator.migrate(0L, 10L);
+    final CompletableFuture<Void> second = migrator.migrate();
     second.get(1, TimeUnit.SECONDS);
 
     // Allow first migration to complete
@@ -189,12 +190,10 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void tracksRunningState() throws Exception {
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
-
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
     assertThat(migrator.migrationRunning).isFalse();
 
-    migrator.migrate(0L, 0L).get(10, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
     assertThat(migrator.migrationRunning).isFalse();
   }
 
@@ -202,12 +201,10 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   public void savesProgressToStorage() throws Exception {
     appendBlocks(5);
 
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
-
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
     assertThat(migrator.getMigrationProgress()).isEmpty();
 
-    migrator.migrate(0L, 5L).get(10, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
     assertThat(migrator.getMigrationProgress()).isPresent();
     assertThat(migrator.getMigrationProgress().get()).isEqualTo(5L);
   }
@@ -216,17 +213,12 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   public void skipsBlocksWithNoTrieLog() throws Exception {
     appendBlocks(2);
 
-    final Hash hash1 = blockchain.getBlockHeader(1L).get().getHash();
     final Hash hash2 = blockchain.getBlockHeader(2L).get().getHash();
-
-    // No trie log for block 1, only for block 2
-    when(trieLogManager.getTrieLogLayer(hash1)).thenReturn(Optional.empty());
-
-    final TrieLogLayer trieLog2 = createAccountTrieLog(Wei.ONE);
-    when(trieLogManager.getTrieLogLayer(hash2)).thenReturn(Optional.of(trieLog2));
+    when(trieLogManager.getTrieLogLayer(hash2))
+        .thenReturn(Optional.of(createAccountTrieLog(Wei.ONE)));
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    migrator.migrate(1L, 2L).get(10, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
 
     // Only block 2 should have state written
     assertThat(getArchivedAccountKey(2L)).isPresent();
@@ -254,7 +246,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
         .thenReturn(Optional.of(createAccountTrieLog(Wei.fromHexString("0x200"))));
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    final CompletableFuture<Void> future = migrator.migrate(1L, 2L);
+    final CompletableFuture<Void> future = migrator.migrate();
 
     // Wait for migration to reach block 1
     assertThat(block1ProcessingLatch.await(5, TimeUnit.SECONDS)).isTrue();
@@ -277,10 +269,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void switchesToArchiveModeOnCompletion() throws Exception {
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
-
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    migrator.migrate(0L, 0L).get(10, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
 
     verify(worldStateStorage).upgradeToFullFlatDbMode();
   }
@@ -293,7 +283,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
-    assertThat(migrator.migrate(1L, 1L)).failsWithin(10, TimeUnit.SECONDS);
+    assertThat(migrator.migrate()).failsWithin(10, TimeUnit.SECONDS);
 
     verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
   }

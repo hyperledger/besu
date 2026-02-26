@@ -913,9 +913,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             (inSync) -> {
               if (inSync && migrationStarted.compareAndSet(false, true)) {
                 LOG.info("Node is in sync, starting Bonsai archive migration");
-                final long chainHead = blockchain.getChainHeadBlockNumber();
                 archiveMigrator
-                    .migrate(0L, chainHead)
+                    .migrate()
                     .thenRun(() -> archiver.setMigrationInProgress(false))
                     .exceptionally(
                         error -> {

@@ -42,6 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -91,20 +92,20 @@ public class BonsaiFlatDbToArchiveMigrator {
   }
 
   /**
-   * Migrates Bonsai flat DB to Bonsai archive format by processing trie logs sequentially. The
-   * target block is continuously updated as new blocks are imported, so the migrator chases the
-   * chain head until it converges.
+   * Migrates Bonsai flat DB to Bonsai archive format by processing trie logs sequentially. Resumes
+   * from saved progress if available, otherwise starts from block 0. The target block is
+   * continuously updated as new blocks are imported, so the migrator chases the chain head until it
+   * converges.
    *
-   * @param startBlock the starting block number (inclusive)
-   * @param endBlock the initial ending block number (inclusive), updated as new blocks arrive
    * @return a CompletableFuture that completes when migration finishes
    */
-  public CompletableFuture<Void> migrate(final long startBlock, final long endBlock) {
+  public CompletableFuture<Void> migrate() {
     if (!migrationRunning.compareAndSet(false, true)) {
-      LOG.warn("Migration already in progress, ignoring request");
+      LOG.warn("Bonsai migration already in progress, ignoring");
       return CompletableFuture.completedFuture(null);
     }
 
+    final long endBlock = blockchain.getChainHeadBlockNumber();
     final AtomicLong target = new AtomicLong(endBlock);
     final long blockObserverId =
         blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
@@ -113,17 +114,19 @@ public class BonsaiFlatDbToArchiveMigrator {
         () -> {
           try {
             final Instant migrationStartTime = Instant.now();
+
+            final long startBlock = getMigrationProgress().orElse(0L);
             final SegmentedKeyValueStorage storage =
                 worldStateStorage.getComposedWorldStateStorage();
-
-            LOG.info("Starting archive migration from block {} to {}", startBlock, endBlock);
-
-            long currentBlock = determineStartBlock(storage, startBlock);
+            LOG.info("Starting Bonsai Archive migration from block {} to {}", startBlock, endBlock);
             long migratedCount = 0;
             long skippedCount = 0;
 
-            for (long blockNumber = currentBlock; blockNumber <= target.get(); blockNumber++) {
-              final Optional<TrieLog> maybeTrieLog = fetchTrieLog(blockNumber);
+            for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
+              final Optional<TrieLog> maybeTrieLog =
+                  blockchain
+                      .getBlockHeader(blockNumber)
+                      .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
 
               final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
               try {
@@ -151,20 +154,18 @@ public class BonsaiFlatDbToArchiveMigrator {
                       rollbackException);
                 }
                 throw new IllegalStateException(
-                    "Migration failed at block " + blockNumber + ": " + e.getMessage(), e);
+                    "Bonsai migration failed at block " + blockNumber + ": " + e.getMessage(), e);
               }
 
               logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
             }
 
             worldStateStorage.upgradeToFullFlatDbMode();
-            LOG.info("Switched FlatDbMode to ARCHIVE");
-
             logCompletion(
                 startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
 
           } catch (final Exception e) {
-            LOG.error("Archive migration failed", e);
+            LOG.error("Bonsai Archive migration failed", e);
             throw new RuntimeException(e);
           } finally {
             blockchain.removeObserver(blockObserverId);
@@ -174,31 +175,13 @@ public class BonsaiFlatDbToArchiveMigrator {
         executorService);
   }
 
-  /**
-   * Gets the last migrated block number.
-   *
-   * @return the last migrated block number, or empty if migration hasn't started
-   */
-  public Optional<Long> getMigrationProgress() {
+  @VisibleForTesting
+  protected Optional<Long> getMigrationProgress() {
     return worldStateStorage
         .getComposedWorldStateStorage()
         .get(VARIABLES, MIGRATION_PROGRESS_KEY)
         .map(Bytes::wrap)
         .map(Bytes::toLong);
-  }
-
-  private long determineStartBlock(final SegmentedKeyValueStorage storage, final long startBlock) {
-    final long currentBlock =
-        storage
-            .get(VARIABLES, MIGRATION_PROGRESS_KEY)
-            .map(Bytes::wrap)
-            .map(Bytes::toLong)
-            .orElse(startBlock);
-    if (currentBlock > startBlock) {
-      LOG.info(
-          "Resuming migration from block {} (previously started at {})", currentBlock, startBlock);
-    }
-    return currentBlock;
   }
 
   private void logProgress(
@@ -213,7 +196,7 @@ public class BonsaiFlatDbToArchiveMigrator {
           long progressPercent =
               totalBlocks > 0 ? ((blockNumber - startBlock) * 100) / totalBlocks : 100;
           LOG.info(
-              "Archive migration progress: {}% (block {}/{}, migrated: {}, skipped: {})",
+              "Bonsai Archive migration progress: {}% (block {}/{}, migrated: {}, skipped: {})",
               progressPercent, blockNumber, endBlock, migratedCount, skippedCount);
         },
         shouldLogProgress,
@@ -227,18 +210,14 @@ public class BonsaiFlatDbToArchiveMigrator {
       final long migratedCount,
       final long skippedCount) {
     final Duration migrationDuration = Duration.between(migrationStartTime, Instant.now());
+    final String formatedDuration =
+        DurationFormatUtils.formatDurationWords(migrationDuration.toMillis(), true, true);
     LOG.info(
-        "Archive migration completed. Processed {} blocks ({} migrated, {} skipped) in {}.",
+        "Bonsai Archive migration completed. Processed {} blocks ({} migrated, {} skipped) in {}.",
         endBlock - startBlock + 1,
         migratedCount,
         skippedCount,
-        DurationFormatUtils.formatDurationWords(migrationDuration.toMillis(), true, true));
-  }
-
-  private Optional<TrieLog> fetchTrieLog(final long blockNumber) {
-    return blockchain
-        .getBlockHeader(blockNumber)
-        .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
+        formatedDuration);
   }
 
   private void processBlock(
