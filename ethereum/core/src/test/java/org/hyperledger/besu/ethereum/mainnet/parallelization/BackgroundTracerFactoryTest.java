@@ -34,15 +34,17 @@ import org.junit.jupiter.api.Test;
 class BackgroundTracerFactoryTest {
 
   @Test
-  void createBackgroundTracer_nullContext_returnsNull() {
-    assertThat(BackgroundTracerFactory.createBackgroundTracer(null)).isNull();
+  void createBackgroundTracer_nullContext_returnsNoTracing() {
+    assertThat(BackgroundTracerFactory.createBackgroundTracer(null))
+        .isSameAs(OperationTracer.NO_TRACING);
   }
 
   @Test
-  void createBackgroundTracer_nullTracer_returnsNull() {
+  void createBackgroundTracer_nullTracer_returnsNoTracing() {
     final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
     when(bpc.getOperationTracer()).thenReturn(null);
-    assertThat(BackgroundTracerFactory.createBackgroundTracer(bpc)).isNull();
+    assertThat(BackgroundTracerFactory.createBackgroundTracer(bpc))
+        .isSameAs(OperationTracer.NO_TRACING);
   }
 
   @Test

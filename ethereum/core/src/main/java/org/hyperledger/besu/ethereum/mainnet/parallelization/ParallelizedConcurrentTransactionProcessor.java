@@ -151,9 +151,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
       // Compose the background tracer with the mining beneficiary tracer
       final OperationTracer composedTracer =
-          backgroundBlockTracer != null
-              ? TracerAggregator.combining(backgroundBlockTracer, miningBeneficiaryTracer)
-              : miningBeneficiaryTracer;
+          TracerAggregator.combining(backgroundBlockTracer, miningBeneficiaryTracer);
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(

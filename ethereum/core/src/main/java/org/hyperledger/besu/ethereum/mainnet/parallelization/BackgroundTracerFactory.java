@@ -42,17 +42,18 @@ public class BackgroundTracerFactory {
    * Creates a tracer for background (parallel) transaction execution.
    *
    * @param blockProcessingContext the block processing context containing the original tracer
-   * @return a background tracer instance, or null if no block tracer exists
+   * @return a background tracer instance, or {@link OperationTracer#NO_TRACING} if no metrics
+   *     tracing is needed
    */
   public static OperationTracer createBackgroundTracer(
       final BlockProcessingContext blockProcessingContext) {
     if (blockProcessingContext == null) {
-      return null;
+      return OperationTracer.NO_TRACING;
     }
 
     final OperationTracer blockTracer = blockProcessingContext.getOperationTracer();
     if (blockTracer == null) {
-      return null;
+      return OperationTracer.NO_TRACING;
     }
 
     // Check if the block tracer contains any metrics tracer (EVMExecutionMetricsTracer directly,
