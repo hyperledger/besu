@@ -14,22 +14,17 @@
  */
 package org.hyperledger.besu.controller;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.chainimport.BlockHeadersCachePreload;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.BlobSchedule;
-import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -1153,49 +1148,11 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   protected abstract ProtocolSchedule createProtocolSchedule();
 
   /**
-   * Validate context. Performs network-aware validation of the protocol context.
+   * Validate context.
    *
    * @param context the context
    */
-  protected void validateContext(final ProtocolContext context) {
-    // Only validate blob configuration on L1 networks
-    final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
-    if (chainId.map(NetworkDefinition::isL1NetworkByChainId).orElse(false)) {
-      validateBlobConfiguration();
-    }
-  }
-
-  private void validateBlobConfiguration() {
-    final int maxBlobsPerTransaction = miningConfiguration.getMaxBlobsPerTransaction();
-    final Optional<BlobScheduleOptions> blobScheduleOptions =
-        genesisConfigOptions.getBlobScheduleOptions();
-
-    // Validate blob schedules for all forks from Osaka onwards
-    // These forks use OsakaTargetingGasLimitCalculator which requires maxBlobsPerBlock >=
-    // maxBlobsPerTransaction
-    for (MainnetHardforkId hardfork : MainnetHardforkId.values()) {
-      if (hardfork.ordinal() >= MainnetHardforkId.OSAKA.ordinal()) {
-        final Optional<BlobSchedule> blobSchedule =
-            blobScheduleOptions
-                .flatMap(opts -> opts.getBlobSchedule(hardfork))
-                .or(
-                    () ->
-                        hardfork == MainnetHardforkId.OSAKA
-                            ? Optional.of(BlobSchedule.PRAGUE_DEFAULT)
-                            : Optional.empty());
-
-        blobSchedule.ifPresent(
-            bs ->
-                checkArgument(
-                    bs.getMax() >= maxBlobsPerTransaction,
-                    "maxBlobsPerTransaction (%s) must not be greater than maxBlobsPerBlock (%s) for %s. "
-                        + "Check your --max-blobs setting or blob schedule in genesis.",
-                    maxBlobsPerTransaction,
-                    bs.getMax(),
-                    hardfork.name()));
-      }
-    }
-  }
+  protected void validateContext(final ProtocolContext context) {}
 
   /**
    * Create consensus context consensus context.

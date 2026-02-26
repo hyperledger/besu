@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MAX_BLOBS_PER_TRANSACTION;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
@@ -123,9 +122,9 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       names = {"--max-blobs"},
       description =
           "Maximum number of blobs allowed per transaction during block building. "
-              + "Only applies from Osaka hardfork onwards. (default: ${DEFAULT-VALUE})",
+              + "Only applies from Osaka hardfork onwards. (default: 6)",
       arity = "1")
-  private Integer maxBlobsPerTransaction = DEFAULT_MAX_BLOBS_PER_TRANSACTION;
+  private Integer maxBlobsPerTransaction = null;
 
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
@@ -251,7 +250,9 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
     miningOptions.pluginBlockTxsSelectionMaxTime =
         miningConfiguration.getPluginBlockTxsSelectionMaxTime();
-    miningOptions.maxBlobsPerTransaction = miningConfiguration.getMaxBlobsPerTransaction();
+    miningConfiguration
+        .getMaxBlobsPerTransaction()
+        .ifPresent(v -> miningOptions.maxBlobsPerTransaction = v);
 
     miningOptions.unstableOptions.posBlockCreationMaxTime =
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
@@ -277,8 +278,11 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
             .extraData(extraData)
             .minTransactionGasPrice(minTransactionGasPrice)
             .minPriorityFeePerGas(minPriorityFeePerGas)
-            .minBlockOccupancyRatio(minBlockOccupancyRatio)
-            .maxBlobsPerTransaction(maxBlobsPerTransaction);
+            .minBlockOccupancyRatio(minBlockOccupancyRatio);
+
+    if (maxBlobsPerTransaction != null) {
+      updatableInitValuesBuilder.maxBlobsPerTransaction(maxBlobsPerTransaction);
+    }
 
     if (targetGasLimit != null) {
       updatableInitValuesBuilder.targetGasLimit(targetGasLimit);

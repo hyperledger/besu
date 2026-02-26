@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.OptionalInt;
+
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
@@ -56,14 +58,14 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
-      final int maxBlobsPerTransaction) {
+      final OptionalInt maxBlobsPerTransaction) {
     this(
         londonForkBlock,
         feeMarket,
         gasCalculator,
         maxBlobsPerBlock,
         targetBlobsPerBlock,
-        maxBlobsPerTransaction,
+        maxBlobsPerTransaction.orElse(DEFAULT_MAX_BLOBS_PER_TRANSACTION),
         DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
   }
 
