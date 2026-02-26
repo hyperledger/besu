@@ -391,6 +391,11 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         "0");
   }
 
+  @Test
+  public void maxBlobsOptionWithNegativeValue() {
+    internalTestFailure("--max-blobs must be a positive value", "--max-blobs", "-9");
+  }
+
   @Override
   protected MiningConfiguration createDefaultDomainObject() {
     return MiningConfiguration.newDefault();

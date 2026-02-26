@@ -74,6 +74,7 @@ public class ConfigurationOverviewBuilder {
 
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
+  private Integer maxBlobsPerTransaction;
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -387,6 +388,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the max blobs per transaction.
+   *
+   * @param maxBlobsPerTransaction the max blobs per transaction
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setMaxBlobsPerTransaction(
+      final Integer maxBlobsPerTransaction) {
+    this.maxBlobsPerTransaction = maxBlobsPerTransaction;
+    return this;
+  }
+
+  /**
    * Sets the chain pruning configuration.
    *
    * @param pruningStrategy the chain pruning strategy
@@ -541,6 +554,10 @@ public class ConfigurationOverviewBuilder {
 
     if (targetGasLimit != null) {
       lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
+    }
+
+    if (maxBlobsPerTransaction != null) {
+      lines.add("Max Blobs Per Transaction: " + maxBlobsPerTransaction);
     }
 
     lines.add("");

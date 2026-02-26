@@ -229,6 +229,10 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
             + " see --block-txs-selection-max-time instead",
         genesisConfigOptions.isPoa(),
         singletonList("--poa-block-txs-selection-max-time"));
+
+    if (maxBlobsPerTransaction != null && maxBlobsPerTransaction < 0) {
+      throw new ParameterException(commandLine, "--max-blobs must be a positive value");
+    }
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
