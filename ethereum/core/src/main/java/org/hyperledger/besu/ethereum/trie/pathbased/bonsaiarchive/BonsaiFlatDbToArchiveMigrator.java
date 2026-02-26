@@ -109,70 +109,66 @@ public class BonsaiFlatDbToArchiveMigrator {
     final AtomicLong target = new AtomicLong(endBlock);
     final long blockObserverId =
         blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
-
     return CompletableFuture.runAsync(
-        () -> {
-          try {
-            final Instant migrationStartTime = Instant.now();
+        () -> migrateBlocks(endBlock, target, blockObserverId), executorService);
+  }
 
-            final long startBlock = getMigrationProgress().orElse(0L);
-            final SegmentedKeyValueStorage storage =
-                worldStateStorage.getComposedWorldStateStorage();
-            LOG.info("Starting Bonsai Archive migration from block {} to {}", startBlock, endBlock);
-            long migratedCount = 0;
-            long skippedCount = 0;
+  private void migrateBlocks(long endBlock, AtomicLong target, long blockObserverId) {
+    try {
+      final Instant migrationStartTime = Instant.now();
 
-            for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
-              final Optional<TrieLog> maybeTrieLog =
-                  blockchain
-                      .getBlockHeader(blockNumber)
-                      .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
+      final long startBlock = getMigrationProgress().orElse(0L);
+      final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
+      LOG.info("Starting Bonsai Archive migration from block {} to {}", startBlock, endBlock);
+      long migratedCount = 0;
+      long skippedCount = 0;
 
-              final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
-              try {
-                if (maybeTrieLog.isPresent()) {
-                  processBlock(maybeTrieLog.get(), blockNumber, tx);
-                  migratedCount++;
-                  migratedBlocksCounter.inc();
-                } else {
-                  if (blockNumber > 0) {
-                    LOG.debug("No trie log found for block {}, skipping", blockNumber);
-                  }
-                  skippedCount++;
-                }
-                // Always save progress, even for blocks with no trie log
-                saveProgress(blockNumber, tx);
-                tx.commit();
-              } catch (final Exception e) {
-                LOG.error("Failed to process block {}, rolling back transaction", blockNumber, e);
-                try {
-                  tx.rollback();
-                } catch (final Exception rollbackException) {
-                  LOG.error(
-                      "Failed to rollback transaction for block {}",
-                      blockNumber,
-                      rollbackException);
-                }
-                throw new IllegalStateException(
-                    "Bonsai migration failed at block " + blockNumber + ": " + e.getMessage(), e);
-              }
+      for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
+        final Optional<TrieLog> maybeTrieLog =
+            blockchain
+                .getBlockHeader(blockNumber)
+                .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
 
-              logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
+        final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+        try {
+          if (maybeTrieLog.isPresent()) {
+            processBlock(maybeTrieLog.get(), blockNumber, tx);
+            migratedCount++;
+            migratedBlocksCounter.inc();
+          } else {
+            if (blockNumber > 0) {
+              LOG.debug("No trie log found for block {}, skipping", blockNumber);
             }
-
-            worldStateStorage.upgradeToFullFlatDbMode();
-            logCompletion(
-                startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
-
-          } catch (final Exception e) {
-            LOG.error("Bonsai Archive migration failed", e);
-            throw new RuntimeException(e);
-          } finally {
-            blockchain.removeObserver(blockObserverId);
-            migrationRunning.set(false);
+            skippedCount++;
           }
-        },
-        executorService);
+          // Always save progress, even for blocks with no trie log
+          saveProgress(blockNumber, tx);
+          tx.commit();
+        } catch (final Exception e) {
+          LOG.error("Failed to process block {}, rolling back transaction", blockNumber, e);
+          try {
+            tx.rollback();
+          } catch (final Exception rollbackException) {
+            LOG.error(
+                "Failed to rollback transaction for block {}", blockNumber, rollbackException);
+          }
+          throw new IllegalStateException(
+              "Bonsai migration failed at block " + blockNumber + ": " + e.getMessage(), e);
+        }
+
+        logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
+      }
+
+      worldStateStorage.upgradeToFullFlatDbMode();
+      logCompletion(startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
+
+    } catch (final Exception e) {
+      LOG.error("Bonsai Archive migration failed", e);
+      throw new RuntimeException(e);
+    } finally {
+      blockchain.removeObserver(blockObserverId);
+      migrationRunning.set(false);
+    }
   }
 
   @VisibleForTesting
