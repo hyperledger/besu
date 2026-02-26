@@ -58,11 +58,9 @@ public class BlobScheduleOptionsTest {
 
   @Test
   public void getBlobScheduleByHardforkId() {
-    // Cancun and Cancun_EOF should return Cancun schedule
+    // Cancun should return Cancun schedule
     assertBlobScheduleMatches(
         options.getBlobSchedule(MainnetHardforkId.CANCUN), options.getCancun());
-    assertBlobScheduleMatches(
-        options.getBlobSchedule(MainnetHardforkId.CANCUN_EOF), options.getCancun());
 
     // Prague and Osaka should return Prague schedule
     assertBlobScheduleMatches(

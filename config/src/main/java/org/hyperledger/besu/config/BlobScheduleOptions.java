@@ -127,7 +127,7 @@ public class BlobScheduleOptions {
    */
   public Optional<BlobSchedule> getBlobSchedule(final MainnetHardforkId hardforkId) {
     return switch (hardforkId) {
-      case CANCUN, CANCUN_EOF -> getCancun();
+      case CANCUN -> getCancun();
       case PRAGUE, OSAKA -> getPrague();
       case BPO1 -> getBpo1();
       case BPO2 -> getBpo2();
