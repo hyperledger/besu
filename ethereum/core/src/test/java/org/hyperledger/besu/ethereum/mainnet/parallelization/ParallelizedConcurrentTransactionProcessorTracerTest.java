@@ -42,7 +42,9 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogMa
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
@@ -52,6 +54,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -429,5 +433,109 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
     assertThat(slowBlockTracer.getExecutionStats().getTransactionCount())
         .as("tx_count should be incremented when SlowBlockTracer is inside TracerAggregator")
         .isEqualTo(1);
+  }
+
+  @Test
+  void parallelExecution_mergesEvmMetricsFromMultipleThreads() throws Exception {
+    // Verify that EVM opcode metrics captured on separate threads are correctly merged
+    // into the main SlowBlockTracer after conflict-free parallel execution
+    final SlowBlockTracer slowBlockTracer = new SlowBlockTracer(0);
+    slowBlockTracer.traceStartBlock(null, blockHeader, null, MINING_BENEFICIARY);
+
+    final BlockProcessingContext bpc = mock(BlockProcessingContext.class);
+    when(bpc.getOperationTracer()).thenReturn(slowBlockTracer);
+
+    // Each parallel thread needs its own world state — return a fresh one per call
+    final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
+    when(worldStateArchive.getWorldState(any()))
+        .thenAnswer(invocation -> Optional.of(createEmptyWorldState()));
+    when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
+
+    // Mock processTransaction to simulate EVM opcode activity on the background tracer
+    when(transactionProcessor.processTransaction(
+            any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              final OperationTracer tracer = invocation.getArgument(4, OperationTracer.class);
+              // Find the EVMExecutionMetricsTracer in the composed tracer
+              final Optional<EVMExecutionMetricsTracer> metricsTracer =
+                  BackgroundTracerFactory.findEVMExecutionMetricsTracer(tracer);
+              assertThat(metricsTracer).isPresent();
+
+              // Simulate 2 SLOAD operations per transaction
+              simulateOpcode(metricsTracer.get(), "SLOAD");
+              simulateOpcode(metricsTracer.get(), "SLOAD");
+              // Simulate 1 CALL per transaction
+              simulateOpcode(metricsTracer.get(), "CALL");
+
+              return TransactionProcessingResult.successful(
+                  Collections.emptyList(),
+                  0,
+                  0,
+                  Bytes.EMPTY,
+                  Optional.empty(),
+                  ValidationResult.valid());
+            });
+
+    final Transaction tx0 = mockTransaction();
+    final Transaction tx1 = mockTransaction();
+    final Transaction tx2 = mockTransaction();
+
+    final ParallelizedConcurrentTransactionProcessor processor = createProcessorWithTracer(bpc);
+
+    // Use a real thread pool for actual parallel execution
+    final ExecutorService threadPool = Executors.newFixedThreadPool(3);
+    try {
+      processor.runAsyncBlock(
+          protocolContext,
+          blockHeader,
+          List.of(tx0, tx1, tx2),
+          MINING_BENEFICIARY,
+          (__, ___) -> Hash.EMPTY,
+          BLOB_GAS_PRICE,
+          threadPool,
+          Optional.empty());
+
+      // Wait for all futures to complete before confirming
+      Thread.sleep(500);
+
+      // Confirm all three transactions on the main thread
+      final List<Transaction> txs = List.of(tx0, tx1, tx2);
+      for (int i = 0; i < 3; i++) {
+        final Optional<TransactionProcessingResult> result =
+            processor.getProcessingResult(
+                worldState, MINING_BENEFICIARY, txs.get(i), i, Optional.empty(), Optional.empty());
+        assertThat(result).as("Transaction %d should be confirmed", i).isPresent();
+      }
+    } finally {
+      threadPool.shutdown();
+    }
+
+    // Verify merged EVM metrics: 3 txs x 2 SLOADs = 6, 3 txs x 1 CALL = 3
+    final EVMExecutionMetricsTracer mergedTracer = slowBlockTracer.getEVMExecutionMetricsTracer();
+    assertThat(mergedTracer.getMetrics().getSloadCount())
+        .as("SLOAD count should be sum across all parallel txs")
+        .isEqualTo(6);
+    assertThat(mergedTracer.getMetrics().getCallCount())
+        .as("CALL count should be sum across all parallel txs")
+        .isEqualTo(3);
+    assertThat(mergedTracer.getMetrics().getSstoreCount())
+        .as("SSTORE count should be zero (no SSTORE ops simulated)")
+        .isEqualTo(0);
+
+    // Verify tx_count
+    assertThat(slowBlockTracer.getExecutionStats().getTransactionCount())
+        .as("tx_count should equal number of confirmed parallel txs")
+        .isEqualTo(3);
+  }
+
+  /** Simulates an EVM opcode by calling tracePostExecution with a mocked MessageFrame. */
+  private static void simulateOpcode(
+      final EVMExecutionMetricsTracer tracer, final String opcodeName) {
+    final MessageFrame frame = mock(MessageFrame.class);
+    final Operation operation = mock(Operation.class);
+    when(frame.getCurrentOperation()).thenReturn(operation);
+    when(operation.getName()).thenReturn(opcodeName);
+    tracer.tracePostExecution(frame, mock(Operation.OperationResult.class));
   }
 }
