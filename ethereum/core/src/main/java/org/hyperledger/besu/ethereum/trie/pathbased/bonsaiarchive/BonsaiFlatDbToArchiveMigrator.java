@@ -53,6 +53,7 @@ public class BonsaiFlatDbToArchiveMigrator {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
+  @VisibleForTesting static final int TAIL_THRESHOLD = 64;
 
   private static final byte[] MIGRATION_PROGRESS_KEY =
       "ARCHIVE_MIGRATION_PROGRESS".getBytes(StandardCharsets.UTF_8);
