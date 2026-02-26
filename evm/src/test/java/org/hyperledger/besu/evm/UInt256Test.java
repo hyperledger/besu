@@ -582,4 +582,14 @@ public class UInt256Test {
       assertThat(remainder).isEqualTo(expected);
     }
   }
+
+  @Test
+  void compare() {
+    assertThat(UInt256.compare(null, UInt256.ONE)).isEqualTo(-1);
+    assertThat(UInt256.compare(null, null)).isEqualTo( 0);
+    assertThat(UInt256.compare(UInt256.ONE, null)).isEqualTo( 1);
+    assertThat(UInt256.compare(UInt256.ZERO, UInt256.ZERO)).isEqualTo( 0);
+    assertThat(UInt256.compare(UInt256.ONE, UInt256.ZERO)).isEqualTo( 1);
+    assertThat(UInt256.compare(UInt256.ZERO, UInt256.ONE)).isEqualTo( -1);
+  }
 }
