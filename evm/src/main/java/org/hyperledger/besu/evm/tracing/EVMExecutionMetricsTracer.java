@@ -14,13 +14,17 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An OperationTracer that collects execution metrics for EVM operations.
@@ -57,6 +61,19 @@ public class EVMExecutionMetricsTracer implements OperationTracer {
     private int callCount;
     private int createCount;
 
+    // Unique tracking sets
+    private final Set<Address> uniqueAccountsTouched = new HashSet<>();
+    private final Set<StorageSlotKey> uniqueStorageSlots = new HashSet<>();
+    private final Set<Address> uniqueContractsExecuted = new HashSet<>();
+
+    /**
+     * Record representing a unique storage slot identified by contract address and slot key.
+     *
+     * @param address the contract address
+     * @param slot the storage slot key
+     */
+    public record StorageSlotKey(Address address, UInt256 slot) {}
+
     /** Creates a new ExecutionMetrics instance with all counters initialized to zero. */
     public ExecutionMetrics() {
       // All primitive int fields are automatically initialized to 0
@@ -68,6 +85,9 @@ public class EVMExecutionMetricsTracer implements OperationTracer {
       sstoreCount = 0;
       callCount = 0;
       createCount = 0;
+      uniqueAccountsTouched.clear();
+      uniqueStorageSlots.clear();
+      uniqueContractsExecuted.clear();
     }
 
     /**
@@ -80,6 +100,9 @@ public class EVMExecutionMetricsTracer implements OperationTracer {
       this.sstoreCount += other.sstoreCount;
       this.callCount += other.callCount;
       this.createCount += other.createCount;
+      this.uniqueAccountsTouched.addAll(other.uniqueAccountsTouched);
+      this.uniqueStorageSlots.addAll(other.uniqueStorageSlots);
+      this.uniqueContractsExecuted.addAll(other.uniqueContractsExecuted);
     }
 
     /**
@@ -117,6 +140,33 @@ public class EVMExecutionMetricsTracer implements OperationTracer {
     public int getCreateCount() {
       return createCount;
     }
+
+    /**
+     * Returns the set of unique accounts touched during execution.
+     *
+     * @return the set of unique account addresses
+     */
+    public Set<Address> getUniqueAccountsTouched() {
+      return uniqueAccountsTouched;
+    }
+
+    /**
+     * Returns the set of unique storage slots accessed during execution.
+     *
+     * @return the set of unique storage slot keys
+     */
+    public Set<StorageSlotKey> getUniqueStorageSlots() {
+      return uniqueStorageSlots;
+    }
+
+    /**
+     * Returns the set of unique contracts executed during execution.
+     *
+     * @return the set of unique contract addresses
+     */
+    public Set<Address> getUniqueContractsExecuted() {
+      return uniqueContractsExecuted;
+    }
   }
 
   private final ExecutionMetrics metrics = new ExecutionMetrics();
@@ -124,6 +174,34 @@ public class EVMExecutionMetricsTracer implements OperationTracer {
   /** Create a new EVMExecutionMetricsTracer that tracks all available metrics. */
   public EVMExecutionMetricsTracer() {
     // This tracer tracks all available execution metrics when instantiated
+  }
+
+  @Override
+  public void traceContextEnter(final MessageFrame frame) {
+    final Address recipient = frame.getRecipientAddress();
+    if (recipient != null) {
+      metrics.uniqueContractsExecuted.add(recipient);
+      metrics.uniqueAccountsTouched.add(recipient);
+    }
+    final Address sender = frame.getSenderAddress();
+    if (sender != null) {
+      metrics.uniqueAccountsTouched.add(sender);
+    }
+  }
+
+  @Override
+  public void tracePreExecution(final MessageFrame frame) {
+    final var operation = frame.getCurrentOperation();
+    if (operation != null) {
+      final String name = operation.getName();
+      if ("SLOAD".equals(name) || "SSTORE".equals(name)) {
+        final Address storageAddress = frame.getRecipientAddress();
+        final UInt256 slotKey = UInt256.fromBytes(frame.getStackItem(0));
+        metrics.uniqueStorageSlots.add(
+            new ExecutionMetrics.StorageSlotKey(storageAddress, slotKey));
+        metrics.uniqueAccountsTouched.add(storageAddress);
+      }
+    }
   }
 
   @Override

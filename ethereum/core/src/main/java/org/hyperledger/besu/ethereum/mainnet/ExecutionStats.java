@@ -341,6 +341,11 @@ public class ExecutionStats implements StateMetricsCollector {
     this.sstoreCount = metrics.getSstoreCount();
     this.callCount = metrics.getCallCount();
     this.createCount = metrics.getCreateCount();
+    this.uniqueAccountsTouched.addAll(metrics.getUniqueAccountsTouched());
+    for (var slot : metrics.getUniqueStorageSlots()) {
+      this.uniqueStorageSlots.add(new StorageSlotKey(slot.address(), slot.slot()));
+    }
+    this.uniqueContractsExecuted.addAll(metrics.getUniqueContractsExecuted());
   }
 
   /**
