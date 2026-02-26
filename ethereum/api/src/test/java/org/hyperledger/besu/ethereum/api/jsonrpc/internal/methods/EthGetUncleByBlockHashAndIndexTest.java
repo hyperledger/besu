@@ -164,7 +164,12 @@ public class EthGetUncleByBlockHashAndIndexTest {
       final Transaction transaction = transactionTestFixture.createTransaction(keyPair);
       transactions.add(
           new TransactionWithMetadata(
-              transaction, header.getNumber(), header.getBaseFee(), header.getHash(), 0));
+              transaction,
+              header.getNumber(),
+              header.getBaseFee(),
+              header.getHash(),
+              0,
+              header.getTimestamp()));
     }
 
     final List<Hash> ommers = new ArrayList<>();
