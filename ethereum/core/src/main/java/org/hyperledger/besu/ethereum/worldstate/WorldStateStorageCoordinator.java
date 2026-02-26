@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,12 +29,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class WorldStateStorageCoordinator {
-  private final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage
-      worldStateKeyValueStorage;
+  private final WorldStateKeyValueStorage worldStateKeyValueStorage;
 
-  public WorldStateStorageCoordinator(
-      final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage
-          worldStateKeyValueStorage) {
+  public WorldStateStorageCoordinator(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
   }
 
@@ -72,8 +70,8 @@ public class WorldStateStorageCoordinator {
   }
 
   @SuppressWarnings("unchecked")
-  public <STRATEGY extends org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage>
-      STRATEGY getStrategy(final Class<STRATEGY> strategyClass) {
+  public <STRATEGY extends WorldStateKeyValueStorage> STRATEGY getStrategy(
+      final Class<STRATEGY> strategyClass) {
     return (STRATEGY) worldStateKeyValueStorage;
   }
 
@@ -128,8 +126,7 @@ public class WorldStateStorageCoordinator {
 
   public void applyOnMatchingStrategy(
       final DataStorageFormat dataStorageFormat,
-      final Consumer<org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage>
-          onStrategy) {
+      final Consumer<WorldStateKeyValueStorage> onStrategy) {
     if (getDataStorageFormat().equals(dataStorageFormat)) {
       onStrategy.accept(worldStateKeyValueStorage());
     }
@@ -137,8 +134,7 @@ public class WorldStateStorageCoordinator {
 
   public void applyOnMatchingStrategies(
       final List<DataStorageFormat> dataStorageFormats,
-      final Consumer<org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage>
-          onStrategy) {
+      final Consumer<WorldStateKeyValueStorage> onStrategy) {
     if (dataStorageFormats.contains(getDataStorageFormat())) {
       onStrategy.accept(worldStateKeyValueStorage());
     }
@@ -165,7 +161,7 @@ public class WorldStateStorageCoordinator {
   }
 
   public static void applyForStrategy(
-      final org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage.Updater updater,
+      final WorldStateKeyValueStorage.Updater updater,
       final Consumer<BonsaiWorldStateKeyValueStorage.Updater> onBonsai,
       final Consumer<ForestWorldStateKeyValueStorage.Updater> onForest) {
     if (updater instanceof BonsaiWorldStateKeyValueStorage.Updater) {
@@ -175,7 +171,7 @@ public class WorldStateStorageCoordinator {
     }
   }
 
-  public org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage.Updater updater() {
+  public WorldStateKeyValueStorage.Updater updater() {
     return worldStateKeyValueStorage().updater();
   }
 
@@ -183,8 +179,7 @@ public class WorldStateStorageCoordinator {
     worldStateKeyValueStorage.clear();
   }
 
-  public org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage
-      worldStateKeyValueStorage() {
+  public WorldStateKeyValueStorage worldStateKeyValueStorage() {
     return worldStateKeyValueStorage;
   }
 }
