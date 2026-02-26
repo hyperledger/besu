@@ -18,6 +18,8 @@
 - Fix outstanding request counter leak in RequestManager that could cause peers to appear at capacity [#9900](https://github.com/hyperledger/besu/pull/9900)
 
 ### Additions and Improvements
+- Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
+- Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
 
 ## 26.2.0
 
@@ -72,6 +74,7 @@
 - EVM optimisations - Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 
 ### Bug fixes
+- Fix DiscV5 ENR `udp`/`udp6` fields: when `--p2p-port=0` is used, the OS-assigned UDP port is now correctly propagated to the ENR after the socket is bound; in dual-stack mode both UDP sockets resolve before the ENR `seq` is incremented [#9888](https://github.com/hyperledger/besu/pull/9888)
 - Fix DiscV5 ENR `tcp`/`tcp6` fields: previously these reflected the UDP discovery bind port instead of the actual RLPx listening port; ENR initialisation is now deferred until the RLPx TCP port is known [#9873](https://github.com/hyperledger/besu/pull/9873)
 - Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
