@@ -342,6 +342,9 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pAdvertisedHostIpv6(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenInterfaceIpv6(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenPortIpv6(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
@@ -359,7 +362,6 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.permissioningService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.transactionValidatorService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.balConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
@@ -372,6 +374,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.poaDiscoveryRetryBootnodes(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.preferIpv6Outbound(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
     when(mockBesuComponent.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 

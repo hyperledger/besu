@@ -48,7 +48,8 @@ public class TransactionCompleteResultTest {
                 0L,
                 Optional.of(Wei.of(7L)),
                 Hash.ZERO,
-                0));
+                0,
+                0L));
 
     assertThat(zeroPriorityFeeTx.getMaxFeePerGas()).isEqualTo("0x1");
     assertThat(zeroPriorityFeeTx.getMaxPriorityFeePerGas()).isEqualTo("0x0");
@@ -60,7 +61,8 @@ public class TransactionCompleteResultTest {
     final Transaction transaction = gen.transaction(TransactionType.EIP1559);
     TransactionCompleteResult tcr =
         new TransactionCompleteResult(
-            new TransactionWithMetadata(transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO, 0));
+            new TransactionWithMetadata(
+                transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO, 0, 0L));
     assertThat(tcr.getMaxFeePerGas()).isNotEmpty();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNotEmpty();
     assertThat(tcr.getGasPrice()).isNotEmpty();
@@ -74,7 +76,8 @@ public class TransactionCompleteResultTest {
     final Transaction transaction = gen.transaction(TransactionType.FRONTIER);
     TransactionCompleteResult tcr =
         new TransactionCompleteResult(
-            new TransactionWithMetadata(transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO, 0));
+            new TransactionWithMetadata(
+                transaction, 0L, Optional.of(Wei.of(7L)), Hash.ZERO, 0, 0L));
     assertThat(tcr.getMaxFeePerGas()).isNull();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
     assertThat(tcr.getGasPrice()).isNotEmpty();
@@ -88,7 +91,7 @@ public class TransactionCompleteResultTest {
     final Transaction transaction = gen.transaction(TransactionType.FRONTIER);
     TransactionCompleteResult tcr =
         new TransactionCompleteResult(
-            new TransactionWithMetadata(transaction, 0L, Optional.empty(), Hash.ZERO, 0));
+            new TransactionWithMetadata(transaction, 0L, Optional.empty(), Hash.ZERO, 0, 0L));
     assertThat(tcr.getMaxFeePerGas()).isNull();
     assertThat(tcr.getMaxPriorityFeePerGas()).isNull();
     assertThat(tcr.getGasPrice()).isNotEmpty();
@@ -108,7 +111,8 @@ public class TransactionCompleteResultTest {
                 Optional.empty(),
                 Hash.fromHexString(
                     "0xfc84c3946cb419cbd8c2c68d5e79a3b2a03a8faff4d9e2be493f5a07eb5da95e"),
-                0));
+                0,
+                0L));
 
     assertThat(transactionCompleteResult.getGasPrice()).isNotEmpty();
     assertThat(transactionCompleteResult.getMaxFeePerGas()).isNull();

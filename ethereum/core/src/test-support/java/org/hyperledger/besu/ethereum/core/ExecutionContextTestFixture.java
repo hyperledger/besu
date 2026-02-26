@@ -166,7 +166,7 @@ public class ExecutionContextTestFixture {
                     MiningConfiguration.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    ImmutableBalConfiguration.builder().isBalApiEnabled(true).build(),
+                    ImmutableBalConfiguration.builder().build(),
                     new NoOpMetricsSystem())
                 .createProtocolSchedule();
       }

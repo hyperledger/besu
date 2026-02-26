@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -306,6 +307,15 @@ public class BesuController implements java.io.Closeable {
     return transactionSimulator;
   }
 
+  /**
+   * Gets the eth scheduler.
+   *
+   * @return the eth scheduler
+   */
+  public EthScheduler getEthScheduler() {
+    return ethProtocolManager.ethContext().getScheduler();
+  }
+
   /** The type Builder. */
   public static class Builder {
     /** Instantiates a new Builder. */
@@ -358,7 +368,7 @@ public class BesuController implements java.io.Closeable {
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
-        if (syncMode == SyncMode.CHECKPOINT && isCheckpointPoSBlock(configOptions)) {
+        if (syncMode == SyncMode.SNAP && isCheckpointPoSBlock(configOptions)) {
           return new MergeBesuControllerBuilder().genesisConfig(genesisConfig);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*

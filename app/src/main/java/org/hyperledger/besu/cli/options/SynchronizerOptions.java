@@ -26,10 +26,13 @@ import java.util.List;
 
 import com.google.common.collect.Range;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 /** The Synchronizer Cli options. */
 public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration.Builder> {
+  private static final Logger LOG = LoggerFactory.getLogger(SynchronizerOptions.class);
   private static final String BLOCK_PROPAGATION_RANGE_FLAG =
       "--Xsynchronizer-block-propagation-range";
   private static final String DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_HEIGHT_FLAG =
@@ -54,10 +57,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-transactions-parallelism";
   private static final String COMPUTATION_PARALLELISM_FLAG =
       "--Xsynchronizer-computation-parallelism";
-  private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG =
-      "--Xsynchronizer-fast-sync-pivot-distance";
-  private static final String FULL_VALIDATION_RATE_FLAG =
-      "--Xsynchronizer-fast-sync-full-validation-rate";
+  private static final String PIVOT_DISTANCE_FROM_HEAD_FLAG = "--Xsynchronizer-pivot-distance";
   private static final String WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG =
       "--Xsynchronizer-world-state-hash-count-per-request";
   private static final String WORLD_STATE_REQUEST_PARALLELISM_FLAG =
@@ -68,6 +68,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-world-state-min-millis-before-stalling";
   private static final String WORLD_STATE_TASK_CACHE_SIZE_FLAG =
       "--Xsynchronizer-world-state-task-cache-size";
+  private static final String RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG =
+      "--Xsynchronizer-receipts-download-step-timeout-millis";
 
   // Regular (stable) flag
   private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
@@ -208,15 +210,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       names = PIVOT_DISTANCE_FROM_HEAD_FLAG,
       hidden = true,
       paramLabel = "<INTEGER>",
-      description =
-          "Distance from initial chain head to fast sync target (default: ${DEFAULT-VALUE})")
-  private int fastSyncPivotDistance = SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
+      description = "Distance from initial chain head to sync target (default: ${DEFAULT-VALUE})")
+  private int pivotDistance = SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
 
-  @CommandLine.Option(
-      names = FULL_VALIDATION_RATE_FLAG,
-      hidden = true,
-      paramLabel = "<FLOAT>",
-      description = "Fraction of headers fast sync will fully validate (default: ${DEFAULT-VALUE})")
+  // Not exposed as CLI option anymore, but used internally
   private float fastSyncFullValidationRate = SynchronizerConfiguration.DEFAULT_FULL_VALIDATION_RATE;
 
   @CommandLine.Option(
@@ -262,6 +259,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
           "The max number of pending node data requests cached in-memory during fast sync world state download. (default: ${DEFAULT-VALUE})")
   private int worldStateTaskCacheSize =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_TASK_CACHE_SIZE;
+
+  @CommandLine.Option(
+      names = RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG,
+      hidden = true,
+      paramLabel = "<LONG>",
+      description =
+          "Maximum time in milliseconds to wait for receipts download step including all retries (default: ${DEFAULT-VALUE})")
+  private long receiptsDownloadStepTimeoutMillis =
+      SynchronizerConfiguration.DEFAULT_RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS;
 
   @CommandLine.Option(
       names = SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
@@ -331,12 +337,20 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description = "Enable snap sync server capability. (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
+  @SuppressWarnings("unused")
   @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
       hidden = true,
-      description = "Enable the sync to start from a post-merge block.")
-  private Boolean checkpointPostMergeSyncEnabled =
-      SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      fallbackValue = "true",
+      description =
+          "DEPRECATED: This option is deprecated as CHECKPOINT sync mode has been replaced by SNAP. This option no longer has any effect.")
+  private void setCheckpointPostMergeSyncEnabled(final Boolean enabled) {
+    LOG.warn(
+        "{} is deprecated and has no effect. CHECKPOINT sync mode has been replaced by SNAP.",
+        CHECKPOINT_POST_MERGE_FLAG);
+  }
 
   @CommandLine.Option(
       names = {"--Xpeertask-system-enabled"},
@@ -350,7 +364,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       paramLabel = "<Boolean>",
       arity = "0..1",
       description =
-          "Enable transaction indexing during SNAP/CHECKPOINT sync. Disabling will improve initial syncing time and disk usage. However, to support RPCs that use transaction hash for historical queries, you'll need to enable this. (default: ${DEFAULT-VALUE})")
+          "Enable transaction indexing during SNAP sync. Enabling will increase syncing time and disk usage. However, to support RPCs that use transaction hash for historical queries, you'll need to enable this. (default: ${DEFAULT-VALUE})")
   private Boolean snapTransactionIndexingEnabled =
       SnapSyncConfiguration.DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
 
@@ -438,7 +452,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.headerDownloadParallelismFactor = config.getHeaderDownloadParallelismFactor();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
-    options.fastSyncPivotDistance = config.getSyncPivotDistance();
+    options.pivotDistance = config.getSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
@@ -459,7 +473,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
     options.snapsyncFlatStorageHealedCountPerRequest =
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
-    options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snapTransactionIndexingEnabled =
         config.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled();
@@ -485,7 +498,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.headerDownloadParallelismFactor(headerDownloadParallelismFactor);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
-    builder.syncPivotDistance(fastSyncPivotDistance);
+    builder.syncPivotDistance(pivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
     builder.worldStateRequestParallelism(worldStateRequestParallelism);
@@ -504,10 +517,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .isSnapServerEnabled(snapsyncServerEnabled)
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
             .build());
-    builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
     builder.isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     builder.snapSyncSavePreCheckpointHeadersOnlyEnabled(
         snapSyncSavePreCheckpointHeadersOnlyEnabled);
+    builder.receiptsDownloadStepTimeoutMillis(receiptsDownloadStepTimeoutMillis);
     builder.era1ImportPrepipelineEnabled(era1ImportPrepipelineEnabled);
     builder.era1DataUri(era1DataUri);
     builder.era1ImportPrepipelineConcurrency(era1ImportPrepipelineConcurrency);
@@ -541,9 +554,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             COMPUTATION_PARALLELISM_FLAG,
             OptionParser.format(computationParallelism),
             PIVOT_DISTANCE_FROM_HEAD_FLAG,
-            OptionParser.format(fastSyncPivotDistance),
-            FULL_VALIDATION_RATE_FLAG,
-            OptionParser.format(fastSyncFullValidationRate),
+            OptionParser.format(pivotDistance),
             WORLD_STATE_HASH_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(worldStateHashCountPerRequest),
             WORLD_STATE_REQUEST_PARALLELISM_FLAG,
@@ -554,6 +565,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(worldStateMinMillisBeforeStalling),
             WORLD_STATE_TASK_CACHE_SIZE_FLAG,
             OptionParser.format(worldStateTaskCacheSize),
+            RECEIPTS_DOWNLOAD_STEP_TIMEOUT_MILLIS_FLAG,
+            OptionParser.format(receiptsDownloadStepTimeoutMillis),
             SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG,
             OptionParser.format(snapsyncPivotBlockWindowValidity),
             SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,

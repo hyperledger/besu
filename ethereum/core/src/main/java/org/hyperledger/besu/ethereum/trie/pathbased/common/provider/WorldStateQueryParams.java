@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.common.provider;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.Objects;
 import java.util.Optional;

@@ -125,7 +125,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 MAX_PEERS,
                 MAX_PEERS,
                 false,
-                SyncMode.FAST,
+                SyncMode.FULL,
                 new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList())));
 
     final EthMessages ethMessages = new EthMessages();

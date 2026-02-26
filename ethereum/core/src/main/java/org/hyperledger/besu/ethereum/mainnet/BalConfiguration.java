@@ -24,12 +24,6 @@ public interface BalConfiguration {
 
   BalConfiguration DEFAULT = ImmutableBalConfiguration.builder().build();
 
-  /** Returns whether block access list support is enabled. */
-  @Value.Default
-  default boolean isBalApiEnabled() {
-    return false;
-  }
-
   /** Returns whether BAL-based optimisations should be disabled entirely. */
   @Value.Default
   default boolean isBalOptimisationEnabled() {

@@ -154,3 +154,5 @@ Voting ends two weeks from today.
 
 For more information on this process, see the MAINTAINERS.md file.
 ```
+## Modifying this file
+Other than adding and removing maintainers, any changes to this file (MAINTAINERS.md) must be proposed in a PR and agreed upon by 2/3 of current maintainers.
