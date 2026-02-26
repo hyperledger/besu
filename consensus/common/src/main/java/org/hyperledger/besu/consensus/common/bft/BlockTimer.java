@@ -92,7 +92,11 @@ public class BlockTimer {
 
     final long expiryTime;
     int currentBlockPeriodSeconds = currentForkOptions.getBlockPeriodSeconds();
-    final int nextBlockPeriodSeconds = currentForkOptions.getBlockPeriodSeconds();
+    final int nextBlockPeriodSeconds =
+        forksSchedule
+            .getFork(round.getSequenceNumber(), headerTimestamp.get() + currentBlockPeriodSeconds)
+            .getValue()
+            .getBlockPeriodSeconds();
 
     // If the block period seconds change between the current block and the next one we need to
     // produce this block on the longer of the two values,
