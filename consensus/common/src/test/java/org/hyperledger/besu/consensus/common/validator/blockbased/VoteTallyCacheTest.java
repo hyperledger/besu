@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Arrays;
 import java.util.Optional;
 
-import com.google.common.util.concurrent.UncheckedExecutionException;
+import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -74,7 +74,7 @@ public class VoteTallyCacheTest extends VoteTallyCacheTestBase {
 
     final Block orphanBlock = createEmptyBlock(4, Hash.ZERO);
 
-    assertThatExceptionOfType(UncheckedExecutionException.class)
+    assertThatExceptionOfType(NoSuchElementException.class)
         .isThrownBy(() -> cache.getVoteTallyAfterBlock(orphanBlock.getHeader()))
         .withMessageContaining(
             "Supplied block was on a orphaned chain, unable to generate " + "VoteTally.");
