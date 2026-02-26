@@ -16,32 +16,16 @@ package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 
+/**
+ * Factory for creating Block Access List builders. Only present when BAL is activated (e.g.
+ * Amsterdam and later); when not a BAL fork, the protocol spec has an empty {@code
+ * Optional<BlockAccessListFactory>}.
+ */
 public class BlockAccessListFactory {
 
-  private final boolean cliActivated;
-  private final boolean forkActivated;
+  public BlockAccessListFactory() {}
 
-  public BlockAccessListFactory() {
-    this(false, false);
-  }
-
-  public BlockAccessListFactory(final boolean cliActivated, final boolean forkActivated) {
-    this.cliActivated = cliActivated;
-    this.forkActivated = forkActivated;
-  }
-
-  public boolean isCliActivated() {
-    return cliActivated;
-  }
-
-  public boolean isForkActivated() {
-    return forkActivated;
-  }
-
-  public boolean isEnabled() {
-    return cliActivated || forkActivated;
-  }
-
+  /** Returns a new builder for tracking block access list data. */
   public BlockAccessListBuilder newBlockAccessListBuilder() {
     return BlockAccessList.builder();
   }

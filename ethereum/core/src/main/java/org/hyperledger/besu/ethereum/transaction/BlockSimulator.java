@@ -63,6 +63,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
 
@@ -260,7 +261,6 @@ public class BlockSimulator {
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
@@ -365,16 +365,13 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
 
-      // Custom tracer and EthTraceTransfers are mutually exclusive
-      OperationTracer finalOperationTracer = operationTracer;
+      // Always use TracerAggregator, optionally adding EthTransferLogOperationTracer
+      final TracerAggregator finalOperationTracer;
       if (isTraceTransfers) {
-        if (finalOperationTracer == OperationTracer.NO_TRACING) {
-          finalOperationTracer = new EthTransferLogOperationTracer();
-        } else {
-          // this shouldn't happen, and isTraceTransfers will go away with Glamsterdam
-          throw new IllegalArgumentException(
-              "Custom tracer and EthTraceTransfers are mutually exclusive");
-        }
+        finalOperationTracer =
+            TracerAggregator.combining(operationTracer, new EthTransferLogOperationTracer());
+      } else {
+        finalOperationTracer = TracerAggregator.combining(operationTracer);
       }
 
       long gasLimit =
@@ -497,10 +494,20 @@ public class BlockSimulator {
     var updater = ws.updater();
     for (Address accountToOverride : stateOverrideMap.keySet()) {
       final StateOverride override = stateOverrideMap.get(accountToOverride);
-      MutableAccount account = updater.getOrCreate(accountToOverride);
-      TransactionSimulator.applyOverrides(account, override);
+      if (hasAccountStateOverrides(override)) {
+        MutableAccount account = updater.getOrCreate(accountToOverride);
+        TransactionSimulator.applyOverrides(account, override);
+      }
     }
     updater.commit();
+  }
+
+  private boolean hasAccountStateOverrides(final StateOverride override) {
+    return override.getNonce().isPresent()
+        || override.getBalance().isPresent()
+        || override.getCode().isPresent()
+        || override.getState().isPresent()
+        || override.getStateDiff().isPresent();
   }
 
   /**

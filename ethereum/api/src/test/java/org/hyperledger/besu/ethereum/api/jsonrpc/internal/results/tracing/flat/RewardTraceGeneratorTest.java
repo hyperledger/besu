@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.ClassicBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
@@ -36,7 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,7 +61,6 @@ public class RewardTraceGeneratorTest {
       Address.wrap(Bytes.fromHexString("0x095e7baea6a6c7c4c2dfeb977efac326af552d88"));
   private final Wei blockReward = Wei.of(10000);
   private final BlockHeader ommerHeader = gen.header(0x09);
-  private final OptionalLong eraRounds = OptionalLong.of(5000000);
   private Block block;
 
   @BeforeEach
@@ -116,67 +113,6 @@ public class RewardTraceGeneratorTest {
             .build();
 
     // calculate reward with MainnetBlockProcessor
-    final Action.Builder actionOmmerReward =
-        Action.builder()
-            .rewardType("uncle")
-            .author(ommerBeneficiary.getBytes().toHexString())
-            .value(
-                blockProcessor
-                    .getOmmerReward(
-                        blockReward, block.getHeader().getNumber(), ommerHeader.getNumber())
-                    .toShortHexString());
-    final Trace ommerReward =
-        new RewardTrace.Builder()
-            .blockHash(block.getHash().getBytes().toHexString())
-            .blockNumber(block.getHeader().getNumber())
-            .actionBuilder(actionOmmerReward)
-            .type("reward")
-            .build();
-
-    final List<Trace> traces = traceStream.collect(Collectors.toList());
-
-    // check block reward
-    assertThat(traces.get(0)).usingRecursiveComparison().isEqualTo(blocReward);
-    // check ommer reward
-    assertThat(traces.get(1)).usingRecursiveComparison().isEqualTo(ommerReward);
-  }
-
-  @Test
-  public void assertThatTraceGeneratorReturnValidRewardsForClassicBlockProcessor() {
-    final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory =
-        mock(AbstractBlockProcessor.TransactionReceiptFactory.class);
-    final ClassicBlockProcessor blockProcessor =
-        new ClassicBlockProcessor(
-            transactionProcessor,
-            transactionReceiptFactory,
-            blockReward,
-            BlockHeader::getCoinbase,
-            true,
-            eraRounds,
-            protocolSchedule,
-            BalConfiguration.DEFAULT);
-    when(protocolSpec.getBlockProcessor()).thenReturn(blockProcessor);
-
-    final Stream<Trace> traceStream =
-        RewardTraceGenerator.generateFromBlock(protocolSchedule, block);
-
-    final Action.Builder actionBlockReward =
-        Action.builder()
-            .rewardType("block")
-            .author(blockBeneficiary.getBytes().toHexString())
-            .value(
-                blockProcessor
-                    .getCoinbaseReward(blockReward, block.getHeader().getNumber(), 1)
-                    .toShortHexString());
-    final Trace blocReward =
-        new RewardTrace.Builder()
-            .blockHash(block.getHash().getBytes().toHexString())
-            .blockNumber(block.getHeader().getNumber())
-            .actionBuilder(actionBlockReward)
-            .type("reward")
-            .build();
-
-    // calculate reward with ClassicBlockProcessor
     final Action.Builder actionOmmerReward =
         Action.builder()
             .rewardType("uncle")

@@ -168,6 +168,14 @@ public class SyncState {
     replaceSyncTarget(Optional.of(syncTarget));
   }
 
+  public void setSyncProgress(
+      final long startingBlock, final long currentBlock, final long highestBlock) {
+    final SyncStatus status =
+        new DefaultSyncStatus(
+            startingBlock, currentBlock, highestBlock, Optional.empty(), Optional.empty());
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(Optional.of(status)));
+  }
+
   public void setWorldStateDownloadStatus(final WorldStateDownloadStatus worldStateDownloadStatus) {
     this.worldStateDownloadStatus = Optional.ofNullable(worldStateDownloadStatus);
   }

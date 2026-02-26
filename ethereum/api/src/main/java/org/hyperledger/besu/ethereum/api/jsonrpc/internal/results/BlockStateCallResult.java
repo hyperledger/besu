@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -99,15 +100,17 @@ public class BlockStateCallResult extends BlockResult {
    * @return a list of {@link TransactionResult} objects with full transaction details
    */
   private static List<TransactionResult> createFullTransactionResults(final Block block) {
-    return block.getBody().getTransactions().stream()
-        .map(
-            transaction ->
+    final var txs = block.getBody().getTransactions();
+    return IntStream.range(0, txs.size())
+        .mapToObj(
+            i ->
                 new TransactionWithMetadata(
-                    transaction,
+                    txs.get(i),
                     block.getHeader().getNumber(),
                     block.getHeader().getBaseFee(),
                     block.getHash(),
-                    block.getBody().getTransactions().indexOf(transaction)))
+                    i,
+                    block.getHeader().getTimestamp()))
         .map(TransactionCompleteResult::new)
         .collect(Collectors.toList());
   }

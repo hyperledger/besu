@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
@@ -200,22 +201,23 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    if (config.getDiscovery().isDiscoveryV5Enabled()) {
-      LOG.warn("Discovery Protocol v5 is not available");
+    if (config.discoveryConfiguration().isDiscoveryV5Enabled()) {
+      LOG.warn(
+          "Discovery Protocol v5 is enabled via --Xv5-discovery-enabled. This is an experimental feature and may not be fully stable.");
+    } else {
+      warnIfIpv6OptionsWithDiscV4();
     }
 
-    final String address = config.getDiscovery().getAdvertisedHost();
-    final int configuredDiscoveryPort = config.getDiscovery().getBindPort();
-    final int configuredRlpxPort = config.getRlpx().getBindPort();
+    final String address = config.discoveryConfiguration().getAdvertisedHost();
 
-    Optional.ofNullable(config.getDiscovery().getDNSDiscoveryURL())
+    Optional.ofNullable(config.discoveryConfiguration().getDNSDiscoveryURL())
         .ifPresent(
             disco -> {
               // These lists are updated every 12h
               // We retrieve the list every 10 minutes (600000 msec)
               LOG.info("Starting DNS discovery with URL {}", disco);
               config
-                  .getDnsDiscoveryServerOverride()
+                  .dnsDiscoveryServerOverride()
                   .ifPresent(
                       dnsServer ->
                           LOG.info(
@@ -228,7 +230,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       0L,
                       1000L, // start after 1 second
                       600000L,
-                      config.getDnsDiscoveryServerOverride().orElse(null));
+                      config.dnsDiscoveryServerOverride().orElse(null));
 
               // Use Java 21 virtual thread to deploy verticle
               final DeploymentOptions options =
@@ -243,13 +245,9 @@ public class DefaultP2PNetwork implements P2PNetwork {
             });
 
     final int listeningPort = rlpxAgent.start().join();
-    final int discoveryPort =
-        peerDiscoveryAgent
-            .start(
-                (configuredDiscoveryPort == 0 && configuredRlpxPort == 0)
-                    ? listeningPort
-                    : configuredDiscoveryPort)
-            .join();
+    // Pass the effective RLPx TCP port so that the discovery agent can write the correct tcp/tcp6
+    // values into the local ENR.  The discovery agent reads its own UDP bind port independently.
+    final int discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
 
     final Consumer<? super NatManager> natAction =
         natManager -> {
@@ -270,11 +268,12 @@ public class DefaultP2PNetwork implements P2PNetwork {
     checkMaintainedConnectionPeers();
 
     // Periodically check maintained connections
-    final int checkMaintainedConnectionsSec = config.getCheckMaintainedConnectionsFrequencySec();
+    final long checkMaintainedConnectionsSec =
+        config.checkMaintainedConnectionsFrequency().toSeconds();
     peerConnectionScheduler.scheduleWithFixedDelay(
         this::checkMaintainedConnectionPeers, 2, checkMaintainedConnectionsSec, TimeUnit.SECONDS);
     // Periodically initiate outgoing connections to discovered peers
-    final int checkConnectionsSec = config.getInitiateConnectionsFrequencySec();
+    final long checkConnectionsSec = config.initiateConnectionsFrequency().toSeconds();
     peerConnectionScheduler.scheduleWithFixedDelay(
         this::attemptPeerConnections, checkConnectionsSec, checkConnectionsSec, TimeUnit.SECONDS);
   }
@@ -462,6 +461,15 @@ public class DefaultP2PNetwork implements P2PNetwork {
     return Optional.of(localNode.getPeer().getEnodeURL());
   }
 
+  private void warnIfIpv6OptionsWithDiscV4() {
+    final DiscoveryConfiguration disc = config.discoveryConfiguration();
+    if (disc.getAdvertisedHostIpv6().isPresent() || disc.isDualStackEnabled()) {
+      LOG.warn(
+          "--p2p-host-ipv6 and --p2p-interface-ipv6 are only supported with DiscV5 "
+              + "(--Xv5-discovery-enabled). These options are ignored by DiscV4.");
+    }
+  }
+
   private void setLocalNode(
       final String address, final int listeningPort, final int discoveryPort) {
     if (localNode.isReady()) {
@@ -494,7 +502,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     private Vertx vertx;
 
-    private NetworkingConfiguration config = NetworkingConfiguration.create();
+    private NetworkingConfiguration config = NetworkingConfiguration.DEFAULT;
     private List<Capability> supportedCapabilities;
     private NodeKey nodeKey;
 
@@ -521,7 +529,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       peerPermissions = PeerPermissions.combine(peerPermissions, misbehavingPeers);
 
       final MutableLocalNode localNode =
-          MutableLocalNode.create(config.getRlpx().getClientId(), 5, supportedCapabilities);
+          MutableLocalNode.create(
+              config.rlpxConfiguration().getClientId(), 5, supportedCapabilities);
       final PeerPrivileges peerPrivileges = new DefaultPeerPrivileges(maintainedPeers);
       final PeerLookup peerLookup = new PeerLookup();
       RlpxAgent rlpxAgent = rlpxAgentFactory.create(localNode, peerPrivileges, peerLookup);

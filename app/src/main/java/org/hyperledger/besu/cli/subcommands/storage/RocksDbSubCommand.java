@@ -67,6 +67,13 @@ public class RocksDbSubCommand implements Runnable {
     @ParentCommand
     private RocksDbSubCommand rocksDbSubCommand;
 
+    @CommandLine.Option(
+        names = {"--limit-size-unit"},
+        description =
+            "Maximum size unit for output display (${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE})",
+        arity = "1..1")
+    private SizeUnit maxSizeUnit = SizeUnit.GIB;
+
     @Override
     public void run() {
 
@@ -88,12 +95,13 @@ public class RocksDbSubCommand implements Runnable {
           (rocksdb, cfHandle) -> {
             try {
               columnFamilyUsages.add(
-                  RocksDbHelper.getAndPrintUsageForColumnFamily(rocksdb, cfHandle, out));
+                  RocksDbHelper.getAndPrintUsageForColumnFamily(
+                      rocksdb, cfHandle, out, maxSizeUnit));
             } catch (RocksDBException e) {
               throw new RuntimeException(e);
             }
           });
-      RocksDbHelper.printTotals(out, columnFamilyUsages);
+      RocksDbHelper.printTotals(out, columnFamilyUsages, maxSizeUnit);
     }
   }
 

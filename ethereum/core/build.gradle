@@ -97,6 +97,7 @@ dependencies {
   integrationTestImplementation 'io.consensys.tuweni:tuweni-bytes'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter'
+  integrationTestRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
   testSupportImplementation project(path: ':config', configuration: 'testSupportArtifacts')
   testSupportImplementation project(':ethereum:eth')
