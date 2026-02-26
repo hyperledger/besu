@@ -14,11 +14,26 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import org.hyperledger.besu.util.NetworkUtility;
+
 /**
  * Groups the network endpoint information (host address and ports) for a discovery node.
  *
  * @param host the advertised host or IP address
  * @param discoveryPort the UDP discovery port
  * @param tcpPort the TCP listening port
+ * @param isIpv4 {@code true} if the host address is IPv4, {@code false} if IPv6
  */
-public record HostEndpoint(String host, int discoveryPort, int tcpPort) {}
+public record HostEndpoint(String host, int discoveryPort, int tcpPort, boolean isIpv4) {
+
+  /**
+   * Convenience constructor that derives {@code isIpv4} from the host address.
+   *
+   * @param host the advertised host or IP address
+   * @param discoveryPort the UDP discovery port
+   * @param tcpPort the TCP listening port
+   */
+  public HostEndpoint(final String host, final int discoveryPort, final int tcpPort) {
+    this(host, discoveryPort, tcpPort, NetworkUtility.isIpV4Address(host));
+  }
+}

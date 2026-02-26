@@ -253,6 +253,45 @@ class NodeRecordManagerTest {
     assertThat(record.get(EnrField.TCP_V6)).isEqualTo(30404);
   }
 
+  @Test
+  void onDiscoveryPortResolved_duplicateCallback_doesNotOverwritePort() {
+    // Once a port has been resolved, a second callback with a different port
+    // must not re-apply it — the guard (discoveryPort == 0) prevents double-application.
+    manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 0, 30303), Optional.empty());
+
+    manager.onDiscoveryPortResolved(Optional.of(54321), Optional.empty());
+
+    // Second callback with a different port — must not overwrite the first value
+    manager.onDiscoveryPortResolved(Optional.of(99999), Optional.empty());
+
+    final NodeRecord record = getNodeRecord();
+    assertThat(record.get(EnrField.UDP)).isEqualTo(54321);
+  }
+
+  @Test
+  void onDiscoveryPortResolved_dualStack_ipv6ResolvesFirst_noOrderingDependency() {
+    // Same as the IPv4-first dual-stack test, but IPv6 resolves before IPv4.
+    // Verifies there is no ordering dependency between the two callbacks.
+    manager.initializeLocalNode(
+        new HostEndpoint("127.0.0.1", 0, 30303), Optional.of(new HostEndpoint("::1", 0, 30404)));
+
+    verify(updater, times(1)).commit();
+
+    // IPv6 resolves first — IPv4 still pending → no new write
+    manager.onDiscoveryPortResolved(Optional.empty(), Optional.of(56789));
+    verify(updater, times(1)).commit();
+
+    // IPv4 resolves — both endpoints now non-zero → ENR written
+    manager.onDiscoveryPortResolved(Optional.of(12345), Optional.empty());
+    verify(updater, times(2)).commit();
+
+    final NodeRecord record = getNodeRecord();
+    assertThat(record.get(EnrField.UDP)).isEqualTo(12345);
+    assertThat(record.get(EnrField.TCP)).isEqualTo(30303);
+    assertThat(record.get(EnrField.UDP_V6)).isEqualTo(56789);
+    assertThat(record.get(EnrField.TCP_V6)).isEqualTo(30404);
+  }
+
   private NodeRecord getNodeRecord() {
     return manager
         .getLocalNode()
