@@ -907,21 +907,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         // Migration is needed - block archiver until migration completes
         archiver.setMigrationInProgress(true);
 
-        // Subscribe to migration completion to enable archiver
-        archiveMigrator.subscribe(
-            new BonsaiFlatDbToArchiveMigrator.MigrationCompletionListener() {
-              @Override
-              public void onMigrationComplete() {
-                archiver.setMigrationInProgress(false);
-              }
-
-              @Override
-              public void onMigrationFailed(final Throwable error) {
-                LOG.error(
-                    "Archive migration failed, archiver will remain disabled until restart", error);
-              }
-            });
-
         // Start migration when node is in sync
         final AtomicBoolean migrationStarted = new AtomicBoolean(false);
         synchronizer.subscribeInSync(
@@ -929,7 +914,16 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               if (inSync && migrationStarted.compareAndSet(false, true)) {
                 LOG.info("Node is in sync, starting Bonsai archive migration");
                 final long chainHead = blockchain.getChainHeadBlockNumber();
-                archiveMigrator.migrate(0L, chainHead);
+                archiveMigrator
+                    .migrate(0L, chainHead)
+                    .thenRun(() -> archiver.setMigrationInProgress(false))
+                    .exceptionally(
+                        error -> {
+                          LOG.error(
+                              "Archive migration failed, archiver will remain disabled until restart",
+                              error);
+                          return null;
+                        });
               }
             },
             0); // tolerance of 0 means exactly in sync

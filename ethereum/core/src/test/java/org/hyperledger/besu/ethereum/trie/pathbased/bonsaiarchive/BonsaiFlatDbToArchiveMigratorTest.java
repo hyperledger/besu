@@ -52,8 +52,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.AfterEach;
@@ -139,66 +137,18 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void notifiesListenersOnCompletion() throws Exception {
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
-
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-
-    final AtomicBoolean completionCalled = new AtomicBoolean(false);
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    migrator.subscribe(
-        new BonsaiFlatDbToArchiveMigrator.MigrationCompletionListener() {
-          @Override
-          public void onMigrationComplete() {
-            completionCalled.set(true);
-            latch.countDown();
-          }
-
-          @Override
-          public void onMigrationFailed(final Throwable error) {
-            latch.countDown();
-          }
-        });
-
-    migrator.migrate(0L, 0L);
-
-    assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-    assertThat(completionCalled.get()).isTrue();
-  }
-
-  @Test
-  public void notifiesListenersOnFailure() throws Exception {
+  public void futureCompletesExceptionallyOnFailure() throws Exception {
     when(trieLogManager.getTrieLogLayer(any())).thenThrow(new RuntimeException("Test failure"));
 
     appendBlocks(1);
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
-    final AtomicBoolean failureCalled = new AtomicBoolean(false);
-    final AtomicReference<Throwable> capturedError = new AtomicReference<>();
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    migrator.subscribe(
-        new BonsaiFlatDbToArchiveMigrator.MigrationCompletionListener() {
-          @Override
-          public void onMigrationComplete() {
-            latch.countDown();
-          }
-
-          @Override
-          public void onMigrationFailed(final Throwable error) {
-            failureCalled.set(true);
-            capturedError.set(error);
-            latch.countDown();
-          }
-        });
-
-    migrator.migrate(1L, 1L);
-
-    assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
-    assertThat(failureCalled.get()).isTrue();
-    assertThat(capturedError.get()).isNotNull();
+    assertThat(migrator.migrate(1L, 1L))
+        .failsWithin(10, TimeUnit.SECONDS)
+        .withThrowableThat()
+        .havingRootCause()
+        .withMessage("Test failure");
   }
 
   @Test
@@ -224,7 +174,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     // Wait for migration to start
     assertThat(migrationStartedLatch.await(5, TimeUnit.SECONDS)).isTrue();
-    assertThat(migrator.isMigrationRunning()).isTrue();
+    assertThat(migrator.migrationRunning).isTrue();
 
     // Second migration should return immediately without running
     final CompletableFuture<Void> second = migrator.migrate(0L, 10L);
@@ -234,7 +184,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     allowMigrationToFinishLatch.countDown();
     first.get(10, TimeUnit.SECONDS);
 
-    assertThat(migrator.isMigrationRunning()).isFalse();
+    assertThat(migrator.migrationRunning).isFalse();
   }
 
   @Test
@@ -242,10 +192,10 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    assertThat(migrator.isMigrationRunning()).isFalse();
+    assertThat(migrator.migrationRunning).isFalse();
 
     migrator.migrate(0L, 0L).get(10, TimeUnit.SECONDS);
-    assertThat(migrator.isMigrationRunning()).isFalse();
+    assertThat(migrator.migrationRunning).isFalse();
   }
 
   @Test
@@ -343,22 +293,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
-    final CountDownLatch latch = new CountDownLatch(1);
-    migrator.subscribe(
-        new BonsaiFlatDbToArchiveMigrator.MigrationCompletionListener() {
-          @Override
-          public void onMigrationComplete() {
-            latch.countDown();
-          }
-
-          @Override
-          public void onMigrationFailed(final Throwable error) {
-            latch.countDown();
-          }
-        });
-
-    migrator.migrate(1L, 1L);
-    assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(migrator.migrate(1L, 1L)).failsWithin(10, TimeUnit.SECONDS);
 
     verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
   }

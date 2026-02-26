@@ -17,11 +17,12 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsaiarchive;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VARIABLES;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
-import org.hyperledger.besu.util.Subscribers;
 import org.hyperledger.besu.util.log.LogUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 public class BonsaiFlatDbToArchiveMigrator {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
-  private static final int LOG_INTERVAL_SECONDS = 30;
+  private static final int LOG_INTERVAL_SECONDS = 60;
 
   private static final byte[] MIGRATION_PROGRESS_KEY =
       "ARCHIVE_MIGRATION_PROGRESS".getBytes(StandardCharsets.UTF_8);
@@ -61,22 +61,8 @@ public class BonsaiFlatDbToArchiveMigrator {
   private final Blockchain blockchain;
   private final ScheduledExecutorService executorService;
   private final Counter migratedBlocksCounter;
-  private final Subscribers<MigrationCompletionListener> completionListeners = Subscribers.create();
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
-  private final AtomicBoolean migrationRunning = new AtomicBoolean(false);
-
-  /** Listener interface for migration completion events. */
-  public interface MigrationCompletionListener {
-    /** Called when the archive migration completes successfully. */
-    void onMigrationComplete();
-
-    /**
-     * Called when the archive migration fails with an error.
-     *
-     * @param error the error that caused the failure
-     */
-    void onMigrationFailed(Throwable error);
-  }
+  protected final AtomicBoolean migrationRunning = new AtomicBoolean(false);
 
   /**
    * Creates a new BonsaiFlatDbToArchiveMigrator.
@@ -105,49 +91,15 @@ public class BonsaiFlatDbToArchiveMigrator {
   }
 
   /**
-   * Subscribe to migration completion events.
-   *
-   * @param listener the listener to notify on migration completion
-   * @return the subscription ID that can be used to unsubscribe
-   */
-  public long subscribe(final MigrationCompletionListener listener) {
-    return completionListeners.subscribe(listener);
-  }
-
-  /**
-   * Unsubscribe from migration completion events.
-   *
-   * @param subscriptionId the subscription ID returned from subscribe
-   * @return true if the listener was found and removed
-   */
-  public boolean unsubscribe(final long subscriptionId) {
-    return completionListeners.unsubscribe(subscriptionId);
-  }
-
-  /**
-   * Migrates FULL flat DB to ARCHIVE format by processing trie logs from startBlock to endBlock.
-   * Resumes from saved progress if available.
-   *
-   * @param startBlock the starting block number (inclusive)
-   * @param endBlock the ending block number (inclusive)
-   * @return a CompletableFuture that completes when migration finishes
-   */
-  public CompletableFuture<Void> migrate(final long startBlock, final long endBlock) {
-    return migrate(startBlock, endBlock, false);
-  }
-
-  /**
-   * Migrates FULL flat DB to ARCHIVE format by processing trie logs sequentially. The target block
-   * is continuously updated as new blocks are imported, so the migrator chases the chain head until
-   * it converges. Once caught up, it switches to ARCHIVE mode.
+   * Migrates Bonsai flat DB to Bonsai archive format by processing trie logs sequentially. The
+   * target block is continuously updated as new blocks are imported, so the migrator chases the
+   * chain head until it converges.
    *
    * @param startBlock the starting block number (inclusive)
    * @param endBlock the initial ending block number (inclusive), updated as new blocks arrive
-   * @param resetProgress if true, ignores any saved progress and starts from startBlock
    * @return a CompletableFuture that completes when migration finishes
    */
-  public CompletableFuture<Void> migrate(
-      final long startBlock, final long endBlock, final boolean resetProgress) {
+  public CompletableFuture<Void> migrate(final long startBlock, final long endBlock) {
     if (!migrationRunning.compareAndSet(false, true)) {
       LOG.warn("Migration already in progress, ignoring request");
       return CompletableFuture.completedFuture(null);
@@ -155,7 +107,7 @@ public class BonsaiFlatDbToArchiveMigrator {
 
     final AtomicLong target = new AtomicLong(endBlock);
     final long blockObserverId =
-        blockchain.observeBlockAdded(event -> target.set(event.getBlock().getHeader().getNumber()));
+        blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
 
     return CompletableFuture.runAsync(
         () -> {
@@ -166,7 +118,7 @@ public class BonsaiFlatDbToArchiveMigrator {
 
             LOG.info("Starting archive migration from block {} to {}", startBlock, endBlock);
 
-            long currentBlock = determineStartBlock(storage, startBlock, resetProgress);
+            long currentBlock = determineStartBlock(storage, startBlock);
             long migratedCount = 0;
             long skippedCount = 0;
 
@@ -210,11 +162,9 @@ public class BonsaiFlatDbToArchiveMigrator {
 
             logCompletion(
                 startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
-            completionListeners.forEach(MigrationCompletionListener::onMigrationComplete);
 
           } catch (final Exception e) {
             LOG.error("Archive migration failed", e);
-            completionListeners.forEach(listener -> listener.onMigrationFailed(e));
             throw new RuntimeException(e);
           } finally {
             blockchain.removeObserver(blockObserverId);
@@ -222,15 +172,6 @@ public class BonsaiFlatDbToArchiveMigrator {
           }
         },
         executorService);
-  }
-
-  /**
-   * Checks if migration is currently running.
-   *
-   * @return true if migration is in progress
-   */
-  public boolean isMigrationRunning() {
-    return migrationRunning.get();
   }
 
   /**
@@ -246,12 +187,7 @@ public class BonsaiFlatDbToArchiveMigrator {
         .map(Bytes::toLong);
   }
 
-  private long determineStartBlock(
-      final SegmentedKeyValueStorage storage, final long startBlock, final boolean resetProgress) {
-    if (resetProgress) {
-      LOG.info("Resetting migration progress, starting from block {}", startBlock);
-      return startBlock;
-    }
+  private long determineStartBlock(final SegmentedKeyValueStorage storage, final long startBlock) {
     final long currentBlock =
         storage
             .get(VARIABLES, MIGRATION_PROGRESS_KEY)
@@ -322,7 +258,7 @@ public class BonsaiFlatDbToArchiveMigrator {
                 final BytesValueRLPOutput out = new BytesValueRLPOutput();
                 accountChange.getUpdated().writeTo(out);
                 final byte[] key =
-                    BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
+                    calculateArchiveKeyWithMinSuffix(
                         context, address.addressHash().getBytes().toArrayUnsafe());
                 tx.put(ACCOUNT_INFO_STATE, key, out.encoded().toArrayUnsafe());
               }
@@ -335,23 +271,19 @@ public class BonsaiFlatDbToArchiveMigrator {
     trieLog
         .getStorageChanges()
         .forEach(
-            (address, storageMap) -> {
-              storageMap.forEach(
-                  (slotKey, storageChange) -> {
-                    if (storageChange.getUpdated() != null) {
-                      final byte[] naturalKey =
-                          BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey(
-                              address.addressHash(), slotKey.getSlotHash());
-                      final byte[] key =
-                          BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
-                              context, naturalKey);
-                      tx.put(
-                          ACCOUNT_STORAGE_STORAGE,
-                          key,
-                          storageChange.getUpdated().toBytes().toArrayUnsafe());
-                    }
-                  });
-            });
+            (address, storageMap) ->
+                storageMap.forEach(
+                    (slotKey, storageChange) -> {
+                      if (storageChange.getUpdated() != null) {
+                        final byte[] naturalKey =
+                            calculateNaturalSlotKey(address.addressHash(), slotKey.getSlotHash());
+                        final byte[] key = calculateArchiveKeyWithMinSuffix(context, naturalKey);
+                        tx.put(
+                            ACCOUNT_STORAGE_STORAGE,
+                            key,
+                            storageChange.getUpdated().toBytes().toArrayUnsafe());
+                      }
+                    }));
   }
 
   private void saveProgress(final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
