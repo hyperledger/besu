@@ -665,7 +665,7 @@ public class Transaction
    */
   public Wei getUpfrontGasCost(
       final Wei gasPrice, final Wei blobGasPrice, final long totalBlobGas) {
-    if (gasPrice == null || gasPrice.isZero()) {
+    if (gasPrice == null) {
       return Wei.ZERO;
     }
 
