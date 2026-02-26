@@ -2073,6 +2073,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     instantiateSignatureAlgorithmFactory();
 
+    //TODO: This works very well with PLAIN, for other logging formats the formatting is not so much readable
     logger.info(generateConfigurationOverview());
     logger.info("Security Module: {}", securityModuleName);
   }
