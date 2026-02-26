@@ -76,6 +76,8 @@ public class ProtocolSpecBuilder {
 
   private BlockProcessorBuilder blockProcessorBuilder;
   private BlockValidatorBuilder blockValidatorBuilder;
+  private Function<ProtocolSchedule, BlockAccessListValidator> blockAccessListValidatorBuilder =
+      protocolSchedule -> BlockAccessListValidator.ALWAYS_REJECT_BAL;
   private BlockImporterBuilder blockImporterBuilder;
 
   private HardforkId hardforkId;
@@ -93,7 +95,6 @@ public class ProtocolSpecBuilder {
   private boolean isPoS = false;
   private Duration slotDuration;
   private boolean isReplayProtectionSupported = false;
-  private boolean isBlockAccessListEnabled = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
   private BlockAccessListFactory blockAccessListFactory;
   private StateRootCommitterFactory stateRootCommitterFactory =
@@ -167,6 +168,12 @@ public class ProtocolSpecBuilder {
   public ProtocolSpecBuilder blockBodyValidatorBuilder(
       final Function<ProtocolSchedule, BlockBodyValidator> blockBodyValidatorBuilder) {
     this.blockBodyValidatorBuilder = blockBodyValidatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder blockAccessListValidatorBuilder(
+      final Function<ProtocolSchedule, BlockAccessListValidator> blockAccessListValidatorBuilder) {
+    this.blockAccessListValidatorBuilder = blockAccessListValidatorBuilder;
     return this;
   }
 
@@ -304,11 +311,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
-    return this;
-  }
-
   public ProtocolSpecBuilder blockAccessListFactory(
       final BlockAccessListFactory blockAccessListFactory) {
     this.blockAccessListFactory = blockAccessListFactory;
@@ -350,6 +352,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(transactionProcessorBuilder, "Missing transaction processor");
     checkNotNull(blockHeaderValidatorBuilder, "Missing block header validator");
     checkNotNull(blockBodyValidatorBuilder, "Missing block body validator");
+    checkNotNull(blockAccessListValidatorBuilder, "Missing block access list validator");
     checkNotNull(blockProcessorBuilder, "Missing block processor");
     checkNotNull(blockImporterBuilder, "Missing block importer");
     checkNotNull(blockValidatorBuilder, "Missing block validator");
@@ -405,23 +408,24 @@ public class ProtocolSpecBuilder {
 
     BlockProcessor blockProcessor = createBlockProcessor(transactionProcessor, protocolSchedule);
 
-    final BlockValidator blockValidator =
-        blockValidatorBuilder.apply(blockHeaderValidator, blockBodyValidator, blockProcessor);
-    final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
-
     final boolean isStackedModeEnabled =
         evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.STACKED;
-    BlockAccessListFactory finalBalFactory = isStackedModeEnabled ? blockAccessListFactory : null;
 
-    if (isStackedModeEnabled && isBlockAccessListEnabled) {
-      // Ensure we have a factory and its CLI flag reflects the CLI setting.
-      final boolean forkActivated = finalBalFactory != null && finalBalFactory.isForkActivated();
-      final boolean cliActivated = finalBalFactory != null && finalBalFactory.isCliActivated();
+    final boolean balForkActivated = blockAccessListFactory != null;
 
-      if (!cliActivated) {
-        finalBalFactory = new BlockAccessListFactory(true, forkActivated);
-      }
+    if (balForkActivated && !isStackedModeEnabled) {
+      throw new IllegalStateException(
+          "Block Access List (BAL) is activated by fork but world updater mode is not STACKED. "
+              + "BAL requires STACKED world updater mode.");
     }
+
+    final BlockAccessListValidator blockAccessListValidator =
+        blockAccessListValidatorBuilder.apply(protocolSchedule);
+
+    final BlockValidator blockValidator =
+        blockValidatorBuilder.apply(
+            blockHeaderValidator, blockBodyValidator, blockProcessor, blockAccessListValidator);
+    final BlockImporter blockImporter = blockImporterBuilder.apply(blockValidator);
 
     return new ProtocolSpec(
         hardforkId,
@@ -454,7 +458,7 @@ public class ProtocolSpecBuilder {
         slotDuration,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
-        Optional.ofNullable(finalBalFactory),
+        Optional.ofNullable(blockAccessListFactory),
         stateRootCommitterFactory,
         blockGasAccountingStrategy,
         blockGasUsedValidator);
@@ -511,7 +515,8 @@ public class ProtocolSpecBuilder {
     BlockValidator apply(
         BlockHeaderValidator blockHeaderValidator,
         BlockBodyValidator blockBodyValidator,
-        BlockProcessor blockProcessor);
+        BlockProcessor blockProcessor,
+        BlockAccessListValidator blockAccessListValidator);
   }
 
   @FunctionalInterface

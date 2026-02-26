@@ -1,5 +1,12 @@
 name: docker develop build and test only
 
+# NOTE: This workflow intentionally does not define env.registry (unlike develop.yml).
+# For fork PRs, secrets are not available, so DOCKER_ORG is empty and the Gradle
+# build falls back to default values. For non-fork PRs (branches on the main repo),
+# the DOCKER_ORG secret is available but env.registry is empty, producing an invalid
+# Docker tag (e.g. "/<org>/besu:develop") which causes the build to fail.
+# This is by design — all PRs should be created from forks, not from repo branches.
+
 on:
   pull_request:
     branches:

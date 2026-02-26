@@ -99,7 +99,7 @@ class CodeDelegationProcessorTest {
     // Arrange
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 0L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
-    when(worldUpdater.getAccount(any())).thenReturn(null);
+    when(worldUpdater.get(any())).thenReturn(null);
     when(worldUpdater.createAccount(any())).thenReturn(authority);
     when(authority.getNonce()).thenReturn(0L);
 
@@ -117,7 +117,7 @@ class CodeDelegationProcessorTest {
     // Arrange
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
-    when(worldUpdater.getAccount(any())).thenReturn(null);
+    when(worldUpdater.get(any())).thenReturn(null);
 
     // Act
     CodeDelegationResult result = processor.process(worldUpdater, transaction, Optional.empty());
@@ -133,6 +133,7 @@ class CodeDelegationProcessorTest {
     // Arrange
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
+    when(worldUpdater.get(any())).thenReturn(authority);
     when(worldUpdater.getAccount(any())).thenReturn(authority);
     when(authority.getNonce()).thenReturn(1L);
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
@@ -152,7 +153,8 @@ class CodeDelegationProcessorTest {
     // Arrange
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 2L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
-    when(worldUpdater.getAccount(any())).thenReturn(authority);
+    when(worldUpdater.get(any())).thenReturn(authority);
+    when(authority.getNonce()).thenReturn(1L);
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
@@ -160,6 +162,7 @@ class CodeDelegationProcessorTest {
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
+    verify(worldUpdater, never()).getAccount(any());
     verify(authority, never()).incrementNonce();
     verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }
@@ -194,7 +197,7 @@ class CodeDelegationProcessorTest {
     when(transaction.getCodeDelegationList())
         .thenReturn(Optional.of(List.of(cd1_invalid, cd2_valid, cd3_invalid)));
 
-    when(worldUpdater.getAccount(any())).thenReturn(null).thenReturn(null).thenReturn(authority);
+    when(worldUpdater.get(any())).thenReturn(null).thenReturn(null).thenReturn(authority);
     when(worldUpdater.createAccount(any())).thenReturn(authority);
     when(authority.getNonce()).thenReturn(0L).thenReturn(1L);
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
@@ -267,7 +270,7 @@ class CodeDelegationProcessorTest {
     // Arrange
     CodeDelegation codeDelegation = createCodeDelegation(CHAIN_ID, 1L);
     when(transaction.getCodeDelegationList()).thenReturn(Optional.of(List.of(codeDelegation)));
-    when(worldUpdater.getAccount(any())).thenReturn(authority);
+    when(worldUpdater.get(any())).thenReturn(authority);
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(false);
 
     // Act
@@ -275,6 +278,7 @@ class CodeDelegationProcessorTest {
 
     // Assert
     assertThat(result.alreadyExistingDelegators()).isZero();
+    verify(worldUpdater, never()).getAccount(any());
     verify(authority, never()).incrementNonce();
     verify(codeDelegationService, never()).processCodeDelegation(any(), any());
   }

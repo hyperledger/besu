@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -446,7 +445,8 @@ public class BlockchainQueries {
                                               txs,
                                               header.getNumber(),
                                               header.getBaseFee(),
-                                              blockHeaderHash);
+                                              blockHeaderHash,
+                                              header.getTimestamp());
                                       final List<Hash> ommers =
                                           body.getOmmers().stream()
                                               .map(BlockHeader::getHash)
@@ -537,11 +537,7 @@ public class BlockchainQueries {
   }
 
   public boolean isBlockAccessListSupported(final BlockHeader header) {
-    return protocolSchedule
-        .getByBlockHeader(header)
-        .getBlockAccessListFactory()
-        .map(BlockAccessListFactory::isForkActivated)
-        .orElse(false);
+    return protocolSchedule.getByBlockHeader(header).getBlockAccessListFactory().isPresent();
   }
 
   public boolean blockIsOnCanonicalChain(final Hash hash) {
@@ -582,7 +578,8 @@ public class BlockchainQueries {
             header.getNumber(),
             header.getBaseFee(),
             blockHash,
-            loc.getTransactionIndex()));
+            loc.getTransactionIndex(),
+            header.getTimestamp()));
   }
 
   /**
@@ -638,7 +635,8 @@ public class BlockchainQueries {
                     header.getNumber(),
                     header.getBaseFee(),
                     blockHeaderHash,
-                    txIndex))
+                    txIndex,
+                    header.getTimestamp()))
         .orElse(null);
   }
 
@@ -1214,11 +1212,14 @@ public class BlockchainQueries {
       final List<Transaction> txs,
       final long blockNumber,
       final Optional<Wei> baseFee,
-      final Hash blockHash) {
+      final Hash blockHash,
+      final long blockTimestamp) {
     final int count = txs.size();
     final List<TransactionWithMetadata> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
-      result.add(new TransactionWithMetadata(txs.get(i), blockNumber, baseFee, blockHash, i));
+      result.add(
+          new TransactionWithMetadata(
+              txs.get(i), blockNumber, baseFee, blockHash, i, blockTimestamp));
     }
     return result;
   }
