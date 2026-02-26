@@ -24,7 +24,9 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -45,13 +47,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Migrates a Bonsai FULL flat database to ARCHIVE format.
- *
- * <p>This migrator processes trie logs from genesis to head, adding block number suffixes to all
- * state keys to create a versioned archive.
- *
- */
+/** Migrates a Bonsai storage to Bonsai archive storage format. */
 public class BonsaiFlatDbToArchiveMigrator {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
@@ -64,6 +60,7 @@ public class BonsaiFlatDbToArchiveMigrator {
   private final TrieLogManager trieLogManager;
   private final Blockchain blockchain;
   private final ScheduledExecutorService executorService;
+  private final Counter migratedBlocksCounter;
   private final Subscribers<MigrationCompletionListener> completionListeners = Subscribers.create();
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
   private final AtomicBoolean migrationRunning = new AtomicBoolean(false);
@@ -100,6 +97,11 @@ public class BonsaiFlatDbToArchiveMigrator {
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.executorService = executorService;
+    this.migratedBlocksCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "archive_migration_count",
+            "Number of blocks migrated from Bonsai to Bonsai Archive storage");
   }
 
   /**
@@ -176,6 +178,7 @@ public class BonsaiFlatDbToArchiveMigrator {
                 if (maybeTrieLog.isPresent()) {
                   processBlock(maybeTrieLog.get(), blockNumber, tx);
                   migratedCount++;
+                  migratedBlocksCounter.inc();
                 } else {
                   if (blockNumber > 0) {
                     LOG.debug("No trie log found for block {}, skipping", blockNumber);
