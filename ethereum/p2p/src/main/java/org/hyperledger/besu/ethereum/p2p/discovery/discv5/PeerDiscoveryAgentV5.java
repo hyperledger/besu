@@ -356,18 +356,22 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   }
 
   /**
-   * Returns the resolved port if the address transitioned from ephemeral (port 0) to a real port.
+   * Returns the resolved port if the address transitioned from unresolved (absent or port 0) to a
+   * real port.
    */
   private static Optional<Integer> extractResolvedPort(
       final Optional<InetSocketAddress> previous, final Optional<InetSocketAddress> updated) {
-    return hasEphemeralPort(previous)
+    return isUnresolvedPort(previous)
         ? updated.filter(a -> a.getPort() != 0).map(InetSocketAddress::getPort)
         : Optional.empty();
   }
 
-  /** Returns {@code true} if the address is present and bound to an ephemeral (port 0) port. */
-  private static boolean hasEphemeralPort(final Optional<InetSocketAddress> address) {
-    return address.map(a -> a.getPort() == 0).orElse(false);
+  /**
+   * Returns {@code true} if the address is absent or bound to an ephemeral (port 0) port. Both
+   * states are treated as unresolved.
+   */
+  private static boolean isUnresolvedPort(final Optional<InetSocketAddress> address) {
+    return address.map(a -> a.getPort() == 0).orElse(true);
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */
