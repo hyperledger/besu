@@ -115,20 +115,17 @@ public class BonsaiFlatDbToArchiveMigrator {
         blockchain.observeBlockAdded(
             event -> {
               if (tailMode.get()) {
-                final long newBlockNumber = event.getHeader().getNumber();
-                final Optional<TrieLog> trieLog =
-                    trieLogManager.getTrieLogLayer(event.getHeader().getHash());
-                if (trieLog.isPresent()) {
-                  try {
+                try {
+                  final long newBlockNumber = event.getHeader().getNumber();
+                  final Optional<TrieLog> trieLog =
+                      trieLogManager.getTrieLogLayer(event.getHeader().getHash());
+                  if (trieLog.isPresent()) {
                     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
                     processBlock(trieLog.get(), newBlockNumber, tx);
                     tx.commit();
-                  } catch (final Exception e) {
-                    LOG.warn(
-                        "Failed to write archive keys for block {} in tail mode",
-                        newBlockNumber,
-                        e);
                   }
+                } catch (final Exception e) {
+                  LOG.warn("Failed to write archive keys in tail mode", e);
                 }
               } else {
                 target.set(event.getHeader().getNumber());
@@ -201,10 +198,7 @@ public class BonsaiFlatDbToArchiveMigrator {
         logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
       }
 
-      // Switch mode first — blocks after this are written in ARCHIVE format natively
       worldStateStorage.upgradeToFullFlatDbMode();
-      // Then remove observer — redundant after mode switch, just cleanup
-      blockchain.removeObserver(blockObserverId);
       logCompletion(startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
 
     } catch (final Exception e) {
