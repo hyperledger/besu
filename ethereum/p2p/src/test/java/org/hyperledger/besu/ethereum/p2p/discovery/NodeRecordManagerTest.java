@@ -262,7 +262,7 @@ class NodeRecordManagerTest {
     manager.onDiscoveryPortResolved(Optional.of(54321), Optional.empty());
 
     // Second callback with a different port — must not overwrite the first value
-    manager.onDiscoveryPortResolved(Optional.of(99999), Optional.empty());
+    manager.onDiscoveryPortResolved(Optional.of(65432), Optional.empty());
 
     final NodeRecord record = getNodeRecord();
     assertThat(record.get(EnrField.UDP)).isEqualTo(54321);
