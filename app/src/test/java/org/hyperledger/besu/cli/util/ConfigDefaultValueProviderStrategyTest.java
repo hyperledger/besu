@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
-import org.hyperledger.besu.cli.options.LoggingOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +56,6 @@ public class ConfigDefaultValueProviderStrategyTest {
   private static final String CONFIG_FILE_OPTION_NAME = "--config-file";
   @TempDir public Path temp;
 
-  private LoggingOptions loggingOptions;
   private final IExecutionStrategy resultHandler = new RunLast();
 
   private final Map<String, String> environment = singletonMap("BESU_LOGGING", "ERROR");
@@ -82,8 +80,6 @@ public class ConfigDefaultValueProviderStrategyTest {
         .thenReturn(mockConfigOptionSpec);
     lenient().when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
     lenient().when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
-    loggingOptions = LoggingOptions.create();
-    loggingOptions.setLogLevel("INFO");
     configParsingHandler = new ConfigDefaultValueProviderStrategy(resultHandler, environment);
   }
 

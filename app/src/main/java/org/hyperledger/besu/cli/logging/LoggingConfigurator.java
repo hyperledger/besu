@@ -50,6 +50,8 @@ public class LoggingConfigurator {
 
     builder.setStatusLevel(Level.ERROR);
     builder.setConfigurationName("BesuProgrammaticConfig");
+    // Ensure custom Log4j2 plugins (%msgc, StackTraceMatchFilter) are discoverable
+    builder.setPackages("org.hyperledger.besu.util.log4j.plugin");
 
     // Determine which appender to use: --logging-format=SPLUNK or LOGGER=Splunk env var
     final boolean requestedSplunk =
@@ -230,6 +232,11 @@ public class LoggingConfigurator {
 
   private static Level parseLevel(final String logLevel) {
     if (logLevel == null || logLevel.isEmpty()) {
+      // Fall back to LOG_LEVEL env var for backward compatibility with pre-programmatic config
+      final String envLogLevel = System.getenv("LOG_LEVEL");
+      if (envLogLevel != null && !envLogLevel.isEmpty()) {
+        return Level.toLevel(envLogLevel.toUpperCase(java.util.Locale.ROOT), Level.INFO);
+      }
       return Level.INFO;
     }
     return Level.toLevel(logLevel.toUpperCase(java.util.Locale.ROOT), Level.INFO);
@@ -254,17 +261,11 @@ public class LoggingConfigurator {
   private static String getHost() {
     String host = System.getenv("HOST");
     if (host == null) {
-      // Try Docker container ID
-      final String containerId = System.getProperty("docker.containerId");
-      if (containerId != null) {
-        host = containerId;
-      } else {
-        // Fall back to hostname
-        try {
-          host = java.net.InetAddress.getLocalHost().getHostName();
-        } catch (java.net.UnknownHostException e) {
-          host = "localhost";
-        }
+      // Fall back to hostname (in Docker, hostname defaults to the container ID)
+      try {
+        host = java.net.InetAddress.getLocalHost().getHostName();
+      } catch (java.net.UnknownHostException e) {
+        host = "localhost";
       }
     }
     return host;

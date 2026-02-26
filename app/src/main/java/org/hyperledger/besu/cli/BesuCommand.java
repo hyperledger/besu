@@ -41,6 +41,7 @@ import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
+import org.hyperledger.besu.cli.logging.LoggingConfigurator;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.BalConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
@@ -934,7 +935,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // Apply programmatic logging configuration
     // Default to color enabled unless NO_COLOR env var is set
     final boolean colorEnabled = getColorEnabled().orElse(System.getenv("NO_COLOR") == null);
-    org.hyperledger.besu.cli.logging.LoggingConfigurator.configureLogging(
+    LoggingConfigurator.configureLogging(
         loggingOptions.getLogLevel(), loggingOptions.getLoggingFormat(), colorEnabled);
   }
 

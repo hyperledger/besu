@@ -19,7 +19,7 @@
 - Allow nonce to be max value when `isAllowFutureNonce` is true [#9759](https://github.com/hyperledger/besu/pull/9759)
 
 ### Additions and Improvements
-- Add `--logging-format` CLI option for structured JSON logging (ECS, GCP, LOGSTASH, GELF) without requiring custom Log4j2 configuration files [#9803](https://github.com/hyperledger/besu/pull/9803). Thanks to [@yashhzd](https://github.com/yashhzd).
+- Add `--logging-format` CLI option for structured logging (ECS, GCP, LOGSTASH, GELF, SPLUNK) without requiring custom Log4j2 configuration files [#9803](https://github.com/hyperledger/besu/pull/9803). Thanks to [@yashhzd](https://github.com/yashhzd).
 - Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
 
 ## 26.2.0
