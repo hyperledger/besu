@@ -255,7 +255,7 @@ public class LoggingConfigurator {
 
   private static String getEnvOrDefault(final String envVar, final String defaultValue) {
     final String value = System.getenv(envVar);
-    return value != null ? value : defaultValue;
+    return (value == null || value.isBlank()) ? defaultValue : value;
   }
 
   private static String getHost() {
