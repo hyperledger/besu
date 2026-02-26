@@ -31,6 +31,7 @@ jar {
 dependencies {
   api project(':plugin-api')
   api 'org.slf4j:slf4j-api'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
 
   testImplementation project(':testutil')

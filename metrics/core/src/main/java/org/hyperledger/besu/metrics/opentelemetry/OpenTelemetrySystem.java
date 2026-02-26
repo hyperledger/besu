@@ -45,7 +45,7 @@ import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 import javax.inject.Singleton;
 
-import com.google.common.cache.Cache;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -304,7 +304,7 @@ public class OpenTelemetrySystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void createGuavaCacheCollector(
+  public void createCaffeineCacheCollector(
       final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   @Override

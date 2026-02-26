@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import java.util.concurrent.ExecutionException;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.primitives.Ints;
 
 public class EthHashCacheFactory {
@@ -40,17 +38,13 @@ public class EthHashCacheFactory {
     }
   }
 
-  Cache<Long, EthHashDescriptor> descriptorCache = CacheBuilder.newBuilder().maximumSize(5).build();
+  Cache<Long, EthHashDescriptor> descriptorCache = Caffeine.newBuilder().maximumSize(5).build();
 
   public EthHashDescriptor ethHashCacheFor(
       final long blockNumber, final EpochCalculator epochCalc) {
     final long epochIndex = epochCalc.cacheEpoch(blockNumber);
-    try {
-      return descriptorCache.get(
-          epochIndex, () -> createHashCache(epochIndex, epochCalc, blockNumber));
-    } catch (final ExecutionException ex) {
-      throw new RuntimeException("Failed to create a suitable cache for EthHash calculations.", ex);
-    }
+    return descriptorCache.get(
+        epochIndex, ignored -> createHashCache(epochIndex, epochCalc, blockNumber));
   }
 
   private EthHashDescriptor createHashCache(

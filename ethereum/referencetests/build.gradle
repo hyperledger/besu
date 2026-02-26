@@ -270,6 +270,7 @@ dependencies {
 
   implementation 'io.consensys.tuweni:tuweni-rlp'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'
   annotationProcessor 'com.google.dagger:dagger-compiler'

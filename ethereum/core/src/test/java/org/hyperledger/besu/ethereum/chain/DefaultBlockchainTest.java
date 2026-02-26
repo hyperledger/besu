@@ -991,26 +991,34 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getTransactionReceiptsCache()).isNotEmpty();
     assertThat(blockchain.getTotalDifficultyCache()).isNotEmpty();
 
-    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(0);
-    assertThat(blockchain.getBlockBodiesCache().get().size()).isEqualTo(0);
-    assertThat(blockchain.getTransactionReceiptsCache().get().size()).isEqualTo(0);
-    assertThat(blockchain.getTotalDifficultyCache().get().size()).isEqualTo(0);
+    blockchain.getBlockHeadersCache().get().cleanUp();
+    blockchain.getBlockBodiesCache().get().cleanUp();
+    blockchain.getTransactionReceiptsCache().get().cleanUp();
+    blockchain.getTotalDifficultyCache().get().cleanUp();
+    assertThat(blockchain.getBlockHeadersCache().get().estimatedSize()).isEqualTo(0);
+    assertThat(blockchain.getBlockBodiesCache().get().estimatedSize()).isEqualTo(0);
+    assertThat(blockchain.getTransactionReceiptsCache().get().estimatedSize()).isEqualTo(0);
+    assertThat(blockchain.getTotalDifficultyCache().get().estimatedSize()).isEqualTo(0);
 
     blockchain.appendBlock(newBlock, receipts);
 
-    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(1);
+    blockchain.getBlockHeadersCache().get().cleanUp();
+    blockchain.getBlockBodiesCache().get().cleanUp();
+    blockchain.getTransactionReceiptsCache().get().cleanUp();
+    blockchain.getTotalDifficultyCache().get().cleanUp();
+    assertThat(blockchain.getBlockHeadersCache().get().estimatedSize()).isEqualTo(1);
     assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(newBlock.getHeader());
 
-    assertThat(blockchain.getBlockBodiesCache().get().size()).isEqualTo(1);
+    assertThat(blockchain.getBlockBodiesCache().get().estimatedSize()).isEqualTo(1);
     assertThat(blockchain.getBlockBodiesCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(newBlock.getBody());
 
-    assertThat(blockchain.getTransactionReceiptsCache().get().size()).isEqualTo(1);
+    assertThat(blockchain.getTransactionReceiptsCache().get().estimatedSize()).isEqualTo(1);
     assertThat(blockchain.getTransactionReceiptsCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(receipts);
 
-    assertThat(blockchain.getTotalDifficultyCache().get().size()).isEqualTo(1);
+    assertThat(blockchain.getTotalDifficultyCache().get().estimatedSize()).isEqualTo(1);
     assertThat(blockchain.getTotalDifficultyCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(newBlock.getHeader().getDifficulty());
   }
@@ -1036,11 +1044,13 @@ public class DefaultBlockchainTest {
     assertThat(blockchain.getTransactionReceiptsCache()).isEmpty();
     assertThat(blockchain.getTotalDifficultyCache()).isEmpty();
 
-    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(0);
+    blockchain.getBlockHeadersCache().get().cleanUp();
+    assertThat(blockchain.getBlockHeadersCache().get().estimatedSize()).isEqualTo(0);
 
     blockchain.appendBlock(newBlock, receipts);
 
-    assertThat(blockchain.getBlockHeadersCache().get().size()).isEqualTo(1);
+    blockchain.getBlockHeadersCache().get().cleanUp();
+    assertThat(blockchain.getBlockHeadersCache().get().estimatedSize()).isEqualTo(1);
     assertThat(blockchain.getBlockHeadersCache().get().getIfPresent(newBlock.getHash()))
         .isEqualTo(newBlock.getHeader());
   }

@@ -35,7 +35,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.collect.ImmutableSet;
 import io.prometheus.metrics.instrumentation.jvm.JvmBufferPoolMetrics;
 import io.prometheus.metrics.instrumentation.jvm.JvmClassLoadingMetrics;
@@ -71,8 +71,8 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   private final Map<CachedMetricKey, LabelledMetric<Histogram>> cachedHistograms =
       new ConcurrentHashMap<>();
 
-  private final PrometheusGuavaCache.Context guavaCacheCollectorContext =
-      new PrometheusGuavaCache.Context();
+  private final PrometheusCaffeineCache.Context caffeineCacheCollectorContext =
+      new PrometheusCaffeineCache.Context();
 
   private final Set<MetricCategory> enabledCategories;
   private final boolean timersEnabled;
@@ -204,11 +204,11 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void createGuavaCacheCollector(
+  public void createCaffeineCacheCollector(
       final MetricCategory category, final String name, final Cache<?, ?> cache) {
     if (isCategoryEnabled(category)) {
       final var cacheCollector =
-          new PrometheusGuavaCache(category, guavaCacheCollectorContext, name, cache);
+          new PrometheusCaffeineCache(category, caffeineCacheCollectorContext, name, cache);
       registerCollector(category, cacheCollector);
     }
   }
@@ -283,7 +283,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
     collectors.clear();
     cachedCounters.clear();
     cachedTimers.clear();
-    guavaCacheCollectorContext.clear();
+    caffeineCacheCollectorContext.clear();
   }
 
   private record CachedMetricKey(MetricCategory category, String name) {

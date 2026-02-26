@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.function.DoubleSupplier;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
+import com.github.benmanes.caffeine.cache.Cache;
 
 public class StubMetricsSystem implements ObservableMetricsSystem {
 
@@ -126,7 +126,7 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void createGuavaCacheCollector(
+  public void createCaffeineCacheCollector(
       final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   public double getGaugeValue(final String name) {

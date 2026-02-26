@@ -46,8 +46,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -270,8 +270,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   static class ReferenceTestsInMemoryTrieLogManager extends TrieLogManager {
 
-    private final Cache<Hash, byte[]> trieLogCache =
-        CacheBuilder.newBuilder().maximumSize(5).build();
+    private final Cache<Hash, byte[]> trieLogCache = Caffeine.newBuilder().maximumSize(5).build();
 
     public ReferenceTestsInMemoryTrieLogManager() {
       super(null, null, 0, null);

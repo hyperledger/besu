@@ -22,12 +22,9 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.concurrent.ExecutionException;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -95,16 +92,11 @@ public class Address extends BytesHolder {
   public static final Address ZERO = Address.fromHexString("0x0");
 
   static LoadingCache<Address, Hash> hashCache =
-      CacheBuilder.newBuilder()
+      Caffeine.newBuilder()
           .maximumSize(4000)
-          // .weakKeys() // unless we "intern" all addresses we cannot use weak or soft keys.
-          .build(
-              new CacheLoader<>() {
-                @Override
-                public Hash load(final Address key) {
-                  return Hash.hash(key.getBytes());
-                }
-              });
+          // Not using weakKeys(): Caffeine's weakKeys uses identity (==) equality,
+          // which would break lookups since Address objects are not interned.
+          .build(key -> Hash.hash(key.getBytes()));
 
   /**
    * Instantiates a new Address.
@@ -244,10 +236,6 @@ public class Address extends BytesHolder {
    * @return the hash of the address.
    */
   public Hash addressHash() {
-    try {
-      return hashCache.get(this);
-    } catch (ExecutionException e) {
-      return Hash.hash(getBytes());
-    }
+    return hashCache.get(this);
   }
 }
