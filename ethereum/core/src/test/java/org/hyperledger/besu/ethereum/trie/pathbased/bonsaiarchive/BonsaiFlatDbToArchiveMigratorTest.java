@@ -399,12 +399,16 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
 
-    // Append a block where trie log lookup will throw in observer
-    appendBlocks(1);
-    final long failBlock = initialBlocks + 1;
-    final Hash failHash = blockchain.getBlockHeader(failBlock).get().getHash();
+    // Pre-generate block so we can set up the throwing mock BEFORE appending
+    final Block head = blockchain.getBlockByNumber(blockchain.getChainHeadBlockNumber()).get();
+    final List<Block> newBlocks = blockDataGenerator.blockSequence(head, 1);
+    final Block failBlock = newBlocks.get(0);
+    final Hash failHash = failBlock.getHeader().getHash();
     when(trieLogManager.getTrieLogLayer(failHash))
         .thenThrow(new RuntimeException("Observer failure"));
+
+    // Now append — the observer will fire, hit the exception, and catch it
+    blockchain.appendBlock(failBlock, blockDataGenerator.receipts(failBlock));
 
     // Let migration finish — should complete despite observer failure
     allowMigrationToFinishLatch.countDown();
