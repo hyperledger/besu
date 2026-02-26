@@ -288,6 +288,87 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
   }
 
+  @Test
+  public void tailModeActivatesNearEndBlock() throws Exception {
+    final int totalBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 10;
+    appendBlocks(totalBlocks);
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
+    migrator.migrate().get(30, TimeUnit.SECONDS);
+
+    assertThat(migrator.getMigrationProgress()).isPresent();
+    assertThat(migrator.getMigrationProgress().get()).isEqualTo((long) totalBlocks);
+  }
+
+  @Test
+  public void observerWritesArchiveKeysInTailMode() throws Exception {
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 5;
+    appendBlocks(initialBlocks);
+
+    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 1;
+    final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
+
+    final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
+    final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
+
+    when(trieLogManager.getTrieLogLayer(pauseHash))
+        .thenAnswer(
+            invocation -> {
+              migrationReachedTailLatch.countDown();
+              allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
+              return Optional.of(createAccountTrieLog(Wei.fromHexString("0x999")));
+            });
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
+    final CompletableFuture<Void> future = migrator.migrate();
+
+    assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+    appendBlocks(1);
+    final long newBlockNumber = initialBlocks + 1;
+    final Hash newHash = blockchain.getBlockHeader(newBlockNumber).get().getHash();
+    when(trieLogManager.getTrieLogLayer(newHash))
+        .thenReturn(Optional.of(createAccountTrieLog(Wei.fromHexString("0xABC"))));
+
+    allowMigrationToFinishLatch.countDown();
+    future.get(30, TimeUnit.SECONDS);
+
+    assertThat(getArchivedAccountKey(newBlockNumber)).isPresent();
+  }
+
+  @Test
+  public void targetFrozenInTailMode() throws Exception {
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 5;
+    appendBlocks(initialBlocks);
+
+    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 1;
+    final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
+
+    final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
+    final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
+
+    when(trieLogManager.getTrieLogLayer(pauseHash))
+        .thenAnswer(
+            invocation -> {
+              migrationReachedTailLatch.countDown();
+              allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
+              return Optional.of(createAccountTrieLog(Wei.fromHexString("0x999")));
+            });
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
+    final CompletableFuture<Void> future = migrator.migrate();
+
+    assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+    appendBlocks(3);
+
+    allowMigrationToFinishLatch.countDown();
+    future.get(30, TimeUnit.SECONDS);
+
+    assertThat(migrator.getMigrationProgress()).isPresent();
+    assertThat(migrator.getMigrationProgress().get()).isEqualTo((long) initialBlocks);
+  }
+
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
     return DefaultBlockchain.createMutable(
         genesisBlock,

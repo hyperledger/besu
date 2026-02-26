@@ -114,7 +114,8 @@ public class BonsaiFlatDbToArchiveMigrator {
         () -> migrateBlocks(endBlock, target, blockObserverId), executorService);
   }
 
-  private void migrateBlocks(long endBlock, AtomicLong target, long blockObserverId) {
+  private void migrateBlocks(
+      final long endBlock, final AtomicLong target, final long blockObserverId) {
     try {
       final Instant migrationStartTime = Instant.now();
 
