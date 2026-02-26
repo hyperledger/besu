@@ -181,7 +181,7 @@ dependencies {
 
     api 'io.consensys.protocols:jc-kzg-4844:2.1.5'
 
-    api 'tech.pegasys.discovery:discovery:26.1.0'
+    api 'tech.pegasys.discovery:discovery:26.2.0'
   }
 }
 
