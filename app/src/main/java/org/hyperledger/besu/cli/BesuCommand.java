@@ -2074,9 +2074,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     instantiateSignatureAlgorithmFactory();
 
-    // TODO: This works very well with PLAIN, for other logging formats the formatting is not so
-    // much readable
-    logger.info(generateConfigurationOverview());
+    if (loggingOptions.getLoggingFormat() == LoggingFormat.PLAIN) {
+      logger.info(generateConfigurationOverview());
+    } else {
+      final Map<String, Object> configMap = generateConfigurationOverviewMap();
+      logger.info("Configuration overview {}", configMap);
+    }
     logger.info("Security Module: {}", securityModuleName);
   }
 
@@ -2878,7 +2881,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .orElse(genesisFile != null || networkId != null);
   }
 
-  private String generateConfigurationOverview() {
+  private ConfigurationOverviewBuilder createConfigurationOverviewBuilder() {
     final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder(logger);
 
     if (environment != null) {
@@ -2971,7 +2974,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
         .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
-    return builder.build();
+    return builder;
+  }
+
+  private String generateConfigurationOverview() {
+    return createConfigurationOverviewBuilder().build();
+  }
+
+  private Map<String, Object> generateConfigurationOverviewMap() {
+    return createConfigurationOverviewBuilder().buildMap();
   }
 
   /**

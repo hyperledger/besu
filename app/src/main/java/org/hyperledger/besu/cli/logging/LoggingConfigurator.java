@@ -27,7 +27,9 @@ import org.apache.logging.log4j.core.config.builder.api.RootLoggerComponentBuild
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 
 /** Programmatic Log4j2 configuration for Besu. */
-public class LoggingConfigurator {
+public final class LoggingConfigurator {
+
+  private LoggingConfigurator() {}
 
   private static final String DEFAULT_PATTERN =
       "%style{%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}}{DIM} %style{|}{DIM} %style{%t}{DIM} %style{|}{DIM} "
