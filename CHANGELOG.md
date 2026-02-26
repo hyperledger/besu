@@ -20,6 +20,7 @@
 
 ### Additions and Improvements
 - Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
+- Add `--max-blobs` flag to limit the number of blobs per block when building [#9531](https://github.com/hyperledger/besu/pull/9531)
 
 ## 26.2.0
 
@@ -152,7 +153,6 @@
 - Add Linea named networks for `linea_mainnet` and `linea_sepolia` [#9436](https://github.com/hyperledger/besu/pull/9436), [#9518](https://github.com/hyperledger/besu/pull/9518)
 - Add `eth_subscribe` and `eth_unsubscribe` support to IPC service [#9504](https://github.com/hyperledger/besu/pull/9504)
 - Add experimental `callTracer` tracer option to `debug_trace*` methods. Enabled using `--Xenable-extra-debug-tracers=true` option. Issue [#8326][issue_8326] implemented via PR [#8960][PR_8960] and [#9072][PR_9072].
-- Add `--max-blobs` flag [#9531](https://github.com/hyperledger/besu/pull/9531)
 - Remove EOF [#9559](https://github.com/hyperledger/besu/pull/9559)
 
 ### Bug fixes
