@@ -24,14 +24,14 @@ import org.apache.tuweni.bytes.Bytes32;
  * <p>The world state represents the complete mapping of account addresses to account state
  * (balance, nonce, code, and storage) at a given block. This interface abstracts over the
  * underlying storage format, supporting both the legacy {@link DataStorageFormat#FOREST FOREST}
- * format (which retains all historical trie nodes) and the more space-efficient
- * {@link DataStorageFormat#BONSAI BONSAI} format (which stores a single trie and uses trie logs
- * to reconstruct historical states).
+ * format (which retains all historical trie nodes) and the more space-efficient {@link
+ * DataStorageFormat#BONSAI BONSAI} format (which stores a single trie and uses trie logs to
+ * reconstruct historical states).
  *
- * <p>Writes are performed through a transaction-scoped {@link Updater} obtained via
- * {@link #updater()}, which must be {@link Updater#commit() committed} to persist changes.
- * Listeners can be registered via implementations to observe trie node insertions through
- * the {@link NodesAddedListener} callback.
+ * <p>Writes are performed through a transaction-scoped {@link Updater} obtained via {@link
+ * #updater()}, which must be {@link Updater#commit() committed} to persist changes. Listeners can
+ * be registered via implementations to observe trie node insertions through the {@link
+ * NodesAddedListener} callback.
  */
 public interface WorldStateKeyValueStorage {
 
@@ -59,9 +59,8 @@ public interface WorldStateKeyValueStorage {
   /**
    * Removes all entries from this world state storage.
    *
-   * <p>This is a destructive, irreversible operation intended for use during resynchronisation
-   * or storage reset. After this call the storage is empty and any previously written state is
-   * lost.
+   * <p>This is a destructive, irreversible operation intended for use during resynchronisation or
+   * storage reset. After this call the storage is empty and any previously written state is lost.
    */
   void clear();
 
@@ -69,8 +68,8 @@ public interface WorldStateKeyValueStorage {
    * Callback interface for observing trie node insertions into world state storage.
    *
    * <p>Implementations can register a {@code NodesAddedListener} with the underlying storage to
-   * receive notifications whenever a batch of trie nodes is persisted. This is useful for
-   * cache invalidation, metrics collection, or triggering downstream processing.
+   * receive notifications whenever a batch of trie nodes is persisted. This is useful for cache
+   * invalidation, metrics collection, or triggering downstream processing.
    */
   interface NodesAddedListener {
 
@@ -95,8 +94,8 @@ public interface WorldStateKeyValueStorage {
     /**
      * Atomically persists all staged write operations to the underlying storage.
      *
-     * <p>After this method returns, all changes accumulated in this updater are durable and
-     * visible to subsequent reads. The updater should not be used after committing.
+     * <p>After this method returns, all changes accumulated in this updater are durable and visible
+     * to subsequent reads. The updater should not be used after committing.
      */
     void commit();
   }
