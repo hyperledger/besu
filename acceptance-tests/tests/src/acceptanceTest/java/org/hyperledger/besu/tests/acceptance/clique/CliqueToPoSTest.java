@@ -201,7 +201,7 @@ public class CliqueToPoSTest extends AcceptanceTestBase {
     triggerSyncViaForkchoiceUpdate(syncNodeSnap, headHash);
 
     // Wait for snap sync to complete and verify the full chain is present
-    syncNodeSnap.verify(blockchain.minimumHeight(10, 300));
+    syncNodeSnap.verify(blockchain.minimumHeight(10, 120));
   }
 
   /**
