@@ -108,14 +108,42 @@ public class BonsaiFlatDbToArchiveMigrator {
 
     final long endBlock = blockchain.getChainHeadBlockNumber();
     final AtomicLong target = new AtomicLong(endBlock);
+    final AtomicBoolean tailMode = new AtomicBoolean(false);
+    final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
+
     final long blockObserverId =
-        blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
+        blockchain.observeBlockAdded(
+            event -> {
+              if (tailMode.get()) {
+                final long newBlockNumber = event.getHeader().getNumber();
+                final Optional<TrieLog> trieLog =
+                    trieLogManager.getTrieLogLayer(event.getHeader().getHash());
+                if (trieLog.isPresent()) {
+                  try {
+                    final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+                    processBlock(trieLog.get(), newBlockNumber, tx);
+                    tx.commit();
+                  } catch (final Exception e) {
+                    LOG.warn(
+                        "Failed to write archive keys for block {} in tail mode",
+                        newBlockNumber,
+                        e);
+                  }
+                }
+              } else {
+                target.set(event.getHeader().getNumber());
+              }
+            });
+
     return CompletableFuture.runAsync(
-        () -> migrateBlocks(endBlock, target, blockObserverId), executorService);
+        () -> migrateBlocks(endBlock, target, tailMode, blockObserverId), executorService);
   }
 
   private void migrateBlocks(
-      final long endBlock, final AtomicLong target, final long blockObserverId) {
+      final long endBlock,
+      final AtomicLong target,
+      final AtomicBoolean tailMode,
+      final long blockObserverId) {
     try {
       final Instant migrationStartTime = Instant.now();
 
@@ -126,6 +154,18 @@ public class BonsaiFlatDbToArchiveMigrator {
       long skippedCount = 0;
 
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
+
+        // Activate tail mode when approaching the initial chain head
+        if (!tailMode.get()
+            && endBlock > TAIL_THRESHOLD
+            && blockNumber >= endBlock - TAIL_THRESHOLD) {
+          tailMode.set(true);
+          LOG.info(
+              "Archive migration entering tail mode at block {}, target frozen at {}",
+              blockNumber,
+              target.get());
+        }
+
         final Optional<TrieLog> maybeTrieLog =
             blockchain
                 .getBlockHeader(blockNumber)
@@ -161,7 +201,10 @@ public class BonsaiFlatDbToArchiveMigrator {
         logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
       }
 
+      // Switch mode first — blocks after this are written in ARCHIVE format natively
       worldStateStorage.upgradeToFullFlatDbMode();
+      // Then remove observer — redundant after mode switch, just cleanup
+      blockchain.removeObserver(blockObserverId);
       logCompletion(startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
 
     } catch (final Exception e) {

@@ -324,11 +324,17 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
 
-    appendBlocks(1);
+    // Pre-generate the block so we can set up the mock BEFORE appending
+    final Block head = blockchain.getBlockByNumber(blockchain.getChainHeadBlockNumber()).get();
+    final List<Block> newBlocks = blockDataGenerator.blockSequence(head, 1);
+    final Block newBlock = newBlocks.get(0);
     final long newBlockNumber = initialBlocks + 1;
-    final Hash newHash = blockchain.getBlockHeader(newBlockNumber).get().getHash();
+    final Hash newHash = newBlock.getHeader().getHash();
     when(trieLogManager.getTrieLogLayer(newHash))
         .thenReturn(Optional.of(createAccountTrieLog(Wei.fromHexString("0xABC"))));
+
+    // Now append — the observer will fire and find the mock ready
+    blockchain.appendBlock(newBlock, blockDataGenerator.receipts(newBlock));
 
     allowMigrationToFinishLatch.countDown();
     future.get(30, TimeUnit.SECONDS);
