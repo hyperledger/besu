@@ -109,7 +109,8 @@ public class BlockStateCallResult extends BlockResult {
                     block.getHeader().getNumber(),
                     block.getHeader().getBaseFee(),
                     block.getHash(),
-                    i))
+                    i,
+                    block.getHeader().getTimestamp()))
         .map(TransactionCompleteResult::new)
         .collect(Collectors.toList());
   }
