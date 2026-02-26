@@ -38,6 +38,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.tuweni.bytes.Bytes;
@@ -50,14 +51,6 @@ import org.slf4j.LoggerFactory;
  * <p>This migrator processes trie logs from genesis to head, adding block number suffixes to all
  * state keys to create a versioned archive.
  *
- * <p>Key features:
- *
- * <ul>
- *   <li>Processes blocks sequentially from start to end
- *   <li>Saves progress after each block for resumability
- *   <li>Uses dedicated executor to avoid blocking sync
- *   <li>Notifies listeners on completion or failure
- * </ul>
  */
 public class BonsaiFlatDbToArchiveMigrator {
 
@@ -66,9 +59,6 @@ public class BonsaiFlatDbToArchiveMigrator {
 
   private static final byte[] MIGRATION_PROGRESS_KEY =
       "ARCHIVE_MIGRATION_PROGRESS".getBytes(StandardCharsets.UTF_8);
-
-  private static final byte[] SYNC_STATE_KEY =
-      "ARCHIVE_SYNC_STATE".getBytes(StandardCharsets.UTF_8);
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final TrieLogManager trieLogManager;
@@ -145,10 +135,12 @@ public class BonsaiFlatDbToArchiveMigrator {
   }
 
   /**
-   * Migrates FULL flat DB to ARCHIVE format by processing trie logs sequentially.
+   * Migrates FULL flat DB to ARCHIVE format by processing trie logs sequentially. The target block
+   * is continuously updated as new blocks are imported, so the migrator chases the chain head until
+   * it converges. Once caught up, it switches to ARCHIVE mode.
    *
    * @param startBlock the starting block number (inclusive)
-   * @param endBlock the ending block number (inclusive)
+   * @param endBlock the initial ending block number (inclusive), updated as new blocks arrive
    * @param resetProgress if true, ignores any saved progress and starts from startBlock
    * @return a CompletableFuture that completes when migration finishes
    */
@@ -159,6 +151,10 @@ public class BonsaiFlatDbToArchiveMigrator {
       return CompletableFuture.completedFuture(null);
     }
 
+    final AtomicLong target = new AtomicLong(endBlock);
+    final long blockObserverId =
+        blockchain.observeBlockAdded(event -> target.set(event.getBlock().getHeader().getNumber()));
+
     return CompletableFuture.runAsync(
         () -> {
           try {
@@ -168,13 +164,11 @@ public class BonsaiFlatDbToArchiveMigrator {
 
             LOG.info("Starting archive migration from block {} to {}", startBlock, endBlock);
 
-            setSyncState(storage, ArchiveSyncState.MIGRATING);
-
             long currentBlock = determineStartBlock(storage, startBlock, resetProgress);
             long migratedCount = 0;
             long skippedCount = 0;
 
-            for (long blockNumber = currentBlock; blockNumber <= endBlock; blockNumber++) {
+            for (long blockNumber = currentBlock; blockNumber <= target.get(); blockNumber++) {
               final Optional<TrieLog> maybeTrieLog = fetchTrieLog(blockNumber);
 
               final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
@@ -205,11 +199,14 @@ public class BonsaiFlatDbToArchiveMigrator {
                     "Migration failed at block " + blockNumber + ": " + e.getMessage(), e);
               }
 
-              logProgress(blockNumber, startBlock, endBlock, migratedCount, skippedCount);
+              logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
             }
 
-            setSyncState(storage, ArchiveSyncState.READY);
-            logCompletion(startBlock, endBlock, migrationStartTime, migratedCount, skippedCount);
+            worldStateStorage.upgradeToFullFlatDbMode();
+            LOG.info("Switched FlatDbMode to ARCHIVE");
+
+            logCompletion(
+                startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
             completionListeners.forEach(MigrationCompletionListener::onMigrationComplete);
 
           } catch (final Exception e) {
@@ -217,6 +214,7 @@ public class BonsaiFlatDbToArchiveMigrator {
             completionListeners.forEach(listener -> listener.onMigrationFailed(e));
             throw new RuntimeException(e);
           } finally {
+            blockchain.removeObserver(blockObserverId);
             migrationRunning.set(false);
           }
         },
@@ -233,19 +231,6 @@ public class BonsaiFlatDbToArchiveMigrator {
   }
 
   /**
-   * Gets the current archive sync state.
-   *
-   * @return the archive sync state, or SYNCING if not set
-   */
-  public ArchiveSyncState getSyncState() {
-    return worldStateStorage
-        .getComposedWorldStateStorage()
-        .get(VARIABLES, SYNC_STATE_KEY)
-        .map(bytes -> ArchiveSyncState.valueOf(new String(bytes, StandardCharsets.UTF_8)))
-        .orElse(ArchiveSyncState.SYNCING);
-  }
-
-  /**
    * Gets the last migrated block number.
    *
    * @return the last migrated block number, or empty if migration hasn't started
@@ -256,12 +241,6 @@ public class BonsaiFlatDbToArchiveMigrator {
         .get(VARIABLES, MIGRATION_PROGRESS_KEY)
         .map(Bytes::wrap)
         .map(Bytes::toLong);
-  }
-
-  private void setSyncState(final SegmentedKeyValueStorage storage, final ArchiveSyncState state) {
-    final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
-    tx.put(VARIABLES, SYNC_STATE_KEY, state.name().getBytes(StandardCharsets.UTF_8));
-    tx.commit();
   }
 
   private long determineStartBlock(
