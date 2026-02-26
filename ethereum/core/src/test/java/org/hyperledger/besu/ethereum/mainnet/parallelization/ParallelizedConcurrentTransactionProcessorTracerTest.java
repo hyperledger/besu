@@ -496,8 +496,11 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
           threadPool,
           Optional.empty());
 
-      // Wait for all futures to complete before confirming
-      Thread.sleep(500);
+      // Wait for all parallel tasks to complete before confirming
+      threadPool.shutdown();
+      assertThat(threadPool.awaitTermination(30, java.util.concurrent.TimeUnit.SECONDS))
+          .as("Thread pool should terminate within timeout")
+          .isTrue();
 
       // Confirm all three transactions on the main thread
       final List<Transaction> txs = List.of(tx0, tx1, tx2);
@@ -508,7 +511,9 @@ class ParallelizedConcurrentTransactionProcessorTracerTest {
         assertThat(result).as("Transaction %d should be confirmed", i).isPresent();
       }
     } finally {
-      threadPool.shutdown();
+      if (!threadPool.isShutdown()) {
+        threadPool.shutdown();
+      }
     }
 
     // Verify merged EVM metrics: 3 txs x 2 SLOADs = 6, 3 txs x 1 CALL = 3
