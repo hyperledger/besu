@@ -21,10 +21,16 @@ on:
         type: string
         default: main
         description: Branch to test
+      besu_repo:
+        required: true
+        type: string
+        default: hyperledger/besu
+        description: Git repository to checkout branch from
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
   BESU_REF: ${{ inputs.besu_ref  || 'main' }}
+  BESU_REPO: ${{ inputs.besu_repo  || 'hyperledger/besu' }}
 
 jobs:
   bft-soak-test:
@@ -39,6 +45,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ env.BESU_REF }}
+          repository: ${{ env.BESU_REPO }}
       - name: Set up Java
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
