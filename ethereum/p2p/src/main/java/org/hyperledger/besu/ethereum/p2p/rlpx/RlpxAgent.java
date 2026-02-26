@@ -351,8 +351,7 @@ public class RlpxAgent {
     if (maybeDisconnectReason.isEmpty()) {
       dispatchConnect(peerConnection);
     } else {
-//      peerConnection.disconnect(maybeDisconnectReason.get());
-      peerConnection.disconnect(DisconnectReason.UNKNOWN);
+      peerConnection.disconnect(maybeDisconnectReason.get());
     }
   }
 
