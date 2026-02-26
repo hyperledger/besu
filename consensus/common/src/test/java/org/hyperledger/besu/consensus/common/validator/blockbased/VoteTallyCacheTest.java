@@ -32,9 +32,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import java.util.NoSuchElementException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
