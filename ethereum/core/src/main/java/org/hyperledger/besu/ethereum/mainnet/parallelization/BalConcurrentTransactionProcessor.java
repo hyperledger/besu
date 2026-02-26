@@ -102,12 +102,9 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
                   BlockAccessListBuilder.createTransactionAccessLocationTracker(
                       transactionLocation));
 
-      // Use the operation tracer from the block processing context if available
-      // (which may contain EVMExecutionMetricsTracer), otherwise use NO_TRACING
-      final OperationTracer operationTracer =
-          blockProcessingContext != null
-              ? blockProcessingContext.getOperationTracer()
-              : OperationTracer.NO_TRACING;
+      // Create a background tracer for parallel execution metrics collection
+      final OperationTracer backgroundTracer =
+          BackgroundTracerFactory.createBackgroundTracer(blockProcessingContext);
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -115,7 +112,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
               blockHeader,
               transaction.detachedCopy(),
               miningBeneficiary,
-              operationTracer,
+              backgroundTracer,
               blockHashLookup,
               TransactionValidationParams.processingBlock(),
               blobGasPrice,
@@ -128,8 +125,7 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
       ctxBuilder
           .transactionAccumulator(blockUpdater)
           .transactionProcessingResult(result)
-          .backgroundTracer(
-              null); // BalConcurrentTransactionProcessor doesn't use background tracers
+          .backgroundTracer(backgroundTracer);
 
       return ctxBuilder.build();
     } finally {
@@ -168,6 +164,13 @@ public class BalConcurrentTransactionProcessor extends ParallelBlockTransactionP
         final TransactionProcessingResult result = ctx.transactionProcessingResult();
 
         blockAccumulator.importStateChangesFromSource(txAccumulator);
+
+        // Consolidate tracer results from successful parallel execution
+        ctx.backgroundTracer()
+            .ifPresent(
+                backgroundTracer ->
+                    BackgroundTracerFactory.consolidateTracerResults(
+                        backgroundTracer, blockProcessingContext));
 
         confirmedParallelizedTransactionCounter.ifPresent(Counter::inc);
         result.setIsProcessedInParallel(Optional.of(Boolean.TRUE));
