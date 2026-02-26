@@ -51,6 +51,18 @@ public interface StateMetricsCollector {
   /** Increments the code cache miss counter. */
   void incrementCodeCacheMisses();
 
+  /** Increments the account cache hit counter. */
+  void incrementAccountCacheHits();
+
+  /** Increments the account cache miss counter. */
+  void incrementAccountCacheMisses();
+
+  /** Increments the storage cache hit counter. */
+  void incrementStorageCacheHits();
+
+  /** Increments the storage cache miss counter. */
+  void incrementStorageCacheMisses();
+
   /**
    * Adds elapsed time for a state read operation.
    *
@@ -84,6 +96,18 @@ public interface StateMetricsCollector {
 
         @Override
         public void incrementCodeCacheMisses() {}
+
+        @Override
+        public void incrementAccountCacheHits() {}
+
+        @Override
+        public void incrementAccountCacheMisses() {}
+
+        @Override
+        public void incrementStorageCacheHits() {}
+
+        @Override
+        public void incrementStorageCacheMisses() {}
 
         @Override
         public void addStateReadTime(final long nanos) {}

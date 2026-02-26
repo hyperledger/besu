@@ -466,21 +466,25 @@ public class ExecutionStats implements StateMetricsCollector {
   }
 
   /** Increments account cache hit counter. */
+  @Override
   public void incrementAccountCacheHits() {
     accountCacheHits++;
   }
 
   /** Increments account cache miss counter. */
+  @Override
   public void incrementAccountCacheMisses() {
     accountCacheMisses++;
   }
 
   /** Increments storage cache hit counter. */
+  @Override
   public void incrementStorageCacheHits() {
     storageCacheHits++;
   }
 
   /** Increments storage cache miss counter. */
+  @Override
   public void incrementStorageCacheMisses() {
     storageCacheMisses++;
   }
