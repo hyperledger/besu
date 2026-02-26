@@ -19,6 +19,7 @@ import static org.hyperledger.besu.evmtool.BlockchainTestSubCommand.COMMAND_NAME
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -56,10 +57,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
@@ -98,7 +101,8 @@ public class BlockchainTestSubCommand implements Runnable {
 
   @Option(
       names = {"--test-name"},
-      description = "Limit execution to one named test.")
+      description =
+          "Limit execution to tests whose name contains the given substring, or matches a glob pattern (using * and ?).")
   private String testName = null;
 
   @Option(
@@ -222,18 +226,49 @@ public class BlockchainTestSubCommand implements Runnable {
   private void executeBlockchainTest(
       final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests,
       final TestResults results) {
-    blockchainTests.forEach((testName, spec) -> traceTestSpecs(testName, spec, results));
+    final Map<String, BlockchainReferenceTestCaseSpec> filteredTests =
+        blockchainTests.entrySet().stream()
+            .filter(
+                entry -> {
+                  final String test = entry.getKey();
+                  if (testName != null && !matchesTestName(test)) {
+                    parentCommand.out.println("Skipping test: " + test);
+                    return false;
+                  }
+                  parentCommand.out.println("Considering " + test);
+                  return true;
+                })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    int repeatCount = Math.max(1, parentCommand.getRepeatCount());
+    for (int i = 0; i < repeatCount; i++) {
+      boolean isLastIteration = (i == repeatCount - 1);
+      parentCommand.out.println("Running iteration " + i);
+      filteredTests.forEach(
+          (testName, spec) -> traceTestSpecs(testName, spec, results, isLastIteration));
+    }
+  }
+
+  private boolean matchesTestName(final String test) {
+    if (testName.contains("*") || testName.contains("?")) {
+      // Convert glob pattern to regex: * -> .*, ? -> .
+      final String regex =
+          "(?i)" + testName.replace(".", "\\.").replace("*", ".*").replace("?", ".");
+      return test.matches(regex);
+    }
+    // Simple substring match (case-insensitive)
+    return test.toLowerCase(Locale.ROOT).contains(testName.toLowerCase(Locale.ROOT));
   }
 
   private void traceTestSpecs(
-      final String test, final BlockchainReferenceTestCaseSpec spec, final TestResults results) {
-    if (testName != null && !testName.equals(test)) {
-      parentCommand.out.println("Skipping test: " + test);
-      return;
+      final String test,
+      final BlockchainReferenceTestCaseSpec spec,
+      final TestResults results,
+      final boolean isLastIteration) {
+    if (isLastIteration) {
+      parentCommand.out.println("Running " + test);
     }
-    parentCommand.out.println("Considering " + test);
-
-    final ProtocolContext context = spec.buildProtocolContext();
+    final MutableBlockchain blockchain = spec.buildBlockchain();
+    final ProtocolContext context = spec.buildProtocolContext(blockchain);
 
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
@@ -248,8 +283,6 @@ public class BlockchainTestSubCommand implements Runnable {
         ReferenceTestProtocolSchedules.create(parentCommand.getEvmConfiguration())
             .getByName(spec.getNetwork());
 
-    final MutableBlockchain blockchain = spec.getBlockchain();
-
     BlockTestTracerManager tracerManager = null;
     PrintStream traceWriter;
     long totalGasUsed = 0;
@@ -260,7 +293,7 @@ public class BlockchainTestSubCommand implements Runnable {
     boolean testPassed = true;
     String failureReason = "";
 
-    if (parentCommand.showJsonResults) {
+    if (parentCommand.showJsonResults && isLastIteration) {
       try {
         final boolean isFileOutput = traceOutput != null;
         if (isFileOutput) {
@@ -313,6 +346,10 @@ public class BlockchainTestSubCommand implements Runnable {
 
         timer.stop();
 
+        if (!isLastIteration) {
+          continue;
+        }
+
         if (parentCommand.showJsonResults) {
           totalGasUsed += block.getHeader().getGasUsed();
           totalTxCount += block.getBody().getTransactions().size();
@@ -356,6 +393,10 @@ public class BlockchainTestSubCommand implements Runnable {
       }
     }
 
+    if (!isLastIteration) {
+      return;
+    }
+
     if (!blockchain.getChainHeadHash().equals(spec.getLastBlockHash())) {
       testPassed = false;
       failureReason =
@@ -363,10 +404,10 @@ public class BlockchainTestSubCommand implements Runnable {
               "Chain header mismatch, have %s want %s",
               blockchain.getChainHeadHash(), spec.getLastBlockHash());
       parentCommand.out.printf(
-          "Chain header mismatch, have %s want %s - %s%n",
-          blockchain.getChainHeadHash(), spec.getLastBlockHash(), test);
+          "Chain header mismatch, have %s want %s%n",
+          blockchain.getChainHeadHash(), spec.getLastBlockHash());
     } else {
-      parentCommand.out.println("Chain import successful - " + test);
+      parentCommand.out.println("Chain import successful");
     }
 
     if (parentCommand.showJsonResults) {
@@ -446,7 +487,7 @@ public class BlockchainTestSubCommand implements Runnable {
         final org.hyperledger.besu.datatypes.Transaction tx,
         final boolean status,
         final org.apache.tuweni.bytes.Bytes output,
-        final List<org.hyperledger.besu.evm.log.Log> logs,
+        final List<Log> logs,
         final long gasUsed,
         final Set<Address> selfDestructs,
         final long timeNs) {

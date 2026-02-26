@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBa
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -85,10 +85,10 @@ public abstract class PathBasedWorldState
     this.worldStateRootHash =
         Hash.wrap(
             Bytes32.wrap(
-                worldStateKeyValueStorage.getWorldStateRootHash().orElse(getEmptyTrieHash())));
-    this.worldStateBlockHash =
-        Hash.wrap(
-            Bytes32.wrap(worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
+                worldStateKeyValueStorage
+                    .getWorldStateRootHash()
+                    .orElse(getEmptyTrieHash().getBytes())));
+    this.worldStateBlockHash = worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO);
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
     this.worldStateConfig = worldStateConfig;
@@ -238,8 +238,11 @@ public abstract class PathBasedWorldState
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
-        worldStateBlockHash = blockHeader.getHash();
+            .put(
+                TRIE_BRANCH_STORAGE,
+                WORLD_BLOCK_HASH_KEY,
+                blockHeader.getBlockHash().getBytes().toArrayUnsafe());
+        worldStateBlockHash = blockHeader.getBlockHash();
       } else {
         stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
@@ -247,7 +250,10 @@ public abstract class PathBasedWorldState
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
+          .put(
+              TRIE_BRANCH_STORAGE,
+              WORLD_ROOT_HASH_KEY,
+              calculatedRootHash.getBytes().toArrayUnsafe());
 
       stateUpdater
           .getWorldStateTransaction()
@@ -294,7 +300,7 @@ public abstract class PathBasedWorldState
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
-    return Hash.wrap(worldStateRootHash);
+    return worldStateRootHash;
   }
 
   protected static final KeyValueStorageTransaction noOpTx =

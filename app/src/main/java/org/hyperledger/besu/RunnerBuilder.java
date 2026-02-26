@@ -70,12 +70,16 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner.NetworkBuilder;
@@ -84,6 +88,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
@@ -154,13 +159,17 @@ public class RunnerBuilder {
   private Vertx vertx;
   private BesuController besuController;
 
-  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
+  private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.DEFAULT;
   private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
   private boolean p2pEnabled = true;
   private boolean discoveryEnabled;
   private String p2pAdvertisedHost;
   private String p2pListenInterface = NetworkUtility.INADDR_ANY;
   private int p2pListenPort;
+  private Optional<String> p2pAdvertisedHostIpv6 = Optional.empty();
+  private Optional<String> p2pListenInterfaceIpv6 = Optional.empty();
+  private int p2pListenPortIpv6 = EnodeURLImpl.DEFAULT_LISTENING_PORT_IPV6;
+  private boolean preferIpv6Outbound = false;
   private NatMethod natMethod = NatMethod.AUTO;
   private boolean natMethodFallbackEnabled;
   private EthNetworkConfig ethNetworkConfig;
@@ -171,7 +180,6 @@ public class RunnerBuilder {
   private WebSocketConfiguration webSocketConfiguration;
   private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
-  private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
   private MetricsConfiguration metricsConfiguration;
@@ -295,6 +303,39 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add P2P advertised host for IPv6.
+   *
+   * @param p2pAdvertisedHostIpv6 optional host name
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pAdvertisedHostIpv6(final Optional<String> p2pAdvertisedHostIpv6) {
+    this.p2pAdvertisedHostIpv6 = p2pAdvertisedHostIpv6;
+    return this;
+  }
+
+  /**
+   * Add IPv6 P2P host name/IP address for P2P to listen to.
+   *
+   * @param p2pListenInterfaceIpv6 optional host name/IP address
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pListenInterfaceIpv6(final Optional<String> p2pListenInterfaceIpv6) {
+    this.p2pListenInterfaceIpv6 = p2pListenInterfaceIpv6;
+    return this;
+  }
+
+  /**
+   * Add IPv6 port for P2P.
+   *
+   * @param p2pListenPortIpv6 the IPv6 P2P listen port
+   * @return the runner builder
+   */
+  public RunnerBuilder p2pListenPortIpv6(final int p2pListenPortIpv6) {
+    this.p2pListenPortIpv6 = p2pListenPortIpv6;
+    return this;
+  }
+
+  /**
    * Add Nat method.
    *
    * @param natMethod the nat method
@@ -392,17 +433,6 @@ public class RunnerBuilder {
    */
   public RunnerBuilder apiConfiguration(final ApiConfiguration apiConfiguration) {
     this.apiConfiguration = apiConfiguration;
-    return this;
-  }
-
-  /**
-   * Sets the block access list configuration.
-   *
-   * @param balConfiguration the BAL configuration
-   * @return the runner builder
-   */
-  public RunnerBuilder balConfiguration(final BalConfiguration balConfiguration) {
-    this.balConfiguration = balConfiguration;
     return this;
   }
 
@@ -597,6 +627,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add IPv6 outbound preference for P2P connections.
+   *
+   * @param preferIpv6Outbound if true, prefer IPv6 when peer advertises both address families
+   * @return the runner builder
+   */
+  public RunnerBuilder preferIpv6Outbound(final boolean preferIpv6Outbound) {
+    this.preferIpv6Outbound = preferIpv6Outbound;
+    return this;
+  }
+
+  /**
    * Set the transaction validator service.
    *
    * @param transactionValidatorService the transaction validator service
@@ -622,6 +663,13 @@ public class RunnerBuilder {
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
             .setAdvertisedHost(p2pAdvertisedHost);
+    p2pListenInterfaceIpv6.ifPresent(
+        iface -> {
+          discoveryConfiguration.setBindHostIpv6(p2pListenInterfaceIpv6);
+          discoveryConfiguration.setBindPortIpv6(p2pListenPortIpv6);
+          discoveryConfiguration.setAdvertisedHostIpv6(p2pAdvertisedHostIpv6);
+        });
+    discoveryConfiguration.setPreferIpv6Outbound(preferIpv6Outbound);
     if (discoveryEnabled) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
@@ -636,9 +684,9 @@ public class RunnerBuilder {
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
-          networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
+          networkingConfiguration.discoveryConfiguration().isDiscoveryV5Enabled());
       discoveryConfiguration.setFilterOnEnrForkId(
-          networkingConfiguration.getDiscovery().isFilterOnEnrForkIdEnabled());
+          networkingConfiguration.discoveryConfiguration().isFilterOnEnrForkIdEnabled());
     } else {
       discoveryConfiguration.setEnabled(false);
     }
@@ -658,13 +706,29 @@ public class RunnerBuilder {
             .flatMap(protocolManager -> protocolManager.getSupportedCapabilities().stream())
             .collect(Collectors.toSet());
 
+    // IPv6 dual-stack support (a second UDP socket + a second TCP socket) was introduced
+    // alongside DiscV5. Besu does not implement dual-stack for DiscV4, so RLPx should only
+    // bind a second TCP socket when DiscV5 is active. This guard can be dropped once DiscV4
+    // is removed.
+    final boolean rlpxDualStackEnabled =
+        discoveryEnabled && networkingConfiguration.discoveryConfiguration().isDiscoveryV5Enabled();
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
             .setBindHost(p2pListenInterface)
             .setBindPort(p2pListenPort)
+            .setBindHostIpv6(rlpxDualStackEnabled ? p2pListenInterfaceIpv6 : Optional.empty())
+            .setBindPortIpv6(
+                rlpxDualStackEnabled
+                    ? p2pListenInterfaceIpv6.map(ignored -> p2pListenPortIpv6)
+                    : Optional.empty())
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuVersionUtils.nodeName(identityString));
-    networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
+    networkingConfiguration =
+        ImmutableNetworkingConfiguration.builder()
+            .from(networkingConfiguration)
+            .rlpxConfiguration(rlpxConfiguration)
+            .discoveryConfiguration(discoveryConfiguration)
+            .build();
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
@@ -697,25 +761,44 @@ public class RunnerBuilder {
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
 
+    PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
+        DefaultPeerDiscoveryAgentFactory.builder()
+            .vertx(vertx)
+            .nodeKey(nodeKey)
+            .config(networkingConfiguration)
+            .peerPermissions(peerPermissions)
+            .natService(natService)
+            .metricsSystem(metricsSystem)
+            .storageProvider(storageProvider)
+            .blockchain(context.getBlockchain())
+            .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
+            .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
+            .build();
+
+    RlpxAgentFactory rlpxAgentFactory =
+        DefaultRlpxAgentFactory.builder()
+            .nodeKey(nodeKey)
+            .config(networkingConfiguration)
+            .peerPermissions(peerPermissions)
+            .metricsSystem(metricsSystem)
+            .allConnectionsSupplier(ethPeers::streamAllConnections)
+            .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
+            .maxPeers(ethPeers.getMaxPeers())
+            .build();
+
     final NetworkBuilder activeNetwork =
-        caps -> {
-          return DefaultP2PNetwork.builder()
-              .vertx(vertx)
-              .nodeKey(nodeKey)
-              .config(networkingConfiguration)
-              .peerPermissions(peerPermissions)
-              .metricsSystem(metricsSystem)
-              .supportedCapabilities(caps)
-              .natService(natService)
-              .storageProvider(storageProvider)
-              .blockchain(context.getBlockchain())
-              .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
-              .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-              .allConnectionsSupplier(ethPeers::streamAllConnections)
-              .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
-              .maxPeers(ethPeers.getMaxPeers())
-              .build();
-        };
+        caps ->
+            DefaultP2PNetwork.builder()
+                .vertx(vertx)
+                .nodeKey(nodeKey)
+                .config(networkingConfiguration)
+                .peerPermissions(peerPermissions)
+                .metricsSystem(metricsSystem)
+                .supportedCapabilities(caps)
+                .natService(natService)
+                .peerDiscoveryAgentFactory(peerDiscoveryAgentFactory)
+                .rlpxAgentFactory(rlpxAgentFactory)
+                .build();
 
     final NetworkRunner networkRunner =
         NetworkRunner.builder()
@@ -812,7 +895,7 @@ public class RunnerBuilder {
               metricsConfiguration,
               graphQLConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins(),
+              besuPluginContext.getPluginsByName(),
               dataDir,
               rpcEndpointServiceImpl,
               transactionSimulator,
@@ -868,7 +951,7 @@ public class RunnerBuilder {
               metricsConfiguration,
               graphQLConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins(),
+              besuPluginContext.getPluginsByName(),
               dataDir,
               rpcEndpointServiceImpl,
               transactionSimulator,
@@ -964,7 +1047,7 @@ public class RunnerBuilder {
               metricsConfiguration,
               graphQLConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins(),
+              besuPluginContext.getPluginsByName(),
               dataDir,
               rpcEndpointServiceImpl,
               transactionSimulator,
@@ -1032,7 +1115,7 @@ public class RunnerBuilder {
               metricsConfiguration,
               graphQLConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins(),
+              besuPluginContext.getPluginsByName(),
               dataDir,
               rpcEndpointServiceImpl,
               transactionSimulator,
@@ -1076,7 +1159,7 @@ public class RunnerBuilder {
               metricsConfiguration,
               graphQLConfiguration,
               natService,
-              besuPluginContext.getNamedPlugins(),
+              besuPluginContext.getPluginsByName(),
               dataDir,
               rpcEndpointServiceImpl,
               transactionSimulator,
@@ -1281,7 +1364,6 @@ public class RunnerBuilder {
                 besuController.getProtocolManager().ethContext().getEthPeers(),
                 consensusEngineServer,
                 apiConfiguration,
-                balConfiguration,
                 enodeDnsConfiguration,
                 transactionSimulator,
                 ethScheduler);

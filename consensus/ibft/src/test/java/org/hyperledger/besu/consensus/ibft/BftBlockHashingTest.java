@@ -28,12 +28,12 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
@@ -89,7 +90,7 @@ public class BftBlockHashingTest {
 
     List<SECPSignature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
-            .map(nodeKey -> nodeKey.sign(dataHahsForCommittedSeal))
+            .map(nodeKey -> nodeKey.sign(Bytes32.wrap(dataHahsForCommittedSeal.getBytes())))
             .collect(Collectors.toList());
 
     final BftExtraData extraDataWithCommitSeals =
@@ -166,7 +167,11 @@ public class BftBlockHashingTest {
 
     List<SECPSignature> commitSeals =
         COMMITTERS_NODE_KEYS.stream()
-            .map(nodeKey -> nodeKey.sign(Hash.hash(rlpForHeaderFroCommittersSigning.encoded())))
+            .map(
+                nodeKey ->
+                    nodeKey.sign(
+                        Bytes32.wrap(
+                            Hash.hash(rlpForHeaderFroCommittersSigning.encoded()).getBytes())))
             .collect(Collectors.toList());
 
     BftExtraData extraDataWithCommitSeals =

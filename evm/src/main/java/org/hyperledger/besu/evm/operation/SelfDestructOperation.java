@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,11 +23,13 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.log.TransferLogEmitter;
 
 /** The Self destruct operation. */
 public class SelfDestructOperation extends AbstractOperation {
 
   final boolean eip6780Semantics;
+  final TransferLogEmitter transferLogEmitter;
 
   /**
    * Instantiates a new Self destruct operation.
@@ -35,7 +37,7 @@ public class SelfDestructOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public SelfDestructOperation(final GasCalculator gasCalculator) {
-    this(gasCalculator, false);
+    this(gasCalculator, false, TransferLogEmitter.NOOP);
   }
 
   /**
@@ -47,8 +49,23 @@ public class SelfDestructOperation extends AbstractOperation {
    * @param eip6780Semantics Enforce EIP6780 semantics.
    */
   public SelfDestructOperation(final GasCalculator gasCalculator, final boolean eip6780Semantics) {
+    this(gasCalculator, eip6780Semantics, TransferLogEmitter.NOOP);
+  }
+
+  /**
+   * Instantiates a new Self destruct operation with EIP-6780 and transfer log emission support.
+   *
+   * @param gasCalculator the gas calculator
+   * @param eip6780Semantics Enforce EIP-6780 semantics (only destroy if created in same tx).
+   * @param transferLogEmitter strategy for emitting transfer logs.
+   */
+  public SelfDestructOperation(
+      final GasCalculator gasCalculator,
+      final boolean eip6780Semantics,
+      final TransferLogEmitter transferLogEmitter) {
     super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
     this.eip6780Semantics = eip6780Semantics;
+    this.transferLogEmitter = transferLogEmitter;
   }
 
   @Override
@@ -61,18 +78,25 @@ public class SelfDestructOperation extends AbstractOperation {
 
     // First calculate cost.  There's a bit of yak shaving getting values to calculate the cost.
     final Address beneficiaryAddress = Words.toAddress(frame.popStackItem());
-    // Because of weird EIP150/158 reasons we care about a null account, so we can't merge this.
-    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final boolean beneficiaryIsWarm =
         frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
+    final long beneficiaryAccessCost =
+        beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost();
+    final long staticCost =
+        gasCalculator().selfDestructOperationStaticGasCost() + beneficiaryAccessCost;
 
+    if (frame.getRemainingGas() < staticCost) {
+      return new OperationResult(staticCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
     final Address originatorAddress = frame.getRecipientAddress();
     final MutableAccount originatorAccount = getMutableAccount(originatorAddress, frame);
     final Wei originatorBalance = originatorAccount.getBalance();
 
     final long cost =
         gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
-            + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
+            + beneficiaryAccessCost;
 
     // With the cost we can test for out-of-gas early WithdrawalRequests
     if (frame.getRemainingGas() < cost) {
@@ -82,14 +106,26 @@ public class SelfDestructOperation extends AbstractOperation {
     // We passed preliminary checks, get mutable accounts.
     final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
 
+    // Determine if the account will actually be destroyed (pre-Cancun or same-tx-create)
+    // or if only a SENDALL will be executed
+    final boolean willBeDestroyed =
+        !eip6780Semantics || frame.wasCreatedInTransaction(originatorAccount.getAddress());
+
     // Do the "sweep," all modes send all originator balance to the beneficiary account.
     originatorAccount.decrementBalance(originatorBalance);
     beneficiaryAccount.incrementBalance(originatorBalance);
 
+    // EIP-7708: if the contract will actually be destroyed and it is not a self transfer emit
+    // Burn log
+    if (!originatorAddress.equals(beneficiaryAddress) || willBeDestroyed) {
+      transferLogEmitter.emitSelfDestructLog(
+          frame, originatorAddress, beneficiaryAddress, originatorBalance);
+    }
+
     // If we are actually destroying the originator (pre-Cancun or same-tx-create) we need to
     // explicitly zero out the account balance (destroying ether/value if the originator is the
     // beneficiary) as well as tag it for later self-destruct cleanup.
-    if (!eip6780Semantics || frame.wasCreatedInTransaction(originatorAccount.getAddress())) {
+    if (willBeDestroyed) {
       frame.addSelfDestruct(originatorAccount.getAddress());
       originatorAccount.setBalance(Wei.ZERO);
     }

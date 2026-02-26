@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.BreachOfProtocolException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.PeerChannelClosedException;
@@ -27,6 +25,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.Framer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramingException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.CapabilityMultiplexer;
@@ -72,9 +71,10 @@ final class DeFramer extends ByteToMessageDecoder {
   private final Optional<Peer> expectedPeer;
   private final List<SubProtocol> subProtocols;
   private final boolean inboundInitiated;
-  private final PeerTable peerTable;
+  private final PeerLookup peerLookup;
   private boolean hellosExchanged;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final LabelledMetric<Counter> outboundBytesCounter;
 
   DeFramer(
       final Framer framer,
@@ -85,7 +85,7 @@ final class DeFramer extends ByteToMessageDecoder {
       final CompletableFuture<PeerConnection> connectFuture,
       final MetricsSystem metricsSystem,
       final boolean inboundInitiated,
-      final PeerTable peerTable) {
+      final PeerLookup peerLookup) {
     this.framer = framer;
     this.subProtocols = subProtocols;
     this.localNode = localNode;
@@ -93,12 +93,20 @@ final class DeFramer extends ByteToMessageDecoder {
     this.connectFuture = connectFuture;
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.inboundInitiated = inboundInitiated;
-    this.peerTable = peerTable;
+    this.peerLookup = peerLookup;
     this.outboundMessagesCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
             "p2p_messages_outbound",
             "Count of each P2P message sent outbound.",
+            "protocol",
+            "name",
+            "code");
+    this.outboundBytesCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.NETWORK,
+            "p2p_bytes_outbound",
+            "Count of bytes sent outbound.",
             "protocol",
             "name",
             "code");
@@ -150,11 +158,11 @@ final class DeFramer extends ByteToMessageDecoder {
             ctx.close();
             return;
           }
-          // If we can find the DiscoveryPeer for the peer in the PeerTable we use it, because
-          // it could contains additional information, like the fork id.
-          final Optional<DiscoveryPeer> discoveryPeer = peerTable.get(peer.get());
-          if (discoveryPeer.isPresent()) {
-            peer = Optional.of(discoveryPeer.get());
+          // If we can find the peer in the peerLookup we use it, because it could contains
+          // additional information, like the fork id.
+          final Optional<Peer> existingPeer = peerLookup.getPeer(peer.get());
+          if (existingPeer.isPresent()) {
+            peer = existingPeer;
           }
         }
 
@@ -166,6 +174,7 @@ final class DeFramer extends ByteToMessageDecoder {
                 capabilityMultiplexer,
                 connectionEventDispatcher,
                 outboundMessagesCounter,
+                outboundBytesCounter,
                 inboundInitiated);
 
         // Check peer is who we expected

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
@@ -39,7 +40,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -48,6 +48,7 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -200,8 +201,9 @@ public class EthMaxPriorityFeePerGasTest {
             0,
             Bytes.EMPTY,
             baseFee,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
+            null,
             null,
             null,
             null,

@@ -98,8 +98,8 @@ public class BackwardSyncStep {
             blockHeaders -> {
               LOG.atDebug()
                   .setMessage("Got headers {} -> {}")
-                  .addArgument(blockHeaders.get(0)::getNumber)
-                  .addArgument(blockHeaders.get(blockHeaders.size() - 1)::getNumber)
+                  .addArgument(blockHeaders.getFirst()::getNumber)
+                  .addArgument(blockHeaders.getLast()::getNumber)
                   .log();
               return blockHeaders;
             });

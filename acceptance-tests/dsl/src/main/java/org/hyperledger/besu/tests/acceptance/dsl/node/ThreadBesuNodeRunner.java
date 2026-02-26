@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.encoding.BlockBodyEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockHeaderEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.ImmutablePluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -482,7 +482,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   public static class BesuControllerModule {
     @Provides
     @Singleton
-    public SynchronizerConfiguration provideSynchronizationConfiguration() {
+    public SynchronizerConfiguration provideSynchronizationConfiguration(final BesuNode node) {
+      // Use the synchronizer configuration set on the node, otherwise use default
+      if (node.getSynchronizerConfiguration() != null) {
+        return node.getSynchronizerConfiguration();
+      }
       final SynchronizerConfiguration synchronizerConfiguration =
           SynchronizerConfiguration.builder().build();
       return synchronizerConfiguration;
@@ -646,9 +650,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       besuPluginContext.addService(PermissioningService.class, permissioningService);
 
       besuPluginContext.initialize(
-          new PluginConfiguration.Builder()
+          ImmutablePluginConfiguration.builder()
               .pluginsDir(pluginsPath)
-              .requestedPlugins(requestedPlugins.stream().map(PluginInfo::new).toList())
+              .requestedPluginsInfo(requestedPlugins.stream().map(PluginInfo::new).toList())
               .build());
       besuPluginContext.registerPlugins();
       commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));

@@ -90,7 +90,7 @@ class StorageTrieNodeHealingRequestTest {
 
     account0Hash = accounts.get(0).addressHash();
     account0StorageRoot =
-        trie.get(account0Hash)
+        trie.get(account0Hash.getBytes())
             .map(RLP::input)
             .map(PmtStateTrieAccountValue::readFrom)
             .map(PmtStateTrieAccountValue::getStorageRoot)

@@ -67,7 +67,7 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
   @Override
   protected EthTask<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>> createTask(
       final List<BlockHeader> requestedData) {
-    final BlockHeader firstHeader = requestedData.get(0);
+    final BlockHeader firstHeader = requestedData.getFirst();
     return GetHeadersFromPeerByHashTask.startingAtHash(
         protocolSchedule,
         ethContext,

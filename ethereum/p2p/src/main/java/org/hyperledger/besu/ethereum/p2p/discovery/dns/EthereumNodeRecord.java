@@ -17,10 +17,8 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,50 +26,52 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 
 /**
  * A modified implementation of Ethereum Node Record (ENR) that is used by DNSResolver. See <a
  * href="https://eips.ethereum.org/EIPS/eip-778">EIP-778</a>
  */
 public record EthereumNodeRecord(
-    Bytes rlp, Bytes publicKey, InetAddress ip, Optional<Integer> tcp, Optional<Integer> udp) {
+    Bytes publicKey,
+    InetAddress ip,
+    Optional<Integer> tcp,
+    Optional<Integer> udp,
+    Optional<InetAddress> ipv6,
+    Optional<Integer> tcpV6,
+    Optional<Integer> udpV6,
+    NodeRecord nodeRecord) {
 
   /**
-   * Creates an ENR from its serialized form as a RLP list
+   * Creates an EthereumNodeRecord from an ENR string
    *
-   * @param rlp the serialized form of the ENR
-   * @return the ENR
-   * @throws IllegalArgumentException if the rlp bytes length is longer than 300 bytes
+   * @param enr the ENR string
+   * @return the EthereumNodeRecord
    */
-  public static EthereumNodeRecord fromRLP(final Bytes rlp) {
-    if (rlp.size() > 300) {
-      throw new IllegalArgumentException("Record too long");
-    }
-    var data = new HashMap<String, Bytes>();
+  public static EthereumNodeRecord fromEnr(final String enr) {
+    NodeRecord nodeRecord = NodeRecordFactory.DEFAULT.fromEnr(enr);
+    return fromNodeRecord(nodeRecord);
+  }
 
-    // rlp: sig, sequence, k1,v1, k2,v2, k3, [v3, vn]...
-    var input = new BytesValueRLPInput(rlp, false);
-    input.enterList();
-
-    input.skipNext(); // skip signature
-    input.skipNext(); // skip sequence
-
-    // go through rest of the list
-    while (!input.isEndOfCurrentList()) {
-      var key = new String(input.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
-      if (input.nextIsList()) {
-        // skip list as we currently don't need any of these complex structures
-        input.skipNext();
-      } else {
-        data.put(key, input.readBytes());
-      }
-    }
-
-    input.leaveList();
-
-    var publicKey = initPublicKeyBytes(data);
-
-    return new EthereumNodeRecord(rlp, publicKey, initIPAddr(data), initTCP(data), initUDP(data));
+  /**
+   * Creates an EthereumNodeRecord from a NodeRecord
+   *
+   * @param nodeRecord the NodeRecord
+   * @return the EthereumNodeRecord
+   */
+  public static EthereumNodeRecord fromNodeRecord(final NodeRecord nodeRecord) {
+    final Map<String, Object> fields = new HashMap<>();
+    nodeRecord.forEachField(fields::put);
+    return new EthereumNodeRecord(
+        initPublicKeyBytes(fields),
+        initIPAddr(fields),
+        initTCP(fields),
+        initUDP(fields),
+        initIPv6Addr(fields),
+        initTCPV6(fields),
+        initUDPV6(fields),
+        nodeRecord);
   }
 
   /**
@@ -79,9 +79,9 @@ public record EthereumNodeRecord(
    *
    * @return the public key of the ENR
    */
-  static Bytes initPublicKeyBytes(final Map<String, Bytes> data) {
-    var keyBytes = data.get("secp256k1");
-    if (keyBytes == null) {
+  static Bytes initPublicKeyBytes(final Map<String, Object> fields) {
+    final Object value = fields.get("secp256k1");
+    if (!(value instanceof Bytes keyBytes)) {
       throw new IllegalArgumentException("Missing secp256k1 entry in ENR");
     }
     // convert 33 bytes compressed public key to uncompressed using Bouncy Castle
@@ -97,13 +97,13 @@ public record EthereumNodeRecord(
    *
    * @return The IP address of the ENR
    */
-  static InetAddress initIPAddr(final Map<String, Bytes> data) {
-    var ipBytes = data.get("ip");
-    if (ipBytes != null) {
+  static InetAddress initIPAddr(final Map<String, Object> fields) {
+    final Object value = fields.get("ip");
+    if (value instanceof Bytes ipBytes) {
       try {
         return InetAddress.getByAddress(ipBytes.toArrayUnsafe());
       } catch (final Exception e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Invalid IP address in ENR", e);
       }
     }
     return InetAddress.getLoopbackAddress();
@@ -114,9 +114,8 @@ public record EthereumNodeRecord(
    *
    * @return the TCP port associated with this ENR
    */
-  static Optional<Integer> initTCP(final Map<String, Bytes> data) {
-    var tcpBytes = data.get("tcp");
-    return tcpBytes != null ? Optional.of(tcpBytes.toInt()) : Optional.empty();
+  static Optional<Integer> initTCP(final Map<String, Object> fields) {
+    return extractInt(fields, "tcp");
   }
 
   /**
@@ -124,9 +123,36 @@ public record EthereumNodeRecord(
    *
    * @return the UDP port associated with this ENR
    */
-  static Optional<Integer> initUDP(final Map<String, Bytes> data) {
-    var udpBytes = data.get("udp");
-    return udpBytes != null ? Optional.of(udpBytes.toInt()) : initTCP(data);
+  static Optional<Integer> initUDP(final Map<String, Object> fields) {
+    return extractInt(fields, "udp").or(() -> initTCP(fields));
+  }
+
+  static Optional<InetAddress> initIPv6Addr(final Map<String, Object> fields) {
+    final Object value = fields.get("ip6");
+    if (value instanceof Bytes ipBytes) {
+      try {
+        return Optional.of(InetAddress.getByAddress(ipBytes.toArrayUnsafe()));
+      } catch (final Exception e) {
+        return Optional.empty();
+      }
+    }
+    return Optional.empty();
+  }
+
+  static Optional<Integer> initTCPV6(final Map<String, Object> fields) {
+    return extractInt(fields, "tcp6");
+  }
+
+  static Optional<Integer> initUDPV6(final Map<String, Object> fields) {
+    return extractInt(fields, "udp6").or(() -> initTCPV6(fields));
+  }
+
+  private static Optional<Integer> extractInt(final Map<String, Object> fields, final String key) {
+    final Object value = fields.get(key);
+    if (value instanceof Integer integer) {
+      return Optional.of(integer);
+    }
+    return Optional.empty();
   }
 
   /**
@@ -137,18 +163,27 @@ public record EthereumNodeRecord(
     return "enr:" + ip() + ":" + tcp() + "?udp=" + udp();
   }
 
-  /** Override equals method to compare the RLP bytes */
-  @Override
-  public boolean equals(final Object o) {
-    if (!(o instanceof EthereumNodeRecord that)) {
-      return false;
-    }
-    return Objects.equals(rlp, that.rlp);
-  }
-
-  /** Override hashCode method to use hashCode of the RLP bytes */
   @Override
   public int hashCode() {
-    return Objects.hashCode(rlp);
+    return Objects.hash(publicKey, ip, tcp, udp, ipv6, tcpV6, udpV6, nodeRecord);
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    final EthereumNodeRecord other = (EthereumNodeRecord) obj;
+    return Objects.equals(this.publicKey, other.publicKey)
+        && Objects.equals(this.ip, other.ip)
+        && Objects.equals(this.tcp, other.tcp)
+        && Objects.equals(this.udp, other.udp)
+        && Objects.equals(this.ipv6, other.ipv6)
+        && Objects.equals(this.tcpV6, other.tcpV6)
+        && Objects.equals(this.udpV6, other.udpV6)
+        && Objects.equals(this.nodeRecord, other.nodeRecord);
   }
 }

@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.datatypes.Address;
@@ -46,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
@@ -82,21 +84,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * to fill 100% of the block.
    */
   private static final double TRY_FILL_BLOCK = 1.0;
-
-  // if you change these gas limits, also update the tests in MergeCoordinatorTest
-  private static final long DEFAULT_TARGET_GAS_LIMIT = 60_000_000L;
-  // testnets might have higher gas limits than mainnet and are incrementally updated
-  private static final long DEFAULT_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
-  // next target gas limit TBD
-  // private static final long NEXT_STEP_TARGET_GAS_LIMIT_TESTNET = 60_000_000L;
-
-  private static final Map<BigInteger, Long> TESTNET_CHAIN_IDS =
-      Map.of(
-          BigInteger.valueOf(11155111), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Sepolia
-          BigInteger.valueOf(17000), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Holesky
-          BigInteger.valueOf(560048), DEFAULT_TARGET_GAS_LIMIT_TESTNET, // Hoodi
-          BigInteger.valueOf(39438135), DEFAULT_TARGET_GAS_LIMIT_TESTNET // Ephemery
-          );
 
   /** The Mining parameters. */
   protected final MiningConfiguration miningConfiguration;
@@ -186,7 +173,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       miningParams.setCoinbase(Address.ZERO);
     }
     if (miningParams.getTargetGasLimit().isEmpty()) {
-      miningParams.setTargetGasLimit(getDefaultGasLimit(protocolSchedule));
+      getDefaultGasLimit(protocolSchedule).ifPresent(miningParams::setTargetGasLimit);
     }
     miningParams.setMinBlockOccupancyRatio(TRY_FILL_BLOCK);
     this.miningConfiguration = miningParams;
@@ -264,7 +251,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot) {
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber) {
 
     // we assume that preparePayload is always called sequentially, since the RPC Engine calls
     // are sequential, if this assumption changes then more synchronization should be added to
@@ -292,23 +280,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         this.mergeBlockCreatorFactory.forParams(parentHeader, Optional.ofNullable(feeRecipient));
 
     // put the empty block in first
-    final Block emptyBlock =
-        mergeBlockCreator
-            .createBlock(
-                Optional.of(Collections.emptyList()),
-                prevRandao,
-                timestamp,
-                withdrawals,
-                parentBeaconBlockRoot,
-                parentHeader)
-            .getBlock();
+    final BlockCreationResult emptyBlockResult =
+        mergeBlockCreator.createBlock(
+            Optional.of(Collections.emptyList()),
+            prevRandao,
+            timestamp,
+            withdrawals,
+            parentBeaconBlockRoot,
+            slotNumber,
+            parentHeader);
+    final Block emptyBlock = emptyBlockResult.getBlock();
 
-    BlockProcessingResult result = validateProposedBlock(emptyBlock);
+    BlockProcessingResult result =
+        validateProposedBlock(emptyBlock, emptyBlockResult.getBlockAccessList());
     if (result.isSuccessful()) {
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
+              emptyBlockResult.getBlockAccessList(),
               result.getRequests(),
               BlockCreationTiming.EMPTY));
       LOG.info(
@@ -333,6 +323,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         mergeBlockCreator,
         withdrawals,
         parentBeaconBlockRoot,
+        slotNumber,
         parentHeader);
 
     return payloadIdentifier;
@@ -435,6 +426,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final MergeBlockCreator mergeBlockCreator,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber,
       final BlockHeader parentHeader) {
 
     final Supplier<BlockCreationResult> blockCreator =
@@ -445,6 +437,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 timestamp,
                 withdrawals,
                 parentBeaconBlockRoot,
+                slotNumber,
                 parentHeader);
 
     LOG.debug(
@@ -553,13 +546,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final PayloadIdentifier payloadIdentifier,
       final long startedAt) {
     final var bestBlock = blockCreationResult.getBlock();
-    final var resultBest = validateProposedBlock(bestBlock);
+    final var resultBest =
+        validateProposedBlock(bestBlock, blockCreationResult.getBlockAccessList());
     if (resultBest.isSuccessful()) {
 
       mergeContext.putPayloadById(
           new PayloadWrapper(
               payloadIdentifier,
               new BlockWithReceipts(bestBlock, resultBest.getReceipts()),
+              blockCreationResult.getBlockAccessList(),
               resultBest.getRequests(),
               blockCreationResult.getBlockCreationTimings()));
       LOG.atDebug()
@@ -649,6 +644,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult validateBlock(final Block block) {
+    return validateBlock(block, Optional.empty());
+  }
+
+  private BlockProcessingResult validateBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -658,12 +658,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                blockAccessList,
                 false);
 
     return validationResult;
   }
 
-  private BlockProcessingResult validateProposedBlock(final Block block) {
+  private BlockProcessingResult validateProposedBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     final var validationResult =
         protocolSchedule
             .getByBlockHeader(block.getHeader())
@@ -673,6 +675,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 block,
                 HeaderValidationMode.FULL,
                 HeaderValidationMode.NONE,
+                blockAccessList,
                 false,
                 false);
 
@@ -681,9 +684,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public BlockProcessingResult rememberBlock(final Block block) {
+    return rememberBlock(block, Optional.empty());
+  }
+
+  @Override
+  public BlockProcessingResult rememberBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
     LOG.atDebug().setMessage("Remember block {}").addArgument(block::toLogString).log();
     final var chain = protocolContext.getBlockchain();
-    final var validationResult = validateBlock(block);
+    final var validationResult = validateBlock(block, blockAccessList);
     validationResult
         .getYield()
         .ifPresentOrElse(
@@ -974,11 +983,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return job.cancelled.get();
   }
 
-  private long getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
+  private Optional<Long> getDefaultGasLimit(final ProtocolSchedule protocolSchedule) {
     return protocolSchedule
         .getChainId()
-        .map(TESTNET_CHAIN_IDS::get)
-        .orElse(DEFAULT_TARGET_GAS_LIMIT);
+        .flatMap(NetworkDefinition::fromChainId)
+        .map(NetworkDefinition::getTargetGasLimit);
   }
 
   /**
@@ -987,8 +996,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
    * @param chainId the chain id
    * @return default gas limit by chain id
    */
-  public static long getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
-    return chainId.map(TESTNET_CHAIN_IDS::get).orElse(DEFAULT_TARGET_GAS_LIMIT);
+  public static Optional<Long> getDefaultGasLimitByChainId(final Optional<BigInteger> chainId) {
+    return chainId
+        .flatMap(NetworkDefinition::fromChainId)
+        .map(NetworkDefinition::getTargetGasLimit);
   }
 
   private static class BlockCreationTask {

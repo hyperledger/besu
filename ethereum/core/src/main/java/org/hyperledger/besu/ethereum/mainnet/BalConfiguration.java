@@ -24,12 +24,6 @@ public interface BalConfiguration {
 
   BalConfiguration DEFAULT = ImmutableBalConfiguration.builder().build();
 
-  /** Returns whether block access list support is enabled. */
-  @Value.Default
-  default boolean isBalApiEnabled() {
-    return false;
-  }
-
   /** Returns whether BAL-based optimisations should be disabled entirely. */
   @Value.Default
   default boolean isBalOptimisationEnabled() {
@@ -40,6 +34,12 @@ public interface BalConfiguration {
   @Value.Default
   default boolean isBalStateRootTrusted() {
     return false;
+  }
+
+  /** Returns whether BAL perfect parallelization is enabled. */
+  @Value.Default
+  default boolean isPerfectParallelizationEnabled() {
+    return true;
   }
 
   /**
@@ -60,6 +60,12 @@ public interface BalConfiguration {
   /** Returns the timeout to use when waiting for the BAL-computed state root. */
   @Value.Default
   default Duration getBalStateRootTimeout() {
+    return Duration.ofSeconds(1);
+  }
+
+  /** Returns the timeout to use when waiting for BAL transaction processing results. */
+  @Value.Default
+  default Duration getBalProcessingTimeout() {
     return Duration.ofSeconds(1);
   }
 }

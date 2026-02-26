@@ -181,7 +181,6 @@ public class JsonRpcHttpServiceLoginTest {
                 mock(EthPeers.class),
                 vertx,
                 mock(ApiConfiguration.class),
-                BalConfiguration.DEFAULT,
                 Optional.empty(),
                 mock(TransactionSimulator.class),
                 new DeterministicEthScheduler());

@@ -47,12 +47,13 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
   }
 
   @Override
-  public QbftBlock createBlock(
+  public BlockCreationResult createBlock(
       final long headerTimeStampSeconds, final QbftBlockHeader parentHeader) {
     var blockResult =
         besuBlockCreator.createBlock(
             headerTimeStampSeconds, AdaptorUtil.toBesuBlockHeader(parentHeader));
-    return new QbftBlockAdaptor(blockResult.getBlock());
+    return new BlockCreationResult(
+        new QbftBlockAdaptor(blockResult.getBlock()), blockResult.getBlockAccessList());
   }
 
   @Override

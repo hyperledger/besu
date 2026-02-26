@@ -22,6 +22,7 @@ import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,11 +32,9 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.net.URL;
@@ -154,12 +153,7 @@ public final class GenesisState {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
-    final Optional<BlockAccessList> blockAccessList =
-        isAmsterdamAtGenesis(config)
-            ? Optional.of(BlockAccessList.builder().build())
-            : Optional.empty();
-
-    return new BlockBody(emptyList(), emptyList(), withdrawals, blockAccessList);
+    return new BlockBody(emptyList(), emptyList(), withdrawals);
   }
 
   public Block getBlock() {
@@ -234,6 +228,7 @@ public final class GenesisState {
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
         .balHash(isAmsterdamAtGenesis(genesis) ? Hash.EMPTY_BAL_HASH : null)
+        .slotNumber(isAmsterdamAtGenesis(genesis) ? parseSlotNumber(genesis) : null)
         .buildBlockHeader();
   }
 
@@ -296,6 +291,11 @@ public final class GenesisState {
         "parentBeaconBlockRoot", genesis.getParentBeaconBlockRoot(), Bytes32::fromHexString);
   }
 
+  private static long parseSlotNumber(final GenesisConfig genesis) {
+    return withNiceErrorMessage(
+        "slotNumber", genesis.getSlotNumber(), GenesisState::parseUnsignedLong);
+  }
+
   private static long parseUnsignedLong(final String value) {
     String v = value.toLowerCase(Locale.US);
     if (v.startsWith("0x")) {
@@ -317,15 +317,7 @@ public final class GenesisState {
     if (cancunTimestamp.isPresent()) {
       return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
-    return isPragueAtGenesis(genesis) || isCancunEOFAtGenesis(genesis);
-  }
-
-  private static boolean isCancunEOFAtGenesis(final GenesisConfig genesis) {
-    final OptionalLong cancunEOFTimestamp = genesis.getConfigOptions().getCancunEOFTime();
-    if (cancunEOFTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= cancunEOFTimestamp.getAsLong();
-    }
-    return false;
+    return isPragueAtGenesis(genesis);
   }
 
   private static boolean isPragueAtGenesis(final GenesisConfig genesis) {

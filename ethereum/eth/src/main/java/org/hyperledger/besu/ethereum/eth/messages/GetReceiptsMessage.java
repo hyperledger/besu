@@ -22,7 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -43,7 +43,7 @@ public final class GetReceiptsMessage extends AbstractMessageData {
   public static GetReceiptsMessage create(final Iterable<Hash> hashes) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    hashes.forEach(tmp::writeBytes);
+    hashes.forEach(hash -> tmp.writeBytes(hash.getBytes()));
     tmp.endList();
     return new GetReceiptsMessage(tmp.encoded());
   }
@@ -57,10 +57,10 @@ public final class GetReceiptsMessage extends AbstractMessageData {
     return EthProtocolMessages.GET_RECEIPTS;
   }
 
-  public Iterable<Hash> hashes() {
+  public List<Hash> hashes() {
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
-    final Collection<Hash> hashes = new ArrayList<>();
+    final List<Hash> hashes = new ArrayList<>();
     while (!input.isEndOfCurrentList()) {
       hashes.add(Hash.wrap(input.readBytes32()));
     }

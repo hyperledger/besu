@@ -37,9 +37,11 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 
 import java.util.Collections;
@@ -63,8 +65,13 @@ public class DebugTraceTransactionTest {
   private final BlockHeader blockHeader = mock(BlockHeader.class, Answers.RETURNS_DEEP_STUBS);
   private final MutableWorldState mutableWorldState = mock(MutableWorldState.class);
   private final TransactionTracer transactionTracer = mock(TransactionTracer.class);
+  private final ProtocolSchedule protocolSchedule =
+      mock(ProtocolSchedule.class, Answers.RETURNS_DEEP_STUBS);
+  private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class, Answers.RETURNS_DEEP_STUBS);
+  private final PrecompileContractRegistry precompileContractRegistry =
+      mock(PrecompileContractRegistry.class);
   private final DebugTraceTransaction debugTraceTransaction =
-      new DebugTraceTransaction(blockchainQueries, transactionTracer);
+      new DebugTraceTransaction(blockchainQueries, transactionTracer, protocolSchedule);
   private final Transaction transaction = mock(Transaction.class);
 
   private final Hash blockHash =
@@ -86,6 +93,11 @@ public class DebugTraceTransactionTest {
                     .apply(mutableWorldState))
         .when(blockchainQueries)
         .getAndMapWorldState(any(), any());
+
+    when(blockchainQueries.getBlockchain().getBlockHeader(any(Hash.class)))
+        .thenReturn(Optional.of(blockHeader));
+    when(protocolSchedule.getByBlockHeader(blockHeader)).thenReturn(protocolSpec);
+    when(protocolSpec.getPrecompileContractRegistry()).thenReturn(precompileContractRegistry);
   }
 
   @Test
@@ -147,7 +159,7 @@ public class DebugTraceTransactionTest {
             any(Tracer.TraceableState.class),
             eq(blockHash),
             eq(transactionHash),
-            any(OperationTracer.class)))
+            any(DebugOperationTracer.class)))
         .thenReturn(Optional.of(transactionTrace));
     final JsonRpcSuccessResponse response =
         (JsonRpcSuccessResponse) debugTraceTransaction.response(request);

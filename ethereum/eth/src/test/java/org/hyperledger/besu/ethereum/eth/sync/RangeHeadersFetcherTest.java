@@ -38,8 +38,6 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.range.RangeHeadersFetcher;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -64,7 +62,6 @@ public class RangeHeadersFetcherTest {
   private static Blockchain blockchain;
   private static ProtocolSchedule protocolSchedule;
   private static ProtocolContext protocolContext;
-  private static final MetricsSystem metricsSystem = new NoOpMetricsSystem();
   private static TransactionPool transactionPool;
 
   private static final Answer<PeerTaskExecutorResult<List<BlockHeader>>> executeAgainstPeerAnswer =
@@ -124,20 +121,6 @@ public class RangeHeadersFetcherTest {
 
   @Test
   public void shouldRequestHeadersFromPeerAndExcludeExistingHeader() {
-    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(false);
-
-    final CompletableFuture<List<BlockHeader>> result =
-        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(1));
-
-    assertThat(result).isNotDone();
-
-    respondingPeer.respond(responder);
-
-    assertThat(result).isCompletedWithValue(asList(header(6), header(11), header(16)));
-  }
-
-  @Test
-  public void shouldRequestHeadersFromPeerAndExcludeExistingHeaderUsingPeerTaskSystem() {
     final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(true);
 
     Mockito.when(
@@ -155,19 +138,6 @@ public class RangeHeadersFetcherTest {
 
   @Test
   public void shouldNotRequestHeadersBeyondTargetWhenTargetIsMultipleOfSegmentSize() {
-    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(11), false);
-
-    final CompletableFuture<List<BlockHeader>> result =
-        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(1));
-
-    respondingPeer.respond(responder);
-
-    assertThat(result).isCompletedWithValue(asList(header(6), header(11)));
-  }
-
-  @Test
-  public void
-      shouldNotRequestHeadersBeyondTargetWhenTargetIsMultipleOfSegmentSizeWithPeerTaskSystem() {
     final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(11), true);
 
     Mockito.when(
@@ -185,19 +155,6 @@ public class RangeHeadersFetcherTest {
 
   @Test
   public void shouldNotRequestHeadersBeyondTargetWhenTargetIsNotAMultipleOfSegmentSize() {
-    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(15), false);
-
-    final CompletableFuture<List<BlockHeader>> result =
-        rangeHeaderFetcher.getNextRangeHeaders(respondingPeer.getEthPeer(), header(1));
-
-    respondingPeer.respond(responder);
-
-    assertThat(result).isCompletedWithValue(asList(header(6), header(11)));
-  }
-
-  @Test
-  public void
-      shouldNotRequestHeadersBeyondTargetWhenTargetIsNotAMultipleOfSegmentSizeWithPeerTaskSystem() {
     final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(header(15), true);
 
     Mockito.when(
@@ -267,25 +224,6 @@ public class RangeHeadersFetcherTest {
   @Test
   public void shouldReturnRemoteChainHeadWhenNextRangeHeaderIsTheRemoteHead() {
     final long remoteChainHeight = blockchain.getChainHeadBlockNumber();
-    final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(false);
-
-    assertThat(
-            rangeHeaderFetcher.nextRangeEndsAtChainHead(
-                respondingPeer.getEthPeer(), header(remoteChainHeight - SEGMENT_SIZE)))
-        .isFalse();
-
-    final CompletableFuture<List<BlockHeader>> result =
-        rangeHeaderFetcher.getNextRangeHeaders(
-            respondingPeer.getEthPeer(), header(remoteChainHeight - SEGMENT_SIZE));
-
-    respondingPeer.respond(responder);
-
-    assertThat(result).isCompletedWithValue(singletonList(header(remoteChainHeight)));
-  }
-
-  @Test
-  public void shouldReturnRemoteChainHeadWhenNextRangeHeaderIsTheRemoteHeadWithPeerTaskSystem() {
-    final long remoteChainHeight = blockchain.getChainHeadBlockNumber();
     final RangeHeadersFetcher rangeHeaderFetcher = createRangeHeaderFetcher(true);
 
     Mockito.when(
@@ -316,8 +254,7 @@ public class RangeHeadersFetcherTest {
             .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled)
             .build(),
         protocolSchedule,
-        ethContext,
-        metricsSystem);
+        ethContext);
   }
 
   private RangeHeadersFetcher createRangeHeaderFetcher(
@@ -331,8 +268,7 @@ public class RangeHeadersFetcherTest {
             .build(),
         protocolSchedule,
         ethContext,
-        new FastSyncState(targetHeader, false),
-        metricsSystem);
+        new FastSyncState(targetHeader, false));
   }
 
   private BlockHeader header(final long blockNumber) {

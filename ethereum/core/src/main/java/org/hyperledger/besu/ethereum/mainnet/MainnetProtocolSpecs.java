@@ -24,7 +24,6 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO4;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO5;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN_EOF;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CONSTANTINOPLE;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_TRANSITION;
@@ -67,6 +66,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
@@ -76,19 +76,19 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactoryBal;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.OsakaTransactionPoolPreProcessor;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.EOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -100,6 +100,7 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.TangerineWhistleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.worldstate.CodeDelegationService;
@@ -112,6 +113,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -139,8 +141,7 @@ public abstract class MainnetProtocolSpecs {
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
   // failed, but the transaction itself succeeded.
-  private static final Set<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
-      Set.of(RIPEMD160_PRECOMPILE);
+  private static final HashSet<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES;
 
   private static final Wei FRONTIER_BLOCK_REWARD = Wei.fromEth(5);
 
@@ -150,6 +151,11 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
   private static final int POW_SLOT_TIME_ESTIMATION = 13;
+
+  static {
+    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES = new HashSet<>();
+    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES.add(RIPEMD160_PRECOMPILE);
+  }
 
   private MainnetProtocolSpecs() {}
 
@@ -198,15 +204,15 @@ public abstract class MainnetProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
+        .blockAccessListValidatorBuilder(__ -> BlockAccessListValidator.ALWAYS_REJECT_BAL)
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .isBlockAccessListEnabled(balConfiguration.isBalApiEnabled())
         .balConfiguration(balConfiguration)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : MainnetBlockProcessor::new)
+                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
         .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
@@ -312,7 +318,8 @@ public abstract class MainnetProtocolSpecs {
                             miningBeneficiaryCalculator,
                             skipZeroBlockRewards,
                             protocolSchedule,
-                            balConfig)))
+                            balConfig,
+                            metricsSystem)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
 
@@ -331,7 +338,7 @@ public abstract class MainnetProtocolSpecs {
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
-                : MainnetBlockProcessor::new)
+                : new MainnetBlockProcessor.MainnetBlockProcessorBuilder(metricsSystem))
         .hardforkId(DAO_RECOVERY_TRANSITION);
   }
 
@@ -869,31 +876,11 @@ public abstract class MainnetProtocolSpecs {
                     evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::blobAwareBlockHeaderValidator)
-        .preExecutionProcessor(new CancunPreExecutionProcessor())
+        .preExecutionProcessor(
+            isPoAConsensus(genesisConfigOptions)
+                ? new FrontierPreExecutionProcessor()
+                : new CancunPreExecutionProcessor())
         .hardforkId(CANCUN);
-  }
-
-  static ProtocolSpecBuilder cancunEOFDefinition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningConfiguration miningConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-
-    ProtocolSpecBuilder protocolSpecBuilder =
-        cancunDefinition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            balConfiguration,
-            metricsSystem);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).hardforkId(CANCUN_EOF);
   }
 
   static ProtocolSpecBuilder pragueDefinition(
@@ -973,20 +960,35 @@ public abstract class MainnetProtocolSpecs {
                                 new CodeDelegationService()))
                         .build())
             // EIP-2935 Blockhash processor
-            .preExecutionProcessor(new PraguePreExecutionProcessor())
+            .preExecutionProcessor(
+                isPoAConsensus(genesisConfigOptions)
+                    ? new FrontierPreExecutionProcessor()
+                    : new PraguePreExecutionProcessor())
             .hardforkId(PRAGUE);
-    try {
-      RequestContractAddresses requestContractAddresses =
-          RequestContractAddresses.fromGenesis(genesisConfigOptions);
+    if (isPoAConsensus(genesisConfigOptions)) {
+      LOG.debug(
+          "Skipping system contract request processors for PoA consensus (clique/ibft/qbft).");
+      pragueSpecBuilder.requestProcessorCoordinator(RequestProcessorCoordinator.noOp());
+    } else {
+      try {
+        RequestContractAddresses requestContractAddresses =
+            RequestContractAddresses.fromGenesis(genesisConfigOptions);
 
-      pragueSpecBuilder.requestProcessorCoordinator(
-          pragueRequestsProcessors(requestContractAddresses));
-    } catch (NoSuchElementException nsee) {
-      LOG.warn("Prague definitions require system contract addresses in genesis");
-      throw nsee;
+        pragueSpecBuilder.requestProcessorCoordinator(
+            pragueRequestsProcessors(requestContractAddresses));
+      } catch (NoSuchElementException nsee) {
+        LOG.warn("Prague definitions require system contract addresses in genesis");
+        throw nsee;
+      }
     }
 
     return pragueSpecBuilder;
+  }
+
+  private static boolean isPoAConsensus(final GenesisConfigOptions genesisConfigOptions) {
+    return genesisConfigOptions.isClique()
+        || genesisConfigOptions.isIbft2()
+        || genesisConfigOptions.isQbft();
   }
 
   static ProtocolSpecBuilder osakaDefinition(
@@ -1173,9 +1175,61 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
-        .blockAccessListFactory(
-            new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
+        .gasCalculator(AmsterdamGasCalculator::new)
+        // EIP-7708: Override evmBuilder to use Amsterdam EVM with transfer logging
+        .evmBuilder(
+            (gasCalculator, __) ->
+                MainnetEVMs.amsterdam(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // EIP-7708: ContractCreationProcessor with transfer log emission enabled
+        .contractCreationProcessorBuilder(
+            evm ->
+                new ContractCreationProcessor(
+                    evm,
+                    true,
+                    List.of(MaxCodeSizeRule.from(evm), PrefixCodeRule.of()),
+                    1,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
+                    EIP7708TransferLogEmitter.INSTANCE))
+        // EIP-7708: MessageCallProcessor with transfer log emission enabled
+        .messageCallProcessorBuilder(
+            (evm, precompileContractRegistry) ->
+                new MessageCallProcessor(
+                    evm,
+                    precompileContractRegistry,
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES,
+                    EIP7708TransferLogEmitter.INSTANCE))
+        // EIP-7708: TransactionProcessor configured for Amsterdam with transfer log emission
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                MainnetTransactionProcessor.builder()
+                    .gasCalculator(gasCalculator)
+                    .transactionValidatorFactory(transactionValidator)
+                    .contractCreationProcessor(contractCreationProcessor)
+                    .messageCallProcessor(messageCallProcessor)
+                    .clearEmptyAccounts(true)
+                    .warmCoinbase(true)
+                    .maxStackSize(evmConfiguration.evmStackSize())
+                    .feeMarket(feeMarket)
+                    .coinbaseFeePriceCalculator(CoinbaseFeePriceCalculator.eip1559())
+                    .codeDelegationProcessor(
+                        new CodeDelegationProcessor(
+                            chainId,
+                            SIGNATURE_ALGORITHM.get().getHalfCurveOrder(),
+                            new CodeDelegationService()))
+                    .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
+                    .build())
+        .blockAccessListFactory(new BlockAccessListFactory())
+        .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
+
+        // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
+        .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
+        .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)
         .hardforkId(AMSTERDAM);
   }
 
@@ -1191,29 +1245,6 @@ public abstract class MainnetProtocolSpecs {
     return builder.hardforkId(hardforkId);
   }
 
-  private static ProtocolSpecBuilder addEOF(
-      final Optional<BigInteger> chainId,
-      final EvmConfiguration evmConfiguration,
-      final ProtocolSpecBuilder protocolSpecBuilder) {
-    return protocolSpecBuilder
-        // EIP-7692 EOF v1 Gas calculator
-        .gasCalculator(EOFGasCalculator::new)
-        // EIP-7692 EOF v1 EVM and opcodes
-        .evmBuilder(
-            (gasCalculator, jdCacheConfig) ->
-                MainnetEVMs.futureEips(
-                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        // EIP-7698 EOF v1 creation transaction
-        .contractCreationProcessorBuilder(
-            evm ->
-                new ContractCreationProcessor(
-                    evm,
-                    true,
-                    List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
-                    1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
-  }
-
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1223,20 +1254,17 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
-    ProtocolSpecBuilder protocolSpecBuilder =
-        amsterdamDefinition(
-                chainId,
-                enableRevertReason,
-                genesisConfigOptions,
-                evmConfiguration,
-                miningConfiguration,
-                isParallelTxProcessingEnabled,
-                balConfiguration,
-                metricsSystem)
-            .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
-            .hardforkId(FUTURE_EIPS);
-
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder);
+    return amsterdamDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem)
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::futureEips)
+        .hardforkId(FUTURE_EIPS);
   }
 
   static ProtocolSpecBuilder experimentalEipsDefinition(
@@ -1368,10 +1396,43 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block,
+        final Optional<BlockAccessList> blockAccessList) {
+      updateWorldStateForDao(worldState);
+      return wrapped.processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
+    }
+
+    @Override
+    public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final Block block,
+        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
+      return processBlock(
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          Optional.empty(),
+          preprocessingBlockFunction);
+    }
+
+    @Override
+    public BlockProcessingResult processBlock(
+        final ProtocolContext protocolContext,
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final Block block,
+        final Optional<BlockAccessList> blockAccessList,
         final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
-          protocolContext, blockchain, worldState, block, preprocessingBlockFunction);
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          blockAccessList,
+          preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

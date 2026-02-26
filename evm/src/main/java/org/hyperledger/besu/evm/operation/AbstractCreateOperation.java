@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.INVALID_STATE;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -21,9 +24,9 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
@@ -44,9 +47,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult INVALID_OPERATION =
       new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
 
-  /** The EOF Version this create operation requires initcode to be in */
-  protected final int eofVersion;
-
   /**
    * Instantiates a new Abstract create operation.
    *
@@ -55,25 +55,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsConsumed the stack items consumed
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
-   * @param eofVersion the EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
       final int stackItemsProduced,
-      final GasCalculator gasCalculator,
-      final int eofVersion) {
+      final GasCalculator gasCalculator) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
-    this.eofVersion = eofVersion;
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (frame.getCode().getEofVersion() != eofVersion) {
-      return INVALID_OPERATION;
-    }
-
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
       return UNDERFLOW_RESPONSE;
@@ -103,23 +96,25 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
 
-    if (value.compareTo(account.getBalance()) > 0
-        || frame.getDepth() >= 1024
-        || account.getNonce() == -1
-        || code == null
-        || code.getEofVersion() != frame.getCode().getEofVersion()) {
-      fail(frame);
-    } else {
-      account.incrementNonce();
+    final boolean insufficientBalance = value.compareTo(account.getBalance()) > 0;
+    final boolean maxDepthReached = frame.getDepth() >= 1024;
+    final boolean invalidState = account.getNonce() == -1 || code == null;
 
-      if (!code.isValid()) {
-        fail(frame);
-      } else {
-        frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, code, evm);
-        frame.incrementRemainingGas(cost);
-      }
+    if (insufficientBalance || maxDepthReached || invalidState) {
+      fail(frame);
+      // Set soft failure reason for callTracer compatibility
+      final SoftFailureReason softFailureReason =
+          insufficientBalance
+              ? LEGACY_INSUFFICIENT_BALANCE
+              : (maxDepthReached ? LEGACY_MAX_CALL_DEPTH : INVALID_STATE);
+      return new OperationResult(cost, getPcIncrement(), softFailureReason);
     }
+
+    account.incrementNonce();
+    frame.decrementRemainingGas(cost);
+    spawnChildMessage(frame, code);
+    frame.incrementRemainingGas(cost);
+
     return new OperationResult(cost, null, getPcIncrement());
   }
 
@@ -173,7 +168,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(Bytes.EMPTY);
   }
 
-  private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
+  private void spawnChildMessage(final MessageFrame parent, final Code code) {
     final Wei value = Wei.wrap(parent.getStackItem(0));
 
     final Address contractAddress = generateTargetContractAddress(parent, code);
@@ -196,7 +191,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
             .value(value)
             .apparentValue(value)
             .code(code)
-            .completer(child -> complete(parent, child, evm));
+            .completer(child -> complete(parent, child));
 
     if (parent.getEip7928AccessList().isPresent()) {
       builder.eip7928AccessList(parent.getEip7928AccessList().get());
@@ -218,7 +213,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     return Bytes.EMPTY;
   }
 
-  private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
+  private void complete(final MessageFrame frame, final MessageFrame childFrame) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
     frame.incrementRemainingGas(childFrame.getRemainingGas());
@@ -228,21 +223,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.popStackItems(getStackItemsConsumed());
 
     if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      Code outputCode =
-          (childFrame.getCreatedCode() != null)
-              ? childFrame.getCreatedCode()
-              : evm.wrapCodeForCreation(childFrame.getOutputData());
-      if (outputCode.isValid()) {
-        Address createdAddress = childFrame.getContractAddress();
-        frame.pushStackItem(Words.fromAddress(createdAddress));
-        frame.setReturnData(Bytes.EMPTY);
-        onSuccess(frame, createdAddress);
-      } else {
-        frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
-        frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(Bytes.EMPTY);
-        onInvalid(frame, (CodeInvalid) outputCode);
-      }
+      Address createdAddress = childFrame.getContractAddress();
+      frame.pushStackItem(Words.fromAddress(createdAddress));
+      frame.setReturnData(Bytes.EMPTY);
+      onSuccess(frame, createdAddress);
     } else {
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(Bytes.EMPTY);
@@ -273,18 +257,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    */
   protected void onFailure(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    // no-op by default
-  }
-
-  /**
-   * Called when the child {@code CONTRACT_CREATION} message has completed successfully but the
-   * returned contract is invalid per chain rules, used to give library users a chance to do
-   * implementation specific logic.
-   *
-   * @param frame the frame running the successful operation
-   * @param invalidCode the code object containing the invalid code
-   */
-  protected void onInvalid(final MessageFrame frame, final CodeInvalid invalidCode) {
     // no-op by default
   }
 }

@@ -66,7 +66,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
     final FastSyncStateStorage fastSyncStateStorage =
         new FastSyncStateStorage(fastSyncDataDirectory);
 
-    if (SyncMode.isFullSync(syncConfig.getSyncMode())) {
+    if (syncConfig.getSyncMode() == SyncMode.FULL) {
       if (fastSyncStateStorage.isFastSyncInProgress()) {
         throw new IllegalStateException(
             "Unable to change the sync mode when snap sync is incomplete, please restart with snap sync mode");
@@ -86,7 +86,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
           .ifPresent(
               address ->
                   snapContext.addAccountToHealingList(
-                      CompactEncoding.bytesToPath(address.addressHash())));
+                      CompactEncoding.bytesToPath(address.addressHash().getBytes())));
     } else if (fastSyncState.getPivotBlockHeader().isEmpty()
         && protocolContext.getBlockchain().getChainHeadBlockNumber()
             != BlockHeader.GENESIS_BLOCK_NUMBER) {
@@ -123,7 +123,9 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
                 ethContext,
                 syncState,
                 pivotBlockSelector,
-                metricsSystem),
+                metricsSystem,
+                fastSyncStateStorage,
+                fastSyncDataDirectory),
             worldStateStorageCoordinator,
             snapWorldStateDownloader,
             fastSyncStateStorage,

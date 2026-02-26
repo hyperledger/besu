@@ -32,8 +32,10 @@ import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -45,6 +47,7 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,7 +82,6 @@ public class BesuNodeConfigurationBuilder {
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
   private Boolean p2pEnabled = true;
   private int p2pPort = 0;
-  private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
   private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
@@ -97,12 +99,9 @@ public class BesuNodeConfigurationBuilder {
   private Map<String, String> environment = new HashMap<>();
   private SynchronizerConfiguration synchronizerConfiguration;
   private Optional<KeyValueStorageFactory> storageImplementation = Optional.empty();
+  private PluginConfiguration pluginConfiguration;
 
-  public BesuNodeConfigurationBuilder() {
-    // Check connections more frequently during acceptance tests to cut down on
-    // intermittent failures due to the fact that we're running over a real network
-    networkingConfiguration.setInitiateConnectionsFrequency(5);
-  }
+  public BesuNodeConfigurationBuilder() {}
 
   public BesuNodeConfigurationBuilder name(final String name) {
     this.name = name;
@@ -462,10 +461,23 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder pluginConfiguration(
+      final PluginConfiguration pluginConfiguration) {
+    this.pluginConfiguration = pluginConfiguration;
+    return this;
+  }
+
   public BesuNodeConfiguration build() {
     if (name == null) {
       throw new IllegalStateException("Name is required");
     }
+
+    // Check connections more frequently during acceptance tests to cut down on
+    // intermittent failures due to the fact that we're running over a real network
+    final NetworkingConfiguration networkingConfiguration =
+        ImmutableNetworkingConfiguration.builder()
+            .initiateConnectionsFrequency(Duration.ofSeconds(5))
+            .build();
 
     return new BesuNodeConfiguration(
         name,
@@ -503,6 +515,7 @@ public class BesuNodeConfigurationBuilder {
         strictTxReplayProtectionEnabled,
         environment,
         synchronizerConfiguration,
-        storageImplementation);
+        storageImplementation,
+        pluginConfiguration);
   }
 }

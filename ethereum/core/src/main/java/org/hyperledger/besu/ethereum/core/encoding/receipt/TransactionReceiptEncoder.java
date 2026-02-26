@@ -23,6 +23,36 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Encoder for transaction receipts to RLP format.
+ *
+ * <h2>Receipt RLP Format</h2>
+ *
+ * <p>The receipt format varies by transaction type and fork:
+ *
+ * <h3>Legacy (Frontier) Receipt</h3>
+ *
+ * <pre>
+ * rlp([status/stateRoot, cumulativeGasUsed, logsBloom?, logs, revertReason?])
+ * </pre>
+ *
+ * <h3>Typed Receipt (EIP-2718, Berlin+)</h3>
+ *
+ * <pre>
+ * transactionType || rlp([status, cumulativeGasUsed, logsBloom?, logs, revertReason?])
+ * </pre>
+ *
+ * <h3>Field Descriptions</h3>
+ *
+ * <ul>
+ *   <li><b>status/stateRoot</b>: Transaction status (0=fail, 1=success) or state root
+ *       (pre-Byzantium)
+ *   <li><b>cumulativeGasUsed</b>: Total gas used in block up to and including this transaction
+ *   <li><b>logsBloom</b>: 256-byte bloom filter (optional, omitted when compacted)
+ *   <li><b>logs</b>: List of log entries
+ *   <li><b>revertReason</b>: ABI-encoded revert reason (optional, when enabled)
+ * </ul>
+ */
 public class TransactionReceiptEncoder {
   public Bytes encode(
       final List<TransactionReceipt> transactionReceipts,
@@ -81,7 +111,7 @@ public class TransactionReceiptEncoder {
     writeStatusOrStateRoot(receipt, rlpOutput);
     rlpOutput.writeLongScalar(receipt.getCumulativeGasUsed());
     if (options.isWithBloomFilter()) {
-      rlpOutput.writeBytes(receipt.getBloomFilter());
+      rlpOutput.writeBytes(receipt.getBloomFilter().getBytes());
     }
     writeLogs(receipt, rlpOutput, options);
     if (options.isWithRevertReason() && receipt.getRevertReason().isPresent()) {
@@ -117,7 +147,7 @@ public class TransactionReceiptEncoder {
     // Determine whether it's a state root-encoded transaction receipt
     // or is a status code-encoded transaction receipt.
     if (receipt.getStateRoot() != null) {
-      output.writeBytes(receipt.getStateRoot());
+      output.writeBytes(receipt.getStateRoot().getBytes());
     } else {
       output.writeLongScalar(receipt.getStatus());
     }

@@ -41,15 +41,20 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.BlockValidator;
+import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
@@ -378,5 +383,148 @@ class ProtocolScheduleBuilderTest {
 
   private BlockHeader blockHeader(final long number, final long timestamp) {
     return new BlockHeaderTestFixture().number(number).timestamp(timestamp).buildHeader();
+  }
+
+  @Test
+  void amsterdamHasBlockAccessListFactoryWithForkActivated() {
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getConstantinopleBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPetersburgBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getIstanbulBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBerlinBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getOsakaTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo1Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo2Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo4Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBpo5Time()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    // Get the Amsterdam protocol spec
+    final ProtocolSpec amsterdamSpec = protocolSchedule.getByBlockHeader(blockHeader(1, 1));
+    assertThat(amsterdamSpec.getHardforkId()).isEqualTo(AMSTERDAM);
+
+    // Verify that BlockAccessListFactory is present and fork-activated
+    assertThat(amsterdamSpec.getBlockAccessListFactory()).isPresent();
+  }
+
+  @Test
+  void balIsValidatedForAmsterdamButNotForOsaka() throws Exception {
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(1L));
+    when(configOptions.getDaoForkBlock()).thenReturn(OptionalLong.of(2L));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(13L));
+    when(configOptions.getMergeNetSplitBlockNumber()).thenReturn(OptionalLong.of(15L));
+    when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 1));
+    when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 3));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 5));
+    when(configOptions.getOsakaTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 7));
+    when(configOptions.getBpo1Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 9));
+    when(configOptions.getBpo2Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 11));
+    when(configOptions.getBpo3Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 13));
+    when(configOptions.getBpo4Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 15));
+    when(configOptions.getBpo5Time()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 17));
+    when(configOptions.getAmsterdamTime()).thenReturn(OptionalLong.of(PRE_SHANGHAI_TIMESTAMP + 19));
+    when(configOptions.getDepositContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getConsolidationRequestContractAddress())
+        .thenReturn(Optional.of(Address.ZERO));
+    when(configOptions.getWithdrawalRequestContractAddress()).thenReturn(Optional.of(Address.ZERO));
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    final BlockValidator amsterdamBlockValidator =
+        protocolSchedule
+            .getByBlockHeader(blockHeader(62, PRE_SHANGHAI_TIMESTAMP + 19))
+            .getBlockValidator();
+    final BlockValidator osakaBlockValidator =
+        protocolSchedule
+            .getByBlockHeader(blockHeader(56, PRE_SHANGHAI_TIMESTAMP + 7))
+            .getBlockValidator();
+
+    assertThat(amsterdamBlockValidator).isInstanceOf(MainnetBlockValidator.class);
+    assertThat(osakaBlockValidator).isInstanceOf(MainnetBlockValidator.class);
+
+    final BlockAccessListValidator amsterdamBalValidator =
+        getBlockAccessListValidator((MainnetBlockValidator) amsterdamBlockValidator);
+    final BlockAccessListValidator osakaBalValidator =
+        getBlockAccessListValidator((MainnetBlockValidator) osakaBlockValidator);
+
+    // Invalid BAL: duplicate address
+    final BlockAccessList.AccountChanges account1 =
+        new BlockAccessList.AccountChanges(
+            Address.fromHexString("0x1000000000000000000000000000000000000001"),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of());
+    final BlockAccessList.AccountChanges account2SameAddress =
+        new BlockAccessList.AccountChanges(
+            Address.fromHexString("0x1000000000000000000000000000000000000001"),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of(),
+            List.of());
+    final BlockAccessList invalidBal = new BlockAccessList(List.of(account1, account2SameAddress));
+    final BlockHeader amsterdamHeader =
+        new BlockHeaderTestFixture()
+            .number(62)
+            .timestamp(PRE_SHANGHAI_TIMESTAMP + 19)
+            .gasLimit(30_000_000L)
+            .balHash(BodyValidation.balHash(invalidBal))
+            .buildHeader();
+    final BlockHeader osakaHeader =
+        new BlockHeaderTestFixture()
+            .number(56)
+            .timestamp(PRE_SHANGHAI_TIMESTAMP + 7)
+            .gasLimit(30_000_000L)
+            .balHash(BodyValidation.balHash(invalidBal))
+            .buildHeader();
+
+    assertThat(amsterdamBalValidator.validate(Optional.of(invalidBal), amsterdamHeader, 1))
+        .as("Amsterdam must validate BAL and reject invalid BAL")
+        .isFalse();
+    assertThat(osakaBalValidator.validate(Optional.of(invalidBal), osakaHeader, 1))
+        .as("Before Amsterdam, any block with a BAL must be rejected")
+        .isFalse();
+
+    // Amsterdam accepts a valid BAL; before Amsterdam any BAL is rejected
+    final BlockAccessList validBal = new BlockAccessList(List.of());
+    final BlockHeader amsterdamHeaderValidBal =
+        new BlockHeaderTestFixture()
+            .number(62)
+            .timestamp(PRE_SHANGHAI_TIMESTAMP + 19)
+            .gasLimit(30_000_000L)
+            .balHash(BodyValidation.balHash(validBal))
+            .buildHeader();
+    final BlockHeader osakaHeaderValidBal =
+        new BlockHeaderTestFixture()
+            .number(56)
+            .timestamp(PRE_SHANGHAI_TIMESTAMP + 7)
+            .gasLimit(30_000_000L)
+            .balHash(BodyValidation.balHash(validBal))
+            .buildHeader();
+    assertThat(amsterdamBalValidator.validate(Optional.of(validBal), amsterdamHeaderValidBal, 1))
+        .as("Amsterdam must accept valid BAL")
+        .isTrue();
+    assertThat(osakaBalValidator.validate(Optional.of(validBal), osakaHeaderValidBal, 1))
+        .as("Before Amsterdam, any BAL (even empty) must be rejected")
+        .isFalse();
+  }
+
+  private static BlockAccessListValidator getBlockAccessListValidator(
+      final MainnetBlockValidator blockValidator) throws Exception {
+    final Field field = MainnetBlockValidator.class.getDeclaredField("blockAccessListValidator");
+    field.setAccessible(true);
+    return (BlockAccessListValidator) field.get(blockValidator);
   }
 }

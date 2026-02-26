@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkState;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerPrivileges;
@@ -28,6 +27,7 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.ConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEvents;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -37,6 +37,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,7 @@ public class RlpxAgent {
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
+  private volatile ConnectionInitializer.ListeningAddresses listeningAddresses;
   private final int maxPeers;
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
@@ -113,9 +115,13 @@ public class RlpxAgent {
     return connectionInitializer
         .start()
         .thenApply(
-            (socketAddress) -> {
-              LOG.info("P2P RLPx agent started and listening on {}.", socketAddress);
-              return socketAddress.getPort();
+            (addresses) -> {
+              this.listeningAddresses = addresses;
+              LOG.info("P2P RLPx agent started and listening on {}.", addresses.ipv4Address());
+              addresses
+                  .ipv6Address()
+                  .ifPresent(ipv6 -> LOG.info("P2P RLPx agent also listening on IPv6: {}", ipv6));
+              return addresses.ipv4Address().getPort();
             })
         .whenComplete(
             (res, err) -> {
@@ -125,6 +131,20 @@ public class RlpxAgent {
                 LOG.error("Failed to start P2P RLPx agent. Check for port conflicts.");
               }
             });
+  }
+
+  /**
+   * Returns the local IPv6 listening port after startup, if dual-stack is active.
+   *
+   * <p>Only valid after {@link #start()} has completed.
+   *
+   * @return the bound IPv6 port, or empty if no IPv6 socket was bound
+   */
+  public Optional<Integer> getIpv6ListeningPort() {
+    if (listeningAddresses == null) {
+      return Optional.empty();
+    }
+    return listeningAddresses.ipv6Address().map(InetSocketAddress::getPort);
   }
 
   public CompletableFuture<Void> stop() {
@@ -372,7 +392,7 @@ public class RlpxAgent {
     private Supplier<Stream<PeerConnection>> allConnectionsSupplier;
     private Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
     private int maxPeers;
-    private PeerTable peerTable;
+    private PeerLookup peerLookup;
 
     private Builder() {}
 
@@ -386,7 +406,7 @@ public class RlpxAgent {
         LOG.debug("Using default NettyConnectionInitializer");
         connectionInitializer =
             new NettyConnectionInitializer(
-                nodeKey, config, localNode, connectionEvents, metricsSystem, peerTable);
+                nodeKey, config, localNode, connectionEvents, metricsSystem, peerLookup);
       }
 
       final PeerRlpxPermissions rlpxPermissions =
@@ -476,8 +496,8 @@ public class RlpxAgent {
       return this;
     }
 
-    public Builder peerTable(final PeerTable peerTable) {
-      this.peerTable = peerTable;
+    public Builder peerLookup(final PeerLookup peerLookup) {
+      this.peerLookup = peerLookup;
       return this;
     }
   }

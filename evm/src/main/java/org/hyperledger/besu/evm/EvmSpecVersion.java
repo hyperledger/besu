@@ -26,57 +26,95 @@ import org.slf4j.LoggerFactory;
 /** The enum Evm spec version. */
 public enum EvmSpecVersion {
   /** Frontier evm spec version. */
-  FRONTIER(MainnetHardforkId.FRONTIER, Integer.MAX_VALUE, Integer.MAX_VALUE, 0),
+  FRONTIER(MainnetHardforkId.FRONTIER, Integer.MAX_VALUE, Integer.MAX_VALUE),
   /** Homestead evm spec version. */
-  HOMESTEAD(MainnetHardforkId.HOMESTEAD, Integer.MAX_VALUE, Integer.MAX_VALUE, 0),
+  HOMESTEAD(MainnetHardforkId.HOMESTEAD, Integer.MAX_VALUE, Integer.MAX_VALUE),
   /** Tangerine Whistle evm spec version. */
-  TANGERINE_WHISTLE(MainnetHardforkId.TANGERINE_WHISTLE, Integer.MAX_VALUE, Integer.MAX_VALUE, 0),
+  TANGERINE_WHISTLE(MainnetHardforkId.TANGERINE_WHISTLE, Integer.MAX_VALUE, Integer.MAX_VALUE),
   /** Spurious Dragon evm spec version. */
-  SPURIOUS_DRAGON(MainnetHardforkId.SPURIOUS_DRAGON, 0x6000, Integer.MAX_VALUE, 0),
+  SPURIOUS_DRAGON(
+      MainnetHardforkId.SPURIOUS_DRAGON, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Byzantium evm spec version. */
-  BYZANTIUM(MainnetHardforkId.BYZANTIUM, 0x6000, Integer.MAX_VALUE, 0),
+  BYZANTIUM(MainnetHardforkId.BYZANTIUM, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Constantinople evm spec version. */
-  CONSTANTINOPLE(MainnetHardforkId.CONSTANTINOPLE, 0x6000, Integer.MAX_VALUE, 0),
+  CONSTANTINOPLE(
+      MainnetHardforkId.CONSTANTINOPLE, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Petersburg / ConstantinopleFix evm spec version. */
-  PETERSBURG(MainnetHardforkId.PETERSBURG, 0x6000, Integer.MAX_VALUE, 0),
+  PETERSBURG(MainnetHardforkId.PETERSBURG, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Istanbul evm spec version. */
-  ISTANBUL(MainnetHardforkId.ISTANBUL, 0x6000, Integer.MAX_VALUE, 0),
+  ISTANBUL(MainnetHardforkId.ISTANBUL, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Berlin evm spec version */
-  BERLIN(MainnetHardforkId.BERLIN, 0x6000, Integer.MAX_VALUE, 0),
+  BERLIN(MainnetHardforkId.BERLIN, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** London evm spec version. */
-  LONDON(MainnetHardforkId.LONDON, 0x6000, Integer.MAX_VALUE, 0),
+  LONDON(MainnetHardforkId.LONDON, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Paris evm spec version. */
-  PARIS(MainnetHardforkId.PARIS, 0x6000, Integer.MAX_VALUE, 0),
+  PARIS(MainnetHardforkId.PARIS, Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON, Integer.MAX_VALUE),
   /** Shanghai evm spec version. */
-  SHANGHAI(MainnetHardforkId.SHANGHAI, 0x6000, 0xc000, 0),
+  SHANGHAI(
+      MainnetHardforkId.SHANGHAI,
+      Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON,
+      Limits.MAX_INITCODE_SIZE_SHANGHAI),
   /** Cancun evm spec version. */
-  CANCUN(MainnetHardforkId.CANCUN, 0x6000, 0xc000, 0),
-  /** Cancun evm spec version. */
-  CANCUN_EOF(MainnetHardforkId.CANCUN_EOF, 0x6000, 0xc000, 1),
+  CANCUN(
+      MainnetHardforkId.CANCUN,
+      Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON,
+      Limits.MAX_INITCODE_SIZE_SHANGHAI),
   /** Prague evm spec version. */
-  PRAGUE(MainnetHardforkId.PRAGUE, 0x6000, 0xc000, 0),
+  PRAGUE(
+      MainnetHardforkId.PRAGUE,
+      Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON,
+      Limits.MAX_INITCODE_SIZE_SHANGHAI),
   /** Osaka evm spec version. */
-  OSAKA(MainnetHardforkId.OSAKA, 0x6000, 0xc000, 0),
+  OSAKA(
+      MainnetHardforkId.OSAKA,
+      Limits.MAX_CODE_SIZE_SPURIOUS_DRAGON,
+      Limits.MAX_INITCODE_SIZE_SHANGHAI),
   /** Amsterdam evm spec version. */
-  AMSTERDAM(MainnetHardforkId.AMSTERDAM, 0x6000, 0xc000, 0),
+  AMSTERDAM(
+      MainnetHardforkId.AMSTERDAM,
+      Limits.MAX_CODE_SIZE_AMSTERDAM,
+      Limits.MAX_INITCODE_SIZE_AMSTERDAM),
   /** Bogota evm spec version. */
-  BOGOTA(MainnetHardforkId.BOGOTA, 0x6000, 0xc000, 0),
+  BOGOTA(
+      MainnetHardforkId.BOGOTA, Limits.MAX_CODE_SIZE_AMSTERDAM, Limits.MAX_INITCODE_SIZE_AMSTERDAM),
   /** Polis evm spec version. */
-  POLIS(MainnetHardforkId.POLIS, 0x6000, 0xc000, 0),
+  POLIS(
+      MainnetHardforkId.POLIS, Limits.MAX_CODE_SIZE_AMSTERDAM, Limits.MAX_INITCODE_SIZE_AMSTERDAM),
   /** Bangkok evm spec version. */
-  BANGKOK(MainnetHardforkId.BANGKOK, 0x6000, 0xc000, 0),
+  BANGKOK(
+      MainnetHardforkId.BANGKOK,
+      Limits.MAX_CODE_SIZE_AMSTERDAM,
+      Limits.MAX_INITCODE_SIZE_AMSTERDAM),
   /** Development fork for unscheduled EIPs */
-  FUTURE_EIPS(MainnetHardforkId.FUTURE_EIPS, 0x6000, 0xc000, 1),
+  FUTURE_EIPS(
+      MainnetHardforkId.FUTURE_EIPS,
+      Limits.MAX_CODE_SIZE_AMSTERDAM,
+      Limits.MAX_INITCODE_SIZE_AMSTERDAM),
   /** Development fork for EIPs that are not yet accepted to Mainnet */
-  EXPERIMENTAL_EIPS(MainnetHardforkId.EXPERIMENTAL_EIPS, 0x6000, 0xc000, 1);
+  EXPERIMENTAL_EIPS(
+      MainnetHardforkId.EXPERIMENTAL_EIPS,
+      Limits.MAX_CODE_SIZE_AMSTERDAM,
+      Limits.MAX_INITCODE_SIZE_AMSTERDAM);
+
+  /** Constants for contract size limits */
+  private interface Limits {
+    /** Maximum deployed code size: 24KiB (EIP-170, Spurious Dragon through Osaka). */
+    int MAX_CODE_SIZE_SPURIOUS_DRAGON = 0x6000;
+
+    /** Maximum initcode size: 48KiB (EIP-3860, Shanghai through Osaka). */
+    int MAX_INITCODE_SIZE_SHANGHAI = 0xC000;
+
+    /** Maximum deployed code size: 32KiB (EIP-7954, Amsterdam onwards). */
+    int MAX_CODE_SIZE_AMSTERDAM = 0x8000;
+
+    /** Maximum initcode size: 64KiB (EIP-7954, Amsterdam onwards). */
+    int MAX_INITCODE_SIZE_AMSTERDAM = 0x10000;
+  }
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
   /** What hardfork did this VM version first show up in? */
   final HardforkId initialHardfork;
-
-  /** The Max eof version. */
-  final int maxEofVersion;
 
   /** Maximum size of deployed code */
   final int maxCodeSize;
@@ -88,12 +126,8 @@ public enum EvmSpecVersion {
   boolean versionWarned = false;
 
   EvmSpecVersion(
-      final HardforkId initialHardfork,
-      final int maxCodeSize,
-      final int maxInitcodeSize,
-      final int maxEofVersion) {
+      final HardforkId initialHardfork, final int maxCodeSize, final int maxInitcodeSize) {
     this.initialHardfork = initialHardfork;
-    this.maxEofVersion = maxEofVersion;
     this.maxCodeSize = maxCodeSize;
     this.maxInitcodeSize = maxInitcodeSize;
   }
@@ -112,15 +146,6 @@ public enum EvmSpecVersion {
       }
     }
     return answer;
-  }
-
-  /**
-   * Gets max eof version.
-   *
-   * @return the max eof version
-   */
-  public int getMaxEofVersion() {
-    return maxEofVersion;
   }
 
   /**

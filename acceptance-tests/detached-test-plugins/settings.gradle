@@ -1,0 +1,10 @@
+// Configure plugin repositories - must be first
+pluginManagement {
+  repositories {
+    gradlePluginPortal()
+  }
+}
+
+rootProject.name = 'testPlugins'
+include 'dependency-conflict-1'
+include 'dependency-conflict-2'

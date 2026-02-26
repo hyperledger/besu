@@ -358,7 +358,9 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   @Test
   public void extraDataDefaultValueIsBesuVersion() {
-    final var expectedRegex = "besu \\d+\\.\\d+(\\.\\d+|\\-develop\\-\\p{XDigit}+)";
+    // Detect also a string with null at the end (case in which metadata are missing because the
+    // JAR is not generated)
+    final var expectedRegex = "besu (\\d+\\.\\d+(\\.\\d+|\\-develop\\-\\p{XDigit}+)|null)";
     internalTestSuccess(
         this::runtimeConfiguration,
         miningParams -> {
@@ -423,7 +425,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   private MiningConfiguration runtimeConfiguration(
       final TestBesuCommand besuCommand, final MiningConfiguration miningConfiguration) {
-    if (besuCommand.getGenesisConfigOptions().isPoa()) {
+    if (besuCommand.getGenesisConfigOptionsSupplier().get().isPoa()) {
       miningConfiguration.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
     }
     return miningConfiguration;

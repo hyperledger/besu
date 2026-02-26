@@ -18,7 +18,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorl
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,7 +38,6 @@ import java.util.function.Function;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,12 +55,12 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
           .build();
 
   private final PathBasedWorldStateKeyValueStorage rootWorldStateStorage;
-  private final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash;
+  private final Map<Hash, PathBasedCachedWorldView> cachedWorldStatesByHash;
 
   protected PathBasedCachedWorldStorageManager(
       final PathBasedWorldStateProvider archive,
       final PathBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final Map<Bytes32, PathBasedCachedWorldView> cachedWorldStatesByHash,
+      final Map<Hash, PathBasedCachedWorldView> cachedWorldStatesByHash,
       final EvmConfiguration evmConfiguration,
       final WorldStateConfig worldStateConfig) {
     worldStateKeyValueStorage.subscribe(this);
@@ -86,7 +85,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
         LOG.atDebug()
             .setMessage("updating layered world state for block {}, state root hash {}")
             .addArgument(blockHeader::toLogString)
-            .addArgument(worldStateRootHash::toShortHexString)
+            .addArgument(() -> worldStateRootHash.getBytes().toShortHexString())
             .log();
         cachedPathBasedWorldView
             .get()
@@ -97,17 +96,17 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
       LOG.atDebug()
           .setMessage("adding layered world state for block {}, state root hash {}")
           .addArgument(blockHeader::toLogString)
-          .addArgument(worldStateRootHash::toShortHexString)
+          .addArgument(() -> worldStateRootHash.getBytes().toShortHexString())
           .log();
       if (forWorldState.isModifyingHeadWorldState()) {
         cachedWorldStatesByHash.put(
-            blockHeader.getHash(),
+            blockHeader.getBlockHash(),
             new PathBasedCachedWorldView(
                 blockHeader, createSnapshotKeyValueStorage(forWorldState.getWorldStateStorage())));
       } else {
         // otherwise, add the layer to the cache
         cachedWorldStatesByHash.put(
-            blockHeader.getHash(),
+            blockHeader.getBlockHash(),
             new PathBasedCachedWorldView(
                 blockHeader,
                 ((PathBasedLayeredWorldStateKeyValueStorage) forWorldState.getWorldStateStorage())
@@ -146,7 +145,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
     }
     LOG.atDebug()
         .setMessage("did not find worldstate in cache for {}")
-        .addArgument(blockHash.toShortHexString())
+        .addArgument(blockHash.getBytes().toShortHexString())
         .log();
 
     return Optional.empty();
@@ -155,7 +154,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
   public Optional<PathBasedWorldState> getNearestWorldState(final BlockHeader blockHeader) {
     LOG.atDebug()
         .setMessage("getting nearest worldstate for {}")
-        .addArgument(blockHeader.toLogString())
+        .addArgument(blockHeader::toLogString)
         .log();
 
     return Optional.ofNullable(
@@ -166,7 +165,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
               // or else search the nearest state in the cache
               LOG.atDebug()
                   .setMessage("searching cache for nearest worldstate for {}")
-                  .addArgument(blockHeader.toLogString())
+                  .addArgument(blockHeader::toLogString)
                   .log();
 
               final List<PathBasedCachedWorldView> cachedPathBasedWorldViews =
@@ -199,7 +198,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
                   blockHeader,
                   blockHeader.getStateRoot(),
                   createWorldState(archive, rootWorldStateStorage, evmConfiguration));
-              return getWorldState(blockHeader.getHash());
+              return getWorldState(blockHeader.getBlockHash());
             });
   }
 
@@ -234,7 +233,7 @@ public abstract class PathBasedCachedWorldStorageManager implements StorageSubsc
     return Optional.ofNullable(stateRootToBlockHeaderCache.getIfPresent(rootHash))
         .flatMap(
             header ->
-                Optional.ofNullable(cachedWorldStatesByHash.get(header.getHash()))
+                Optional.ofNullable(cachedWorldStatesByHash.get(header.getBlockHash()))
                     .map(PathBasedCachedWorldView::getWorldStateStorage)
                     .or(
                         () -> {

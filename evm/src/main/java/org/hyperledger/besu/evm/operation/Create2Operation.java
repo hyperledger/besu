@@ -41,7 +41,7 @@ public class Create2Operation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public Create2Operation(final GasCalculator gasCalculator) {
-    super(0xF5, "CREATE2", 4, 1, gasCalculator, 0);
+    super(0xF5, "CREATE2", 4, 1, gasCalculator);
   }
 
   @Override
@@ -60,7 +60,9 @@ public class Create2Operation extends AbstractCreateOperation {
   public Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
     final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
-    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
+    final Bytes32 hash =
+        keccak256(
+            Bytes.concatenate(PREFIX, sender.getBytes(), salt, initcode.getCodeHash().getBytes()));
     return Address.extract(hash);
   }
 
@@ -71,6 +73,6 @@ public class Create2Operation extends AbstractCreateOperation {
     final Bytes inputData = frame.readMemory(inputOffset, inputSize);
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
-    return evm.wrapCode(inputData);
+    return new Code(inputData);
   }
 }

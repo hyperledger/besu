@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -188,7 +187,44 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Address to = to(frame);
     final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
-    long cost = cost(frame, accountIsWarm);
+    final long stipend = gas(frame);
+    final long inputDataOffset = inputDataOffset(frame);
+    final long inputDataLength = inputDataLength(frame);
+    final long outputDataOffset = outputDataOffset(frame);
+    final long outputDataLength = outputDataLength(frame);
+    final Wei transferValue = value(frame);
+    final Address recipientAddress = address(frame);
+
+    final long staticCost =
+        gasCalculator()
+            .callOperationStaticGasCost(
+                frame,
+                stipend,
+                inputDataOffset,
+                inputDataLength,
+                outputDataOffset,
+                outputDataLength,
+                transferValue,
+                recipientAddress,
+                accountIsWarm);
+
+    if (frame.getRemainingGas() < staticCost) {
+      return new OperationResult(staticCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    long cost =
+        gasCalculator()
+            .callOperationGasCost(
+                frame,
+                staticCost,
+                stipend,
+                inputDataOffset,
+                inputDataLength,
+                outputDataOffset,
+                outputDataLength,
+                transferValue,
+                recipientAddress,
+                accountIsWarm);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
@@ -229,11 +265,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     final Code code = getCode(evm, frame, contract);
 
-    // invalid code results in a quick exit
-    if (!code.isValid()) {
-      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
-    }
-
     MessageFrame.Builder builder =
         MessageFrame.builder()
             .parentMessageFrame(frame)
@@ -262,34 +293,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   }
 
   /**
-   * Calculates Cost.
-   *
-   * @param frame the frame
-   * @param accountIsWarm whether the contract being called is "warm" as per EIP-2929.
-   * @return the long
-   */
-  public long cost(final MessageFrame frame, final boolean accountIsWarm) {
-    final long stipend = gas(frame);
-    final long inputDataOffset = inputDataOffset(frame);
-    final long inputDataLength = inputDataLength(frame);
-    final long outputDataOffset = outputDataOffset(frame);
-    final long outputDataLength = outputDataLength(frame);
-    final Address recipientAddress = address(frame);
-    GasCalculator gasCalculator = gasCalculator();
-
-    return gasCalculator.callOperationGasCost(
-        frame,
-        stipend,
-        inputDataOffset,
-        inputDataLength,
-        outputDataOffset,
-        outputDataLength,
-        value(frame),
-        recipientAddress,
-        accountIsWarm);
-  }
-
-  /**
    * Complete.
    *
    * @param frame the frame
@@ -310,9 +313,15 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     frame.setReturnData(outputData);
-    frame.addLogs(childFrame.getLogs());
-    frame.addSelfDestructs(childFrame.getSelfDestructs());
-    frame.addCreates(childFrame.getCreates());
+    if (!childFrame.getLogs().isEmpty()) {
+      frame.addLogs(childFrame.getLogs());
+    }
+    if (!childFrame.getSelfDestructs().isEmpty()) {
+      frame.addSelfDestructs(childFrame.getSelfDestructs());
+    }
+    if (!childFrame.getCreates().isEmpty()) {
+      frame.addCreates(childFrame.getCreates());
+    }
 
     final long gasRemaining = childFrame.getRemainingGas();
     frame.incrementRemainingGas(gasRemaining);
@@ -345,13 +354,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    */
   protected Code getCode(final EVM evm, final MessageFrame frame, final Account account) {
     if (account == null) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final Hash codeHash = account.getCodeHash();
     frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(account.getAddress()));
     if (codeHash == null || codeHash.equals(Hash.EMPTY)) {
-      return CodeV0.EMPTY_CODE;
+      return Code.EMPTY_CODE;
     }
 
     final boolean accountHasCodeCache = account.getCodeCache() != null;

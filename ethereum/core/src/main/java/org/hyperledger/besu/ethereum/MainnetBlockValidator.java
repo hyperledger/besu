@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -22,10 +21,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,26 +58,33 @@ public class MainnetBlockValidator implements BlockValidator {
   /** The BlockProcessor used to process blocks. */
   protected final BlockProcessor blockProcessor;
 
+  /** The BlockAccessListValidator used to validate block access lists. */
+  protected final BlockAccessListValidator blockAccessListValidator;
+
   /** The maximum size of a block in RLP encoding. */
   private final int maxRlpBlockSize;
 
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
-   * BlockProcessor, and maximum RLP block size.
+   * BlockProcessor, BlockAccessListValidator, and maximum RLP block size.
    *
    * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
    * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
    * @param blockProcessor the BlockProcessor used to process blocks
+   * @param blockAccessListValidator the BlockAccessListValidator used to validate block access
+   *     lists
    * @param maxRlpBlockSize the maximum size of a block in RLP encoding
    */
   protected MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,
+      final BlockAccessListValidator blockAccessListValidator,
       final int maxRlpBlockSize) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
+    this.blockAccessListValidator = blockAccessListValidator;
     this.maxRlpBlockSize = maxRlpBlockSize;
   }
 
@@ -98,7 +105,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
     return validateAndProcessBlock(
-        context, block, headerValidationMode, ommerValidationMode, true, true);
+        context, block, headerValidationMode, ommerValidationMode, Optional.empty(), true, true);
   }
 
   @Override
@@ -107,9 +114,16 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList,
       final boolean shouldPersist) {
     return validateAndProcessBlock(
-        context, block, headerValidationMode, ommerValidationMode, shouldPersist, true);
+        context,
+        block,
+        headerValidationMode,
+        ommerValidationMode,
+        blockAccessList,
+        shouldPersist,
+        true);
   }
 
   @Override
@@ -118,6 +132,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList,
       final boolean shouldUpdateHead,
       final boolean shouldRecordBadBlock) {
 
@@ -126,7 +141,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final String errorMessage =
           "Block size of " + blockSize + " bytes exceeds limit of " + maxRlpBlockSize + " bytes";
       var retval = new BlockProcessingResult(errorMessage);
-      handleFailedBlockProcessing(block, retval, true, context);
+      handleFailedBlockProcessing(block, blockAccessList, retval, true, context);
       return retval;
     }
 
@@ -142,7 +157,7 @@ public class MainnetBlockValidator implements BlockValidator {
             new BlockProcessingResult(
                 "Parent block with hash " + header.getParentHash() + " not present");
         // Blocks should not be marked bad due to missing data
-        handleFailedBlockProcessing(block, retval, false, context);
+        handleFailedBlockProcessing(block, blockAccessList, retval, false, context);
         return retval;
       }
       parentHeader = maybeParentHeader.get();
@@ -151,13 +166,13 @@ public class MainnetBlockValidator implements BlockValidator {
           header, parentHeader, context, headerValidationMode)) {
         final String error = String.format("Header validation failed (%s)", headerValidationMode);
         var retval = new BlockProcessingResult(error);
-        handleFailedBlockProcessing(block, retval, shouldRecordBadBlock, context);
+        handleFailedBlockProcessing(block, blockAccessList, retval, shouldRecordBadBlock, context);
         return retval;
       }
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
       // Blocks should not be marked bad due to a local storage failure
-      handleFailedBlockProcessing(block, retval, false, context);
+      handleFailedBlockProcessing(block, blockAccessList, retval, false, context);
       return retval;
     }
 
@@ -176,63 +191,56 @@ public class MainnetBlockValidator implements BlockValidator {
                     + parentHeader.getStateRoot()
                     + " is not available");
         // Blocks should not be marked bad due to missing data
-        handleFailedBlockProcessing(block, retval, false, context);
+        handleFailedBlockProcessing(block, blockAccessList, retval, false, context);
         return retval;
       }
 
-      final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
-      final Optional<Hash> expectedBalHash =
-          block.getBody().getBlockAccessList().map(BodyValidation::balHash);
-
-      if (!headerBalHash.equals(expectedBalHash)) {
-        final String errorMessage;
-        if (headerBalHash.isPresent() && expectedBalHash.isPresent()) {
-          errorMessage =
-              String.format(
-                  "Block access list hash mismatch, calculated: %s header: %s",
-                  expectedBalHash.get().toHexString(), headerBalHash.get().toHexString());
-        } else if (headerBalHash.isPresent()) {
-          errorMessage =
-              String.format(
-                  "Block access list hash present in header %s but block body has no access list",
-                  headerBalHash.get().toHexString());
-        } else {
-          errorMessage =
-              String.format(
-                  "Block access list present in body with hash %s but header is missing balHash",
-                  expectedBalHash.get().toHexString());
-        }
-        var result = new BlockProcessingResult(errorMessage);
-        handleFailedBlockProcessing(block, result, shouldRecordBadBlock, context);
+      if (!blockAccessListValidator.validate(
+          blockAccessList, block.getHeader(), block.getBody().getTransactions().size())) {
+        var result =
+            new BlockProcessingResult(
+                String.format(
+                    "Block access list validation failed for block %s",
+                    block.getHeader().getBlockHash()));
+        handleFailedBlockProcessing(block, blockAccessList, result, shouldRecordBadBlock, context);
         return result;
       }
 
-      var result = processBlock(context, worldState, block);
+      var result = processBlock(context, worldState, block, blockAccessList);
       if (result.isFailed()) {
-        handleFailedBlockProcessing(block, result, shouldRecordBadBlock, context);
+        handleFailedBlockProcessing(block, blockAccessList, result, shouldRecordBadBlock, context);
         return result;
       } else {
         List<TransactionReceipt> receipts =
             result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
         Optional<List<Request>> maybeRequests =
             result.getYield().flatMap(BlockProcessingOutputs::getRequests);
-        Optional<BlockAccessList> blockAccessList =
+        Optional<BlockAccessList> processedBlockAccessList =
             result.getYield().flatMap(BlockProcessingOutputs::getBlockAccessList);
+        long cumulativeBlockGasUsed =
+            result.getYield().map(BlockProcessingOutputs::getCumulativeBlockGasUsed).orElse(0L);
         if (!blockBodyValidator.validateBody(
             context,
             block,
             receipts,
             worldState.rootHash(),
             ommerValidationMode,
-            BodyValidationMode.FULL)) {
+            BodyValidationMode.FULL,
+            OptionalLong.of(cumulativeBlockGasUsed))) {
           result = new BlockProcessingResult("failed to validate output of imported block");
-          handleFailedBlockProcessing(block, result, shouldRecordBadBlock, context);
+          handleFailedBlockProcessing(
+              block, blockAccessList, result, shouldRecordBadBlock, context);
           return result;
         }
 
         return new BlockProcessingResult(
             Optional.of(
-                new BlockProcessingOutputs(worldState, receipts, maybeRequests, blockAccessList)),
+                new BlockProcessingOutputs(
+                    worldState,
+                    receipts,
+                    maybeRequests,
+                    processedBlockAccessList,
+                    cumulativeBlockGasUsed)),
             result.getNbParallelizedTransactions());
       }
     } catch (MerkleTrieException ex) {
@@ -241,7 +249,7 @@ public class MainnetBlockValidator implements BlockValidator {
     } catch (StorageException ex) {
       var retval = new BlockProcessingResult(Optional.empty(), ex);
       // Do not record bad block due to a local storage issue
-      handleFailedBlockProcessing(block, retval, false, context);
+      handleFailedBlockProcessing(block, blockAccessList, retval, false, context);
       return retval;
     } catch (Exception ex) {
       // Wrap checked autocloseable exception from try-with-resources
@@ -253,12 +261,14 @@ public class MainnetBlockValidator implements BlockValidator {
    * Handles the processing of a block that has failed validation or processing.
    *
    * @param failedBlock the block that failed processing
+   * @param blockAccessList optional block access list
    * @param result the result of the block processing
    * @param shouldRecordBadBlock whether to record the block as a bad block
    * @param context the ProtocolContext
    */
   protected void handleFailedBlockProcessing(
       final Block failedBlock,
+      final Optional<BlockAccessList> blockAccessList,
       final BlockValidationResult result,
       final boolean shouldRecordBadBlock,
       final ProtocolContext context) {
@@ -285,7 +295,9 @@ public class MainnetBlockValidator implements BlockValidator {
             result instanceof BlockProcessingResult
                 ? ((BlockProcessingResult) result).getGeneratedBlockAccessList()
                 : Optional.empty();
-        context.getBadBlockManager().addBadBlock(failedBlock, cause, generatedBlockAccessList);
+        context
+            .getBadBlockManager()
+            .addBadBlock(failedBlock, cause, blockAccessList, generatedBlockAccessList);
       } else {
         LOG.debug("Invalid block {} not added to badBlockManager ", failedBlock.toLogString());
       }
@@ -298,12 +310,17 @@ public class MainnetBlockValidator implements BlockValidator {
    * @param context the ProtocolContext
    * @param worldState the world state for the parent block state root hash
    * @param block the block to be processed
+   * @param blockAccessList optional block access list
    * @return the result of processing the block
    */
   protected BlockProcessingResult processBlock(
-      final ProtocolContext context, final MutableWorldState worldState, final Block block) {
+      final ProtocolContext context,
+      final MutableWorldState worldState,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList) {
 
-    return blockProcessor.processBlock(context, context.getBlockchain(), worldState, block);
+    return blockProcessor.processBlock(
+        context, context.getBlockchain(), worldState, block, blockAccessList);
   }
 
   @Override
@@ -333,7 +350,8 @@ public class MainnetBlockValidator implements BlockValidator {
       return true;
     }
 
-    if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
+    if (!blockBodyValidator.validateBodyLight(
+        context, block, receipts, ommerValidationMode, OptionalLong.empty())) {
       context
           .getBadBlockManager()
           .addBadBlock(

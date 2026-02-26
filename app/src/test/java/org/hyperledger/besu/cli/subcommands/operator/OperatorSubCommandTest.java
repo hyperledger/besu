@@ -118,14 +118,6 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void callingBackupStateCommandVersionMustDisplayVersion() {
-    parseCommand("x-backup-state", "--version");
-    assertThat(commandOutput.toString(UTF_8))
-        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void callingGenerateBlockchainConfigCommandVersionMustDisplayVersion() {
     parseCommand("generate-blockchain-config", "--version");
     assertThat(commandOutput.toString(UTF_8))
@@ -136,14 +128,6 @@ public class OperatorSubCommandTest extends CommandTestAbstract {
   @Test
   public void callingGenerateLogBloomCacheCommandVersionMustDisplayVersion() {
     parseCommand("generate-log-bloom-cache", "--version");
-    assertThat(commandOutput.toString(UTF_8))
-        .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void callingRestoreStateCommandVersionMustDisplayVersion() {
-    parseCommand("x-restore-state", "--version");
     assertThat(commandOutput.toString(UTF_8))
         .isEqualToIgnoringWhitespace(BesuVersionUtils.version());
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

@@ -501,7 +501,7 @@ public class EthPeers implements PeerSelector {
         .filter(filter)
         .filter(EthPeerImmutableAttributes::hasAvailableRequestCapacity)
         .filter(EthPeerImmutableAttributes::isFullyValidated)
-        .min(LEAST_TO_MOST_BUSY)
+        .max(getBestPeerComparator())
         .map(EthPeerImmutableAttributes::ethPeer);
   }
 
@@ -606,7 +606,7 @@ public class EthPeers implements PeerSelector {
 
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
-            if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
+            if (syncMode == SyncMode.SNAP) {
               // even if we have finished the snap sync, we still want to know if the peer is a snap
               // server
               isServingSnapFuture =

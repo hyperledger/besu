@@ -28,14 +28,13 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
-import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentV4;
+import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerTestHelper;
@@ -51,7 +50,6 @@ import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -76,18 +74,19 @@ public final class DefaultP2PNetworkTest {
       SECP256K1.SecretKey.fromBytes(
           Bytes32.fromHexString(
               "0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
-  @Mock PeerDiscoveryAgent discoveryAgent;
+  @Mock PeerDiscoveryAgentV4 discoveryAgent;
   @Mock RlpxAgent rlpxAgent;
 
-  @Captor private ArgumentCaptor<DiscoveryPeer> peerCaptor;
+  @Captor private ArgumentCaptor<DiscoveryPeerV4> peerCaptor;
 
   private final NetworkingConfiguration config =
-      NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
-          .setRlpx(
+      ImmutableNetworkingConfiguration.builder()
+          .discoveryConfiguration(DiscoveryConfiguration.create().setEnabled(false))
+          .rlpxConfiguration(
               RlpxConfiguration.create()
                   .setBindPort(0)
-                  .setSupportedProtocols(MockSubProtocol.create()));
+                  .setSupportedProtocols(MockSubProtocol.create()))
+          .build();
 
   @BeforeEach
   public void before() {
@@ -110,7 +109,7 @@ public final class DefaultP2PNetworkTest {
 
     assertThat(maintainedPeers.contains(peer)).isTrue();
     verify(rlpxAgent).connect(peer);
-    verify(discoveryAgent).bond(peer);
+    verify(discoveryAgent).addPeer(peer);
   }
 
   @Test
@@ -122,7 +121,7 @@ public final class DefaultP2PNetworkTest {
     assertThat(network.addMaintainedConnectionPeer(peer)).isTrue();
     assertThat(network.addMaintainedConnectionPeer(peer)).isFalse();
     verify(rlpxAgent, times(2)).connect(peer);
-    verify(discoveryAgent, times(2)).bond(peer);
+    verify(discoveryAgent, times(2)).addPeer(peer);
     assertThat(maintainedPeers.contains(peer)).isTrue();
   }
 
@@ -137,7 +136,7 @@ public final class DefaultP2PNetworkTest {
 
     assertThat(maintainedPeers.contains(peer)).isFalse();
     verify(rlpxAgent).connect(peer);
-    verify(discoveryAgent).bond(peer);
+    verify(discoveryAgent).addPeer(peer);
     verify(rlpxAgent).disconnect(peer.getId(), DisconnectReason.REQUESTED);
     verify(discoveryAgent).dropPeer(peer);
   }
@@ -219,8 +218,8 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void start_withNatManager() {
     final String externalIp = "127.0.0.3";
-    config.getRlpx().setBindPort(30303);
-    config.getDiscovery().setBindPort(30301);
+    config.rlpxConfiguration().setBindPort(30303);
+    config.discoveryConfiguration().setBindPort(30301);
 
     final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
     when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNP);
@@ -232,10 +231,11 @@ public final class DefaultP2PNetworkTest {
 
     network.start();
     verify(upnpNatManager)
-        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
+        .requestPortForward(
+            eq(config.rlpxConfiguration().getBindPort()), eq(NetworkProtocol.TCP), any());
     verify(upnpNatManager)
         .requestPortForward(
-            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
+            eq(config.discoveryConfiguration().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
@@ -243,8 +243,8 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void start_withNatManagerUpnpP2p() {
     final String externalIp = "127.0.0.3";
-    config.getRlpx().setBindPort(30303);
-    config.getDiscovery().setBindPort(30301);
+    config.rlpxConfiguration().setBindPort(30303);
+    config.discoveryConfiguration().setBindPort(30301);
 
     final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
     when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNPP2PONLY);
@@ -256,19 +256,20 @@ public final class DefaultP2PNetworkTest {
 
     network.start();
     verify(upnpNatManager)
-        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
+        .requestPortForward(
+            eq(config.rlpxConfiguration().getBindPort()), eq(NetworkProtocol.TCP), any());
     verify(upnpNatManager)
         .requestPortForward(
-            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
+            eq(config.discoveryConfiguration().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
 
   @Test
   public void attemptPeerConnections_bondedPeers() {
-    final DiscoveryPeer discoPeer = DiscoveryPeer.fromEnode(PeerTestHelper.enode());
-    discoPeer.setStatus(PeerDiscoveryStatus.BONDED);
-    final Stream<DiscoveryPeer> peerStream = Stream.of(discoPeer);
+    final DiscoveryPeerV4 discoPeer = DiscoveryPeerV4.fromEnode(PeerTestHelper.enode());
+    discoPeer.setBonded();
+    final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
 
     final DefaultP2PNetwork network = network();
@@ -280,9 +281,21 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void attemptPeerConnections_unbondedPeers() {
-    final DiscoveryPeer discoPeer = DiscoveryPeer.fromEnode(PeerTestHelper.enode());
-    discoPeer.setStatus(PeerDiscoveryStatus.KNOWN);
-    final Stream<DiscoveryPeer> peerStream = Stream.of(discoPeer);
+    final DiscoveryPeerV4 discoPeer = DiscoveryPeerV4.fromEnode(PeerTestHelper.enode());
+    final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
+    when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
+
+    final DefaultP2PNetwork network = network();
+    network.attemptPeerConnections();
+    verify(rlpxAgent, times(0)).connect(any());
+  }
+
+  @Test
+  public void attemptPeerConnections_notListening() {
+    final DiscoveryPeerV4 discoPeer = mock(DiscoveryPeerV4.class);
+    when(discoPeer.isReadyForConnections()).thenCallRealMethod();
+    when(discoPeer.isListening()).thenReturn(false);
+    final Stream<DiscoveryPeerV4> peerStream = Stream.of(discoPeer);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(peerStream);
 
     final DefaultP2PNetwork network = network();
@@ -292,11 +305,11 @@ public final class DefaultP2PNetworkTest {
 
   @Test
   public void attemptPeerConnections_sortsPeersByLastContacted() {
-    final List<DiscoveryPeer> discoPeers = new ArrayList<>();
-    discoPeers.add(DiscoveryPeer.fromEnode(PeerTestHelper.enode()));
-    discoPeers.add(DiscoveryPeer.fromEnode(PeerTestHelper.enode()));
-    discoPeers.add(DiscoveryPeer.fromEnode(PeerTestHelper.enode()));
-    discoPeers.forEach(p -> p.setStatus(PeerDiscoveryStatus.BONDED));
+    final List<DiscoveryPeerV4> discoPeers = new ArrayList<>();
+    discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
+    discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
+    discoPeers.add(DiscoveryPeerV4.fromEnode(PeerTestHelper.enode()));
+    discoPeers.forEach(DiscoveryPeerV4::setBonded);
     discoPeers.get(0).setLastAttemptedConnection(10);
     discoPeers.get(2).setLastAttemptedConnection(15);
     when(discoveryAgent.streamDiscoveredPeers()).thenReturn(discoPeers.stream());
@@ -331,7 +344,7 @@ public final class DefaultP2PNetworkTest {
 
     // spy on config to return dns discovery config:
     final NetworkingConfiguration dnsConfig =
-        when(spy(config).getDiscovery()).thenReturn(disco).getMock();
+        when(spy(config).discoveryConfiguration()).thenReturn(disco).getMock();
 
     final Vertx vertx = Vertx.vertx(); // use real instance
 
@@ -358,8 +371,8 @@ public final class DefaultP2PNetworkTest {
 
     // spy on config to return dns discovery config:
     final NetworkingConfiguration dnsConfig = spy(config);
-    doReturn(disco).when(dnsConfig).getDiscovery();
-    doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
+    doReturn(disco).when(dnsConfig).discoveryConfiguration();
+    doReturn(Optional.of("localhost")).when(dnsConfig).dnsDiscoveryServerOverride();
 
     Vertx vertx = Vertx.vertx(); // use real instance
     final DefaultP2PNetwork testClass =
@@ -369,7 +382,7 @@ public final class DefaultP2PNetworkTest {
     // ensure we used the dns server override config when building DNSDaemon:
     try {
       assertThat(testClass.getDnsDaemon()).isPresent();
-      verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
+      verify(dnsConfig, times(2)).dnsDiscoveryServerOverride();
     } finally {
       testClass.stop();
       vertx.close();
@@ -386,16 +399,11 @@ public final class DefaultP2PNetworkTest {
 
     return DefaultP2PNetwork.builder()
         .config(config)
-        .peerDiscoveryAgent(discoveryAgent)
-        .rlpxAgent(rlpxAgent)
+        .peerDiscoveryAgentFactory((rlpxAgent) -> discoveryAgent)
+        .rlpxAgentFactory((localNode, peerPrivileges, peerLookup) -> rlpxAgent)
         .nodeKey(nodeKey)
         .maintainedPeers(maintainedPeers)
         .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(EthProtocolHelper.LATEST)
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .blockNumberForks(Collections.emptyList())
-        .timestampForks(Collections.emptyList())
-        .allConnectionsSupplier(Stream::empty)
-        .allActiveConnectionsSupplier(Stream::empty);
+        .supportedCapabilities(EthProtocolHelper.LATEST);
   }
 }

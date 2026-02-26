@@ -16,14 +16,12 @@ package org.hyperledger.besu.evm.fluent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -32,6 +30,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,12 +55,12 @@ public class EVMExecutor {
   private Wei blobGasPrice = Wei.ZERO;
   private Bytes callData = Bytes.EMPTY;
   private Wei ethValue = Wei.ZERO;
-  private Code code = CodeV0.EMPTY_CODE;
+  private Code code = Code.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
   private BlockHashLookup blockHashLookup = (__, ___) -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
-  private Set<Address> accessListWarmAddresses = new BytesTrieSet<>(Address.SIZE);
+  private Set<Address> accessListWarmAddresses = new HashSet<>(Address.SIZE);
   private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
@@ -92,8 +91,7 @@ public class EVMExecutor {
                 evmSpec.getEvm(),
                 evmSpec.isRequireDeposit(),
                 evmSpec.getContractValidationRules(),
-                evmSpec.getInitialNonce(),
-                evmSpec.getForceCommitAddresses()));
+                evmSpec.getInitialNonce()));
   }
 
   /**
@@ -125,7 +123,7 @@ public class EVMExecutor {
    */
   public Bytes execute(
       final Bytes codeBytes, final Bytes inputData, final Wei value, final Address receiver) {
-    this.code = evmSpec.getEvm().wrapCode(codeBytes);
+    this.code = new Code(codeBytes);
     this.callData = inputData;
     this.ethValue = value;
     this.receiver = receiver;
@@ -332,7 +330,7 @@ public class EVMExecutor {
    * @return the evm executor
    */
   public EVMExecutor code(final Bytes codeBytes) {
-    this.code = evmSpec.getEvm().wrapCode(codeBytes);
+    this.code = new Code(codeBytes);
     return this;
   }
 
