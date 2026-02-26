@@ -39,6 +39,11 @@ public class HostEndpoint {
    * @throws IllegalArgumentException if {@code host} is not a valid IP address
    */
   public HostEndpoint(final String host, final int discoveryPort, final int tcpPort) {
+    this(host, discoveryPort, tcpPort, NetworkUtility.isIpV4Address(host));
+  }
+
+  private HostEndpoint(
+      final String host, final int discoveryPort, final int tcpPort, final boolean isIpv4) {
     // host is already meant to be filtered at cli validation level to be an IP address
     checkArgument(
         NetworkUtility.isIpV4Address(host) || NetworkUtility.isIpV6Address(host),
@@ -47,15 +52,7 @@ public class HostEndpoint {
     this.host = host;
     this.discoveryPort = discoveryPort;
     this.tcpPort = tcpPort;
-    this.isIpv4 = NetworkUtility.isIpV4Address(host);
-  }
-
-  private HostEndpoint(
-      final String host, final int discoveryPort, final int tcpPort, final boolean isIpV4) {
-    this.host = host;
-    this.discoveryPort = discoveryPort;
-    this.tcpPort = tcpPort;
-    this.isIpv4 = isIpV4;
+    this.isIpv4 = isIpv4;
   }
 
   /**
