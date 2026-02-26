@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,17 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.common.checkpoint;
 
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 
-import java.util.concurrent.CompletableFuture;
+import org.immutables.value.Value;
 
-public interface WorldStateDownloader extends WorldStateDownloadStatus {
+@Value.Immutable
+public interface Checkpoint {
 
-  CompletableFuture<Void> run(
-      final PivotSyncActions fastSyncActions, final PivotSyncState fastSyncState);
+  long blockNumber();
 
-  void cancel();
+  Hash blockHash();
+
+  Difficulty totalDifficulty();
 }
