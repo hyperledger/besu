@@ -203,12 +203,7 @@ public class NodeRecordManager {
   /** Updates the primary endpoint's discovery port if it is currently ephemeral (0). */
   private void updatePrimaryPortIfEphemeral(final Optional<Integer> resolvedPort) {
     if (resolvedPort.isPresent() && primaryEndpoint.discoveryPort() == 0) {
-      primaryEndpoint =
-          new HostEndpoint(
-              primaryEndpoint.host(),
-              resolvedPort.get(),
-              primaryEndpoint.tcpPort(),
-              primaryEndpoint.isIpv4());
+      primaryEndpoint = primaryEndpoint.withDiscoveryPort(resolvedPort.get());
     }
   }
 
@@ -220,9 +215,7 @@ public class NodeRecordManager {
     if (primaryEndpoint.isIpv4()
         && resolvedUdp6Port.isPresent()
         && ipv6Endpoint.map(ep -> ep.discoveryPort() == 0).orElse(false)) {
-      ipv6Endpoint =
-          ipv6Endpoint.map(
-              ep -> new HostEndpoint(ep.host(), resolvedUdp6Port.get(), ep.tcpPort(), ep.isIpv4()));
+      ipv6Endpoint = ipv6Endpoint.map(ep -> ep.withDiscoveryPort(resolvedUdp6Port.get()));
     }
   }
 
