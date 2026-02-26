@@ -41,13 +41,13 @@ public final class GetReceiptsMessageTest {
     // Perform round-trip transformation
     // Create GetReceipts message, copy it to a generic message, then read back into a GetReceipts
     // message
-    final MessageData initialMessage = GetReceiptsMessage.create(hashes);
+    final MessageData initialMessage = GetReceiptsMessage.create(hashes, 1);
     final MessageData raw =
         new RawMessage(EthProtocolMessages.GET_RECEIPTS, initialMessage.getData());
     final GetReceiptsMessage message = GetReceiptsMessage.readFrom(raw);
 
     // Read hashes back out after round trip and check they match originals.
-    final Iterator<Hash> readData = message.hashes().iterator();
+    final Iterator<Hash> readData = message.blockHashes().iterator();
     for (int i = 0; i < hashCount; ++i) {
       Assertions.assertThat(readData.next()).isEqualTo(hashes.get(i));
     }
