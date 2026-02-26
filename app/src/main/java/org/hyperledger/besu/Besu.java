@@ -15,7 +15,6 @@
 package org.hyperledger.besu;
 
 import org.hyperledger.besu.cli.BesuCommand;
-import org.hyperledger.besu.cli.logging.BesuLoggingConfigurationFactory;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.components.DaggerBesuComponent;
 
@@ -52,8 +51,8 @@ public final class Besu {
   }
 
   /**
-   * a Logger setup for handling any exceptions during the bootstrap process, to indicate to users
-   * their CLI configuration had problems.
+   * Sets up framework integrations for logging. Logging configuration itself happens in the
+   * execution strategy (see BesuCommand.createLoggingInitializationTask).
    */
   public static void setupLogging() {
     try {
@@ -67,8 +66,6 @@ public final class Besu {
       System.setProperty(
           "vertx.logger-delegate-factory-class-name",
           "io.vertx.core.logging.Log4j2LogDelegateFactory");
-      System.setProperty(
-          "log4j.configurationFactory", BesuLoggingConfigurationFactory.class.getName());
       System.setProperty("log4j.skipJansi", String.valueOf(false));
     } catch (Throwable t) {
       System.out.printf(

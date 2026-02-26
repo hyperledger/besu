@@ -2176,6 +2176,43 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void loggingFormatAcceptsEcs() {
+    parseCommand("--logging-format", "ECS");
+    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("--logging-format");
+  }
+
+  @Test
+  public void loggingFormatAcceptsGcp() {
+    parseCommand("--logging-format", "GCP");
+    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("--logging-format");
+  }
+
+  @Test
+  public void loggingFormatAcceptsLogstash() {
+    parseCommand("--logging-format", "LOGSTASH");
+    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("--logging-format");
+  }
+
+  @Test
+  public void loggingFormatAcceptsGelf() {
+    parseCommand("--logging-format", "GELF");
+    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("--logging-format");
+  }
+
+  @Test
+  public void loggingFormatAcceptsSplunk() {
+    parseCommand("--logging-format", "SPLUNK");
+    assertThat(commandErrorOutput.toString(UTF_8)).doesNotContain("--logging-format");
+  }
+
+  @Test
+  public void loggingFormatRejectsInvalidValue() {
+    parseCommand("--logging-format", "INVALID_FORMAT");
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option", "--logging-format");
+  }
+
+  @Test
   public void assertThatDefaultHttpTimeoutSecondsWorks() {
     parseCommand();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
