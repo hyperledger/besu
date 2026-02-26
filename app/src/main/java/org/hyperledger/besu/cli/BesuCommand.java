@@ -881,12 +881,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private IExecutionStrategy createPluginRegistrationTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
-      // Plugin registration now happens after logging initialization,
-      // so plugins can log properly during registration
-      if (!isHelpOrVersionRequested(parseResult)) {
-        besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
-        besuPluginContext.registerPlugins();
+      if (isHelpOrVersionRequested(parseResult)) {
+        // Suppress INFO-level plugin registration logs to keep help/version output clean.
+        // No need to restore — process exits after displaying help/version.
+        LogConfigurator.setRootLevel("WARN");
       }
+      besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
+      besuPluginContext.registerPlugins();
       commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
     };

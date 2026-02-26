@@ -38,6 +38,20 @@ public interface LogConfigurator {
     }
   }
 
+  /**
+   * Sets the root logger level without affecting child loggers.
+   *
+   * @param level the level
+   */
+  static void setRootLevel(final String level) {
+    try {
+      LoggerFactory.getLogger(LogConfigurator.class);
+      Log4j2ConfiguratorUtil.setLevel("", level);
+    } catch (NoClassDefFoundError | ClassCastException | NoSuchElementException e) {
+      // This is expected when Log4j support is not in the classpath, so ignore
+    }
+  }
+
   /** Reconfigure. */
   static void reconfigure() {
     try {
