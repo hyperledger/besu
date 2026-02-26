@@ -270,8 +270,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
 
   static class ReferenceTestsInMemoryTrieLogManager extends TrieLogManager {
 
-    private final Cache<Hash, byte[]> trieLogCache =
-        Caffeine.newBuilder().maximumSize(5).build();
+    private final Cache<Hash, byte[]> trieLogCache = Caffeine.newBuilder().maximumSize(5).build();
 
     public ReferenceTestsInMemoryTrieLogManager() {
       super(null, null, 0, null);

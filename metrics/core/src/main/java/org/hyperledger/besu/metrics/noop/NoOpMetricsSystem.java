@@ -33,8 +33,8 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.google.common.base.Preconditions;
 import com.github.benmanes.caffeine.cache.Cache;
+import com.google.common.base.Preconditions;
 
 /** The NoOp metrics system. */
 public class NoOpMetricsSystem implements ObservableMetricsSystem {

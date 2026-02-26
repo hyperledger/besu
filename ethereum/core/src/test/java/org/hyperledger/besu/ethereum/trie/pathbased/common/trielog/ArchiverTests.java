@@ -127,9 +127,7 @@ public class ArchiverTests {
     // Fake block
     final BlockHeader header =
         new BlockHeader(
-            blockNumber == 0
-                ? Hash.EMPTY
-                : blockNumberCache.get(blockNumber - 1).get().getHash(),
+            blockNumber == 0 ? Hash.EMPTY : blockNumberCache.get(blockNumber - 1).get().getHash(),
             Hash.EMPTY_TRIE_HASH,
             Address.ZERO,
             Hash.EMPTY_TRIE_HASH,
@@ -162,8 +160,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -213,8 +210,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -330,8 +326,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -471,8 +466,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -657,8 +651,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
@@ -786,8 +779,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
 
     blockHashCache =
         Caffeine.newBuilder()
@@ -884,8 +876,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
@@ -1001,8 +992,7 @@ public class ArchiverTests {
     blockNumberCache =
         Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
-            .build(
-                blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
+            .build(blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
 
     blockHashCache =
         Caffeine.newBuilder()

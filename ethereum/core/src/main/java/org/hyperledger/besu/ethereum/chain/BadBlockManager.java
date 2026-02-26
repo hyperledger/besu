@@ -24,9 +24,9 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Collection;
 import java.util.Optional;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

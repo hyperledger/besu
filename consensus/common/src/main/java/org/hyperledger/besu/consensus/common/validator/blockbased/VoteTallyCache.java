@@ -71,8 +71,7 @@ class VoteTallyCache {
    *     and including the requested header.
    */
   VoteTally getVoteTallyAfterBlock(final BlockHeader header) {
-    return voteTallyCache.get(
-        header.getHash(), ignored -> populateCacheUptoAndIncluding(header));
+    return voteTallyCache.get(header.getHash(), ignored -> populateCacheUptoAndIncluding(header));
   }
 
   private VoteTally populateCacheUptoAndIncluding(final BlockHeader start) {
