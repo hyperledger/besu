@@ -91,29 +91,32 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   final referenceTestsDir = layout.buildDirectory.dir("execution-spec-tests")
   final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
-  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
-  outputs.files generatedTestsDir
-  // generate blockchain_tests grouped by hardfork/EIP:
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
-    "blockchain_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
-    "ExecutionSpecBlockchainTest",
-    "org.hyperledger.besu.ethereum.vm.executionspec",
-    )
+  inputs.dir referenceTestsDir
+  inputs.files fileTree("src/reference-test/templates")
+  outputs.dir generatedTestsDir
+  doLast {
+    // generate blockchain_tests grouped by hardfork/EIP:
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
+      file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+      "fixtures",
+      "blockchain_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
+      "ExecutionSpecBlockchainTest",
+      "org.hyperledger.besu.ethereum.vm.executionspec",
+      )
 
-  // generate state_tests grouped by hardfork/EIP:
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
-    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
-    "state_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
-    "ExecutionSpecStateTest",
-    "org.hyperledger.besu.ethereum.vm.executionspec",
-    )
+    // generate state_tests grouped by hardfork/EIP:
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
+      file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+      "fixtures",
+      "state_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
+      "ExecutionSpecStateTest",
+      "org.hyperledger.besu.ethereum.vm.executionspec",
+      )
+  }
 }
 
 def extractDevnetFixtures = tasks.register("extractDevnetFixtures", Copy) {
@@ -128,28 +131,30 @@ def executionSpecDevnetTests = tasks.register("executionSpecDevnetTests") {
   final referenceTestsDir = layout.buildDirectory.dir("execution-spec-devnet-tests")
   final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
-  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
-  outputs.files generatedTestsDir
+  inputs.dir referenceTestsDir
+  inputs.files fileTree("src/reference-test/templates")
+  outputs.dir generatedTestsDir
+  doLast {
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
+      file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+      "fixtures",
+      "blockchain_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
+      "ExecutionSpecDevnetBlockchainTest",
+      "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
+      )
 
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
-    "blockchain_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
-    "ExecutionSpecDevnetBlockchainTest",
-    "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
-    )
-
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
-    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
-    "state_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
-    "ExecutionSpecDevnetStateTest",
-    "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
-    )
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
+      file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+      "fixtures",
+      "state_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
+      "ExecutionSpecDevnetStateTest",
+      "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
+      )
+  }
 }
 
 def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
