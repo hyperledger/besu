@@ -108,6 +108,43 @@ public class BlockTimerTest {
   }
 
   @Test
+  public void startTimerSchedulesCorrectlyOnBlockPeriodTransition() {
+    final int INITIAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
+    final int NEW_TIME_BETWEEN_BLOCKS_SECONDS = 30;
+    final long NOW_MILLIS = 505_000L;
+    final long BLOCK_TIME_STAMP = 500L;
+    final long EXPECTED_DELAY = 25_000L;
+
+    // Simulate a transition from 15s block period to 30s block period. The BFT timer should
+    // reflect the larger of the two block periods to ensure that the produced block passes
+    // validation which will be based on the post-transition time.
+    when(mockForksSchedule.getFork(anyLong(), anyLong()))
+        .thenReturn(new ForkSpec<>(0, createBftFork(INITIAL_TIME_BETWEEN_BLOCKS_SECONDS)));
+
+    when(mockForksSchedule.getFork(
+            anyLong(), eq(BLOCK_TIME_STAMP + INITIAL_TIME_BETWEEN_BLOCKS_SECONDS)))
+        .thenReturn(new ForkSpec<>(0, createBftFork(NEW_TIME_BETWEEN_BLOCKS_SECONDS)));
+
+    final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
+
+    when(mockClock.millis()).thenReturn(NOW_MILLIS);
+
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final ConsensusRoundIdentifier round =
+        new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
+
+    final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
+    Mockito.<ScheduledFuture<?>>when(
+            bftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
+        .thenReturn(mockedFuture);
+
+    timer.startTimer(round, header::getTimestamp);
+    verify(bftExecutors)
+        .scheduleTask(any(Runnable.class), eq(EXPECTED_DELAY), eq(TimeUnit.MILLISECONDS));
+  }
+
+  @Test
   public void aBlockTimerExpiryEventIsAddedToTheQueueOnExpiry() throws InterruptedException {
     final int MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 1;
     final int MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS = 10;
@@ -327,6 +364,13 @@ public class BlockTimerTest {
     assertThat(timer.getBlockPeriodSeconds()).isEqualTo(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS);
     assertThat(timer.getEmptyBlockPeriodSeconds())
         .isEqualTo(MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS);
+  }
+
+  private BftConfigOptions createBftFork(final int blockPeriodSeconds) {
+    final MutableBftConfigOptions bftConfigOptions =
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
+    bftConfigOptions.setBlockPeriodSeconds(blockPeriodSeconds);
+    return bftConfigOptions;
   }
 
   private BftConfigOptions createBftFork(
