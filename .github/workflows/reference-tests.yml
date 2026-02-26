@@ -61,6 +61,15 @@ jobs:
         run: cat refTestArgs.txt
       - name: run reference tests
         run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt`
+      - name: verify test file count matches
+        run: |
+          listed=$(wc -l < filenames.txt | tr -d ' ')
+          actual=$({ find ethereum/referencetests/build/generated/sources/reference-test -name '*.java'; find ethereum/referencetests/src/reference-test/java -name '*.java'; } | wc -l | tr -d ' ')
+          echo "Test files listed: $listed, Test files on disk: $actual"
+          if [ "$actual" -ne "$listed" ]; then
+            echo "::error::Test file count mismatch: filenames.txt has $listed entries but $actual files found on disk"
+            exit 1
+          fi
       - name: Upload Test Report
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always() # always run even if the previous step fails
