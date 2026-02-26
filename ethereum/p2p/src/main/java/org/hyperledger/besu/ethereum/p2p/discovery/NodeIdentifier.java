@@ -36,6 +36,6 @@ public interface NodeIdentifier {
         && ((node1.getIpV4Address().equals(node2.getIpV4Address())
                 && node1.getTcpListeningPort().equals(node2.getTcpListeningPort()))
             || (node1.getIpV6Address().equals(node2.getIpV6Address())
-                && node1.getIpV6TcpListeningPort().equals(node2.getTcpListeningPort())));
+                && node1.getIpV6TcpListeningPort().equals(node2.getIpV6TcpListeningPort())));
   }
 }
