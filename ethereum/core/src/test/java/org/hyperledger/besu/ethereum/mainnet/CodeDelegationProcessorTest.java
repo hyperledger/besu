@@ -199,7 +199,7 @@ class CodeDelegationProcessorTest {
 
     when(worldUpdater.get(any())).thenReturn(null).thenReturn(null).thenReturn(authority);
     when(worldUpdater.createAccount(any())).thenReturn(authority);
-    when(authority.getNonce()).thenReturn(0L).thenReturn(1L);
+    when(authority.getNonce()).thenReturn(1L);
     when(codeDelegationService.canSetCodeDelegation(any())).thenReturn(true);
 
     // Act
