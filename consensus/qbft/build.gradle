@@ -43,6 +43,7 @@ dependencies {
   implementation project(':ethereum:rlp')
   implementation project(':evm')
 
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
   implementation 'io.vertx:vertx-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'

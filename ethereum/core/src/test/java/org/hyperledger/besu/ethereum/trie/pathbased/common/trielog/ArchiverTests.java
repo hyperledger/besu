@@ -52,9 +52,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -81,21 +80,18 @@ public class ArchiverTests {
   static LoadingCache<Long, Optional<Block>> blockNumberCache;
 
   static LoadingCache<Hash, Optional<Block>> blockHashCache =
-      CacheBuilder.newBuilder()
+      Caffeine.newBuilder()
           .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
           .build(
-              new CacheLoader<>() {
-                @Override
-                public Optional<Block> load(final Hash blockHash) {
-                  Optional<Block> foundBlock;
-                  for (long i = 0; i <= SHORT_TEST_CHAIN_HEIGHT; i++) {
-                    if ((foundBlock = blockNumberCache.getUnchecked(i)).isPresent()
-                        && foundBlock.get().getHash().equals(blockHash)) {
-                      return foundBlock;
-                    }
+              blockHash -> {
+                Optional<Block> foundBlock;
+                for (long i = 0; i <= SHORT_TEST_CHAIN_HEIGHT; i++) {
+                  if ((foundBlock = blockNumberCache.get(i)).isPresent()
+                      && foundBlock.get().getHash().equals(blockHash)) {
+                    return foundBlock;
                   }
-                  return Optional.empty();
                 }
+                return Optional.empty();
               });
 
   static long currentBlockHeight = 0;
@@ -133,7 +129,7 @@ public class ArchiverTests {
         new BlockHeader(
             blockNumber == 0
                 ? Hash.EMPTY
-                : blockNumberCache.getUnchecked(blockNumber - 1).get().getHash(),
+                : blockNumberCache.get(blockNumber - 1).get().getHash(),
             Hash.EMPTY_TRIE_HASH,
             Address.ZERO,
             Hash.EMPTY_TRIE_HASH,
@@ -164,15 +160,10 @@ public class ArchiverTests {
   public void archiveInitialisesAndSetsPendingBlockCount() {
 
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -204,7 +195,7 @@ public class ArchiverTests {
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
-                blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
+                blockNumberCache.get(requestedBlockNumber.getArgument(0, Long.class)));
 
     BonsaiArchiver archiver =
         new BonsaiArchiver(
@@ -220,15 +211,10 @@ public class ArchiverTests {
   public void archiverMoves1AccountStateChangeToArchiveSegment() {
     // Set up the block cache
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -276,13 +262,13 @@ public class ArchiverTests {
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
-                blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
+                blockNumberCache.get(requestedBlockNumber.getArgument(0, Long.class)));
 
     when(blockchain.getBlockHeader(any()))
         .then(
             requestedBlockHash ->
                 blockHashCache
-                    .getUnchecked(requestedBlockHash.getArgument(0, Hash.class))
+                    .get(requestedBlockHash.getArgument(0, Hash.class))
                     .map(Block::getHeader));
 
     // Generate some trie logs to return for a specific block
@@ -342,15 +328,10 @@ public class ArchiverTests {
   public void archiverMoves2StorageChangesToArchiveSegment() {
     // Set up the block cache
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -400,13 +381,13 @@ public class ArchiverTests {
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
-                blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
+                blockNumberCache.get(requestedBlockNumber.getArgument(0, Long.class)));
 
     when(blockchain.getBlockHeader(any()))
         .then(
             requestedBlockHash ->
                 blockHashCache
-                    .getUnchecked(requestedBlockHash.getArgument(0, Hash.class))
+                    .get(requestedBlockHash.getArgument(0, Hash.class))
                     .map(Block::getHeader));
 
     // Generate some trie logs to return for a specific block
@@ -488,15 +469,10 @@ public class ArchiverTests {
   public void archiverMoves1AccountAnd2StorageChangesToArchiveSegment() {
     // Set up the block cache
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     when(worldStateStorage.getFlatDbMode()).thenReturn(FlatDbMode.ARCHIVE);
 
@@ -560,13 +536,13 @@ public class ArchiverTests {
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
-                blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
+                blockNumberCache.get(requestedBlockNumber.getArgument(0, Long.class)));
 
     when(blockchain.getBlockHeader(any()))
         .then(
             requestedBlockHash ->
                 blockHashCache
-                    .getUnchecked(requestedBlockHash.getArgument(0, Hash.class))
+                    .get(requestedBlockHash.getArgument(0, Hash.class))
                     .map(Block::getHeader));
 
     // Generate some trie logs to return for a specific block
@@ -679,28 +655,23 @@ public class ArchiverTests {
 
     // Set up the block cache
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
-                blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
+                blockNumberCache.get(requestedBlockNumber.getArgument(0, Long.class)));
 
     when(blockchain.getBlockHeader(any()))
         .then(
             requestedBlockHash ->
                 blockHashCache
-                    .getUnchecked(requestedBlockHash.getArgument(0, Hash.class))
+                    .get(requestedBlockHash.getArgument(0, Hash.class))
                     .map(Block::getHeader));
 
     // Generate some trie logs to return for a specific block
@@ -813,32 +784,24 @@ public class ArchiverTests {
     // Process the next 50 blocks 151-200 and count the archive changes. We'll recreate the
     // block cache so we can generate blocks beyond 150
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
 
     blockHashCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Hash blockHash) {
-                    Optional<Block> foundBlock;
-                    for (long i = 0; i <= LONG_TEST_CHAIN_HEIGHT; i++) {
-                      if ((foundBlock = blockNumberCache.getUnchecked(i)).isPresent()
-                          && foundBlock.get().getHash().equals(blockHash)) {
-                        return foundBlock;
-                      }
+                blockHash -> {
+                  Optional<Block> foundBlock;
+                  for (long i = 0; i <= LONG_TEST_CHAIN_HEIGHT; i++) {
+                    if ((foundBlock = blockNumberCache.get(i)).isPresent()
+                        && foundBlock.get().getHash().equals(blockHash)) {
+                      return foundBlock;
                     }
-                    return Optional.empty();
                   }
+                  return Optional.empty();
                 });
 
     // By default we archive state for chainheight - 10 blocks, so importing up to block 210 whould
@@ -846,7 +809,7 @@ public class ArchiverTests {
     for (long nextBlock = 151; nextBlock <= 211; nextBlock++) {
       currentBlockHeight = nextBlock;
       archiver.onBlockAdded(
-          BlockAddedEvent.createForStoredOnly(blockNumberCache.getUnchecked(nextBlock).get()));
+          BlockAddedEvent.createForStoredOnly(blockNumberCache.get(nextBlock).get()));
     }
 
     // We should have marked up to block 200 as archived
@@ -919,28 +882,23 @@ public class ArchiverTests {
 
     // Set up the block cache
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(SHORT_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, SHORT_TEST_CHAIN_HEIGHT));
 
     // When any block is asked for by the archiver, generate it on the fly, cache it, and
     // return it unless it
     when(blockchain.getBlockByNumber(anyLong()))
         .then(
             requestedBlockNumber ->
-                blockNumberCache.getUnchecked(requestedBlockNumber.getArgument(0, Long.class)));
+                blockNumberCache.get(requestedBlockNumber.getArgument(0, Long.class)));
 
     when(blockchain.getBlockHeader(any()))
         .then(
             requestedBlockHash ->
                 blockHashCache
-                    .getUnchecked(requestedBlockHash.getArgument(0, Hash.class))
+                    .get(requestedBlockHash.getArgument(0, Hash.class))
                     .map(Block::getHeader));
 
     // Generate some trie logs to return for a specific block
@@ -1041,32 +999,24 @@ public class ArchiverTests {
     // Process the next 50 blocks 150-200 and count the archive changes. We'll recreate the
     // block cache so we can generate blocks beyond 150
     blockNumberCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Long blockNumber) {
-                    return getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT);
-                  }
-                });
+                blockNumber -> getGeneratedBlock(blockNumber, LONG_TEST_CHAIN_HEIGHT));
 
     blockHashCache =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(LONG_TEST_CHAIN_HEIGHT)
             .build(
-                new CacheLoader<>() {
-                  @Override
-                  public Optional<Block> load(final Hash blockHash) {
-                    Optional<Block> foundBlock;
-                    for (long i = 0; i < LONG_TEST_CHAIN_HEIGHT; i++) {
-                      if ((foundBlock = blockNumberCache.getUnchecked(i)).isPresent()
-                          && foundBlock.get().getHash().equals(blockHash)) {
-                        return foundBlock;
-                      }
+                blockHash -> {
+                  Optional<Block> foundBlock;
+                  for (long i = 0; i < LONG_TEST_CHAIN_HEIGHT; i++) {
+                    if ((foundBlock = blockNumberCache.get(i)).isPresent()
+                        && foundBlock.get().getHash().equals(blockHash)) {
+                      return foundBlock;
                     }
-                    return Optional.empty();
                   }
+                  return Optional.empty();
                 });
 
     // By default we archive state for chainheight - 10 blocks, so importing up to block 210 whould
@@ -1074,7 +1024,7 @@ public class ArchiverTests {
     for (long nextBlock = 151; nextBlock <= 211; nextBlock++) {
       currentBlockHeight = nextBlock;
       archiver.onBlockAdded(
-          BlockAddedEvent.createForStoredOnly(blockNumberCache.getUnchecked(nextBlock).get()));
+          BlockAddedEvent.createForStoredOnly(blockNumberCache.get(nextBlock).get()));
     }
 
     // We should have marked up to block 200 as archived

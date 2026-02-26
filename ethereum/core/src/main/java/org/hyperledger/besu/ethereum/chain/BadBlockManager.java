@@ -25,8 +25,8 @@ import java.util.Collection;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,15 +35,15 @@ public class BadBlockManager {
 
   public static final int MAX_BAD_BLOCKS_SIZE = 100;
   private final Cache<Hash, Block> badBlocks =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
   private final Cache<Hash, BlockHeader> badHeaders =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
   private final Cache<Hash, Hash> latestValidHashes =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
   private final Cache<Hash, BlockAccessList> blockAccessLists =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
   private final Cache<Hash, BlockAccessList> generatedBlockAccessLists =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
   private final Subscribers<BadBlockListener> badBlockSubscribers = Subscribers.create(true);
 
   /**

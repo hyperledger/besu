@@ -44,15 +44,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -75,10 +74,9 @@ public class RlpxAgent {
   private final Supplier<Stream<PeerConnection>> allConnectionsSupplier;
   private final Supplier<Stream<PeerConnection>> allActiveConnectionsSupplier;
   private final Cache<Bytes, CompletableFuture<PeerConnection>> peersConnectingCache =
-      CacheBuilder.newBuilder()
+      Caffeine.newBuilder()
           .expireAfterWrite(
               Duration.ofSeconds(30L)) // we will at most try to connect every 30 seconds
-          .concurrencyLevel(1)
           .build();
 
   private RlpxAgent(
@@ -234,14 +232,10 @@ public class RlpxAgent {
 
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
     if (checkWhetherToConnect(peer, false)) {
-      try {
-        synchronized (this) {
-          peerConnectionCompletableFuture =
-              peersConnectingCache.get(
-                  peer.getId(), () -> createPeerConnectionCompletableFuture(peer));
-        }
-      } catch (final ExecutionException e) {
-        throw new RuntimeException(e);
+      synchronized (this) {
+        peerConnectionCompletableFuture =
+            peersConnectingCache.get(
+                peer.getId(), ignored -> createPeerConnectionCompletableFuture(peer));
       }
     } else {
       final String errorMsg =

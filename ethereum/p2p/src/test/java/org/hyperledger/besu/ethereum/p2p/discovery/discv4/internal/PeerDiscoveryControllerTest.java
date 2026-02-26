@@ -75,9 +75,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.google.common.base.Ticker;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Ticker;
 import com.google.common.net.InetAddresses;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
@@ -1619,7 +1619,7 @@ public class PeerDiscoveryControllerTest {
     final List<DiscoveryPeerV4> peers = helper.createDiscoveryPeers(nodeKeys);
     final OutboundMessageHandler outboundMessageHandler = mock(OutboundMessageHandler.class);
     final Cache<Bytes, Packet> enrs =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(50)
             .expireAfterWrite(1, TimeUnit.NANOSECONDS)
             .ticker(
@@ -1728,7 +1728,7 @@ public class PeerDiscoveryControllerTest {
     final OutboundMessageHandler outboundMessageHandler =
         (dp, pa) -> packetTypeBytesHashMap.put(pa.getType(), pa.getHash());
     final Cache<Bytes, Packet> enrs =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(50)
             .expireAfterWrite(1, TimeUnit.NANOSECONDS)
             .ticker(
@@ -1901,7 +1901,7 @@ public class PeerDiscoveryControllerTest {
     private PeerPermissions peerPermissions = PeerPermissions.noop();
 
     private Cache<Bytes, Packet> enrs =
-        CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.SECONDS).build();
+        Caffeine.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.SECONDS).build();
     private boolean filterOnForkId = false;
     private RlpxAgent rlpxAgent;
 

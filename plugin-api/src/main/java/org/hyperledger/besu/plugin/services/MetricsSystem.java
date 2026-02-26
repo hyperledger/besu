@@ -29,7 +29,7 @@ import java.util.function.IntSupplier;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
-import com.google.common.cache.Cache;
+import com.github.benmanes.caffeine.cache.Cache;
 
 /** An interface for creating various Metrics components. */
 public interface MetricsSystem extends BesuService {
@@ -264,13 +264,13 @@ public interface MetricsSystem extends BesuService {
   }
 
   /**
-   * Collect metrics from Guava cache.
+   * Collect metrics from Caffeine cache.
    *
-   * @param category The {@link MetricCategory} this Guava cache is assigned to.
-   * @param name the name to identify this Guava cache, must be unique.
-   * @param cache the Guava cache
+   * @param category The {@link MetricCategory} this Caffeine cache is assigned to.
+   * @param name the name to identify this Caffeine cache, must be unique.
+   * @param cache the Caffeine cache
    */
-  void createGuavaCacheCollector(MetricCategory category, String name, Cache<?, ?> cache);
+  void createCaffeineCacheCollector(MetricCategory category, String name, Cache<?, ?> cache);
 
   /**
    * Provides an immutable view into the metric categories enabled for metric collection.

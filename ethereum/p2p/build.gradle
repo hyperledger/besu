@@ -39,6 +39,7 @@ dependencies {
   implementation project(':nat')
   implementation project(':util')
 
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
   annotationProcessor 'com.google.dagger:dagger-compiler'
   implementation 'com.google.dagger:dagger'

@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
-import io.prometheus.metrics.instrumentation.guava.CacheMetricsCollector;
+import com.github.benmanes.caffeine.cache.Cache;
+import io.prometheus.metrics.instrumentation.caffeine.CacheMetricsCollector;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.model.snapshots.CounterSnapshot;
 import io.prometheus.metrics.model.snapshots.DataPointSnapshot;
@@ -35,21 +35,21 @@ import io.prometheus.metrics.model.snapshots.MetricSnapshot;
 import io.vertx.core.impl.ConcurrentHashSet;
 
 /**
- * A Prometheus Guava cache collector implementation for Besu metrics. This class provides a way to
- * expose metrics from Guava caches, it behaves differently from other collectors, since instead of
- * having one collector per cache, Prometheus provides only one collector for all caches, so we need
- * a Context that wraps the Prometheus single collector and handles its registration, while here we
- * keep the abstraction of one Prometheus collector for one Guava cache, and we also verify that
- * there is no collector name clash.
+ * A Prometheus Caffeine cache collector implementation for Besu metrics. This class provides a way
+ * to expose metrics from Caffeine caches, it behaves differently from other collectors, since
+ * instead of having one collector per cache, Prometheus provides only one collector for all caches,
+ * so we need a Context that wraps the Prometheus single collector and handles its registration,
+ * while here we keep the abstraction of one Prometheus collector for one Caffeine cache, and we
+ * also verify that there is no collector name clash.
  */
-class PrometheusGuavaCache extends CategorizedPrometheusCollector {
+class PrometheusCaffeineCache extends CategorizedPrometheusCollector {
   /** Use to reduce the possibility of a name clash with other collectors */
-  private static final String NAME_PREFIX = "__guavaCacheMetricsCollector__";
+  private static final String NAME_PREFIX = "__caffeineCacheMetricsCollector__";
 
   private final Cache<?, ?> cache;
   private final Context context;
 
-  public PrometheusGuavaCache(
+  public PrometheusCaffeineCache(
       final MetricCategory category,
       final Context context,
       final String name,
@@ -83,8 +83,8 @@ class PrometheusGuavaCache extends CategorizedPrometheusCollector {
   }
 
   /**
-   * Since Prometheus provides only one collector for all Guava caches, we only need to register
-   * that collector once when the first Besu Guava cache collector is created, and unregister it
+   * Since Prometheus provides only one collector for all Caffeine caches, we only need to register
+   * that collector once when the first Besu Caffeine cache collector is created, and unregister it
    * when the last is unregistered, so we have this context to keep track of that and also manage
    * the observations stream.
    */
@@ -92,11 +92,11 @@ class PrometheusGuavaCache extends CategorizedPrometheusCollector {
     private static final Map<String, ToDoubleFunction<DataPointSnapshot>>
         COLLECTOR_VALUE_EXTRACTORS =
             Map.of(
-                "guava_cache_eviction", Context::counterValueExtractor,
-                "guava_cache_hit", Context::counterValueExtractor,
-                "guava_cache_miss", Context::counterValueExtractor,
-                "guava_cache_requests", Context::counterValueExtractor,
-                "guava_cache_size", Context::gaugeValueExtractor);
+                "caffeine_cache_eviction", Context::counterValueExtractor,
+                "caffeine_cache_hit", Context::counterValueExtractor,
+                "caffeine_cache_miss", Context::counterValueExtractor,
+                "caffeine_cache_requests", Context::counterValueExtractor,
+                "caffeine_cache_size", Context::gaugeValueExtractor);
 
     private final CacheMetricsCollector cacheMetricsCollector = new CacheMetricsCollector();
     private final Set<String> cacheNames = new ConcurrentHashSet<>();

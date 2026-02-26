@@ -32,8 +32,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.hash.BloomFilter;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -69,7 +69,7 @@ public class PeerTable {
     this.distanceCache = new ConcurrentHashMap<>();
     this.maxEntriesCnt = N_BUCKETS * DEFAULT_BUCKET_SIZE;
     this.unresponsiveIPs =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(maxEntriesCnt)
             .expireAfterWrite(15L, TimeUnit.MINUTES)
             .build();

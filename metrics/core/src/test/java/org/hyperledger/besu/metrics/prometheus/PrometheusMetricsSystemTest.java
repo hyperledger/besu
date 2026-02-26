@@ -41,11 +41,10 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.ImmutableSet;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import org.junit.jupiter.api.AfterEach;
@@ -307,22 +306,23 @@ public class PrometheusMetricsSystemTest {
   }
 
   @Test
-  public void shouldCreateObservationFromGuavaCache() throws ExecutionException {
-    final Cache<String, String> guavaCache =
-        CacheBuilder.newBuilder().maximumSize(1).recordStats().build();
-    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "test", guavaCache);
+  public void shouldCreateObservationFromCaffeineCache() {
+    final Cache<String, String> caffeineCache =
+        Caffeine.newBuilder().maximumSize(1).recordStats().build();
+    metricsSystem.createCaffeineCacheCollector(BLOCKCHAIN, "test", caffeineCache);
 
-    guavaCache.put("a", "b");
-    guavaCache.get("a", () -> "b");
-    guavaCache.get("z", () -> "x");
+    caffeineCache.put("a", "b");
+    var unused1 = caffeineCache.get("a", k -> "b");
+    var unused2 = caffeineCache.get("z", k -> "x");
+    caffeineCache.cleanUp();
 
     assertThat(metricsSystem.streamObservations())
         .containsExactlyInAnyOrder(
-            new Observation(BLOCKCHAIN, "guava_cache_size", 1.0, List.of("test")),
-            new Observation(BLOCKCHAIN, "guava_cache_requests", 2.0, List.of("test")),
-            new Observation(BLOCKCHAIN, "guava_cache_hit", 1.0, List.of("test")),
-            new Observation(BLOCKCHAIN, "guava_cache_miss", 1.0, List.of("test")),
-            new Observation(BLOCKCHAIN, "guava_cache_eviction", 1.0, List.of("test")));
+            new Observation(BLOCKCHAIN, "caffeine_cache_size", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "caffeine_cache_requests", 2.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "caffeine_cache_hit", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "caffeine_cache_miss", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "caffeine_cache_eviction", 1.0, List.of("test")));
   }
 
   private boolean isCreatedSample(final Observation obs) {
