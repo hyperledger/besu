@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.util.NetworkUtility;
 
 /**
@@ -35,5 +37,10 @@ public record HostEndpoint(String host, int discoveryPort, int tcpPort, boolean 
    */
   public HostEndpoint(final String host, final int discoveryPort, final int tcpPort) {
     this(host, discoveryPort, tcpPort, NetworkUtility.isIpV4Address(host));
+    // host is already meant to be filtered at cli validation level to be an IP address
+    checkArgument(
+        NetworkUtility.isIpV4Address(host) || NetworkUtility.isIpV6Address(host),
+        "host must be an IP address, not a hostname: %s",
+        host);
   }
 }
