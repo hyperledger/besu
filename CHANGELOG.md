@@ -14,6 +14,8 @@
   - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
 
 ### Bug fixes
+- Fix eth/69 snap sync receipt root mismatch by correctly identifying Frontier transaction type in SyncTransactionReceiptEncoder
+- Fix outstanding request counter leak in RequestManager that could cause peers to appear at capacity
 
 ### Additions and Improvements
 
