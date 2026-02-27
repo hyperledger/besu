@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsaiarchive;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VARIABLES;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.DELETED_ACCOUNT_VALUE;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.DELETED_STORAGE_VALUE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey;
 
@@ -265,13 +267,15 @@ public class BonsaiFlatDbToArchiveMigrator {
         .getAccountChanges()
         .forEach(
             (address, accountChange) -> {
+              final byte[] key =
+                  calculateArchiveKeyWithMinSuffix(
+                      context, address.addressHash().getBytes().toArrayUnsafe());
               if (accountChange.getUpdated() != null) {
                 final BytesValueRLPOutput out = new BytesValueRLPOutput();
                 accountChange.getUpdated().writeTo(out);
-                final byte[] key =
-                    calculateArchiveKeyWithMinSuffix(
-                        context, address.addressHash().getBytes().toArrayUnsafe());
                 tx.put(ACCOUNT_INFO_STATE, key, out.encoded().toArrayUnsafe());
+              } else {
+                tx.put(ACCOUNT_INFO_STATE, key, DELETED_ACCOUNT_VALUE);
               }
             });
   }
@@ -285,14 +289,16 @@ public class BonsaiFlatDbToArchiveMigrator {
             (address, storageMap) ->
                 storageMap.forEach(
                     (slotKey, storageChange) -> {
+                      final byte[] naturalKey =
+                          calculateNaturalSlotKey(address.addressHash(), slotKey.getSlotHash());
+                      final byte[] key = calculateArchiveKeyWithMinSuffix(context, naturalKey);
                       if (storageChange.getUpdated() != null) {
-                        final byte[] naturalKey =
-                            calculateNaturalSlotKey(address.addressHash(), slotKey.getSlotHash());
-                        final byte[] key = calculateArchiveKeyWithMinSuffix(context, naturalKey);
                         tx.put(
                             ACCOUNT_STORAGE_STORAGE,
                             key,
                             storageChange.getUpdated().toBytes().toArrayUnsafe());
+                      } else {
+                        tx.put(ACCOUNT_STORAGE_STORAGE, key, DELETED_STORAGE_VALUE);
                       }
                     }));
   }
