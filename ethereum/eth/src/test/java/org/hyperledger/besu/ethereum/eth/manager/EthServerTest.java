@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -256,8 +257,10 @@ public class EthServerTest {
 
     // Check response
     final ReceiptsMessage expectedMsg =
-        ReceiptsMessage.create(
-            expectedResults, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
+        ReceiptsMessage.createUnsafe(
+            serializeReceiptsList(
+                expectedResults,
+                TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
     final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
     assertThat(result).contains(expectedMsg);
   }
@@ -278,8 +281,10 @@ public class EthServerTest {
 
     // Check response
     final ReceiptsMessage expectedMsg =
-        ReceiptsMessage.create(
-            expectedResults, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
+        ReceiptsMessage.createUnsafe(
+            serializeReceiptsList(
+                expectedResults,
+                TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
     final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
     assertThat(result).contains(expectedMsg);
   }
