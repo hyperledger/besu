@@ -38,7 +38,6 @@ dependencies {
   api 'org.slf4j:slf4j-api'
   api project(':util')
 
-  annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
   implementation project(':config')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
@@ -90,10 +89,6 @@ dependencies {
   testSupportImplementation project(':testutil')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testArtifacts')
   testSupportImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-
-  jmhImplementation project(':app')
-  jmhImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
-  jmhImplementation project(':plugins:rocksdb')
 }
 
 artifacts {
