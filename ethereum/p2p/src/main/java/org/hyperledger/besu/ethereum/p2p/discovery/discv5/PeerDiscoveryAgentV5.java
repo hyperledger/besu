@@ -33,6 +33,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -127,7 +128,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * @param preferIpv6Outbound if true, prefer IPv6 when a peer advertises both address families
    * @param discoverySystemFactory factory for creating the {@link MutableDiscoverySystem}
    */
-  public PeerDiscoveryAgentV5(
+  PeerDiscoveryAgentV5(
       final NetworkingConfiguration config,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
@@ -177,8 +178,14 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .start()
         .thenApply(
             v -> {
-              if (state.get() != State.STOPPED) {
-                scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
+              try {
+                if (state.get() != State.STOPPED) {
+                  scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
+                }
+              } catch (final RejectedExecutionException e) {
+                // Benign: stop() shut down the scheduler between the state check and the
+                // schedule call. The agent is stopping so there is nothing to schedule.
+                LOG.debug("Scheduler already shut down; skipping discovery tick scheduling", e);
               }
               final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
               // Return the IPv4 UDP port when available (single-stack IPv4 or dual-stack).
