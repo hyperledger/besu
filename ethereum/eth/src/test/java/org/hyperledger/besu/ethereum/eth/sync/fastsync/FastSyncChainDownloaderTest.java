@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncReceiptsFromPeerTask.Response;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
@@ -168,7 +169,7 @@ public class FastSyncChainDownloaderTest {
                                   .toList()));
 
               return new PeerTaskExecutorResult<>(
-                  Optional.of(getReceiptsFromPeerTaskResult),
+                  Optional.of(new Response(getReceiptsFromPeerTaskResult, List.of())),
                   PeerTaskExecutorResponseCode.SUCCESS,
                   Collections.emptyList());
             });

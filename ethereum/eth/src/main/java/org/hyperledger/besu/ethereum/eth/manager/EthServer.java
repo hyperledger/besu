@@ -35,9 +35,11 @@ import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetPaginatedReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.PaginatedReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -101,7 +103,7 @@ class EthServer {
         EthProtocolMessages.GET_RECEIPTS,
         (peer, messageData, capability) -> {
           if (EthProtocol.isEth70Compatible(capability)) {
-            return constructGetReceiptsPaginatedResponse(
+            return constructGetPaginatedReceiptsResponse(
                 peer,
                 blockchain,
                 messageData,
@@ -277,14 +279,15 @@ class EthServer {
     return ReceiptsMessage.createUnsafe(rlp.encoded());
   }
 
-  static MessageData constructGetReceiptsPaginatedResponse(
+  static MessageData constructGetPaginatedReceiptsResponse(
       final EthPeer peer,
       final Blockchain blockchain,
       final MessageData message,
       final int requestLimit,
       final int maxMessageSize) {
-    final GetReceiptsMessage getReceipts = GetReceiptsMessage.readFrom(message);
-    final List<Hash> requestedBlockHashes = getReceipts.blockHashes();
+    final GetPaginatedReceiptsMessage getPaginatedReceipts =
+        GetPaginatedReceiptsMessage.readFrom(message);
+    final List<Hash> requestedBlockHashes = getPaginatedReceipts.blockHashes();
     final List<Hash> blockHashes;
     if (requestedBlockHashes.size() > requestLimit) {
       LOG.atDebug()
@@ -300,7 +303,7 @@ class EthServer {
 
     final var blockReceiptsRLPs = new ArrayList<BytesValueRLPOutput>(blockHashes.size());
 
-    int skipBefore = getReceipts.firstBlockReceiptIndex();
+    int skipBefore = getPaginatedReceipts.firstBlockReceiptIndex();
     int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
     boolean lastBlockIncomplete = false;
 
@@ -309,7 +312,7 @@ class EthServer {
       if (maybeReceipts.isEmpty()) {
         LOG.debug("Invalid request from peer {}, block {} does not exists", peer, blockHash);
         peer.disconnect(INVALID_BLOCK_REQUESTED);
-        return ReceiptsMessage.createUnsafe(Bytes.EMPTY, false);
+        return PaginatedReceiptsMessage.createUnsafe(Bytes.EMPTY, false);
       }
 
       final List<TransactionReceipt> blockReceipts = maybeReceipts.get();
@@ -323,7 +326,7 @@ class EthServer {
             blockReceipts.size(),
             blockHash);
         peer.disconnect(INVALID_FIRST_BLOCK_RECEIPT_INDEX);
-        return ReceiptsMessage.createUnsafe(Bytes.EMPTY, false);
+        return PaginatedReceiptsMessage.createUnsafe(Bytes.EMPTY, false);
       }
 
       if (skipBefore > 0) {
@@ -364,7 +367,7 @@ class EthServer {
     blockReceiptsRLPs.forEach(r -> rlp.writeRaw(r.encoded()));
     rlp.endList();
 
-    return ReceiptsMessage.createUnsafe(rlp.encoded(), lastBlockIncomplete);
+    return PaginatedReceiptsMessage.createUnsafe(rlp.encoded(), lastBlockIncomplete);
   }
 
   static MessageData constructGetPooledTransactionsResponse(

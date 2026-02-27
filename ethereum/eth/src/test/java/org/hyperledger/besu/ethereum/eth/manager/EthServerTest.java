@@ -261,7 +261,7 @@ public class EthServerTest {
             serializeReceiptsList(
                 expectedResults,
                 TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH69);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -285,7 +285,7 @@ public class EthServerTest {
             serializeReceiptsList(
                 expectedResults,
                 TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH69);
     assertThat(result).contains(expectedMsg);
   }
 
