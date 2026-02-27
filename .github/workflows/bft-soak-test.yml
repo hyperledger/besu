@@ -2,18 +2,33 @@ name: bft-soak-test
 on:
   workflow_dispatch:
     inputs:
+      consensus-type:
+        description: 'Consensus type to test'
+        required: false
+        default: 'qbft'
+        type: choice
+        options:
+          - all
+          - qbft
+          - ibft2
       soak-time-mins:
         description: 'Duration of soak test in minutes (minimum 60)'
         required: false
         default: '60'
         type: string
+      besu_ref:
+        required: true
+        type: string
+        default: main
+        description: Branch to test
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+  BESU_REF: ${{ inputs.besu_ref  || 'main' }}
 
 jobs:
   bft-soak-test:
-    name: "BFT Soak Test"
+    name: "BFT Soak Test (${{ inputs.consensus-type }})"
     runs-on: ubuntu-22.04
     timeout-minutes: 180
     permissions:
@@ -23,7 +38,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ env.BESU_REF }}
       - name: Set up Java
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:
@@ -34,16 +49,16 @@ jobs:
         with:
           cache-disabled: true
       - name: run BFT soak test
-        run: ./gradlew :acceptance-tests:tests:acceptanceTestBftSoak -Dacctests.soakTimeMins=${{ inputs['soak-time-mins'] }}
+        run: ./gradlew :acceptance-tests:tests:acceptanceTestBftSoak -Dacctests.soakTimeMins=${{ inputs['soak-time-mins'] }} -Dacctests.consensusType=${{ inputs.consensus-type }}
       - name: Upload BFT Soak Test HTML Reports
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always()
         with:
-          name: bft-soak-test-html-reports
+          name: bft-soak-test-html-reports-${{ inputs.consensus-type }}
           path: 'acceptance-tests/tests/build/reports/tests/**'
       - name: Upload BFT Soak Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: always()
         with:
-          name: bft-soak-test-results
+          name: bft-soak-test-results-${{ inputs.consensus-type }}
           path: 'acceptance-tests/tests/build/test-results/**/TEST-*.xml'

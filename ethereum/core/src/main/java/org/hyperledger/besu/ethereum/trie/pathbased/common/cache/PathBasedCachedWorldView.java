@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.common.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class PathBasedCachedWorldView implements StorageSubscriber {
   }
 
   public Hash getBlockHash() {
-    return blockHeader.getHash();
+    return blockHeader.getBlockHash();
   }
 
   public synchronized void close() {
