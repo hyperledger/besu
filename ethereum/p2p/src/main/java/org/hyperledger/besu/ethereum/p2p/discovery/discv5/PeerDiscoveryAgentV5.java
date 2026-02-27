@@ -102,10 +102,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
 
+  // One-shot idempotency guard: prevents double-start (never reset to false).
   private final AtomicBoolean started = new AtomicBoolean(false);
-  // Indicates whether the discovery agent is running
+  // Operational state: true while actively running, set back to false by stop() or start failure.
   private volatile boolean running = false;
-  // Indicates whether the discovery agent has been stopped
+  // Terminal state: once stopped, the agent cannot be restarted.
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   // Indicates whether a discovery operation is currently in progress
   private final AtomicBoolean discoveryInProgress = new AtomicBoolean(false);
@@ -175,7 +176,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .start()
         .thenApply(
             v -> {
-              if (running) {
+              if (!stopped.get()) {
                 scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
               }
               final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
