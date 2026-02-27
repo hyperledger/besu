@@ -128,7 +128,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
                 }
               },
               blockHashLookup,
-              TransactionValidationParams.processingBlock(),
+              TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce(),
               blobGasPrice,
               transactionLocationTracker);
 
@@ -194,7 +194,6 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
     if (future != null && future.isDone()) {
       final ParallelizedTransactionContext parallelizedTransactionContext = future.resultNow();
-      System.out.println("getProcessingResult "+parallelizedTransactionContext.transactionProcessingResult().toString());
       if (parallelizedTransactionContext == null) {
         return Optional.empty();
       }
