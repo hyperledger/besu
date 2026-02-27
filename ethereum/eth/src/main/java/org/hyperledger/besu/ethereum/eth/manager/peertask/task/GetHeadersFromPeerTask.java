@@ -50,6 +50,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   private final int maximumRetriesAgainstDifferentPeers;
   private final ProtocolSchedule protocolSchedule;
   private final long requiredBlockchainHeight;
+  private final boolean isPoS;
 
   public GetHeadersFromPeerTask(
       final long blockNumber,
@@ -145,6 +146,8 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
         direction == Direction.FORWARD
             ? blockNumber + (long) (maxHeaders - 1) * (skip + 1)
             : blockNumber;
+
+    isPoS = protocolSchedule.anyMatch((ps) -> ps.spec().isPoS());
   }
 
   @Override
@@ -174,9 +177,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
 
   @Override
   public Predicate<EthPeerImmutableAttributes> getPeerRequirementFilter() {
-    return (ethPeer) ->
-        protocolSchedule.anyMatch((ps) -> ps.spec().isPoS())
-            || ethPeer.estimatedChainHeight() >= requiredBlockchainHeight;
+    return (ethPeer) -> isPoS || ethPeer.estimatedChainHeight() >= requiredBlockchainHeight;
   }
 
   @Override
