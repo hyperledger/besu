@@ -39,6 +39,9 @@ dependencies {
   api project(':util')
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+
+  compileOnly 'com.google.code.findbugs:jsr305'
+
   implementation project(':config')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
