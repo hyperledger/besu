@@ -346,9 +346,7 @@ public class UInt256PropertyBasedTest {
     BigInteger A = toBigUnsigned(a);
     BigInteger D = toBigUnsigned(d);
     byte[] exp =
-        (D.signum() == 0)
-            ? Bytes32.ZERO.toArrayUnsafe()
-            : bigUnsignedToBytes32(A.divide(D));
+        (D.signum() == 0) ? Bytes32.ZERO.toArrayUnsafe() : bigUnsignedToBytes32(A.divide(D));
     assertThat(got).containsExactly(exp);
   }
 
@@ -368,9 +366,7 @@ public class UInt256PropertyBasedTest {
 
     // Assert
     byte[] expected =
-        (D.signum() == 0)
-            ? Bytes32.ZERO.toArrayUnsafe()
-            : computeSignedDivExpected(A, D);
+        (D.signum() == 0) ? Bytes32.ZERO.toArrayUnsafe() : computeSignedDivExpected(A, D);
     assertThat(got).containsExactly(expected);
   }
 
