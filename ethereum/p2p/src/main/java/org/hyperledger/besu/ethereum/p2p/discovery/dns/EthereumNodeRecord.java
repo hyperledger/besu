@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
@@ -39,17 +40,19 @@ public record EthereumNodeRecord(
     Optional<InetAddress> ip,
     Optional<Integer> tcp,
     Optional<Integer> udp,
-    Optional<InetAddress> ipv6,
+    Optional<InetAddress> ipV6,
     Optional<Integer> tcpV6,
     Optional<Integer> udpV6,
     NodeRecord nodeRecord)
     implements NodeIdentifier {
 
-    public EthereumNodeRecord {
-        if (ip.isEmpty() && ipv6.isEmpty()) {
-            throw new IllegalArgumentException("Unable to create EthereumNodeRecord with no IPv4 or IPv6 address");
-        }
+  public EthereumNodeRecord {
+    if (ip.isEmpty() && ipV6.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Unable to create EthereumNodeRecord with no IPv4 or IPv6 address");
     }
+  }
+
   /**
    * Creates an EthereumNodeRecord from an ENR string
    *
@@ -167,12 +170,20 @@ public record EthereumNodeRecord(
    */
   @Override
   public String toString() {
-    return "enr:" + ip() + ":" + tcp() + "?udp=" + udp();
+    return MoreObjects.toStringHelper(this)
+        .add("publicKey", publicKey)
+        .add("ip", ip)
+        .add("tcp", tcp)
+        .add("udp", udp)
+        .add("ipv6", ipV6)
+        .add("tcpV6", tcpV6)
+        .add("udpV6", udpV6)
+        .toString();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(publicKey, ip, tcp, udp, ipv6, tcpV6, udpV6, nodeRecord);
+    return Objects.hash(publicKey, ip, tcp, udp, ipV6, tcpV6, udpV6, nodeRecord);
   }
 
   @Override
@@ -188,7 +199,7 @@ public record EthereumNodeRecord(
         && Objects.equals(this.ip, other.ip)
         && Objects.equals(this.tcp, other.tcp)
         && Objects.equals(this.udp, other.udp)
-        && Objects.equals(this.ipv6, other.ipv6)
+        && Objects.equals(this.ipV6, other.ipV6)
         && Objects.equals(this.tcpV6, other.tcpV6)
         && Objects.equals(this.udpV6, other.udpV6)
         && Objects.equals(this.nodeRecord, other.nodeRecord);
@@ -211,7 +222,7 @@ public record EthereumNodeRecord(
 
   @Override
   public Optional<InetAddress> getIpV6Address() {
-    return ipv6;
+    return ipV6;
   }
 
   @Override
