@@ -104,8 +104,6 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   // One-shot idempotency guard: prevents double-start (never reset to false).
   private final AtomicBoolean started = new AtomicBoolean(false);
-  // Operational state: true while actively running, set back to false by stop() or start failure.
-  private volatile boolean running = false;
   // Terminal state: once stopped, the agent cannot be restarted.
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   // Indicates whether a discovery operation is currently in progress
@@ -171,7 +169,6 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         discoverySystemFactory.create(localNodeRecord, this::handleBoundPortResolved);
     discoverySystem.set(system);
 
-    running = true;
     return system
         .start()
         .thenApply(
@@ -200,7 +197,6 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             (port, error) -> {
               if (error != null) {
                 LOG.error("Failed to start DiscV5 peer discovery agent", error);
-                running = false;
                 scheduler.shutdownNow();
               }
             });
@@ -214,7 +210,6 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   @Override
   public CompletableFuture<?> stop() {
     LOG.info("Stopping DiscV5 Peer Discovery Agent");
-    running = false;
     stopped.set(true);
     scheduler.shutdownNow();
     final MutableDiscoverySystem system = discoverySystem.get();
@@ -377,7 +372,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   /** Periodic discovery task that enforces adaptive cadence and triggers peer discovery. */
   private void discoveryTick() {
-    if (!running || hasSufficientPeers()) {
+    if (stopped.get() || hasSufficientPeers()) {
       return;
     }
     discoverAndConnect();
