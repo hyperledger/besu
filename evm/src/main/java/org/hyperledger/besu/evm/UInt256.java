@@ -16,7 +16,6 @@ package org.hyperledger.besu.evm;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * 256-bits wide unsigned integer class.
@@ -42,6 +41,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
   /** The constant 0. */
   public static final UInt256 ZERO = new UInt256(0, 0, 0, 0);
+
   public static final UInt256 ONE = new UInt256(0, 0, 0, 1);
 
   private static final byte[] ZERO_BYTES = new byte[BYTESIZE];
@@ -946,8 +946,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return new QR256(q, new UInt256(z3, z2, z1, z0));
   }
 
-  private QR256 mulSub(
-    final long v3, final long v2, final long v1, final long v0, final long q) {
+  private QR256 mulSub(final long v3, final long v2, final long v1, final long v0, final long q) {
     // Multiply-subtract: already have highest 1 limbs
     // <z4, z3, z2, z1, z0>  =  <u3, u2, u1, u0> * q
     long p0 = u0 * q;
@@ -969,16 +968,15 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     long z2 = res - carry;
     borrow = (Long.compareUnsigned(res, z2) < 0) ? 1 : 0;
     carry =
-      p1
-        + ((Long.compareUnsigned(v2, t2) < 0) ? 1 : 0)
-        + ((Long.compareUnsigned(t2, res) < 0) ? 1 : 0);
+        p1
+            + ((Long.compareUnsigned(v2, t2) < 0) ? 1 : 0)
+            + ((Long.compareUnsigned(t2, res) < 0) ? 1 : 0);
 
     // Propagate overflows (borrows)
     long t3 = v3 - carry;
     long z3 = t3 - borrow;
     borrow =
-      ((Long.compareUnsigned(v3, t3) < 0) ? 1 : 0)
-        | ((Long.compareUnsigned(t3, z3) < 0) ? 1 : 0);
+        ((Long.compareUnsigned(v3, t3) < 0) ? 1 : 0) | ((Long.compareUnsigned(t3, z3) < 0) ? 1 : 0);
 
     if (borrow != 0) return addBack(z3, z2, z1, z0, q - 1);
     return new QR256(q, new UInt256(z3, z2, z1, z0));
@@ -1007,7 +1005,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   private QR256 reduceStep(
-    final long v4, final long v3, final long v2, final long v1, final long v0, final long inv) {
+      final long v4, final long v3, final long v2, final long v1, final long v0, final long inv) {
     if (v4 == u3) return new QR256(-1L, mulSubOverflow(v3, v2, v1, v0));
     QR64 qr = div2by1(v4, v3, u3, inv);
     if (qr.q != 0) return mulSub(qr.r, v2, v1, v0, qr.q);
@@ -1027,9 +1025,9 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   private UInt256 modReduceNormalised(final UInt512 that, final int shift, final long inv) {
     UInt576 v = that.shiftLeftWide(shift);
     if ((v.u8 | v.u7 | v.u6) == 0
-      && Long.compareUnsigned(v.u7, u3) < 0
-      && Long.compareUnsigned(v.u6, u3) < 0
-      && Long.compareUnsigned(v.u5, u3) < 0) {
+        && Long.compareUnsigned(v.u7, u3) < 0
+        && Long.compareUnsigned(v.u6, u3) < 0
+        && Long.compareUnsigned(v.u5, u3) < 0) {
       QR256 qr;
       if (v.u5 != 0 || Long.compareUnsigned(v.u4, u3) >= 0) {
         qr = reduceStep(v.u5, v.u4, v.u3, v.u2, v.u1, inv);
@@ -1196,8 +1194,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       UInt256 y = (b.isUInt64()) ? b : m.modReduceNormalised(b, shift, inv);
       UInt256 prod = x.mul64(y);
       return prod.isUInt64()
-        ? UInt256.fromLong(Long.remainderUnsigned(prod.u0, u0))
-        : m.modReduceNormalised(prod, shift, inv);
+          ? UInt256.fromLong(Long.remainderUnsigned(prod.u0, u0))
+          : m.modReduceNormalised(prod, shift, inv);
     }
 
     private QR64 reduceStep(final long v1, final long v0, final long inv) {
@@ -1284,8 +1282,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       return m.divReduceNormalised(that, shift, inv);
     }
 
-    private UInt256 divReduceNormalised(
-        final UInt256 that, final int shift, final long inv) {
+    private UInt256 divReduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
       // Divide (v.u4, v.u3, v.u2, v.u1, v.u0) by u0
       // v.u4 < u0 is guaranteed by normalization when dividend < divisor * 2^256
@@ -1592,8 +1589,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       long t2 = v2 - carry;
       long z2 = t2 - borrow;
       borrow =
-        ((Long.compareUnsigned(v2, t2) < 0) ? 1 : 0)
-          | ((Long.compareUnsigned(t2, z2) < 0) ? 1 : 0);
+          ((Long.compareUnsigned(v2, t2) < 0) ? 1 : 0)
+              | ((Long.compareUnsigned(t2, z2) < 0) ? 1 : 0);
 
       if (borrow != 0) return addBack(z2, z1, z0, q - 1); // unlikely
       return new QR192(q, new UInt192(z2, z1, z0));
@@ -1615,7 +1612,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     }
 
     private QR192 reduceStep(
-      final long v3, final long v2, final long v1, final long v0, final long inv) {
+        final long v3, final long v2, final long v1, final long v0, final long inv) {
       if (v3 == u2) return new QR192(-1L, mulSubOverflow(v2, v1, v0));
       QR64 qr = div2by1(v3, v2, u2, inv);
       if (qr.q != 0) return mulSub(qr.r, v1, v0, qr.q);
