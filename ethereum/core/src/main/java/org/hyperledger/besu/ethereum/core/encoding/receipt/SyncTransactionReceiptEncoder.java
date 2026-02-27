@@ -35,7 +35,9 @@ public class SyncTransactionReceiptEncoder {
     final boolean isFrontier =
         receipt.getTransactionTypeCode().isEmpty()
             || receipt.getTransactionTypeCode().get(0)
-                == TransactionType.FRONTIER.getEthSerializedType();
+                == TransactionType.FRONTIER.getEthSerializedType()
+            || receipt.getTransactionTypeCode().get(0)
+                == TransactionType.FRONTIER.getSerializedType();
 
     List<Bytes> encodedLogs =
         receipt.getLogs().stream()
