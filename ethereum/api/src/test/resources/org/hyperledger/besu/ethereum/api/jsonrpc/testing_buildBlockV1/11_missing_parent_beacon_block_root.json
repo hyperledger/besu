@@ -1,0 +1,30 @@
+{
+  "description": "Error case: parentBeaconBlockRoot field is absent from payloadAttributes. Expects INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS (code -32602) with 'Missing parent beacon block root field'.",
+  "request": {
+    "id": 11,
+    "jsonrpc": "2.0",
+    "method": "testing_buildBlockV1",
+    "params": [
+      {
+        "parentBlockHash": "0x937c8f382f4945fc6122652239426484d97b400d66c122aea45f2dd4a8afeab6",
+        "payloadAttributes": {
+          "timestamp": "0x1",
+          "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "suggestedFeeRecipient": "0x0000000000000000000000000000000000000000",
+          "withdrawals": []
+        },
+        "transactions": []
+      }
+    ]
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "error": {
+      "code": -32602,
+      "message": "Invalid parent beacon block root (missing or incorrect)",
+      "data": "Missing parent beacon block root field"
+    }
+  },
+  "statusCode": 200
+}

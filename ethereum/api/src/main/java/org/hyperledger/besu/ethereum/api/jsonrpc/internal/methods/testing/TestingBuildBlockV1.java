@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Besu.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.testing;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
+
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -28,39 +31,55 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV1;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV4;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobsBundleV2;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.GenericBlockCreator;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
-import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.HexUtils;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * The testing_buildBlockV1 RPC method is a debugging and testing tool that simplifies the block
+ * production process into a single call. It is intended to replace the multi-step workflow of
+ * sending transactions, calling engine_forkchoiceUpdated with payloadAttributes, and then calling
+ * engine_getPayload.
+ *
+ * <p>This method is considered sensitive and is intended for testing environments only.
+ */
 public class TestingBuildBlockV1 implements JsonRpcMethod {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestingBuildBlockV1.class);
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final MiningConfiguration miningConfiguration;
   private final TransactionPool transactionPool;
   private final EthScheduler ethScheduler;
+  private final Optional<Long> amsterdamMilestone;
 
   public TestingBuildBlockV1(
       final ProtocolContext protocolContext,
@@ -73,6 +92,7 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     this.miningConfiguration = miningConfiguration;
     this.transactionPool = transactionPool;
     this.ethScheduler = ethScheduler;
+    this.amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
   }
 
   @Override
@@ -82,103 +102,188 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final TestingBuildBlockParameter param;
+    final TestingBuildBlockParameter parameter;
     try {
-      param = requestContext.getRequiredParameter(0, TestingBuildBlockParameter.class);
-    } catch (final JsonRpcParameterException e) {
+      parameter = requestContext.getRequiredParameter(0, TestingBuildBlockParameter.class);
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid testing_buildBlockV1 parameter (index 0)", RpcErrorType.INVALID_PARAMS, e);
     }
 
-    final EnginePayloadAttributesParameter payloadAttributes = param.getPayloadAttributes();
+    final Object requestId = requestContext.getRequest().getId();
 
-    // Validate parent block exists
-    final Optional<BlockHeader> maybeParentHeader =
-        protocolContext.getBlockchain().getBlockHeader(param.getParentBlockHash());
+    final Hash parentBlockHash = parameter.getParentBlockHash();
+    final EnginePayloadAttributesParameter payloadAttributes = parameter.getPayloadAttributes();
+    final List<String> rawTransactions = parameter.getTransactions();
+    final Bytes extraData = parameter.getExtraData();
+
+    final Blockchain blockchain = protocolContext.getBlockchain();
+    final Optional<BlockHeader> maybeParentHeader = blockchain.getBlockHeader(parentBlockHash);
+
     if (maybeParentHeader.isEmpty()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_HASH_PARAMS);
+          requestId,
+          ValidationResult.invalid(
+              RpcErrorType.INVALID_PARAMS,
+              "Parent block not found: " + parentBlockHash.toHexString()));
     }
+
     final BlockHeader parentHeader = maybeParentHeader.get();
 
-    // Decode transactions from hex RLP
-    final List<Transaction> transactions;
-    try {
-      transactions =
-          param.getTransactions().stream()
-              .map(Bytes::fromHexString)
-              .map(bytes -> TransactionDecoder.decodeOpaqueBytes(bytes, EncodingContext.BLOCK_BODY))
-              .collect(Collectors.toList());
-    } catch (final Exception e) {
+    if (payloadAttributes == null) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestId,
+          ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing payloadAttributes field"));
     }
 
-    // Convert withdrawals
-    final Optional<List<Withdrawal>> withdrawals =
-        Optional.ofNullable(payloadAttributes.getWithdrawals())
-            .map(
-                wps ->
-                    wps.stream()
-                        .map(WithdrawalParameter::toWithdrawal)
-                        .collect(Collectors.toList()));
+    final ValidationResult<RpcErrorType> forkValidation =
+        validateForkSupported(payloadAttributes.getTimestamp());
+    if (!forkValidation.isValid()) {
+      return new JsonRpcErrorResponse(requestId, forkValidation);
+    }
 
-    // Extra data
-    final Bytes extraData = param.getExtraData().map(Bytes::fromHexString).orElse(Bytes.EMPTY);
+    final ValidationResult<RpcErrorType> attributesValidation =
+        validatePayloadAttributes(payloadAttributes);
+    if (!attributesValidation.isValid()) {
+      return new JsonRpcErrorResponse(requestId, attributesValidation);
+    }
 
-    // Create block creator
-    final GenericBlockCreator blockCreator =
-        new GenericBlockCreator(
-            miningConfiguration,
-            (__, ___) -> payloadAttributes.getSuggestedFeeRecipient(),
-            (__) -> extraData,
-            transactionPool,
-            protocolContext,
-            protocolSchedule,
-            ethScheduler);
+    final List<Transaction> transactions = new ArrayList<>();
+    for (String rawTx : rawTransactions) {
+      try {
+        transactions.add(DomainObjectDecodeUtils.decodeRawTransaction(rawTx));
+      } catch (Exception e) {
+        LOG.debug("Failed to decode transaction: {}", rawTx, e);
+        return new JsonRpcErrorResponse(
+            requestId,
+            ValidationResult.invalid(
+                RpcErrorType.INVALID_TRANSACTION_PARAMS,
+                "Failed to decode transaction: " + e.getMessage()));
+      }
+    }
 
-    // Build the block
-    final BlockCreationResult result;
+    final List<Withdrawal> withdrawals =
+        payloadAttributes.getWithdrawals() != null
+            ? payloadAttributes.getWithdrawals().stream()
+                .map(WithdrawalParameter::toWithdrawal)
+                .collect(Collectors.toList())
+            : List.of();
+
+    final Bytes32 prevRandao = payloadAttributes.getPrevRandao();
+    final Bytes32 parentBeaconBlockRoot = payloadAttributes.getParentBeaconBlockRoot();
+    final Long timestamp = payloadAttributes.getTimestamp();
+    final Long slotNumber = payloadAttributes.getSlotNumber();
+
     try {
-      result =
+      miningConfiguration.setCoinbase(payloadAttributes.getSuggestedFeeRecipient());
+
+      if (extraData != null && !extraData.isEmpty()) {
+        miningConfiguration.setExtraData(extraData);
+      }
+
+      final TestingBlockCreator blockCreator =
+          new TestingBlockCreator(
+              miningConfiguration,
+              transactionPool,
+              protocolContext,
+              protocolSchedule,
+              ethScheduler);
+
+      final BlockCreationResult result =
           blockCreator.createBlock(
               Optional.of(transactions),
-              Optional.of(Collections.emptyList()),
-              withdrawals,
-              Optional.of(payloadAttributes.getPrevRandao()),
-              Optional.ofNullable(payloadAttributes.getParentBeaconBlockRoot()),
-              Optional.empty(),
-              payloadAttributes.getTimestamp(),
-              false,
+              prevRandao,
+              timestamp,
+              Optional.of(withdrawals),
+              Optional.ofNullable(parentBeaconBlockRoot),
+              Optional.ofNullable(slotNumber),
               parentHeader);
-    } catch (final Exception e) {
+
+      final Block block = result.getBlock();
+
+      final List<String> txsAsHex =
+          block.getBody().getTransactions().stream()
+              .map(tx -> TransactionEncoder.encodeOpaqueBytes(tx, EncodingContext.BLOCK_BODY))
+              .map(b -> HexUtils.toFastHex(b, true))
+              .collect(Collectors.toList());
+
+      final Optional<List<String>> executionRequests = getExecutionRequests(block);
+
+      final BlobsBundleV2 blobsBundle = new BlobsBundleV2(block.getBody().getTransactions());
+
+      final String blockAccessListHex = encodeBlockAccessList(result.getBlockAccessList());
+
+      final String slotNumberHex =
+          block.getHeader().getOptionalSlotNumber().map(Quantity::create).orElse(null);
+
+      final EngineGetPayloadResultV6 responsePayload =
+          new EngineGetPayloadResultV6(
+              block.getHeader(),
+              txsAsHex,
+              block.getBody().getWithdrawals(),
+              executionRequests,
+              Quantity.create(Wei.ZERO),
+              blobsBundle,
+              blockAccessListHex,
+              slotNumberHex);
+
+      return new JsonRpcSuccessResponse(requestId, responsePayload);
+
+    } catch (Exception e) {
+      LOG.error("Error building block", e);
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
+          requestId,
+          ValidationResult.invalid(
+              RpcErrorType.INTERNAL_ERROR, "Error building block: " + e.getMessage()));
     }
+  }
 
-    // Format response as EngineGetPayloadResultV4
-    final var block = result.getBlock();
-    final List<String> txsAsHex =
-        block.getBody().getTransactions().stream()
-            .map(tx -> TransactionEncoder.encodeOpaqueBytes(tx, EncodingContext.BLOCK_BODY))
-            .map(b -> HexUtils.toFastHex(b, true))
-            .collect(Collectors.toList());
+  private ValidationResult<RpcErrorType> validateForkSupported(final long timestamp) {
+    if (amsterdamMilestone.isEmpty()) {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK, "Amsterdam fork is not enabled");
+    }
+    if (timestamp < amsterdamMilestone.get()) {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK,
+          "Timestamp must be >= Amsterdam fork timestamp: " + amsterdamMilestone.get());
+    }
+    return ValidationResult.valid();
+  }
 
-    final BlockWithReceipts blockWithReceipts =
-        new BlockWithReceipts(block, result.getTransactionSelectionResults().getReceipts());
-    final Wei blockValue = BlockValueCalculator.calculateBlockValue(blockWithReceipts);
+  private ValidationResult<RpcErrorType> validatePayloadAttributes(
+      final EnginePayloadAttributesParameter attributes) {
+    if (attributes.getTimestamp() == null || attributes.getTimestamp() == 0) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Missing or invalid timestamp field");
+    }
+    if (attributes.getPrevRandao() == null) {
+      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing prevRandao field");
+    }
+    if (attributes.getSuggestedFeeRecipient() == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARAMS, "Missing suggestedFeeRecipient field");
+    }
+    if (attributes.getParentBeaconBlockRoot() == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
+          "Missing parent beacon block root field");
+    }
+    return ValidationResult.valid();
+  }
 
-    final BlobsBundleV1 blobsBundle = new BlobsBundleV1(block.getBody().getTransactions());
+  private Optional<List<String>> getExecutionRequests(final Block block) {
+    return block.getHeader().getRequestsHash().map(hash -> List.of());
+  }
 
-    final EngineGetPayloadResultV4 response =
-        new EngineGetPayloadResultV4(
-            block.getHeader(),
-            txsAsHex,
-            block.getBody().getWithdrawals(),
-            Optional.empty(),
-            Quantity.create(blockValue),
-            blobsBundle);
-
-    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
+  private String encodeBlockAccessList(final Optional<BlockAccessList> maybeBlockAccessList) {
+    return maybeBlockAccessList
+        .map(
+            bal -> {
+              final BytesValueRLPOutput output = new BytesValueRLPOutput();
+              bal.writeTo(output);
+              return output.encoded().toHexString();
+            })
+        .orElse(null);
   }
 }
