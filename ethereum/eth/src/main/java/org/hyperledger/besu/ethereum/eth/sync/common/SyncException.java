@@ -12,17 +12,23 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.common;
 
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
+public class SyncException extends RuntimeException {
 
-import java.util.concurrent.CompletableFuture;
+  private final SyncError error;
 
-public interface WorldStateDownloader extends WorldStateDownloadStatus {
+  public SyncException(final SyncError error) {
+    super("Sync failed: " + error);
+    this.error = error;
+  }
 
-  CompletableFuture<Void> run(
-      final PivotSyncActions fastSyncActions, final PivotSyncState fastSyncState);
+  public SyncError getError() {
+    return error;
+  }
 
-  void cancel();
+  public SyncException(final Throwable error) {
+    super(error);
+    this.error = SyncError.UNEXPECTED_ERROR;
+  }
 }

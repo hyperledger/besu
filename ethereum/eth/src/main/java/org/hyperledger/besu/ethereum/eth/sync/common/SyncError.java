@@ -12,17 +12,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.worldstate;
+package org.hyperledger.besu.ethereum.eth.sync.common;
 
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
-
-import java.util.concurrent.CompletableFuture;
-
-public interface WorldStateDownloader extends WorldStateDownloadStatus {
-
-  CompletableFuture<Void> run(
-      final PivotSyncActions fastSyncActions, final PivotSyncState fastSyncState);
-
-  void cancel();
+public enum SyncError {
+  NO_PEERS_AVAILABLE,
+  PIVOT_BLOCK_HEADER_MISMATCH,
+  UNEXPECTED_ERROR
 }
