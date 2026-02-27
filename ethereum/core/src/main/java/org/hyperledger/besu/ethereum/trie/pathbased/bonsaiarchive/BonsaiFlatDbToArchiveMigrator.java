@@ -106,8 +106,7 @@ public class BonsaiFlatDbToArchiveMigrator {
       return CompletableFuture.completedFuture(null);
     }
 
-    final long endBlock = blockchain.getChainHeadBlockNumber();
-    final AtomicLong target = new AtomicLong(endBlock);
+    final AtomicLong target = new AtomicLong(blockchain.getChainHeadBlockNumber());
     final AtomicBoolean tailMode = new AtomicBoolean(false);
     final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
 
@@ -133,29 +132,27 @@ public class BonsaiFlatDbToArchiveMigrator {
             });
 
     return CompletableFuture.runAsync(
-        () -> migrateBlocks(endBlock, target, tailMode, blockObserverId), executorService);
+        () -> migrateBlocks(target, tailMode, blockObserverId), executorService);
   }
 
   private void migrateBlocks(
-      final long endBlock,
-      final AtomicLong target,
-      final AtomicBoolean tailMode,
-      final long blockObserverId) {
+      final AtomicLong target, final AtomicBoolean tailMode, final long blockObserverId) {
     try {
       final Instant migrationStartTime = Instant.now();
 
       final long startBlock = getMigrationProgress().orElse(0L);
       final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
-      LOG.info("Starting Bonsai Archive migration from block {} to {}", startBlock, endBlock);
+      LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
       long migratedCount = 0;
       long skippedCount = 0;
 
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
 
-        // Activate tail mode when approaching the initial chain head
+        // Activate tail mode when approaching the current chain head
+        final long currentTarget = target.get();
         if (!tailMode.get()
-            && endBlock > TAIL_THRESHOLD
-            && blockNumber >= endBlock - TAIL_THRESHOLD) {
+            && currentTarget > TAIL_THRESHOLD
+            && blockNumber >= currentTarget - TAIL_THRESHOLD) {
           tailMode.set(true);
           LOG.info(
               "Archive migration entering tail mode at block {}, target frozen at {}",
@@ -192,7 +189,7 @@ public class BonsaiFlatDbToArchiveMigrator {
                 "Failed to rollback transaction for block {}", blockNumber, rollbackException);
           }
           throw new IllegalStateException(
-              "Bonsai migration failed at block " + blockNumber + ": " + e.getMessage(), e);
+              "Migration failed at block " + blockNumber + ": " + e.getMessage(), e);
         }
 
         logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
@@ -202,7 +199,7 @@ public class BonsaiFlatDbToArchiveMigrator {
       logCompletion(startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
 
     } catch (final Exception e) {
-      LOG.error("Bonsai Archive migration failed", e);
+      LOG.error("Migration failed", e);
       throw new RuntimeException(e);
     } finally {
       blockchain.removeObserver(blockObserverId);

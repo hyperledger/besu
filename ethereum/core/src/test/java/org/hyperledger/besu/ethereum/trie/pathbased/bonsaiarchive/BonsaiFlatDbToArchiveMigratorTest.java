@@ -289,6 +289,48 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
+  public void tailModeDoesNotActivateBeforeThreshold() throws Exception {
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 10;
+    appendBlocks(initialBlocks);
+
+    // Pause well before the tail threshold (block 1)
+    final Hash pauseHash = blockchain.getBlockHeader(1L).get().getHash();
+
+    final CountDownLatch migrationPausedLatch = new CountDownLatch(1);
+    final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
+
+    when(trieLogManager.getTrieLogLayer(pauseHash))
+        .thenAnswer(
+            invocation -> {
+              migrationPausedLatch.countDown();
+              allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
+              return Optional.of(createAccountTrieLog(Wei.fromHexString("0x100")));
+            });
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
+    final CompletableFuture<Void> future = migrator.migrate();
+
+    assertThat(migrationPausedLatch.await(5, TimeUnit.SECONDS)).isTrue();
+
+    // Append a block while paused far from tail — target should update (not frozen)
+    final Block head = blockchain.getBlockByNumber(blockchain.getChainHeadBlockNumber()).get();
+    final List<Block> newBlocks = blockDataGenerator.blockSequence(head, 1);
+    final Block newBlock = newBlocks.get(0);
+    final long newBlockNumber = initialBlocks + 1;
+    final Hash newHash = newBlock.getHeader().getHash();
+    when(trieLogManager.getTrieLogLayer(newHash))
+        .thenReturn(Optional.of(createAccountTrieLog(Wei.fromHexString("0xABC"))));
+    blockchain.appendBlock(newBlock, blockDataGenerator.receipts(newBlock));
+
+    allowMigrationToFinishLatch.countDown();
+    future.get(30, TimeUnit.SECONDS);
+
+    // The new block should have been migrated by the main loop (target was updated, not frozen)
+    assertThat(migrator.getMigrationProgress()).hasValue(newBlockNumber);
+    assertThat(getArchivedAccountKey(newBlockNumber)).isPresent();
+  }
+
+  @Test
   public void tailModeActivatesNearEndBlock() throws Exception {
     final int totalBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 10;
     appendBlocks(totalBlocks);
