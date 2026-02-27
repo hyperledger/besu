@@ -17,33 +17,72 @@ package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Downloads block headers in reverse direction (backward from pivot to genesis). Returns headers in
- * reverse order: [n, n-1, n-2, ...].
+ * Downloads block headers in reverse direction (backward from a pivot block toward genesis).
+ * Returns headers in reverse order: {@code [n, n-1, n-2, ...]}.
+ *
+ * <p>Each invocation of {@link #apply(Long)} downloads a contiguous batch of headers ending at the
+ * given start block number and stopping no earlier than {@code trustAnchorBlockNumber}. Headers are
+ * fetched from peers using {@link PeerTaskExecutor} and accumulated across multiple peer requests
+ * until the full batch is complete.
+ *
+ * <h2>Retry mechanism</h2>
+ *
+ * <p>The download is resilient to transient peer failures. When a peer request does not succeed,
+ * the behavior depends on the response code:
+ *
+ * <ul>
+ *   <li><b>SUCCESS</b> – the returned headers are appended to the accumulated list. If the batch is
+ *       still incomplete, the loop immediately issues another request (possibly to a different
+ *       peer) for the remaining headers.
+ *   <li><b>INTERNAL_SERVER_ERROR</b> – a fatal, non-retriable condition. The returned future is
+ *       failed immediately with a {@link RuntimeException} and no further attempts are made.
+ *   <li><b>Any other code</b> (e.g. {@code NO_PEER_AVAILABLE}, {@code PEER_DISCONNECTED}) – a
+ *       transient condition. The next attempt is scheduled after {@link #RETRY_DELAY} via {@link
+ *       EthScheduler#scheduleFutureTask}. There is no upper bound on the number of retries; the
+ *       process continues until either all headers are received or the overall {@link
+ *       #timeoutDuration} elapses.
+ * </ul>
+ *
+ * <p>The total time budget is enforced by {@link CompletableFuture#orTimeout} applied in {@link
+ * #apply(Long)}. When the deadline is exceeded a {@link java.util.concurrent.TimeoutException} is
+ * raised, which is logged at TRACE level before propagating to the caller.
+ *
+ * <p>Partial progress is preserved across retries: headers already downloaded are stored in a
+ * shared list and subsequent requests only ask for the remaining headers, so a retry after a
+ * partial success does not re-download headers that were already received.
  */
 public class DownloadBackwardHeadersStep
     implements Function<Long, CompletableFuture<List<BlockHeader>>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadBackwardHeadersStep.class);
+  private static final Duration RETRY_DELAY = Duration.ofSeconds(1);
+  private static final AtomicInteger taskId = new AtomicInteger(0);
 
   private final ProtocolSchedule protocolSchedule;
-  private final EthContext ethContext;
+  private final EthScheduler ethScheduler;
+  private final PeerTaskExecutor peerTaskExecutor;
   private final int headerRequestSize;
   private final long trustAnchorBlockNumber;
+  private final Duration timeoutDuration;
 
   /**
    * Creates a new DownloadBackwardHeadersStep.
@@ -52,19 +91,37 @@ public class DownloadBackwardHeadersStep
    * @param ethContext the eth context
    * @param headerRequestSize the number of headers to request per batch
    * @param trustAnchorBlockNumber the lowest header that we want to download
+   * @param timeoutDuration the maximum time to wait including all retries
    */
   public DownloadBackwardHeadersStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
       final int headerRequestSize,
-      final long trustAnchorBlockNumber) {
+      final long trustAnchorBlockNumber,
+      final Duration timeoutDuration) {
     if (headerRequestSize < 1) throw new IllegalArgumentException("headerRequestSize must be >= 1");
     this.protocolSchedule = protocolSchedule;
-    this.ethContext = ethContext;
+    this.ethScheduler = ethContext.getScheduler();
+    this.peerTaskExecutor = ethContext.getPeerTaskExecutor();
     this.headerRequestSize = headerRequestSize;
     this.trustAnchorBlockNumber = trustAnchorBlockNumber;
+    this.timeoutDuration = timeoutDuration;
   }
 
+  /**
+   * Initiates the download of a backward batch of block headers.
+   *
+   * <p>The batch starts at {@code startBlockNumber} and contains at most {@link #headerRequestSize}
+   * headers, capped so that the download does not go below {@link #trustAnchorBlockNumber}. The
+   * returned future completes with the full list of headers in reverse order once all headers in
+   * the batch have been retrieved, or fails if a fatal error occurs or the {@link #timeoutDuration}
+   * is exceeded.
+   *
+   * @param startBlockNumber the block number of the first (highest) header to download
+   * @return a future that resolves to the downloaded headers in reverse order (highest to lowest)
+   * @throws IllegalStateException if {@code startBlockNumber} is not strictly greater than {@link
+   *     #trustAnchorBlockNumber} (i.e. there are no headers left to download)
+   */
   @Override
   public CompletableFuture<List<BlockHeader>> apply(final Long startBlockNumber) {
     final long remainingHeaders = startBlockNumber - trustAnchorBlockNumber;
@@ -74,56 +131,152 @@ public class DownloadBackwardHeadersStep
           "Number of headers to request is less than 1:" + headersToRequest);
     }
 
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(() -> downloadAllHeaders(startBlockNumber, headersToRequest))
-        .orTimeout(2L, TimeUnit.MINUTES);
+    final int currentTaskId = taskId.getAndIncrement();
+    final List<BlockHeader> downloadedHeaders = new ArrayList<>(headersToRequest);
+    return ethScheduler
+        .scheduleServiceTask(
+            () ->
+                downloadAllHeaders(
+                    currentTaskId, 0, startBlockNumber, headersToRequest, downloadedHeaders))
+        .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
+        .whenComplete(
+            (unused, throwable) -> {
+              if (throwable instanceof TimeoutException) {
+                LOG.trace(
+                    "[{}] Timed out after {} ms while downloading {} backward headers from block {}",
+                    currentTaskId,
+                    timeoutDuration.toMillis(),
+                    headersToRequest,
+                    startBlockNumber);
+              }
+            });
   }
 
+  /**
+   * Core download loop that accumulates headers for a single batch, retrying on transient peer
+   * failures.
+   *
+   * <p>On each iteration the method asks peers for the remaining headers in the batch (i.e. {@code
+   * headersToRequest - downloadedHeaders.size()} headers starting from {@code startBlockNumber -
+   * downloadedHeaders.size()}). The loop continues synchronously as long as peer requests succeed,
+   * exiting only when the batch is complete.
+   *
+   * <p>When a peer request fails transiently, the method returns a future that fires after {@link
+   * #RETRY_DELAY} and then calls itself recursively via {@link EthScheduler#scheduleServiceTask}.
+   * The recursion carries the current {@code downloadedHeaders} list and iteration count forward,
+   * so no progress is lost between retries. A fatal {@link
+   * PeerTaskExecutorResponseCode#INTERNAL_SERVER_ERROR} skips the retry and fails the future
+   * immediately.
+   *
+   * <p>When consecutive headers from different peer responses are joined, the method verifies that
+   * the hash of the first header of the new response matches the parent hash recorded in the last
+   * already-downloaded header, ensuring chain continuity.
+   *
+   * @param currTaskId monotonically increasing identifier used in log messages to correlate entries
+   *     belonging to the same logical download task
+   * @param prevIterations number of iterations completed before this invocation (0 on the first
+   *     call; preserved across recursive retry calls so that log messages show the true attempt
+   *     count)
+   * @param startBlockNumber block number of the first (highest) header in the batch
+   * @param headersToRequest total number of headers the batch must contain
+   * @param downloadedHeaders mutable list that accumulates successfully downloaded headers; shared
+   *     across the synchronous loop iterations and across recursive retry invocations
+   * @return a future that resolves to {@code downloadedHeaders} once all {@code headersToRequest}
+   *     headers have been fetched, or fails on a fatal peer error or timeout
+   */
   private CompletableFuture<List<BlockHeader>> downloadAllHeaders(
-      final Long startBlockNumber, final int headersToRequest) {
-    List<BlockHeader> headers = new ArrayList<>(headersToRequest);
+      final int currTaskId,
+      final int prevIterations,
+      final Long startBlockNumber,
+      final int headersToRequest,
+      final List<BlockHeader> downloadedHeaders) {
+
+    int iteration = prevIterations;
     do {
+      ++iteration;
+
+      final long requestStartBlockNumber = startBlockNumber - downloadedHeaders.size();
+      final int requestMaxHeaders = headersToRequest - downloadedHeaders.size();
+
+      LOG.trace(
+          "[{}:{}] Backward downloading {} headers starting from block {}",
+          currTaskId,
+          iteration,
+          requestMaxHeaders,
+          requestStartBlockNumber);
+
       final GetHeadersFromPeerTask task =
           new GetHeadersFromPeerTask(
-              startBlockNumber - headers.size(),
-              headersToRequest - headers.size(),
+              requestStartBlockNumber,
+              requestMaxHeaders,
               0,
               GetHeadersFromPeerTask.Direction.REVERSE,
               protocolSchedule);
 
-      final PeerTaskExecutorResult<List<BlockHeader>> result =
-          ethContext.getPeerTaskExecutor().execute(task);
+      final PeerTaskExecutorResult<List<BlockHeader>> result = peerTaskExecutor.execute(task);
 
-      final PeerTaskExecutorResponseCode peerTaskExecutorResponseCode = result.responseCode();
-      if (peerTaskExecutorResponseCode != PeerTaskExecutorResponseCode.SUCCESS) {
-        if (peerTaskExecutorResponseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
-          throw new RuntimeException(
-              "Failed to download "
-                  + headersToRequest
-                  + " headers starting from block "
-                  + startBlockNumber);
-        }
-        // wait for a peer to become available before retrying
-        ethContext.getEthPeers().waitForPeer(__ -> true);
-      } else {
-        final Optional<List<BlockHeader>> optionalBlockHeaderList = result.result();
-        final List<BlockHeader> resultBlockHeaders = optionalBlockHeaderList.orElseGet(List::of);
-        if (!headers.isEmpty() // check the parent hash and block hash match
+      final PeerTaskExecutorResponseCode responseCode = result.responseCode();
+
+      if (responseCode == PeerTaskExecutorResponseCode.SUCCESS) {
+        final List<BlockHeader> resultBlockHeaders = result.result().orElseGet(List::of);
+        if (!downloadedHeaders.isEmpty() // check the parent hash and block hash match
             && !resultBlockHeaders.isEmpty()
-            && !resultBlockHeaders.getFirst().getHash().equals(headers.getLast().getParentHash())) {
+            && !resultBlockHeaders
+                .getFirst()
+                .getHash()
+                .getBytes()
+                .equals(downloadedHeaders.getLast().getParentHash().getBytes())) {
           throw new IllegalStateException("Parent hash of last header does not match first header");
         }
-        headers.addAll(resultBlockHeaders);
+        downloadedHeaders.addAll(resultBlockHeaders);
+        LOG.trace(
+            "[{}:{}] Successfully received {} headers starting from block {}",
+            currTaskId,
+            iteration,
+            requestMaxHeaders,
+            requestStartBlockNumber);
+      } else {
+        LOG.trace(
+            "[{}:{}] Failed with {} to retrieve {} headers starting from block {}",
+            currTaskId,
+            iteration,
+            responseCode,
+            requestMaxHeaders,
+            requestStartBlockNumber);
+        if (responseCode == PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR) {
+          return CompletableFuture.failedFuture(
+              new RuntimeException(
+                  "Failed to download "
+                      + headersToRequest
+                      + " headers starting from block "
+                      + startBlockNumber));
+        } else {
+
+          LOG.trace("[{}:{}] Waiting for {} before retrying", currTaskId, iteration, RETRY_DELAY);
+          final int passIterations = iteration;
+          return ethScheduler.scheduleFutureTask(
+              () ->
+                  ethScheduler.scheduleServiceTask(
+                      () ->
+                          downloadAllHeaders(
+                              currTaskId,
+                              passIterations,
+                              startBlockNumber,
+                              headersToRequest,
+                              downloadedHeaders)),
+              RETRY_DELAY);
+        }
       }
-    } while (headers.size() < headersToRequest);
+    } while (downloadedHeaders.size() < headersToRequest);
     LOG.atTrace()
-        .setMessage("Downloaded {} headers: blocks {} to {}")
-        .addArgument(headers.size())
-        .addArgument(headers.getFirst().getNumber())
-        .addArgument(headers.getLast().getNumber())
+        .setMessage("[{}:{}] Downloaded {} headers: blocks {} to {}")
+        .addArgument(currTaskId)
+        .addArgument(iteration)
+        .addArgument(downloadedHeaders::size)
+        .addArgument(downloadedHeaders.getFirst()::getNumber)
+        .addArgument(downloadedHeaders.getLast()::getNumber)
         .log();
 
-    return CompletableFuture.completedFuture(headers);
+    return CompletableFuture.completedFuture(downloadedHeaders);
   }
 }
