@@ -194,6 +194,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
 
     if (future != null && future.isDone()) {
       final ParallelizedTransactionContext parallelizedTransactionContext = future.resultNow();
+      System.out.println("getProcessingResult "+parallelizedTransactionContext.transactionProcessingResult().toString());
       if (parallelizedTransactionContext == null) {
         return Optional.empty();
       }
@@ -208,7 +209,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       final boolean hasCollision =
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
-      if (transactionProcessingResult.isSuccessful() && !hasCollision) {
+      if (!transactionProcessingResult.isInvalid() && !hasCollision) {
         final MutableAccount miningBeneficiaryAccount =
             blockAccumulator.getOrCreate(miningBeneficiary);
         Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
