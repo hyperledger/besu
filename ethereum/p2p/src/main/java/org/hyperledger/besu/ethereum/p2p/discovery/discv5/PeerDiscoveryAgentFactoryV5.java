@@ -109,11 +109,9 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
               .signer(new LocalNodeKeySigner(nodeKey))
               .localNodeRecord(localNodeRecord)
               .localNodeRecordListener(nodeRecordListener)
-              // Ignore peer-reported external addresses for now (always returns
-              // Optional.empty()).
+              // Ignore peer-reported external addresses for now (always returns Optional.empty()).
               // For IPv4 this is covered by NatService; future IPv6 auto-discovery may relax
-              // this:
-              // https://github.com/hyperledger/besu/issues/9874
+              // this: https://github.com/hyperledger/besu/issues/9874
               .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
               // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based
               // on peer permissions is not yet integrated; all addresses are currently allowed.
