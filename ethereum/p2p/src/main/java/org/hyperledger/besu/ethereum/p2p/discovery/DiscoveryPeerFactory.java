@@ -49,13 +49,13 @@ public class DiscoveryPeerFactory {
 
   private static EnodeURLImpl buildEnodeUrl(
       final EthereumNodeRecord enr, final boolean preferIpv6Outbound) {
-    final boolean hasIpv4 = enr.ip() != null;
-    final boolean hasIpv6 = enr.ipv6().isPresent();
+    final boolean hasIpv4 = enr.ip().isPresent();
+    final boolean hasIpv6 = enr.ipV6().isPresent();
 
     if (hasIpv6 && (!hasIpv4 || preferIpv6Outbound)) {
       return EnodeURLImpl.builder()
           .ipAddress(
-              enr.ipv6()
+              enr.ipV6()
                   .orElseThrow(
                       () ->
                           new IllegalStateException(
@@ -66,7 +66,7 @@ public class DiscoveryPeerFactory {
           .build();
     }
     return EnodeURLImpl.builder()
-        .ipAddress(enr.ip())
+        .ipAddress(enr.ip().get())
         .nodeId(enr.publicKey())
         .discoveryPort(enr.udp())
         .listeningPort(enr.tcp())

@@ -149,13 +149,14 @@ public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
     checkArgument(argument != null && !argument.trim().isEmpty(), message);
   }
 
-  public static boolean sameListeningEndpoint(final EnodeURL enodeA, final NodeIdentifier enodeB) {
-    if (enodeA == null || enodeB == null) {
+  public static boolean sameListeningEndpoint(
+      final EnodeURL enodeA, final NodeIdentifier otherNode) {
+    if (enodeA == null || (otherNode == null || otherNode.getIpV4Address().isEmpty())) {
       return false;
     }
 
-    return Objects.equals(enodeA.getIp(), enodeB.getIpV4Address())
-        && Objects.equals(enodeA.getListeningPort(), enodeB.getTcpListeningPort());
+    return Objects.equals(enodeA.getIp(), otherNode.getIpV4Address().get())
+        && Objects.equals(enodeA.getListeningPort(), otherNode.getTcpListeningPort());
   }
 
   public static Bytes parseNodeId(final String nodeId) {

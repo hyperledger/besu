@@ -46,6 +46,8 @@ public record EthereumNodeRecord(
     NodeRecord nodeRecord)
     implements NodeIdentifier {
 
+  @SuppressWarnings(
+      "MethodInputParametersMustBeFinal") // needed since record constructors are not yet supported
   public EthereumNodeRecord {
     if (ip.isEmpty() && ipV6.isEmpty()) {
       throw new IllegalArgumentException(
