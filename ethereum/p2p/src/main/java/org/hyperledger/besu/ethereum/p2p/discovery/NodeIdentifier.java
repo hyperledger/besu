@@ -18,7 +18,7 @@ import java.net.InetAddress;
 import java.util.Optional;
 
 public interface NodeIdentifier {
-  InetAddress getIpV4Address();
+  Optional<InetAddress> getIpV4Address();
 
   Optional<Integer> getTcpListeningPort();
 

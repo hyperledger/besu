@@ -36,7 +36,7 @@ import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
  */
 public record EthereumNodeRecord(
     Bytes publicKey,
-    InetAddress ip,
+    Optional<InetAddress> ip,
     Optional<Integer> tcp,
     Optional<Integer> udp,
     Optional<InetAddress> ipv6,
@@ -45,6 +45,11 @@ public record EthereumNodeRecord(
     NodeRecord nodeRecord)
     implements NodeIdentifier {
 
+    public EthereumNodeRecord {
+        if (ip.isEmpty() && ipv6.isEmpty()) {
+            throw new IllegalArgumentException("Unable to create EthereumNodeRecord with no IPv4 or IPv6 address");
+        }
+    }
   /**
    * Creates an EthereumNodeRecord from an ENR string
    *
@@ -99,16 +104,16 @@ public record EthereumNodeRecord(
    *
    * @return The IP address of the ENR
    */
-  static InetAddress initIPAddr(final Map<String, Object> fields) {
+  static Optional<InetAddress> initIPAddr(final Map<String, Object> fields) {
     final Object value = fields.get("ip");
     if (value instanceof Bytes ipBytes) {
       try {
-        return InetAddress.getByAddress(ipBytes.toArrayUnsafe());
+        return Optional.of(InetAddress.getByAddress(ipBytes.toArrayUnsafe()));
       } catch (final Exception e) {
-        throw new RuntimeException("Invalid IP address in ENR", e);
+        return Optional.empty();
       }
     }
-    return InetAddress.getLoopbackAddress();
+    return Optional.empty();
   }
 
   /**
@@ -190,7 +195,7 @@ public record EthereumNodeRecord(
   }
 
   @Override
-  public InetAddress getIpV4Address() {
+  public Optional<InetAddress> getIpV4Address() {
     return ip;
   }
 

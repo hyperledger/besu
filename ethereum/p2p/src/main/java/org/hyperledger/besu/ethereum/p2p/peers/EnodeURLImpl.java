@@ -331,8 +331,8 @@ public class EnodeURLImpl implements EnodeURL, NodeIdentifier {
   }
 
   @Override
-  public InetAddress getIpV4Address() {
-    return getIp();
+  public Optional<InetAddress> getIpV4Address() {
+    return Optional.ofNullable(getIp());
   }
 
   @Override
