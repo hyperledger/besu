@@ -50,7 +50,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * A container object for all the states associated with a message.
@@ -662,7 +661,7 @@ public class MessageFrame {
    * @param length The length of the bytes to read
    * @return The bytes in the specified range
    */
-  public MutableBytes readMutableMemory(final long offset, final long length) {
+  public Bytes readMutableMemory(final long offset, final long length) {
     return readMutableMemory(offset, length, false);
   }
 
@@ -674,7 +673,7 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes shadowReadMemory(final long offset, final long length) {
-    return memory.getBytesWithoutGrowth(offset, length);
+    return Bytes.wrap(memory.getBytesWithoutGrowth(offset, length));
   }
 
   /**
@@ -685,21 +684,20 @@ public class MessageFrame {
    * @return The bytes in the specified range
    */
   public Bytes readMemory(final long offset, final long length) {
-    return readMutableMemory(offset, length, false).copy();
+    return readMutableMemory(offset, length, false);
   }
 
   /**
-   * Read bytes in memory. Contents should not be considered stable outside the scope of the current
-   * operation.
+   * Read bytes in memory.
    *
    * @param offset The offset in memory
    * @param length The length of the bytes to read
    * @param explicitMemoryRead true if triggered by a memory opcode, false otherwise
    * @return The bytes in the specified range
    */
-  public MutableBytes readMutableMemory(
+  public Bytes readMutableMemory(
       final long offset, final long length, final boolean explicitMemoryRead) {
-    final MutableBytes memBytes = memory.getMutableBytes(offset, length);
+    final Bytes memBytes = Bytes.wrap(memory.getBytes(offset, length));
     if (explicitMemoryRead) {
       setUpdatedMemory(offset, memBytes);
     }
@@ -715,7 +713,7 @@ public class MessageFrame {
    */
   public void mloadDirect(final long offset, final long[] s, final int slotOff) {
     memory.readLimbs(offset, s, slotOff);
-    setUpdatedMemory(offset, memory.getMutableBytes(offset, 32));
+    setUpdatedMemory(offset, Bytes.wrap(memory.getBytes(offset, 32)));
   }
 
   /**
@@ -727,7 +725,7 @@ public class MessageFrame {
    */
   public void mstoreDirect(final long offset, final long[] s, final int slotOff) {
     memory.writeLimbs(offset, s, slotOff);
-    setUpdatedMemory(offset, memory.getMutableBytes(offset, 32));
+    setUpdatedMemory(offset, Bytes.wrap(memory.getBytes(offset, 32)));
   }
 
   /**
@@ -765,7 +763,7 @@ public class MessageFrame {
    */
   public void writeMemory(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
-    memory.setBytes(offset, length, value);
+    memory.setBytes(offset, length, value.toArrayUnsafe());
     if (explicitMemoryUpdate) {
       setUpdatedMemory(offset, 0, length, value);
     }
@@ -783,7 +781,7 @@ public class MessageFrame {
    */
   public void writeMemoryRightAligned(
       final long offset, final long length, final Bytes value, final boolean explicitMemoryUpdate) {
-    memory.setBytesRightAligned(offset, length, value);
+    memory.setBytesRightAligned(offset, length, value.toArrayUnsafe());
     if (explicitMemoryUpdate) {
       setUpdatedMemoryRightAligned(offset, length, value);
     }
@@ -817,7 +815,7 @@ public class MessageFrame {
       final long length,
       final Bytes value,
       final boolean explicitMemoryUpdate) {
-    memory.setBytes(offset, sourceOffset, length, value);
+    memory.setBytes(offset, sourceOffset, length, value.toArrayUnsafe());
     if (explicitMemoryUpdate && length > 0) {
       setUpdatedMemory(offset, sourceOffset, length, value);
     }
@@ -838,7 +836,7 @@ public class MessageFrame {
     if (length > 0) {
       memory.copy(dst, src, length);
       if (explicitMemoryUpdate) {
-        setUpdatedMemory(dst, memory.getBytes(dst, length));
+        setUpdatedMemory(dst, Bytes.wrap(memory.getBytes(dst, length)));
       }
     }
   }
@@ -849,11 +847,12 @@ public class MessageFrame {
     if (sourceOffset >= 0 && endIndex > 0) {
       final int srcSize = value.size();
       if (endIndex > srcSize) {
-        final MutableBytes paddedAnswer = MutableBytes.create((int) length);
+        final byte[] paddedAnswer = new byte[(int) length];
         if (sourceOffset < srcSize) {
-          value.slice((int) sourceOffset, (int) (srcSize - sourceOffset)).copyTo(paddedAnswer, 0);
+          final int copyLen = (int) (srcSize - sourceOffset);
+          System.arraycopy(value.toArrayUnsafe(), (int) sourceOffset, paddedAnswer, 0, copyLen);
         }
-        setUpdatedMemory(offset, paddedAnswer.copy());
+        setUpdatedMemory(offset, Bytes.wrap(paddedAnswer));
       } else {
         setUpdatedMemory(offset, value.slice((int) sourceOffset, (int) length).copy());
       }
@@ -865,11 +864,12 @@ public class MessageFrame {
     if (length > 0) {
       final int srcSize = value.size();
       if (length > srcSize) {
-        final MutableBytes paddedAnswer = MutableBytes.create((int) length);
-        if ((long) 0 < srcSize) {
-          value.slice(0, srcSize).copyTo(paddedAnswer, (int) (length - srcSize));
+        final byte[] paddedAnswer = new byte[(int) length];
+        if (srcSize > 0) {
+          System.arraycopy(
+              value.toArrayUnsafe(), 0, paddedAnswer, (int) (length - srcSize), srcSize);
         }
-        setUpdatedMemory(offset, paddedAnswer.copy());
+        setUpdatedMemory(offset, Bytes.wrap(paddedAnswer));
       } else {
         setUpdatedMemory(offset, value.slice(0, (int) length).copy());
       }
