@@ -102,10 +102,14 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
 
-  // One-shot idempotency guard: prevents double-start (never reset to false).
-  private final AtomicBoolean started = new AtomicBoolean(false);
-  // Terminal state: once stopped, the agent cannot be restarted.
-  private final AtomicBoolean stopped = new AtomicBoolean(false);
+  /** Agent lifecycle: {@code NEW → STARTED → STOPPED}. */
+  enum State {
+    NEW,
+    STARTED,
+    STOPPED
+  }
+
+  private final AtomicReference<State> state = new AtomicReference<>(State.NEW);
   // Indicates whether a discovery operation is currently in progress
   private final AtomicBoolean discoveryInProgress = new AtomicBoolean(false);
 
@@ -158,7 +162,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.debug("DiscV5 peer discovery is disabled; not starting agent");
       return CompletableFuture.completedFuture(0);
     }
-    if (!started.compareAndSet(false, true)) {
+    if (!state.compareAndSet(State.NEW, State.STARTED)) {
       return CompletableFuture.failedFuture(
           new IllegalStateException("Unable to start an already started PeerDiscoveryAgentV5"));
     }
@@ -173,7 +177,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .start()
         .thenApply(
             v -> {
-              if (!stopped.get()) {
+              if (state.get() != State.STOPPED) {
                 scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
               }
               final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
@@ -210,7 +214,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   @Override
   public CompletableFuture<?> stop() {
     LOG.info("Stopping DiscV5 Peer Discovery Agent");
-    stopped.set(true);
+    state.set(State.STOPPED);
     scheduler.shutdownNow();
     final MutableDiscoverySystem system = discoverySystem.get();
     if (system != null) {
@@ -290,7 +294,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public boolean isStopped() {
-    return stopped.get();
+    return state.get() == State.STOPPED;
   }
 
   /**
@@ -372,7 +376,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   /** Periodic discovery task that enforces adaptive cadence and triggers peer discovery. */
   private void discoveryTick() {
-    if (stopped.get() || hasSufficientPeers()) {
+    if (state.get() == State.STOPPED || hasSufficientPeers()) {
       return;
     }
     discoverAndConnect();
