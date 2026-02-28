@@ -112,8 +112,8 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
         aPool[i] = Bytes.wrap(a);
         bPool[i] = Bytes.wrap(b);
       } else {
-        BigInteger aInt = new BigInteger(a);
-        BigInteger bInt = new BigInteger(b);
+        BigInteger aInt = new BigInteger(1, a);
+        BigInteger bInt = new BigInteger(1, b);
         if ((aInt.compareTo(bInt) < 0)) {
           aPool[i] = Bytes.wrap(b);
           bPool[i] = Bytes.wrap(a);

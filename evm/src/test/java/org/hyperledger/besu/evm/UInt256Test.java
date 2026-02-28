@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.array;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -29,7 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class UInt256Test {
-  static final int SAMPLE_SIZE = 3;
+  static final int SAMPLE_SIZE = 1_000_000;
 
   private Bytes32 bigIntTo32B(final BigInteger y) {
     byte[] a = y.toByteArray();
@@ -589,7 +590,7 @@ public class UInt256Test {
 
   @Test
   public void div() {
-    final Random random = new Random(432);
+    final Random random = new Random(45532);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
@@ -614,21 +615,18 @@ public class UInt256Test {
 
   @Test
   public void signedDiv() {
-    final Random random = new Random(432);
+    final Random random = new Random(957467);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
       int bSize = random.nextInt(1, 33);
-      boolean neg = random.nextBoolean();
       byte[] aArray = new byte[aSize];
       byte[] bArray = new byte[bSize];
       random.nextBytes(aArray);
       random.nextBytes(bArray);
-      if ((aSize < 32) && (neg)) {
-        byte[] tmp = new byte[32];
-        Arrays.fill(tmp, (byte) 0xFF);
-        System.arraycopy(aArray, 0, tmp, 32 - aArray.length, aArray.length);
-        aArray = tmp;
-      }
+
+      aArray = negate(aArray, random.nextBoolean());
+      bArray = negate(bArray, random.nextBoolean());
+
       UInt256 a = UInt256.fromBytesBE(aArray);
       UInt256 b = UInt256.fromBytesBE(bArray);
       UInt256 q = a.signedDiv(b);
@@ -642,6 +640,16 @@ public class UInt256Test {
       }
       assertThat(qBytes).as("inputs:[" + a + ", " + b + "]").isEqualTo(expected);
     }
+  }
+
+  private static byte[] negate(final byte[] array, final boolean negate) {
+    if (!negate || array.length >= 32) {
+      return array;
+    }
+    byte[] tmp = new byte[32];
+    Arrays.fill(tmp, (byte) 0xFF);
+    System.arraycopy(array, 0, tmp, 32 - array.length, array.length);
+    return tmp;
   }
 
   @ParameterizedTest
@@ -681,6 +689,14 @@ public class UInt256Test {
               {"0xffffffffffffffffffffffff6bacfb1469f9a4d5674a85b75f951d72d7a58e4a", "0x020000"},
               {"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "0x01"},
               {"0x01", "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+              {
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              },
+              {
+                "0x8000000000000000000000000000000000000000000000000000000000000000",
+                "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+              },
               {"0x1598209296af93c13b2f5fde7d8e99", "0x09244c1368"},
               {
                 "0xfffffffffffffff9309d38241af6a2545b52958d000000000000000000000000",
