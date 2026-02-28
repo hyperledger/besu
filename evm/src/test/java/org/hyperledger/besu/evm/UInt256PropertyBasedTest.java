@@ -1879,6 +1879,24 @@ public class UInt256PropertyBasedTest {
     assertThat(got).containsExactly(expected);
   }
 
+  @Property(seed = "34243534534")
+  void property_signedDiv_division_by_minus_one(@ForAll("bytes0to64_shaped") final byte[] a) {
+    // Arrange.
+    final byte[] a32 = toBytes32Unsigned(a);
+    final byte[] d32 = applyPattern(new byte[32], Pattern.ALL_FF);
+    final UInt256 ua = UInt256.fromBytesBE(a32);
+    final UInt256 ud = UInt256.fromBytesBE(d32);
+    final BigInteger A = new BigInteger(a32);
+    final BigInteger D = new BigInteger(d32);
+    final byte[] expected = expectedSignedDiv(A, D);
+
+    // Act.
+    final byte[] got = ua.signedDiv(ud).toBytesBE();
+
+    // Assert.
+    assertThat(got).containsExactly(expected);
+  }
+
   @Property(seed = "123456789")
   void property_mod_matches_big_integer_unsigned(
       @ForAll("bytes0to64_shaped") final byte[] a, @ForAll("bytes0to64_shaped") final byte[] m) {
