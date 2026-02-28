@@ -55,7 +55,6 @@ public class MessageDigestFactory {
   public static MessageDigest create(final String algorithm) throws NoSuchAlgorithmException {
     return switch (algorithm) {
       case KECCAK256_ALG -> new Keccak.Digest256();
-      case SHA256_ALG -> MessageDigest.getInstance("SHA-256");
       case RIPEMD160_ALG -> new RIPEMD160.Digest();
       case BLAKE2BF_ALG -> new Blake2bfMessageDigest();
       default -> MessageDigest.getInstance(algorithm);
