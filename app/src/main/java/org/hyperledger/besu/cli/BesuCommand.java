@@ -127,7 +127,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.discovery.P2PDiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
@@ -155,7 +157,6 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.vertx.VertxMetricsAdapterFactory;
 import org.hyperledger.besu.nat.NatMethod;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockSimulationService;
@@ -231,6 +232,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -689,7 +691,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
   private DataStorageConfiguration dataStorageConfiguration;
-  private Collection<EnodeURL> staticNodes;
+  private Collection<EnodeURLImpl> staticNodes;
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
 
@@ -2030,10 +2032,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
-    final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
-        .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(ethNetworkConfig.enodeBootNodes(), p));
+
+    permissioningConfiguration
+        .flatMap(PermissioningConfiguration::getLocalConfig)
+        .ifPresent(p -> ensureAllNodesAreInAllowlist(ethNetworkConfig.enrBootNodes(), p));
 
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
@@ -2081,11 +2086,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void ensureAllNodesAreInAllowlist(
-      final Collection<EnodeURL> enodeAddresses,
+      final Collection<? extends NodeIdentifier> nodeIdentifiers,
       final LocalPermissioningConfiguration permissioningConfiguration) {
     try {
       PermissioningConfigurationValidator.areAllNodesInAllowlist(
-          enodeAddresses, permissioningConfiguration);
+          nodeIdentifiers, permissioningConfiguration);
     } catch (final Exception e) {
       throw new ParameterException(this.commandLine, e.getMessage());
     }
@@ -2403,7 +2408,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
-      final Collection<EnodeURL> staticNodes,
+      final Collection<EnodeURLImpl> staticNodes,
       final Path pidPath) {
 
     checkNotNull(runnerBuilder);
@@ -2518,7 +2523,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
 
       if (p2PDiscoveryOptions.bootNodes == null) {
-        builder.setBootNodes(new ArrayList<>());
+        builder.setEnodeBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
     }
@@ -2541,12 +2546,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
-    List<EnodeURL> listBootNodes = null;
+    List<EnodeURLImpl> listBootNodes = null;
     if (p2PDiscoveryOptions.bootNodes != null) {
       try {
         final List<String> resolvedBootNodeArgs =
             BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
-        listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+        if (!resolvedBootNodeArgs.isEmpty()) {
+          if (resolvedBootNodeArgs.getFirst().startsWith("enr:")) {
+            builder.setEnrBootNodes(
+                resolvedBootNodeArgs.stream().map(EthereumNodeRecord::fromEnr).toList());
+          } else {
+            listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
+          }
+        } else {
+          listBootNodes = Collections.emptyList();
+        }
 
       } catch (final BootnodeResolutionException e) {
         throw new ParameterException(commandLine, e.getMessage(), e);
@@ -2558,7 +2572,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Optional<List<String>> bootNodesFromGenesis =
           genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent()) {
-        listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+        if (bootNodesFromGenesis.get().getFirst().startsWith("enr:")) {
+          builder.setEnrBootNodes(
+              bootNodesFromGenesis.get().stream().map(EthereumNodeRecord::fromEnr).toList());
+        } else {
+          listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
+        }
       }
     }
     if (listBootNodes != null) {
@@ -2566,7 +2585,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
-      builder.setBootNodes(listBootNodes);
+      builder.setEnodeBootNodes(listBootNodes);
     }
     return builder.build();
   }
@@ -2601,7 +2620,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return besuComponent.getMetricsSystem();
   }
 
-  private Set<EnodeURL> loadStaticNodes() throws IOException {
+  private Set<EnodeURLImpl> loadStaticNodes() throws IOException {
     final Path staticNodesPath;
     if (staticNodesFile != null) {
       staticNodesPath = staticNodesFile.toAbsolutePath();
@@ -2614,14 +2633,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       staticNodesPath = dataDir().resolve(staticNodesFilename);
     }
     logger.debug("Static Nodes file: {}", staticNodesPath);
-    final Set<EnodeURL> staticNodes =
+    final Set<EnodeURLImpl> staticNodes =
         StaticNodesParser.fromPath(staticNodesPath, getEnodeDnsConfiguration());
     logger.info("Connecting to {} static nodes.", staticNodes.size());
     logger.debug("Static Nodes = {}", staticNodes);
     return staticNodes;
   }
 
-  private List<EnodeURL> buildEnodes(
+  private List<EnodeURLImpl> buildEnodes(
       final List<String> bootNodes, final EnodeDnsConfiguration enodeDnsConfiguration) {
     return bootNodes.stream()
         .filter(bootNode -> !bootNode.isEmpty())

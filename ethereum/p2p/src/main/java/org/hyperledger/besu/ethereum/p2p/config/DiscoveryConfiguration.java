@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.config;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.NetworkUtility;
 
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ public class DiscoveryConfiguration {
   private int bindPort = 30303;
   private String advertisedHost = "127.0.0.1";
   private int bucketSize = 16;
-  private List<EnodeURL> bootnodes = new ArrayList<>();
+  private List<EnodeURLImpl> enodeBootnodes = new ArrayList<>();
+  private List<EthereumNodeRecord> enrBootnodes = new ArrayList<>();
   private String dnsDiscoveryURL;
   private boolean discoveryV5Enabled = false;
   private boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
@@ -45,15 +47,17 @@ public class DiscoveryConfiguration {
     return new DiscoveryConfiguration();
   }
 
-  public static void assertValidBootnodes(final List<EnodeURL> bootnodes) {
-    final List<EnodeURL> invalidEnodes =
-        bootnodes.stream().filter(e -> !e.isRunningDiscovery()).collect(Collectors.toList());
+  public static void assertValidBootnodes(final List<? extends NodeIdentifier> bootnodes) {
+    final List<? extends NodeIdentifier> invalidEnodes =
+        bootnodes.stream().filter(e -> e.getUdpDiscoveryPort().isEmpty()).toList();
 
-    if (invalidEnodes.size() > 0) {
+    if (!invalidEnodes.isEmpty()) {
       final String invalidBootnodes =
-          invalidEnodes.stream().map(EnodeURL::toString).collect(Collectors.joining(","));
+          invalidEnodes.stream().map(NodeIdentifier::toString).collect(Collectors.joining(","));
       final String errorMsg =
-          "Bootnodes must have discovery enabled. Invalid bootnodes: " + invalidBootnodes + ".";
+          "Bootnodes must have discovery enabled. Invalid enodeBootnodes: "
+              + invalidBootnodes
+              + ".";
       throw new IllegalArgumentException(errorMsg);
     }
   }
@@ -85,14 +89,28 @@ public class DiscoveryConfiguration {
     return this;
   }
 
-  public List<EnodeURL> getBootnodes() {
-    return bootnodes;
+  public List<EnodeURLImpl> getEnodeBootnodes() {
+    return enodeBootnodes;
   }
 
-  public DiscoveryConfiguration setBootnodes(final List<EnodeURL> bootnodes) {
-    assertValidBootnodes(bootnodes);
-    this.bootnodes = bootnodes;
+  public DiscoveryConfiguration setEnodeBootnodes(final List<EnodeURLImpl> enodeBootnodes) {
+    assertValidBootnodes(enodeBootnodes);
+    this.enodeBootnodes = enodeBootnodes;
     return this;
+  }
+
+  public List<EthereumNodeRecord> getEnrBootnodes() {
+    return enrBootnodes;
+  }
+
+  public DiscoveryConfiguration setEnrBootnodes(final List<EthereumNodeRecord> enrBootnodes) {
+    assertValidBootnodes(enrBootnodes);
+    this.enrBootnodes = enrBootnodes;
+    return this;
+  }
+
+  public List<? extends NodeIdentifier> getBootnodeIdentifiers() {
+    return enodeBootnodes.isEmpty() ? enrBootnodes : enodeBootnodes;
   }
 
   public boolean getIncludeBootnodesOnPeerRefresh() {
@@ -203,7 +221,8 @@ public class DiscoveryConfiguration {
         && bindPortIpv6 == that.bindPortIpv6
         && Objects.equals(bindHost, that.bindHost)
         && Objects.equals(advertisedHost, that.advertisedHost)
-        && Objects.equals(bootnodes, that.bootnodes)
+        && Objects.equals(enodeBootnodes, that.enodeBootnodes)
+        && Objects.equals(enrBootnodes, that.enrBootnodes)
         && Objects.equals(dnsDiscoveryURL, that.dnsDiscoveryURL)
         && Objects.equals(bindHostIpv6, that.bindHostIpv6)
         && Objects.equals(advertisedHostIpv6, that.advertisedHostIpv6)
@@ -218,7 +237,8 @@ public class DiscoveryConfiguration {
         bindPort,
         advertisedHost,
         bucketSize,
-        bootnodes,
+        enodeBootnodes,
+        enrBootnodes,
         dnsDiscoveryURL,
         bindHostIpv6,
         bindPortIpv6,
@@ -241,8 +261,10 @@ public class DiscoveryConfiguration {
         + '\''
         + ", bucketSize="
         + bucketSize
-        + ", bootnodes="
-        + bootnodes
+        + ", enodeBootnodes="
+        + enodeBootnodes
+        + ", enrBootnodes="
+        + enrBootnodes
         + ", dnsDiscoveryURL="
         + dnsDiscoveryURL
         + ", isDiscoveryV5Enabled="

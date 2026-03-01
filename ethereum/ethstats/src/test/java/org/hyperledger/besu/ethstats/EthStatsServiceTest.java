@@ -41,7 +41,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethstats.request.EthStatsRequest;
 import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.ethstats.util.ImmutableEthStatsConnectOptions;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.time.Duration;
@@ -96,7 +95,7 @@ public class EthStatsServiceTest {
           .ethStatsReportInterval(5)
           .build();
 
-  final EnodeURL node =
+  final EnodeURLImpl node =
       EnodeURLImpl.builder()
           .nodeId(
               "50203c6bfca6874370e71aecc8958529fd723feb05013dc1abca8fc1fff845c5259faba05852e9dfe5ce172a7d6e7c2a3a5eaa8b541c8af15ea5518bbff5f2fa")

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
@@ -81,7 +82,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.P2P_DISABLED);
     }
-    final Optional<EnodeURL> maybeEnode = peerNetwork.getLocalEnode();
+    final Optional<EnodeURLImpl> maybeEnode = peerNetwork.getLocalEnode();
     if (maybeEnode.isEmpty()) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.P2P_NETWORK_NOT_RUNNING);
