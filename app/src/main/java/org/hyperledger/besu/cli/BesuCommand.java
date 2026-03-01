@@ -1409,7 +1409,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             miningParametersSupplier.get(),
             besuController.getTransactionSimulator(),
             besuController.getProtocolSchedule(),
-            besuController.getProtocolContext().getBlockchain()));
+            besuController.getProtocolContext().getBlockchain(),
+            metricsOptions.getSlowBlockThresholdMs()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
     besuPluginContext.startPlugins();
@@ -2148,6 +2149,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled)
             .apiConfiguration(apiConfiguration)
             .balConfiguration(balConfiguration)
+            .slowBlockThresholdMs(metricsOptions.getSlowBlockThresholdMs())
             .besuComponent(besuComponent);
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())) {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =

@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
 
@@ -40,6 +41,7 @@ public class BlockStateCallSimulationResult {
       new ArrayList<>();
   private long cumulativeGasUsed = 0;
   private Optional<BlockAccessList> blockAccessList = Optional.empty();
+  private Optional<EVMExecutionMetricsTracer> executionMetricsTracer = Optional.empty();
   private final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private final long blockGasLimit;
   private long blobCount = 0;
@@ -127,6 +129,14 @@ public class BlockStateCallSimulationResult {
 
   public Optional<BlockAccessList> getBlockAccessList() {
     return blockAccessList;
+  }
+
+  public void setEVMExecutionMetricsTracer(final EVMExecutionMetricsTracer executionMetricsTracer) {
+    this.executionMetricsTracer = Optional.ofNullable(executionMetricsTracer);
+  }
+
+  public Optional<EVMExecutionMetricsTracer> getEVMExecutionMetricsTracer() {
+    return executionMetricsTracer;
   }
 
   /** Represents a single block call simulation result with metadata. */

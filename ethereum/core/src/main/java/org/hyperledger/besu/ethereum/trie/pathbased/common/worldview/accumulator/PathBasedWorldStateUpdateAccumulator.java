@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.PathBasedValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldView;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.StateMetricsCollector;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.preload.StorageConsumingMap;
@@ -309,13 +310,17 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     try {
       final PathBasedValue<ACCOUNT> pathBasedValue = accountsToUpdate.get(address);
       if (pathBasedValue == null) {
+        getStateMetricsCollector().incrementAccountCacheMisses();
         final Account account;
         if (wrappedWorldView() instanceof PathBasedWorldStateUpdateAccumulator) {
           final PathBasedWorldStateUpdateAccumulator<ACCOUNT> worldStateUpdateAccumulator =
               (PathBasedWorldStateUpdateAccumulator<ACCOUNT>) wrappedWorldView();
           account = worldStateUpdateAccumulator.loadAccount(address, accountFunction);
         } else {
+          final long startNanos = System.nanoTime();
           account = wrappedWorldView().get(address);
+          getStateMetricsCollector().addStateReadTime(System.nanoTime() - startNanos);
+          getStateMetricsCollector().incrementAccountReads();
         }
         if (account instanceof PathBasedAccount pathBasedAccount) {
           ACCOUNT mutableAccount = copyAccount((ACCOUNT) pathBasedAccount, this, true);
@@ -328,6 +333,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
           return null;
         }
       } else {
+        getStateMetricsCollector().incrementAccountCacheHits();
         return accountFunction.apply(pathBasedValue);
       }
     } catch (MerkleTrieException e) {
@@ -415,7 +421,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts().stream()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
@@ -475,6 +481,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                 pendingStorageUpdates.clear();
               }
 
+              // Track account write for cross-client execution metrics (account modified)
+              getStateMetricsCollector().incrementAccountWrites();
+
               // parallel stream here may cause database corruption
               updatedAccount
                   .getUpdatedStorage()
@@ -496,6 +505,8 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
                         } else {
                           pendingValue.setUpdated(value);
                         }
+                        // Track storage write for cross-client execution metrics
+                        getStateMetricsCollector().incrementStorageWrites();
                       });
 
               updatedAccount.getUpdatedStorage().clear();
@@ -543,14 +554,19 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
     if (localAccountStorage != null) {
       final PathBasedValue<UInt256> value = localAccountStorage.get(storageSlotKey);
       if (value != null) {
+        getStateMetricsCollector().incrementStorageCacheHits();
         return Optional.ofNullable(value.getUpdated());
       }
     }
     try {
+      getStateMetricsCollector().incrementStorageCacheMisses();
+      final long startNanos = System.nanoTime();
       final Optional<UInt256> valueUInt =
           (wrappedWorldView() instanceof PathBasedWorldState worldState)
               ? worldState.getStorageValueByStorageSlotKey(address, storageSlotKey)
               : wrappedWorldView().getStorageValueByStorageSlotKey(address, storageSlotKey);
+      getStateMetricsCollector().addStateReadTime(System.nanoTime() - startNanos);
+      getStateMetricsCollector().incrementStorageReads();
       storageToUpdate
           .computeIfAbsent(
               address,
@@ -632,6 +648,11 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
   @Override
   public PathBasedWorldStateKeyValueStorage getWorldStateStorage() {
     return wrappedWorldView().getWorldStateStorage();
+  }
+
+  @Override
+  public StateMetricsCollector getStateMetricsCollector() {
+    return wrappedWorldView().getStateMetricsCollector();
   }
 
   public void rollForward(final TrieLog layer) {

@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -61,6 +60,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.EVMExecutionMetricsTracer;
 import org.hyperledger.besu.evm.tracing.EthTransferLogOperationTracer;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracerAggregator;
@@ -202,6 +202,7 @@ public class BlockSimulator {
               simulationParameter.isValidation(),
               simulationParameter.isTraceTransfers(),
               simulationParameter.isReturnTrieLog(),
+              simulationParameter.isCollectExecutionMetrics(),
               simulationParameter::getFakeSignature,
               blockHashCache,
               simulationCumulativeGasUsed,
@@ -231,6 +232,7 @@ public class BlockSimulator {
       final boolean shouldValidate,
       final boolean isTraceTransfers,
       final boolean returnTrieLog,
+      final boolean collectExecutionMetrics,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
       final long simulationCumulativeGasUsed,
@@ -288,6 +290,7 @@ public class BlockSimulator {
             protocolSpec,
             shouldValidate,
             isTraceTransfers,
+            collectExecutionMetrics,
             transactionProcessor,
             blockHashLookup,
             signatureSupplier,
@@ -337,6 +340,7 @@ public class BlockSimulator {
       final ProtocolSpec protocolSpec,
       final boolean shouldValidate,
       final boolean isTraceTransfers,
+      final boolean collectExecutionMetrics,
       final MainnetTransactionProcessor transactionProcessor,
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
@@ -358,6 +362,9 @@ public class BlockSimulator {
             .<MiningBeneficiaryCalculator>map(feeRecipient -> header -> feeRecipient)
             .orElseGet(protocolSpec::getMiningBeneficiaryCalculator);
 
+    // Collect per-transaction metrics if requested
+    final List<EVMExecutionMetricsTracer> transactionMetricsTracers = new ArrayList<>();
+
     final WorldUpdater blockUpdater = ws.updater();
     for (int transactionLocation = 0;
         transactionLocation < blockStateCall.getCalls().size();
@@ -365,11 +372,28 @@ public class BlockSimulator {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
 
-      // Always use TracerAggregator, optionally adding EthTransferLogOperationTracer
+      // Create separate EVMExecutionMetricsTracer for each transaction (thread-safe)
+      EVMExecutionMetricsTracer transactionMetricsTracer = null;
+      if (collectExecutionMetrics) {
+        transactionMetricsTracer = new EVMExecutionMetricsTracer();
+        transactionMetricsTracers.add(transactionMetricsTracer);
+      }
+
+      // Compose operation tracers using TracerAggregator, starting with the provided
+      // operationTracer
       final TracerAggregator finalOperationTracer;
-      if (isTraceTransfers) {
+      if (isTraceTransfers && transactionMetricsTracer != null) {
+        // Compose all three tracers: operationTracer + EthTransferLogOperationTracer +
+        // EVMExecutionMetricsTracer
+        finalOperationTracer =
+            TracerAggregator.combining(
+                operationTracer, new EthTransferLogOperationTracer(), transactionMetricsTracer);
+      } else if (isTraceTransfers) {
         finalOperationTracer =
             TracerAggregator.combining(operationTracer, new EthTransferLogOperationTracer());
+      } else if (transactionMetricsTracer != null) {
+        finalOperationTracer =
+            TracerAggregator.combining(operationTracer, transactionMetricsTracer);
       } else {
         finalOperationTracer = TracerAggregator.combining(operationTracer);
       }
@@ -427,6 +451,16 @@ public class BlockSimulator {
     }
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
+
+    // Aggregate per-transaction execution metrics if collected
+    if (!transactionMetricsTracers.isEmpty()) {
+      EVMExecutionMetricsTracer aggregatedTracer = new EVMExecutionMetricsTracer();
+      for (EVMExecutionMetricsTracer transactionTracer : transactionMetricsTracers) {
+        aggregatedTracer.getMetrics().merge(transactionTracer.copyMetrics());
+      }
+      blockStateCallSimulationResult.setEVMExecutionMetricsTracer(aggregatedTracer);
+    }
+
     return blockStateCallSimulationResult;
   }
 
@@ -445,7 +479,7 @@ public class BlockSimulator {
       final Optional<List<Request>> maybeRequests,
       final boolean returnTrieLog) {
 
-    List<Transaction> transactions = simResult.getTransactions();
+    var transactions = simResult.getTransactions();
     List<TransactionReceipt> receipts = simResult.getReceipts();
 
     BlockHeader finalBlockHeader =
@@ -475,7 +509,11 @@ public class BlockSimulator {
       var trieLogFactory = pathBasedArchive.getTrieLogManager().getTrieLogFactory();
       var trieLog = trieLogFactory.create(pathBasedAccumulator, finalBlockHeader);
       return new BlockSimulationResult(
-          block, simResult, trieLog, log -> Bytes.wrap(trieLogFactory.serialize(log)));
+          block,
+          simResult,
+          trieLog,
+          log -> Bytes.wrap(trieLogFactory.serialize(log)),
+          simResult.getEVMExecutionMetricsTracer().orElse(null));
     } else {
       // otherwise return result w/o trielog
       return new BlockSimulationResult(block, simResult);

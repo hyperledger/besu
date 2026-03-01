@@ -47,6 +47,8 @@ import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracerAggregator;
 import org.hyperledger.besu.evm.worldstate.StackedUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -156,6 +158,20 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   }
 
   /**
+   * Creates a SlowBlockTracer if slow block logging is enabled.
+   *
+   * @param protocolContext the protocol context
+   * @return an Optional containing the SlowBlockTracer if enabled, empty otherwise
+   */
+  private Optional<SlowBlockTracer> getSlowBlockTracer(final ProtocolContext protocolContext) {
+    final long slowBlockThresholdMs = protocolContext.getSlowBlockThresholdMs();
+    if (slowBlockThresholdMs >= 0) {
+      return Optional.of(new SlowBlockTracer(slowBlockThresholdMs));
+    }
+    return Optional.empty();
+  }
+
+  /**
    * Processes the block with no privateMetadata and no preprocessor.
    *
    * @param protocolContext the current context of the protocol
@@ -231,11 +247,23 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final BlockAwareOperationTracer blockTracer =
         getBlockImportTracer(protocolContext, blockHeader);
+    final Optional<SlowBlockTracer> maybeSlowBlockTracer = getSlowBlockTracer(protocolContext);
+
+    // Compose operation-level tracer: base tracer + slow block tracer (if enabled)
+    final OperationTracer operationTracer =
+        maybeSlowBlockTracer
+            .<OperationTracer>map(sbt -> TracerAggregator.of(blockTracer, sbt))
+            .orElse(blockTracer);
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
-    LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
+    LOG.trace(
+        "traceStartBlock for {} using tracer {}",
+        blockHeader.getNumber(),
+        blockTracer.getClass().getSimpleName());
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
+    maybeSlowBlockTracer.ifPresent(
+        sbt -> sbt.traceStartBlock(worldState, blockHeader, miningBeneficiary));
 
     final StateRootCommitter stateRootCommitter =
         blockProcessingMetrics.wrapStateRootCommitter(
@@ -258,7 +286,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               worldState,
               protocolSpec,
               blockHashLookup,
-              blockTracer,
+              operationTracer,
               blockAccessListBuilder);
       protocolSpec
           .getPreExecutionProcessor()
@@ -286,7 +314,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
               blockHashLookup,
               blobGasPrice,
               blockAccessListBuilder,
-              blockAccessList);
+              blockAccessList,
+              blockProcessingContext);
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -363,6 +392,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 worldState,
                 cumulativeReceiptGasUsed);
         receipts.add(transactionReceipt);
+
         if (!parallelizedTxFound
             && transactionProcessingResult.getIsProcessedInParallel().isPresent()) {
           parallelizedTxFound = true;
@@ -371,6 +401,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           nbParallelTx++;
         }
       }
+
       final var optionalHeaderBlobGasUsed = blockHeader.getBlobGasUsed();
       if (optionalHeaderBlobGasUsed.isPresent()) {
         final long headerBlobGasUsed = optionalHeaderBlobGasUsed.get();
@@ -513,9 +544,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), e);
       }
 
-      LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
-      blockTracer.traceEndBlock(blockHeader, blockBody);
-
+      // Persist before traceEndBlock so that state root calculation (trie cache lookups,
+      // state_hash_ms timing) occurs while ExecutionStatsHolder is still set on this thread.
       try {
         worldState.persist(blockHeader, stateRootCommitter);
       } catch (MerkleTrieException e) {
@@ -537,6 +567,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed persisting block", e);
         return new BlockProcessingResult(Optional.empty(), e);
       }
+
+      LOG.trace("traceEndBlock for {}", blockHeader.getNumber());
+      // Call SlowBlockTracer first so it can collect metrics before state cleanup
+      maybeSlowBlockTracer.ifPresent(sbt -> sbt.traceEndBlock(blockHeader, blockBody));
+      blockTracer.traceEndBlock(blockHeader, blockBody);
 
       return new BlockProcessingResult(
           Optional.of(
@@ -637,7 +672,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final BlockHashLookup blockHashLookup,
         final Wei blobGasPrice,
         final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-        final Optional<BlockAccessList> maybeBlockBal);
+        final Optional<BlockAccessList> maybeBlockBal,
+        final BlockProcessingContext blockProcessingContext);
 
     class NoPreprocessing implements PreprocessingFunction {
 
@@ -650,7 +686,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           final BlockHashLookup blockHashLookup,
           final Wei blobGasPrice,
           final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-          final Optional<BlockAccessList> maybeBlockBal) {
+          final Optional<BlockAccessList> maybeBlockBal,
+          final BlockProcessingContext blockProcessingContext) {
         return Optional.empty();
       }
     }
