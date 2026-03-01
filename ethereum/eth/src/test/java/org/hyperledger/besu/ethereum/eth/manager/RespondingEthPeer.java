@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
+import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
+import org.hyperledger.besu.ethereum.eth.core.Utils;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -382,13 +384,14 @@ public class RespondingEthPeer {
         case EthProtocolMessages.GET_RECEIPTS:
           final ReceiptsMessage receiptsMessage = ReceiptsMessage.readFrom(originalResponse);
           final List<List<TransactionReceipt>> originalReceipts =
-              Lists.newArrayList(receiptsMessage.receipts());
+              receiptsMessage.syncReceipts().stream().map(Utils::syncReceiptsToReceipts).toList();
           final List<List<TransactionReceipt>> partialReceipts =
               originalReceipts.subList(0, (int) (originalReceipts.size() * portion));
           partialResponse =
-              ReceiptsMessage.create(
-                  partialReceipts,
-                  TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+              ReceiptsMessage.createUnsafe(
+                  serializeReceiptsList(
+                      partialReceipts,
+                      TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION));
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           final NodeDataMessage nodeDataMessage = NodeDataMessage.readFrom(originalResponse);
@@ -423,9 +426,10 @@ public class RespondingEthPeer {
           break;
         case EthProtocolMessages.GET_RECEIPTS:
           response =
-              ReceiptsMessage.create(
-                  Collections.emptyList(),
-                  TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+              ReceiptsMessage.createUnsafe(
+                  serializeReceiptsList(
+                      Collections.emptyList(),
+                      TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION));
           break;
         case EthProtocolMessages.GET_NODE_DATA:
           response = NodeDataMessage.create(Collections.emptyList());

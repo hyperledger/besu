@@ -24,13 +24,14 @@ import java.util.Set;
 /**
  * Eth protocol messages as defined in <a
  * href="https://github.com/ethereum/devp2p/blob/master/caps/eth.md">Ethereum Wire Protocol
- * (ETH)</a>}
+ * (ETH)</a>
  */
 public class EthProtocol implements SubProtocol {
   public static final String NAME = "eth";
   private static final EthProtocol INSTANCE = new EthProtocol();
   public static final Capability ETH68 = Capability.create(NAME, EthProtocolVersion.V68);
   public static final Capability ETH69 = Capability.create(NAME, EthProtocolVersion.V69);
+  public static final Capability ETH70 = Capability.create(NAME, EthProtocolVersion.V70);
   public static final BitSet REQUEST_ID_MESSAGES;
 
   static {
@@ -52,7 +53,7 @@ public class EthProtocol implements SubProtocol {
   }
 
   // Latest version of the Eth protocol
-  public static final Capability LATEST = ETH69;
+  public static final Capability LATEST = ETH70;
 
   public static boolean requestIdCompatible(final int code) {
     return REQUEST_ID_MESSAGES.get(code);
@@ -67,7 +68,7 @@ public class EthProtocol implements SubProtocol {
   public int messageSpace(final int protocolVersion) {
     return switch (protocolVersion) {
       case EthProtocolVersion.V68 -> 17;
-      case EthProtocolVersion.V69 -> 18;
+      case EthProtocolVersion.V69, EthProtocolVersion.V70 -> 18;
       default -> 0;
     };
   }
@@ -105,5 +106,9 @@ public class EthProtocol implements SubProtocol {
 
   public static boolean isEth69Compatible(final Capability capability) {
     return NAME.equals(capability.getName()) && capability.getVersion() >= ETH69.getVersion();
+  }
+
+  public static boolean isEth70Compatible(final Capability capability) {
+    return NAME.equals(capability.getName()) && capability.getVersion() >= ETH70.getVersion();
   }
 }

@@ -133,7 +133,7 @@ public class SnapSyncChainDownloadPipelineFactory {
             ethContext,
             headerRequestSize,
             anchorForHeaderDownload.getNumber(),
-            java.time.Duration.ofMillis(syncConfig.getBackwardHeadersDownloadStepTimeoutMillis()));
+            Duration.ofMillis(syncConfig.getBackwardHeadersDownloadStepTimeoutMillis()));
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
