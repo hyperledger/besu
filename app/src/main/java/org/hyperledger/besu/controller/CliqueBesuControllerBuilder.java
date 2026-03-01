@@ -114,7 +114,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             o ->
                 miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
-                        .getFork(o.getHeader().getNumber() + 1)
+                        .getFork(o.getHeader().getNumber() + 1, o.getHeader().getTimestamp())
                         .getValue()
                         .getBlockPeriodSeconds()));
 

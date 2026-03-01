@@ -78,7 +78,10 @@ public class CliqueBlockMiner extends BlockMiner<CliqueBlockCreator> {
 
   @Override
   protected boolean shouldImportBlock(final Block block) throws InterruptedException {
-    if (forksSchedule.getFork(block.getHeader().getNumber()).getValue().getCreateEmptyBlocks()) {
+    if (forksSchedule
+        .getFork(block.getHeader().getNumber(), block.getHeader().getTimestamp())
+        .getValue()
+        .getCreateEmptyBlocks()) {
       return true;
     }
 
