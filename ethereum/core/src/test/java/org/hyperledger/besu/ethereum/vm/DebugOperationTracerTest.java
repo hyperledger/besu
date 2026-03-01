@@ -38,10 +38,12 @@ import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerCo
 import org.hyperledger.besu.evm.tracing.TraceFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.TreeMap;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
@@ -282,6 +284,92 @@ class DebugOperationTracerTest {
     assertThat(traceFrame.getExceptionalHaltReason())
         .contains(ExceptionalHaltReason.INSUFFICIENT_GAS);
     assertThat(traceFrame.getStorage()).contains(updatedStorage);
+  }
+
+  @Test
+  void shouldUseLastSnapshotInNonMemoryWriteOperation() {
+    final Bytes32 initialValue = Bytes32.fromHexString("0x" + "aa".repeat(32));
+
+    final MessageFrame frame = validMessageFrameBuilder().build();
+    frame.writeMemory(0L, 32, initialValue);
+    frame.setCurrentOperation(anOperation);
+
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+
+    // Frame 0: non-memory-writing op — captures initial snapshot
+    tracer.tracePreExecution(frame);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    // Frame 1: another non-memory-writing op — should reuse last snapshot, not re-capture
+    tracer.tracePreExecution(frame);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    final List<TraceFrame> frames = tracer.getTraceFrames();
+    assertThat(frames).hasSize(2);
+
+    final Bytes[] frame0Memory = frames.get(0).getMemory().get();
+    final Bytes[] frame1Memory = frames.get(1).getMemory().get();
+
+    assertThat(frame1Memory)
+        .as("For a non-memory-writing opcode, the last snapshot must be reused")
+        .isSameAs(frame0Memory);
+  }
+
+  @Test
+  void shouldTakeNewMemorySnapshotAfterExplicitMemoryWrite() {
+    final Bytes32 initialValue = Bytes32.fromHexString("0x" + "aa".repeat(32));
+    final Bytes32 updatedValue = Bytes32.fromHexString("0x" + "cc".repeat(32));
+
+    final Operation memoryWritingOp =
+        new AbstractOperation(0x52, "MSTORE", 2, 0, null) {
+          @Override
+          public OperationResult execute(final MessageFrame frame, final EVM evm) {
+            // explicitMemoryUpdate=true simulates what MSTORE does in the real EVM
+            frame.writeMemory(0L, 32, updatedValue, true);
+            return new OperationResult(3L, null);
+          }
+        };
+
+    final MessageFrame frame = validMessageFrameBuilder().build();
+    frame.writeMemory(0L, 32, initialValue);
+    frame.setCurrentOperation(anOperation); // non-memory-writing op first
+
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+
+    // Frame 0: non-memory-writing op
+    tracer.tracePreExecution(frame);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    // Frame 1: memory-writing op
+    frame.setCurrentOperation(memoryWritingOp);
+    tracer.tracePreExecution(frame);
+    memoryWritingOp.execute(frame, null);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    final List<TraceFrame> frames = tracer.getTraceFrames();
+    assertThat(frames).hasSize(2);
+
+    final Bytes[] before = frames.get(0).getMemory().get();
+    final Bytes[] after = frames.get(1).getMemory().get();
+
+    // A memory write must produce a distinct snapshot with updated content
+    assertThat(after)
+        .as("After a memory-writing opcode, a new memory snapshot must be taken")
+        .isNotSameAs(before);
+    assertThat(before[0]).isEqualTo(initialValue);
+    assertThat(after[0]).isEqualTo(updatedValue);
   }
 
   private TraceFrame traceFrame(final MessageFrame frame) {

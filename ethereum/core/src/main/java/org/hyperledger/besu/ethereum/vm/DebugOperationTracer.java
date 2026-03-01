@@ -286,6 +286,8 @@ public class DebugOperationTracer implements OperationTracer {
   private Optional<Bytes[]> captureMemory(final MessageFrame frame) {
     if (!options.traceMemory() || frame.memoryWordSize() == 0) {
       return Optional.empty();
+    } else if (frame.getMaybeUpdatedMemory().isEmpty() && lastFrame != null) {
+      return lastFrame.getMemory();
     }
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
     for (int i = 0; i < memoryContents.length; i++) {
