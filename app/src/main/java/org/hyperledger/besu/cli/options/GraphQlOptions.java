@@ -29,8 +29,7 @@ import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** Handles configuration options for the GraphQL HTTP service in Besu. */
-// TODO: implement CLIOptions<GraphQLConfiguration>
-public class GraphQlOptions {
+public class GraphQlOptions implements CLIOptions<GraphQLConfiguration> {
   @CommandLine.Option(
       names = {"--graphql-http-enabled"},
       description = "Set to start the GraphQL HTTP service (default: ${DEFAULT-VALUE})")
@@ -124,6 +123,29 @@ public class GraphQlOptions {
         asList("--graphql-tls-truststore-file", "--graphql-tls-truststore-password-file"));
   }
 
+  @Override
+  public GraphQLConfiguration toDomainObject() {
+    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
+    graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
+    if (!Strings.isNullOrEmpty(graphQLHttpHost)) {
+      graphQLConfiguration.setHost(graphQLHttpHost);
+    }
+    graphQLConfiguration.setPort(graphQLHttpPort);
+    graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
+    graphQLConfiguration.setTlsEnabled(graphqlTlsEnabled);
+    graphQLConfiguration.setTlsKeyStorePath(graphqlTlsKeystoreFile);
+    graphQLConfiguration.setTlsKeyStorePasswordFile(graphqlTlsKeystorePasswordFile);
+    graphQLConfiguration.setMtlsEnabled(graphqlMtlsEnabled);
+    graphQLConfiguration.setTlsTrustStorePath(graphqlTlsTruststoreFile);
+    graphQLConfiguration.setTlsTrustStorePasswordFile(graphqlTlsTruststorePasswordFile);
+    return graphQLConfiguration;
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return CommandLineUtils.getCLIOptions(this, new GraphQlOptions());
+  }
+
   /**
    * Creates a GraphQLConfiguration based on the provided options.
    *
@@ -134,22 +156,11 @@ public class GraphQlOptions {
    */
   public GraphQLConfiguration graphQLConfiguration(
       final List<String> hostsAllowlist, final String defaultHostAddress, final Long timeoutSec) {
-    final GraphQLConfiguration graphQLConfiguration = GraphQLConfiguration.createDefault();
-    graphQLConfiguration.setEnabled(isGraphQLHttpEnabled);
-    graphQLConfiguration.setHost(
-        Strings.isNullOrEmpty(graphQLHttpHost) ? defaultHostAddress : graphQLHttpHost);
-    graphQLConfiguration.setPort(graphQLHttpPort);
-    graphQLConfiguration.setHostsAllowlist(hostsAllowlist);
-    graphQLConfiguration.setCorsAllowedDomains(graphQLHttpCorsAllowedOrigins);
-    graphQLConfiguration.setHttpTimeoutSec(timeoutSec);
-    graphQLConfiguration.setTlsEnabled(graphqlTlsEnabled);
-    graphQLConfiguration.setTlsKeyStorePath(graphqlTlsKeystoreFile);
-    graphQLConfiguration.setTlsKeyStorePasswordFile(graphqlTlsKeystorePasswordFile);
-    graphQLConfiguration.setMtlsEnabled(graphqlMtlsEnabled);
-    graphQLConfiguration.setTlsTrustStorePath(graphqlTlsTruststoreFile);
-    graphQLConfiguration.setTlsTrustStorePasswordFile(graphqlTlsTruststorePasswordFile);
-
-    return graphQLConfiguration;
+    final GraphQLConfiguration config = toDomainObject();
+    config.setHost(Strings.isNullOrEmpty(graphQLHttpHost) ? defaultHostAddress : graphQLHttpHost);
+    config.setHostsAllowlist(hostsAllowlist);
+    config.setHttpTimeoutSec(timeoutSec);
+    return config;
   }
 
   /**

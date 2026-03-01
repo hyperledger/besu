@@ -21,6 +21,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
@@ -28,8 +30,7 @@ import picocli.CommandLine;
  * Handles configuration options for the API in Besu, including gas price settings, RPC log range,
  * and trace filter range.
  */
-// TODO: implement CLIOption<ApiConfiguration>
-public class ApiConfigurationOptions {
+public class ApiConfigurationOptions implements CLIOptions<ApiConfiguration> {
   /** Default constructor. */
   public ApiConfigurationOptions() {}
 
@@ -120,6 +121,16 @@ public class ApiConfigurationOptions {
         asList(
             "--api-gas-and-priority-fee-upper-bound-coefficient",
             "--api-gas-and-priority-fee-lower-bound-coefficient"));
+  }
+
+  @Override
+  public ApiConfiguration toDomainObject() {
+    return apiConfiguration();
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return CommandLineUtils.getCLIOptions(this, new ApiConfigurationOptions());
   }
 
   /**

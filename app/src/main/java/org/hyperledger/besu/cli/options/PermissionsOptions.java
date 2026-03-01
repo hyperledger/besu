@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
@@ -22,14 +23,14 @@ import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfigurationBuilder;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** Handles configuration options for permissions in Besu. */
-// TODO: implement CLIOption<PermissioningConfiguration>
-public class PermissionsOptions {
+public class PermissionsOptions implements CLIOptions<PermissioningConfiguration> {
   @CommandLine.Option(
       names = {"--permissions-nodes-config-file-enabled"},
       description = "Enable node level permissions (default: ${DEFAULT-VALUE})")
@@ -56,6 +57,23 @@ public class PermissionsOptions {
 
   /** Default constructor. */
   public PermissionsOptions() {}
+
+  @Override
+  public PermissioningConfiguration toDomainObject() {
+    if (!localPermissionsEnabled()) {
+      return PermissioningConfiguration.createDefault();
+    }
+    final LocalPermissioningConfiguration localConfig =
+        LocalPermissioningConfiguration.createDefault();
+    localConfig.setNodePermissioningConfigFilePath(nodePermissionsConfigFile);
+    localConfig.setAccountPermissioningConfigFilePath(accountPermissionsConfigFile);
+    return new PermissioningConfiguration(Optional.of(localConfig));
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return CommandLineUtils.getCLIOptions(this, new PermissionsOptions());
+  }
 
   /**
    * Creates a PermissioningConfiguration based on the provided options.

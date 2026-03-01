@@ -53,8 +53,7 @@ import picocli.CommandLine;
  * Handles configuration options for the JSON-RPC HTTP service, including validation and creation of
  * a JSON-RPC configuration.
  */
-// TODO: implement CLIOption<JsonRpcConfiguration>
-public class JsonRpcHttpOptions {
+public class JsonRpcHttpOptions implements CLIOptions<JsonRpcConfiguration> {
   @CommandLine.Option(
       names = {"--rpc-http-enabled"},
       description = "Set to start the JSON-RPC HTTP service (default: ${DEFAULT-VALUE})")
@@ -268,6 +267,16 @@ public class JsonRpcHttpOptions {
     if (isRpcTlsConfigurationRequired()) {
       validateTls(commandLine);
     }
+  }
+
+  @Override
+  public JsonRpcConfiguration toDomainObject() {
+    return jsonRpcConfiguration();
+  }
+
+  @Override
+  public List<String> getCLIOptions() {
+    return CommandLineUtils.getCLIOptions(this, new JsonRpcHttpOptions());
   }
 
   /**
