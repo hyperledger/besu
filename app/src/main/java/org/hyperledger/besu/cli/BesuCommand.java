@@ -2904,10 +2904,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final PathBasedExtraStorageConfiguration subStorageConfiguration =
           getDataStorageConfiguration().getPathBasedExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
+        final boolean isBatchSizeExplicitlySet =
+            CommandLineUtils.isOptionSet(
+                commandLine, PathBasedExtraStorageOptions.TRIE_LOG_PRUNING_BATCH_SIZE);
         builder
             .setLimitTrieLogsEnabled()
-            .setTrieLogRetentionLimit(subStorageConfiguration.getMaxLayersToLoad())
-            .setTrieLogsPruningWindowSize(subStorageConfiguration.getTrieLogPruningWindowSize());
+            .setTrieLogRetentionLimit(subStorageConfiguration.getTrieLogRetentionLimit())
+            .setTrieLogsPruningBatchSize(
+                subStorageConfiguration.getTrieLogPruningBatchSize(), isBatchSizeExplicitlySet);
       }
     }
 

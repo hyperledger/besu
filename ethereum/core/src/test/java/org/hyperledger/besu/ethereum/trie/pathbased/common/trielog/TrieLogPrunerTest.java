@@ -131,10 +131,10 @@ public class TrieLogPrunerTest {
   }
 
   @Test
-  public void trieLogs_pruned_in_reverse_order_within_pruning_window() {
+  public void trieLogs_pruned_in_reverse_order_within_batch_size() {
     // Given
 
-    // pruning window is below numBlocksToRetain and inside the pruningWindowSize offset.
+    // batch size is below numBlocksToRetain and inside the pruningBatchSize offset.
     final long blocksToRetain = 3;
     final int pruningWindowSize = 2;
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
