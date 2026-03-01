@@ -14,20 +14,18 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 
-public final class StateRootCommitterImplSync implements StateRootCommitter {
+import java.util.Optional;
 
+public final class DefaultStateRootCommitterFactory implements StateRootCommitterFactory {
   @Override
-  public Hash computeRootAndCommit(
-      final MutableWorldState worldState,
-      final WorldStateKeyValueStorage.Updater stateUpdater,
+  public StateRootCommitter forBlock(
+      final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
-      final WorldStateConfig cfg) {
-    return worldState.calculateOrReadRootHash(stateUpdater, blockHeader, cfg);
+      final Optional<BlockAccessList> maybeBal) {
+    return StateRootCommitter.DEFAULT;
   }
 }

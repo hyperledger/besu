@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BlockAccessListStateRootHashCalculator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BalStateRootCalculator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -1286,8 +1286,7 @@ class AbstractBlockProcessorIntegrationTest {
         result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
 
     final Hash computedRoot =
-        BlockAccessListStateRootHashCalculator.computeAsync(
-                protocolContext, block.getHeader(), blockAccessList)
+        BalStateRootCalculator.computeAsync(protocolContext, block.getHeader(), blockAccessList)
             .join()
             .root();
 
