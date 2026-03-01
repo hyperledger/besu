@@ -16,9 +16,15 @@ on:
         required: false
         default: '60'
         type: string
+      besu_ref:
+        required: true
+        type: string
+        default: main
+        description: Branch to test
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
+  BESU_REF: ${{ inputs.besu_ref  || 'main' }}
 
 jobs:
   bft-soak-test:
@@ -32,7 +38,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ env.BESU_REF }}
       - name: Set up Java
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
         with:

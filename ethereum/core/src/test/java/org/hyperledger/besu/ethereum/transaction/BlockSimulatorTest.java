@@ -287,7 +287,7 @@ public class BlockSimulatorTest {
   }
 
   @Test
-  public void shouldDetectDuplicatedPrecompileTargetAddresses() {
+  public void shouldAllowDuplicatePrecompileTargetAddresses() {
     var stateOverrideMap = new StateOverrideMap();
     var targetAddress = Address.fromHexString("0x3");
     var precompileAddress1 = Address.fromHexString("0x1");
@@ -296,7 +296,7 @@ public class BlockSimulatorTest {
     var stateOverride =
         new StateOverride.Builder().withMovePrecompileToAddress(targetAddress).build();
 
-    // Map two precompile addresses to the same target address
+    // Map two precompile addresses to the same target address - should be allowed
     stateOverrideMap.put(precompileAddress1, stateOverride);
     stateOverrideMap.put(precompileAddress2, stateOverride);
 
@@ -304,9 +304,7 @@ public class BlockSimulatorTest {
         buildParameterWithOverrides(stateOverrideMap)
             .validate(Set.of(precompileAddress1, precompileAddress2));
 
-    assertThat(validationResult).isPresent();
-    assertThat(validationResult.orElseThrow())
-        .isEqualTo(BlockStateCallError.DUPLICATED_PRECOMPILE_TARGET);
+    assertThat(validationResult).isEmpty();
   }
 
   private BlockSimulationParameter createSimulationParameter(final BlockStateCall blockStateCall) {
