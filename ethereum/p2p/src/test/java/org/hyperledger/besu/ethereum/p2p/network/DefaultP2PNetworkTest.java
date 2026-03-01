@@ -389,6 +389,35 @@ public final class DefaultP2PNetworkTest {
     }
   }
 
+  @Test
+  public void start_rlpxAgentFailure_awaitStopCompletesPromptly() {
+    when(rlpxAgent.start())
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
+
+    final DefaultP2PNetwork network = network();
+    Assertions.assertThatThrownBy(network::start).hasCauseInstanceOf(RuntimeException.class);
+
+    // stop() + awaitStop() must not hang despite the partial start
+    network.stop();
+    network.awaitStop();
+  }
+
+  @Test
+  public void start_discoveryAgentFailure_awaitStopCompletesPromptly() {
+    when(discoveryAgent.start(anyInt()))
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
+
+    final DefaultP2PNetwork network = network();
+    Assertions.assertThatThrownBy(network::start).hasCauseInstanceOf(RuntimeException.class);
+
+    // RLPx agent was started successfully, so it should have been stopped on failure
+    verify(rlpxAgent).stop();
+
+    // stop() + awaitStop() must not hang despite the partial start
+    network.stop();
+    network.awaitStop();
+  }
+
   private DefaultP2PNetwork network() {
     return (DefaultP2PNetwork) builder().build();
   }

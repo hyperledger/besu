@@ -244,10 +244,30 @@ public class DefaultP2PNetwork implements P2PNetwork {
               dnsDaemonRef.set(Optional.of(dnsDaemon));
             });
 
-    final int listeningPort = rlpxAgent.start().join();
+    final int listeningPort;
+    try {
+      listeningPort = rlpxAgent.start().join();
+    } catch (final Exception e) {
+      LOG.error("Failed to start RLPx agent", e);
+      // Neither agent will stop(), so count down both latch positions
+      shutdownLatch.countDown();
+      shutdownLatch.countDown();
+      throw e;
+    }
+
     // Pass the effective RLPx TCP port so that the discovery agent can write the correct tcp/tcp6
     // values into the local ENR.  The discovery agent reads its own UDP bind port independently.
-    final int discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
+    final int discoveryPort;
+    try {
+      discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
+    } catch (final Exception e) {
+      LOG.error("Failed to start peer discovery agent", e);
+      // Discovery agent won't stop(), count down its latch position
+      shutdownLatch.countDown();
+      // Stop the already-started RLPx agent (its whenComplete counts down the other position)
+      rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
+      throw e;
+    }
 
     final Consumer<? super NatManager> natAction =
         natManager -> {
