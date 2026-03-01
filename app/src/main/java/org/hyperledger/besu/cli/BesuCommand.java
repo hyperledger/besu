@@ -41,6 +41,7 @@ import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
+import org.hyperledger.besu.cli.logging.LoggingConfigurator;
 import org.hyperledger.besu.cli.options.ApiConfigurationOptions;
 import org.hyperledger.besu.cli.options.BalConfigurationOptions;
 import org.hyperledger.besu.cli.options.ChainPruningOptions;
@@ -54,7 +55,8 @@ import org.hyperledger.besu.cli.options.GraphQlOptions;
 import org.hyperledger.besu.cli.options.InProcessRpcOptions;
 import org.hyperledger.besu.cli.options.IpcOptions;
 import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
-import org.hyperledger.besu.cli.options.LoggingLevelOption;
+import org.hyperledger.besu.cli.options.LoggingFormat;
+import org.hyperledger.besu.cli.options.LoggingOptions;
 import org.hyperledger.besu.cli.options.MetricsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.NatOptions;
@@ -260,10 +262,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.jackson.DatabindCodec;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.impl.Log4jContextFactory;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -330,7 +328,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
-  private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
+  private final LoggingOptions loggingOptions = LoggingOptions.create();
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
@@ -848,12 +846,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     // Create the execution strategy chain.
     final IExecutionStrategy executeTask = createExecuteTask(resultHandler);
     final IExecutionStrategy pluginRegistrationTask = createPluginRegistrationTask(executeTask);
+    final IExecutionStrategy loggingTask = createLoggingInitializationTask(pluginRegistrationTask);
     final IExecutionStrategy setDefaultValueProviderTask =
-        createDefaultValueProviderTask(pluginRegistrationTask);
+        createDefaultValueProviderTask(loggingTask);
 
     // 1- Config default value provider
-    // 2- Register plugins
-    // 3- Execute command
+    // 2- Initialize logging
+    // 3- Register plugins
+    // 4- Execute command
     return executeCommandLine(
         setDefaultValueProviderTask, parameterExceptionHandler, executionExceptionHandler, args);
   }
@@ -881,10 +881,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private IExecutionStrategy createPluginRegistrationTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
-      if (parseResult.isUsageHelpRequested() || parseResult.isVersionHelpRequested()) {
-        // suppressing the info log to avoid that plugin registrations logs are printed
-        // before the help or the version information
-        suppressInfoLog();
+      if (isHelpOrVersionRequested(parseResult)) {
+        // Suppress INFO-level plugin registration logs to keep help/version output clean.
+        // No need to restore — process exits after displaying help/version.
+        LogConfigurator.setRootLevel("WARN");
       }
       besuPluginContext.initialize(PluginsConfigurationOptions.fromCommandLine(commandLine));
       besuPluginContext.registerPlugins();
@@ -893,26 +893,51 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     };
   }
 
-  @SuppressWarnings("BannedMethod")
-  private void suppressInfoLog() {
-    // this is specific for Log4j2, in case we switch to another logging framework,
-    // this need to be adapted for it
+  private IExecutionStrategy createLoggingInitializationTask(final IExecutionStrategy nextStep) {
+    return parseResult -> {
+      if (!isHelpOrVersionRequested(parseResult)) {
+        // Initialize logging now that CLI options are available
+        initializeLogging();
+      }
+      commandLine.setExecutionStrategy(nextStep);
+      return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+    };
+  }
 
-    // silence already created loggers
-    LoggerContext.getContext(false).getLoggers().forEach(logger -> logger.setLevel(Level.WARN));
-
-    // silence future loggers by configuration
-    if (LogManager.getFactory() instanceof Log4jContextFactory log4jContextFactory) {
-      final var selector = log4jContextFactory.getSelector();
-      selector
-          .getLoggerContexts()
-          .forEach(
-              ctx ->
-                  ctx.getConfiguration()
-                      .getLoggers()
-                      .values()
-                      .forEach(loggerConfig -> loggerConfig.setLevel(Level.WARN)));
+  /**
+   * Check if help or version is requested at any level of the command/subcommand chain.
+   *
+   * @param parseResult the parse result to check
+   * @return true if help or version is requested anywhere in the command chain
+   */
+  private boolean isHelpOrVersionRequested(final ParseResult parseResult) {
+    // Walk through all subcommand levels to check if help or version is requested anywhere
+    ParseResult current = parseResult;
+    while (current != null) {
+      if (current.isUsageHelpRequested()
+          || current.isVersionHelpRequested()
+          || "help".equals(current.commandSpec().name())) {
+        return true;
+      }
+      current = current.hasSubcommand() ? current.subcommand() : null;
     }
+    return false;
+  }
+
+  private void initializeLogging() {
+    // Check for custom Log4j configuration file
+    if (System.getProperty("log4j.configurationFile") != null
+        || System.getProperty("log4j2.configurationFile") != null
+        || System.getenv("LOG4J_CONFIGURATION_FILE") != null) {
+      logger.debug("Using custom Log4j configuration file");
+      return;
+    }
+
+    // Apply programmatic logging configuration
+    // Default to color enabled unless NO_COLOR env var is set
+    final boolean colorEnabled = getColorEnabled().orElse(System.getenv("NO_COLOR") == null);
+    LoggingConfigurator.configureLogging(
+        loggingOptions.getLogLevel(), loggingOptions.getLoggingFormat(), colorEnabled);
   }
 
   private IExecutionStrategy createDefaultValueProviderTask(final IExecutionStrategy nextStep) {
@@ -1249,7 +1274,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void handleStableOptions() {
     commandLine.addMixin("Ethstats", ethstatsOptions);
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
-    commandLine.addMixin("Logging level", loggingLevelOption);
+    commandLine.addMixin("Logging", loggingOptions);
     commandLine.addMixin("Data Storage Options", dataStorageOptions);
   }
 
@@ -1424,20 +1449,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Configure logging framework for Besu
+   * Log the logging configuration. Logging initialization happens in the execution strategy (see
+   * createLoggingInitializationTask), so this method just logs the configuration if requested. Kept
+   * for backward compatibility with subcommands.
    *
-   * @param announce sets to true to print the logging level on standard output
+   * @param logIt if true, log the logging configuration (via logger, respecting structured format)
+   * @deprecated This method is deprecated. Logging is now initialized in the execution strategy.
    */
-  public void configureLogging(final boolean announce) {
-    // To change the configuration if color was enabled/disabled
-    LogConfigurator.reconfigure();
-    // set log level per CLI flags
-    final String logLevel = loggingLevelOption.getLogLevel();
-    if (logLevel != null) {
-      if (announce) {
-        System.out.println("Setting logging level to " + logLevel);
+  @Deprecated
+  public void configureLogging(final boolean logIt) {
+    // Logging is already initialized in the execution strategy before any run() method is called.
+    // This method now just logs the configuration if requested, using the logger to respect
+    // structured logging formats.
+    if (logIt) {
+      // Log the effective level (INFO default if not specified)
+      final String effectiveLevel =
+          loggingOptions.getLogLevel() != null ? loggingOptions.getLogLevel() : "INFO";
+      logger.info("Logging level: {}", effectiveLevel);
+
+      if (loggingOptions.getLoggingFormat() != LoggingFormat.PLAIN) {
+        logger.info("Logging format: {}", loggingOptions.getLoggingFormat());
       }
-      LogConfigurator.setLevel("", logLevel);
     }
   }
 
@@ -2042,7 +2074,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     instantiateSignatureAlgorithmFactory();
 
-    logger.info(generateConfigurationOverview());
+    if (loggingOptions.getLoggingFormat() == LoggingFormat.PLAIN) {
+      logger.info(generateConfigurationOverview());
+    } else {
+      final Map<String, Object> configMap = generateConfigurationOverviewMap();
+      logger.info("Configuration overview {}", configMap);
+    }
     logger.info("Security Module: {}", securityModuleName);
   }
 
@@ -2742,7 +2779,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   String getLogLevel() {
-    return loggingLevelOption.getLogLevel();
+    return loggingOptions.getLogLevel();
   }
 
   /**
@@ -2844,7 +2881,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .orElse(genesisFile != null || networkId != null);
   }
 
-  private String generateConfigurationOverview() {
+  private ConfigurationOverviewBuilder createConfigurationOverviewBuilder() {
     final ConfigurationOverviewBuilder builder = new ConfigurationOverviewBuilder(logger);
 
     if (environment != null) {
@@ -2937,7 +2974,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .setHistoryExpiryPruneEnabled(getDataStorageConfiguration().getHistoryExpiryPruneEnabled())
         .setBlobDBSettings(rocksDBPlugin.getBlobDBSettings());
 
-    return builder.build();
+    return builder;
+  }
+
+  private String generateConfigurationOverview() {
+    return createConfigurationOverviewBuilder().build();
+  }
+
+  private Map<String, Object> generateConfigurationOverviewMap() {
+    return createConfigurationOverviewBuilder().buildMap();
   }
 
   /**
