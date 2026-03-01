@@ -23,10 +23,12 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class GetPooledTransactionsFromPeerTask implements PeerTask<List<Transaction>> {
@@ -43,12 +45,13 @@ public class GetPooledTransactionsFromPeerTask implements PeerTask<List<Transact
   }
 
   @Override
-  public MessageData getRequestMessage() {
+  public MessageData getRequestMessage(final Set<Capability> agreedCapabilities) {
     return GetPooledTransactionsMessage.create(hashes);
   }
 
   @Override
-  public List<Transaction> processResponse(final MessageData messageData)
+  public List<Transaction> processResponse(
+      final MessageData messageData, final Set<Capability> agreedCapabilities)
       throws InvalidPeerTaskResponseException {
     final PooledTransactionsMessage pooledTransactionsMessage =
         PooledTransactionsMessage.readFrom(messageData);

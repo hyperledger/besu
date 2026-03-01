@@ -26,12 +26,14 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResp
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -156,7 +158,7 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   @Override
-  public MessageData getRequestMessage() {
+  public MessageData getRequestMessage(final Set<Capability> agreedCapabilities) {
     if (blockHash != null) {
       return GetBlockHeadersMessage.create(
           blockHash, maxHeaders, skip, direction == Direction.REVERSE);
@@ -167,7 +169,8 @@ public class GetHeadersFromPeerTask implements PeerTask<List<BlockHeader>> {
   }
 
   @Override
-  public List<BlockHeader> processResponse(final MessageData messageData)
+  public List<BlockHeader> processResponse(
+      final MessageData messageData, final Set<Capability> agreedCapabilities)
       throws InvalidPeerTaskResponseException {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException("Response MessageData is null");

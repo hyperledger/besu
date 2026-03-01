@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.core.Utils.receiptToSyncReceipt;
+import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -47,12 +48,14 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
@@ -63,6 +66,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 public class GetSyncReceiptsFromPeerTaskTest {
+  private static final Set<Capability> AGREED_CAPABILITIES = Set.of(EthProtocol.ETH69);
   private static ProtocolSchedule protocolSchedule;
 
   @BeforeAll
@@ -123,7 +127,7 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
     final var task = createTask(blocks, protocolSchedule);
 
-    final var messageData = task.getRequestMessage();
+    final var messageData = task.getRequestMessage(AGREED_CAPABILITIES);
     final var getReceiptsMessage = GetReceiptsMessage.readFrom(messageData);
 
     assertEquals(EthProtocolMessages.GET_RECEIPTS, getReceiptsMessage.getCode());
@@ -146,7 +150,8 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
     final var task = createTask(List.of(syncBlock), protocolSchedule);
     Assertions.assertThrows(
-        InvalidPeerTaskResponseException.class, () -> task.processResponse(null));
+        InvalidPeerTaskResponseException.class,
+        () -> task.processResponse(null, AGREED_CAPABILITIES));
   }
 
   @Test
@@ -182,12 +187,15 @@ public class GetSyncReceiptsFromPeerTaskTest {
     final var task = createTask(List.of(syncBlock1, syncBlock2, syncBlock3), protocolSchedule);
 
     ReceiptsMessage receiptsMessage =
-        ReceiptsMessage.create(
-            List.of(
-                List.of(receiptForBlock1), List.of(receiptForBlock2), List.of(receiptForBlock3)),
-            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+        ReceiptsMessage.createUnsafe(
+            serializeReceiptsList(
+                List.of(
+                    List.of(receiptForBlock1),
+                    List.of(receiptForBlock2),
+                    List.of(receiptForBlock3)),
+                TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION));
 
-    final var response = task.processResponse(receiptsMessage);
+    final var response = task.processResponse(receiptsMessage, AGREED_CAPABILITIES);
 
     assertThat(response).hasSize(3);
     assertThat(response.get(syncBlock1))
@@ -306,17 +314,20 @@ public class GetSyncReceiptsFromPeerTaskTest {
     final var task = createTask(List.of(syncBlock1, syncBlock2, syncBlock3), protocolSchedule);
 
     final ReceiptsMessage receiptsMessage =
-        ReceiptsMessage.create(
-            List.of(
-                List.of(receiptForBlock1),
-                List.of(receiptForBlock2),
-                List.of(receiptForBlock3),
+        ReceiptsMessage.createUnsafe(
+            serializeReceiptsList(
                 List.of(
-                    new TransactionReceipt(1, 101112, Collections.emptyList(), Optional.empty()))),
-            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+                    List.of(receiptForBlock1),
+                    List.of(receiptForBlock2),
+                    List.of(receiptForBlock3),
+                    List.of(
+                        new TransactionReceipt(
+                            1, 101112, Collections.emptyList(), Optional.empty()))),
+                TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION));
 
     Assertions.assertThrows(
-        InvalidPeerTaskResponseException.class, () -> task.processResponse(receiptsMessage));
+        InvalidPeerTaskResponseException.class,
+        () -> task.processResponse(receiptsMessage, AGREED_CAPABILITIES));
   }
 
   @Test
