@@ -114,6 +114,14 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
   private PositiveNumber pluginBlockTxsSelectionMaxTime =
       DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 
+  @Option(
+      names = {"--max-blobs"},
+      description =
+          "Maximum number of blobs allowed per transaction during block building. "
+              + "Only applies from Osaka hardfork onwards. (default: 6)",
+      arity = "1")
+  private Integer maxBlobsPerTransaction = null;
+
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
 
@@ -221,6 +229,10 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
             + " see --block-txs-selection-max-time instead",
         genesisConfigOptions.isPoa(),
         singletonList("--poa-block-txs-selection-max-time"));
+
+    if (maxBlobsPerTransaction != null && maxBlobsPerTransaction < 0) {
+      throw new ParameterException(commandLine, "--max-blobs must be a positive value");
+    }
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
@@ -237,6 +249,9 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
     miningOptions.pluginBlockTxsSelectionMaxTime =
         miningConfiguration.getPluginBlockTxsSelectionMaxTime();
+    miningConfiguration
+        .getMaxBlobsPerTransaction()
+        .ifPresent(v -> miningOptions.maxBlobsPerTransaction = v);
 
     miningOptions.unstableOptions.posBlockCreationMaxTime =
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
@@ -263,6 +278,10 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
             .minTransactionGasPrice(minTransactionGasPrice)
             .minPriorityFeePerGas(minPriorityFeePerGas)
             .minBlockOccupancyRatio(minBlockOccupancyRatio);
+
+    if (maxBlobsPerTransaction != null) {
+      updatableInitValuesBuilder.maxBlobsPerTransaction(maxBlobsPerTransaction);
+    }
 
     if (targetGasLimit != null) {
       updatableInitValuesBuilder.targetGasLimit(targetGasLimit);
