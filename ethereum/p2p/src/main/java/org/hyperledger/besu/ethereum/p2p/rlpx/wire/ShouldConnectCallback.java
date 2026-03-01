@@ -15,9 +15,13 @@
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+
+import java.util.Optional;
 
 @FunctionalInterface
 public interface ShouldConnectCallback {
 
-  boolean shouldConnect(final Peer peer, final boolean incoming);
+  Optional<DisconnectMessage.DisconnectReason> shouldConnect(
+      final Peer peer, final boolean incoming);
 }

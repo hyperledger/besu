@@ -44,6 +44,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -78,8 +79,8 @@ public class P2PPlainNetworkTest {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = createP2PNetwork(nodeKey);
         final P2PNetwork connector = createP2PNetwork()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+      listener.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      connector.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
 
       listener.start();
       connector.start();
@@ -102,8 +103,8 @@ public class P2PPlainNetworkTest {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
     try (final P2PNetwork listener = createP2PNetwork(listenNodeKey);
         final P2PNetwork connector = createP2PNetwork()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+      listener.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      connector.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
 
       listener.start();
       connector.start();
@@ -146,9 +147,14 @@ public class P2PPlainNetworkTest {
     try (final P2PNetwork listener = createP2PNetwork(listenerConfig, nodeKey);
         final P2PNetwork connector1 = createP2PNetwork();
         final P2PNetwork connector2 = createP2PNetwork()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector1.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector2.getRlpxAgent().subscribeConnectRequest((p, d) -> false);
+      listener.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      connector1.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      connector2
+          .getRlpxAgent()
+          .ifPresent(
+              agent ->
+                  agent.setShouldConnectCallback(
+                      (p, d) -> Optional.of(DisconnectReason.TOO_MANY_PEERS)));
 
       // Setup listener and first connection
       listener.start();
@@ -190,8 +196,8 @@ public class P2PPlainNetworkTest {
     final Capability cap2 = Capability.create(subprotocol2.getName(), 68);
     try (final P2PNetwork listener = createP2PNetwork(listenerNodeKey, List.of(cap1));
         final P2PNetwork connector = createP2PNetwork(connectorNodeKey, List.of(cap2))) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+      listener.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      connector.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
 
       listener.start();
       connector.start();
@@ -211,8 +217,8 @@ public class P2PPlainNetworkTest {
 
     try (final P2PNetwork localNetwork = createP2PNetwork(localDenylist);
         final P2PNetwork remoteNetwork = createP2PNetwork()) {
-      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
-      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+      localNetwork.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      remoteNetwork.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
 
       localNetwork.start();
       remoteNetwork.start();
@@ -260,8 +266,8 @@ public class P2PPlainNetworkTest {
 
     try (final P2PNetwork localNetwork = createP2PNetwork(peerPermissions);
         final P2PNetwork remoteNetwork = createP2PNetwork()) {
-      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
-      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+      localNetwork.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
+      remoteNetwork.getRlpxAgent().ifPresent(agent -> agent.setShouldConnectCallback(testCallback));
 
       localNetwork.start();
       remoteNetwork.start();
@@ -300,7 +306,7 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  private final ShouldConnectCallback testCallback = (p, d) -> true;
+  private final ShouldConnectCallback testCallback = (p, d) -> Optional.empty();
 
   private Peer createPeer(final Bytes nodeId, final int listenPort) {
     return DefaultPeer.fromEnodeURL(

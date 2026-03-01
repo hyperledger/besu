@@ -87,7 +87,7 @@ public class RlpxAgentTest {
   public void setup() {
     // Set basic defaults
     when(peerPrivileges.canExceedConnectionLimits(any())).thenReturn(false);
-    agent.subscribeConnectRequest((a, b) -> true);
+    agent.setShouldConnectCallback((a, b) -> Optional.empty());
   }
 
   @AfterEach

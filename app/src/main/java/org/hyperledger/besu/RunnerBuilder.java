@@ -809,7 +809,7 @@ public class RunnerBuilder {
             .ethPeersShouldConnect(ethPeers::shouldTryToConnect)
             .build();
 
-    ethPeers.setRlpxAgent(networkRunner.getRlpxAgent());
+    networkRunner.getRlpxAgent().ifPresent(ethPeers::setRlpxAgent);
 
     final P2PNetwork network = networkRunner.getNetwork();
     // ForkId in Ethereum Node Record needs updating when we transition to a new

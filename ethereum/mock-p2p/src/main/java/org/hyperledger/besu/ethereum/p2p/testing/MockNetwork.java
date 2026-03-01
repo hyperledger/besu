@@ -20,13 +20,13 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.MessageCallback;
+import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.util.Subscribers;
@@ -175,9 +175,6 @@ public final class MockNetwork {
     }
 
     @Override
-    public void subscribeConnectRequest(final ShouldConnectCallback callback) {}
-
-    @Override
     public void subscribeDisconnect(final DisconnectCallback callback) {
       disconnectCallbacks.subscribe(callback);
     }
@@ -236,6 +233,11 @@ public final class MockNetwork {
 
     @Override
     public void updateNodeRecord() {}
+
+    @Override
+    public Optional<RlpxAgent> getRlpxAgent() {
+      return Optional.empty();
+    }
   }
 
   /**
