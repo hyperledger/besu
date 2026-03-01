@@ -144,6 +144,47 @@ public class NettyConnectionInitializerTest {
     assertThat(addrs.ipv6Address().get().getPort()).isGreaterThan(0);
   }
 
+  @Test
+  public void stop_immediatelyAfterStart_completesWithoutHanging() throws Exception {
+    initializer = createInitializer(ipv4OnlyConfig());
+
+    // Call start() but do NOT wait for it to complete — immediately stop.
+    final var startFuture = initializer.start();
+    final var stopFuture = initializer.stop();
+
+    // Both futures must resolve within the timeout. Before the fix, stop() could hang
+    // indefinitely when the bind had not yet completed.
+    stopFuture.get(10, TimeUnit.SECONDS);
+    // start() should also complete (exceptionally is fine — it was interrupted by stop).
+    try {
+      startFuture.get(10, TimeUnit.SECONDS);
+    } catch (final Exception ignored) {
+      // Expected — stop() may have completed start()'s future exceptionally.
+    }
+
+    // Prevent double-stop in @AfterEach.
+    initializer = null;
+  }
+
+  @Test
+  public void stop_immediatelyAfterStart_dualStack_completesWithoutHanging() throws Exception {
+    assumeTrue(NetworkUtility.isIPv6Available(), "IPv6 not available on this host");
+
+    initializer = createInitializer(dualStackConfig());
+
+    final var startFuture = initializer.start();
+    final var stopFuture = initializer.stop();
+
+    stopFuture.get(10, TimeUnit.SECONDS);
+    try {
+      startFuture.get(10, TimeUnit.SECONDS);
+    } catch (final Exception ignored) {
+      // Expected — stop() may have completed start()'s future exceptionally.
+    }
+
+    initializer = null;
+  }
+
   private static RlpxConfiguration ipv4OnlyConfig() {
     return RlpxConfiguration.create().setBindHost("127.0.0.1").setBindPort(0);
   }

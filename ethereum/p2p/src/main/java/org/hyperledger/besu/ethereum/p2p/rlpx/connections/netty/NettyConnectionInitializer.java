@@ -76,6 +76,7 @@ public class NettyConnectionInitializer
 
   private ChannelFuture server;
   private volatile ChannelFuture serverIpv6;
+  private volatile CompletableFuture<ListeningAddresses> listeningAddressesFuture;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
   private final EventLoopGroup workers = new NioEventLoopGroup(10);
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -112,6 +113,7 @@ public class NettyConnectionInitializer
   public CompletableFuture<ListeningAddresses> start() {
     final CompletableFuture<ListeningAddresses> listeningAddressesFuture =
         new CompletableFuture<>();
+    this.listeningAddressesFuture = listeningAddressesFuture;
     if (!started.compareAndSet(false, true)) {
       listeningAddressesFuture.completeExceptionally(
           new IllegalStateException(
@@ -188,57 +190,80 @@ public class NettyConnectionInitializer
       return stoppedFuture;
     }
 
-    final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
-    server
-        .channel()
-        .close()
-        .addListener(
-            future -> {
-              if (future.isSuccess()) {
-                ipv4Close.complete(null);
-              } else {
-                ipv4Close.completeExceptionally(future.cause());
-              }
-            });
-
-    if (serverIpv6 != null) {
-      final CompletableFuture<Void> ipv6Close = new CompletableFuture<>();
-      serverIpv6
-          .channel()
-          .close()
-          .addListener(
-              future -> {
-                if (!future.isSuccess()) {
-                  LOG.warn("Failed to close IPv6 RLPx socket cleanly", future.cause());
-                }
-                ipv6Close.complete(
-                    null); // best-effort: doesn't block shutdown on IPv6 close failure
-              });
-      CompletableFuture.allOf(ipv4Close, ipv6Close)
-          .whenComplete(
-              (v, err) -> {
-                workers.shutdownGracefully();
-                boss.shutdownGracefully();
-                if (err != null) {
-                  stoppedFuture.completeExceptionally(err);
-                } else {
-                  stoppedFuture.complete(null);
-                }
-              });
-    } else {
-      ipv4Close.whenComplete(
-          (v, err) -> {
-            workers.shutdownGracefully();
-            boss.shutdownGracefully();
-            if (err != null) {
-              stoppedFuture.completeExceptionally(err);
-            } else {
-              stoppedFuture.complete(null);
-            }
-          });
+    // Unblock any caller waiting on start() that hasn't completed yet.
+    if (listeningAddressesFuture != null) {
+      listeningAddressesFuture.completeExceptionally(
+          new IllegalStateException("Connection initializer was stopped before startup completed"));
     }
 
+    // Wait for the IPv4 bind to settle before closing. If already done, fires immediately.
+    server.addListener(
+        bindFuture -> {
+          if (!bindFuture.isSuccess()) {
+            // Bind failed — channel was never fully registered, nothing to close.
+            shutdownEventLoops(stoppedFuture);
+            return;
+          }
+
+          final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
+          server
+              .channel()
+              .close()
+              .addListener(
+                  closeFuture -> {
+                    if (closeFuture.isSuccess()) {
+                      ipv4Close.complete(null);
+                    } else {
+                      ipv4Close.completeExceptionally(closeFuture.cause());
+                    }
+                  });
+
+          // Read serverIpv6 here — the start() listener has already run (listener
+          // ordering), so this is the final state.
+          final ChannelFuture ipv6 = serverIpv6;
+          if (ipv6 != null) {
+            final CompletableFuture<Void> ipv6Close = new CompletableFuture<>();
+            ipv6.addListener(
+                ipv6BindFuture -> {
+                  if (!ipv6BindFuture.isSuccess()) {
+                    ipv6Close.complete(null);
+                    return;
+                  }
+                  ipv6.channel()
+                      .close()
+                      .addListener(
+                          ipv6CloseFuture -> {
+                            if (!ipv6CloseFuture.isSuccess()) {
+                              LOG.warn(
+                                  "Failed to close IPv6 RLPx socket cleanly",
+                                  ipv6CloseFuture.cause());
+                            }
+                            ipv6Close.complete(null);
+                          });
+                });
+            CompletableFuture.allOf(ipv4Close, ipv6Close)
+                .whenComplete((v, err) -> shutdownEventLoops(stoppedFuture, err));
+          } else {
+            ipv4Close.whenComplete((v, err) -> shutdownEventLoops(stoppedFuture, err));
+          }
+        });
+
     return stoppedFuture;
+  }
+
+  private void shutdownEventLoops(final CompletableFuture<Void> stoppedFuture) {
+    shutdownEventLoops(stoppedFuture, null);
+  }
+
+  private void shutdownEventLoops(
+      final CompletableFuture<Void> stoppedFuture, final Throwable err) {
+    workers.shutdownGracefully();
+    boss.shutdownGracefully();
+    if (err != null) {
+      stoppedFuture.completeExceptionally(err);
+    } else {
+      stoppedFuture.complete(null);
+    }
   }
 
   @Override
