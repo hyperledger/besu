@@ -1,5 +1,5 @@
-/*
- * Copyright contributors to Besu.
+/**
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,19 +21,19 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** The Add operation. */
-public class AddOperationOptimized extends AbstractFixedCostOperation {
+/** The Mul operation. */
+public class MulOperationOptimized extends AbstractFixedCostOperation {
 
-  /** The Add operation success result. */
-  static final OperationResult addSuccess = new OperationResult(3, null);
+  /** The Mul operation success result. */
+  static final OperationResult mulSuccess = new OperationResult(5, null);
 
   /**
-   * Instantiates a new Add operation.
+   * Instantiates a new Mul operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public AddOperationOptimized(final GasCalculator gasCalculator) {
-    super(0x01, "ADD", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+  public MulOperation(final GasCalculator gasCalculator) {
+    super(0x02, "MUL", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
   }
 
   @Override
@@ -43,21 +43,20 @@ public class AddOperationOptimized extends AbstractFixedCostOperation {
   }
 
   /**
-   * Static operation.
+   * Performs mul operation
    *
    * @param frame the frame
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 
-    byte[] b0 = value0.toArrayUnsafe();
-    byte[] b1 = value1.toArrayUnsafe();
-    byte[] resultArray = UInt256.add(b0, b1);
-    frame.pushStackItem(Bytes.wrap(resultArray));
+    UInt256 u0 = UInt256.fromBytesBE(value0.toArrayUnsafe());
+    UInt256 u1 = UInt256.fromBytesBE(value1.toArrayUnsafe());
+    Bytes resultBytes = Bytes.wrap(u0.mul(u1).toBytesBE());
 
-    return addSuccess;
+    frame.pushStackItem(resultBytes);
+    return mulModSuccess;
   }
 }

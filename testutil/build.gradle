@@ -33,6 +33,8 @@ sonarqube {
 }
 
 dependencies {
+  compileOnly 'com.google.code.findbugs:jsr305'
+
   implementation project(':ethereum:eth')
   implementation project(':plugin-api')
   implementation project(':util')
