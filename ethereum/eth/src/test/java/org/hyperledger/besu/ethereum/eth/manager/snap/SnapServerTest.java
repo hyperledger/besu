@@ -16,8 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -50,7 +48,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
@@ -843,16 +840,6 @@ public class SnapServerTest {
     return createTestContractAccount(acctHash, 1, storage);
   }
 
-  private static void updateStorageArchiveBlock(
-      final SegmentedKeyValueStorage storage, final long blockNumber) {
-    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
-    tx.put(
-        TRIE_BRANCH_STORAGE,
-        WORLD_BLOCK_NUMBER_KEY,
-        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
-    tx.commit();
-  }
-
   static SnapTestAccount createTestContractAccount(
       final Hash acctHash, final int slotKeyGap, final BonsaiWorldStateKeyValueStorage storage) {
     MerkleTrie<Bytes32, Bytes> trie =
@@ -868,7 +855,6 @@ public class SnapServerTest {
 
     // Only Bonsai archive cares about this. Do everything as if we're at
     // block 1 so we know which entry to retrieve from the DB
-    updateStorageArchiveBlock(storage.getComposedWorldStateStorage(), 1);
 
     var updater = storage.updater();
     updater.putCode(Hash.hash(mockCode), mockCode);
@@ -908,12 +894,6 @@ public class SnapServerTest {
     }
     storageTrie.commit(updater::putAccountStateTrieNode);
     updater.commit();
-    inMemoryStorage
-        .getWorldStateBlockNumber()
-        .ifPresent(
-            currentBlock ->
-                updateStorageArchiveBlock(
-                    inMemoryStorage.getComposedWorldStateStorage(), currentBlock + 1));
   }
 
   boolean assertIsValidAccountRangeProof(
