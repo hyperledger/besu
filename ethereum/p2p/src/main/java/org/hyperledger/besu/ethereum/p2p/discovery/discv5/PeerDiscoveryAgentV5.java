@@ -165,14 +165,20 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     }
     if (!state.compareAndSet(State.NEW, State.STARTED)) {
       return CompletableFuture.failedFuture(
-          new IllegalStateException("Unable to start an already started PeerDiscoveryAgentV5"));
+          new IllegalStateException(
+              "Unable to start PeerDiscoveryAgentV5 from state " + state.get()));
     }
     LOG.info("Starting DiscV5 peer discovery agent ...");
 
-    final NodeRecord localNodeRecord = initializeLocalNodeRecord(tcpPort);
-    final MutableDiscoverySystem system =
-        discoverySystemFactory.create(localNodeRecord, this::handleBoundPortResolved);
-    discoverySystem.set(system);
+    final MutableDiscoverySystem system;
+    try {
+      final NodeRecord localNodeRecord = initializeLocalNodeRecord(tcpPort);
+      system = discoverySystemFactory.create(localNodeRecord, this::handleBoundPortResolved);
+      discoverySystem.set(system);
+    } catch (final Exception e) {
+      state.set(State.NEW);
+      return CompletableFuture.failedFuture(e);
+    }
 
     return system
         .start()
@@ -209,6 +215,14 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
               if (error != null) {
                 LOG.error("Failed to start DiscV5 peer discovery agent", error);
                 scheduler.shutdownNow();
+                if (state.compareAndSet(State.STARTED, State.NEW)) {
+                  try {
+                    system.stop();
+                  } catch (final Exception e) {
+                    LOG.debug("Error while stopping discovery system after failed start", e);
+                  }
+                  discoverySystem.set(null);
+                }
               }
             });
   }

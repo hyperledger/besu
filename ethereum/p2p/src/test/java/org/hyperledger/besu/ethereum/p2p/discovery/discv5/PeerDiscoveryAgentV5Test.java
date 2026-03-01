@@ -111,7 +111,7 @@ class PeerDiscoveryAgentV5Test {
         .failsWithin(1, TimeUnit.SECONDS)
         .withThrowableOfType(ExecutionException.class)
         .withCauseInstanceOf(IllegalStateException.class)
-        .withMessageContaining("already started");
+        .withMessageContaining("Unable to start PeerDiscoveryAgentV5 from state");
   }
 
   @Test
@@ -145,6 +145,29 @@ class PeerDiscoveryAgentV5Test {
     final CompletableFuture<Integer> result = agent.start(1234);
     assertThat(result).isCompletedExceptionally();
     assertThat(agent.getScheduler().isShutdown()).isTrue();
+    // State should roll back so a retry is possible
+    assertThat(agent.isStopped()).isFalse();
+    verify(mockSystem).stop();
+  }
+
+  @Test
+  void startResetsStateOnSynchronousInitFailure() {
+    // Factory throws during create() — synchronous failure before system.start()
+    final PeerDiscoveryAgentV5 failingAgent =
+        new PeerDiscoveryAgentV5(
+            config,
+            forkIdManager,
+            nodeRecordManager,
+            rlpxAgent,
+            false,
+            (nodeRecord, listener) -> {
+              throw new RuntimeException("factory exploded");
+            });
+
+    final CompletableFuture<Integer> result = failingAgent.start(1234);
+    assertThat(result).isCompletedExceptionally();
+    // State should roll back to NEW so a retry is possible
+    assertThat(failingAgent.isStopped()).isFalse();
   }
 
   @Test
