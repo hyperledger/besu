@@ -18,11 +18,14 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.layout.template.json.JsonTemplateLayout;
 import org.apache.logging.log4j.util.Strings;
 import org.apache.logging.slf4j.Log4jLoggerFactory;
 import org.slf4j.LoggerFactory;
@@ -114,6 +117,52 @@ class Log4j2ConfiguratorUtil {
       loggerConfig.setLevel(level);
       loggerContext.updateLoggers();
     }
+  }
+
+  /**
+   * Applies a structured JSON logging format by replacing the Console appender layout. This is
+   * called after CLI parsing to apply the user's --logging-format choice, since the initial Log4j2
+   * configuration happens before CLI arguments are available.
+   *
+   * @param eventTemplateUri the Log4j2 JsonTemplateLayout event template URI, or null for PLAIN
+   */
+  static void applyLoggingFormat(final String eventTemplateUri) {
+    if (eventTemplateUri == null) {
+      return;
+    }
+    if (customLog4jConfigFilePresent()) {
+      return;
+    }
+    final LoggerContext loggerContext = getLoggerContext();
+    final Configuration config = loggerContext.getConfiguration();
+    final LoggerConfig rootLogger = config.getRootLogger();
+
+    final JsonTemplateLayout layout =
+        JsonTemplateLayout.newBuilder()
+            .setConfiguration(config)
+            .setEventTemplateUri(eventTemplateUri)
+            .build();
+    final ConsoleAppender consoleAppender =
+        ConsoleAppender.newBuilder()
+            .setName("Console")
+            .setTarget(ConsoleAppender.Target.SYSTEM_OUT)
+            .setLayout(layout)
+            .build();
+    consoleAppender.start();
+
+    if (rootLogger.getAppenders().containsKey("Console")) {
+      rootLogger.removeAppender("Console");
+    }
+    rootLogger.addAppender(consoleAppender, null, null);
+    loggerContext.updateLoggers();
+  }
+
+  private static boolean customLog4jConfigFilePresent() {
+    return Stream.of("LOG4J_CONFIGURATION_FILE", "log4j.configurationFile")
+        .flatMap(key -> Stream.of(System.getenv(key), System.getProperty(key)))
+        .flatMap(Stream::ofNullable)
+        .findFirst()
+        .isPresent();
   }
 
   /** Reconfigure. */

@@ -54,7 +54,8 @@ import org.hyperledger.besu.cli.options.GraphQlOptions;
 import org.hyperledger.besu.cli.options.InProcessRpcOptions;
 import org.hyperledger.besu.cli.options.IpcOptions;
 import org.hyperledger.besu.cli.options.JsonRpcHttpOptions;
-import org.hyperledger.besu.cli.options.LoggingLevelOption;
+import org.hyperledger.besu.cli.options.LoggingFormat;
+import org.hyperledger.besu.cli.options.LoggingOptions;
 import org.hyperledger.besu.cli.options.MetricsOptions;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.NatOptions;
@@ -330,7 +331,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final EthstatsOptions ethstatsOptions = EthstatsOptions.create();
   private final NodePrivateKeyFileOption nodePrivateKeyFileOption =
       NodePrivateKeyFileOption.create();
-  private final LoggingLevelOption loggingLevelOption = LoggingLevelOption.create();
+  private final LoggingOptions loggingOptions = LoggingOptions.create();
+  private static LoggingFormat selectedLoggingFormat;
 
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Tx Pool Common Options|@%n")
   final TransactionPoolOptions transactionPoolOptions = TransactionPoolOptions.create();
@@ -1249,7 +1251,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void handleStableOptions() {
     commandLine.addMixin("Ethstats", ethstatsOptions);
     commandLine.addMixin("Private key file", nodePrivateKeyFileOption);
-    commandLine.addMixin("Logging level", loggingLevelOption);
+    commandLine.addMixin("Logging", loggingOptions);
     commandLine.addMixin("Data Storage Options", dataStorageOptions);
   }
 
@@ -1429,15 +1431,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param announce sets to true to print the logging level on standard output
    */
   public void configureLogging(final boolean announce) {
-    // To change the configuration if color was enabled/disabled
+    // Store selected logging format for use by the logging configuration factory
+    selectedLoggingFormat = loggingOptions.getLoggingFormat();
+    // To change the configuration if color was enabled/disabled or format was changed
     LogConfigurator.reconfigure();
+    // Directly replace the Console appender with the correct layout, since the initial
+    // Log4j2 configuration happened before CLI arguments were parsed (setupLogging() runs
+    // before parse()), so the console appender was created with the default PLAIN format.
+    LogConfigurator.applyLoggingFormat(selectedLoggingFormat.getEventTemplateUri());
     // set log level per CLI flags
-    final String logLevel = loggingLevelOption.getLogLevel();
+    final String logLevel = loggingOptions.getLogLevel();
     if (logLevel != null) {
       if (announce) {
         System.out.println("Setting logging level to " + logLevel);
       }
       LogConfigurator.setLevel("", logLevel);
+    }
+    if (announce && selectedLoggingFormat != LoggingFormat.PLAIN) {
+      System.out.println("Setting logging format to " + selectedLoggingFormat);
     }
   }
 
@@ -1448,6 +1459,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public static Optional<Boolean> getColorEnabled() {
     return Optional.ofNullable(colorEnabled);
+  }
+
+  /**
+   * Gets the selected logging format.
+   *
+   * @return the selected logging format, or PLAIN if not set
+   */
+  public static LoggingFormat getSelectedLoggingFormat() {
+    return selectedLoggingFormat != null ? selectedLoggingFormat : LoggingFormat.PLAIN;
   }
 
   @VisibleForTesting
@@ -2742,7 +2762,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @VisibleForTesting
   String getLogLevel() {
-    return loggingLevelOption.getLogLevel();
+    return loggingOptions.getLogLevel();
   }
 
   /**
