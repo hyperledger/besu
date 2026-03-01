@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Syncing networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. [#9852](https://github.com/hyperledger/besu/pull/9852)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
@@ -11,7 +12,6 @@
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
-  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
 
 ### Bug fixes
 

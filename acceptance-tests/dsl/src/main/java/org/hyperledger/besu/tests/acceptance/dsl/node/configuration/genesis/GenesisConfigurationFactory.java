@@ -160,6 +160,10 @@ public class GenesisConfigurationFactory {
     return Optional.of(genesis);
   }
 
+  public static Optional<String> createFromResource(final String resourceName) {
+    return Optional.of(readGenesisFile(resourceName));
+  }
+
   private static String updateGenesisCliqueOptions(
       final String template, final CliqueOptions cliqueOptions) {
     return template
