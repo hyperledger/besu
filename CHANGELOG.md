@@ -73,6 +73,7 @@
 - EVM optimisations - Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 
 ### Bug fixes
+- Fix epoch reset not clearing DROP votes in Clique/IBFT/QBFT consensus [#9870](https://github.com/hyperledger/besu/pull/9870)
 - Fix DiscV5 ENR `udp`/`udp6` fields: when `--p2p-port=0` is used, the OS-assigned UDP port is now correctly propagated to the ENR after the socket is bound; in dual-stack mode both UDP sockets resolve before the ENR `seq` is incremented [#9888](https://github.com/hyperledger/besu/pull/9888)
 - Fix DiscV5 ENR `tcp`/`tcp6` fields: previously these reflected the UDP discovery bind port instead of the actual RLPx listening port; ENR initialisation is now deferred until the RLPx TCP port is known [#9873](https://github.com/hyperledger/besu/pull/9873)
 - Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
