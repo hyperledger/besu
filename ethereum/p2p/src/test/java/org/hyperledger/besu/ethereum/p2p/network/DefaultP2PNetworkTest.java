@@ -396,7 +396,7 @@ public final class DefaultP2PNetworkTest {
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
 
     final DefaultP2PNetwork network = network();
-    Assertions.assertThatThrownBy(network::start).hasCauseInstanceOf(RuntimeException.class);
+    Assertions.assertThatThrownBy(network::start).hasRootCauseInstanceOf(RuntimeException.class);
 
     // Partially started RLPx agent should have been stopped on failure
     verify(rlpxAgent).stop();
@@ -408,7 +408,7 @@ public final class DefaultP2PNetworkTest {
                   network.stop();
                   network.awaitStop();
                 }))
-        .succeedsWithin(Duration.ofSeconds(10));
+        .succeedsWithin(Duration.ofSeconds(5));
   }
 
   @Test
@@ -417,7 +417,7 @@ public final class DefaultP2PNetworkTest {
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
 
     final DefaultP2PNetwork network = network();
-    Assertions.assertThatThrownBy(network::start).hasCauseInstanceOf(RuntimeException.class);
+    Assertions.assertThatThrownBy(network::start).hasRootCauseInstanceOf(RuntimeException.class);
 
     // Both agents should have been stopped on failure
     verify(discoveryAgent).stop();
@@ -430,7 +430,7 @@ public final class DefaultP2PNetworkTest {
                   network.stop();
                   network.awaitStop();
                 }))
-        .succeedsWithin(Duration.ofSeconds(10));
+        .succeedsWithin(Duration.ofSeconds(5));
   }
 
   private DefaultP2PNetwork network() {
