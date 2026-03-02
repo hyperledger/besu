@@ -461,8 +461,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     Awaitility.waitAtMost(60, TimeUnit.SECONDS)
         .until(
             () -> {
-              if (!besuProcesses.get(node.getName()).isAlive()) {
-                return true;
+              final Process process = besuProcesses.get(node.getName());
+              if (!process.isAlive()) {
+                throw new IllegalStateException(
+                    "Besu process for node "
+                        + node.getName()
+                        + " exited with code "
+                        + process.exitValue()
+                        + " before writing "
+                        + fileName);
               }
 
               try (final Stream<String> s = Files.lines(file.toPath())) {
