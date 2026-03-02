@@ -32,13 +32,16 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.messages.BlockAccessListsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetBlockAccessListsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
@@ -50,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.messages.PaginatedReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -472,6 +476,139 @@ public class EthServerTest {
     verify(ethPeer).disconnect(INVALID_FIRST_BLOCK_RECEIPT_INDEX);
   }
 
+  @Test
+  public void shouldIncludeEmptyEntryForUnavailableBlockAccessList() {
+    setupEthServer();
+
+    final Hash availableHash = dataGenerator.hash();
+    final Hash unavailableHash = dataGenerator.hash();
+    final BlockAccessList available = dataGenerator.blockAccessList();
+
+    when(blockchain.getBlockAccessList(availableHash)).thenReturn(Optional.of(available));
+    when(blockchain.getBlockAccessList(unavailableHash)).thenReturn(Optional.empty());
+
+    final GetBlockAccessListsMessage request =
+        GetBlockAccessListsMessage.create(List.of(availableHash, unavailableHash));
+
+    final BlockAccessListsMessage expected =
+        BlockAccessListsMessage.create(List.of(available, new BlockAccessList(List.of())));
+
+    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, request), EthProtocol.LATEST))
+        .contains(expected);
+  }
+
+  @Test
+  public void shouldLimitBlockAccessListsByCount() {
+    final int count = 10;
+    final int limit = 6;
+    setupEthServer(b -> b.maxGetBlockAccessLists(limit));
+
+    final List<Hash> hashes = new ArrayList<>(count);
+    final List<BlockAccessList> accessLists = new ArrayList<>(count);
+
+    for (int i = 0; i < count; i++) {
+      final Hash h = dataGenerator.hash();
+      final BlockAccessList bal = dataGenerator.blockAccessList();
+      hashes.add(h);
+      accessLists.add(bal);
+      when(blockchain.getBlockAccessList(h)).thenReturn(Optional.of(bal));
+    }
+
+    final GetBlockAccessListsMessage request = GetBlockAccessListsMessage.create(hashes);
+
+    final BlockAccessListsMessage expected =
+        BlockAccessListsMessage.create(accessLists.subList(0, limit));
+
+    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, request), EthProtocol.LATEST))
+        .contains(expected);
+  }
+
+  @Test
+  public void shouldLimitBlockAccessListsByMessageSize() {
+    final int count = 10;
+    setupEthServer();
+
+    final List<Hash> hashes = new ArrayList<>(count);
+    final List<BlockAccessList> accessLists = new ArrayList<>(count);
+
+    for (int i = 0; i < count; i++) {
+      final Hash h = dataGenerator.hash();
+      final BlockAccessList bal = dataGenerator.blockAccessList();
+      hashes.add(h);
+      accessLists.add(bal);
+      when(blockchain.getBlockAccessList(h)).thenReturn(Optional.of(bal));
+    }
+
+    int sizeLimit = RLP.MAX_PREFIX_SIZE;
+    final List<BlockAccessList> expectedAccessLists = new ArrayList<>();
+    for (int i = 0; i < 4; i++) {
+      final BlockAccessList bal = accessLists.get(i);
+      expectedAccessLists.add(bal);
+      sizeLimit += calculateRlpEncodedSize(bal);
+    }
+
+    final int messageSizeLimit = sizeLimit;
+    setupEthServer(b -> b.maxMessageSize(messageSizeLimit));
+
+    final GetBlockAccessListsMessage request = GetBlockAccessListsMessage.create(hashes);
+    final BlockAccessListsMessage expected = BlockAccessListsMessage.create(expectedAccessLists);
+
+    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, request), EthProtocol.LATEST))
+        .contains(expected);
+  }
+
+  @Test
+  public void
+      shouldLimitTheNumberOfBlockAccessListsLookedUpByRequestLimitEvenWhenSomeAreUnavailable() {
+    final int requestLimit = 2;
+    setupEthServer(b -> b.maxGetBlockAccessLists(requestLimit));
+
+    final Hash firstAvailableHash = dataGenerator.hash();
+    final Hash unavailableHash = dataGenerator.hash();
+    final Hash secondAvailableHash = dataGenerator.hash(); // should NOT be processed
+
+    final BlockAccessList firstAvailable = dataGenerator.blockAccessList();
+    final BlockAccessList secondAvailable = dataGenerator.blockAccessList();
+
+    when(blockchain.getBlockAccessList(firstAvailableHash)).thenReturn(Optional.of(firstAvailable));
+    when(blockchain.getBlockAccessList(unavailableHash)).thenReturn(Optional.empty());
+    when(blockchain.getBlockAccessList(secondAvailableHash))
+        .thenReturn(Optional.of(secondAvailable));
+
+    final GetBlockAccessListsMessage request =
+        GetBlockAccessListsMessage.create(
+            List.of(firstAvailableHash, unavailableHash, secondAvailableHash));
+
+    // With requestLimit=2, the 3rd hash must not be looked up or included.
+    final BlockAccessListsMessage expected =
+        BlockAccessListsMessage.create(List.of(firstAvailable, new BlockAccessList(List.of())));
+
+    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, request), EthProtocol.LATEST))
+        .contains(expected);
+    verify(blockchain, never()).getBlockAccessList(secondAvailableHash);
+  }
+
+  @Test
+  public void shouldReturnEmptyResponseWhenFirstBlockAccessListWouldExceedMessageSize() {
+    setupEthServer(b -> b.maxMessageSize(RLP.MAX_PREFIX_SIZE));
+
+    final Hash firstHash = dataGenerator.hash();
+    final Hash secondHash = dataGenerator.hash();
+
+    final BlockAccessList firstBal = dataGenerator.blockAccessList();
+    final BlockAccessList secondBal = dataGenerator.blockAccessList();
+
+    when(blockchain.getBlockAccessList(firstHash)).thenReturn(Optional.of(firstBal));
+    when(blockchain.getBlockAccessList(secondHash)).thenReturn(Optional.of(secondBal));
+
+    final GetBlockAccessListsMessage request =
+        GetBlockAccessListsMessage.create(List.of(firstHash, secondHash));
+
+    assertThat(ethMessages.dispatch(new EthMessage(ethPeer, request), EthProtocol.LATEST))
+        .contains(BlockAccessListsMessage.create(List.of()));
+    verify(blockchain, never()).getBlockAccessList(secondHash);
+  }
+
   private void setupEthServer() {
     setupEthServer(Function.identity());
   }
@@ -593,5 +730,11 @@ public class EthServerTest {
     }
     rlp.endList();
     return rlp.encoded();
+  }
+
+  private int calculateRlpEncodedSize(final BlockAccessList blockAccessList) {
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    BlockAccessListEncoder.encode(blockAccessList, rlp);
+    return rlp.encodedSize();
   }
 }
