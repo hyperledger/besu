@@ -39,6 +39,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
@@ -94,6 +95,7 @@ public class EthPeers implements PeerSelector {
       Caffeine.newBuilder()
           .expireAfterWrite(Duration.ofSeconds(20L))
           .evictionListener(this::onCacheRemoval)
+          .executor(CacheMaintenanceExecutor.getInstance())
           .build();
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;

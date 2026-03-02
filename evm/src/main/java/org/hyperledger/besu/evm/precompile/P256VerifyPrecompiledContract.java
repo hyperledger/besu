@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmType;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.boringssl.BoringSSLPrecompiles;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.math.BigInteger;
 
@@ -95,7 +96,10 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private final SignatureAlgorithm signatureAlgorithm;
 
   private static final Cache<Integer, PrecompileInputResultTuple> p256VerifyCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumSize(1000)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /**
    * Instantiates a new Abstract precompiled contract.

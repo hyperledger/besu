@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -41,7 +42,10 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
 
   private final long gasCost;
   private static final Cache<Integer, PrecompileInputResultTuple> bnAddCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumSize(1000)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   AltBN128AddPrecompiledContract(final GasCalculator gasCalculator, final long gasCost) {
     super(

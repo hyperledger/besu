@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -95,6 +96,7 @@ public class RocksDBColumnarKeyValueSnapshot
               Caffeine.newBuilder()
                   .maximumSize(100_000)
                   .expireAfterAccess(5, TimeUnit.MINUTES)
+                  .executor(CacheMaintenanceExecutor.getInstance())
                   .build());
     }
   }

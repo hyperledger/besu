@@ -40,6 +40,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -144,17 +145,42 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final int headersSize = Math.max(headersCacheSize, blocksCacheSize);
     blockHeadersCache =
-        Optional.of(Caffeine.newBuilder().recordStats().maximumSize(headersSize).build());
+        Optional.of(
+            Caffeine.newBuilder()
+                .recordStats()
+                .maximumSize(headersSize)
+                .executor(CacheMaintenanceExecutor.getInstance())
+                .build());
 
     if (blocksCacheSize != 0) {
       blockBodiesCache =
-          Optional.of(Caffeine.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       transactionReceiptsCache =
-          Optional.of(Caffeine.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       totalDifficultyCache =
-          Optional.of(Caffeine.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       blockAccessListCache =
-          Optional.of(Caffeine.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       registerCacheMetrics(metricsSystem);
     } else {
       // Only headers cache is created, rest are empty

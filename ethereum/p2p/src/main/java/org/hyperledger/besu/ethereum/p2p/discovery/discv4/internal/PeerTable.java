@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -72,6 +73,7 @@ public class PeerTable {
         Caffeine.newBuilder()
             .maximumSize(maxEntriesCnt)
             .expireAfterWrite(15L, TimeUnit.MINUTES)
+            .executor(CacheMaintenanceExecutor.getInstance())
             .build();
 
     // A bloom filter with 4096 expected insertions of 64-byte keys with a 0.1% false positive

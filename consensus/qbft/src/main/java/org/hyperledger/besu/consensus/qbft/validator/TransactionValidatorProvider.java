@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -36,9 +37,15 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   private final ValidatorContractController validatorContractController;
   private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final Cache<Long, Collection<Address>> afterBlockValidatorCache =
-      Caffeine.newBuilder().maximumSize(100).build();
+      Caffeine.newBuilder()
+          .maximumSize(100)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Long, Collection<Address>> forBlockValidatorCache =
-      Caffeine.newBuilder().maximumSize(100).build();
+      Caffeine.newBuilder()
+          .maximumSize(100)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /**
    * Instantiates a new Transaction validator provider.

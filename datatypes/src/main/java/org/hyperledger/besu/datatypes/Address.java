@@ -21,6 +21,7 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -94,8 +95,7 @@ public class Address extends BytesHolder {
   static LoadingCache<Address, Hash> hashCache =
       Caffeine.newBuilder()
           .maximumSize(4000)
-          // Not using weakKeys(): Caffeine's weakKeys uses identity (==) equality,
-          // which would break lookups since Address objects are not interned.
+          .executor(CacheMaintenanceExecutor.getInstance())
           .build(key -> Hash.hash(key.getBytes()));
 
   /**
@@ -231,7 +231,8 @@ public class Address extends BytesHolder {
   }
 
   /**
-   * Returns the hash of the address. Backed by a cache for performance reasons.
+   * Returns the hash of the address. Backed by a Caffeine cache with async maintenance for
+   * performance.
    *
    * @return the hash of the address.
    */

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -45,9 +46,17 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
   private final Cache<Bytes, Bytes> accountNodes =
-      Caffeine.newBuilder().recordStats().maximumSize(ACCOUNT_CACHE_SIZE).build();
+      Caffeine.newBuilder()
+          .recordStats()
+          .maximumSize(ACCOUNT_CACHE_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Bytes, Bytes> storageNodes =
-      Caffeine.newBuilder().recordStats().maximumSize(STORAGE_CACHE_SIZE).build();
+      Caffeine.newBuilder()
+          .recordStats()
+          .maximumSize(STORAGE_CACHE_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   public BonsaiCachedMerkleTrieLoader(final ObservableMetricsSystem metricsSystem) {
     metricsSystem.createCaffeineCacheCollector(BLOCKCHAIN, "accountsNodes", accountNodes);

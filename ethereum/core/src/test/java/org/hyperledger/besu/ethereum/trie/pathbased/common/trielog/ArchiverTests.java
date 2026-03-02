@@ -127,7 +127,9 @@ public class ArchiverTests {
     // Fake block
     final BlockHeader header =
         new BlockHeader(
-            blockNumber == 0 ? Hash.EMPTY : blockNumberCache.get(blockNumber - 1).get().getHash(),
+            blockNumber == 0
+                ? Hash.EMPTY
+                : getGeneratedBlock(blockNumber - 1, chainLength).get().getHash(),
             Hash.EMPTY_TRIE_HASH,
             Address.ZERO,
             Hash.EMPTY_TRIE_HASH,

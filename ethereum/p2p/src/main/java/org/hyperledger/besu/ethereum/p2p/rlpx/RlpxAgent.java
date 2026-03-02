@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.net.InetSocketAddress;
@@ -77,6 +78,7 @@ public class RlpxAgent {
       Caffeine.newBuilder()
           .expireAfterWrite(
               Duration.ofSeconds(30L)) // we will at most try to connect every 30 seconds
+          .executor(CacheMaintenanceExecutor.getInstance())
           .build();
 
   private RlpxAgent(

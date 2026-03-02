@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Collection;
@@ -35,15 +36,30 @@ public class BadBlockManager {
 
   public static final int MAX_BAD_BLOCKS_SIZE = 100;
   private final Cache<Hash, Block> badBlocks =
-      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, BlockHeader> badHeaders =
-      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, Hash> latestValidHashes =
-      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, BlockAccessList> blockAccessLists =
-      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, BlockAccessList> generatedBlockAccessLists =
-      Caffeine.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Subscribers<BadBlockListener> badBlockSubscribers = Subscribers.create(true);
 
   /**

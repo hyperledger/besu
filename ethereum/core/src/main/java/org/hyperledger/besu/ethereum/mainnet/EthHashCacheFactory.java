@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.primitives.Ints;
@@ -38,7 +40,8 @@ public class EthHashCacheFactory {
     }
   }
 
-  Cache<Long, EthHashDescriptor> descriptorCache = Caffeine.newBuilder().maximumSize(5).build();
+  Cache<Long, EthHashDescriptor> descriptorCache =
+      Caffeine.newBuilder().maximumSize(5).executor(CacheMaintenanceExecutor.getInstance()).build();
 
   public EthHashDescriptor ethHashCacheFor(
       final long blockNumber, final EpochCalculator epochCalc) {

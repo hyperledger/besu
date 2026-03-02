@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -82,7 +83,11 @@ public class Transaction
   public static final BigInteger TWO = BigInteger.valueOf(2);
 
   private static final Cache<Hash, Address> senderCache =
-      Caffeine.newBuilder().recordStats().maximumSize(100_000L).build();
+      Caffeine.newBuilder()
+          .recordStats()
+          .maximumSize(100_000L)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   private final long nonce;
 
