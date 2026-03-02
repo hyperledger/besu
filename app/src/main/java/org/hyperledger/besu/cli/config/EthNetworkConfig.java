@@ -77,7 +77,7 @@ public record EthNetworkConfig(
         genesisConfigOptions.getDiscoveryOptions().getBootNodes();
     final List<EnodeURLImpl> enodeBootNodes = new ArrayList<>();
     final List<EthereumNodeRecord> enrBootNodes = new ArrayList<>();
-    if (rawBootNodes.isPresent()) {
+    if (rawBootNodes.isPresent() && !rawBootNodes.get().isEmpty()) {
       if (rawBootNodes.get().getFirst().startsWith("enr:")) {
         enrBootNodes.addAll(rawBootNodes.get().stream().map(EthereumNodeRecord::fromEnr).toList());
       } else {

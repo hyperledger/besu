@@ -2571,7 +2571,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } else {
       final Optional<List<String>> bootNodesFromGenesis =
           genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
-      if (bootNodesFromGenesis.isPresent()) {
+      if (bootNodesFromGenesis.isPresent() && !bootNodesFromGenesis.get().isEmpty()) {
         if (bootNodesFromGenesis.get().getFirst().startsWith("enr:")) {
           builder.setEnrBootNodes(
               bootNodesFromGenesis.get().stream().map(EthereumNodeRecord::fromEnr).toList());
