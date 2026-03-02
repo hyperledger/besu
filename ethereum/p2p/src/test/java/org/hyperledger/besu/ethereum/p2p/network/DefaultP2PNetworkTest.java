@@ -391,7 +391,7 @@ public final class DefaultP2PNetworkTest {
   }
 
   @Test
-  public void start_rlpxAgentFailure_awaitStopCompletesPromptly() {
+  public void startRlpxAgentFailureAwaitStopCompletesPromptly() {
     when(rlpxAgent.start())
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
 
@@ -412,7 +412,7 @@ public final class DefaultP2PNetworkTest {
   }
 
   @Test
-  public void start_discoveryAgentFailure_awaitStopCompletesPromptly() {
+  public void startDiscoveryAgentFailureAwaitStopCompletesPromptly() {
     when(discoveryAgent.start(anyInt()))
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
 
