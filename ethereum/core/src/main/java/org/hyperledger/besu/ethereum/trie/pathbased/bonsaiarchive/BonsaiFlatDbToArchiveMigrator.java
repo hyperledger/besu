@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsaiarchive;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VARIABLES;
-import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.DELETED_ACCOUNT_VALUE;
-import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.DELETED_STORAGE_VALUE;
-import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix;
-import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -64,6 +59,7 @@ public class BonsaiFlatDbToArchiveMigrator {
   private final TrieLogManager trieLogManager;
   private final Blockchain blockchain;
   private final ScheduledExecutorService executorService;
+  private final BonsaiArchiveFlatDbStrategy archiveStrategy;
   private final Counter migratedBlocksCounter;
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
   protected final AtomicBoolean migrationRunning = new AtomicBoolean(false);
@@ -76,17 +72,20 @@ public class BonsaiFlatDbToArchiveMigrator {
    * @param blockchain the blockchain for reading block headers
    * @param executorService the executor service for running migration on a separate thread
    * @param metricsSystem the metrics system for tracking migration progress
+   * @param archiveStrategy the archive flat DB strategy for writing archive keys
    */
   public BonsaiFlatDbToArchiveMigrator(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final TrieLogManager trieLogManager,
       final Blockchain blockchain,
       final ScheduledExecutorService executorService,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final BonsaiArchiveFlatDbStrategy archiveStrategy) {
     this.worldStateStorage = worldStateStorage;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
     this.executorService = executorService;
+    this.archiveStrategy = archiveStrategy;
     this.migratedBlocksCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
@@ -277,15 +276,12 @@ public class BonsaiFlatDbToArchiveMigrator {
         .getAccountChanges()
         .forEach(
             (address, accountChange) -> {
-              final byte[] key =
-                  calculateArchiveKeyWithMinSuffix(
-                      context, address.addressHash().getBytes().toArrayUnsafe());
               if (accountChange.getUpdated() != null) {
                 final BytesValueRLPOutput out = new BytesValueRLPOutput();
                 accountChange.getUpdated().writeTo(out);
-                tx.put(ACCOUNT_INFO_STATE, key, out.encoded().toArrayUnsafe());
+                archiveStrategy.putFlatAccount(context, tx, address.addressHash(), out.encoded());
               } else {
-                tx.put(ACCOUNT_INFO_STATE, key, DELETED_ACCOUNT_VALUE);
+                archiveStrategy.removeFlatAccount(context, tx, address.addressHash());
               }
             });
   }
@@ -299,16 +295,16 @@ public class BonsaiFlatDbToArchiveMigrator {
             (address, storageMap) ->
                 storageMap.forEach(
                     (slotKey, storageChange) -> {
-                      final byte[] naturalKey =
-                          calculateNaturalSlotKey(address.addressHash(), slotKey.getSlotHash());
-                      final byte[] key = calculateArchiveKeyWithMinSuffix(context, naturalKey);
                       if (storageChange.getUpdated() != null) {
-                        tx.put(
-                            ACCOUNT_STORAGE_STORAGE,
-                            key,
-                            storageChange.getUpdated().toBytes().toArrayUnsafe());
+                        archiveStrategy.putFlatAccountStorageValueByStorageSlotHash(
+                            context,
+                            tx,
+                            address.addressHash(),
+                            slotKey.getSlotHash(),
+                            storageChange.getUpdated().toBytes());
                       } else {
-                        tx.put(ACCOUNT_STORAGE_STORAGE, key, DELETED_STORAGE_VALUE);
+                        archiveStrategy.removeFlatAccountStorageValueByStorageSlotHash(
+                            context, tx, address.addressHash(), slotKey.getSlotHash());
                       }
                     }));
   }

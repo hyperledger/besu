@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.BonsaiContext;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -482,8 +483,16 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   private BonsaiFlatDbToArchiveMigrator createMigrator() {
+    final NoOpMetricsSystem metricsSystem = new NoOpMetricsSystem();
+    final BonsaiArchiveFlatDbStrategy archiveStrategy =
+        new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
     return new BonsaiFlatDbToArchiveMigrator(
-        worldStateStorage, trieLogManager, blockchain, executorService, new NoOpMetricsSystem());
+        worldStateStorage,
+        trieLogManager,
+        blockchain,
+        executorService,
+        metricsSystem,
+        archiveStrategy);
   }
 
   private TrieLogLayer createAccountTrieLog(final Wei balance) {

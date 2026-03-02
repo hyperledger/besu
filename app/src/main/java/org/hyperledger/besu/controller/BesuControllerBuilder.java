@@ -92,9 +92,11 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvi
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsaiarchive.BonsaiFlatDbToArchiveMigrator;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -1044,8 +1046,15 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
     final ScheduledExecutorService migrationExecutor =
         MonitoredExecutors.newScheduledThreadPool("archive-migrator", 1, metricsSystem);
+    final BonsaiArchiveFlatDbStrategy archiveStrategy =
+        new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
     return new BonsaiFlatDbToArchiveMigrator(
-        worldStateKeyValueStorage, trieLogManager, blockchain, migrationExecutor, metricsSystem);
+        worldStateKeyValueStorage,
+        trieLogManager,
+        blockchain,
+        migrationExecutor,
+        metricsSystem,
+        archiveStrategy);
   }
 
   /**
