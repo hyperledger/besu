@@ -124,7 +124,6 @@ public class PeerTransactionTracker
       final EthPeer peer, final Collection<Hash> announcements) {
     seenAnnouncements.computeIfAbsent(peer, key -> createSeenSet()).addAll(announcements);
     // do not clean transactionAnnouncementsToRequest to allow for retries with other peers
-    //transactionAnnouncementsToRequest.values().forEach(hashes -> hashes.removeAll(announcements));
   }
 
   public synchronized void addToPeerSendQueue(
@@ -268,7 +267,7 @@ public class PeerTransactionTracker
       return true;
     }
     final Set<Hash> seenTransactionsForPeer = seenTransactions.get(peer);
-    if(seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash)) {
+    if (seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash)) {
       return true;
     }
     final var seenAnnouncementsForPeer = seenAnnouncements.get(peer);

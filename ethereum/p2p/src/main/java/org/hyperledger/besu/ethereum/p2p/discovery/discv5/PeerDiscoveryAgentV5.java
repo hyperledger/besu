@@ -155,7 +155,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         new DiscoverySystemBuilder()
             .signer(new LocalNodeKeySigner(nodeKey))
             .localNodeRecord(localNodeRecord)
-            .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
+            .localNodeRecordListener(this::handleBoundPortResolved)
             // Ignore peer-reported external addresses for now (always returns Optional.empty()).
             // For IPv4 this is covered by NatService; future IPv6 auto-discovery may relax this:
             // https://github.com/hyperledger/besu/issues/9874
@@ -184,8 +184,20 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .start()
         .thenApply(
             v -> {
+              final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
+              // Return the IPv4 UDP port when available (single-stack IPv4 or dual-stack).
+              // The caller uses this port for UPnP IPv4 port forwarding and for the local
+              // enode URL, both of which are IPv4-only concerns. The fallback to udp6 covers
+              // single-stack IPv6 mode where no IPv4 udp field exists in the ENR.
               final int localPort =
-                  system.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
+                  startedNodeRecord
+                      .getUdpAddress()
+                      .or(startedNodeRecord::getUdp6Address)
+                      .orElseThrow(
+                          () ->
+                              new IllegalStateException(
+                                  "Local ENR has neither udp nor udp6 address after start"))
+                      .getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
@@ -318,6 +330,48 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     return system
         .lookupNode(peerId.getId())
         .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
+  }
+
+  /**
+   * Handles a {@code localNodeRecordListener} callback from the discovery library.
+   *
+   * <p>When {@code onBoundPortResolved} resolves ephemeral (port 0) UDP ports, this method
+   * propagates the resolved ports to {@link NodeRecordManager}. {@code onDiscoveryPortResolved}
+   * writes the ENR atomically once all configured endpoints are non-zero, so concurrent dual-stack
+   * callbacks cannot race a write against an endpoint update.
+   *
+   * <p>{@code resolvedUdpPort} corresponds to the ENR {@code udp} field (IPv4 or IPv4-primary);
+   * {@code resolvedUdp6Port} corresponds to the ENR {@code udp6} field (IPv6 primary or dual-stack
+   * secondary). {@link NodeRecordManager} routes each to the correct endpoint based on the
+   * primary's address family.
+   */
+  private void handleBoundPortResolved(final NodeRecord previous, final NodeRecord updated) {
+    final Optional<Integer> resolvedUdpPort =
+        extractResolvedPort(previous.getUdpAddress(), updated.getUdpAddress());
+    final Optional<Integer> resolvedUdp6Port =
+        extractResolvedPort(previous.getUdp6Address(), updated.getUdp6Address());
+    if (resolvedUdpPort.isPresent() || resolvedUdp6Port.isPresent()) {
+      nodeRecordManager.onDiscoveryPortResolved(resolvedUdpPort, resolvedUdp6Port);
+    }
+  }
+
+  /**
+   * Returns the resolved port if the address transitioned from unresolved (absent or port 0) to a
+   * real port.
+   */
+  private static Optional<Integer> extractResolvedPort(
+      final Optional<InetSocketAddress> previous, final Optional<InetSocketAddress> updated) {
+    return isUnresolvedPort(previous)
+        ? updated.filter(a -> a.getPort() != 0).map(InetSocketAddress::getPort)
+        : Optional.empty();
+  }
+
+  /**
+   * Returns {@code true} if the address is absent or bound to an ephemeral (port 0) port. Both
+   * states are treated as unresolved.
+   */
+  private static boolean isUnresolvedPort(final Optional<InetSocketAddress> address) {
+    return address.map(a -> a.getPort() == 0).orElse(true);
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */

@@ -78,7 +78,8 @@ public class BlockResultFactory {
               block.getHeader().getNumber(),
               block.getHeader().getBaseFee(),
               block.getHash(),
-              i));
+              i,
+              block.getHeader().getTimestamp()));
     }
     final List<TransactionResult> txs =
         transactionWithMetadata.stream()
