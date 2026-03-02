@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.trie.StorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -1032,6 +1033,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
     when(mockTrieLogStorage.tryDelete(any())).thenThrow(new RuntimeException("test exception"));
     final BonsaiWorldStateKeyValueStorage storage = setupSpyStorage(mockTrieLogStorage);
     assertThat(storage.pruneTrieLog(Hash.ZERO)).isFalse();
+  }
+
+  @Test
+  void upgradeToFullFlatDbModeNotifiesSubscribersToClearCache() {
+    final BonsaiWorldStateKeyValueStorage archiveStorage = emptyArchiveStorage();
+    final StorageSubscriber subscriber = mock(StorageSubscriber.class);
+    archiveStorage.subscribe(subscriber);
+
+    archiveStorage.upgradeToFullFlatDbMode();
+
+    verify(subscriber).onClearFlatDatabaseStorage();
   }
 
   private BonsaiWorldStateKeyValueStorage setupSpyStorage(
