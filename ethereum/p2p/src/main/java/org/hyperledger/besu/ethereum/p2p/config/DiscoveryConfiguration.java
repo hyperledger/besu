@@ -49,15 +49,15 @@ public class DiscoveryConfiguration {
 
   public static void assertValidBootnodes(final List<? extends NodeIdentifier> bootnodes) {
     final List<? extends NodeIdentifier> invalidEnodes =
-        bootnodes.stream().filter(e -> e.getUdpDiscoveryPort().isEmpty()).toList();
+        bootnodes.stream()
+            .filter(e -> e.getUdpDiscoveryPort().isEmpty() && e.getIpV6UdpDiscoveryPort().isEmpty())
+            .toList();
 
     if (!invalidEnodes.isEmpty()) {
       final String invalidBootnodes =
           invalidEnodes.stream().map(NodeIdentifier::toString).collect(Collectors.joining(","));
       final String errorMsg =
-          "Bootnodes must have discovery enabled. Invalid enodeBootnodes: "
-              + invalidBootnodes
-              + ".";
+          "Bootnodes must have discovery enabled. Invalid bootnodes: " + invalidBootnodes + ".";
       throw new IllegalArgumentException(errorMsg);
     }
   }
