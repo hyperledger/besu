@@ -184,6 +184,14 @@ class PeerDiscoveryAgentV5Test {
       assertThat(result).isCompletedExceptionally();
       // Agent should not be in stopped state — start failed, not stopped
       assertThat(failingAgent.isStopped()).isFalse();
+      // Verify started flag was reset — a second start() should fail with
+      // "factory exploded" (not "already started")
+      final CompletableFuture<Integer> retry = failingAgent.start(1234);
+      assertThat(retry)
+          .failsWithin(1, TimeUnit.SECONDS)
+          .withThrowableOfType(ExecutionException.class)
+          .withCauseInstanceOf(RuntimeException.class)
+          .withMessageContaining("factory exploded");
     } finally {
       failingAgent.stop();
     }
