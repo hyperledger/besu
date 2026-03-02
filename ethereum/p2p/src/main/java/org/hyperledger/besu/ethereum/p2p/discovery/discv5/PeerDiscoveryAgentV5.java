@@ -156,6 +156,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.debug("DiscV5 peer discovery is disabled; not starting agent");
       return CompletableFuture.completedFuture(0);
     }
+    if (stopped.get()) {
+      return CompletableFuture.failedFuture(
+          new IllegalStateException(
+              "Unable to start PeerDiscoveryAgentV5 after it has been stopped"));
+    }
     if (!started.compareAndSet(false, true)) {
       return CompletableFuture.failedFuture(
           new IllegalStateException("Unable to start an already started PeerDiscoveryAgentV5"));
@@ -227,7 +232,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     LOG.info("Stopping DiscV5 Peer Discovery Agent");
     stopped.set(true);
     scheduler.shutdownNow();
-    final MutableDiscoverySystem system = discoverySystem.get();
+    final MutableDiscoverySystem system = discoverySystem.getAndSet(null);
     if (system != null) {
       system.stop();
     }

@@ -115,6 +115,21 @@ class PeerDiscoveryAgentV5Test {
   }
 
   @Test
+  void startAfterStopFails() {
+    agent.stop();
+
+    final CompletableFuture<Integer> result = agent.start(1234);
+    assertThat(result).isCompletedExceptionally();
+    assertThat(result)
+        .failsWithin(1, TimeUnit.SECONDS)
+        .withThrowableOfType(ExecutionException.class)
+        .withCauseInstanceOf(IllegalStateException.class)
+        .withMessageContaining("after it has been stopped");
+
+    verify(mockSystem, never()).start();
+  }
+
+  @Test
   void schedulerStartsOnlyAfterSystemStartCompletes() {
     final CompletableFuture<Void> startFuture = new CompletableFuture<>();
     when(mockSystem.start()).thenReturn(startFuture);
