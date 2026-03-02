@@ -896,7 +896,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               blockchain,
               scheduler,
               ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager());
-      blockchain.observeBlockAdded(archiver);
 
       if (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
         final BonsaiFlatDbToArchiveMigrator archiveMigrator =
@@ -907,10 +906,9 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             (inSync) -> {
               if (inSync && migrationStarted.compareAndSet(false, true)) {
                 LOG.info("Node is in sync, starting Bonsai archive migration");
-                archiver.setMigrationInProgress(true);
                 archiveMigrator
                     .migrate()
-                    .thenRun(() -> archiver.setMigrationInProgress(false))
+                    .thenRun(() -> blockchain.observeBlockAdded(archiver))
                     .exceptionally(
                         error -> {
                           LOG.error(
@@ -921,6 +919,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               }
             },
             0);
+      } else {
+        blockchain.observeBlockAdded(archiver);
       }
     }
 

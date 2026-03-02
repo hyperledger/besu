@@ -27,7 +27,6 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -60,9 +59,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
   // For logging progress. Saves doing a DB read just to record our progress
   final AtomicLong latestArchivedBlock = new AtomicLong(0);
 
-  // Flag to prevent archiving during migration
-  private final AtomicBoolean migrationInProgress = new AtomicBoolean(false);
-
   public BonsaiArchiver(
       final PathBasedWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
@@ -89,15 +85,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
 
   public long getPendingBlocksCount() {
     return blockchain.getChainHeadBlockNumber() - latestArchivedBlock.get();
-  }
-
-  /**
-   * Sets whether migration is in progress. When true, archiver skips archiving.
-   *
-   * @param inProgress true if migration is in progress
-   */
-  public void setMigrationInProgress(final boolean inProgress) {
-    migrationInProgress.set(inProgress);
   }
 
   // Move state and storage entries from their primary DB segments to their archive DB segments.
@@ -235,12 +222,6 @@ public class BonsaiArchiver implements BlockAddedObserver {
 
   @Override
   public void onBlockAdded(final BlockAddedEvent addedBlockContext) {
-    if (migrationInProgress.get()) {
-      LOG.debug(
-          "Skipping archive for block {}, migration in progress",
-          addedBlockContext.getHeader().getNumber());
-      return;
-    }
     initialize();
     final Optional<Long> blockNumber = Optional.of(addedBlockContext.getHeader().getNumber());
     blockNumber.ifPresent(
