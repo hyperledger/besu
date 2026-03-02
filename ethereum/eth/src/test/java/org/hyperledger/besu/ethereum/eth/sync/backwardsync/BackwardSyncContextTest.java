@@ -347,11 +347,15 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldAddExpectedBlock() throws Exception {
 
-    final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT - 1));
+    // Append the higher block to the backward chain before starting sync,
+    // so both targets are available when the sync session begins.
+    // This avoids a race where the first sync session completes before the
+    // second syncBackwardsUntil call can update the target height.
+    final Block lowerBlock = getRemoteBlockByNumber(REMOTE_HEIGHT - 1);
+    final Block higherBlock = getRemoteBlockByNumber(REMOTE_HEIGHT);
 
-    final CompletableFuture<Void> secondFuture =
-        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
+    final CompletableFuture<Void> future = context.syncBackwardsUntil(lowerBlock);
+    final CompletableFuture<Void> secondFuture = context.syncBackwardsUntil(higherBlock);
 
     assertThat(future).isSameAs(secondFuture);
 
@@ -362,10 +366,10 @@ public class BackwardSyncContextTest {
         .untilAsserted(
             () -> {
               respondUntilFutureIsDone(future);
-              assertThat(future).isCompleted();
+              assertThat(future).isDone();
             });
 
-    secondFuture.get();
+    future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 

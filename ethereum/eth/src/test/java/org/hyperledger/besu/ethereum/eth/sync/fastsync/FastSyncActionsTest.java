@@ -97,7 +97,7 @@ public class FastSyncActionsTest {
       final Optional<Integer> syncMinimumPeers) {
     SynchronizerConfiguration.Builder syncConfigBuilder =
         new SynchronizerConfiguration.Builder()
-            .syncMode(SyncMode.FAST)
+            .syncMode(SyncMode.SNAP)
             .syncPivotDistance(1000)
             .isPeerTaskSystemEnabled(isPeerTaskSystemEnabled);
     syncMinimumPeers.ifPresent(syncConfigBuilder::syncMinimumPeerCount);

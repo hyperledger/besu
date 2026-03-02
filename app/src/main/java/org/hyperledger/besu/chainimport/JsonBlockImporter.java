@@ -16,10 +16,11 @@ package org.hyperledger.besu.chainimport;
 
 import org.hyperledger.besu.chainimport.internal.BlockData;
 import org.hyperledger.besu.chainimport.internal.ChainData;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.blockcreation.GenericBlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,18 +112,23 @@ public class JsonBlockImporter {
       final BlockData blockData,
       final BlockHeader parentHeader,
       final List<Transaction> transactions) {
-    final MiningCoordinator miner = controller.getMiningCoordinator();
-    final GenesisConfigOptions genesisConfigOptions = controller.getGenesisConfigOptions();
     setOptionalFields(blockData);
 
-    // Some MiningCoordinator's (specific to consensus type) do not support block-level imports
-    return miner
-        .createBlock(parentHeader, transactions, Collections.emptyList())
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    "Unable to create block using current consensus engine: "
-                        + genesisConfigOptions.getConsensusEngine()));
+    final GenericBlockCreator blockCreator =
+        new GenericBlockCreator(
+            controller.getMiningParameters(),
+            (timestamp, header) -> Address.ZERO,
+            parentHeader_ -> Bytes.EMPTY,
+            controller.getTransactionPool(),
+            controller.getProtocolContext(),
+            controller.getProtocolSchedule(),
+            controller.getEthScheduler());
+
+    final BlockCreationResult result =
+        blockCreator.createBlock(
+            transactions, Collections.emptyList(), parentHeader.getTimestamp() + 1, parentHeader);
+
+    return result.getBlock();
   }
 
   private void setOptionalFields(final BlockData blockData) {

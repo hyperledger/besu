@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -30,6 +30,10 @@ import org.apache.tuweni.units.bigints.UInt256;
  * block gas limit. All state-creation costs that were previously charged as regular gas are split:
  * the state portion is charged as state gas (drawn from the reservoir), while the regular portion
  * is reduced.
+ *
+ * <UL>
+ *   <LI>EIP-7928: gas cost per item for block access list size limit
+ * </UL>
  */
 public class AmsterdamGasCalculator extends OsakaGasCalculator {
 
@@ -47,6 +51,12 @@ public class AmsterdamGasCalculator extends OsakaGasCalculator {
   private static final long SSTORE_CLEARS_SCHEDULE = SSTORE_RESET_GAS + ACCESS_LIST_STORAGE_COST;
   private static final long NEGATIVE_SSTORE_CLEARS_SCHEDULE = -SSTORE_CLEARS_SCHEDULE;
 
+  /**
+   * EIP-7928: gas cost per item for block access list size limit (bal_items <= block_gas_limit /
+   * ITEM_COST).
+   */
+  private static final long BLOCK_ACCESS_LIST_ITEM_COST = 2000L;
+
   /** The EIP-8037 state gas cost calculator. */
   private final Eip8037StateGasCostCalculator stateGasCostCalc =
       new Eip8037StateGasCostCalculator();
@@ -57,17 +67,32 @@ public class AmsterdamGasCalculator extends OsakaGasCalculator {
   }
 
   /**
-   * Instantiates a new Amsterdam Gas Calculator.
+   * Instantiates a new Amsterdam Gas Calculator
    *
-   * @param maxPrecompile the max precompile address
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   * @param maxL2Precompile max precompile address from the L2 precompile space (0x0100 - 0x01FF)
    */
-  protected AmsterdamGasCalculator(final int maxPrecompile) {
+  public AmsterdamGasCalculator(final int maxPrecompile, final int maxL2Precompile) {
+    super(maxPrecompile, maxL2Precompile);
+  }
+
+  /**
+   * Instantiates a new Amsterdam Gas Calculator, uses default P256_VERIFY as max L2 precompile.
+   *
+   * @param maxPrecompile the max precompile address from the L1 precompile range (0x01 - 0xFF)
+   */
+  public AmsterdamGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
   }
 
   @Override
   public StateGasCostCalculator stateGasCostCalculator() {
     return stateGasCostCalc;
+  }
+
+  @Override
+  public long getBlockAccessListItemCost() {
+    return BLOCK_ACCESS_LIST_ITEM_COST;
   }
 
   // --- EIP-8037 Gas Cost Overrides ---

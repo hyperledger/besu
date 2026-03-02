@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -197,6 +198,21 @@ public class BaseBftProtocolScheduleBuilderTest {
     assertThatThrownBy(() -> createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions))))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
+  }
+
+  @Test
+  public void ensureNotApplicableWithdrawalsValidatorIsUsed() {
+    final BigInteger arbitraryBlockReward = BigInteger.valueOf(5);
+    final BftConfigOptions configOptions = createBftConfig(arbitraryBlockReward);
+    when(genesisConfig.getTransitions()).thenReturn(TransitionsConfigOptions.DEFAULT);
+    when(genesisConfig.getBftConfigOptions()).thenReturn(configOptions);
+
+    final ProtocolSchedule schedule =
+        createProtocolSchedule(List.of(new ForkSpec<>(0, configOptions)));
+    final ProtocolSpec spec = schedule.getByBlockHeader(blockHeader(1));
+
+    assertThat(spec.getWithdrawalsValidator())
+        .isInstanceOf(WithdrawalsValidator.NotApplicableWithdrawals.class);
   }
 
   @Test
