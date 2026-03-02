@@ -111,7 +111,7 @@ class PeerDiscoveryAgentV5Test {
         .failsWithin(1, TimeUnit.SECONDS)
         .withThrowableOfType(ExecutionException.class)
         .withCauseInstanceOf(IllegalStateException.class)
-        .withMessageContaining("Unable to start PeerDiscoveryAgentV5 from state");
+        .withMessageContaining("Unable to start an already started PeerDiscoveryAgentV5");
   }
 
   @Test
@@ -144,9 +144,9 @@ class PeerDiscoveryAgentV5Test {
 
     final CompletableFuture<Integer> result = agent.start(1234);
     assertThat(result).isCompletedExceptionally();
-    assertThat(agent.getScheduler().isShutdown()).isTrue();
-    // State should roll back so a retry is possible
+    // Agent should not be in stopped state — start failed, not stopped
     assertThat(agent.isStopped()).isFalse();
+    // Discovery system should have been cleaned up
     verify(mockSystem).stop();
   }
 
@@ -166,7 +166,7 @@ class PeerDiscoveryAgentV5Test {
 
     final CompletableFuture<Integer> result = failingAgent.start(1234);
     assertThat(result).isCompletedExceptionally();
-    // State should roll back to NEW so a retry is possible
+    // Agent should not be in stopped state — start failed, not stopped
     assertThat(failingAgent.isStopped()).isFalse();
   }
 
