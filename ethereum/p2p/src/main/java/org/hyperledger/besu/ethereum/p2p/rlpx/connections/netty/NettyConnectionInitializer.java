@@ -112,13 +112,13 @@ public class NettyConnectionInitializer
   @Override
   public CompletableFuture<ListeningAddresses> start() {
     final CompletableFuture<ListeningAddresses> startupFuture = new CompletableFuture<>();
-    this.listeningAddressesFuture = startupFuture;
     if (!started.compareAndSet(false, true)) {
       startupFuture.completeExceptionally(
           new IllegalStateException(
               "Attempt to start an already started " + this.getClass().getSimpleName()));
       return startupFuture;
     }
+    this.listeningAddressesFuture = startupFuture;
 
     this.server =
         new ServerBootstrap()
@@ -190,6 +190,13 @@ public class NettyConnectionInitializer
     if (listeningAddressesFuture != null) {
       listeningAddressesFuture.completeExceptionally(
           new IllegalStateException("Connection initializer was stopped before startup completed"));
+    }
+
+    // If the server channel has not been assigned yet (stop() called between CAS and bind()),
+    // shut down event loops directly — there is nothing to close.
+    if (server == null) {
+      shutdownEventLoops(stoppedFuture);
+      return stoppedFuture;
     }
 
     // Wait for the IPv4 bind to settle before closing. If already done, fires immediately.
