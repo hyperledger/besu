@@ -83,6 +83,14 @@ class PeerDiscoveryAgentV5Test {
         .when(localNodeRecord.getUdpAddress())
         .thenReturn(Optional.of(new InetSocketAddress(InetAddress.getLoopbackAddress(), 30303)));
 
+    // Default stubs for discoveryTick() — the scheduler fires immediately on successful start,
+    // so these must be present to avoid NPEs from unstubbed Mockito returns.
+    lenient().when(rlpxAgent.getConnectionCount()).thenReturn(0);
+    lenient().when(rlpxAgent.getMaxPeers()).thenReturn(25);
+    lenient()
+        .when(mockSystem.searchForNewPeers())
+        .thenReturn(CompletableFuture.completedFuture(List.of()));
+
     agent =
         new PeerDiscoveryAgentV5(
             config,
@@ -133,11 +141,6 @@ class PeerDiscoveryAgentV5Test {
   void schedulerStartsOnlyAfterSystemStartCompletes() {
     final CompletableFuture<Void> startFuture = new CompletableFuture<>();
     when(mockSystem.start()).thenReturn(startFuture);
-    lenient().when(rlpxAgent.getConnectionCount()).thenReturn(0);
-    lenient().when(rlpxAgent.getMaxPeers()).thenReturn(25);
-    lenient()
-        .when(mockSystem.searchForNewPeers())
-        .thenReturn(CompletableFuture.completedFuture(List.of()));
 
     agent.start(1234);
 
@@ -148,7 +151,8 @@ class PeerDiscoveryAgentV5Test {
     startFuture.complete(null);
 
     Awaitility.await()
-        .atMost(5, TimeUnit.SECONDS)
+        .pollInterval(50, TimeUnit.MILLISECONDS)
+        .atMost(3, TimeUnit.SECONDS)
         .untilAsserted(() -> verify(mockSystem, atLeastOnce()).searchForNewPeers());
   }
 
