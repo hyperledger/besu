@@ -122,7 +122,13 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
             new InetSocketAddress(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
         final InetSocketAddress ipv6 =
             new InetSocketAddress(
-                discoveryConfig.getBindHostIpv6().orElseThrow(), discoveryConfig.getBindPortIpv6());
+                discoveryConfig
+                    .getBindHostIpv6()
+                    .orElseThrow(
+                        () ->
+                            new IllegalStateException(
+                                "Discovery dual-stack is enabled but bindHostIpv6 is not set")),
+                discoveryConfig.getBindPortIpv6());
         builder.listen(ipv4, ipv6);
       } else {
         builder.listen(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
