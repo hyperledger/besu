@@ -28,7 +28,6 @@ import java.math.BigInteger;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -88,7 +87,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
           final BigInteger chainId,
       @JsonProperty("address") final Address address,
       @JsonProperty("nonce") final String nonce,
-      @JsonProperty("v") @JsonAlias("yParity") final String v,
+      @JsonProperty("v") final String v,
       @JsonProperty("r") final String r,
       @JsonProperty("s") final String s) {
     return new CodeDelegation(
