@@ -562,4 +562,49 @@ public class DownloadSyncReceiptsStepTest {
       realScheduler.awaitStop();
     }
   }
+
+  @Test
+  public void shouldNotRetryAfterTimeout() throws Exception {
+    // The first request fails transiently, scheduling a retry after RETRY_DELAY (1 s).
+    // The overall timeout fires before that retry, setting the cancelled flag.
+    // When the retry eventually runs it must observe cancelled=true and exit without
+    // making a second peer request.
+    final List<Block> blocks = gen.blockSequence(2).subList(1, 2);
+    final List<SyncBlock> syncBlocks = blocksToSyncBlocks(blocks);
+
+    final EthScheduler realScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final EthContext realEthContext = mock(EthContext.class);
+    when(realEthContext.getScheduler()).thenReturn(realScheduler);
+    when(realEthContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
+
+    try {
+      final DownloadSyncReceiptsStep step =
+          new DownloadSyncReceiptsStep(
+              protocolSchedule,
+              realEthContext,
+              syncTransactionReceiptEncoder,
+              Duration.ofMillis(50));
+
+      when(peerTaskExecutor.execute(any(GetSyncReceiptsFromPeerTask.class)))
+          .thenReturn(
+              new PeerTaskExecutorResult<Map<SyncBlock, List<SyncTransactionReceipt>>>(
+                  Optional.empty(), NO_PEER_AVAILABLE, emptyList()));
+
+      final CompletableFuture<List<SyncBlockWithReceipts>> result = step.apply(syncBlocks);
+
+      // Timeout fires at ~50 ms; the retry is scheduled ~1 000 ms after the first failure.
+      assertThatThrownBy(result::get)
+          .isInstanceOf(ExecutionException.class)
+          .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
+
+      // Wait long enough for the pending retry to fire, then assert it did not
+      // issue a second peer request because the cancelled flag was already set.
+      Thread.sleep(1_200);
+
+      verify(peerTaskExecutor, times(1)).execute(any(GetSyncReceiptsFromPeerTask.class));
+    } finally {
+      realScheduler.stop();
+      realScheduler.awaitStop();
+    }
+  }
 }
