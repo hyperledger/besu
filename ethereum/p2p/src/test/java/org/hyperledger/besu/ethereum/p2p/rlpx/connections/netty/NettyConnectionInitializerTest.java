@@ -51,7 +51,7 @@ public class NettyConnectionInitializerTest {
   }
 
   @Test
-  public void start_bindsIpv4Address() throws Exception {
+  public void startBindsIpv4Address() throws Exception {
     initializer = createInitializer(ipv4OnlyConfig());
 
     final ListeningAddresses addrs = initializer.start().get(10, TimeUnit.SECONDS);
@@ -67,7 +67,7 @@ public class NettyConnectionInitializerTest {
   }
 
   @Test
-  public void start_dualStack_bindsBothAddresses() throws Exception {
+  public void startDualStackBindsBothAddresses() throws Exception {
     assumeTrue(NetworkUtility.isIPv6Available(), "IPv6 not available on this host");
 
     initializer = createInitializer(dualStackConfig());
@@ -94,7 +94,7 @@ public class NettyConnectionInitializerTest {
   }
 
   @Test
-  public void start_dualStack_degradesToIpv4WhenIpv6BindFails() throws Exception {
+  public void startDualStackDegradesToIpv4WhenIpv6BindFails() throws Exception {
     assumeTrue(NetworkUtility.isIPv6Available(), "IPv6 not available on this host");
 
     // Pre-bind a port on ::1 to force the IPv6 bind to fail.
@@ -128,7 +128,7 @@ public class NettyConnectionInitializerTest {
   }
 
   @Test
-  public void start_dualStack_ipv4AndIpv6PortsAreIndependent() throws Exception {
+  public void startDualStackIpv4AndIpv6PortsAreIndependent() throws Exception {
     assumeTrue(NetworkUtility.isIPv6Available(), "IPv6 not available on this host");
 
     initializer = createInitializer(dualStackConfig());
@@ -146,7 +146,7 @@ public class NettyConnectionInitializerTest {
   }
 
   @Test
-  public void stop_immediatelyAfterStart_completesWithoutHanging() throws Exception {
+  public void stopImmediatelyAfterStartCompletesWithoutHanging() throws Exception {
     initializer = createInitializer(ipv4OnlyConfig());
 
     // Call start() but do NOT wait for it to complete — immediately stop.
@@ -168,7 +168,7 @@ public class NettyConnectionInitializerTest {
   }
 
   @Test
-  public void stop_immediatelyAfterStart_dualStack_completesWithoutHanging() throws Exception {
+  public void stopImmediatelyAfterStartDualStackCompletesWithoutHanging() throws Exception {
     assumeTrue(NetworkUtility.isIPv6Available(), "IPv6 not available on this host");
 
     initializer = createInitializer(dualStackConfig());
