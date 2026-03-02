@@ -82,8 +82,31 @@ public class Eip8037StateGasCostCalculator implements StateGasCostCalculator {
   /** Instantiates a new EIP-8037 state gas cost calculator. */
   public Eip8037StateGasCostCalculator() {}
 
+  /**
+   * Hardcoded cost per state byte for devnet-3. This value (1174) corresponds to a 100M block gas
+   * limit. The test framework cannot currently handle dynamic gas prices, so cpsb is treated as a
+   * fork constant. For devnet-4, the full EIP-8037 dynamic calculation will be restored.
+   */
+  static final long DEVNET_COST_PER_STATE_BYTE = 1174L;
+
   @Override
   public long costPerStateByte(final long blockGasLimit) {
+    // TODO(devnet-4): Restore dynamic cpsb calculation based on block gas limit:
+    // return costPerStateByteFromGasLimit(blockGasLimit);
+    return DEVNET_COST_PER_STATE_BYTE;
+  }
+
+  /**
+   * Dynamic cost per state byte calculation from the full EIP-8037 specification. Derives cpsb from
+   * the block gas limit by targeting TARGET_STATE_GROWTH_PER_YEAR at 50% average gas utilization,
+   * then quantizes to retain CPSB_SIGNIFICANT_BITS significant bits.
+   *
+   * <p>Currently unused (hardcoded for devnet-3). Will be re-enabled for devnet-4.
+   *
+   * @param blockGasLimit the block gas limit
+   * @return the quantized cost per state byte
+   */
+  static long costPerStateByteFromGasLimit(final long blockGasLimit) {
     // cpsb = ceil(((gas_limit / 2) * SLOTS_PER_YEAR) / TARGET_STATE_GROWTH_PER_YEAR)
     final long numerator = (blockGasLimit / 2) * SLOTS_PER_YEAR;
     final long raw = (numerator + TARGET_STATE_GROWTH_PER_YEAR - 1) / TARGET_STATE_GROWTH_PER_YEAR;
