@@ -41,13 +41,10 @@ public class DownloadSyncBodiesStep
 
   @Override
   public CompletableFuture<List<SyncBlock>> apply(final List<BlockHeader> blockHeaders) {
-    return ethContext
-        .getScheduler()
-        .scheduleServiceTask(() -> getSyncBodiesWithPeerTaskSystem(blockHeaders));
+    return ethContext.getScheduler().scheduleServiceTask(() -> getSyncBodies(blockHeaders));
   }
 
-  private CompletableFuture<List<SyncBlock>> getSyncBodiesWithPeerTaskSystem(
-      final List<BlockHeader> headers) {
+  private CompletableFuture<List<SyncBlock>> getSyncBodies(final List<BlockHeader> headers) {
     final int numSyncBlocksToGet = headers.size();
     final List<SyncBlock> syncBlocks = new ArrayList<>(numSyncBlocksToGet);
     do {
