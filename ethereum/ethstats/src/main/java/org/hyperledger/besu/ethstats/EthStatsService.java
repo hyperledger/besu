@@ -490,7 +490,7 @@ public class EthStatsService {
                     final long startHistoryBlockNumber =
                         Math.max(0, chainHeadBlockNumber - HISTORY_RANGE);
                     list =
-                        LongStream.range(chainHeadBlockNumber, startHistoryBlockNumber)
+                        LongStream.rangeClosed(startHistoryBlockNumber, chainHeadBlockNumber)
                             .boxed()
                             .collect(Collectors.toList());
                   }
