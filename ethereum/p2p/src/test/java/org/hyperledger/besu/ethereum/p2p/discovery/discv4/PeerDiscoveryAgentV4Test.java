@@ -91,7 +91,7 @@ public class PeerDiscoveryAgentV4Test {
     assertThatThrownBy(
             () -> helper.createDiscoveryAgent(helper.agentBuilder().bootnodes(invalidBootnode)))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid enodeBootnodes")
+        .hasMessageContaining("Invalid bootnodes")
         .hasMessageContaining("Bootnodes must have discovery enabled");
   }
 
