@@ -38,6 +38,8 @@ dependencies {
   api 'org.slf4j:slf4j-api'
   api project(':util')
 
+  compileOnly 'com.google.code.findbugs:jsr305'
+
   implementation project(':config')
   implementation project(':datatypes')
   implementation project(':ethereum:core')
