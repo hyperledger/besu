@@ -49,6 +49,7 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -387,6 +388,49 @@ public final class DefaultP2PNetworkTest {
       testClass.stop();
       vertx.close();
     }
+  }
+
+  @Test
+  public void startRlpxAgentFailureAwaitStopCompletesPromptly() {
+    when(rlpxAgent.start())
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
+
+    final DefaultP2PNetwork network = network();
+    Assertions.assertThatThrownBy(network::start).hasRootCauseInstanceOf(RuntimeException.class);
+
+    // Partially started RLPx agent should have been stopped on failure
+    verify(rlpxAgent).stop();
+
+    // stop() + awaitStop() must not hang despite the partial start
+    assertThat(
+            CompletableFuture.runAsync(
+                () -> {
+                  network.stop();
+                  network.awaitStop();
+                }))
+        .succeedsWithin(Duration.ofSeconds(5));
+  }
+
+  @Test
+  public void startDiscoveryAgentFailureAwaitStopCompletesPromptly() {
+    when(discoveryAgent.start(anyInt()))
+        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
+
+    final DefaultP2PNetwork network = network();
+    Assertions.assertThatThrownBy(network::start).hasRootCauseInstanceOf(RuntimeException.class);
+
+    // Both agents should have been stopped on failure
+    verify(discoveryAgent).stop();
+    verify(rlpxAgent).stop();
+
+    // stop() + awaitStop() must not hang despite the partial start
+    assertThat(
+            CompletableFuture.runAsync(
+                () -> {
+                  network.stop();
+                  network.awaitStop();
+                }))
+        .succeedsWithin(Duration.ofSeconds(5));
   }
 
   private DefaultP2PNetwork network() {
