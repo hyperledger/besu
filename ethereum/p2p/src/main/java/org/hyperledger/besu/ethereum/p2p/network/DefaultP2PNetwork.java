@@ -263,8 +263,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
     } catch (final Exception e) {
       LOG.error("Failed to start peer discovery agent", e);
-      // Discovery agent won't stop(), count down its latch position
-      shutdownLatch.countDown();
+      // Stop the partially-started discovery agent and count down its latch position on completion
+      peerDiscoveryAgent.stop().whenComplete((r, err) -> shutdownLatch.countDown());
       // Stop the already-started RLPx agent and count down the remaining latch position on
       // completion
       rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());

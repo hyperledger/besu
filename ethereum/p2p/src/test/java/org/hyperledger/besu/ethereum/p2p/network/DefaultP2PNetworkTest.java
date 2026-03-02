@@ -419,7 +419,8 @@ public final class DefaultP2PNetworkTest {
     final DefaultP2PNetwork network = network();
     Assertions.assertThatThrownBy(network::start).hasCauseInstanceOf(RuntimeException.class);
 
-    // RLPx agent was started successfully, so it should have been stopped on failure
+    // Both agents should have been stopped on failure
+    verify(discoveryAgent).stop();
     verify(rlpxAgent).stop();
 
     // stop() + awaitStop() must not hang despite the partial start
