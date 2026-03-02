@@ -297,6 +297,7 @@ public class EngineJsonRpcService {
   }
 
   private void stopEngineCallListener() {
+    // all engine rpc methods share one listener interface
     rpcMethods.values().stream()
         .filter(ExecutionEngineJsonRpcMethod.class::isInstance)
         .map(ExecutionEngineJsonRpcMethod.class::cast)
