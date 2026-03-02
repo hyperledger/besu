@@ -55,7 +55,7 @@ public class BonsaiFlatDbToArchiveMigrator {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
-  @VisibleForTesting static final int TAIL_THRESHOLD = 64;
+  @VisibleForTesting static final int NEAR_HEAD_THRESHOLD = 2;
 
   private static final byte[] MIGRATION_PROGRESS_KEY =
       "ARCHIVE_MIGRATION_PROGRESS".getBytes(StandardCharsets.UTF_8);
@@ -90,8 +90,8 @@ public class BonsaiFlatDbToArchiveMigrator {
     this.migratedBlocksCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
-            "archive_migration_count",
-            "Number of blocks migrated from Bonsai to Bonsai Archive storage");
+            "bonsai_archive_migration_block",
+            "Bonsai archive migration head block");
   }
 
   /**
@@ -109,14 +109,16 @@ public class BonsaiFlatDbToArchiveMigrator {
     }
 
     final AtomicLong target = new AtomicLong(blockchain.getChainHeadBlockNumber());
-    final AtomicBoolean tailMode = new AtomicBoolean(false);
+    final AtomicBoolean nearHeadMode = new AtomicBoolean(false);
     final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
 
     final long blockObserverId =
         blockchain.observeBlockAdded(
             event -> {
-              if (tailMode.get()) {
+              if (nearHeadMode.get()) {
                 try {
+                  // When near head write the archive keys for new blocks inline to avoid a gap
+                  // between the last migrated block and the head when the mode switches.
                   final long newBlockNumber = event.getHeader().getNumber();
                   final Optional<TrieLog> trieLog =
                       trieLogManager.getTrieLogLayer(event.getHeader().getHash());
@@ -126,7 +128,7 @@ public class BonsaiFlatDbToArchiveMigrator {
                     tx.commit();
                   }
                 } catch (final Exception e) {
-                  LOG.warn("Failed to write archive keys in tail mode", e);
+                  LOG.warn("Failed to write archive keys for near head block", e);
                 }
               } else {
                 target.set(event.getHeader().getNumber());
@@ -134,11 +136,11 @@ public class BonsaiFlatDbToArchiveMigrator {
             });
 
     return CompletableFuture.runAsync(
-        () -> migrateBlocks(target, tailMode, blockObserverId), executorService);
+        () -> migrateBlocks(target, nearHeadMode, blockObserverId), executorService);
   }
 
   private void migrateBlocks(
-      final AtomicLong target, final AtomicBoolean tailMode, final long blockObserverId) {
+      final AtomicLong target, final AtomicBoolean nearHead, final long blockObserverId) {
     try {
       final Instant migrationStartTime = Instant.now();
 
@@ -150,14 +152,22 @@ public class BonsaiFlatDbToArchiveMigrator {
 
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
 
-        // Activate tail mode when approaching the current chain head
+        /*
+         * This prevents a race at switchover: without it, blocks arriving between the
+         * loop exit and upgradeToFullFlatDbMode() are written with unsuffixed FULL keys.
+         * After the switch, seekForPrev would find stale suffixed keys instead of HEAD.
+         *
+         * When activated, the target freezes and the block observer starts writing archive
+         * keys inline for new blocks. The migrator finishes up to the frozen target, the
+         * observer covers everything after — no gap when the mode switches.
+         */
         final long currentTarget = target.get();
-        if (!tailMode.get()
-            && currentTarget > TAIL_THRESHOLD
-            && blockNumber >= currentTarget - TAIL_THRESHOLD) {
-          tailMode.set(true);
+        if (!nearHead.get()
+            && currentTarget > NEAR_HEAD_THRESHOLD
+            && blockNumber >= currentTarget - NEAR_HEAD_THRESHOLD) {
+          nearHead.set(true);
           LOG.info(
-              "Archive migration entering tail mode at block {}, target frozen at {}",
+              "Archive migration entering near head mode at block {}, target frozen at {}",
               blockNumber,
               target.get());
         }

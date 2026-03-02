@@ -290,7 +290,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void tailModeDoesNotActivateBeforeThreshold() throws Exception {
-    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 10;
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 10;
     appendBlocks(initialBlocks);
 
     // Pause well before the tail threshold (block 1)
@@ -332,7 +332,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void tailModeActivatesNearEndBlock() throws Exception {
-    final int totalBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 10;
+    final int totalBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 10;
     appendBlocks(totalBlocks);
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
@@ -344,10 +344,10 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void observerWritesArchiveKeysInTailMode() throws Exception {
-    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 5;
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 5;
     appendBlocks(initialBlocks);
 
-    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 1;
+    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 1;
     final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
 
     final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
@@ -386,10 +386,10 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void targetFrozenInTailMode() throws Exception {
-    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 5;
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 5;
     appendBlocks(initialBlocks);
 
-    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 1;
+    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 1;
     final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
 
     final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
@@ -419,10 +419,10 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   @Test
   public void observerFailureDoesNotCrashMigration() throws Exception {
-    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 5;
+    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 5;
     appendBlocks(initialBlocks);
 
-    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.TAIL_THRESHOLD + 1;
+    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 1;
     final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
 
     final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
