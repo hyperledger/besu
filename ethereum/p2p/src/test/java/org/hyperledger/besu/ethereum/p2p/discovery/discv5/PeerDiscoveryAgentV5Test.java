@@ -99,7 +99,7 @@ class PeerDiscoveryAgentV5Test {
   }
 
   @Test
-  void startTwice_secondCallFails() throws Exception {
+  void startTwiceSecondCallFails() throws Exception {
     when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
 
     final CompletableFuture<Integer> first = agent.start(1234);
@@ -138,7 +138,7 @@ class PeerDiscoveryAgentV5Test {
   }
 
   @Test
-  void schedulerShutdownOnStartFailure() {
+  void asyncStartFailureCleansUpDiscoverySystem() {
     when(mockSystem.start())
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("bind failed")));
 
@@ -151,7 +151,7 @@ class PeerDiscoveryAgentV5Test {
   }
 
   @Test
-  void startResetsStateOnSynchronousInitFailure() {
+  void synchronousInitFailureResetsStartedState() {
     // Factory throws during create() — synchronous failure before system.start()
     final PeerDiscoveryAgentV5 failingAgent =
         new PeerDiscoveryAgentV5(
@@ -164,14 +164,18 @@ class PeerDiscoveryAgentV5Test {
               throw new RuntimeException("factory exploded");
             });
 
-    final CompletableFuture<Integer> result = failingAgent.start(1234);
-    assertThat(result).isCompletedExceptionally();
-    // Agent should not be in stopped state — start failed, not stopped
-    assertThat(failingAgent.isStopped()).isFalse();
+    try {
+      final CompletableFuture<Integer> result = failingAgent.start(1234);
+      assertThat(result).isCompletedExceptionally();
+      // Agent should not be in stopped state — start failed, not stopped
+      assertThat(failingAgent.isStopped()).isFalse();
+    } finally {
+      failingAgent.stop();
+    }
   }
 
   @Test
-  void startWhenDisabled_returnsZero() throws Exception {
+  void startWhenDisabledReturnsZero() throws Exception {
     final NetworkingConfiguration disabledConfig =
         ImmutableNetworkingConfiguration.builder()
             .discoveryConfiguration(DiscoveryConfiguration.create().setEnabled(false))
@@ -186,10 +190,14 @@ class PeerDiscoveryAgentV5Test {
             false,
             (nodeRecord, listener) -> mockSystem);
 
-    final CompletableFuture<Integer> result = disabledAgent.start(1234);
-    assertThat(result.get()).isEqualTo(0);
+    try {
+      final CompletableFuture<Integer> result = disabledAgent.start(1234);
+      assertThat(result.get()).isEqualTo(0);
 
-    // Verify no interaction with the discovery system
-    verify(mockSystem, never()).start();
+      // Verify no interaction with the discovery system
+      verify(mockSystem, never()).start();
+    } finally {
+      disabledAgent.stop();
+    }
   }
 }
