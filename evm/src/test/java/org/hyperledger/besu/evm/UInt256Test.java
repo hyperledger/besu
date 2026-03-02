@@ -545,6 +545,46 @@ public class UInt256Test {
   }
 
   @Test
+  public void modWithOverflowQuotientEstimate() {
+    // When the dividend's leading limb equals the modulus's leading limb, the trial quotient
+    // overflows and is clamped to 2^64-1. Verify correctness for each Modulus size.
+
+    // Modulus192 path (b.u3==0, b.u2!=0)
+    UInt256 a1 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff8000000000000000000000000000000000000000d900000000000001", 16)
+                .toByteArray());
+    UInt256 b1 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff800000007effffff800000008000ff0000010000", 16).toByteArray());
+    BigInteger expected1 = new BigInteger("7effffff800000007dff00feffff0001d901fe0000020001", 16);
+    assertThat(new BigInteger(1, a1.mod(b1).toBytesBE())).isEqualTo(expected1);
+    assertThat(new BigInteger(1, a1.signedMod(b1).toBytesBE())).isEqualTo(expected1);
+
+    // Modulus128 path (b.u3==0, b.u2==0, b.u1!=0)
+    UInt256 a2 =
+        UInt256.fromBytesBE(new BigInteger("ffffffffffffffff0000000000000001", 16).toByteArray());
+    UInt256 b2 =
+        UInt256.fromBytesBE(new BigInteger("ffffffffffffffff0000000000000000", 16).toByteArray());
+    BigInteger expected2 = new BigInteger("1", 16);
+    assertThat(new BigInteger(1, a2.mod(b2).toBytesBE())).isEqualTo(expected2);
+
+    // Modulus256 path (b.u3!=0)
+    UInt256 a3 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff800000000000000000000000000000000000000000000000000000ff", 16)
+                .toByteArray());
+    UInt256 b3 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff800000007effffff80000000800000000000000080000000000000ff", 16)
+                .toByteArray());
+    BigInteger aBI3 = new BigInteger(1, a3.toBytesBE());
+    BigInteger bBI3 = new BigInteger(1, b3.toBytesBE());
+    BigInteger expected3 = aBI3.mod(bBI3);
+    assertThat(new BigInteger(1, a3.mod(b3).toBytesBE())).isEqualTo(expected3);
+  }
+
+  @Test
   public void signedMod() {
     final Random random = new Random(432);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
