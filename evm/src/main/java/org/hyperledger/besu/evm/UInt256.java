@@ -1284,8 +1284,26 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 divReduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      // Divide (v.u4, v.u3, v.u2, v.u1, v.u0) by u0
-      // v.u4 < u0 is guaranteed by normalization when dividend < divisor * 2^256
+      if ((v.u4 | v.u3) == 0 && Long.compareUnsigned(v.u2, u0) < 0) {
+        if (v.u2 != 0 || Long.compareUnsigned(v.u1, u0) >= 0) {
+          QR64 qr1 = reduceStep(v.u2, v.u1, inv);
+          QR64 qr0 = reduceStep(qr1.r, v.u0, inv);
+          return new UInt256(0, 0, qr1.q, qr0.q);
+        } else {
+          QR64 qr0 = reduceStep(v.u1, v.u0, inv);
+          return new UInt256(0, 0, 0, qr0.q);
+        }
+      }
+      return divReduceNormalisedSlowPath(v, inv);
+    }
+
+    private UInt256 divReduceNormalisedSlowPath(final UInt320 v, final long inv) {
+      if (v.u4 == 0 && Long.compareUnsigned(v.u3, u0) < 0) {
+        QR64 qr2 = reduceStep(v.u3, v.u2, inv);
+        QR64 qr1 = reduceStep(qr2.r, v.u1, inv);
+        QR64 qr0 = reduceStep(qr1.r, v.u0, inv);
+        return new UInt256(0, qr2.q, qr1.q, qr0.q);
+      }
       QR64 qr3 = reduceStep(v.u4, v.u3, inv);
       QR64 qr2 = reduceStep(qr3.r, v.u2, inv);
       QR64 qr1 = reduceStep(qr2.r, v.u1, inv);
@@ -1459,8 +1477,19 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 divReduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      // Divide (v.u4, v.u3, v.u2, v.u1, v.u0) by (u1, u0)
-      // v.u4 < u1 is guaranteed by normalization
+      if (v.u4 == 0 && Long.compareUnsigned(v.u3, u1) < 0) {
+        if (v.u3 != 0 || Long.compareUnsigned(v.u2, u1) >= 0) {
+          QR128 qr1 = reduceStep(v.u3, v.u2, v.u1, inv);
+          QR128 qr0 = reduceStep(qr1.r.u1, qr1.r.u0, v.u0, inv);
+          return new UInt256(0, 0, qr1.q, qr0.q);
+        }
+        QR128 qr0 = reduceStep(v.u2, v.u1, v.u0, inv);
+        return new UInt256(0, 0, 0, qr0.q);
+      }
+      return divReduceNormalisedSlowPath(v, inv);
+    }
+
+    private UInt256 divReduceNormalisedSlowPath(final UInt320 v, final long inv) {
       QR128 qr2 = reduceStep(v.u4, v.u3, v.u2, inv);
       QR128 qr1 = reduceStep(qr2.r.u1, qr2.r.u0, v.u1, inv);
       QR128 qr0 = reduceStep(qr1.r.u1, qr1.r.u0, v.u0, inv);
@@ -1694,8 +1723,14 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 divReduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      // Divide (v.u4, v.u3, v.u2, v.u1, v.u0) by (u2, u1, u0)
-      // v.u4 < u2 is guaranteed by normalization
+      if (v.u4 == 0 && Long.compareUnsigned(v.u3, u2) < 0) {
+        QR192 qr0 = reduceStep(v.u3, v.u2, v.u1, v.u0, inv);
+        return new UInt256(0, 0, 0, qr0.q);
+      }
+      return divReduceNormalisedSlowPath(v, inv);
+    }
+
+    private UInt256 divReduceNormalisedSlowPath(final UInt320 v, final long inv) {
       QR192 qr1 = reduceStep(v.u4, v.u3, v.u2, v.u1, inv);
       QR192 qr0 = reduceStep(qr1.r.u2, qr1.r.u1, qr1.r.u0, v.u0, inv);
       return new UInt256(0, 0, qr1.q, qr0.q);
