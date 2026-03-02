@@ -32,6 +32,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.net.InetAddresses;
@@ -158,7 +159,7 @@ public class NettyConnectionInitializerTest {
     // start() should also complete (exceptionally is fine — it was interrupted by stop).
     try {
       startFuture.get(10, TimeUnit.SECONDS);
-    } catch (final Exception ignored) {
+    } catch (final ExecutionException ignored) {
       // Expected — stop() may have completed start()'s future exceptionally.
     }
 
@@ -178,7 +179,7 @@ public class NettyConnectionInitializerTest {
     stopFuture.get(10, TimeUnit.SECONDS);
     try {
       startFuture.get(10, TimeUnit.SECONDS);
-    } catch (final Exception ignored) {
+    } catch (final ExecutionException ignored) {
       // Expected — stop() may have completed start()'s future exceptionally.
     }
 

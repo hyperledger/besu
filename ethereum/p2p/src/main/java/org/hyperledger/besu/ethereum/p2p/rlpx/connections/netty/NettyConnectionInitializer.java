@@ -111,14 +111,13 @@ public class NettyConnectionInitializer
 
   @Override
   public CompletableFuture<ListeningAddresses> start() {
-    final CompletableFuture<ListeningAddresses> listeningAddressesFuture =
-        new CompletableFuture<>();
-    this.listeningAddressesFuture = listeningAddressesFuture;
+    final CompletableFuture<ListeningAddresses> startupFuture = new CompletableFuture<>();
+    this.listeningAddressesFuture = startupFuture;
     if (!started.compareAndSet(false, true)) {
-      listeningAddressesFuture.completeExceptionally(
+      startupFuture.completeExceptionally(
           new IllegalStateException(
               "Attempt to start an already started " + this.getClass().getSimpleName()));
-      return listeningAddressesFuture;
+      return startupFuture;
     }
 
     this.server =
@@ -137,8 +136,7 @@ public class NettyConnectionInitializer
                 String.format(
                     "Unable to start listening on %s:%s. Check for port conflicts.",
                     config.getBindHost(), config.getBindPort());
-            listeningAddressesFuture.completeExceptionally(
-                new IllegalStateException(message, future.cause()));
+            startupFuture.completeExceptionally(new IllegalStateException(message, future.cause()));
             return;
           }
 
@@ -159,7 +157,7 @@ public class NettyConnectionInitializer
                   if (ipv6Future.isSuccess()) {
                     final InetSocketAddress ipv6Address =
                         (InetSocketAddress) serverIpv6.channel().localAddress();
-                    listeningAddressesFuture.complete(
+                    startupFuture.complete(
                         new ListeningAddresses(socketAddress, Optional.of(ipv6Address)));
                   } else {
                     LOG.warn(
@@ -168,17 +166,15 @@ public class NettyConnectionInitializer
                         ipv6Port,
                         ipv6Future.cause());
                     serverIpv6 = null;
-                    listeningAddressesFuture.complete(
-                        new ListeningAddresses(socketAddress, Optional.empty()));
+                    startupFuture.complete(new ListeningAddresses(socketAddress, Optional.empty()));
                   }
                 });
           } else {
-            listeningAddressesFuture.complete(
-                new ListeningAddresses(socketAddress, Optional.empty()));
+            startupFuture.complete(new ListeningAddresses(socketAddress, Optional.empty()));
           }
         });
 
-    return listeningAddressesFuture;
+    return startupFuture;
   }
 
   @Override
