@@ -49,6 +49,7 @@ import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -397,9 +398,17 @@ public final class DefaultP2PNetworkTest {
     final DefaultP2PNetwork network = network();
     Assertions.assertThatThrownBy(network::start).hasCauseInstanceOf(RuntimeException.class);
 
+    // Partially started RLPx agent should have been stopped on failure
+    verify(rlpxAgent).stop();
+
     // stop() + awaitStop() must not hang despite the partial start
-    network.stop();
-    network.awaitStop();
+    assertThat(
+            CompletableFuture.runAsync(
+                () -> {
+                  network.stop();
+                  network.awaitStop();
+                }))
+        .succeedsWithin(Duration.ofSeconds(10));
   }
 
   @Test
@@ -414,8 +423,13 @@ public final class DefaultP2PNetworkTest {
     verify(rlpxAgent).stop();
 
     // stop() + awaitStop() must not hang despite the partial start
-    network.stop();
-    network.awaitStop();
+    assertThat(
+            CompletableFuture.runAsync(
+                () -> {
+                  network.stop();
+                  network.awaitStop();
+                }))
+        .succeedsWithin(Duration.ofSeconds(10));
   }
 
   private DefaultP2PNetwork network() {

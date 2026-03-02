@@ -249,9 +249,10 @@ public class DefaultP2PNetwork implements P2PNetwork {
       listeningPort = rlpxAgent.start().join();
     } catch (final Exception e) {
       LOG.error("Failed to start RLPx agent", e);
-      // Neither agent will stop(), so count down both latch positions
+      // Discovery agent will not be started, count down its latch position
       shutdownLatch.countDown();
-      shutdownLatch.countDown();
+      // Ensure any partially started RLPx agent is stopped and count down its latch position
+      rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
       throw e;
     }
 
@@ -264,7 +265,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       LOG.error("Failed to start peer discovery agent", e);
       // Discovery agent won't stop(), count down its latch position
       shutdownLatch.countDown();
-      // Stop the already-started RLPx agent (its whenComplete counts down the other position)
+      // Stop the already-started RLPx agent and count down the remaining latch position on
+      // completion
       rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
       throw e;
     }
