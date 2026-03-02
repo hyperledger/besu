@@ -26,6 +26,7 @@ import org.hyperledger.besu.util.platform.PlatformDetector;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -405,85 +406,157 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Build configuration overview.
-   *
-   * @return the string representing configuration overview
+   * Display format specification for a map entry when rendering framed PLAIN output. A {@code null}
+   * suffix means the entry is rendered as static text (the prefix alone), ignoring the map value.
    */
-  public String build() {
-    final List<String> lines = new ArrayList<>();
-    lines.add("Besu version " + BesuVersionUtils.shortVersion());
-    lines.add("");
-    lines.add("Configuration:");
+  private record DisplayEntry(String key, String prefix, String suffix) {
+    String format(final String value) {
+      if (suffix == null) {
+        return prefix;
+      }
+      return prefix + value + suffix;
+    }
+  }
+
+  private static final List<DisplayEntry> CONFIG_DISPLAY_ENTRIES =
+      List.of(
+          new DisplayEntry("network", "Network: ", ""),
+          new DisplayEntry("customGenesisFile", "", ""),
+          new DisplayEntry("networkId", "Network Id: ", ""),
+          new DisplayEntry("profile", "Profile: ", ""),
+          new DisplayEntry("dataStorage", "Data storage: ", ""),
+          new DisplayEntry("syncMode", "Sync mode: ", ""),
+          new DisplayEntry("syncMinPeers", "Sync min peers: ", ""),
+          new DisplayEntry("rpcHttpApis", "RPC HTTP APIs: ", ""),
+          new DisplayEntry("rpcHttpPort", "RPC HTTP port: ", ""),
+          new DisplayEntry("engineApis", "Engine APIs: ", ""),
+          new DisplayEntry("enginePort", "Engine port: ", ""),
+          new DisplayEntry("engineJwt", "Engine JWT: ", ""),
+          new DisplayEntry("txPool", "Using ", " transaction pool implementation"),
+          new DisplayEntry("worldStateUpdateMode", "Using ", " worldstate update mode"),
+          new DisplayEntry("opcodeOptimizations", "Opcode optimizations ", ""),
+          new DisplayEntry("parallelTxProcessing", "Parallel transaction processing ", ""),
+          new DisplayEntry("trieLogPruning", "Limit trie logs enabled: ", ""),
+          new DisplayEntry("chainPruning", "", ""),
+          new DisplayEntry("snapServer", "Snap Sync server enabled", null),
+          new DisplayEntry("highSpec", "Experimental high spec configuration enabled", null),
+          new DisplayEntry("historyExpiryPrune", "History expiry prune enabled", null),
+          new DisplayEntry(
+              "blobDBGC", "Experimental BlobDB BLOCKCHAIN Garbage Collection enabled", null),
+          new DisplayEntry("blobDBGCSettings", "Experimental BlobDB GC ", ""),
+          new DisplayEntry("targetGasLimit", "Target Gas Limit: ", ""));
+
+  private static final List<DisplayEntry> HOST_DISPLAY_ENTRIES =
+      List.of(
+          new DisplayEntry("java", "Java: ", ""),
+          new DisplayEntry("maxHeapSize", "Maximum heap size: ", ""),
+          new DisplayEntry("os", "OS: ", ""),
+          new DisplayEntry("glibc", "glibc: ", ""),
+          new DisplayEntry("jemalloc", "jemalloc: ", ""),
+          new DisplayEntry("totalMemory", "Total memory: ", ""),
+          new DisplayEntry("cpuCores", "CPU cores: ", ""));
+
+  private static void formatSection(
+      final List<String> lines,
+      final Map<String, String> section,
+      final List<DisplayEntry> displayEntries) {
+    for (final DisplayEntry entry : displayEntries) {
+      final String value = section.get(entry.key());
+      if (value != null) {
+        lines.add("  " + entry.format(value));
+      }
+    }
+  }
+
+  /**
+   * Build a structured map of all configuration data, grouped into sections.
+   *
+   * <p>Returns a map with the following structure:
+   *
+   * <ul>
+   *   <li>{@code "version"} &rarr; version string
+   *   <li>{@code "configuration"} &rarr; {@code Map<String, String>} of config options
+   *   <li>{@code "host"} &rarr; {@code Map<String, String>} of host/environment info
+   *   <li>{@code "plugins"} &rarr; {@code Map<String, String>} of plugin summary (if available)
+   * </ul>
+   *
+   * @return an ordered map of configuration sections
+   */
+  public Map<String, Object> buildMap() {
+    final Map<String, Object> result = new LinkedHashMap<>();
+    result.put("version", BesuVersionUtils.shortVersion());
+    result.put("configuration", buildConfigurationMap());
+    result.put("host", buildHostMap());
+    if (besuPluginContext != null) {
+      result.put("plugins", besuPluginContext.getPluginsSummaryMap());
+    }
+    return result;
+  }
+
+  private Map<String, String> buildConfigurationMap() {
+    final Map<String, String> config = new LinkedHashMap<>();
 
     // Don't include the default network if a genesis file has been supplied
     if (network != null && !hasCustomGenesis) {
-      lines.add("Network: " + network);
+      config.put("network", network);
     }
 
     if (hasCustomGenesis) {
-      lines.add("Network: Custom genesis file");
-      lines.add(
+      config.put("network", "Custom genesis file");
+      config.put(
+          "customGenesisFile",
           customGenesisFileName == null ? "Custom genesis file is null" : customGenesisFileName);
     }
 
     if (networkId != null) {
-      lines.add("Network Id: " + networkId);
+      config.put("networkId", networkId.toString());
     }
 
     if (profile != null) {
-      lines.add("Profile: " + profile);
+      config.put("profile", profile);
     }
 
     if (dataStorage != null) {
-      lines.add("Data storage: " + dataStorage);
+      config.put("dataStorage", dataStorage);
     }
 
     if (syncMode != null) {
-      lines.add("Sync mode: " + syncMode);
+      config.put("syncMode", syncMode);
     }
 
     if (syncMinPeers != null) {
-      lines.add("Sync min peers: " + syncMinPeers);
+      config.put("syncMinPeers", syncMinPeers.toString());
     }
 
     if (rpcHttpApis != null) {
-      lines.add("RPC HTTP APIs: " + String.join(",", rpcHttpApis));
+      config.put("rpcHttpApis", String.join(",", rpcHttpApis));
     }
     if (rpcPort != null) {
-      lines.add("RPC HTTP port: " + rpcPort);
+      config.put("rpcHttpPort", rpcPort.toString());
     }
 
     if (engineApis != null) {
-      lines.add("Engine APIs: " + String.join(",", engineApis));
+      config.put("engineApis", String.join(",", engineApis));
     }
     if (enginePort != null) {
-      lines.add("Engine port: " + enginePort);
+      config.put("enginePort", enginePort.toString());
     }
     if (engineJwtFilePath != null) {
-      lines.add("Engine JWT: " + engineJwtFilePath);
+      config.put("engineJwt", engineJwtFilePath);
     }
 
-    lines.add("Using " + txPoolImplementation + " transaction pool implementation");
-
-    lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
-
-    lines.add("Opcode optimizations " + (enabledOpcodeOptimizations ? "enabled" : "disabled"));
-
-    if (isParallelTxProcessingEnabled) {
-      lines.add("Parallel transaction processing enabled");
-    } else {
-      lines.add("Parallel transaction processing disabled");
-    }
+    config.put("txPool", String.valueOf(txPoolImplementation));
+    config.put("worldStateUpdateMode", String.valueOf(worldStateUpdateMode));
+    config.put("opcodeOptimizations", enabledOpcodeOptimizations ? "enabled" : "disabled");
+    config.put("parallelTxProcessing", isParallelTxProcessingEnabled ? "enabled" : "disabled");
 
     if (isLimitTrieLogsEnabled) {
-      final StringBuilder trieLogPruningString = new StringBuilder();
-      trieLogPruningString
-          .append("Limit trie logs enabled: retention: ")
-          .append(trieLogRetentionLimit);
+      final StringBuilder trieLogPruning = new StringBuilder();
+      trieLogPruning.append("retention: ").append(trieLogRetentionLimit);
       if (trieLogsPruningWindowSize != null) {
-        trieLogPruningString.append("; prune window: ").append(trieLogsPruningWindowSize);
+        trieLogPruning.append("; prune window: ").append(trieLogsPruningWindowSize);
       }
-      lines.add(trieLogPruningString.toString());
+      config.put("trieLogPruning", trieLogPruning.toString());
     }
 
     if (!chainPruningStrategy.equals(ChainPruningStrategy.NONE)) {
@@ -496,7 +569,6 @@ public class ConfigurationOverviewBuilder {
             .append(chainPruningBalsRetained)
             .append("; Blocks: ")
             .append(chainPruningBlocksRetained);
-        ;
 
       } else if (chainPruningStrategy.equals(ChainPruningStrategy.BAL)) {
         chainPruningString
@@ -504,27 +576,26 @@ public class ConfigurationOverviewBuilder {
             .append(chainPruningBalsRetained);
       }
       chainPruningString.append(")");
-      lines.add(chainPruningString.toString());
+      config.put("chainPruning", chainPruningString.toString());
     }
 
     if (isSnapServerEnabled) {
-      lines.add("Snap Sync server enabled");
+      config.put("snapServer", "enabled");
     }
 
     if (isHighSpec) {
-      lines.add("Experimental high spec configuration enabled");
+      config.put("highSpec", "enabled");
     }
 
     if (isHistoryExpiryPruneEnabled) {
-      lines.add("History expiry prune enabled");
+      config.put("historyExpiryPrune", "enabled");
     }
 
     if (blobDBSettings != null && blobDBSettings.isBlockchainGarbageCollectionEnabled()) {
-      lines.add("Experimental BlobDB BLOCKCHAIN Garbage Collection enabled");
+      config.put("blobDBGC", "enabled");
     }
     if (hasCustomBlobDBSettings()) {
       final StringBuilder blobDBString = new StringBuilder();
-      blobDBString.append("Experimental BlobDB GC ");
       if (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()) {
         blobDBString
             .append("age cutoff: ")
@@ -536,38 +607,66 @@ public class ConfigurationOverviewBuilder {
             .append("force threshold: ")
             .append(blobDBSettings.blobGarbageCollectionForceThreshold().get());
       }
-      lines.add(blobDBString.toString());
+      config.put("blobDBGCSettings", blobDBString.toString());
     }
 
     if (targetGasLimit != null) {
-      lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
+      config.put("targetGasLimit", normalizeGas(targetGasLimit));
     }
 
-    lines.add("");
-    lines.add("Host:");
+    return config;
+  }
 
-    lines.add("Java: " + PlatformDetector.getVM());
-    lines.add("Maximum heap size: " + normalizeSize(Runtime.getRuntime().maxMemory()));
-    lines.add("OS: " + PlatformDetector.getOS());
+  private Map<String, String> buildHostMap() {
+    final Map<String, String> host = new LinkedHashMap<>();
+
+    host.put("java", PlatformDetector.getVM());
+    host.put("maxHeapSize", normalizeSize(Runtime.getRuntime().maxMemory()));
+    host.put("os", PlatformDetector.getOS());
 
     if (SystemInfo.getCurrentPlatform() == PlatformEnum.LINUX) {
       final String glibcVersion = PlatformDetector.getGlibc();
       if (glibcVersion != null) {
-        lines.add("glibc: " + glibcVersion);
+        host.put("glibc", glibcVersion);
       }
-
-      detectJemalloc(lines);
+      detectJemallocForMap(host);
     }
 
     final HardwareAbstractionLayer hardwareInfo = new SystemInfo().getHardware();
+    host.put("totalMemory", normalizeSize(hardwareInfo.getMemory().getTotal()));
+    host.put("cpuCores", String.valueOf(hardwareInfo.getProcessor().getLogicalProcessorCount()));
 
-    lines.add("Total memory: " + normalizeSize(hardwareInfo.getMemory().getTotal()));
-    lines.add("CPU cores: " + hardwareInfo.getProcessor().getLogicalProcessorCount());
+    return host;
+  }
+
+  /**
+   * Build configuration overview as a framed string for PLAIN logging.
+   *
+   * @return the string representing configuration overview
+   */
+  public String build() {
+    final Map<String, String> config = buildConfigurationMap();
+    final Map<String, String> host = buildHostMap();
+    final List<String> lines = new ArrayList<>();
+
+    lines.add("Besu version " + BesuVersionUtils.shortVersion());
+    lines.add("");
+    lines.add("Configuration:");
+    formatSection(lines, config, CONFIG_DISPLAY_ENTRIES);
+
+    lines.add("");
+    lines.add("Host:");
+    formatSection(lines, host, HOST_DISPLAY_ENTRIES);
 
     lines.add("");
 
+    // Use the formatted multi-line plugin summary for framed output
     if (besuPluginContext != null) {
-      lines.addAll(besuPluginContext.getPluginsSummaryLog());
+      final List<String> pluginLines = besuPluginContext.getPluginsSummaryLog();
+      for (int i = 0; i < pluginLines.size(); i++) {
+        // First line is the section header, rest are indented content
+        lines.add(i == 0 ? pluginLines.get(i) : "  " + pluginLines.get(i));
+      }
     }
 
     return FramedLogMessage.generate(lines);
@@ -579,14 +678,13 @@ public class ConfigurationOverviewBuilder {
             || blobDBSettings.blobGarbageCollectionForceThreshold().isPresent());
   }
 
-  private void detectJemalloc(final List<String> lines) {
+  private void detectJemallocForMap(final Map<String, String> configMap) {
     Optional.ofNullable(Objects.isNull(environment) ? null : environment.get("BESU_USING_JEMALLOC"))
         .ifPresentOrElse(
             jemallocEnabled -> {
               try {
                 if (Boolean.parseBoolean(jemallocEnabled)) {
-                  final String version = PlatformDetector.getJemalloc();
-                  lines.add("jemalloc: " + version);
+                  configMap.put("jemalloc", PlatformDetector.getJemalloc());
                 } else {
                   logger.warn(
                       "besu_using_jemalloc is present but is not set to true, jemalloc library not loaded");
@@ -599,8 +697,7 @@ public class ConfigurationOverviewBuilder {
             () -> {
               // in case the user is using jemalloc without BESU_USING_JEMALLOC env var
               try {
-                final String version = PlatformDetector.getJemalloc();
-                lines.add("jemalloc: " + version);
+                configMap.put("jemalloc", PlatformDetector.getJemalloc());
               } catch (final Throwable throwable) {
                 logger.info(
                     "jemalloc library not found, memory usage may be reduced by installing it");

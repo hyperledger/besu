@@ -21,18 +21,18 @@ import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Spec;
 
-/** The Logging level CLI option. */
-public class LoggingLevelOption {
+/** The combined Logging CLI options (level and format). */
+public class LoggingOptions {
   /** Default Constructor. */
-  LoggingLevelOption() {}
+  LoggingOptions() {}
 
   /**
-   * Create logging level option.
+   * Create logging options.
    *
-   * @return the logging level option
+   * @return the logging options
    */
-  public static LoggingLevelOption create() {
-    return new LoggingLevelOption();
+  public static LoggingOptions create() {
+    return new LoggingOptions();
   }
 
   private static final Set<String> ACCEPTED_VALUES =
@@ -42,6 +42,16 @@ public class LoggingLevelOption {
   @Spec CommandSpec spec;
 
   private String logLevel;
+
+  @CommandLine.Option(
+      names = {"--logging-format"},
+      paramLabel = "<LOG FORMAT>",
+      description =
+          "Logging output format: PLAIN (default), ECS (Elastic Common Schema), "
+              + "GCP (Google Cloud Platform), LOGSTASH (Logstash JSON Event Layout V1), "
+              + "GELF (Graylog Extended Log Format), "
+              + "SPLUNK (Splunk HEC - requires SPLUNK_URL and SPLUNK_TOKEN env vars)")
+  private LoggingFormat loggingFormat = LoggingFormat.PLAIN;
 
   /**
    * Sets log level.
@@ -71,5 +81,14 @@ public class LoggingLevelOption {
    */
   public String getLogLevel() {
     return logLevel;
+  }
+
+  /**
+   * Gets the logging format.
+   *
+   * @return the logging format
+   */
+  public LoggingFormat getLoggingFormat() {
+    return loggingFormat;
   }
 }

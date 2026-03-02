@@ -419,6 +419,49 @@ public class BesuPluginContextImpl implements ServiceManager, PluginVersionsProv
   }
 
   /**
+   * Generates a structured summary of plugin registration as a map. The summary includes registered
+   * plugins, detected but not registered (skipped) plugins, and a total count.
+   *
+   * @return A map with keys: pluginSummary, registeredPlugins, and optionally skippedPlugins.
+   */
+  public Map<String, String> getPluginsSummaryMap() {
+    final Map<String, String> summary = new LinkedHashMap<>();
+
+    summary.put(
+        "pluginSummary",
+        String.format(
+            "TOTAL = %d of %d plugins successfully registered.",
+            registeredPlugins.size(), detectedPlugins.size()));
+
+    if (!registeredPlugins.isEmpty()) {
+      summary.put(
+          "registeredPlugins",
+          registeredPlugins.stream()
+              .map(
+                  plugin ->
+                      String.format(
+                          "%s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion()))
+              .collect(Collectors.joining(", ")));
+    }
+
+    final List<BesuPlugin> skipped =
+        detectedPlugins.stream().filter(plugin -> !registeredPlugins.contains(plugin)).toList();
+
+    if (!skipped.isEmpty()) {
+      summary.put(
+          "skippedPlugins",
+          skipped.stream()
+              .map(
+                  plugin ->
+                      String.format(
+                          "%s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion()))
+              .collect(Collectors.joining(", ")));
+    }
+
+    return summary;
+  }
+
+  /**
    * Generates a summary log of plugin registration. The summary includes registered plugins,
    * detected but not registered (skipped) plugins
    *
