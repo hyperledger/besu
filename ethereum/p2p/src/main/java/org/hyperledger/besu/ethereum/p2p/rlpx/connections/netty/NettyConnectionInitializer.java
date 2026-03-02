@@ -74,7 +74,7 @@ public class NettyConnectionInitializer
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
   private final PeerLookup peerLookup;
 
-  private ChannelFuture server;
+  private volatile ChannelFuture server;
   private volatile ChannelFuture serverIpv6;
   private volatile CompletableFuture<ListeningAddresses> listeningAddressesFuture;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
