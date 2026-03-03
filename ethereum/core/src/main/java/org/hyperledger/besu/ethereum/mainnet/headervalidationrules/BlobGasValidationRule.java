@@ -70,11 +70,12 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
           "blob gas used must be multiple of GAS_PER_BLOB ({})", gasCalculator.getBlobGasPerBlob());
       return false;
     }
-    if (headerBlobGasUsed > gasLimitCalculator.currentBlobGasLimit()) {
+    long currentBlobGasLimit = gasLimitCalculator.currentBlobGasLimit();
+    if (headerBlobGasUsed > currentBlobGasLimit) {
       LOG.info(
           "blob gas used {} exceeds max {}",
           headerBlobGasUsed,
-          gasLimitCalculator.currentBlobGasLimit());
+          currentBlobGasLimit);
       return false;
     }
     return true;
