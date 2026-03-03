@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodie
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.time.Duration;
@@ -54,8 +53,6 @@ public class DownloadSyncBodiesStepTest {
   private PeerTaskExecutor peerTaskExecutor;
   private EthContext ethContext;
   private ProtocolSchedule protocolSchedule;
-  private MetricsSystem metricsSystem;
-  private SynchronizerConfiguration syncConfig;
 
   @BeforeEach
   public void setUp() {
@@ -67,9 +64,6 @@ public class DownloadSyncBodiesStepTest {
     ethContext = mock(EthContext.class);
     when(ethContext.getScheduler()).thenReturn(new DeterministicEthScheduler(() -> false));
     when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
-    metricsSystem = new NoOpMetricsSystem();
-    syncConfig = mock(SynchronizerConfiguration.class);
-    when(syncConfig.isPeerTaskSystemEnabled()).thenReturn(true);
   }
 
   @Test
@@ -208,8 +202,7 @@ public class DownloadSyncBodiesStepTest {
 
     try {
       final DownloadSyncBodiesStep step =
-          new DownloadSyncBodiesStep(
-              protocolSchedule, realEthContext, metricsSystem, syncConfig, Duration.ofMillis(100));
+          new DownloadSyncBodiesStep(protocolSchedule, realEthContext, Duration.ofMillis(100));
 
       when(peerTaskExecutor.execute(any(GetSyncBlockBodiesFromPeerTask.class)))
           .thenReturn(failure(PeerTaskExecutorResponseCode.TIMEOUT));
@@ -239,8 +232,7 @@ public class DownloadSyncBodiesStepTest {
 
     try {
       final DownloadSyncBodiesStep step =
-          new DownloadSyncBodiesStep(
-              protocolSchedule, realEthContext, metricsSystem, syncConfig, Duration.ofMillis(500));
+          new DownloadSyncBodiesStep(protocolSchedule, realEthContext, Duration.ofMillis(500));
 
       when(peerTaskExecutor.execute(any(GetSyncBlockBodiesFromPeerTask.class)))
           .thenReturn(failure(PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE));
@@ -264,8 +256,7 @@ public class DownloadSyncBodiesStepTest {
   // ---- helpers ----
 
   private DownloadSyncBodiesStep createStep() {
-    return new DownloadSyncBodiesStep(
-        protocolSchedule, ethContext, metricsSystem, syncConfig, Duration.ofMinutes(1));
+    return new DownloadSyncBodiesStep(protocolSchedule, ethContext, Duration.ofMinutes(1));
   }
 
   private List<BlockHeader> createHeaders(final int count) {

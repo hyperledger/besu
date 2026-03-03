@@ -22,9 +22,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetSyncBlockBodiesFromPeerTask;
-import org.hyperledger.besu.ethereum.eth.sync.tasks.CompleteSyncBlocksTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -82,11 +80,8 @@ public class DownloadSyncBodiesStep
   private static final AtomicInteger taskSequence = new AtomicInteger(0);
 
   private final ProtocolSchedule protocolSchedule;
-  private final EthContext ethContext;
   private final EthScheduler ethScheduler;
   private final PeerTaskExecutor peerTaskExecutor;
-  private final MetricsSystem metricsSystem;
-  private final SynchronizerConfiguration synchronizerConfiguration;
   private final Duration timeoutDuration;
 
   /**
@@ -99,15 +94,10 @@ public class DownloadSyncBodiesStep
   public DownloadSyncBodiesStep(
       final ProtocolSchedule protocolSchedule,
       final EthContext ethContext,
-      final MetricsSystem metricsSystem,
-      final SynchronizerConfiguration syncConfig,
       final Duration timeoutDuration) {
     this.protocolSchedule = protocolSchedule;
-    this.ethContext = ethContext;
     this.ethScheduler = ethContext.getScheduler();
     this.peerTaskExecutor = ethContext.getPeerTaskExecutor();
-    this.metricsSystem = metricsSystem;
-    this.synchronizerConfiguration = syncConfig;
     this.timeoutDuration = timeoutDuration;
   }
 
@@ -124,32 +114,25 @@ public class DownloadSyncBodiesStep
    */
   @Override
   public CompletableFuture<List<SyncBlock>> apply(final List<BlockHeader> blockHeaders) {
-    if (synchronizerConfiguration.isPeerTaskSystemEnabled()) {
-
-      final int currTaskId = taskSequence.incrementAndGet();
-      final List<SyncBlock> syncBlocks = new ArrayList<>(blockHeaders.size());
-      final List<BlockHeader> remainingHeaders = new ArrayList<>(blockHeaders);
-      final AtomicBoolean cancelled = new AtomicBoolean(false);
-      return ethScheduler
-          .scheduleServiceTask(
-              () -> downloadAllBodies(currTaskId, 0, remainingHeaders, syncBlocks, cancelled))
-          .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
-          .whenComplete(
-              (unused, throwable) -> {
-                if (throwable instanceof TimeoutException) {
-                  cancelled.set(true);
-                  LOG.trace(
-                      "[{}] Timed out after {} ms while downloading bodies for {} blocks",
-                      currTaskId,
-                      timeoutDuration.toMillis(),
-                      blockHeaders.size());
-                }
-              });
-    } else {
-      return CompleteSyncBlocksTask.forHeaders(
-              protocolSchedule, ethContext, blockHeaders, metricsSystem)
-          .run();
-    }
+    final int currTaskId = taskSequence.incrementAndGet();
+    final List<SyncBlock> syncBlocks = new ArrayList<>(blockHeaders.size());
+    final List<BlockHeader> remainingHeaders = new ArrayList<>(blockHeaders);
+    final AtomicBoolean cancelled = new AtomicBoolean(false);
+    return ethScheduler
+        .scheduleServiceTask(
+            () -> getSyncBodies(currTaskId, 0, remainingHeaders, syncBlocks, cancelled))
+        .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
+        .whenComplete(
+            (unused, throwable) -> {
+              if (throwable instanceof TimeoutException) {
+                cancelled.set(true);
+                LOG.trace(
+                    "[{}] Timed out after {} ms while downloading bodies for {} blocks",
+                    currTaskId,
+                    timeoutDuration.toMillis(),
+                    blockHeaders.size());
+              }
+            });
   }
 
   /**
@@ -184,7 +167,7 @@ public class DownloadSyncBodiesStep
    * @return a future that resolves to {@code downloadedSyncBlocks} once all bodies have been
    *     fetched, or fails on a fatal peer error or timeout
    */
-  private CompletableFuture<List<SyncBlock>> downloadAllBodies(
+  private CompletableFuture<List<SyncBlock>> getSyncBodies(
       final int currTaskId,
       final int prevIterations,
       final List<BlockHeader> remainingHeaders,
@@ -244,7 +227,7 @@ public class DownloadSyncBodiesStep
             () ->
                 ethScheduler.scheduleServiceTask(
                     () ->
-                        downloadAllBodies(
+                        getSyncBodies(
                             currTaskId,
                             passIterations,
                             remainingHeaders,
