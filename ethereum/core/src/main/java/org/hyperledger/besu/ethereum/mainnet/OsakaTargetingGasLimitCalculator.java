@@ -53,7 +53,7 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
         DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
   }
 
-  public OsakaTargetingGasLimitCalculator(
+  private OsakaTargetingGasLimitCalculator(
       final long londonForkBlock,
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
