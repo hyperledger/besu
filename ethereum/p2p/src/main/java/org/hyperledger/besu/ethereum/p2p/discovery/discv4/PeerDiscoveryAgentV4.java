@@ -102,7 +102,9 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
 
     this.peerPermissions = peerPermissions;
     this.bootstrapPeers =
-        config.getBootnodes().stream().map(DiscoveryPeerV4::fromEnode).collect(Collectors.toList());
+        config.getEnodeBootnodes().stream()
+            .map(DiscoveryPeerV4::fromEnode)
+            .collect(Collectors.toList());
 
     this.config = config;
     this.nodeKey = nodeKey;
@@ -324,7 +326,7 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
     checkArgument(
         config.getBindPort() == 0 || NetworkUtility.isValidPort(config.getBindPort()),
         "valid port number required");
-    checkArgument(config.getBootnodes() != null, "bootstrapPeers cannot be null");
+    checkArgument(config.getEnodeBootnodes() != null, "bootstrapPeers cannot be null");
     checkArgument(config.getBucketSize() > 0, "bucket size cannot be negative nor zero");
   }
 
