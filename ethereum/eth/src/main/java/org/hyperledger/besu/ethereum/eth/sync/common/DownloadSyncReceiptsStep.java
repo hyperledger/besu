@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -78,15 +79,17 @@ public class DownloadSyncReceiptsStep
     final List<SyncBlock> blocksToRequest = prepareRequest(blocks);
     final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash =
         HashMap.newHashMap(blocksToRequest.size());
+    final AtomicBoolean cancelled = new AtomicBoolean(false);
 
     return ethScheduler
         .scheduleServiceTask(
-            () -> downloadReceipts(currTaskId, 0, blocksToRequest, receiptsByRootHash))
+            () -> downloadReceipts(currTaskId, 0, blocksToRequest, receiptsByRootHash, cancelled))
         .thenApply(receipts -> combineBlocksAndReceipts(blocks, receipts))
         .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
         .whenComplete(
             (unused, throwable) -> {
               if (throwable instanceof TimeoutException) {
+                cancelled.set(true);
                 LOG.trace(
                     "[{}] Timed out after {} ms while downloading receipts for {} blocks",
                     currTaskId,
@@ -136,11 +139,12 @@ public class DownloadSyncReceiptsStep
       final int currTaskId,
       final int prevIterations,
       final List<SyncBlock> blocksToRequest,
-      final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash) {
+      final Map<Hash, List<SyncTransactionReceipt>> receiptsByRootHash,
+      final AtomicBoolean cancelled) {
 
     final int initialBlockCount = blocksToRequest.size();
     int iteration = prevIterations;
-    while (!blocksToRequest.isEmpty()) {
+    while (!cancelled.get() && !blocksToRequest.isEmpty()) {
       ++iteration;
 
       LOG.atTrace()
@@ -205,7 +209,11 @@ public class DownloadSyncReceiptsStep
                 ethScheduler.scheduleServiceTask(
                     () ->
                         downloadReceipts(
-                            currTaskId, passIterations, blocksToRequest, receiptsByRootHash)),
+                            currTaskId,
+                            passIterations,
+                            blocksToRequest,
+                            receiptsByRootHash,
+                            cancelled)),
             RETRY_DELAY);
       }
     }
