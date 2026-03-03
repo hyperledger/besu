@@ -107,7 +107,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
     return (localNodeRecord, nodeRecordListener) -> {
       final DiscoverySystemBuilder builder =
           new DiscoverySystemBuilder()
-              .signer(new LocalNodeKeySigner(nodeKey))
+              .signer(new NodeKeySigner(nodeKey))
               .localNodeRecord(localNodeRecord)
               .localNodeRecordListener(nodeRecordListener)
               // Ignore peer-reported external addresses for now (always returns Optional.empty()).
@@ -144,20 +144,20 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   }
 
   /**
-   * An implementation of the {@link Signer} interface that uses a local {@link NodeKey} for signing
-   * and key agreement.
+   * An implementation of the {@link Signer} interface that uses the node's {@link NodeKey} for
+   * signing and key agreement.
    */
-  private static class LocalNodeKeySigner implements Signer {
+  private static class NodeKeySigner implements Signer {
     private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     private final NodeKey nodeKey;
 
     /**
-     * Creates a new LocalNodeKeySigner.
+     * Creates a new NodeKeySigner.
      *
      * @param nodeKey the node key to use for signing and key agreement
      */
-    public LocalNodeKeySigner(final NodeKey nodeKey) {
+    public NodeKeySigner(final NodeKey nodeKey) {
       this.nodeKey = nodeKey;
     }
 
