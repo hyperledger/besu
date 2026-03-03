@@ -254,8 +254,7 @@ public class BlockSimulator {
                 overridenBaseBlockHeader, blockStateCall.getStateOverrideMap());
 
     BlockHashLookup blockHashLookup =
-        createBlockHashLookup(
-            blockOverrides, protocolSpec, overridenBaseBlockHeader, blockHashCache);
+        createBlockHashLookup(blockOverrides, protocolSpec, blockHashCache);
 
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
@@ -693,14 +692,12 @@ public class BlockSimulator {
    *
    * @param blockOverrides The BlockOverrides to use.
    * @param newProtocolSpec The ProtocolSpec for the block.
-   * @param blockHeader The block header for the simulation.
    * @param blockHashCache A cache of block hashes.
    * @return The BlockHashLookup for the block simulation.
    */
   private BlockHashLookup createBlockHashLookup(
       final BlockOverrides blockOverrides,
       final ProtocolSpec newProtocolSpec,
-      final BlockHeader blockHeader,
       final Map<Long, Hash> blockHashCache) {
     var blockCallBlockHashLookup =
         blockOverrides
@@ -708,10 +705,17 @@ public class BlockSimulator {
             .<BlockHashLookup>map(
                 blockHashLookup -> (___, blockNumber) -> blockHashLookup.apply(blockNumber))
             .orElseGet(
-                () ->
-                    newProtocolSpec
-                        .getPreExecutionProcessor()
-                        .createBlockHashLookup(blockchain, blockHeader));
+                () -> {
+                  // Use the real chain head for the fallback lookup, not the simulated block
+                  // header. Simulated block headers have parent hashes pointing to other
+                  // simulated blocks that don't exist in the blockchain, so
+                  // BlockchainBasedBlockHashLookup can't walk back through them to reach real
+                  // chain blocks. The blockHashCache already handles simulated block lookups.
+                  var chainHeadHeader = blockchain.getChainHeadHeader();
+                  return newProtocolSpec
+                      .getPreExecutionProcessor()
+                      .createBlockHashLookup(blockchain, chainHeadHeader);
+                });
     return (frame, blockNumber) -> {
       if (blockHashCache.containsKey(blockNumber)) {
         return blockHashCache.get(blockNumber);
