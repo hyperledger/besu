@@ -270,9 +270,8 @@ public class BlockSimulatorTest {
 
   @Test
   public void shouldInheritFeeRecipientFromParentBlock() {
-    // When no mining coinbase is configured and feeRecipient is set on the first block,
-    // subsequent blocks without feeRecipient should inherit from the parent block's coinbase.
-    when(miningConfiguration.getCoinbase()).thenReturn(Optional.empty());
+    // When feeRecipient is set on the first block, subsequent blocks without feeRecipient
+    // should inherit from the parent block's coinbase, regardless of mining configuration.
 
     var expectedFeeRecipient = Address.fromHexString("0xc200000000000000000000000000000000000000");
 
