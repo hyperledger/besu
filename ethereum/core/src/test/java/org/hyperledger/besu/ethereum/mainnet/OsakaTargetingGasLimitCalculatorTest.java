@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     final OsakaTargetingGasLimitCalculator osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
 
     final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
     assertThat(
@@ -90,7 +91,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
 
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(osakaTargetingGasLimitCalculator.currentBlobGasLimit())
@@ -107,7 +108,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var calculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
     assertThat(calculator.maxBlobsPerBlock).isEqualTo(maxBlobs);
     assertThat(calculator.targetBlobsPerBlock).isEqualTo(targetBlobs);
 
@@ -135,7 +136,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var calculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
     assertThat(calculator.transactionBlobGasLimitCap()).isEqualTo(0xC0000); // 6 * 131072
   }
 
