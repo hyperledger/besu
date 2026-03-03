@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -133,15 +134,22 @@ public class DownloadBackwardHeadersStep
 
     final int currentTaskId = taskId.getAndIncrement();
     final List<BlockHeader> downloadedHeaders = new ArrayList<>(headersToRequest);
+    final AtomicBoolean cancelled = new AtomicBoolean(false);
     return ethScheduler
         .scheduleServiceTask(
             () ->
                 downloadAllHeaders(
-                    currentTaskId, 0, startBlockNumber, headersToRequest, downloadedHeaders))
+                    currentTaskId,
+                    0,
+                    startBlockNumber,
+                    headersToRequest,
+                    downloadedHeaders,
+                    cancelled))
         .orTimeout(timeoutDuration.toMillis(), TimeUnit.MILLISECONDS)
         .whenComplete(
             (unused, throwable) -> {
               if (throwable instanceof TimeoutException) {
+                cancelled.set(true);
                 LOG.trace(
                     "[{}] Timed out after {} ms while downloading {} backward headers from block {}",
                     currentTaskId,
@@ -181,6 +189,9 @@ public class DownloadBackwardHeadersStep
    * @param headersToRequest total number of headers the batch must contain
    * @param downloadedHeaders mutable list that accumulates successfully downloaded headers; shared
    *     across the synchronous loop iterations and across recursive retry invocations
+   * @param cancelled flag set to {@code true} by the timeout handler in {@link #apply(Long)} when
+   *     the overall deadline has elapsed; the loop checks this flag before each iteration and exits
+   *     early if it is set, preventing further peer requests after a timeout
    * @return a future that resolves to {@code downloadedHeaders} once all {@code headersToRequest}
    *     headers have been fetched, or fails on a fatal peer error or timeout
    */
@@ -189,10 +200,11 @@ public class DownloadBackwardHeadersStep
       final int prevIterations,
       final Long startBlockNumber,
       final int headersToRequest,
-      final List<BlockHeader> downloadedHeaders) {
+      final List<BlockHeader> downloadedHeaders,
+      final AtomicBoolean cancelled) {
 
     int iteration = prevIterations;
-    do {
+    while (!cancelled.get() && downloadedHeaders.size() < headersToRequest) {
       ++iteration;
 
       final long requestStartBlockNumber = startBlockNumber - downloadedHeaders.size();
@@ -263,11 +275,12 @@ public class DownloadBackwardHeadersStep
                               passIterations,
                               startBlockNumber,
                               headersToRequest,
-                              downloadedHeaders)),
+                              downloadedHeaders,
+                              cancelled)),
               RETRY_DELAY);
         }
       }
-    } while (downloadedHeaders.size() < headersToRequest);
+    }
     LOG.atTrace()
         .setMessage("[{}:{}] Downloaded {} headers: blocks {} to {}")
         .addArgument(currTaskId)

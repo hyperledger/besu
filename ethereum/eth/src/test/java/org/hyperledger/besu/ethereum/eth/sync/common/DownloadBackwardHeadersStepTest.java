@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -567,6 +568,41 @@ public class DownloadBackwardHeadersStepTest {
           .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
     } finally {
       // Clean up the real scheduler
+      realScheduler.stop();
+      realScheduler.awaitStop();
+    }
+  }
+
+  @Test
+  public void shouldNotRetryAfterTimeout() throws Exception {
+    // The first request fails transiently, scheduling a retry after RETRY_DELAY (1 s).
+    // The overall timeout fires before that retry, setting the cancelled flag.
+    // When the retry eventually runs it must observe cancelled=true and exit without
+    // making a second peer request.
+    final EthScheduler realScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final EthContext realEthContext = mock(EthContext.class);
+    when(realEthContext.getScheduler()).thenReturn(realScheduler);
+    when(realEthContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
+
+    try {
+      final DownloadBackwardHeadersStep step =
+          new DownloadBackwardHeadersStep(
+              protocolSchedule, realEthContext, 10, 0, Duration.ofMillis(500));
+
+      when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
+          .thenReturn(
+              new PeerTaskExecutorResult<>(
+                  Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, emptyList()));
+
+      final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
+
+      // Timeout fires at ~500 ms; the retry is scheduled ~1 000 ms after the first failure.
+      assertThatThrownBy(result::get)
+          .isInstanceOf(ExecutionException.class)
+          .hasCauseInstanceOf(java.util.concurrent.TimeoutException.class);
+
+      verify(peerTaskExecutor, after(1200).times(1)).execute(any(GetHeadersFromPeerTask.class));
+    } finally {
       realScheduler.stop();
       realScheduler.awaitStop();
     }
