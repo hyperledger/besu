@@ -292,23 +292,13 @@ class DebugOperationTracerTest {
 
     final MessageFrame frame = validMessageFrameBuilder().build();
     frame.writeMemory(0L, 32, initialValue);
-    frame.setCurrentOperation(anOperation);
 
-    final OpCodeTracerConfig config =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceMemory(true)
-            .traceStack(false)
-            .traceStorage(false)
-            .build();
-    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+    final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
     // Frame 0: non-memory-writing op — captures initial snapshot
-    tracer.tracePreExecution(frame);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
-
+    traceFrame(frame, tracer, anOperation);
     // Frame 1: another non-memory-writing op — should reuse last snapshot, not re-capture
-    tracer.tracePreExecution(frame);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+    traceFrame(frame, tracer, anOperation);
 
     final List<TraceFrame> frames = tracer.getTraceFrames();
     assertThat(frames).hasSize(2);
@@ -332,25 +322,16 @@ class DebugOperationTracerTest {
 
     final MessageFrame frame = validMessageFrameBuilder().build();
     frame.writeMemory(0L, 32, word1); // 1 word
-    frame.setCurrentOperation(anOperation);
 
-    final OpCodeTracerConfig config =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceMemory(true)
-            .traceStack(false)
-            .traceStorage(false)
-            .build();
-    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+    final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
     // Frame 0: 1 word in memory
-    tracer.tracePreExecution(frame);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+    traceFrame(frame, tracer, anOperation);
 
     // Memory grows to 2 words without an explicit-update flag (simulates e.g. MLOAD
     // touching a new page, which expands memory but does not set the flag)
     frame.writeMemory(32L, 32, word2); // now 2 words, no explicit-update flag
-    tracer.tracePreExecution(frame);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+    traceFrame(frame, tracer, anOperation);
 
     final List<TraceFrame> frames = tracer.getTraceFrames();
     assertThat(frames).hasSize(2);
@@ -383,25 +364,15 @@ class DebugOperationTracerTest {
 
     final MessageFrame frame = validMessageFrameBuilder().build();
     frame.writeMemory(0L, 32, initialValue);
-    frame.setCurrentOperation(anOperation); // non-memory-writing op first
 
-    final OpCodeTracerConfig config =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceMemory(true)
-            .traceStack(false)
-            .traceStorage(false)
-            .build();
-    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+    final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
     // Frame 0: non-memory-writing op
-    tracer.tracePreExecution(frame);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+    traceFrame(frame, tracer, anOperation);
 
     // Frame 1: memory-writing op
     frame.setCurrentOperation(memoryWritingOp);
-    tracer.tracePreExecution(frame);
-    memoryWritingOp.execute(frame, null);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+    traceFrame(frame, tracer, memoryWritingOp);
 
     final List<TraceFrame> frames = tracer.getTraceFrames();
     assertThat(frames).hasSize(2);
@@ -426,19 +397,9 @@ class DebugOperationTracerTest {
 
     final MessageFrame frame = validMessageFrameBuilder().build();
     frame.writeMemory(0L, 32, word); // no explicit-update flag → getMaybeUpdatedMemory() is empty
-    frame.setCurrentOperation(anOperation);
 
-    final OpCodeTracerConfig config =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceMemory(true)
-            .traceStack(false)
-            .traceStorage(false)
-            .build();
-    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
-
-    // lastFrame is null at this point — no previous tracePostExecution call
-    tracer.tracePreExecution(frame);
-    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+    final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
+    traceFrame(frame, tracer, anOperation);
 
     final List<TraceFrame> frames = tracer.getTraceFrames();
     assertThat(frames).hasSize(1);
@@ -456,21 +417,14 @@ class DebugOperationTracerTest {
     final Bytes32 parentWord = Bytes32.fromHexString("0x" + "aa".repeat(32));
     final Bytes32 childWord = Bytes32.fromHexString("0x" + "bb".repeat(32));
 
-    final OpCodeTracerConfig config =
-        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-            .traceMemory(true)
-            .traceStack(false)
-            .traceStorage(false)
-            .build();
-    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+    final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
     // --- Step 1: parent frame before CALL (depth 0) ---
     final MessageFrame parentFrame = validMessageFrameBuilder().build();
     parentFrame.writeMemory(0L, 32, parentWord);
     parentFrame.setCurrentOperation(anOperation);
 
-    tracer.tracePreExecution(parentFrame);
-    tracer.tracePostExecution(parentFrame, new OperationResult(3L, null));
+    traceFrame(parentFrame, tracer, anOperation);
 
     // --- Step 2: child frame during CALL (depth 1) ---
     // lastFrame.depth(0) != frame.depth(1) → fresh snapshot must be taken from the child
@@ -479,14 +433,12 @@ class DebugOperationTracerTest {
     childFrame.setCurrentOperation(anOperation);
     childFrame.getMessageFrameStack().add(childFrame); // raises depth to 1
 
-    tracer.tracePreExecution(childFrame);
-    tracer.tracePostExecution(childFrame, new OperationResult(3L, null));
+    traceFrame(childFrame, tracer, anOperation);
 
     // --- Step 3: parent frame resumes after RETURN (depth 0) ---
     // getMaybeUpdatedMemory() is empty (reset() cleared it after step 1),
     // lastFrame.depth(1) != frame.depth(0) → fresh snapshot must be read from parentFrame
-    tracer.tracePreExecution(parentFrame);
-    tracer.tracePostExecution(parentFrame, new OperationResult(3L, null));
+    traceFrame(parentFrame, tracer, anOperation);
 
     final List<TraceFrame> frames = tracer.getTraceFrames();
     assertThat(frames).hasSize(3);
@@ -530,6 +482,15 @@ class DebugOperationTracerTest {
     OperationResult operationResult = anOperation.execute(frame, null);
     tracer.tracePostExecution(frame, operationResult);
     return getOnlyTraceFrame(tracer);
+  }
+
+  private void traceFrame(
+          final MessageFrame frame,
+          final DebugOperationTracer tracer,
+          final Operation operation) {
+    tracer.tracePreExecution(frame);
+    OperationResult operationResult = operation.execute(frame, null);
+    tracer.tracePostExecution(frame, operationResult);
   }
 
   private MessageFrame validMessageFrame() {
@@ -578,5 +539,15 @@ class DebugOperationTracerTest {
     frame.writeMemory(32, 32, word2);
     frame.writeMemory(64, 32, word3);
     return updatedStorage;
+  }
+
+  private static DebugOperationTracer createDebugOperationTracerWithMemory() {
+    final OpCodeTracerConfig config =
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                    .traceMemory(true)
+                    .traceStack(false)
+                    .traceStorage(false)
+                    .build();
+    return new DebugOperationTracer(config, false);
   }
 }
