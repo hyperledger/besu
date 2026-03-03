@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 
 import java.net.InetSocketAddress;
@@ -90,6 +91,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   }
 
   private final DiscoveryConfiguration discoveryConfig;
+  private final PeerPermissions peerPermissions;
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
@@ -115,6 +117,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * record (ENR) carries the correct {@code tcp}/{@code tcp6} values.
    *
    * @param config the full networking configuration
+   * @param peerPermissions peer permissions to enforce on discovered peers
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
@@ -123,6 +126,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   PeerDiscoveryAgentV5(
       final NetworkingConfiguration config,
+      final PeerPermissions peerPermissions,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
@@ -131,6 +135,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
     this.discoveryConfig =
         Objects.requireNonNull(config, "config must not be null").discoveryConfiguration();
+    this.peerPermissions =
+        Objects.requireNonNull(peerPermissions, "peerPermissions must not be null");
     this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
@@ -440,6 +446,8 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       return Stream.empty();
     }
 
+    final Peer localNode = nodeRecordManager.getLocalNode().orElse(null);
+
     // Combine newly discovered peers with known peers and filter for suitability
     final Stream<NodeRecord> knownPeers = system.streamLiveNodes();
     final List<DiscoveryPeer> candidates =
@@ -448,11 +456,32 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound))
             .filter(DiscoveryPeer::isReadyForConnections)
             .filter(peer -> peer.getForkId().map(forkIdManager::peerCheck).orElse(true))
+            .filter(peer -> isPeerPermitted(localNode, peer))
             .toList();
     if (LOG.isTraceEnabled() && !candidates.isEmpty()) {
       LOG.trace("Total unique peers eligible for connection: {}", candidates.size());
     }
     return candidates.stream();
+  }
+
+  /**
+   * Checks whether a discovered peer is permitted by the configured peer permissions.
+   *
+   * @param localNode the local node, or {@code null} if not yet initialized
+   * @param remotePeer the remote peer to check
+   * @return {@code true} if the peer is permitted
+   */
+  private boolean isPeerPermitted(final Peer localNode, final DiscoveryPeer remotePeer) {
+    if (localNode == null) {
+      return true;
+    }
+    final boolean permitted =
+        peerPermissions.isPermitted(
+            localNode, remotePeer, PeerPermissions.Action.DISCOVERY_ALLOW_IN_PEER_TABLE);
+    if (!permitted) {
+      LOG.trace("DiscV5: Peer {} rejected by peer permissions", remotePeer.getEnodeURL());
+    }
+    return permitted;
   }
 
   /**
