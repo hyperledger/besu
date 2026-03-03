@@ -372,6 +372,148 @@ class DebugOperationTracerTest {
     assertThat(after[0]).isEqualTo(updatedValue);
   }
 
+  @Test
+  void shouldCaptureMemoryDirectlyWhenLastFrameIsNull() {
+    // captureMemory is invoked with lastFrame == null (first trace ever).
+    // The early-return path (reuse lastFrame.getMemory()) must be skipped and
+    // memory must be read fresh from the frame even when getMaybeUpdatedMemory() is empty.
+    final Bytes32 word = Bytes32.fromHexString("0x" + "aa".repeat(32));
+
+    final MessageFrame frame = validMessageFrameBuilder().build();
+    frame.writeMemory(0L, 32, word); // no explicit-update flag → getMaybeUpdatedMemory() is empty
+    frame.setCurrentOperation(anOperation);
+
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+
+    // lastFrame is null at this point — no previous tracePostExecution call
+    tracer.tracePreExecution(frame);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    final List<TraceFrame> frames = tracer.getTraceFrames();
+    assertThat(frames).hasSize(1);
+    assertThat(frames.get(0).getMemory()).isPresent();
+    assertThat(frames.get(0).getMemory().get()).containsExactly(word);
+  }
+
+  @Test
+  void shouldTakeNewMemorySnapshotWhenFrameDepthDiffers() {
+    // Tests the condition at line 291: when lastFrame.getDepth() != frame.getDepth(),
+    // a fresh memory snapshot must be taken even if getMaybeUpdatedMemory() is empty.
+    final Bytes32 word1 = Bytes32.fromHexString("0x" + "aa".repeat(32));
+    final Bytes32 word2 = Bytes32.fromHexString("0x" + "bb".repeat(32));
+
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+
+    // First frame at depth 0
+    final MessageFrame frame0 = validMessageFrameBuilder().build();
+    frame0.writeMemory(0L, 32, word1);
+    frame0.setCurrentOperation(anOperation);
+
+    tracer.tracePreExecution(frame0);
+    tracer.tracePostExecution(frame0, new OperationResult(3L, null));
+
+    // Second frame at depth 1 — different from lastFrame.getDepth()
+    // getMaybeUpdatedMemory() is empty (no explicit-update flag used)
+    final MessageFrame frame1 = validMessageFrameBuilder().build();
+    frame1.writeMemory(0L, 32, word2);
+    frame1.setCurrentOperation(anOperation);
+    frame1.getMessageFrameStack().add(frame1); // push one entry to raise depth to 1
+
+    tracer.tracePreExecution(frame1);
+    tracer.tracePostExecution(frame1, new OperationResult(3L, null));
+
+    final List<TraceFrame> frames = tracer.getTraceFrames();
+    assertThat(frames).hasSize(2);
+
+    assertThat(frames.get(1).getMemory()).isPresent();
+    final Bytes[] snapshot0 = frames.get(0).getMemory().get();
+    final Bytes[] snapshot1 = frames.get(1).getMemory().get();
+
+    assertThat(snapshot1)
+        .as("A frame at a different depth must produce a fresh memory snapshot, not reuse the last")
+        .isNotSameAs(snapshot0);
+    assertThat(snapshot0[0]).isEqualTo(word1);
+    assertThat(snapshot1[0]).isEqualTo(word2);
+  }
+
+  @Test
+  void shouldHandleCallReturnScenario() {
+    // Full CALL/RETURN lifecycle: parent (depth 0) → child (depth 1) → parent (depth 0).
+    //
+    // On CALL entry (depth increases):
+    //   tracePreExecution line 86 copies inputData so the child's TraceFrame holds an
+    //   isolated snapshot, not a live reference to the frame's input buffer.
+    //
+    // On RETURN (depth decreases back to parent):
+    //   captureMemory line 291 sees lastFrame.depth(1) != frame.depth(0), so a fresh
+    //   memory snapshot is taken from the parent frame — the child's memory is never
+    //   leaked into the parent's TraceFrame.
+    final Bytes32 parentWord = Bytes32.fromHexString("0x" + "aa".repeat(32));
+    final Bytes32 childWord = Bytes32.fromHexString("0x" + "bb".repeat(32));
+
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+
+    // --- Step 1: parent frame before CALL (depth 0) ---
+    final MessageFrame parentFrame = validMessageFrameBuilder().build();
+    parentFrame.writeMemory(0L, 32, parentWord);
+    parentFrame.setCurrentOperation(anOperation);
+
+    tracer.tracePreExecution(parentFrame);
+    tracer.tracePostExecution(parentFrame, new OperationResult(3L, null));
+
+    // --- Step 2: child frame during CALL (depth 1) ---
+    // depth > lastFrame.depth → tracePreExecution copies inputData (line 86)
+    final MessageFrame childFrame = validMessageFrameBuilder().build();
+    childFrame.writeMemory(0L, 32, childWord);
+    childFrame.setCurrentOperation(anOperation);
+    childFrame.getMessageFrameStack().add(childFrame); // raises depth to 1
+
+    tracer.tracePreExecution(childFrame);
+    tracer.tracePostExecution(childFrame, new OperationResult(3L, null));
+    // lastFrame.depth is now 1
+
+    // --- Step 3: parent frame resumes after RETURN (depth 0) ---
+    // getMaybeUpdatedMemory() is empty (reset() cleared it after step 1),
+    // lastFrame.depth(1) != frame.depth(0) → condition at line 291 is false
+    // → fresh memory snapshot must be read from parentFrame, not reused from child
+    tracer.tracePreExecution(parentFrame);
+    tracer.tracePostExecution(parentFrame, new OperationResult(3L, null));
+
+    final List<TraceFrame> frames = tracer.getTraceFrames();
+    assertThat(frames).hasSize(3);
+
+    // After RETURN, parent memory must be freshly captured from the parent frame,
+    // not the child's snapshot
+    assertThat(frames.get(2).getMemory()).isPresent();
+    final Bytes[] parentAfterReturn = frames.get(2).getMemory().get();
+    final Bytes[] childSnapshot = frames.get(1).getMemory().get();
+
+    assertThat(parentAfterReturn)
+        .as("After RETURN, parent memory must be freshly captured — not the child's snapshot")
+        .isNotSameAs(childSnapshot);
+    assertThat(parentAfterReturn[0])
+        .as("After RETURN, parent memory must reflect the parent frame's actual content")
+        .isEqualTo(parentWord);
+  }
+
   private TraceFrame traceFrame(final MessageFrame frame) {
     return traceFrame(
         frame,
