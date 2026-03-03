@@ -97,11 +97,11 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         nodeRecordManager,
         rlpxAgent,
         config.discoveryConfiguration().isPreferIpv6Outbound(),
-        buildDefaultFactory());
+        buildDefaultDiscoverySystemFactory());
   }
 
   /** Creates the default {@link PeerDiscoveryAgentV5.DiscoverySystemFactory}. */
-  private PeerDiscoveryAgentV5.DiscoverySystemFactory buildDefaultFactory() {
+  private PeerDiscoveryAgentV5.DiscoverySystemFactory buildDefaultDiscoverySystemFactory() {
     final DiscoveryConfiguration discoveryConfig = config.discoveryConfiguration();
 
     return (localNodeRecord, nodeRecordListener) -> {
