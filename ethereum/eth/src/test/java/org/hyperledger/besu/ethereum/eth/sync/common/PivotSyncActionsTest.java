@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.common;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -36,6 +39,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
@@ -56,7 +62,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,14 +69,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@Disabled(
-    "Fast sync is broken - https://github.com/hyperledger/besu/issues/7511 and deprecated, and this test is flaky")
 public class PivotSyncActionsTest {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator =
       mock(WorldStateStorageCoordinator.class);
   private final AtomicInteger timeoutCount = new AtomicInteger(0);
   private SynchronizerConfiguration syncConfig;
-  private PivotSyncActions fastSyncActions;
+  private PivotSyncActions pivotSyncActions;
   private EthProtocolManager ethProtocolManager;
   private EthContext ethContext;
   private EthPeers ethPeers;
@@ -119,7 +122,7 @@ public class PivotSyncActionsTest {
     ethContext = ethProtocolManager.ethContext();
     ethPeers = ethContext.getEthPeers();
     syncState = new SyncState(blockchain, ethPeers);
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
   }
@@ -134,7 +137,7 @@ public class PivotSyncActionsTest {
           ethProtocolManager, syncConfig.getSyncPivotDistance() + i + 1);
     }
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     assertThat(result).isCompletedWithValue(new PivotSyncState(5, false));
   }
 
@@ -145,7 +148,7 @@ public class PivotSyncActionsTest {
     final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
     final PivotSyncState fastSyncState = new PivotSyncState(pivotHeader, false);
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(fastSyncState);
+        pivotSyncActions.selectPivotBlock(fastSyncState);
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(fastSyncState);
   }
@@ -159,7 +162,7 @@ public class PivotSyncActionsTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(new PivotSyncState(pivotHeader, false));
+        pivotSyncActions.selectPivotBlock(new PivotSyncState(pivotHeader, false));
     final PivotSyncState expected = new PivotSyncState(pivotHeader, false);
     assertThat(result).isCompletedWithValue(expected);
   }
@@ -170,14 +173,14 @@ public class PivotSyncActionsTest {
       final DataStorageFormat storageFormat) {
     setUp(storageFormat, false, Optional.of(1));
 
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
 
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     final PivotSyncState expected = new PivotSyncState(4000, false);
     assertThat(result).isCompletedWithValue(expected);
   }
@@ -187,7 +190,7 @@ public class PivotSyncActionsTest {
   public void selectPivotBlockShouldConsiderTotalDifficultyWhenSelectingBestPeer(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat, false, Optional.of(1));
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
 
@@ -195,7 +198,7 @@ public class PivotSyncActionsTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, Difficulty.of(2000), 4000);
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     final PivotSyncState expected = new PivotSyncState(3000, false);
     assertThat(result).isCompletedWithValue(expected);
   }
@@ -205,26 +208,22 @@ public class PivotSyncActionsTest {
   public void selectPivotBlockShouldWaitAndRetryUntilMinHeightEstimatesAreAvailable(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat, false, Optional.of(2));
-    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
-    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     assertThat(result).isNotDone();
 
     // First peer is under the threshold, we should keep retrying
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
-    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isNotDone();
 
-    // Second peers meets min peer threshold, we should select the pivot
+    // Second peer meets min peer threshold, we should select the pivot
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
-    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
-    assertThat(result).isDone();
     final PivotSyncState expected = new PivotSyncState(4000, false);
+    await().atMost(1, SECONDS).untilAsserted(() -> assertThat(result).isDone());
     assertThat(result).isCompletedWithValue(expected);
   }
 
@@ -235,7 +234,7 @@ public class PivotSyncActionsTest {
     setUp(storageFormat, false, Optional.of(3));
 
     PivotBlockSelector pivotBlockSelector = mock(PivotBlockSelector.class);
-    fastSyncActions = createPivotSyncActions(syncConfig, pivotBlockSelector);
+    pivotSyncActions = createPivotSyncActions(syncConfig, pivotBlockSelector);
 
     PivotSyncState expectedResult = new PivotSyncState(123, false);
 
@@ -243,10 +242,10 @@ public class PivotSyncActionsTest {
         .thenReturn(
             CompletableFuture.failedFuture(new RuntimeException("No pivot block available")))
         .thenReturn(CompletableFuture.completedFuture(expectedResult));
-    when(pivotBlockSelector.prepareRetry()).thenReturn(CompletableFuture.runAsync(() -> {}));
+    when(pivotBlockSelector.prepareRetry()).thenReturn(CompletableFuture.completedFuture(null));
 
     CompletableFuture<PivotSyncState> resultFuture =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
 
     verify(pivotBlockSelector, times(2)).selectNewPivotBlock();
     verify(pivotBlockSelector).prepareRetry();
@@ -280,7 +279,7 @@ public class PivotSyncActionsTest {
   private void selectPivotBlockUsesBestPeerMatchingRequiredCriteria(
       final boolean bestMissingHeight, final boolean bestNotValidated) {
     final int peerCount = 4;
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
     final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
@@ -312,7 +311,7 @@ public class PivotSyncActionsTest {
     }
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
 
     final long expectedBestChainHeight =
@@ -328,7 +327,7 @@ public class PivotSyncActionsTest {
   public void selectPivotBlockShouldWaitAndRetryIfBestPeerChainIsShorterThanPivotDistance(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat, false, Optional.of(1));
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
     final long pivotDistance = syncConfig.getSyncPivotDistance();
@@ -337,7 +336,7 @@ public class PivotSyncActionsTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, pivotDistance - 1);
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     assertThat(result).isNotDone();
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isNotDone();
@@ -362,7 +361,7 @@ public class PivotSyncActionsTest {
     }
 
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
+        pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     assertThat(result).isNotDone();
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isNotDone();
@@ -381,7 +380,7 @@ public class PivotSyncActionsTest {
     setUp(storageFormat, false);
     final BlockHeader pivotHeader = new BlockHeaderTestFixture().number(1024).buildHeader();
     final PivotSyncState expected = new PivotSyncState(pivotHeader, false);
-    assertThat(fastSyncActions.downloadPivotBlockHeader(expected)).isCompletedWithValue(expected);
+    assertThat(pivotSyncActions.downloadPivotBlockHeader(expected)).isCompletedWithValue(expected);
   }
 
   @ParameterizedTest
@@ -389,20 +388,24 @@ public class PivotSyncActionsTest {
   public void downloadPivotBlockHeaderShouldRetrievePivotBlockHeader(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat, false, Optional.of(1));
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
 
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
+    final BlockHeader expectedHeader = blockchain.getBlockHeader(1).get();
+    final PeerTaskExecutor peerTaskExecutor = ethContext.getPeerTaskExecutor();
+    when(peerTaskExecutor.executeAgainstPeer(any(), any()))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(expectedHeader)),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of()));
+
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.downloadPivotBlockHeader(new PivotSyncState(1, false));
-    assertThat(result).isNotCompleted();
+        pivotSyncActions.downloadPivotBlockHeader(new PivotSyncState(1, false));
 
-    final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
-    peer.respond(responder);
-
-    assertThat(result)
-        .isCompletedWithValue(new PivotSyncState(blockchain.getBlockHeader(1).get(), false));
+    assertThat(result).isCompletedWithValue(new PivotSyncState(expectedHeader, false));
   }
 
   @ParameterizedTest
@@ -423,7 +426,7 @@ public class PivotSyncActionsTest {
     final SingleBlockHeaderDownloader headerDownloader =
         new SingleBlockHeaderDownloader(ethContext, blockchainSetupUtil.getProtocolSchedule());
 
-    fastSyncActions =
+    pivotSyncActions =
         createPivotSyncActions(
             syncConfig,
             new PivotSelectorFromSafeBlock(
@@ -435,17 +438,21 @@ public class PivotSyncActionsTest {
                 () -> {},
                 headerDownloader));
 
-    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
+    final BlockHeader expectedHeader = blockchain.getBlockHeader(3).get();
+    final PeerTaskExecutor peerTaskExecutor = ethContext.getPeerTaskExecutor();
+    when(peerTaskExecutor.execute(any()))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(expectedHeader)),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of()));
+
+    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1001);
     final CompletableFuture<PivotSyncState> result =
-        fastSyncActions.downloadPivotBlockHeader(
+        pivotSyncActions.downloadPivotBlockHeader(
             new PivotSyncState(finalizedEvent.get().getSafeBlockHash(), false));
-    assertThat(result).isNotCompleted();
 
-    final RespondingEthPeer.Responder responder = RespondingEthPeer.blockchainResponder(blockchain);
-    peer.respond(responder);
-
-    assertThat(result)
-        .isCompletedWithValue(new PivotSyncState(blockchain.getBlockHeader(3).get(), false));
+    assertThat(result).isCompletedWithValue(new PivotSyncState(expectedHeader, false));
   }
 
   private PivotSyncActions createPivotSyncActions(
