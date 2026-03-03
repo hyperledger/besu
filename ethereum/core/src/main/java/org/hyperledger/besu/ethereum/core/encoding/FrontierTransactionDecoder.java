@@ -37,7 +37,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 
 public class FrontierTransactionDecoder {
-  // Supplier for the signature algorithm
   private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
       SignatureAlgorithmFactory.getInstance();
 
