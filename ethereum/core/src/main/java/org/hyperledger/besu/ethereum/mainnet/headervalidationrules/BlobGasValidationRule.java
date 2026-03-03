@@ -72,10 +72,7 @@ public class BlobGasValidationRule implements DetachedBlockHeaderValidationRule 
     }
     long currentBlobGasLimit = gasLimitCalculator.currentBlobGasLimit();
     if (headerBlobGasUsed > currentBlobGasLimit) {
-      LOG.info(
-          "blob gas used {} exceeds max {}",
-          headerBlobGasUsed,
-          currentBlobGasLimit);
+      LOG.info("blob gas used {} exceeds max {}", headerBlobGasUsed, currentBlobGasLimit);
       return false;
     }
     return true;
