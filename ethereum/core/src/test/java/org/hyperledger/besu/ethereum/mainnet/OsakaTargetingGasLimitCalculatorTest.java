@@ -141,6 +141,32 @@ class OsakaTargetingGasLimitCalculatorTest {
   }
 
   @Test
+  void osakaBlobGasLimitPerTransactionWithCustomValue() {
+    int maxBlobs = 10;
+    int targetBlobs = 9;
+    int customMaxBlobsPerTx = 3;
+    var calculator =
+        new OsakaTargetingGasLimitCalculator(
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.of(customMaxBlobsPerTx));
+    // 3 * 131072 = 393216
+    assertThat(calculator.transactionBlobGasLimitCap())
+        .isEqualTo(osakaGasCalculator.getBlobGasPerBlob() * customMaxBlobsPerTx);
+  }
+
+  @Test
+  void maxBlobsPerTransactionClampedToMaxBlobsPerBlock() {
+    int maxBlobsPerBlock = 10;
+    int targetBlobs = 9;
+    int tooManyBlobsPerTx = 15; // exceeds maxBlobsPerBlock
+    var calculator =
+        new OsakaTargetingGasLimitCalculator(
+            0L, feeMarket, osakaGasCalculator, maxBlobsPerBlock, targetBlobs, OptionalInt.of(tooManyBlobsPerTx));
+    // Should be clamped to maxBlobsPerBlock (10), not the user value (15)
+    assertThat(calculator.transactionBlobGasLimitCap())
+        .isEqualTo(osakaGasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock);
+  }
+
+  @Test
   void dryRunDetector() {
     Assertions.assertThat(true)
         .withFailMessage("This test is here so gradle --dry-run executes this class")
