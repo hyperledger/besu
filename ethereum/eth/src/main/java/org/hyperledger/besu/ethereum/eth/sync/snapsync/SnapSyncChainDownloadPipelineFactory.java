@@ -129,7 +129,11 @@ public class SnapSyncChainDownloadPipelineFactory {
 
     final DownloadBackwardHeadersStep downloadStep =
         new DownloadBackwardHeadersStep(
-            protocolSchedule, ethContext, headerRequestSize, anchorForHeaderDownload.getNumber());
+            protocolSchedule,
+            ethContext,
+            headerRequestSize,
+            anchorForHeaderDownload.getNumber(),
+            java.time.Duration.ofMillis(syncConfig.getBackwardHeadersDownloadStepTimeoutMillis()));
 
     final ImportHeadersStep importHeadersStep =
         new ImportHeadersStep(
@@ -186,7 +190,7 @@ public class SnapSyncChainDownloadPipelineFactory {
         new BlockHeaderSource(blockchain, anchorBlock, pivotHeaderNumber, bodiesRequestSize);
 
     final DownloadSyncBodiesStep downloadBodiesStep =
-        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
+        new DownloadSyncBodiesStep(protocolSchedule, ethContext);
 
     final DownloadSyncReceiptsStep downloadReceiptsStep =
         new DownloadSyncReceiptsStep(

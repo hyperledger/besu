@@ -109,7 +109,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
@@ -127,7 +127,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
@@ -142,7 +142,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now(),
         ofMinutes(1));
     verify(transactionPool, times(3)).getTransactionByHash(any());
@@ -152,7 +152,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
   void shouldNotMarkReceivedExpiredTransactionsAsSeen() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
@@ -167,7 +167,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
   void shouldNotAddReceivedTransactionsToTransactionPoolIfExpired() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
@@ -187,7 +187,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(
-            List.of(transaction1, transaction2), EthProtocol.ETH66),
+            List.of(transaction1, transaction2), EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
@@ -202,46 +202,20 @@ class NewPooledTransactionHashesMessageProcessorTest {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(
-            Collections.singletonList(transaction1), EthProtocol.ETH66),
+            Collections.singletonList(transaction1), EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(
-            Collections.singletonList(transaction2), EthProtocol.ETH66),
+            Collections.singletonList(transaction2), EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
     verify(ethScheduler, times(1))
         .scheduleFutureTaskWithFixedDelay(
             any(FetcherCreatorTask.class), any(Duration.class), any(Duration.class));
-  }
-
-  @Test
-  void shouldCreateAndDecodeForEth66() {
-
-    final List<TransactionAnnouncement> expectedAnnouncementList =
-        transactionList.stream().map(TransactionAnnouncement::new).toList();
-
-    final NewPooledTransactionHashesMessage message =
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66);
-
-    // for eth/66 the message should not contain size or type
-    message
-        .pendingTransactions()
-        .forEach(
-            t -> {
-              assertThat(t.getSize()).isEmpty();
-              assertThat(t.getType()).isEmpty();
-            });
-
-    // assert all transaction hashes are the same as announcement message
-    assertThat(message.pendingTransactionHashes())
-        .containsExactlyElementsOf(
-            expectedAnnouncementList.stream()
-                .map(TransactionAnnouncement::getHash)
-                .collect(Collectors.toList()));
   }
 
   @Test
@@ -254,24 +228,6 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     final List<TransactionAnnouncement> announcementList = message.pendingTransactions();
     assertThat(announcementList).containsExactlyElementsOf(expectedTransactions);
-  }
-
-  @Test
-  void shouldThrowRLPExceptionIfIncorrectVersion() {
-
-    // message for Eth/68 with 66 data should throw RLPException
-    final NewPooledTransactionHashesMessage message66 =
-        new NewPooledTransactionHashesMessage(
-            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
-    // assert RLPException
-    assertThatThrownBy(message66::pendingTransactions).isInstanceOf(RLPException.class);
-
-    // message for Eth/66 with 68 data should throw RLPException
-    final NewPooledTransactionHashesMessage message68 =
-        new NewPooledTransactionHashesMessage(
-            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
-    // assert RLPException
-    assertThatThrownBy(message68::pendingTransactions).isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -381,25 +337,6 @@ class NewPooledTransactionHashesMessageProcessorTest {
                 "0x0000000000000000000000000000000000000000000000000000000000000003"));
     assertThat(eip1559.getType()).hasValue(TransactionType.EIP1559);
     assertThat(eip1559.getSize()).hasValue(3L);
-  }
-
-  @Test
-  void shouldEncodeAndDecodeTransactionAnnouncement_Eth66() {
-    final Transaction t1 = generator.transaction(TransactionType.FRONTIER);
-    final Transaction t2 = generator.transaction(TransactionType.ACCESS_LIST);
-    final Transaction t3 = generator.transaction(TransactionType.EIP1559);
-    final List<Transaction> list = List.of(t1, t2, t3);
-    final Bytes bytes = getEncoder(EthProtocol.ETH66).encode(list);
-
-    final List<TransactionAnnouncement> announcementList =
-        getDecoder(EthProtocol.ETH66).decode(RLP.input(bytes));
-
-    for (int i = 0; i < announcementList.size(); i++) {
-      final TransactionAnnouncement announcement = announcementList.get(i);
-      assertThat(announcement.getHash()).isEqualTo(list.get(i).getHash());
-      assertThat(announcement.getType()).isEmpty();
-      assertThat(announcement.getType()).isEmpty();
-    }
   }
 
   @Test
