@@ -325,6 +325,41 @@ public class PrometheusMetricsSystemTest {
             new Observation(BLOCKCHAIN, "guava_cache_eviction", 1.0, List.of("test")));
   }
 
+  @Test
+  public void nonBlockingCounterShouldFunctionCorrectly() {
+    final LabelledMetric<Counter> labelledCounter =
+        metricsSystem.createLabelledCounterNonBlocking(
+            NETWORK, "test_nonblocking", "A non-blocking counter", "label");
+    final Counter counter = labelledCounter.labels("value1");
+    counter.inc();
+    counter.inc();
+
+    assertThat(metricsSystem.streamObservations())
+        .filteredOn(obs -> obs.metricName().equals("test_nonblocking"))
+        .containsExactly(
+            new Observation(NETWORK, "test_nonblocking", 2.0, singletonList("value1")));
+  }
+
+  @Test
+  public void nonBlockingCounterIncShouldNotBlock() throws Exception {
+    final LabelledMetric<Counter> labelledCounter =
+        metricsSystem.createLabelledCounterNonBlocking(
+            NETWORK, "fast_counter", "Should not block", "label");
+    final Counter counter = labelledCounter.labels("pool1");
+
+    // Verify inc() completes quickly (under 10ms) even under contention.
+    // With exemplar sampling, this can block for seconds during metrics scrapes.
+    final long start = System.nanoTime();
+    for (int i = 0; i < 1000; i++) {
+      counter.inc();
+    }
+    final long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+
+    assertThat(elapsedMs)
+        .as("1000 counter increments should complete in under 100ms without exemplar lock")
+        .isLessThan(100);
+  }
+
   private boolean isCreatedSample(final Observation obs) {
     // Simple client 0.10.0 add a _created sample to every counter, histogram and summary, that we
     // may want to ignore

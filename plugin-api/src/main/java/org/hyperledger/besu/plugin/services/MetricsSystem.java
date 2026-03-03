@@ -77,6 +77,29 @@ public interface MetricsSystem extends BesuService {
       MetricCategory category, String name, String help, String... labelNames);
 
   /**
+   * Creates a labelled counter safe for use from non-blocking event loop threads. This variant
+   * disables Prometheus exemplar sampling, which uses an internal lock that can block during
+   * metrics scrapes. Use this for counters that are incremented from Vert.x event loop threads or
+   * other latency-sensitive non-blocking contexts.
+   *
+   * <p>The default implementation delegates to {@link #createLabelledCounter}. Implementations that
+   * use Prometheus should override this to disable exemplar sampling.
+   *
+   * @param category The {@link MetricCategory} this counter is assigned to.
+   * @param name A name for this metric.
+   * @param help A human readable description of the metric.
+   * @param labelNames An array of labels to assign to the Counter.
+   * @return The created LabelledMetric instance.
+   */
+  default LabelledMetric<Counter> createLabelledCounterNonBlocking(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return createLabelledCounter(category, name, help, labelNames);
+  }
+
+  /**
    * Creates a Counter with assigned labels, that gets its values from suppliers. To be used when
    * the values of the counter are calculated outside the metric system.
    *

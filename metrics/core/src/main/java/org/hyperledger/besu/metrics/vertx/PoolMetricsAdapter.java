@@ -30,7 +30,7 @@ final class PoolMetricsAdapter implements PoolMetrics<Object> {
       final MetricsSystem metricsSystem, final String poolType, final String poolName) {
     submittedCounter =
         metricsSystem
-            .createLabelledCounter(
+            .createLabelledCounterNonBlocking(
                 BesuMetricCategory.NETWORK,
                 "vertx_worker_pool_submitted_total",
                 "Total number of tasks submitted to the Vertx worker pool",
@@ -40,7 +40,7 @@ final class PoolMetricsAdapter implements PoolMetrics<Object> {
 
     completedCounter =
         metricsSystem
-            .createLabelledCounter(
+            .createLabelledCounterNonBlocking(
                 BesuMetricCategory.NETWORK,
                 "vertx_worker_pool_completed_total",
                 "Total number of tasks completed by the Vertx worker pool",
@@ -50,7 +50,7 @@ final class PoolMetricsAdapter implements PoolMetrics<Object> {
 
     rejectedCounter =
         metricsSystem
-            .createLabelledCounter(
+            .createLabelledCounterNonBlocking(
                 BesuMetricCategory.NETWORK,
                 "vertx_worker_pool_rejected_total",
                 "Total number of tasks rejected by the Vertx worker pool",

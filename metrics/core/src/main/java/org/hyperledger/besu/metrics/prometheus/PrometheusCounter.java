@@ -39,13 +39,25 @@ class PrometheusCounter extends CategorizedPrometheusCollector implements Labell
       final String name,
       final String help,
       final String... labelNames) {
+    this(category, name, help, false, labelNames);
+  }
+
+  public PrometheusCounter(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final boolean withoutExemplars,
+      final String... labelNames) {
     super(category, name);
-    this.counter =
+    final var builder =
         io.prometheus.metrics.core.metrics.Counter.builder()
             .name(this.prefixedName)
             .help(help)
-            .labelNames(labelNames)
-            .build();
+            .labelNames(labelNames);
+    if (withoutExemplars) {
+      builder.withoutExemplars();
+    }
+    this.counter = builder.build();
   }
 
   @Override

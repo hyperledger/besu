@@ -118,11 +118,30 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
       final String name,
       final String help,
       final String... labelNames) {
+    return createLabelledCounter(category, name, help, false, labelNames);
+  }
+
+  @Override
+  public LabelledMetric<Counter> createLabelledCounterNonBlocking(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return createLabelledCounter(category, name, help, true, labelNames);
+  }
+
+  private LabelledMetric<Counter> createLabelledCounter(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final boolean withoutExemplars,
+      final String... labelNames) {
     return cachedCounters.computeIfAbsent(
         CachedMetricKey.of(category, name),
         k -> {
           if (isCategoryEnabled(category)) {
-            final var counter = new PrometheusCounter(category, name, help, labelNames);
+            final var counter =
+                new PrometheusCounter(category, name, help, withoutExemplars, labelNames);
             registerCollector(category, counter);
             return counter;
           }
