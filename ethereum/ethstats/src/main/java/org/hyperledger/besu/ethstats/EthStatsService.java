@@ -485,8 +485,9 @@ public class EthStatsService {
                           .collect(Collectors.toList());
                   //  if the server does not send a list, we recover the last 50 blocks
                   if (list.isEmpty()) {
-                    list = buildHistoryBlockList(
-                        blockchainQueries.getBlockchain().getChainHeadBlockNumber());
+                    list =
+                        buildHistoryBlockList(
+                            blockchainQueries.getBlockchain().getChainHeadBlockNumber());
                   }
                   sendHistoryReport(list);
                 }
@@ -501,9 +502,7 @@ public class EthStatsService {
   @VisibleForTesting
   static List<Long> buildHistoryBlockList(final long chainHeadBlockNumber) {
     final long start = Math.max(0, chainHeadBlockNumber - HISTORY_RANGE);
-    return LongStream.rangeClosed(start, chainHeadBlockNumber)
-        .boxed()
-        .collect(Collectors.toList());
+    return LongStream.rangeClosed(start, chainHeadBlockNumber).boxed().collect(Collectors.toList());
   }
 
   private long suggestGasPrice(final Block block) {
