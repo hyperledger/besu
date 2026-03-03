@@ -44,7 +44,6 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -206,7 +205,7 @@ public class AdminNodeInfoTest {
 
   @Test
   public void handlesLocalEnodeWithListeningAndDiscoveryDisabled() {
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
@@ -252,7 +251,7 @@ public class AdminNodeInfoTest {
 
   @Test
   public void handlesLocalEnodeWithListeningDisabled() {
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
@@ -299,7 +298,7 @@ public class AdminNodeInfoTest {
 
   @Test
   public void handlesLocalEnodeWithDiscoveryDisabled() {
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
