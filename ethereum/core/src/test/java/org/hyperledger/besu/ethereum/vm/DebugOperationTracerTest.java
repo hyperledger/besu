@@ -322,6 +322,51 @@ class DebugOperationTracerTest {
   }
 
   @Test
+  void shouldTakeNewMemorySnapshotWhenMemorySizeGrowsWithoutExplicitWrite() {
+    // Safety-net check: even with no explicit-update flag and the same depth, if memory
+    // has grown between frames (e.g. expanded by a read touching a new page) the size guard
+    // lastFrame.getMemory().map(m -> m.length).orElse(0) == frame.memoryWordSize()
+    // must prevent stale snapshot reuse.
+    final Bytes32 word1 = Bytes32.fromHexString("0x" + "aa".repeat(32));
+    final Bytes32 word2 = Bytes32.fromHexString("0x" + "bb".repeat(32));
+
+    final MessageFrame frame = validMessageFrameBuilder().build();
+    frame.writeMemory(0L, 32, word1); // 1 word
+    frame.setCurrentOperation(anOperation);
+
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+
+    // Frame 0: 1 word in memory
+    tracer.tracePreExecution(frame);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    // Memory grows to 2 words without an explicit-update flag (simulates e.g. MLOAD
+    // touching a new page, which expands memory but does not set the flag)
+    frame.writeMemory(32L, 32, word2); // now 2 words, no explicit-update flag
+    tracer.tracePreExecution(frame);
+    tracer.tracePostExecution(frame, new OperationResult(3L, null));
+
+    final List<TraceFrame> frames = tracer.getTraceFrames();
+    assertThat(frames).hasSize(2);
+
+    final Bytes[] snapshot0 = frames.get(0).getMemory().get();
+    final Bytes[] snapshot1 = frames.get(1).getMemory().get();
+
+    assertThat(snapshot1)
+        .as("When memory size grows, a fresh snapshot must be taken even without an explicit write")
+        .isNotSameAs(snapshot0);
+    assertThat(snapshot0).hasSize(1);
+    assertThat(snapshot1).hasSize(2);
+    assertThat(snapshot1[1]).isEqualTo(word2);
+  }
+
+  @Test
   void shouldTakeNewMemorySnapshotAfterExplicitMemoryWrite() {
     final Bytes32 initialValue = Bytes32.fromHexString("0x" + "aa".repeat(32));
     final Bytes32 updatedValue = Bytes32.fromHexString("0x" + "cc".repeat(32));
