@@ -347,7 +347,7 @@ public class PrometheusMetricsSystemTest {
             NETWORK, "fast_counter", "Should not block", "label");
     final Counter counter = labelledCounter.labels("pool1");
 
-    // Verify inc() completes quickly (under 10ms) even under contention.
+    // Verify inc() completes quickly (under 100ms) even under contention.
     // With exemplar sampling, this can block for seconds during metrics scrapes.
     final long start = System.nanoTime();
     for (int i = 0; i < 1000; i++) {
