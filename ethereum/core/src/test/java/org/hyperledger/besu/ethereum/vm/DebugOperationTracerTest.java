@@ -381,12 +381,14 @@ class DebugOperationTracerTest {
   }
 
   @Test
-  void shouldHandleCallReturnScenario() {
+  void shouldHandleCallScenarioAndDepthChange() {
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
     final MessageFrame parentFrame = validMessageFrameWithInitiatedMemory(WORD_1);
 
-    traceFrame(parentFrame, tracer, anOperation);
+    // Parent executes CALL (empty operand stack → UNDERFLOW_RESPONSE, frame memory unchanged)
+    traceFrame(parentFrame, tracer, callOperation);
 
+    // Child frame enters at depth 1
     final MessageFrame childFrame = validMessageFrameWithInitiatedMemory(WORD_2);
     childFrame.getMessageFrameStack().add(childFrame);
 
@@ -479,7 +481,7 @@ class DebugOperationTracerTest {
         .blockchain(blockchain);
   }
 
-  private MessageFrame validMessageFrameWithInitiatedMemory(Bytes32 initiatedMemory) {
+  private MessageFrame validMessageFrameWithInitiatedMemory(final Bytes32 initiatedMemory) {
     final MessageFrame frame = validMessageFrameBuilder().build();
     frame.writeMemory(0L, 32, initiatedMemory);
 
