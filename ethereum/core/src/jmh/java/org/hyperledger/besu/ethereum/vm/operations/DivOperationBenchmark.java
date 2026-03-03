@@ -44,11 +44,11 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
     DIV_256_128(8, 4),
     DIV_256_192(8, 6),
     DIV_256_256(8, 8),
-    ZERO_QUOTIENT_0_256(0, 8),
-    ZERO_QUOTIENT_64_256(2, 8),
-    ZERO_QUOTIENT_128_256(4, 8),
-    ZERO_QUOTIENT_192_256(6, 8),
-    FULL_RANDOM(-1, -1);
+    DIV_ZERO_QUOTIENT_0_256(0, 8),
+    DIV_ZERO_QUOTIENT_64_256(2, 8),
+    DIV_ZERO_QUOTIENT_128_256(4, 8),
+    DIV_ZERO_QUOTIENT_192_256(6, 8),
+    DIV_FULL_RANDOM(-1, -1);
 
     final int numSize;
     final int denomSize;
@@ -75,13 +75,13 @@ public class DivOperationBenchmark extends BinaryOperationBenchmark {
     "DIV_256_128",
     "DIV_256_192",
     "DIV_256_256",
-    "ZERO_QUOTIENT_0_256",
-    "ZERO_QUOTIENT_64_256",
-    "ZERO_QUOTIENT_128_256",
-    "ZERO_QUOTIENT_192_256",
-    "FULL_RANDOM"
+    "DIV_ZERO_QUOTIENT_0_256",
+    "DIV_ZERO_QUOTIENT_64_256",
+    "DIV_ZERO_QUOTIENT_128_256",
+    "DIV_ZERO_QUOTIENT_192_256",
+    "DIV_FULL_RANDOM"
   })
-  String caseName;
+  private String caseName;
 
   @Setup(Level.Iteration)
   @Override

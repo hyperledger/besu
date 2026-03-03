@@ -24,16 +24,72 @@ import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Setup;
 
-public class SDivOperationBenchmark extends DivOperationBenchmark {
+public class SDivOperationBenchmark extends BinaryOperationBenchmark {
+
+  public enum Case {
+    SDIV_32_32(1, 1),
+    SDIV_64_32(2, 1),
+    SDIV_64_64(2, 2),
+    SDIV_128_32(4, 1),
+    SDIV_128_64(4, 2),
+    SDIV_128_128(4, 4),
+    SDIV_192_32(6, 1),
+    SDIV_192_64(6, 2),
+    SDIV_192_128(6, 4),
+    SDIV_192_192(6, 6),
+    SDIV_256_32(8, 1),
+    SDIV_256_64(8, 2),
+    SDIV_256_128(8, 4),
+    SDIV_256_192(8, 6),
+    SDIV_256_256(8, 8),
+    SDIV_ZERO_QUOTIENT_0_256(0, 8),
+    SDIV_ZERO_QUOTIENT_64_256(2, 8),
+    SDIV_ZERO_QUOTIENT_128_256(4, 8),
+    SDIV_ZERO_QUOTIENT_192_256(6, 8),
+    SDIV_FULL_RANDOM(-1, -1);
+
+    final int numSize;
+    final int denomSize;
+
+    Case(final int numSize, final int denomSize) {
+      this.numSize = numSize;
+      this.denomSize = denomSize;
+    }
+  }
+
+  @Param({
+    "SDIV_32_32",
+    "SDIV_64_32",
+    "SDIV_64_64",
+    "SDIV_128_32",
+    "SDIV_128_64",
+    "SDIV_128_128",
+    "SDIV_192_32",
+    "SDIV_192_64",
+    "SDIV_192_128",
+    "SDIV_192_192",
+    "SDIV_256_32",
+    "SDIV_256_64",
+    "SDIV_256_128",
+    "SDIV_256_192",
+    "SDIV_256_256",
+    "SDIV_ZERO_QUOTIENT_0_256",
+    "SDIV_ZERO_QUOTIENT_64_256",
+    "SDIV_ZERO_QUOTIENT_128_256",
+    "SDIV_ZERO_QUOTIENT_192_256",
+    "SDIV_FULL_RANDOM"
+  })
+  private String caseName;
 
   @Setup(Level.Iteration)
   @Override
   public void setUp() {
     frame = BenchmarkHelper.createMessageCallFrame();
 
-    DivOperationBenchmark.Case scenario = DivOperationBenchmark.Case.valueOf(caseName);
+    Case scenario = Case.valueOf(caseName);
     aPool = new Bytes[SAMPLE_SIZE];
     bPool = new Bytes[SAMPLE_SIZE];
 
