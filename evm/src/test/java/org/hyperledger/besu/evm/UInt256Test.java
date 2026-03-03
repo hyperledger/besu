@@ -565,8 +565,7 @@ public class UInt256Test {
         UInt256.fromBytesBE(
             new BigInteger("7effffff800000000000000000000000d900000000000001", 16).toByteArray());
     UInt256 b2 =
-        UInt256.fromBytesBE(
-            new BigInteger("7effffff800000007fffffffffffffff", 16).toByteArray());
+        UInt256.fromBytesBE(new BigInteger("7effffff800000007fffffffffffffff", 16).toByteArray());
     BigInteger aBI2 = new BigInteger(1, a2.toBytesBE());
     BigInteger bBI2 = new BigInteger(1, b2.toBytesBE());
     BigInteger expected2 = aBI2.mod(bBI2);
@@ -577,8 +576,7 @@ public class UInt256Test {
         UInt256.fromBytesBE(
             new BigInteger("7effffff8000000000000000000000000000000000000000d900000000000001", 16)
                 .toByteArray());
-    UInt256 x3 =
-        UInt256.fromBytesBE(new BigInteger("10000000000000000", 16).toByteArray()); // 2^64
+    UInt256 x3 = UInt256.fromBytesBE(new BigInteger("10000000000000000", 16).toByteArray()); // 2^64
     UInt256 m3 =
         UInt256.fromBytesBE(
             new BigInteger("7effffff800000007effffff800000008000ff00000100007effffff80000000", 16)
