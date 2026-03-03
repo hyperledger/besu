@@ -57,6 +57,8 @@ class DebugOperationTracerTest {
 
   private static final int DEPTH = 4;
   private static final long INITIAL_GAS = 1000L;
+  private static final Bytes32 WORD_1 = Bytes32.fromHexString("0x" + "aa".repeat(32));
+  private static final Bytes32 WORD_2 = Bytes32.fromHexString("0x" + "bb".repeat(32));
 
   @Mock private WorldUpdater worldUpdater;
 
@@ -288,10 +290,8 @@ class DebugOperationTracerTest {
 
   @Test
   void shouldUseLastSnapshotInNonMemoryWriteOperation() {
-    final Bytes32 initialValue = Bytes32.fromHexString("0x" + "aa".repeat(32));
-
     final MessageFrame frame = validMessageFrameBuilder().build();
-    frame.writeMemory(0L, 32, initialValue);
+    frame.writeMemory(0L, 32, WORD_1);
 
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
@@ -317,11 +317,9 @@ class DebugOperationTracerTest {
     // has grown between frames (e.g. expanded by a read touching a new page) the size guard
     // lastFrame.getMemory().map(m -> m.length).orElse(0) == frame.memoryWordSize()
     // must prevent stale snapshot reuse.
-    final Bytes32 word1 = Bytes32.fromHexString("0x" + "aa".repeat(32));
-    final Bytes32 word2 = Bytes32.fromHexString("0x" + "bb".repeat(32));
 
     final MessageFrame frame = validMessageFrameBuilder().build();
-    frame.writeMemory(0L, 32, word1); // 1 word
+    frame.writeMemory(0L, 32, WORD_1); // 1 word
 
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
@@ -330,7 +328,7 @@ class DebugOperationTracerTest {
 
     // Memory grows to 2 words without an explicit-update flag (simulates e.g. MLOAD
     // touching a new page, which expands memory but does not set the flag)
-    frame.writeMemory(32L, 32, word2); // now 2 words, no explicit-update flag
+    frame.writeMemory(32L, 32, WORD_2); // now 2 words, no explicit-update flag
     traceFrame(frame, tracer, anOperation);
 
     final List<TraceFrame> frames = tracer.getTraceFrames();
@@ -344,26 +342,23 @@ class DebugOperationTracerTest {
         .isNotSameAs(snapshot0);
     assertThat(snapshot0).hasSize(1);
     assertThat(snapshot1).hasSize(2);
-    assertThat(snapshot1[1]).isEqualTo(word2);
+    assertThat(snapshot1[1]).isEqualTo(WORD_2);
   }
 
   @Test
   void shouldTakeNewMemorySnapshotAfterExplicitMemoryWrite() {
-    final Bytes32 initialValue = Bytes32.fromHexString("0x" + "aa".repeat(32));
-    final Bytes32 updatedValue = Bytes32.fromHexString("0x" + "cc".repeat(32));
-
     final Operation memoryWritingOp =
         new AbstractOperation(0x52, "MSTORE", 2, 0, null) {
           @Override
           public OperationResult execute(final MessageFrame frame, final EVM evm) {
             // explicitMemoryUpdate=true simulates what MSTORE does in the real EVM
-            frame.writeMemory(0L, 32, updatedValue, true);
+            frame.writeMemory(0L, 32, WORD_2, true);
             return new OperationResult(3L, null);
           }
         };
 
     final MessageFrame frame = validMessageFrameBuilder().build();
-    frame.writeMemory(0L, 32, initialValue);
+    frame.writeMemory(0L, 32, WORD_1);
 
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
@@ -384,8 +379,8 @@ class DebugOperationTracerTest {
     assertThat(after)
         .as("After a memory-writing opcode, a new memory snapshot must be taken")
         .isNotSameAs(before);
-    assertThat(before[0]).isEqualTo(initialValue);
-    assertThat(after[0]).isEqualTo(updatedValue);
+    assertThat(before[0]).isEqualTo(WORD_1);
+    assertThat(after[0]).isEqualTo(WORD_2);
   }
 
   @Test
@@ -393,10 +388,8 @@ class DebugOperationTracerTest {
     // captureMemory is invoked with lastFrame == null (first trace ever).
     // The early-return path (reuse lastFrame.getMemory()) must be skipped and
     // memory must be read fresh from the frame even when getMaybeUpdatedMemory() is empty.
-    final Bytes32 word = Bytes32.fromHexString("0x" + "aa".repeat(32));
-
     final MessageFrame frame = validMessageFrameBuilder().build();
-    frame.writeMemory(0L, 32, word); // no explicit-update flag → getMaybeUpdatedMemory() is empty
+    frame.writeMemory(0L, 32, WORD_1); // no explicit-update flag → getMaybeUpdatedMemory() is empty
 
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
     traceFrame(frame, tracer, anOperation);
@@ -404,7 +397,7 @@ class DebugOperationTracerTest {
     final List<TraceFrame> frames = tracer.getTraceFrames();
     assertThat(frames).hasSize(1);
     assertThat(frames.get(0).getMemory()).isPresent();
-    assertThat(frames.get(0).getMemory().get()).containsExactly(word);
+    assertThat(frames.get(0).getMemory().get()).containsExactly(WORD_1);
   }
 
   @Test
@@ -414,14 +407,11 @@ class DebugOperationTracerTest {
     // Any depth change — whether entering a CALL (0→1) or returning from one (1→0) —
     // must trigger a fresh memory snapshot, because lastFrame.depth != frame.depth.
     // This prevents both cross-frame snapshot reuse and child-memory leaking into the parent.
-    final Bytes32 parentWord = Bytes32.fromHexString("0x" + "aa".repeat(32));
-    final Bytes32 childWord = Bytes32.fromHexString("0x" + "bb".repeat(32));
-
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
 
     // --- Step 1: parent frame before CALL (depth 0) ---
     final MessageFrame parentFrame = validMessageFrameBuilder().build();
-    parentFrame.writeMemory(0L, 32, parentWord);
+    parentFrame.writeMemory(0L, 32, WORD_1);
     parentFrame.setCurrentOperation(anOperation);
 
     traceFrame(parentFrame, tracer, anOperation);
@@ -429,8 +419,7 @@ class DebugOperationTracerTest {
     // --- Step 2: child frame during CALL (depth 1) ---
     // lastFrame.depth(0) != frame.depth(1) → fresh snapshot must be taken from the child
     final MessageFrame childFrame = validMessageFrameBuilder().build();
-    childFrame.writeMemory(0L, 32, childWord);
-    childFrame.setCurrentOperation(anOperation);
+    childFrame.writeMemory(0L, 32, WORD_2);
     childFrame.getMessageFrameStack().add(childFrame); // raises depth to 1
 
     traceFrame(childFrame, tracer, anOperation);
@@ -451,7 +440,7 @@ class DebugOperationTracerTest {
     assertThat(childSnapshot)
         .as("On CALL entry, child must get a fresh snapshot — not reuse the parent's")
         .isNotSameAs(parentSnapshot);
-    assertThat(childSnapshot[0]).isEqualTo(childWord);
+    assertThat(childSnapshot[0]).isEqualTo(WORD_2);
 
     // After RETURN (depth 1→0): parent memory must be freshly captured, not the child's snapshot
     assertThat(parentAfterReturn)
@@ -459,7 +448,7 @@ class DebugOperationTracerTest {
         .isNotSameAs(childSnapshot);
     assertThat(parentAfterReturn[0])
         .as("After RETURN, parent memory must reflect the parent frame's actual content")
-        .isEqualTo(parentWord);
+        .isEqualTo(WORD_1);
   }
 
   private TraceFrame traceFrame(final MessageFrame frame) {
@@ -488,6 +477,7 @@ class DebugOperationTracerTest {
           final MessageFrame frame,
           final DebugOperationTracer tracer,
           final Operation operation) {
+    frame.setCurrentOperation(operation);
     tracer.tracePreExecution(frame);
     OperationResult operationResult = operation.execute(frame, null);
     tracer.tracePostExecution(frame, operationResult);
