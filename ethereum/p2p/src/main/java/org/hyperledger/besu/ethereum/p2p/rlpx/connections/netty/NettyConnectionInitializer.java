@@ -201,15 +201,15 @@ public class NettyConnectionInitializer
 
     // Wait for the IPv4 bind to settle before closing. If already done, fires immediately.
     server.addListener(
-        bindFuture -> {
-          if (!bindFuture.isSuccess()) {
+        (ChannelFuture ipv4BindFuture) -> {
+          if (!ipv4BindFuture.isSuccess()) {
             // Bind failed — channel was never fully registered, nothing to close.
             shutdownEventLoops(stoppedFuture);
             return;
           }
 
           final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
-          server
+          ipv4BindFuture
               .channel()
               .close()
               .addListener(
