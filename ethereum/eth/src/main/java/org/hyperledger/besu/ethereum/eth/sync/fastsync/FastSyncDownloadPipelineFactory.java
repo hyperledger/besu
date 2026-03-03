@@ -142,7 +142,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             getCheckpointBlockNumber(syncState),
             protocolContext.safeConsensusContext(ConsensusContext.class));
     final DownloadSyncBodiesStep downloadSyncBodiesStep =
-        new DownloadSyncBodiesStep(protocolSchedule, ethContext, metricsSystem, syncConfig);
+        new DownloadSyncBodiesStep(protocolSchedule, ethContext);
     final DownloadSyncReceiptsStep downloadSyncReceiptsStep =
         new DownloadSyncReceiptsStep(
             protocolSchedule,

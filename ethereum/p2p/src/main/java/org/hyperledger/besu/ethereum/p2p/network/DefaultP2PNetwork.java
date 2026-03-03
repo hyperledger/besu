@@ -51,7 +51,6 @@ import org.hyperledger.besu.nat.core.NatManager;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.time.Duration;
@@ -244,10 +243,32 @@ public class DefaultP2PNetwork implements P2PNetwork {
               dnsDaemonRef.set(Optional.of(dnsDaemon));
             });
 
-    final int listeningPort = rlpxAgent.start().join();
+    final int listeningPort;
+    try {
+      listeningPort = rlpxAgent.start().join();
+    } catch (final Exception e) {
+      LOG.error("Failed to start RLPx agent", e);
+      // Discovery agent will not be started, count down its latch position
+      shutdownLatch.countDown();
+      // Ensure any partially started RLPx agent is stopped and count down its latch position
+      rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
+      throw e;
+    }
+
     // Pass the effective RLPx TCP port so that the discovery agent can write the correct tcp/tcp6
     // values into the local ENR.  The discovery agent reads its own UDP bind port independently.
-    final int discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
+    final int discoveryPort;
+    try {
+      discoveryPort = peerDiscoveryAgent.start(listeningPort).join();
+    } catch (final Exception e) {
+      LOG.error("Failed to start peer discovery agent", e);
+      // Stop the partially-started discovery agent and count down its latch position on completion
+      peerDiscoveryAgent.stop().whenComplete((r, err) -> shutdownLatch.countDown());
+      // Stop the already-started RLPx agent and count down the remaining latch position on
+      // completion
+      rlpxAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
+      throw e;
+    }
 
     final Consumer<? super NatManager> natAction =
         natManager -> {
@@ -454,7 +475,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Optional<EnodeURL> getLocalEnode() {
+  public Optional<EnodeURLImpl> getLocalEnode() {
     if (!localNode.isReady()) {
       return Optional.empty();
     }
@@ -480,7 +501,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
     // override advertised host if we detect an external IP address via NAT manager
     final String advertisedAddress = natService.queryExternalIPAddress(address);
 
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress(advertisedAddress)
