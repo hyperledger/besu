@@ -312,7 +312,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
             specBuilder -> {
               specBuilder.isReplayProtectionSupported(true);
               specBuilder.withdrawalsProcessor(withdrawalsProcessor);
-              specBuilder.blockAccessListFactory(new BlockAccessListFactory(true, true));
+              specBuilder.blockAccessListFactory(new BlockAccessListFactory());
               specBuilder.transactionValidatorFactoryBuilder(
                   (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
               return specBuilder;
@@ -422,7 +422,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        ImmutableBalConfiguration.builder().isBalApiEnabled(true).build(),
+                        ImmutableBalConfiguration.builder().build(),
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .dataStorageFormat(DataStorageFormat.BONSAI)

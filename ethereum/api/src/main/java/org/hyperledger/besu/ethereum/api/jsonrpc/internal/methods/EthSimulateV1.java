@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.SimulateV1Parameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockStateCallResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -44,6 +45,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.common.annotations.VisibleForTesting;
 
 public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
 
@@ -66,6 +69,16 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
             miningConfiguration,
             blockchainQueries.getBlockchain(),
             apiConfiguration.getGasCap());
+  }
+
+  @VisibleForTesting
+  EthSimulateV1(
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final BlockSimulator blockSimulator) {
+    super(blockchainQueries);
+    this.protocolSchedule = protocolSchedule;
+    this.blockSimulator = blockSimulator;
   }
 
   @Override
@@ -96,8 +109,13 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected Object resultByBlockHeader(
       final JsonRpcRequestContext request, final BlockHeader header) {
+    SimulateV1Parameter simulateV1Parameter;
     try {
-      SimulateV1Parameter simulateV1Parameter = getBlockStateCalls(request);
+      simulateV1Parameter = getBlockStateCalls(request);
+    } catch (final JsonRpcParameterException e) {
+      return errorResponse(request, INVALID_PARAMS);
+    }
+    try {
       Optional<BlockStateCallError> maybeValidationError =
           simulateV1Parameter.validate(getValidPrecompileAddresses(header));
       if (maybeValidationError.isPresent()) {
@@ -110,10 +128,15 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
       }
       return process(header, simulateV1Parameter);
     } catch (final BlockStateCallException e) {
-      JsonRpcError error = new JsonRpcError(e.getError().getCode(), e.getMessage(), null);
+      int errorCode = e.getError().getCode();
+      // When validation is enabled, map simulation-specific error codes to -32602
+      // (invalid params) per the execution-apis spec.
+      if (simulateV1Parameter.isValidation()
+          && e.getError() == BlockStateCallError.UPFRONT_COST_EXCEEDS_BALANCE) {
+        errorCode = INVALID_PARAMS.getCode();
+      }
+      JsonRpcError error = new JsonRpcError(errorCode, e.getMessage(), null);
       return new JsonRpcErrorResponse(request.getRequest().getId(), error);
-    } catch (final JsonRpcParameterException e) {
-      return errorResponse(request, INVALID_PARAMS);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -139,6 +162,12 @@ public class EthSimulateV1 extends AbstractBlockParameterOrBlockHashMethod {
   private SimulateV1Parameter getBlockStateCalls(final JsonRpcRequestContext request)
       throws JsonRpcParameterException {
     return request.getRequiredParameter(0, SimulateV1Parameter.class);
+  }
+
+  @Override
+  protected JsonRpcResponse blockNotFoundResponse(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcErrorResponse(
+        requestContext.getRequest().getId(), new JsonRpcError(BLOCK_NOT_FOUND));
   }
 
   private JsonRpcErrorResponse errorResponse(

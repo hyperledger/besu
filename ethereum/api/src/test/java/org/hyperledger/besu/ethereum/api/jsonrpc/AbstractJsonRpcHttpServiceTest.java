@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
-import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -102,12 +102,12 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected void setupBlockchain() {
     blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.FOREST);
-    blockchainSetupUtil.importAllBlocks();
+    blockchainSetupUtil.importAllBlocks(HeaderValidationMode.NONE, HeaderValidationMode.NONE);
   }
 
   protected void setupBonsaiBlockchain() {
     blockchainSetupUtil = getBlockchainSetupUtil(DataStorageFormat.BONSAI);
-    blockchainSetupUtil.importAllBlocks();
+    blockchainSetupUtil.importAllBlocks(HeaderValidationMode.NONE, HeaderValidationMode.NONE);
   }
 
   protected BlockchainSetupUtil getBlockchainSetupUtil(final DataStorageFormat storageFormat) {
@@ -216,7 +216,6 @@ public abstract class AbstractJsonRpcHttpServiceTest {
             mock(EthPeers.class),
             syncVertx,
             ImmutableApiConfiguration.builder().build(),
-            BalConfiguration.DEFAULT,
             Optional.empty(),
             transactionSimulator,
             new EthScheduler(1, 1, 1, new NoOpMetricsSystem()));

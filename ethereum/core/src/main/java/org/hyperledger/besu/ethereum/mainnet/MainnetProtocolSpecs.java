@@ -84,6 +84,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -201,10 +202,10 @@ public abstract class MainnetProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
+        .blockAccessListValidatorBuilder(__ -> BlockAccessListValidator.ALWAYS_REJECT_BAL)
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .isBlockAccessListEnabled(balConfiguration.isBalApiEnabled())
         .balConfiguration(balConfiguration)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
@@ -1171,6 +1172,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
+        .gasCalculator(AmsterdamGasCalculator::new)
         // EIP-7708: Override evmBuilder to use Amsterdam EVM with transfer logging
         .evmBuilder(
             (gasCalculator, __) ->
@@ -1218,9 +1220,10 @@ public abstract class MainnetProtocolSpecs {
                             new CodeDelegationService()))
                     .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
                     .build())
-        .blockAccessListFactory(
-            new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
+        .blockAccessListFactory(new BlockAccessListFactory())
+        .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
+
         // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
         .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)

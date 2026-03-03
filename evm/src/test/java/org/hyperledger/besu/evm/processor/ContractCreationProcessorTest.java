@@ -127,6 +127,64 @@ class ContractCreationProcessorTest
   }
 
   @Test
+  void shouldRejectDeployedCodeAboveAmsterdamLimit() {
+    processor =
+        new ContractCreationProcessor(
+            evm,
+            true,
+            Collections.singletonList(
+                MaxCodeSizeRule.from(EvmSpecVersion.AMSTERDAM, EvmConfiguration.DEFAULT)),
+            1);
+    final Bytes contractCode =
+        Bytes.fromHexString("00".repeat(EvmSpecVersion.AMSTERDAM.getMaxCodeSize() + 1));
+    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
+    messageFrame.setOutputData(contractCode);
+    messageFrame.setGasRemaining(10_000_000L);
+
+    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
+    assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
+    assertThat(messageFrame.getExceptionalHaltReason())
+        .contains(ExceptionalHaltReason.CODE_TOO_LARGE);
+  }
+
+  @Test
+  void shouldAcceptDeployedCodeAtAmsterdamLimit() {
+    processor =
+        new ContractCreationProcessor(
+            evm,
+            true,
+            Collections.singletonList(
+                MaxCodeSizeRule.from(EvmSpecVersion.AMSTERDAM, EvmConfiguration.DEFAULT)),
+            1);
+    final Bytes contractCode =
+        Bytes.fromHexString("00".repeat(EvmSpecVersion.AMSTERDAM.getMaxCodeSize()));
+    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
+    messageFrame.setOutputData(contractCode);
+    messageFrame.setGasRemaining(10_000_000L);
+
+    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
+    assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
+  }
+
+  @Test
+  void shouldAcceptDeployedCodeBetweenOldAndNewAmsterdamLimit() {
+    processor =
+        new ContractCreationProcessor(
+            evm,
+            true,
+            Collections.singletonList(
+                MaxCodeSizeRule.from(EvmSpecVersion.AMSTERDAM, EvmConfiguration.DEFAULT)),
+            1);
+    final Bytes contractCode = Bytes.fromHexString("00".repeat(0x6001));
+    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
+    messageFrame.setOutputData(contractCode);
+    messageFrame.setGasRemaining(10_000_000L);
+
+    processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
+    assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
+  }
+
+  @Test
   void shouldNotThrowAnExceptionWhenCodeSizeRuleNotAdded() {
     processor = new ContractCreationProcessor(evm, true, Collections.emptyList(), 1);
     final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));

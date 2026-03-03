@@ -37,6 +37,7 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,10 +57,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 import jakarta.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NettyConnectionInitializer
     implements ConnectionInitializer, HandshakerProvider, FramerProvider {
 
+  private static final Logger LOG = LoggerFactory.getLogger(NettyConnectionInitializer.class);
   private static final int TIMEOUT_SECONDS = 10;
 
   private final NodeKey nodeKey;
@@ -70,7 +74,9 @@ public class NettyConnectionInitializer
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
   private final PeerLookup peerLookup;
 
-  private ChannelFuture server;
+  private volatile ChannelFuture server;
+  private volatile ChannelFuture serverIpv6;
+  private volatile CompletableFuture<ListeningAddresses> listeningAddressesFuture;
   private final EventLoopGroup boss = new NioEventLoopGroup(1);
   private final EventLoopGroup workers = new NioEventLoopGroup(10);
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -104,14 +110,15 @@ public class NettyConnectionInitializer
   }
 
   @Override
-  public CompletableFuture<InetSocketAddress> start() {
-    final CompletableFuture<InetSocketAddress> listeningPortFuture = new CompletableFuture<>();
+  public CompletableFuture<ListeningAddresses> start() {
+    final CompletableFuture<ListeningAddresses> startupFuture = new CompletableFuture<>();
     if (!started.compareAndSet(false, true)) {
-      listeningPortFuture.completeExceptionally(
+      startupFuture.completeExceptionally(
           new IllegalStateException(
               "Attempt to start an already started " + this.getClass().getSimpleName()));
-      return listeningPortFuture;
+      return startupFuture;
     }
+    this.listeningAddressesFuture = startupFuture;
 
     this.server =
         new ServerBootstrap()
@@ -119,6 +126,7 @@ public class NettyConnectionInitializer
             .channel(NioServerSocketChannel.class)
             .childHandler(inboundChannelInitializer())
             .bind(config.getBindHost(), config.getBindPort());
+
     server.addListener(
         future -> {
           final InetSocketAddress socketAddress =
@@ -128,15 +136,45 @@ public class NettyConnectionInitializer
                 String.format(
                     "Unable to start listening on %s:%s. Check for port conflicts.",
                     config.getBindHost(), config.getBindPort());
-            listeningPortFuture.completeExceptionally(
-                new IllegalStateException(message, future.cause()));
+            startupFuture.completeExceptionally(new IllegalStateException(message, future.cause()));
             return;
           }
 
-          listeningPortFuture.complete(socketAddress);
+          // Bind IPv6 socket when dual-stack is configured, using the same shared event loops.
+          // The outer future must not complete until the IPv6 bind is also resolved so that
+          // callers receive both bound addresses atomically.
+          if (config.isDualStackEnabled()) {
+            final String ipv6Host = config.getBindHostIpv6().orElseThrow();
+            final int ipv6Port = config.getBindPortIpv6().orElseThrow();
+            this.serverIpv6 =
+                new ServerBootstrap()
+                    .group(boss, workers)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(inboundChannelInitializer())
+                    .bind(ipv6Host, ipv6Port);
+            serverIpv6.addListener(
+                ipv6Future -> {
+                  if (ipv6Future.isSuccess()) {
+                    final InetSocketAddress ipv6Address =
+                        (InetSocketAddress) serverIpv6.channel().localAddress();
+                    startupFuture.complete(
+                        new ListeningAddresses(socketAddress, Optional.of(ipv6Address)));
+                  } else {
+                    LOG.warn(
+                        "Failed to bind IPv6 RLPx socket on {}:{}, continuing with IPv4 only",
+                        ipv6Host,
+                        ipv6Port,
+                        ipv6Future.cause());
+                    serverIpv6 = null;
+                    startupFuture.complete(new ListeningAddresses(socketAddress, Optional.empty()));
+                  }
+                });
+          } else {
+            startupFuture.complete(new ListeningAddresses(socketAddress, Optional.empty()));
+          }
         });
 
-    return listeningPortFuture;
+    return startupFuture;
   }
 
   @Override
@@ -148,20 +186,87 @@ public class NettyConnectionInitializer
       return stoppedFuture;
     }
 
+    // Unblock any caller waiting on start() that hasn't completed yet.
+    if (listeningAddressesFuture != null) {
+      listeningAddressesFuture.completeExceptionally(
+          new IllegalStateException("Connection initializer was stopped before startup completed"));
+    }
+
+    // If the server channel has not been assigned yet (stop() called between CAS and bind()),
+    // shut down event loops directly — there is nothing to close.
+    if (server == null) {
+      shutdownEventLoops(stoppedFuture);
+      return stoppedFuture;
+    }
+
+    // Wait for the IPv4 bind to settle before closing. If already done, fires immediately.
+    server.addListener(
+        (ChannelFuture ipv4BindFuture) -> {
+          if (!ipv4BindFuture.isSuccess()) {
+            // Bind failed — channel was never fully registered, nothing to close.
+            shutdownEventLoops(stoppedFuture);
+            return;
+          }
+
+          final CompletableFuture<Void> ipv4Close = new CompletableFuture<>();
+          ipv4BindFuture
+              .channel()
+              .close()
+              .addListener(
+                  closeFuture -> {
+                    if (closeFuture.isSuccess()) {
+                      ipv4Close.complete(null);
+                    } else {
+                      ipv4Close.completeExceptionally(closeFuture.cause());
+                    }
+                  });
+
+          // Read serverIpv6 here — the start() listener has already run (listener
+          // ordering), so this is the final state.
+          final ChannelFuture ipv6 = serverIpv6;
+          if (ipv6 != null) {
+            final CompletableFuture<Void> ipv6Close = new CompletableFuture<>();
+            ipv6.addListener(
+                ipv6BindFuture -> {
+                  if (!ipv6BindFuture.isSuccess()) {
+                    ipv6Close.complete(null);
+                    return;
+                  }
+                  ipv6.channel()
+                      .close()
+                      .addListener(
+                          ipv6CloseFuture -> {
+                            if (!ipv6CloseFuture.isSuccess()) {
+                              LOG.warn(
+                                  "Failed to close IPv6 RLPx socket cleanly",
+                                  ipv6CloseFuture.cause());
+                            }
+                            ipv6Close.complete(null);
+                          });
+                });
+            CompletableFuture.allOf(ipv4Close, ipv6Close)
+                .whenComplete((v, err) -> shutdownEventLoops(stoppedFuture, err));
+          } else {
+            ipv4Close.whenComplete((v, err) -> shutdownEventLoops(stoppedFuture, err));
+          }
+        });
+
+    return stoppedFuture;
+  }
+
+  private void shutdownEventLoops(final CompletableFuture<Void> stoppedFuture) {
+    shutdownEventLoops(stoppedFuture, null);
+  }
+
+  private void shutdownEventLoops(
+      final CompletableFuture<Void> stoppedFuture, final Throwable err) {
     workers.shutdownGracefully();
     boss.shutdownGracefully();
-    server
-        .channel()
-        .closeFuture()
-        .addListener(
-            (future) -> {
-              if (future.isSuccess()) {
-                stoppedFuture.complete(null);
-              } else {
-                stoppedFuture.completeExceptionally(future.cause());
-              }
-            });
-    return stoppedFuture;
+    if (err != null) {
+      stoppedFuture.completeExceptionally(err);
+    } else {
+      stoppedFuture.complete(null);
+    }
   }
 
   @Override
