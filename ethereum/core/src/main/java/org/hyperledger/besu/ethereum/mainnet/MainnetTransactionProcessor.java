@@ -403,6 +403,10 @@ public class MainnetTransactionProcessor {
         stateGasCalc.chargeCodeDelegationStateGas(
             initialFrame, transaction.codeDelegationListSize(), alreadyExistingDelegators);
       }
+      // EIP-8037: Advance the undo mark so intrinsic state gas charges (auth delegation,
+      // contract creation) are not rolled back if the initial frame's execution reverts.
+      // These are transaction-level costs that persist regardless of execution outcome.
+      initialFrame.advanceUndoMark();
 
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
 

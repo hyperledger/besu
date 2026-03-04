@@ -241,7 +241,7 @@ public class MessageFrame {
   private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
   /** The mark of the undoable collections at the creation of this message frame */
-  private final long undoMark;
+  private long undoMark;
 
   /**
    * Builder builder.
@@ -1386,6 +1386,16 @@ public class MessageFrame {
   /** Undo all the changes done by this message frame, such as when a revert is called for. */
   public void rollback() {
     txValues.undoChanges(undoMark);
+  }
+
+  /**
+   * Advances the undo mark to the current point, so that subsequent rollback() calls will not undo
+   * changes made before this point. Used by the transaction processor to protect intrinsic state
+   * gas charges (EIP-8037 auth delegation and contract creation) from being rolled back when the
+   * initial frame's execution reverts.
+   */
+  public void advanceUndoMark() {
+    this.undoMark = txValues.transientStorage().mark();
   }
 
   /**
