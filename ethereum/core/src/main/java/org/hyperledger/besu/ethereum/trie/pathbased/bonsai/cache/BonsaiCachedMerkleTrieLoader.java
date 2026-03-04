@@ -145,11 +145,17 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final Bytes cachedNode = accountNodes.getIfPresent(nodeHash);
       if (cachedNode != null) {
         // Track account cache hit for cross-client execution metrics
-        ExecutionStatsHolder.getOptional().ifPresent(ExecutionStats::incrementAccountCacheHits);
+        final ExecutionStats stats = ExecutionStatsHolder.get();
+        if (stats != null) {
+          stats.incrementAccountCacheHits();
+        }
         return Optional.of(cachedNode);
       } else {
         // Track account cache miss for cross-client execution metrics
-        ExecutionStatsHolder.getOptional().ifPresent(ExecutionStats::incrementAccountCacheMisses);
+        final ExecutionStats stats = ExecutionStatsHolder.get();
+        if (stats != null) {
+          stats.incrementAccountCacheMisses();
+        }
         return worldStateKeyValueStorage.getAccountStateTrieNode(location, nodeHash);
       }
     }
@@ -166,11 +172,17 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final Bytes cachedNode = storageNodes.getIfPresent(nodeHash);
       if (cachedNode != null) {
         // Track storage cache hit for cross-client execution metrics
-        ExecutionStatsHolder.getOptional().ifPresent(ExecutionStats::incrementStorageCacheHits);
+        final ExecutionStats stats = ExecutionStatsHolder.get();
+        if (stats != null) {
+          stats.incrementStorageCacheHits();
+        }
         return Optional.of(cachedNode);
       } else {
         // Track storage cache miss for cross-client execution metrics
-        ExecutionStatsHolder.getOptional().ifPresent(ExecutionStats::incrementStorageCacheMisses);
+        final ExecutionStats stats = ExecutionStatsHolder.get();
+        if (stats != null) {
+          stats.incrementStorageCacheMisses();
+        }
         return worldStateKeyValueStorage.getAccountStorageTrieNode(accountHash, location, nodeHash);
       }
     }

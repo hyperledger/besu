@@ -236,14 +236,16 @@ public abstract class PathBasedWorldState
         worldStateKeyValueStorage.updater();
     Runnable saveTrieLog = () -> {};
     Runnable cacheWorldState = () -> {};
+    final var executionStats = ExecutionStatsHolder.get();
 
     try {
       // Track state hash time (Merkle trie rehashing)
-      final long stateHashStartNanos = System.nanoTime();
+      final long stateHashStartNanos = executionStats != null ? System.nanoTime() : 0;
       final Hash calculatedRootHash =
           committer.computeRootAndCommit(this, stateUpdater, blockHeader, worldStateConfig);
-      ExecutionStatsHolder.getOptional()
-          .ifPresent(stats -> stats.addStateHashTime(System.nanoTime() - stateHashStartNanos));
+      if (executionStats != null) {
+        executionStats.addStateHashTime(System.nanoTime() - stateHashStartNanos);
+      }
 
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
@@ -288,7 +290,7 @@ public abstract class PathBasedWorldState
     } finally {
       if (success) {
         // Track commit time (writing state to DB)
-        final long commitStartNanos = System.nanoTime();
+        final long commitStartNanos = executionStats != null ? System.nanoTime() : 0;
 
         // commit the trielog transaction ahead of the state, in case of an abnormal shutdown:
         saveTrieLog.run();
@@ -299,8 +301,9 @@ public abstract class PathBasedWorldState
           cacheWorldState.run();
         }
 
-        ExecutionStatsHolder.getOptional()
-            .ifPresent(stats -> stats.addCommitTime(System.nanoTime() - commitStartNanos));
+        if (executionStats != null) {
+          executionStats.addCommitTime(System.nanoTime() - commitStartNanos);
+        }
 
         accumulator.reset();
       } else {
