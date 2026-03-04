@@ -428,7 +428,10 @@ public class BlockSimulator {
       // upfront cost failures, but for eth_simulateV1 results we need the caller-provided values
       // so that gasPrice, maxFeePerGas, maxPriorityFeePerGas, transactionHash, and
       // transactionsRoot are correct in the response.
-      transactionSimulationResult = restoreGasPricing(transactionSimulationResult, callParameter);
+      if (transactionValidationParams.isAllowExceedingBalance()) {
+        transactionSimulationResult =
+            restoreGasPricing(transactionSimulationResult, callParameter);
+      }
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, finalOperationTracer);
     }
