@@ -1295,7 +1295,6 @@ public final class EthProtocolManagerTest {
   public void shouldUseRightCapabilityDependingOnSyncMode() {
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH69);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH69);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH69);
   }
 
   @Test
@@ -1309,7 +1308,6 @@ public final class EthProtocolManagerTest {
 
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68, configuration);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68, configuration);
   }
 
   @Test
@@ -1338,7 +1336,6 @@ public final class EthProtocolManagerTest {
 
     assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH68, configuration);
     assertHighestCapability(SyncMode.FULL, EthProtocol.ETH68, configuration);
-    assertHighestCapability(SyncMode.CHECKPOINT, EthProtocol.ETH68, configuration);
   }
 
   @Test

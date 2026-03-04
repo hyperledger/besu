@@ -91,6 +91,9 @@ testing {
             setSystemProperties(getSystemProperties())
             systemProperty 'acctests.runBesuAsProcess', 'true'
             systemProperty 'java.security.properties', "${buildDir}/resources/acceptanceTest/acceptanceTesting.security"
+            if (System.getProperty('acctests.consensusType')) {
+              systemProperty 'acctests.consensusType', System.getProperty('acctests.consensusType')
+            }
             def javaProjects = rootProject.subprojects - project(':platform')
             mustRunAfter javaProjects.test
             description = 'Runs ALL Besu acceptance tests (excluding bftsoak).'
@@ -120,8 +123,9 @@ testing {
             setSystemProperties(getSystemProperties())
             systemProperty 'acctests.runBesuAsProcess', 'true'
             systemProperty 'java.security.properties', "${buildDir}/resources/acceptanceTest/acceptanceTesting.security"
-            // Set to any time > 60 minutes to run the soak test for longer
-            // systemProperty 'acctests.soakTimeMins', '120'
+            if (System.getProperty('acctests.consensusType')) {
+              systemProperty 'acctests.consensusType', System.getProperty('acctests.consensusType')
+            }
             description = 'Runs BFT soak test.'
             group = 'verification'
 
