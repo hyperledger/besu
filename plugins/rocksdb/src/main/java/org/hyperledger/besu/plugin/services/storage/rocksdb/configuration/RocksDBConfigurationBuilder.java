@@ -36,6 +36,7 @@ public class RocksDBConfigurationBuilder {
   private boolean isBlockchainGarbageCollectionEnabled = false;
   private Optional<Double> blobGarbageCollectionAgeCutoff = Optional.empty();
   private Optional<Double> blobGarbageCollectionForceThreshold = Optional.empty();
+  private boolean useSeparateDatabasePerColumn = false;
 
   /** Instantiates a new Rocks db configuration builder. */
   public RocksDBConfigurationBuilder() {}
@@ -155,6 +156,18 @@ public class RocksDBConfigurationBuilder {
   }
 
   /**
+   * Use separate database per column.
+   *
+   * @param useSeparateDatabasePerColumn whether to use separate database per column
+   * @return the rocks db configuration builder
+   */
+  public RocksDBConfigurationBuilder useSeparateDatabasePerColumn(
+      final boolean useSeparateDatabasePerColumn) {
+    this.useSeparateDatabasePerColumn = useSeparateDatabasePerColumn;
+    return this;
+  }
+
+  /**
    * From.
    *
    * @param configuration the configuration
@@ -169,8 +182,8 @@ public class RocksDBConfigurationBuilder {
         .enableReadCacheForSnapshots(configuration.isReadCacheEnabledForSnapshots())
         .isBlockchainGarbageCollectionEnabled(configuration.isBlockchainGarbageCollectionEnabled())
         .blobGarbageCollectionAgeCutoff(configuration.getBlobGarbageCollectionAgeCutoff())
-        .blobGarbageCollectionForceThreshold(
-            configuration.getBlobGarbageCollectionForceThreshold());
+        .blobGarbageCollectionForceThreshold(configuration.getBlobGarbageCollectionForceThreshold())
+        .useSeparateDatabasePerColumn(configuration.useSeparateDatabasePerColumn());
   }
 
   /**
@@ -189,6 +202,7 @@ public class RocksDBConfigurationBuilder {
         enableReadCacheForSnapshots,
         isBlockchainGarbageCollectionEnabled,
         blobGarbageCollectionAgeCutoff,
-        blobGarbageCollectionForceThreshold);
+        blobGarbageCollectionForceThreshold,
+        useSeparateDatabasePerColumn);
   }
 }
