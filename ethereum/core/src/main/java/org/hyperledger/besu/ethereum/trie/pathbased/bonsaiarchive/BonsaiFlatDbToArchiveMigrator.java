@@ -127,7 +127,7 @@ public class BonsaiFlatDbToArchiveMigrator {
                     tx.commit();
                   }
                 } catch (final Exception e) {
-                  LOG.warn("Failed to write archive keys for near head block", e);
+                  LOG.error("Failed to write Bonsai archive near head block during migration", e);
                 }
               } else {
                 target.set(event.getHeader().getNumber());
@@ -203,7 +203,7 @@ public class BonsaiFlatDbToArchiveMigrator {
       logCompletion(startBlock, target.get(), migrationStartTime);
 
     } catch (final Exception e) {
-      LOG.error("Migration failed", e);
+      LOG.error("Bonsai to Bonsai archive migration failed", e);
       throw new RuntimeException(e);
     } finally {
       blockchain.removeObserver(blockObserverId);
@@ -220,8 +220,7 @@ public class BonsaiFlatDbToArchiveMigrator {
         .map(Bytes::toLong);
   }
 
-  private void logProgress(
-      final long blockNumber, final long startBlock, final long endBlock) {
+  private void logProgress(final long blockNumber, final long startBlock, final long endBlock) {
     final long totalBlocks = endBlock - startBlock;
     LogUtil.throttledLog(
         () -> {
