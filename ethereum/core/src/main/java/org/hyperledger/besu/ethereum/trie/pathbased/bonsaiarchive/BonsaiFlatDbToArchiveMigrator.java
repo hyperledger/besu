@@ -165,7 +165,7 @@ public class BonsaiFlatDbToArchiveMigrator {
             && currentTarget > NEAR_HEAD_THRESHOLD
             && blockNumber >= currentTarget - NEAR_HEAD_THRESHOLD) {
           nearHead.set(true);
-          LOG.info(
+          LOG.debug(
               "Archive migration entering near head mode at block {}, target frozen at {}",
               blockNumber,
               target.get());

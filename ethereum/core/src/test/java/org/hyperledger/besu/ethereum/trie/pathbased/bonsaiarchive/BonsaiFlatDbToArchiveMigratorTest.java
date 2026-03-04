@@ -17,8 +17,9 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsaiarchive;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,15 +59,21 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class BonsaiFlatDbToArchiveMigratorTest {
 
-  // Test address used for account and storage changes
   private static final Address TEST_ADDRESS =
       Address.fromHexString("0x95cD8499051f7FE6a2F53749eC1e9F4a81cafa13");
 
-  private BonsaiWorldStateKeyValueStorage worldStateStorage;
-  private TrieLogManager trieLogManager;
+  @Mock private BonsaiWorldStateKeyValueStorage worldStateStorage;
+  @Mock private TrieLogManager trieLogManager;
   private MutableBlockchain blockchain;
   private ScheduledExecutorService executorService;
   private SegmentedKeyValueStorage storage;
@@ -75,8 +82,6 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   @BeforeEach
   public void setup() {
     storage = new SegmentedInMemoryKeyValueStorage();
-    worldStateStorage = mock(BonsaiWorldStateKeyValueStorage.class);
-    trieLogManager = mock(TrieLogManager.class);
     executorService = Executors.newScheduledThreadPool(1);
     blockDataGenerator = new BlockDataGenerator();
     blockchain = createInMemoryBlockchain(blockDataGenerator.genesisBlock());
@@ -92,11 +97,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   @Test
   public void migratesAccountChangesFromTrieLogs() throws Exception {
     appendBlocks(2);
-
     final Hash hash1 = blockchain.getBlockHeader(1L).get().getHash();
     final Hash hash2 = blockchain.getBlockHeader(2L).get().getHash();
-
-    // Create trie logs with account changes
     final TrieLogLayer trieLog1 = createAccountTrieLog(Wei.fromHexString("0x100"));
     final TrieLogLayer trieLog2 = createAccountTrieLog(Wei.fromHexString("0x200"));
 
@@ -104,10 +106,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     when(trieLogManager.getTrieLogLayer(hash2)).thenReturn(Optional.of(trieLog2));
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-
     migrator.migrate().get(10, TimeUnit.SECONDS);
 
-    // Verify account state was written for both blocks
     assertThat(getArchivedAccountKey(1L)).isPresent();
     assertThat(getArchivedAccountKey(2L)).isPresent();
   }
@@ -115,39 +115,32 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   @Test
   public void migratesStorageChangesFromTrieLogs() throws Exception {
     appendBlocks(1);
-
     final Hash hash1 = blockchain.getBlockHeader(1L).get().getHash();
     final StorageSlotKey slotKey = new StorageSlotKey(UInt256.ONE);
-
     final TrieLogLayer trieLog1 = new TrieLogLayer();
     trieLog1.addStorageChange(TEST_ADDRESS, slotKey, UInt256.ZERO, UInt256.valueOf(42));
 
     when(trieLogManager.getTrieLogLayer(hash1)).thenReturn(Optional.of(trieLog1));
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-
     migrator.migrate().get(10, TimeUnit.SECONDS);
 
-    // Verify storage was written
     final byte[] naturalKey =
-        BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey(
-            TEST_ADDRESS.addressHash(), slotKey.getSlotHash());
-    final byte[] key =
-        BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
-            new BonsaiContext(1L), naturalKey);
+        calculateNaturalSlotKey(TEST_ADDRESS.addressHash(), slotKey.getSlotHash());
+    final byte[] key = calculateArchiveKeyWithMinSuffix(new BonsaiContext(1L), naturalKey);
     assertThat(storage.get(ACCOUNT_STORAGE_STORAGE, key)).isPresent();
   }
 
   @Test
-  public void futureCompletesExceptionallyOnFailure() throws Exception {
-    when(trieLogManager.getTrieLogLayer(any())).thenThrow(new RuntimeException("Test failure"));
-
+  public void futureCompletesExceptionallyOnFailure() {
     appendBlocks(1);
+
+    when(trieLogManager.getTrieLogLayer(any())).thenThrow(new RuntimeException("Test failure"));
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
     assertThat(migrator.migrate())
-        .failsWithin(10, TimeUnit.SECONDS)
+        .failsWithin(1, TimeUnit.SECONDS)
         .withThrowableThat()
         .havingRootCause()
         .withMessage("Test failure");
@@ -157,11 +150,11 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   public void rejectsConcurrentMigrations() throws Exception {
     final CountDownLatch migrationStartedLatch = new CountDownLatch(1);
     final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
-
     appendBlocks(1);
+    final Hash hash1 = blockchain.getBlockHeader(1L).get().getHash();
 
     // Block the trie log manager to pause migration
-    when(trieLogManager.getTrieLogLayer(any()))
+    when(trieLogManager.getTrieLogLayer(hash1))
         .thenAnswer(
             invocation -> {
               migrationStartedLatch.countDown();
@@ -181,6 +174,9 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     // Second migration should return immediately without running
     final CompletableFuture<Void> second = migrator.migrate();
     second.get(1, TimeUnit.SECONDS);
+
+    // Second migration must not have interacted with the database
+    verify(trieLogManager).getTrieLogLayer(hash1);
 
     // Allow first migration to complete
     allowMigrationToFinishLatch.countDown();
@@ -206,14 +202,14 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     assertThat(migrator.getMigrationProgress()).isEmpty();
 
     migrator.migrate().get(10, TimeUnit.SECONDS);
-    assertThat(migrator.getMigrationProgress()).isPresent();
-    assertThat(migrator.getMigrationProgress().get()).isEqualTo(5L);
+    assertThat(migrator.getMigrationProgress()).hasValue(5L);
   }
 
   @Test
   public void skipsBlocksWithNoTrieLog() throws Exception {
     appendBlocks(2);
 
+    // Block 1 has no trie log, block 2 has a trie log
     final Hash hash2 = blockchain.getBlockHeader(2L).get().getHash();
     when(trieLogManager.getTrieLogLayer(hash2))
         .thenReturn(Optional.of(createAccountTrieLog(Wei.ONE)));
@@ -221,7 +217,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
     migrator.migrate().get(10, TimeUnit.SECONDS);
 
-    // Only block 2 should have state written
+    assertThat(getArchivedAccountKey(1L)).isEmpty();
     assertThat(getArchivedAccountKey(2L)).isPresent();
   }
 
@@ -277,24 +273,21 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void doesNotSwitchToArchiveModeOnFailure() throws Exception {
+  public void doesNotSwitchToArchiveModeOnFailure() {
     appendBlocks(1);
-
     when(trieLogManager.getTrieLogLayer(any())).thenThrow(new RuntimeException("Test failure"));
-
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
     assertThat(migrator.migrate()).failsWithin(10, TimeUnit.SECONDS);
-
     verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
   }
 
   @Test
-  public void tailModeDoesNotActivateBeforeThreshold() throws Exception {
+  public void nearHeadModeDoesNotActivateBeforeThreshold() throws Exception {
     final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 10;
     appendBlocks(initialBlocks);
 
-    // Pause well before the tail threshold (block 1)
+    // Pause well before the near head threshold (block 1)
     final Hash pauseHash = blockchain.getBlockHeader(1L).get().getHash();
 
     final CountDownLatch migrationPausedLatch = new CountDownLatch(1);
@@ -313,126 +306,72 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
     assertThat(migrationPausedLatch.await(5, TimeUnit.SECONDS)).isTrue();
 
-    // Append a block while paused far from tail — target should update (not frozen)
-    final Block head = blockchain.getBlockByNumber(blockchain.getChainHeadBlockNumber()).get();
-    final List<Block> newBlocks = blockDataGenerator.blockSequence(head, 1);
-    final Block newBlock = newBlocks.get(0);
-    final long newBlockNumber = initialBlocks + 1;
-    final Hash newHash = newBlock.getHeader().getHash();
-    when(trieLogManager.getTrieLogLayer(newHash))
-        .thenReturn(Optional.of(createAccountTrieLog(Wei.fromHexString("0xABC"))));
-    blockchain.appendBlock(newBlock, blockDataGenerator.receipts(newBlock));
+    // Append a block while paused far from near head — target should update (not frozen)
+    final Block newBlock = appendNextBlock(Wei.fromHexString("0xABC"));
 
     allowMigrationToFinishLatch.countDown();
-    future.get(30, TimeUnit.SECONDS);
+    future.get(10, TimeUnit.SECONDS);
 
     // The new block should have been migrated by the main loop (target was updated, not frozen)
-    assertThat(migrator.getMigrationProgress()).hasValue(newBlockNumber);
-    assertThat(getArchivedAccountKey(newBlockNumber)).isPresent();
+    assertThat(migrator.getMigrationProgress()).hasValue(newBlock.getHeader().getNumber());
+    assertThat(getArchivedAccountKey(newBlock.getHeader().getNumber())).isPresent();
   }
 
   @Test
-  public void tailModeActivatesNearEndBlock() throws Exception {
+  public void nearHeadModeActivatesNearEndBlock() throws Exception {
     final int totalBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 10;
     appendBlocks(totalBlocks);
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    migrator.migrate().get(30, TimeUnit.SECONDS);
+    migrator.migrate().get(10, TimeUnit.SECONDS);
 
-    assertThat(migrator.getMigrationProgress()).isPresent();
-    assertThat(migrator.getMigrationProgress().get()).isEqualTo((long) totalBlocks);
+    assertThat(migrator.getMigrationProgress()).hasValue((long) totalBlocks);
   }
 
   @Test
-  public void observerWritesArchiveKeysInTailMode() throws Exception {
-    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 5;
-    appendBlocks(initialBlocks);
+  public void observerWritesArchiveKeysInNearHeadMode() throws Exception {
+    final NearHeadPause pause = pauseMigrationInNearHeadMode();
 
-    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 1;
-    final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
+    final Block newBlock = appendNextBlock(Wei.fromHexString("0xABC"));
 
-    final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
-    final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
+    pause.allowFinishLatch().countDown();
+    pause.future().get(10, TimeUnit.SECONDS);
 
-    when(trieLogManager.getTrieLogLayer(pauseHash))
-        .thenAnswer(
-            invocation -> {
-              migrationReachedTailLatch.countDown();
-              allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
-              return Optional.of(createAccountTrieLog(Wei.fromHexString("0x999")));
-            });
-
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    final CompletableFuture<Void> future = migrator.migrate();
-
-    assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
-
-    // Pre-generate the block so we can set up the mock BEFORE appending
-    final Block head = blockchain.getBlockByNumber(blockchain.getChainHeadBlockNumber()).get();
-    final List<Block> newBlocks = blockDataGenerator.blockSequence(head, 1);
-    final Block newBlock = newBlocks.get(0);
-    final long newBlockNumber = initialBlocks + 1;
-    final Hash newHash = newBlock.getHeader().getHash();
-    when(trieLogManager.getTrieLogLayer(newHash))
-        .thenReturn(Optional.of(createAccountTrieLog(Wei.fromHexString("0xABC"))));
-
-    // Now append — the observer will fire and find the mock ready
-    blockchain.appendBlock(newBlock, blockDataGenerator.receipts(newBlock));
-
-    allowMigrationToFinishLatch.countDown();
-    future.get(30, TimeUnit.SECONDS);
-
-    assertThat(getArchivedAccountKey(newBlockNumber)).isPresent();
+    assertThat(getArchivedAccountKey(newBlock.getHeader().getNumber())).isPresent();
   }
 
   @Test
-  public void targetFrozenInTailMode() throws Exception {
-    final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 5;
-    appendBlocks(initialBlocks);
-
-    final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 1;
-    final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
-
-    final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
-    final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
-
-    when(trieLogManager.getTrieLogLayer(pauseHash))
-        .thenAnswer(
-            invocation -> {
-              migrationReachedTailLatch.countDown();
-              allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
-              return Optional.of(createAccountTrieLog(Wei.fromHexString("0x999")));
-            });
-
-    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    final CompletableFuture<Void> future = migrator.migrate();
-
-    assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
+  public void targetFrozenInNearHeadMode() throws Exception {
+    final NearHeadPause pause = pauseMigrationInNearHeadMode();
 
     appendBlocks(3);
 
-    allowMigrationToFinishLatch.countDown();
-    future.get(30, TimeUnit.SECONDS);
+    pause.allowFinishLatch().countDown();
+    pause.future().get(10, TimeUnit.SECONDS);
 
-    assertThat(migrator.getMigrationProgress()).isPresent();
-    assertThat(migrator.getMigrationProgress().get()).isEqualTo((long) initialBlocks);
+    assertThat(pause.migrator().getMigrationProgress()).hasValue((long) pause.initialBlocks());
   }
 
-  @Test
-  public void observerFailureDoesNotCrashMigration() throws Exception {
+  private record NearHeadPause(
+      int initialBlocks,
+      BonsaiFlatDbToArchiveMigrator migrator,
+      CompletableFuture<Void> future,
+      CountDownLatch allowFinishLatch) {}
+
+  private NearHeadPause pauseMigrationInNearHeadMode() throws InterruptedException {
     final int initialBlocks = BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 5;
     appendBlocks(initialBlocks);
 
     final long pauseBlock = initialBlocks - BonsaiFlatDbToArchiveMigrator.NEAR_HEAD_THRESHOLD + 1;
     final Hash pauseHash = blockchain.getBlockHeader(pauseBlock).get().getHash();
 
-    final CountDownLatch migrationReachedTailLatch = new CountDownLatch(1);
+    final CountDownLatch reachedNearHeadLatch = new CountDownLatch(1);
     final CountDownLatch allowMigrationToFinishLatch = new CountDownLatch(1);
 
     when(trieLogManager.getTrieLogLayer(pauseHash))
         .thenAnswer(
             invocation -> {
-              migrationReachedTailLatch.countDown();
+              reachedNearHeadLatch.countDown();
               allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
               return Optional.of(createAccountTrieLog(Wei.fromHexString("0x999")));
             });
@@ -440,26 +379,18 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
     final CompletableFuture<Void> future = migrator.migrate();
 
-    assertThat(migrationReachedTailLatch.await(10, TimeUnit.SECONDS)).isTrue();
+    assertThat(reachedNearHeadLatch.await(10, TimeUnit.SECONDS)).isTrue();
 
-    // Pre-generate block so we can set up the throwing mock BEFORE appending
+    return new NearHeadPause(initialBlocks, migrator, future, allowMigrationToFinishLatch);
+  }
+
+  private Block appendNextBlock(final Wei balance) {
     final Block head = blockchain.getBlockByNumber(blockchain.getChainHeadBlockNumber()).get();
-    final List<Block> newBlocks = blockDataGenerator.blockSequence(head, 1);
-    final Block failBlock = newBlocks.get(0);
-    final Hash failHash = failBlock.getHeader().getHash();
-    when(trieLogManager.getTrieLogLayer(failHash))
-        .thenThrow(new RuntimeException("Observer failure"));
-
-    // Now append — the observer will fire, hit the exception, and catch it
-    blockchain.appendBlock(failBlock, blockDataGenerator.receipts(failBlock));
-
-    // Let migration finish — should complete despite observer failure
-    allowMigrationToFinishLatch.countDown();
-    future.get(30, TimeUnit.SECONDS);
-
-    // Migration should have completed successfully
-    assertThat(migrator.getMigrationProgress()).isPresent();
-    verify(worldStateStorage).upgradeToFullFlatDbMode();
+    final Block newBlock = blockDataGenerator.blockSequence(head, 1).get(0);
+    when(trieLogManager.getTrieLogLayer(newBlock.getHeader().getHash()))
+        .thenReturn(Optional.of(createAccountTrieLog(balance)));
+    blockchain.appendBlock(newBlock, blockDataGenerator.receipts(newBlock));
+    return newBlock;
   }
 
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -505,7 +436,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
 
   private Optional<byte[]> getArchivedAccountKey(final long blockNumber) {
     final byte[] key =
-        BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix(
+        calculateArchiveKeyWithMinSuffix(
             new BonsaiContext(blockNumber), TEST_ADDRESS.addressHash().getBytes().toArrayUnsafe());
     return storage.get(ACCOUNT_INFO_STATE, key);
   }
