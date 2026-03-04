@@ -261,7 +261,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
   }
 
   @Test
-  public void shouldSetGasPriceToZeroWhenExceedingBalanceAllowed() {
+  public void shouldPreserveGasPriceWhenExceedingBalanceAllowedAndGasProvided() {
     final CallParameter callParameter =
         legacyTransactionCallParameterBuilder().gasPrice(Wei.ONE).build();
 
@@ -271,7 +271,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
         Transaction.builder()
             .type(TransactionType.FRONTIER)
             .nonce(1L)
-            .gasPrice(Wei.ZERO)
+            .gasPrice(Wei.ONE)
             .gasLimit(blockHeader.getGasLimit())
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
@@ -291,7 +291,7 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
   }
 
   @Test
-  public void shouldSetFeePerGasToZeroWhenExceedingBalanceAllowed() {
+  public void shouldPreserveFeePerGasWhenExceedingBalanceAllowedAndGasProvided() {
     final CallParameter callParameter =
         eip1559TransactionCallParameterBuilder()
             .maxFeePerGas(Wei.ONE)
@@ -307,8 +307,8 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
             .chainId(BigInteger.ONE)
             .nonce(1L)
             .gasLimit(TRANSFER_GAS_LIMIT)
-            .maxFeePerGas(Wei.ZERO)
-            .maxPriorityFeePerGas(Wei.ZERO)
+            .maxFeePerGas(Wei.ONE)
+            .maxPriorityFeePerGas(Wei.ONE)
             .to(callParameter.getTo().orElseThrow())
             .sender(callParameter.getSender().orElseThrow())
             .value(callParameter.getValue().orElseThrow())
