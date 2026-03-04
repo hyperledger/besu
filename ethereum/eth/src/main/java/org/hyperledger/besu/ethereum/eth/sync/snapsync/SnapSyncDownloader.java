@@ -51,6 +51,6 @@ public class SnapSyncDownloader extends PivotSyncDownloader {
   @Override
   protected PivotSyncState storeState(final PivotSyncState fastSyncState) {
     initialPivotSyncState = fastSyncState;
-    return new SnapSyncProcessState(fastSyncState);
+    return fastSyncState;
   }
 }

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -53,7 +54,7 @@ public class PersistDataStepTest {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator =
       new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final PivotSyncState snapSyncState = mock(PivotSyncState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
   private final SnapSyncConfiguration snapSyncConfiguration = mock(SnapSyncConfiguration.class);
