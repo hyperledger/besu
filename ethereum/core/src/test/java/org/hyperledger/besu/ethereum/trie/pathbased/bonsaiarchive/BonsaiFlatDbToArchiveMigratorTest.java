@@ -86,7 +86,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     blockDataGenerator = new BlockDataGenerator();
     blockchain = createInMemoryBlockchain(blockDataGenerator.genesisBlock());
     when(worldStateStorage.getComposedWorldStateStorage()).thenReturn(storage);
-    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.empty());
+    when(trieLogManager.getTrieLogLayer(any()))
+        .thenReturn(Optional.of(createAccountTrieLog(Wei.ONE)));
   }
 
   @AfterEach
@@ -159,7 +160,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
             invocation -> {
               migrationStartedLatch.countDown();
               allowMigrationToFinishLatch.await(10, TimeUnit.SECONDS);
-              return Optional.empty();
+              return Optional.of(createAccountTrieLog(Wei.ONE));
             });
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
@@ -208,6 +209,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   @Test
   public void failsMigrationWhenTrieLogIsMissing() {
     appendBlocks(1);
+    final Hash hash1 = blockchain.getBlockHeader(1L).get().getHash();
+    when(trieLogManager.getTrieLogLayer(hash1)).thenReturn(Optional.empty());
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
