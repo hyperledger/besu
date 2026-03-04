@@ -146,7 +146,7 @@ public class NewPooledTransactionHashesMessageProcessor {
         if (peer.isDisconnected()) {
           scheduledTasks.remove(peer).cancel(true);
         } else if (peer.hasAvailableRequestCapacity()) {
-          ethContext.getScheduler().scheduleSyncWorkerTask(fetcher::requestTransactions);
+          ethContext.getScheduler().scheduleServiceTask(fetcher::requestTransactions);
         }
       }
     }

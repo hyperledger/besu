@@ -21,6 +21,7 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -60,6 +61,10 @@ public class TransactionsMessageProcessorTest {
 
   @Test
   public void shouldMarkAllReceivedTransactionsAsSeen() {
+    when(transactionTracker.receivedTransactions(
+            peer1, asList(transaction1, transaction2, transaction3)))
+        .thenReturn(asList(transaction1, transaction2, transaction3));
+
     messageHandler.processTransactionsMessage(
         peer1,
         TransactionsMessage.create(asList(transaction1, transaction2, transaction3)),
@@ -67,16 +72,21 @@ public class TransactionsMessageProcessorTest {
         ofMinutes(1));
 
     verify(transactionTracker)
-        .markTransactionsAsSeen(peer1, asList(transaction1, transaction2, transaction3));
+        .receivedTransactions(peer1, asList(transaction1, transaction2, transaction3));
   }
 
   @Test
   public void shouldAddReceivedTransactionsToTransactionPool() {
+    when(transactionTracker.receivedTransactions(
+            peer1, asList(transaction1, transaction2, transaction3)))
+        .thenReturn(asList(transaction1, transaction2, transaction3));
+
     messageHandler.processTransactionsMessage(
         peer1,
         TransactionsMessage.create(asList(transaction1, transaction2, transaction3)),
         now(),
         ofMinutes(1));
+
     verify(transactionPool).addRemoteTransactions(asList(transaction1, transaction2, transaction3));
   }
 

@@ -179,7 +179,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     final Hash hash = transaction.getHash();
 
     // Firstly mark the transaction as already seen by this peer
-    transactionTracker.markTransactionsAsSeen(ethPeer, List.of(transaction));
+    transactionTracker.markTransactionsAsSeen(ethPeer, List.of(transaction.getHash()));
 
     // Try to add the announcement for the same transaction
     transactionTracker.receivedTransactionAnnouncements(ethPeer, List.of(hash));
@@ -199,7 +199,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     transactionTracker.receivedTransactionAnnouncements(ethPeer, List.of(hash));
 
     // Only after mark the transaction as already seen by this peer
-    transactionTracker.markTransactionsAsSeen(ethPeer, List.of(transaction));
+    transactionTracker.markTransactionsAsSeen(ethPeer, List.of(transaction.getHash()));
 
     fetcher.requestTransactions();
 

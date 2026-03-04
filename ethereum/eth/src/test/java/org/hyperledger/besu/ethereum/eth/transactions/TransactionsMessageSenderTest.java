@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -95,6 +96,37 @@ public class TransactionsMessageSenderTest {
 
     assertThat(firstBatch).hasSizeGreaterThan(secondBatch.size());
     assertThat(Sets.union(firstBatch, secondBatch)).isEqualTo(transactions);
+  }
+
+  @Test
+  public void shouldNotSendTransactionAlreadySeenByPeer() throws Exception {
+    // Mark transaction2 as already seen by peer1 (e.g. received from that peer earlier)
+    transactionTracker.markTransactionsAsSeen(peer1, List.of(transaction2.getHash()));
+
+    transactionTracker.addToPeerSendQueue(peer1, List.of(transaction1, transaction2));
+    transactionTracker.addToPeerSendQueue(peer2, List.of(transaction3));
+
+    messageSender.sendTransactionsToPeer(peer1);
+    messageSender.sendTransactionsToPeer(peer2);
+
+    // peer1 receives only transaction1; transaction2 filtered out because already seen
+    verify(peer1).send(transactionsMessageContaining(transaction1));
+    verify(peer2).send(transactionsMessageContaining(transaction3));
+    verifyNoMoreInteractions(peer1, peer2);
+  }
+
+  @Test
+  public void shouldNotSendTransactionAlreadyAnnouncedToPeer() throws Exception {
+    // Simulate transaction1 having been announced to peer1 already
+    transactionTracker.markTransactionAnnouncementsAsSeen(peer1, List.of(transaction1.getHash()));
+
+    // Queue transaction1 for full broadcast to the same peer
+    transactionTracker.addToPeerSendQueue(peer1, List.of(transaction1));
+
+    messageSender.sendTransactionsToPeer(peer1);
+
+    // peer1 must not receive the full transaction — already announced
+    verifyNoInteractions(peer1);
   }
 
   private MessageData transactionsMessageContaining(final Transaction... transactions) {

@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.SequencedSet;
@@ -52,6 +51,7 @@ public class PeerTransactionTracker
   private final EthPeers ethPeers;
   private final EthScheduler ethScheduler;
   private final int maxTrackedSeenTxsPerPeer;
+  private final int maxSendQueueSizePerPeer;
   private final boolean forgetEvictedTxsEnabled;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new HashMap<>();
   private final Map<EthPeer, Set<Hash>> seenAnnouncements = new HashMap<>();
@@ -61,7 +61,7 @@ public class PeerTransactionTracker
   private final Map<EthPeer, SequencedSet<Hash>> transactionAnnouncementsToRequest =
       new HashMap<>();
   private final Set<Hash> inProgressAnnouncements = new HashSet<>();
-  private final Set<Hash> recentlyConfirmedTransactions = createSeenSet();
+  private final Set<Hash> recentlyConfirmedTransactions;
 
   public PeerTransactionTracker(
       final TransactionPoolConfiguration txPoolConfig,
@@ -70,7 +70,9 @@ public class PeerTransactionTracker
     this.ethPeers = ethPeers;
     this.ethScheduler = scheduler;
     this.maxTrackedSeenTxsPerPeer = txPoolConfig.getUnstable().getMaxTrackedSeenTxsPerPeer();
+    this.maxSendQueueSizePerPeer = txPoolConfig.getUnstable().getMaxSendQueueSizePerPeer();
     this.forgetEvictedTxsEnabled = txPoolConfig.getUnstable().getPeerTrackerForgetEvictedTxs();
+    this.recentlyConfirmedTransactions = createBoundedSet(maxTrackedSeenTxsPerPeer);
     ethScheduler.scheduleFutureTaskWithFixedDelay(
         this::logStats, Duration.ofMinutes(1), Duration.ofMinutes(1));
   }
@@ -107,7 +109,9 @@ public class PeerTransactionTracker
 
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Hash> seenHashes) {
-    seenTransactions.computeIfAbsent(peer, key -> createSeenSet()).addAll(seenHashes);
+    seenTransactions
+        .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
+        .addAll(seenHashes);
     transactionAnnouncementsToRequest
         .values()
         .forEach(hashes -> seenHashes.forEach(hashes::remove));
@@ -116,25 +120,31 @@ public class PeerTransactionTracker
   public synchronized void markTransactionAsSeen(
       final EthPeer peer, final Transaction transaction) {
     final var seenHash = transaction.getHash();
-    seenTransactions.computeIfAbsent(peer, key -> createSeenSet()).add(seenHash);
+    seenTransactions
+        .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
+        .add(seenHash);
     transactionAnnouncementsToRequest.values().forEach(hashes -> hashes.remove(seenHash));
   }
 
   public synchronized void markTransactionAnnouncementsAsSeen(
       final EthPeer peer, final Collection<Hash> announcements) {
-    seenAnnouncements.computeIfAbsent(peer, key -> createSeenSet()).addAll(announcements);
+    seenAnnouncements
+        .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
+        .addAll(announcements);
     // do not clean transactionAnnouncementsToRequest to allow for retries with other peers
   }
 
   public synchronized void addToPeerSendQueue(
       final EthPeer peer, final List<Transaction> transactions) {
-    transactionsToSend.computeIfAbsent(peer, key -> new LinkedHashSet<>()).addAll(transactions);
+    transactionsToSend
+        .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
+        .addAll(transactions);
   }
 
   public synchronized void addToPeerAnnouncementsSendQueue(
       final EthPeer peer, final List<Transaction> transactions) {
     transactionAnnouncementsToSend
-        .computeIfAbsent(peer, key -> new LinkedHashSet<>())
+        .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
         .addAll(transactions);
   }
 
@@ -178,7 +188,7 @@ public class PeerTransactionTracker
           inProgressAnnouncements.add(hash);
           itAnnouncements.remove();
         }
-        // if announcement not in progress, then keep in the queue, since it could be
+        // if announcement is in progress, then keep in the queue, since it could be
         // tried later if the current in progress retrieval should fail
       }
       return returnAnnouncements;
@@ -214,7 +224,7 @@ public class PeerTransactionTracker
     markTransactionAnnouncementsAsSeen(peer, incomingTransactionAnnouncements);
 
     transactionAnnouncementsToRequest
-        .computeIfAbsent(peer, key -> new LinkedHashSet<>())
+        .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
         .addAll(freshAnnouncements);
 
     return freshAnnouncements;
@@ -274,12 +284,12 @@ public class PeerTransactionTracker
     return seenAnnouncementsForPeer != null && seenAnnouncementsForPeer.contains(txHash);
   }
 
-  private <T> Set<T> createSeenSet() {
-    return Collections.newSetFromMap(
+  private <T> SequencedSet<T> createBoundedSet(final int maxSize) {
+    return Collections.newSequencedSetFromMap(
         new LinkedHashMap<>(16, 0.75f, true) {
           @Override
           protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
-            return size() > maxTrackedSeenTxsPerPeer;
+            return size() > maxSize;
           }
         });
   }

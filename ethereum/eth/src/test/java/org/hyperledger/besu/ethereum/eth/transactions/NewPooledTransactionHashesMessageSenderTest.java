@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.Sets;
 import org.junit.jupiter.api.BeforeEach;
@@ -128,6 +129,32 @@ public class NewPooledTransactionHashesMessageSenderTest {
         .hasSizeBetween(
             expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
 
+    assertThat(Sets.union(firstBatch, secondBatch))
+        .containsExactlyInAnyOrderElementsOf(toHashList(transactions));
+  }
+
+  @Test
+  public void shouldNotDropAnnouncementAtExactBatchBoundary() throws Exception {
+    // MAX_TRANSACTIONS_HASHES + 1 forces exactly one full batch plus one leftover
+    final int batchSize = 4096;
+    final List<Transaction> transactions =
+        IntStream.range(0, batchSize + 1).mapToObj(unused -> generator.transaction()).toList();
+
+    transactions.forEach(
+        tx -> transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(tx)));
+
+    messageSender.sendTransactionAnnouncementsToPeer(peer1);
+
+    final ArgumentCaptor<MessageData> captor = ArgumentCaptor.forClass(MessageData.class);
+    verify(peer1, times(2)).send(captor.capture());
+
+    final List<MessageData> sentMessages = captor.getAllValues();
+    final Set<Hash> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
+    final Set<Hash> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
+
+    assertThat(firstBatch).hasSize(batchSize);
+    assertThat(secondBatch).hasSize(1);
+    // All transactions must be present — none dropped at the boundary
     assertThat(Sets.union(firstBatch, secondBatch))
         .containsExactlyInAnyOrderElementsOf(toHashList(transactions));
   }

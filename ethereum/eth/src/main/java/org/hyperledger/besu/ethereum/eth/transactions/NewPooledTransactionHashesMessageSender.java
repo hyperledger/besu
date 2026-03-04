@@ -47,18 +47,19 @@ class NewPooledTransactionHashesMessageSender {
     Transaction announcementToSend;
     while ((announcementToSend = transactionTracker.claimTransactionAnnouncementToSendToPeer(peer))
         != null) {
-      if (txBatch.size() < MAX_TRANSACTIONS_HASHES) {
-        if (!transactionTracker.hasPeerSeenTransaction(peer, announcementToSend)) {
-          txBatch.add(announcementToSend);
-        }
-      } else {
-        // send current batch and exit loop if told so
-        if (!send(peer, txBatch, capability)) break;
+      if (!transactionTracker.hasPeerSeenTransaction(peer, announcementToSend)) {
+        txBatch.add(announcementToSend);
+      }
 
+      if (txBatch.size() == MAX_TRANSACTIONS_HASHES) {
+        // send current batch and exit loop if peer no more connected
+        final boolean connectionLost = !send(peer, txBatch, capability);
         txBatch.clear();
+        if (connectionLost) break;
       }
     }
 
+    // send the last partial batch
     if (!txBatch.isEmpty()) {
       send(peer, txBatch, capability);
     }
