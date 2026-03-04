@@ -879,6 +879,31 @@ public class MessageFrame {
   }
 
   /**
+   * Consumes state gas, draining all available gas even when the full amount cannot be covered.
+   * Always increments stateGasUsed by the full amount regardless of gas availability. Used when a
+   * transaction-level (depth-0) contract creation fails after state gas has been partially
+   * committed: we must record the charge for block accounting even though execution fails.
+   *
+   * @param amount the amount of state gas to consume
+   * @return true if sufficient gas was available, false if gas was insufficient (but drained anyway)
+   */
+  public boolean consumeStateGasForced(final long amount) {
+    final long reservoir = txValues.stateGasReservoir().get();
+    if (reservoir >= amount) {
+      txValues.stateGasReservoir().set(reservoir - amount);
+      txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+      return true;
+    } else {
+      final long overflow = amount - reservoir;
+      txValues.stateGasReservoir().set(0L);
+      final boolean sufficient = gasRemaining >= overflow;
+      gasRemaining = Math.max(0L, gasRemaining - overflow);
+      txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+      return sufficient;
+    }
+  }
+
+  /**
    * Accumulates state gas that spilled into gasRemaining in a reverted child frame (EIP-8037). This
    * counter is NOT undone on revert — it tracks permanently burned spill gas for block accounting.
    *
