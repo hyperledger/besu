@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerRlpxPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.NettyConnectionInitializer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerConnectionGatekeeper;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -64,7 +64,7 @@ public class RlpxAgent {
   private final PeerConnectionEvents connectionEvents;
   private final ConnectionInitializer connectionInitializer;
   private final Subscribers<ConnectCallback> connectSubscribers = Subscribers.create();
-  private ShouldConnectCallback shouldConnectCallback;
+  private volatile PeerConnectionGatekeeper peerConnectionGatekeeper;
   private final PeerRlpxPermissions peerPermissions;
   private final PeerPrivileges peerPrivileges;
   private final AtomicBoolean started = new AtomicBoolean(false);
@@ -232,7 +232,7 @@ public class RlpxAgent {
     }
 
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
-    final Optional<DisconnectReason> maybeDisconnectReason = checkWhetherToConnect(peer, false);
+    final Optional<DisconnectReason> maybeDisconnectReason = gatePeerConnection(peer, false);
 
     if (maybeDisconnectReason.isEmpty()) {
       try {
@@ -267,10 +267,9 @@ public class RlpxAgent {
     return peerConnectionCompletableFuture;
   }
 
-  private Optional<DisconnectReason> checkWhetherToConnect(
-      final Peer peer, final boolean incoming) {
-    return shouldConnectCallback != null
-        ? shouldConnectCallback.shouldConnect(peer, incoming)
+  private Optional<DisconnectReason> gatePeerConnection(final Peer peer, final boolean incoming) {
+    return peerConnectionGatekeeper != null
+        ? peerConnectionGatekeeper.checkPeerConnection(peer, incoming)
         : Optional.empty();
   }
 
@@ -347,7 +346,7 @@ public class RlpxAgent {
       return;
     }
 
-    final Optional<DisconnectReason> maybeDisconnectReason = checkWhetherToConnect(peer, true);
+    final Optional<DisconnectReason> maybeDisconnectReason = gatePeerConnection(peer, true);
     if (maybeDisconnectReason.isEmpty()) {
       dispatchConnect(peerConnection);
     } else {
@@ -363,8 +362,8 @@ public class RlpxAgent {
     connectSubscribers.subscribe(callback);
   }
 
-  public void setShouldConnectCallback(final ShouldConnectCallback callback) {
-    this.shouldConnectCallback = callback;
+  public void setPeerConnectionGatekeeper(final PeerConnectionGatekeeper gatekeeper) {
+    this.peerConnectionGatekeeper = gatekeeper;
   }
 
   public void subscribeDisconnect(final DisconnectCallback callback) {

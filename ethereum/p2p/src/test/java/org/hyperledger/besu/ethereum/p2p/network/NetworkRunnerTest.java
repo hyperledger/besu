@@ -88,8 +88,8 @@ public class NetworkRunnerTest {
     when(network.isListening()).thenReturn(true);
     when(network.getRlpxAgent()).thenReturn(Optional.empty());
 
-    BiFunction<Peer, Boolean, Optional<DisconnectMessage.DisconnectReason>> ethPeersShouldConnect =
-        (peer, incoming) -> Optional.empty();
+    BiFunction<Peer, Boolean, Optional<DisconnectMessage.DisconnectReason>>
+        peerConnectionGatekeeper = (peer, incoming) -> Optional.empty();
 
     NetworkRunner.NetworkBuilder networkBuilder = caps -> network;
 
@@ -99,7 +99,7 @@ public class NetworkRunnerTest {
             .subProtocols(subProtocol)
             .network(networkBuilder)
             .metricsSystem(metricsSystem)
-            .ethPeersShouldConnect(ethPeersShouldConnect)
+            .peerConnectionGatekeeper(peerConnectionGatekeeper)
             .build();
   }
 

@@ -220,7 +220,7 @@ public class TestNode implements Closeable {
         NetworkRunner.builder()
             .subProtocols(EthProtocol.get())
             .protocolManagers(singletonList(ethProtocolManager))
-            .ethPeersShouldConnect((p, d) -> Optional.empty())
+            .peerConnectionGatekeeper((p, d) -> Optional.empty())
             .network(
                 capabilities ->
                     createP2PNetwork(

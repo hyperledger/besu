@@ -79,10 +79,10 @@ public class P2PNetworkTest {
         final P2PNetwork connector = createP2PNetwork(NodeKeyUtils.generate())) {
       listener
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
       connector
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
 
       listener.start();
       connector.start();
@@ -107,10 +107,10 @@ public class P2PNetworkTest {
         final P2PNetwork connector = createP2PNetwork(NodeKeyUtils.generate())) {
       listener
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
       connector
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
 
       listener.start();
       connector.start();
@@ -148,10 +148,10 @@ public class P2PNetworkTest {
         final P2PNetwork connector = createP2PNetwork(connectorNodeKey, List.of(cap2))) {
       listener
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
       connector
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
 
       listener.start();
       connector.start();
@@ -173,10 +173,10 @@ public class P2PNetworkTest {
         final P2PNetwork remoteNetwork = createP2PNetwork()) {
       localNetwork
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
       remoteNetwork
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
 
       localNetwork.start();
       remoteNetwork.start();
@@ -226,10 +226,10 @@ public class P2PNetworkTest {
         final P2PNetwork remoteNetwork = createP2PNetwork()) {
       localNetwork
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
       remoteNetwork
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback((p, d) -> Optional.empty()));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper((p, d) -> Optional.empty()));
 
       localNetwork.start();
       remoteNetwork.start();

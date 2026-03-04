@@ -201,7 +201,8 @@ public class NetworkRunner implements AutoCloseable {
     List<ProtocolManager> protocolManagers = new ArrayList<>();
     List<SubProtocol> subProtocols = new ArrayList<>();
     MetricsSystem metricsSystem;
-    private BiFunction<Peer, Boolean, Optional<DisconnectReason>> ethPeersShouldConnect;
+    private BiFunction<Peer, Boolean, Optional<DisconnectReason>> peerConnectionGatekeeper =
+        (peer, incoming) -> Optional.empty();
 
     public NetworkRunner build() {
       final Map<String, SubProtocol> subProtocolMap = new HashMap<>();
@@ -221,7 +222,7 @@ public class NetworkRunner implements AutoCloseable {
       final P2PNetwork network = networkProvider.build(caps);
       network
           .getRlpxAgent()
-          .ifPresent(agent -> agent.setShouldConnectCallback(ethPeersShouldConnect::apply));
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper(peerConnectionGatekeeper::apply));
       return new NetworkRunner(network, subProtocolMap, protocolManagers, metricsSystem);
     }
 
@@ -250,9 +251,9 @@ public class NetworkRunner implements AutoCloseable {
       return this;
     }
 
-    public Builder ethPeersShouldConnect(
-        final BiFunction<Peer, Boolean, Optional<DisconnectReason>> shouldConnect) {
-      this.ethPeersShouldConnect = shouldConnect;
+    public Builder peerConnectionGatekeeper(
+        final BiFunction<Peer, Boolean, Optional<DisconnectReason>> gatekeeper) {
+      this.peerConnectionGatekeeper = gatekeeper;
       return this;
     }
   }

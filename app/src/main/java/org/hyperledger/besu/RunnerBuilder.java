@@ -806,7 +806,7 @@ public class RunnerBuilder {
             .subProtocols(subProtocols)
             .network(p2pEnabled ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
-            .ethPeersShouldConnect(ethPeers::shouldTryToConnect)
+            .peerConnectionGatekeeper(ethPeers::gatePeerConnection)
             .build();
 
     networkRunner.getRlpxAgent().ifPresent(ethPeers::setRlpxAgent);

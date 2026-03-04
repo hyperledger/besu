@@ -424,7 +424,7 @@ public class EthPeers implements PeerSelector {
         .filter(c -> !c.isDisconnected());
   }
 
-  public Optional<DisconnectReason> shouldTryToConnect(final Peer peer, final boolean inbound) {
+  public Optional<DisconnectReason> gatePeerConnection(final Peer peer, final boolean inbound) {
 
     if (peer.getForkId().isPresent()) {
       final ForkId forkId = peer.getForkId().get();
