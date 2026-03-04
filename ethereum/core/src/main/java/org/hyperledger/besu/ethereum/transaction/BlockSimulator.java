@@ -453,7 +453,8 @@ public class BlockSimulator {
     final boolean hasGasPrice = callParameter.getGasPrice().isPresent();
     final boolean hasMaxFeePerGas = callParameter.getMaxFeePerGas().isPresent();
     final boolean hasMaxPriorityFeePerGas = callParameter.getMaxPriorityFeePerGas().isPresent();
-    final boolean hasMaxFeePerBlobGas = callParameter.getMaxFeePerBlobGas().isPresent();
+    final boolean hasMaxFeePerBlobGas =
+        original.getType().supportsBlob() && callParameter.getMaxFeePerBlobGas().isPresent();
 
     if (!hasGasPrice && !hasMaxFeePerGas && !hasMaxPriorityFeePerGas && !hasMaxFeePerBlobGas) {
       return result;
@@ -463,7 +464,9 @@ public class BlockSimulator {
     callParameter.getGasPrice().ifPresent(builder::gasPrice);
     callParameter.getMaxFeePerGas().ifPresent(builder::maxFeePerGas);
     callParameter.getMaxPriorityFeePerGas().ifPresent(builder::maxPriorityFeePerGas);
-    callParameter.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
+    if (original.getType().supportsBlob()) {
+      callParameter.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
+    }
 
     return new TransactionSimulatorResult(builder.build(), result.result());
   }
