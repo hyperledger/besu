@@ -2558,7 +2558,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           } else if (resolvedBootNodeArgs.stream().allMatch((b) -> b.startsWith("enode:"))) {
             listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
           } else {
-            throw new ParameterException(commandLine, "Unable to mix enode and ENR bootnodes");
+            throw new ParameterException(
+                commandLine,
+                "Supplied bootnodes must be either all enode or all ENR. "
+                    + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. "
+                    + "ENR URL should have the following format 'enr:<base64Enr>'");
           }
         } else {
           listBootNodes = Collections.emptyList();
@@ -2580,7 +2584,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         } else if (bootNodesFromGenesis.get().stream().allMatch((b) -> b.startsWith("enode:"))) {
           listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
         } else {
-          throw new ParameterException(commandLine, "Unable to mix enode and ENR bootnodes");
+          throw new ParameterException(
+              commandLine, "Supplied bootnodes must be either all enode or all ENR.");
         }
       }
     }

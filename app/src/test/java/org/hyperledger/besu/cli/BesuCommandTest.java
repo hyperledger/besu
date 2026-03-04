@@ -990,8 +990,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--bootnodes", "invalid_enode_url");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
-        "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
-            + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
+        "Supplied bootnodes must be either all enode or all ENR. "
+            + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. "
+            + "ENR URL should have the following format 'enr:<base64Enr>'";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
@@ -1015,8 +1016,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--bootnodes=invalid_enode_url");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     final String expectedErrorOutputStart =
-        "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
-            + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
+        "Supplied bootnodes must be either all enode or all ENR. "
+            + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. "
+            + "ENR URL should have the following format 'enr:<base64Enr>'";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
