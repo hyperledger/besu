@@ -72,14 +72,14 @@ class DebugOperationTracerTest {
         }
       };
   private final Operation MSTORE_OPERATION =
-          new AbstractOperation(0x52, "MSTORE", 2, 0, null) {
-            @Override
-            public OperationResult execute(final MessageFrame frame, final EVM evm) {
-              // explicitMemoryUpdate=true simulates what MSTORE does in the real EVM
-              frame.writeMemory(0L, 32, WORD_2, true);
-              return new OperationResult(3L, null);
-            }
-          };
+      new AbstractOperation(0x52, "MSTORE", 2, 0, null) {
+        @Override
+        public OperationResult execute(final MessageFrame frame, final EVM evm) {
+          // explicitMemoryUpdate=true simulates what MSTORE does in the real EVM
+          frame.writeMemory(0L, 32, WORD_2, true);
+          return new OperationResult(3L, null);
+        }
+      };
 
   private final CallOperation callOperation = new CallOperation(new CancunGasCalculator());
 
@@ -385,7 +385,6 @@ class DebugOperationTracerTest {
     final DebugOperationTracer tracer = createDebugOperationTracerWithMemory();
     final MessageFrame parentFrame = validMessageFrameWithInitiatedMemory(WORD_1);
 
-    // Parent executes CALL (empty operand stack → UNDERFLOW_RESPONSE, frame memory unchanged)
     traceFrame(parentFrame, tracer, callOperation);
 
     // Child frame enters at depth 1
@@ -441,9 +440,7 @@ class DebugOperationTracerTest {
   }
 
   private void traceFrame(
-          final MessageFrame frame,
-          final DebugOperationTracer tracer,
-          final Operation operation) {
+      final MessageFrame frame, final DebugOperationTracer tracer, final Operation operation) {
     frame.setCurrentOperation(operation);
     tracer.tracePreExecution(frame);
     OperationResult operationResult = operation.execute(frame, null);
@@ -507,11 +504,11 @@ class DebugOperationTracerTest {
 
   private static DebugOperationTracer createDebugOperationTracerWithMemory() {
     final OpCodeTracerConfig config =
-            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
-                    .traceMemory(true)
-                    .traceStack(false)
-                    .traceStorage(false)
-                    .build();
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceMemory(true)
+            .traceStack(false)
+            .traceStorage(false)
+            .build();
     return new DebugOperationTracer(config, false);
   }
 }
