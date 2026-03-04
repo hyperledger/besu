@@ -36,6 +36,7 @@ import org.hyperledger.besu.nat.NatService;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
@@ -107,12 +108,15 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       final List<SubnetInfo> allowedSubnets,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager) {
-    this.config = config;
-    this.nodeKey = nodeKey;
-    this.peerPermissions = peerPermissions;
-    this.allowedSubnets = List.copyOf(allowedSubnets);
-    this.forkIdManager = forkIdManager;
-    this.nodeRecordManager = nodeRecordManager;
+    this.config = Objects.requireNonNull(config, "config must not be null");
+    this.nodeKey = Objects.requireNonNull(nodeKey, "nodeKey must not be null");
+    this.peerPermissions =
+        Objects.requireNonNull(peerPermissions, "peerPermissions must not be null");
+    this.allowedSubnets =
+        List.copyOf(Objects.requireNonNull(allowedSubnets, "allowedSubnets must not be null"));
+    this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
+    this.nodeRecordManager =
+        Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
   }
 
   /**
@@ -245,7 +249,8 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         }
 
         try {
-          final Optional<Peer> localNode = nodeRecordManager.getLocalNode().map(p -> p);
+          // .map(Peer.class::cast) widens Optional<DiscoveryPeerV4> to Optional<Peer>
+          final Optional<Peer> localNode = nodeRecordManager.getLocalNode().map(Peer.class::cast);
           if (localNode.isEmpty()) {
             // During startup the local node may not be initialized yet; allow through
             return true;
@@ -256,7 +261,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
           return peerPermissions.isPermitted(
               localNode.get(), remotePeer, PeerPermissions.Action.DISCOVERY_ALLOW_IN_PEER_TABLE);
         } catch (final Exception e) {
-          LOG.trace("DiscV5: Rejecting peer with malformed NodeRecord: {}", e.getMessage());
+          LOG.trace("DiscV5: Rejecting peer with malformed NodeRecord", e);
           return false;
         }
       }
