@@ -885,7 +885,8 @@ public class MessageFrame {
    * committed: we must record the charge for block accounting even though execution fails.
    *
    * @param amount the amount of state gas to consume
-   * @return true if sufficient gas was available, false if gas was insufficient (but drained anyway)
+   * @return true if sufficient gas was available, false if gas was insufficient (but drained
+   *     anyway)
    */
   public boolean consumeStateGasForced(final long amount) {
     final long reservoir = txValues.stateGasReservoir().get();

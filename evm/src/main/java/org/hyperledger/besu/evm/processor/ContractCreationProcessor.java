@@ -253,7 +253,8 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             failCodeDepositWithoutRollback(frame, operationTracer, haltReason);
             return;
           }
-          // Insufficient state gas or no state gas (non-EIP-8037): fall through to EXCEPTIONAL_HALT.
+          // Insufficient state gas or no state gas (non-EIP-8037): fall through to
+          // EXCEPTIONAL_HALT.
         }
         final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
         frame.setExceptionalHaltReason(exceptionalHaltReason);
@@ -264,9 +265,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   }
 
   /**
-   * Fails a depth-0 code deposit without triggering the normal EXCEPTIONAL_HALT rollback path.
-   * This preserves stateGasUsed for EIP-8037 block gas accounting. The world state is still
-   * reverted and all gas is cleared.
+   * Fails a depth-0 code deposit without triggering the normal EXCEPTIONAL_HALT rollback path. This
+   * preserves stateGasUsed for EIP-8037 block gas accounting. The world state is still reverted and
+   * all gas is cleared.
    *
    * @param frame the message frame
    * @param operationTracer the operation tracer
