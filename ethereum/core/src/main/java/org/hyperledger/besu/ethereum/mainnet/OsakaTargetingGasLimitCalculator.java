@@ -26,8 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(OsakaTargetingGasLimitCalculator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(OsakaTargetingGasLimitCalculator.class);
 
   /** The constant max number of blobs per transaction defined for Osaka */
   private static final int DEFAULT_MAX_BLOBS_PER_TRANSACTION = 6;
