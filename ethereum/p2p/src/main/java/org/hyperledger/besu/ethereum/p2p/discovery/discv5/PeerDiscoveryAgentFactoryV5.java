@@ -260,8 +260,8 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
                   record, config.discoveryConfiguration().isPreferIpv6Outbound());
           return peerPermissions.isPermitted(
               localNode.get(), remotePeer, PeerPermissions.Action.DISCOVERY_ALLOW_IN_PEER_TABLE);
-        } catch (final Exception e) {
-          LOG.trace("DiscV5: Rejecting peer with malformed NodeRecord", e);
+        } catch (final RuntimeException e) {
+          LOG.debug("DiscV5: Rejecting peer with malformed NodeRecord", e);
           return false;
         }
       }
