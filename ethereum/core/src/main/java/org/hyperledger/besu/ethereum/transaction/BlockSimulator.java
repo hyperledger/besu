@@ -494,10 +494,20 @@ public class BlockSimulator {
     var updater = ws.updater();
     for (Address accountToOverride : stateOverrideMap.keySet()) {
       final StateOverride override = stateOverrideMap.get(accountToOverride);
-      MutableAccount account = updater.getOrCreate(accountToOverride);
-      TransactionSimulator.applyOverrides(account, override);
+      if (hasAccountStateOverrides(override)) {
+        MutableAccount account = updater.getOrCreate(accountToOverride);
+        TransactionSimulator.applyOverrides(account, override);
+      }
     }
     updater.commit();
+  }
+
+  private boolean hasAccountStateOverrides(final StateOverride override) {
+    return override.getNonce().isPresent()
+        || override.getBalance().isPresent()
+        || override.getCode().isPresent()
+        || override.getState().isPresent()
+        || override.getStateDiff().isPresent();
   }
 
   /**
