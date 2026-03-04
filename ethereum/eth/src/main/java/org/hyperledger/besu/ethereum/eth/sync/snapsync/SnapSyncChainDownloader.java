@@ -23,13 +23,13 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.SingleBlockHeaderDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.common.ChainSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.common.ChainSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotUpdateListener;
+import org.hyperledger.besu.ethereum.eth.sync.common.SingleBlockHeaderDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.common.WorldStateHealFinishedListener;
+import org.hyperledger.besu.ethereum.eth.sync.common.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -144,7 +144,7 @@ public class SnapSyncChainDownloader
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState,
+      final PivotSyncState fastSyncState,
       final SyncDurationMetrics syncDurationMetrics,
       final Path fastSyncDataDirectory) {
 
@@ -294,6 +294,7 @@ public class SnapSyncChainDownloader
 
       LOG.info("Created initial chain sync state: {}", newState);
       chainSyncState.set(newState);
+      chainSyncStateStorage.storeState(newState);
       return CompletableFuture.completedFuture(newState);
     }
 
@@ -329,6 +330,7 @@ public class SnapSyncChainDownloader
 
               LOG.info("Created initial chain sync state: {}", newState);
               chainSyncState.set(newState);
+              chainSyncStateStorage.storeState(newState);
               return newState;
             });
   }
