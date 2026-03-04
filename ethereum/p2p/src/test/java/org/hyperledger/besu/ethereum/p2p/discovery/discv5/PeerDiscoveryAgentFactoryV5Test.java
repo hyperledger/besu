@@ -15,6 +15,10 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -137,6 +141,20 @@ class PeerDiscoveryAgentFactoryV5Test {
   }
 
   @Test
+  void rejectNodeRecordWithNoAddressWhenSubnetsConfigured() {
+    final SubnetInfo subnet = new SubnetUtils("10.0.0.0/8").getInfo();
+    final AddressAccessPolicy policy =
+        createFactory(PeerPermissions.NOOP, List.of(subnet)).createAddressAccessPolicy();
+
+    // A NodeRecord with no UDP or TCP address cannot be verified against subnets
+    final NodeRecord noAddressRecord = mock(NodeRecord.class);
+    when(noAddressRecord.getUdpAddress()).thenReturn(Optional.empty());
+    when(noAddressRecord.getTcpAddress()).thenReturn(Optional.empty());
+
+    assertThat(policy.allow(noAddressRecord)).isFalse();
+  }
+
+  @Test
   void allowInetSocketAddressInSubnet() {
     final SubnetInfo subnet = new SubnetUtils("192.168.1.0/24").getInfo();
     final AddressAccessPolicy policy =
@@ -148,17 +166,16 @@ class PeerDiscoveryAgentFactoryV5Test {
 
   @Test
   void rejectNodeRecordBySubnetBeforeCheckingPermissions() {
-    // Subnet check rejects first — permissions should not be consulted.
-    // nodeRecordManager.getLocalNode() is not stubbed, so if permissions were reached
-    // the test would fail.
+    // Subnet check should reject first — permissions must not be consulted.
     final SubnetInfo subnet = new SubnetUtils("10.0.0.0/8").getInfo();
-    final PeerPermissions rejectAll = rejectAllPermissions();
+    final PeerPermissions mockPermissions = mock(PeerPermissions.class);
 
     final AddressAccessPolicy policy =
-        createFactory(rejectAll, List.of(subnet)).createAddressAccessPolicy();
+        createFactory(mockPermissions, List.of(subnet)).createAddressAccessPolicy();
 
     // 15.204.180.57 is outside 10.0.0.0/8 — rejected by subnet before permissions
     assertThat(policy.allow(testNodeRecord)).isFalse();
+    verify(mockPermissions, never()).isPermitted(any(), any(), any());
   }
 
   @Test

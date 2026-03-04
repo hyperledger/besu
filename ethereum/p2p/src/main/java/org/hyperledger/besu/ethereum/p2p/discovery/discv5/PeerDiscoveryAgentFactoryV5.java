@@ -110,7 +110,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
     this.config = config;
     this.nodeKey = nodeKey;
     this.peerPermissions = peerPermissions;
-    this.allowedSubnets = allowedSubnets;
+    this.allowedSubnets = List.copyOf(allowedSubnets);
     this.forkIdManager = forkIdManager;
     this.nodeRecordManager = nodeRecordManager;
   }
@@ -222,10 +222,20 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
 
       @Override
       public boolean allow(final NodeRecord record) {
-        // First apply subnet check via the default delegation to allow(InetSocketAddress)
         if (hasSubnetRestrictions) {
-          final boolean subnetAllowed = record.getTcpAddress().map(this::allow).orElse(true);
-          if (!subnetAllowed) {
+          final Optional<InetSocketAddress> udpAddress = record.getUdpAddress();
+          final Optional<InetSocketAddress> tcpAddress = record.getTcpAddress();
+
+          // If no address is present, we cannot verify subnet membership: reject.
+          if (udpAddress.isEmpty() && tcpAddress.isEmpty()) {
+            return false;
+          }
+
+          if (udpAddress.isPresent() && !this.allow(udpAddress.get())) {
+            return false;
+          }
+
+          if (tcpAddress.isPresent() && !this.allow(tcpAddress.get())) {
             return false;
           }
         }
