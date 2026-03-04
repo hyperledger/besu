@@ -439,8 +439,7 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (syncMode != null) {
-      lines.add(
-          "Sync mode: " + syncMode + (syncMode.equalsIgnoreCase("FAST") ? " (Deprecated)" : ""));
+      lines.add("Sync mode: " + syncMode);
     }
 
     if (syncMinPeers != null) {

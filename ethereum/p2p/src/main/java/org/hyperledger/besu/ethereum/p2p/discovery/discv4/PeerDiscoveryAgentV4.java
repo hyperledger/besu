@@ -20,6 +20,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
@@ -101,7 +102,9 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
 
     this.peerPermissions = peerPermissions;
     this.bootstrapPeers =
-        config.getBootnodes().stream().map(DiscoveryPeerV4::fromEnode).collect(Collectors.toList());
+        config.getEnodeBootnodes().stream()
+            .map(DiscoveryPeerV4::fromEnode)
+            .collect(Collectors.toList());
 
     this.config = config;
     this.nodeKey = nodeKey;
@@ -140,7 +143,8 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
                 // Once listener is set up, finish initializing
                 final int discoveryPort = localAddress.getPort();
                 nodeRecordManager.initializeLocalNode(
-                    config.getAdvertisedHost(), discoveryPort, tcpPort);
+                    new HostEndpoint(config.getAdvertisedHost(), discoveryPort, tcpPort),
+                    Optional.empty());
                 startController(
                     nodeRecordManager
                         .getLocalNode()
@@ -322,7 +326,7 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
     checkArgument(
         config.getBindPort() == 0 || NetworkUtility.isValidPort(config.getBindPort()),
         "valid port number required");
-    checkArgument(config.getBootnodes() != null, "bootstrapPeers cannot be null");
+    checkArgument(config.getEnodeBootnodes() != null, "bootstrapPeers cannot be null");
     checkArgument(config.getBucketSize() > 0, "bucket size cannot be negative nor zero");
   }
 

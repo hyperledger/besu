@@ -15,8 +15,8 @@
 package org.hyperledger.besu.evm.log;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.BURN_TOPIC;
 import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.EIP7708_SYSTEM_ADDRESS;
-import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.SELFDESTRUCT_TOPIC;
 import static org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter.TRANSFER_TOPIC;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -119,18 +119,18 @@ class EIP7708TransferLogEmitterTest {
   }
 
   @Test
-  void selfdestructTopicIsCorrect() {
-    // keccak256('Selfdestruct(address,uint256)')
-    assertThat(SELFDESTRUCT_TOPIC)
+  void burnTopicIsCorrect() {
+    // keccak256('Burn(address,uint256)')
+    assertThat(BURN_TOPIC)
         .isEqualTo(
             Bytes32.fromHexString(
-                "0x4bfaba3443c1a1836cd362418edc679fc96cae8449cbefccb6457cdf2c943083"));
+                "0xcc16f5dbb4873280815c1ee09dbd06736cffcc184412cf7a71a0fdb75d397ca5"));
   }
 
   @Test
-  void createSelfdestructLogHasCorrectStructure() {
+  void createBurnLogHasCorrectStructure() {
     final Wei value = Wei.of(1000);
-    final Log log = EIP7708TransferLogEmitter.createSelfdestructLog(SENDER, value);
+    final Log log = EIP7708TransferLogEmitter.createBurnLog(SENDER, value);
 
     // Logger should be the system address
     assertThat(log.getLogger()).isEqualTo(EIP7708_SYSTEM_ADDRESS);
@@ -139,8 +139,8 @@ class EIP7708TransferLogEmitterTest {
     final List<LogTopic> topics = log.getTopics();
     assertThat(topics).hasSize(2);
 
-    // First topic is the selfdestruct event signature
-    assertThat(topics.get(0)).isEqualTo(LogTopic.create(SELFDESTRUCT_TOPIC));
+    // First topic is the burn event signature
+    assertThat(topics.get(0)).isEqualTo(LogTopic.create(BURN_TOPIC));
 
     // Second topic is the closed address (zero-padded to 32 bytes)
     assertThat(topics.get(1)).isEqualTo(LogTopic.create(Bytes32.leftPad(SENDER.getBytes())));
@@ -188,7 +188,7 @@ class EIP7708TransferLogEmitterTest {
   }
 
   @Test
-  void emitSelfDestructLogEmitsSelfdestructLogWhenOriginatorEqualsBeneficiary() {
+  void emitSelfDestructLogEmitsBurnLogWhenOriginatorEqualsBeneficiary() {
     final MessageFrame frame = mock(MessageFrame.class);
     final Wei value = Wei.of(1000);
 
@@ -198,9 +198,9 @@ class EIP7708TransferLogEmitterTest {
     verify(frame).addLog(logCaptor.capture());
 
     final Log capturedLog = logCaptor.getValue();
-    // Should be a selfdestruct log (2 topics)
+    // Should be a burn log (2 topics)
     assertThat(capturedLog.getTopics()).hasSize(2);
-    assertThat(capturedLog.getTopics().get(0)).isEqualTo(LogTopic.create(SELFDESTRUCT_TOPIC));
+    assertThat(capturedLog.getTopics().get(0)).isEqualTo(LogTopic.create(BURN_TOPIC));
   }
 
   @Test

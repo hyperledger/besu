@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidatorRunner;
 import org.hyperledger.besu.ethereum.eth.sync.BlockBroadcaster;
 import org.hyperledger.besu.ethereum.eth.sync.BlockRangeBroadcaster;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
@@ -51,7 +50,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -110,8 +108,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     this.blockBroadcaster =
         new BlockBroadcaster(ethContext, ethereumWireProtocolConfiguration.getMaxMessageSize());
 
-    this.supportedCapabilities =
-        calculateCapabilities(synchronizerConfiguration, ethereumWireProtocolConfiguration);
+    this.supportedCapabilities = calculateCapabilities(ethereumWireProtocolConfiguration);
 
     subscribeBlockRangeBroadcaster(ethContext, blockchain);
 
@@ -173,19 +170,11 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private List<Capability> calculateCapabilities(
-      final SynchronizerConfiguration synchronizerConfiguration,
       final EthProtocolConfiguration ethProtocolConfiguration) {
     final List<Capability> capabilities = new ArrayList<>();
 
-    if (Objects.equals(SyncMode.FAST, synchronizerConfiguration.getSyncMode())) {
-      // Version 67 removes the GetNodeData and NodeData
-      // Fast sync depends on GetNodeData and NodeData
-      // see https://eips.ethereum.org/EIPS/eip-4938
-      capabilities.add(EthProtocol.ETH66);
-    } else {
-      capabilities.add(EthProtocol.ETH68);
-      capabilities.add(EthProtocol.ETH69);
-    }
+    capabilities.add(EthProtocol.ETH68);
+    capabilities.add(EthProtocol.ETH69);
     capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
     capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
 

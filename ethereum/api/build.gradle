@@ -34,6 +34,8 @@ dependencies {
   api 'org.slf4j:slf4j-api'
   api 'org.apache.logging.log4j:log4j-api'
 
+  compileOnly 'com.google.code.findbugs:jsr305'
+
   implementation project(':config')
   implementation project(':consensus:merge')
   implementation project(':crypto:services')
@@ -132,7 +134,9 @@ def dataPath = file("$buildDir/generated/data")
 def blocksBin = file("$buildDir/resources/test/org/hyperledger/besu/ethereum/api/jsonrpc/trace/chain-data/blocks.bin")
 
 tasks.register('importTestBlocks', JavaExec) {
-  onlyIf { !blocksBin.exists() }
+  inputs.dir(srcFiles)
+  inputs.files(configurations.testResourceGeneration)
+  outputs.dir(dataPath)
   mainClass = 'org.hyperledger.besu.Besu'
   classpath = configurations.testResourceGeneration
   args = [
@@ -147,12 +151,14 @@ tasks.register('importTestBlocks', JavaExec) {
   ]
   dependsOn processTestResources
   doFirst {
+    delete dataPath
     dataPath.mkdirs()
   }
 }
 
 tasks.register('exportTestBlocks', JavaExec) {
-  onlyIf { !blocksBin.exists() }
+  inputs.dir(dataPath)
+  outputs.file(blocksBin)
   mainClass = 'org.hyperledger.besu.Besu'
   classpath = configurations.testResourceGeneration
   args = [
@@ -169,8 +175,6 @@ tasks.register('exportTestBlocks', JavaExec) {
 }
 
 tasks.register('generateTestBlockchain') {
-  inputs.dir(srcFiles)
-  outputs.file(blocksBin)
   dependsOn exportTestBlocks
 }
 test.dependsOn(generateTestBlockchain)

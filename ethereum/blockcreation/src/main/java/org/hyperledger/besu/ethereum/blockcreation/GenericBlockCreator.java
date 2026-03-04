@@ -25,8 +25,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 /**
- * A consensus-agnostic block creator that produces blocks with zero difficulty and zero nonce.
- * Suitable for testing and block building outside of any specific consensus mechanism.
+ * A generic block creator that produces blocks with zero difficulty and zero nonce. Suitable for
+ * block assembly contexts (such as JSON block import) that do not require consensus-specific
+ * sealing.
  */
 public class GenericBlockCreator extends AbstractBlockCreator {
 

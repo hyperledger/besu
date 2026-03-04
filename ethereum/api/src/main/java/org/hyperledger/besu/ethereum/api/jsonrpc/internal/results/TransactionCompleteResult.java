@@ -35,6 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
   "authorizationList",
   "blockHash",
   "blockNumber",
+  "blockTimestamp",
   "chainId",
   "from",
   "gas",
@@ -62,6 +63,9 @@ public class TransactionCompleteResult implements TransactionResult {
 
   private final String blockHash;
   private final String blockNumber;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String blockTimestamp;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String chainId;
@@ -104,6 +108,7 @@ public class TransactionCompleteResult implements TransactionResult {
         transaction.getAccessList().orElse(transactionType.supportsAccessList() ? List.of() : null);
     this.blockHash = tx.getBlockHash().get().toString();
     this.blockNumber = Quantity.create(tx.getBlockNumber().get());
+    this.blockTimestamp = tx.getBlockTimestamp().map(Quantity::create).orElse(null);
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
@@ -168,6 +173,11 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return blockNumber;
+  }
+
+  @JsonGetter(value = "blockTimestamp")
+  public String getBlockTimestamp() {
+    return blockTimestamp;
   }
 
   @JsonGetter(value = "chainId")
