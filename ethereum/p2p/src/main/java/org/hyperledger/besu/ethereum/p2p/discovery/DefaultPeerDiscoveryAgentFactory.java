@@ -143,7 +143,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
     }
 
     public Builder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
-      this.allowedSubnets = allowedSubnets;
+      this.allowedSubnets = allowedSubnets == null ? List.of() : allowedSubnets;
       return this;
     }
 
