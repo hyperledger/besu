@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -112,10 +113,12 @@ class Eip8037RegularGasLimitTest {
     doAnswer(
             invocation -> {
               final MessageFrame frame = invocation.getArgument(0);
-              // Consume all gas: totalConsumed = 20M
+              // Simulate EXCEPTIONAL_HALT (e.g. ran out of gas mid-execution).
+              // Setting the halt reason causes MTP to zero the state gas reservoir,
+              // so totalConsumed = txGasLimit - 0 - 0 = 20M (instead of 20M - reservoir).
+              frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
               frame.setGasRemaining(0);
-              // Add state gas: stateGas = 2M
-              // regularConsumed = 20M - 2M = 18M > TX_MAX_GAS_LIMIT (16,777,216)
+              // stateGas = 2M; regularConsumed = 20M - 2M = 18M > TX_MAX_GAS_LIMIT (16,777,216)
               frame.incrementStateGasUsed(2_000_000L);
               frame.getMessageFrameStack().pop();
               return null;
