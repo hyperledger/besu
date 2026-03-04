@@ -53,7 +53,9 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.testutil.BlockTestUtil.ChainResources;
 
 import java.math.BigInteger;
@@ -71,6 +73,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
@@ -90,7 +93,8 @@ public abstract class AbstractJsonRpcHttpServiceTest {
           RpcApis.NET.name(),
           RpcApis.WEB3.name(),
           RpcApis.DEBUG.name(),
-          RpcApis.TRACE.name());
+          RpcApis.TRACE.name(),
+          RpcApis.TESTING.name());
 
   protected final Vertx vertx = Vertx.vertx();
   protected final Vertx syncVertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
@@ -154,7 +158,15 @@ public abstract class AbstractJsonRpcHttpServiceTest {
         .thenReturn(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
 
     when(miningConfiguration.getCoinbase()).thenReturn(Optional.of(Address.ZERO));
-
+    when(miningConfiguration.getExtraData()).thenReturn(Bytes.EMPTY);
+    final TransactionSelectionService transactionSelectionService =
+        mock(TransactionSelectionService.class);
+    when(miningConfiguration.getTransactionSelectionService())
+        .thenReturn(transactionSelectionService);
+    when(transactionSelectionService.createPluginTransactionSelector(any()))
+        .thenReturn(PluginTransactionSelector.ACCEPT_ALL);
+    when(protocolContext.getBlockchain()).thenReturn(blockchainSetupUtil.getBlockchain());
+    when(protocolContext.getWorldStateArchive()).thenReturn(blockchainSetupUtil.getWorldArchive());
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
             blockchainSetupUtil.getProtocolSchedule(),
