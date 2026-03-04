@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import com.google.common.collect.HashBasedTable;
@@ -816,7 +815,7 @@ public class MessageFrame {
    * @param amount The amount of state gas to add
    */
   public void incrementStateGasUsed(final long amount) {
-    txValues.stateGasUsed().addAndGet(amount);
+    txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
   }
 
   /**
@@ -852,7 +851,7 @@ public class MessageFrame {
    * @param amount the amount to add to the reservoir
    */
   public void incrementStateGasReservoir(final long amount) {
-    txValues.stateGasReservoir().addAndGet(amount);
+    txValues.stateGasReservoir().set(txValues.stateGasReservoir().get() + amount);
   }
 
   /**
@@ -865,7 +864,7 @@ public class MessageFrame {
   public boolean consumeStateGas(final long amount) {
     final long reservoir = txValues.stateGasReservoir().get();
     if (reservoir >= amount) {
-      txValues.stateGasReservoir().addAndGet(-amount);
+      txValues.stateGasReservoir().set(reservoir - amount);
     } else {
       // Overflow goes to gasRemaining
       final long overflow = amount - reservoir;
@@ -875,14 +874,52 @@ public class MessageFrame {
       txValues.stateGasReservoir().set(0L);
       gasRemaining -= overflow;
     }
-    txValues.stateGasUsed().addAndGet(amount);
+    txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
     return true;
   }
 
-  /** Clears both gasRemaining and the state gas reservoir. Used on exceptional halt. */
+  /**
+   * Accumulates state gas that spilled into gasRemaining in a reverted child frame (EIP-8037). This
+   * counter is NOT undone on revert — it tracks permanently burned spill gas for block accounting.
+   *
+   * @param amount the spill amount to accumulate
+   */
+  public void accumulateStateGasSpillBurned(final long amount) {
+    txValues.stateGasSpillBurned()[0] += amount;
+  }
+
+  /**
+   * Returns the total state gas spill burned by reverted child frames (EIP-8037).
+   *
+   * @return accumulated spill burned
+   */
+  public long getStateGasSpillBurned() {
+    return txValues.stateGasSpillBurned()[0];
+  }
+
+  /**
+   * Accumulates regular gas burned by a CREATE child frame that halted before executing code
+   * (address collision). NOT undone on revert — excluded from block gas accounting but still
+   * charged for fee purposes.
+   *
+   * @param amount the collision gas amount to accumulate
+   */
+  public void accumulateRegularGasCollisionBurned(final long amount) {
+    txValues.regularGasCollisionBurned()[0] += amount;
+  }
+
+  /**
+   * Returns accumulated regular gas burned by pre-execution CREATE collision halts.
+   *
+   * @return accumulated collision gas burned
+   */
+  public long getRegularGasCollisionBurned() {
+    return txValues.regularGasCollisionBurned()[0];
+  }
+
+  /** Clears gasRemaining. State gas reservoir is handled by undo on revert for child frames. */
   public void clearAllGas() {
     this.gasRemaining = 0L;
-    txValues.stateGasReservoir().set(0L);
   }
 
   /**
@@ -1727,8 +1764,10 @@ public class MessageFrame {
                 UndoSet.of(new HashSet<>(Address.SIZE)),
                 UndoSet.of(new HashSet<>(Address.SIZE)),
                 new UndoScalar<>(0L),
-                new AtomicLong(0L),
-                new AtomicLong(0L));
+                new UndoScalar<>(0L),
+                new UndoScalar<>(0L),
+                new long[] {0L},
+                new long[] {0L});
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

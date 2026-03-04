@@ -96,6 +96,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
 
+    // EIP-8037: Charge state gas for CREATE operation (new account creation: 112 * cpsb)
+    // Charged before balance/depth checks — state gas is consumed even on soft failure.
+    if (!gasCalculator().stateGasCostCalculator().chargeCreateStateGas(frame)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     final boolean insufficientBalance = value.compareTo(account.getBalance()) > 0;
     final boolean maxDepthReached = frame.getDepth() >= 1024;
     final boolean invalidState = account.getNonce() == -1 || code == null;
@@ -112,11 +118,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     account.incrementNonce();
     frame.decrementRemainingGas(cost);
-
-    // EIP-8037: Charge state gas for CREATE operation (new account creation: 112 * cpsb)
-    if (!gasCalculator().stateGasCostCalculator().chargeCreateStateGas(frame)) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
 
     spawnChildMessage(frame, code);
     frame.incrementRemainingGas(cost);

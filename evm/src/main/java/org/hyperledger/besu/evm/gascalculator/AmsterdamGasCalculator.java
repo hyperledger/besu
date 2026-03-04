@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -103,6 +104,11 @@ public class AmsterdamGasCalculator extends OsakaGasCalculator {
   }
 
   @Override
+  protected long txCreateExtraGasCost() {
+    return TX_CREATE_COST;
+  }
+
+  @Override
   public long codeDepositGasCost(final int codeSize) {
     // 6 * ceil(codeSize / 32) — hash cost only; state portion (cpsb * codeSize) charged separately
     return stateGasCostCalc.codeDepositHashGas(codeSize);
@@ -160,6 +166,32 @@ public class AmsterdamGasCalculator extends OsakaGasCalculator {
   public long calculateDelegateCodeGasRefund(final long alreadyExistingAccounts) {
     // No refund needed — regular cost is lower, state gas uses its own refund path
     return 0L;
+  }
+
+  @Override
+  public long calculateGasRefund(
+      final Transaction transaction,
+      final MessageFrame initialFrame,
+      final long codeDelegationRefund) {
+
+    final long gasLimit = transaction.getGasLimit();
+    // EIP-8037: Include leftover reservoir in remaining gas so unspent state gas is returned.
+    final long totalRemaining =
+        initialFrame.getRemainingGas() + initialFrame.getStateGasReservoir();
+    final long totalConsumed = gasLimit - totalRemaining;
+
+    final long selfDestructRefund =
+        getSelfDestructRefundAmount() * initialFrame.getSelfDestructs().size();
+    final long executionRefund =
+        initialFrame.getGasRefund() + selfDestructRefund + codeDelegationRefund;
+    // 1/5 cap on total consumed gas (regular + state)
+    final long maxRefundAllowance = totalConsumed / getMaxRefundQuotient();
+    final long refundAllowance = Math.min(executionRefund, maxRefundAllowance);
+
+    final long gasUsed = totalConsumed - refundAllowance;
+    final long floorCost =
+        transactionFloorCost(transaction.getPayload(), transaction.getPayloadZeroBytes());
+    return gasLimit - Math.max(gasUsed, floorCost);
   }
 
   @Override

@@ -138,9 +138,34 @@ public abstract class AbstractMessageProcessor {
    * Gets called when the message frame encounters an exceptional halt.
    *
    * @param frame The message frame
+   * @param preExecutionHalt true if the halt occurred before any code was executed (e.g. address
+   *     collision in CONTRACT_CREATION detected in start())
    */
-  private void exceptionalHalt(final MessageFrame frame) {
+  private void exceptionalHalt(final MessageFrame frame, final boolean preExecutionHalt) {
+    // EIP-8037: Same spill accounting as revert — state gas that spilled into gasRemaining is
+    // permanently burned and tracked for block accounting. The reservoir IS restored by rollback
+    // so the caller frame can still use it (hence "reservoir restored after child halt").
+    final long stateGasUsedBefore = frame.getStateGasUsed();
+    final long reservoirBefore = frame.getStateGasReservoir();
+
     clearAccumulatedStateBesidesGasAndOutput(frame);
+
+    final long stateGasRestored = stateGasUsedBefore - frame.getStateGasUsed();
+    final long reservoirRestored = frame.getStateGasReservoir() - reservoirBefore;
+    final long spill = Math.max(0L, stateGasRestored - reservoirRestored);
+    if (spill > 0) {
+      frame.accumulateStateGasSpillBurned(spill);
+    }
+
+    // EIP-8037: Gas burned by a CREATE child that halted before executing any code (address
+    // collision) is excluded from block regular gas accounting. It still counts toward fees.
+    if (preExecutionHalt && frame.getType() == MessageFrame.Type.CONTRACT_CREATION) {
+      final long collisionGas = frame.getRemainingGas();
+      if (collisionGas > 0) {
+        frame.accumulateRegularGasCollisionBurned(collisionGas);
+      }
+    }
+
     frame.clearAllGas();
     frame.clearOutputData();
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
@@ -152,7 +177,21 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   protected void revert(final MessageFrame frame) {
+    // EIP-8037: Capture state gas values before rollback to detect spill.
+    // For REVERT: state gas is rolled back (not burned), but any spill that already reduced
+    // gasRemaining is permanently lost — track it in stateGasSpillBurned for block accounting.
+    // The spill must NOT be returned to gasRemaining (would inflate parent's remaining gas).
+    final long stateGasUsedBefore = frame.getStateGasUsed();
+    final long reservoirBefore = frame.getStateGasReservoir();
+
     clearAccumulatedStateBesidesGasAndOutput(frame);
+
+    final long stateGasRestored = stateGasUsedBefore - frame.getStateGasUsed();
+    final long reservoirRestored = frame.getStateGasReservoir() - reservoirBefore;
+    final long spill = Math.max(0L, stateGasRestored - reservoirRestored);
+    if (spill > 0) {
+      frame.accumulateStateGasSpillBurned(spill);
+    }
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }
 
@@ -207,7 +246,8 @@ public abstract class AbstractMessageProcessor {
       }
     }
 
-    if (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
+    final boolean wasCodeExecuting = (frame.getState() == MessageFrame.State.CODE_EXECUTING);
+    if (wasCodeExecuting) {
       codeExecute(frame, operationTracer);
 
       if (frame.getState() == MessageFrame.State.CODE_SUSPENDED) {
@@ -220,7 +260,7 @@ public abstract class AbstractMessageProcessor {
     }
 
     if (frame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
-      exceptionalHalt(frame);
+      exceptionalHalt(frame, !wasCodeExecuting);
     }
 
     if (frame.getState() == MessageFrame.State.REVERT) {

@@ -245,8 +245,8 @@ public class Eip8037StateGasCostCalculator implements StateGasCostCalculator {
   public void refundStorageSetStateGas(final MessageFrame frame) {
     final long blockGasLimit = frame.getBlockValues().getGasLimit();
     final long refundAmount = storageSetStateGas(blockGasLimit);
-    frame.incrementStateGasReservoir(refundAmount);
-    // Decrement stateGasUsed to reflect the refund
-    frame.incrementStateGasUsed(-refundAmount);
+    // State gas refund goes into the regular refund counter, subject to the 1/5 cap.
+    // stateGasUsed is NOT decremented — it tracks gross state gas consumed.
+    frame.incrementGasRefund(refundAmount);
   }
 }
