@@ -257,7 +257,7 @@ class PeerDiscoveryAgentV5Test {
     when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
     when(mockSystem.searchForNewPeers())
         .thenReturn(CompletableFuture.completedFuture(List.of(peerRecord)));
-    when(mockSystem.streamLiveNodes()).thenReturn(Stream.of(peerRecord));
+    when(mockSystem.streamLiveNodes()).thenAnswer(invocation -> Stream.of(peerRecord));
 
     final PeerDiscoveryAgentV5 restrictedAgent =
         new PeerDiscoveryAgentV5(
@@ -296,7 +296,7 @@ class PeerDiscoveryAgentV5Test {
     when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
     when(mockSystem.searchForNewPeers())
         .thenReturn(CompletableFuture.completedFuture(List.of(peerRecord)));
-    when(mockSystem.streamLiveNodes()).thenReturn(Stream.of(peerRecord));
+    when(mockSystem.streamLiveNodes()).thenAnswer(invocation -> Stream.of(peerRecord));
 
     // Agent with NOOP permissions (the default setUp agent) — permissions should not interfere
     agent.start(1234);
