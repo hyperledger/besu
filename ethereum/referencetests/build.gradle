@@ -254,6 +254,8 @@ configurations {
 }
 
 dependencies {
+  compileOnly 'com.google.code.findbugs:jsr305'
+
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
