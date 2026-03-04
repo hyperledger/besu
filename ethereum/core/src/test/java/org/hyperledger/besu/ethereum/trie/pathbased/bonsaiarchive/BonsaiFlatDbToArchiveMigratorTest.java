@@ -206,19 +206,17 @@ public class BonsaiFlatDbToArchiveMigratorTest {
   }
 
   @Test
-  public void skipsBlocksWithNoTrieLog() throws Exception {
-    appendBlocks(2);
-
-    // Block 1 has no trie log, block 2 has a trie log
-    final Hash hash2 = blockchain.getBlockHeader(2L).get().getHash();
-    when(trieLogManager.getTrieLogLayer(hash2))
-        .thenReturn(Optional.of(createAccountTrieLog(Wei.ONE)));
+  public void failsMigrationWhenTrieLogIsMissing() {
+    appendBlocks(1);
 
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
-    migrator.migrate().get(10, TimeUnit.SECONDS);
 
-    assertThat(getArchivedAccountKey(1L)).isEmpty();
-    assertThat(getArchivedAccountKey(2L)).isPresent();
+    assertThat(migrator.migrate())
+        .failsWithin(10, TimeUnit.SECONDS)
+        .withThrowableThat()
+        .havingRootCause()
+        .withMessage("No trie log found for block 1");
+    verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
   }
 
   @Test

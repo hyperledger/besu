@@ -146,9 +146,6 @@ public class BonsaiFlatDbToArchiveMigrator {
       final long startBlock = getMigrationProgress().orElse(0L);
       final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
       LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
-      long migratedCount = 0;
-      long skippedCount = 0;
-
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
 
         /*
@@ -180,13 +177,9 @@ public class BonsaiFlatDbToArchiveMigrator {
         try {
           if (maybeTrieLog.isPresent()) {
             processBlock(maybeTrieLog.get(), blockNumber, tx);
-            migratedCount++;
             migratedBlocksCounter.inc();
-          } else {
-            if (blockNumber > 0) {
-              LOG.debug("No trie log found for block {}, skipping", blockNumber);
-            }
-            skippedCount++;
+          } else if (blockNumber > 0) {
+            throw new IllegalStateException("No trie log found for block " + blockNumber);
           }
           // Always save progress, even for blocks with no trie log
           saveProgress(blockNumber, tx);
@@ -203,11 +196,11 @@ public class BonsaiFlatDbToArchiveMigrator {
               "Migration failed at block " + blockNumber + ": " + e.getMessage(), e);
         }
 
-        logProgress(blockNumber, startBlock, target.get(), migratedCount, skippedCount);
+        logProgress(blockNumber, startBlock, target.get());
       }
 
       worldStateStorage.upgradeToFullFlatDbMode();
-      logCompletion(startBlock, target.get(), migrationStartTime, migratedCount, skippedCount);
+      logCompletion(startBlock, target.get(), migrationStartTime);
 
     } catch (final Exception e) {
       LOG.error("Migration failed", e);
@@ -228,38 +221,28 @@ public class BonsaiFlatDbToArchiveMigrator {
   }
 
   private void logProgress(
-      final long blockNumber,
-      final long startBlock,
-      final long endBlock,
-      final long migratedCount,
-      final long skippedCount) {
+      final long blockNumber, final long startBlock, final long endBlock) {
     final long totalBlocks = endBlock - startBlock;
     LogUtil.throttledLog(
         () -> {
           long progressPercent =
               totalBlocks > 0 ? ((blockNumber - startBlock) * 100) / totalBlocks : 100;
           LOG.info(
-              "Bonsai Archive migration progress: {}% (block {}/{}, migrated: {}, skipped: {})",
-              progressPercent, blockNumber, endBlock, migratedCount, skippedCount);
+              "Bonsai Archive migration progress: {}% (block {}/{})",
+              progressPercent, blockNumber, endBlock);
         },
         shouldLogProgress,
         LOG_INTERVAL_SECONDS);
   }
 
   private void logCompletion(
-      final long startBlock,
-      final long endBlock,
-      final Instant migrationStartTime,
-      final long migratedCount,
-      final long skippedCount) {
+      final long startBlock, final long endBlock, final Instant migrationStartTime) {
     final Duration migrationDuration = Duration.between(migrationStartTime, Instant.now());
     final String formatedDuration =
         DurationFormatUtils.formatDurationWords(migrationDuration.toMillis(), true, true);
     LOG.info(
-        "Bonsai Archive migration completed. Processed {} blocks ({} migrated, {} skipped) in {}.",
+        "Bonsai Archive migration completed. Processed {} blocks in {}.",
         endBlock - startBlock + 1,
-        migratedCount,
-        skippedCount,
         formatedDuration);
   }
 
