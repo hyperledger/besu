@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,6 @@ import java.util.SequencedSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +112,7 @@ public class PeerTransactionTracker
     seenTransactions
         .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
         .addAll(seenHashes);
+    // remove the seen txs from any request queue
     transactionAnnouncementsToRequest
         .values()
         .forEach(hashes -> seenHashes.forEach(hashes::remove));
@@ -123,6 +124,7 @@ public class PeerTransactionTracker
     seenTransactions
         .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
         .add(seenHash);
+    // remove the seen txs from any request queue
     transactionAnnouncementsToRequest.values().forEach(hashes -> hashes.remove(seenHash));
   }
 
@@ -148,24 +150,20 @@ public class PeerTransactionTracker
         .addAll(transactions);
   }
 
-  @VisibleForTesting
-  synchronized Iterable<EthPeer> getEthPeersWithUnsentTransactions() {
-    return Set.copyOf(transactionsToSend.keySet());
-  }
-
   public synchronized Transaction claimTransactionToSendToPeer(final EthPeer peer) {
-    final var txToSend = this.transactionsToSend.get(peer);
-    if (txToSend != null && !txToSend.isEmpty()) {
-      return txToSend.removeFirst();
+    final SequencedSet<Transaction> txsToSend = this.transactionsToSend.get(peer);
+    if (txsToSend != null && !txsToSend.isEmpty()) {
+      return txsToSend.removeFirst();
     } else {
       return null;
     }
   }
 
   public synchronized Transaction claimTransactionAnnouncementToSendToPeer(final EthPeer peer) {
-    final var announcementToSend = this.transactionAnnouncementsToSend.get(peer);
-    if (announcementToSend != null && !announcementToSend.isEmpty()) {
-      return announcementToSend.removeFirst();
+    final SequencedSet<Transaction> announcementsToSend =
+        this.transactionAnnouncementsToSend.get(peer);
+    if (announcementsToSend != null && !announcementsToSend.isEmpty()) {
+      return announcementsToSend.removeFirst();
     } else {
       return null;
     }
@@ -174,14 +172,14 @@ public class PeerTransactionTracker
   @SuppressWarnings("MixedMutabilityReturnType")
   public synchronized List<Hash> claimTransactionAnnouncementsToRequestFromPeer(
       final EthPeer peer, final int maxHashes) {
-    final var transactionAnnouncements = transactionAnnouncementsToRequest.get(peer);
+    final SequencedSet<Hash> transactionAnnouncements = transactionAnnouncementsToRequest.get(peer);
 
     if (transactionAnnouncements != null && !transactionAnnouncements.isEmpty()) {
-      final var returnAnnouncements = new ArrayList<Hash>(maxHashes);
-      final var itAnnouncements = transactionAnnouncements.iterator();
+      final List<Hash> returnAnnouncements = new ArrayList<>(maxHashes);
+      final Iterator<Hash> itAnnouncements = transactionAnnouncements.iterator();
       while (returnAnnouncements.size() < maxHashes && itAnnouncements.hasNext()) {
-        final var hash = itAnnouncements.next();
-        if (hasSeenTransaction(hash)) {
+        final Hash hash = itAnnouncements.next();
+        if (alreadySeenTransaction(hash)) {
           itAnnouncements.remove();
         } else if (!inProgressAnnouncements.contains(hash)) {
           returnAnnouncements.add(hash);
@@ -199,7 +197,7 @@ public class PeerTransactionTracker
 
   public synchronized void missedTransactionAnnouncements(
       final EthPeer peer, final List<Hash> missedHashes) {
-    final var transactionAnnouncements = transactionAnnouncementsToRequest.get(peer);
+    final SequencedSet<Hash> transactionAnnouncements = transactionAnnouncementsToRequest.get(peer);
 
     if (transactionAnnouncements != null && !transactionAnnouncements.isEmpty()) {
       missedHashes.forEach(transactionAnnouncements::remove);
@@ -213,10 +211,10 @@ public class PeerTransactionTracker
   public synchronized Collection<Hash> receivedTransactionAnnouncements(
       final EthPeer peer, final List<Hash> incomingTransactionAnnouncements) {
 
-    final var freshAnnouncements = new ArrayList<Hash>(incomingTransactionAnnouncements.size());
+    final List<Hash> freshAnnouncements = new ArrayList<>(incomingTransactionAnnouncements.size());
 
-    for (final var txAnnouncement : incomingTransactionAnnouncements) {
-      if (!hasSeenTransaction(txAnnouncement)) {
+    for (final Hash txAnnouncement : incomingTransactionAnnouncements) {
+      if (!alreadySeenTransaction(txAnnouncement)) {
         freshAnnouncements.add(txAnnouncement);
       }
     }
@@ -232,10 +230,10 @@ public class PeerTransactionTracker
 
   public synchronized Collection<Transaction> receivedTransactions(
       final EthPeer peer, final List<Transaction> incomingTransactions) {
-    final var freshTransactions = new ArrayList<Transaction>(incomingTransactions.size());
+    final List<Transaction> freshTransactions = new ArrayList<>(incomingTransactions.size());
 
-    for (final var transaction : incomingTransactions) {
-      if (!hasSeenTransaction(transaction.getHash())) {
+    for (final Transaction transaction : incomingTransactions) {
+      if (!alreadySeenTransaction(transaction.getHash())) {
         freshTransactions.add(transaction);
       }
     }
@@ -245,7 +243,7 @@ public class PeerTransactionTracker
     return freshTransactions;
   }
 
-  public synchronized boolean hasSeenTransaction(final Hash txHash) {
+  public synchronized boolean alreadySeenTransaction(final Hash txHash) {
     return recentlyConfirmedTransactions.contains(txHash)
         || seenTransactions.values().stream().anyMatch(seen -> seen.contains(txHash));
   }
@@ -262,16 +260,16 @@ public class PeerTransactionTracker
     return seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash);
   }
 
-  public synchronized boolean hasSeenTransactionAnnouncement(
+  public synchronized boolean hasPeerSeenTransactionAnnouncement(
       final EthPeer peer, final Hash txHash) {
     if (recentlyConfirmedTransactions.contains(txHash)) {
       return true;
     }
-    final var seenAnnouncementsForPeer = seenAnnouncements.get(peer);
+    final Set<Hash> seenAnnouncementsForPeer = seenAnnouncements.get(peer);
     return seenAnnouncementsForPeer != null && seenAnnouncementsForPeer.contains(txHash);
   }
 
-  public synchronized boolean hasSeenTransactionOrAnnouncement(
+  public synchronized boolean hasPeerSeenTransactionOrAnnouncement(
       final EthPeer peer, final Hash txHash) {
     if (recentlyConfirmedTransactions.contains(txHash)) {
       return true;
@@ -280,7 +278,7 @@ public class PeerTransactionTracker
     if (seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash)) {
       return true;
     }
-    final var seenAnnouncementsForPeer = seenAnnouncements.get(peer);
+    final Set<Hash> seenAnnouncementsForPeer = seenAnnouncements.get(peer);
     return seenAnnouncementsForPeer != null && seenAnnouncementsForPeer.contains(txHash);
   }
 
@@ -319,26 +317,32 @@ public class PeerTransactionTracker
             .map(EthPeerImmutableAttributes::ethPeer)
             .collect(Collectors.toUnmodifiableSet());
 
-    final var disconnectedPeers = trackedPeers;
+    final Set<EthPeer> disconnectedPeers = trackedPeers;
     disconnectedPeers.removeAll(connectedPeers);
     LOG.atTrace()
-        .setMessage("Removing {} transaction trackers for disconnected peers ({})")
+        .setMessage(
+            "{} transaction trackers for disconnected peers ({}) will be remove after a graceful delay")
         .addArgument(disconnectedPeers.size())
         .addArgument(() -> logPeerSet(disconnectedPeers))
         .log();
 
-    disconnectedPeers.forEach(
-        disconnectedPeer -> {
-          seenTransactions.remove(disconnectedPeer);
-          seenAnnouncements.remove(disconnectedPeer);
-          transactionsToSend.remove(disconnectedPeer);
-          transactionAnnouncementsToSend.remove(disconnectedPeer);
-          transactionAnnouncementsToRequest.remove(disconnectedPeer);
-          LOG.atTrace()
-              .setMessage("Removed transaction trackers for disconnected peer {}")
-              .addArgument(disconnectedPeer::getLoggableId)
-              .log();
-        });
+    // keep the trackers for a while after the disconnection,
+    // to not immediately loose some seen txs data and avoiding re-requesting them.
+    ethScheduler.scheduleFutureTask(
+        () ->
+            disconnectedPeers.forEach(
+                disconnectedPeer -> {
+                  seenTransactions.remove(disconnectedPeer);
+                  seenAnnouncements.remove(disconnectedPeer);
+                  transactionsToSend.remove(disconnectedPeer);
+                  transactionAnnouncementsToSend.remove(disconnectedPeer);
+                  transactionAnnouncementsToRequest.remove(disconnectedPeer);
+                  LOG.atTrace()
+                      .setMessage("Removed transaction trackers for disconnected peer {}")
+                      .addArgument(disconnectedPeer::getLoggableId)
+                      .log();
+                }),
+        Duration.ofMinutes(5));
   }
 
   private String logPeerSet(final Set<EthPeer> peers) {
@@ -365,8 +369,8 @@ public class PeerTransactionTracker
         () -> {
           if (event.getEventType().equals(AddedBlockContext.EventType.HEAD_ADVANCED)
               || event.getEventType().equals(AddedBlockContext.EventType.CHAIN_REORG)) {
-            final var confirmedTxs = event.getBlock().getBody().getTransactions();
-            final var confirmedTxHashes = toHashList(confirmedTxs);
+            final List<Transaction> confirmedTxs = event.getBlock().getBody().getTransactions();
+            final List<Hash> confirmedTxHashes = toHashList(confirmedTxs);
 
             synchronized (this) {
               recentlyConfirmedTransactions.addAll(confirmedTxHashes);

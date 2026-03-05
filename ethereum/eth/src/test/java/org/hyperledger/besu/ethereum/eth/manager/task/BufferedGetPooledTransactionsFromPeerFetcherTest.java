@@ -104,7 +104,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     verifyNoMoreInteractions(peerTaskExecutor);
     verify(transactionPool, times(1)).addRemoteTransactions(taskResult);
 
-    assertThat(transactionTracker.hasSeenTransactionAnnouncement(ethPeer, transaction.getHash()))
+    assertThat(
+            transactionTracker.hasPeerSeenTransactionAnnouncement(ethPeer, transaction.getHash()))
         .isTrue();
   }
 

@@ -77,7 +77,6 @@ public class PeerTransactionTrackerTest {
     tracker.addToPeerSendQueue(ethPeer1, List.of(transaction2));
     tracker.addToPeerSendQueue(ethPeer2, List.of(transaction3));
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer1, ethPeer2);
     assertThat(claimAllTransactionsToSend(tracker, ethPeer1))
         .containsOnly(transaction1, transaction2);
     assertThat(claimAllTransactionsToSend(tracker, ethPeer2)).containsOnly(transaction3);
@@ -99,22 +98,22 @@ public class PeerTransactionTrackerTest {
   public void shouldStopTrackingSeenTransactionsWhenRemovalReasonSaysSo() {
     forgetfulTracker.markTransactionsAsSeen(ethPeer1, List.of(transaction2.getHash()));
 
-    assertThat(forgetfulTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(forgetfulTracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
 
     forgetfulTracker.onTransactionDropped(transaction2, createRemovalReason(true, false));
 
-    assertThat(forgetfulTracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+    assertThat(forgetfulTracker.alreadySeenTransaction(transaction2.getHash())).isFalse();
   }
 
   @Test
   public void shouldKeepTrackingSeenTransactionsWhenNotForgettingEvenIfRemovalReasonSaysSo() {
     tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction2.getHash()));
 
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(tracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
 
     tracker.onTransactionDropped(transaction2, createRemovalReason(true, false));
 
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(tracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
   }
 
   @Test
@@ -122,27 +121,27 @@ public class PeerTransactionTrackerTest {
     shortMemoryTracker.markTransactionsAsSeen(
         ethPeer1, List.of(transaction1.getHash(), transaction2.getHash()));
 
-    assertThat(shortMemoryTracker.hasSeenTransaction(transaction1.getHash())).isTrue();
-    assertThat(shortMemoryTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(shortMemoryTracker.alreadySeenTransaction(transaction1.getHash())).isTrue();
+    assertThat(shortMemoryTracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
 
     // now the cache is full and the last recent entry if the transaction1
     // so it should be evicted when inserting transaction3
     shortMemoryTracker.markTransactionsAsSeen(ethPeer1, List.of(transaction3.getHash()));
 
-    assertThat(shortMemoryTracker.hasSeenTransaction(transaction1.getHash())).isFalse();
-    assertThat(shortMemoryTracker.hasSeenTransaction(transaction2.getHash())).isTrue();
-    assertThat(shortMemoryTracker.hasSeenTransaction(transaction3.getHash())).isTrue();
+    assertThat(shortMemoryTracker.alreadySeenTransaction(transaction1.getHash())).isFalse();
+    assertThat(shortMemoryTracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(shortMemoryTracker.alreadySeenTransaction(transaction3.getHash())).isTrue();
   }
 
   @Test
   public void shouldKeepTrackingSeenTransactionsWhenRemovalReasonSaysSo() {
     tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction2.getHash()));
 
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(tracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
 
     tracker.onTransactionDropped(transaction2, createRemovalReason(false, false));
 
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isTrue();
+    assertThat(tracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
   }
 
   @Test
@@ -169,14 +168,15 @@ public class PeerTransactionTrackerTest {
         .thenReturn(Stream.of(ethPeer2).map(EthPeerImmutableAttributes::from));
     tracker.onDisconnect(ethPeer1);
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer2);
+    // peer1's send queue cleared after disconnect
+    assertThat(claimAllTransactionsToSend(tracker, ethPeer1)).isEmpty();
+    // peer2 is unaffected
+    assertThat(claimAllTransactionsToSend(tracker, ethPeer2)).containsOnly(transaction3);
 
     // Should have cleared data that ethPeer1 has already seen transaction1
     tracker.addToPeerSendQueue(ethPeer1, List.of(transaction1));
 
-    assertThat(tracker.getEthPeersWithUnsentTransactions()).containsOnly(ethPeer1, ethPeer2);
     assertThat(claimAllTransactionsToSend(tracker, ethPeer1)).containsOnly(transaction1);
-    assertThat(claimAllTransactionsToSend(tracker, ethPeer2)).containsOnly(transaction3);
   }
 
   @Test
@@ -246,9 +246,9 @@ public class PeerTransactionTrackerTest {
     // transaction1 removed from peer2's announcement request queue
     assertThat(tracker.claimTransactionAnnouncementsToRequestFromPeer(ethPeer2, 10)).isEmpty();
     // transaction1 recorded as recently confirmed
-    assertThat(tracker.hasSeenTransaction(transaction1.getHash())).isTrue();
+    assertThat(tracker.alreadySeenTransaction(transaction1.getHash())).isTrue();
     // unconfirmed transactions not affected
-    assertThat(tracker.hasSeenTransaction(transaction2.getHash())).isFalse();
+    assertThat(tracker.alreadySeenTransaction(transaction2.getHash())).isFalse();
   }
 
   @Test
