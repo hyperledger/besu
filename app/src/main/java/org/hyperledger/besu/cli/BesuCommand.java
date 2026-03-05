@@ -2525,6 +2525,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (p2PDiscoveryOptions.bootNodes == null) {
         builder.setEnodeBootNodes(new ArrayList<>());
+        builder.setEnrBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
     }

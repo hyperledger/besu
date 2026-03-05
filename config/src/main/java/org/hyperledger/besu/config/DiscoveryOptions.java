@@ -28,7 +28,7 @@ public class DiscoveryOptions {
       new DiscoveryOptions(JsonUtil.createEmptyObjectNode());
 
   private static final String ENODES_KEY = "bootnodes";
-  private static final String V5_BOOTNODES_KEY = "v5Bootnodes";
+  private static final String V5_BOOTNODES_KEY = "v5bootnodes";
   private static final String DNS_KEY = "dns";
 
   private final ObjectNode discoveryConfigRoot;

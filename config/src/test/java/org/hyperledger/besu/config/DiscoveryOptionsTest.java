@@ -56,7 +56,7 @@ class DiscoveryOptionsTest {
   @Test
   void parsesV5BootNodes() {
     final ObjectNode root = JsonUtil.createEmptyObjectNode();
-    final ArrayNode v5Bootnodes = root.putArray("v5Bootnodes");
+    final ArrayNode v5Bootnodes = root.putArray("v5bootnodes");
     v5Bootnodes.add("enr:-abc123");
     v5Bootnodes.add("enr:-def456");
 
@@ -80,7 +80,7 @@ class DiscoveryOptionsTest {
   void bootNodesAndV5BootNodesCanCoexist() {
     final ObjectNode root = JsonUtil.createEmptyObjectNode();
     root.putArray("bootnodes").add("enode://abc@127.0.0.1:30303");
-    root.putArray("v5Bootnodes").add("enr:-abc123");
+    root.putArray("v5bootnodes").add("enr:-abc123");
 
     final DiscoveryOptions options = new DiscoveryOptions(root);
     assertThat(options.getBootNodes()).isPresent().hasValue(List.of("enode://abc@127.0.0.1:30303"));
@@ -90,12 +90,12 @@ class DiscoveryOptionsTest {
   @Test
   void v5BootNodesThrowsOnNonStringElement() {
     final ObjectNode root = JsonUtil.createEmptyObjectNode();
-    root.putArray("v5Bootnodes").add(42);
+    root.putArray("v5bootnodes").add(42);
 
     final DiscoveryOptions options = new DiscoveryOptions(root);
     assertThatThrownBy(options::getV5BootNodes)
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("v5Bootnodes does not contain a string");
+        .hasMessageContaining("v5bootnodes does not contain a string");
   }
 
   @Test
