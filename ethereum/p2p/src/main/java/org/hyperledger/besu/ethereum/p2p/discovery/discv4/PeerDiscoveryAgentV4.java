@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -359,6 +360,11 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
   @Override
   public void addPeer(final Peer peer) {
     controller.ifPresent(c -> DiscoveryPeerV4.from(peer).ifPresent(c::handleBondingRequest));
+  }
+
+  @Override
+  public Optional<NodeRecord> getLocalNodeRecord() {
+    return nodeRecordManager.getLocalNode().flatMap(DiscoveryPeerV4::getNodeRecord);
   }
 
   @VisibleForTesting
