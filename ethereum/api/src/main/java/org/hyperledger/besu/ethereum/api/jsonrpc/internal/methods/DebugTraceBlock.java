@@ -55,6 +55,25 @@ public class DebugTraceBlock extends AbstractDebugTraceBlock {
   }
 
   @Override
+  protected Optional<Block> findBlock(final JsonRpcRequestContext request) {
+    try {
+      final String input = request.getRequiredParameter(0, String.class);
+      final Block block =
+          Block.readFrom(RLP.input(Bytes.fromHexString(input)), this.blockHeaderFunctions);
+      if (getBlockchainQueries()
+          .getBlockchain()
+          .getBlockByHash(block.getHeader().getParentHash())
+          .isEmpty()) {
+        return Optional.empty();
+      }
+      return Optional.of(block);
+    } catch (final RLPException | IllegalArgumentException | JsonRpcParameterException e) {
+      LOG.debug("Failed to resolve block for batch trace request", e);
+      return Optional.empty();
+    }
+  }
+
+  @Override
   public void streamResponse(
       final JsonRpcRequestContext requestContext, final OutputStream out, final ObjectMapper mapper)
       throws IOException {
