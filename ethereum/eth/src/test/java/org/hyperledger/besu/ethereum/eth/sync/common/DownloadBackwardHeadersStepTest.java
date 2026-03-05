@@ -608,6 +608,41 @@ public class DownloadBackwardHeadersStepTest {
     }
   }
 
+  @Test
+  public void shouldNotRetryAfterCancellation() throws Exception {
+    // The first request fails transiently, scheduling a retry after RETRY_DELAY (1 s).
+    // The pipeline cancels the future (as AsyncOperationProcessor.abort() does) before
+    // the retry fires.  The cancelled flag must be set so the retry exits immediately
+    // without making a second peer request.
+    final EthScheduler realScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final EthContext realEthContext = mock(EthContext.class);
+    when(realEthContext.getScheduler()).thenReturn(realScheduler);
+    when(realEthContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
+
+    try {
+      final DownloadBackwardHeadersStep step =
+          new DownloadBackwardHeadersStep(
+              protocolSchedule, realEthContext, 10, 0, Duration.ofMinutes(1));
+
+      when(peerTaskExecutor.execute(any(GetHeadersFromPeerTask.class)))
+          .thenReturn(
+              new PeerTaskExecutorResult<>(
+                  Optional.empty(), PeerTaskExecutorResponseCode.NO_PEER_AVAILABLE, emptyList()));
+
+      final CompletableFuture<List<BlockHeader>> result = step.apply(100L);
+
+      // Simulate pipeline abort cancelling the future before the 1-second retry fires.
+      result.cancel(true);
+      assertThat(result.isCancelled()).isTrue();
+
+      // The retry is scheduled 1 s after the first failure; verify it does not run.
+      verify(peerTaskExecutor, after(1200).times(1)).execute(any(GetHeadersFromPeerTask.class));
+    } finally {
+      realScheduler.stop();
+      realScheduler.awaitStop();
+    }
+  }
+
   private List<BlockHeader> createMockHeaders(final int count, final long startBlock) {
     final BlockHeaderFunctions bhf = new LocalBlockHeaderFunctions();
     final List<BlockHeader> headers = new ArrayList<>();
