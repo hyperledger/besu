@@ -20,6 +20,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
@@ -38,7 +39,7 @@ import org.openjdk.jmh.annotations.Warmup;
 @BenchmarkMode(Mode.AverageTime)
 public class SHA256Benchmark {
 
-  @Param({"32", "64", "128", "256", "512"})
+  @Param({"32", "64", "128", "256", "512", "1024", "2048", "4096"})
   private String inputSize;
 
   public Bytes bytes;
@@ -52,7 +53,7 @@ public class SHA256Benchmark {
   }
 
   @Benchmark
-  public Object sha256() {
+  public Bytes32 sha256() {
     return Hash.sha256(bytes);
   }
 }
