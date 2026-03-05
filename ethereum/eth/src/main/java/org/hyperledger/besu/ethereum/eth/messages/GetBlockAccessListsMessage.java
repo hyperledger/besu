@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -43,13 +41,9 @@ public final class GetBlockAccessListsMessage extends AbstractMessageData {
   }
 
   public static GetBlockAccessListsMessage create(final Iterable<Hash> blockHashes) {
-    final var hashIterator = blockHashes.iterator();
-    checkArgument(hashIterator.hasNext(), "Block hashes must not be empty");
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    while (hashIterator.hasNext()) {
-      tmp.writeBytes(hashIterator.next().getBytes());
-    }
+    blockHashes.forEach(hash -> tmp.writeBytes(hash.getBytes()));
     tmp.endList();
     return new GetBlockAccessListsMessage(tmp.encoded());
   }
