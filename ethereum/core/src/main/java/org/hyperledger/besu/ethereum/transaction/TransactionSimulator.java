@@ -423,8 +423,7 @@ public class TransactionSimulator {
 
     final ProcessableBlockHeader blockHeaderToProcess;
     if (transactionValidationParams.isAllowExceedingBalance()
-        && processableHeader.getBaseFee().isPresent()
-        && !hasNonZeroGasPricing(callParams)) {
+        && processableHeader.getBaseFee().isPresent()) {
       blockHeaderToProcess =
           new BlockHeaderBuilder()
               .populateFrom(processableHeader)
@@ -590,17 +589,10 @@ public class TransactionSimulator {
     final Wei maxPriorityFeePerGas;
     final Wei maxFeePerBlobGas;
     if (transactionValidationParams.isAllowExceedingBalance()) {
-      if (hasNonZeroGasPricing(callParams)) {
-        gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
-        maxFeePerGas = callParams.getMaxFeePerGas().orElse(Wei.ZERO);
-        maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(Wei.ZERO);
-        maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(Wei.ZERO);
-      } else {
-        gasPrice = Wei.ZERO;
-        maxFeePerGas = Wei.ZERO;
-        maxPriorityFeePerGas = Wei.ZERO;
-        maxFeePerBlobGas = Wei.ZERO;
-      }
+      gasPrice = Wei.ZERO;
+      maxFeePerGas = Wei.ZERO;
+      maxPriorityFeePerGas = Wei.ZERO;
+      maxFeePerBlobGas = Wei.ZERO;
     } else {
       if (noPricingParametersPresent) {
         // in case there are no gas price parameters,
@@ -719,13 +711,6 @@ public class TransactionSimulator {
     return callParams.getMaxPriorityFeePerGas().isEmpty()
         && callParams.getMaxFeePerGas().isEmpty()
         && callParams.getGasPrice().isEmpty();
-  }
-
-  private boolean hasNonZeroGasPricing(final CallParameter callParams) {
-    // Return true if any gas pricing parameter is present AND non-zero
-    return callParams.getGasPrice().map(p -> p.greaterThan(Wei.ZERO)).orElse(false)
-        || callParams.getMaxFeePerGas().map(p -> p.greaterThan(Wei.ZERO)).orElse(false)
-        || callParams.getMaxPriorityFeePerGas().map(p -> p.greaterThan(Wei.ZERO)).orElse(false);
   }
 
   private boolean shouldSetBlobGasPrice(final CallParameter callParams) {
