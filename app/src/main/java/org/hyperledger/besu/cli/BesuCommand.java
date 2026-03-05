@@ -2950,6 +2950,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder
+        .setDiscoveryEnabled(p2PDiscoveryOptions.peerDiscoveryEnabled)
         .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
         .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
         .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
