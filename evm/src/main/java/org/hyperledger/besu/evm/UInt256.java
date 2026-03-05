@@ -1450,26 +1450,39 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     }
 
     private UInt256 reduceNormalised(final UInt256 that, final int shift, final long inv) {
-      UInt192 r;
       UInt320 v = that.shiftLeftWide(shift);
-      if (v.u4 != 0 || Long.compareUnsigned(v.u3, u2) >= 0) {
-        r = reduceStep(v.u4, v.u3, v.u2, v.u1, inv);
-        r = reduceStep(r.u2, r.u1, r.u0, v.u0, inv);
-      } else {
-        r = reduceStep(v.u3, v.u2, v.u1, v.u0, inv);
+      if (Long.compareUnsigned(v.u4, u2) < 0) {
+        UInt192 r;
+        if (v.u4 != 0 || Long.compareUnsigned(v.u3, u2) >= 0) {
+          r = reduceStep(v.u4, v.u3, v.u2, v.u1, inv);
+          r = reduceStep(r.u2, r.u1, r.u0, v.u0, inv);
+        } else {
+          r = reduceStep(v.u3, v.u2, v.u1, v.u0, inv);
+        }
+        return new UInt256(0, r.u2, r.u1, r.u0).shiftRight(shift);
       }
-      return new UInt256(0, r.u2, r.u1, r.u0).shiftRight(shift);
+      return reduceNormalisedSlowPath(v, shift, inv);
     }
 
     private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
-      UInt192 r;
       UInt320 v = that.shiftLeftWide(shift);
-      if (v.u4 != 0 || Long.compareUnsigned(v.u3, u2) >= 0) {
-        r = reduceStep(v.u4, v.u3, v.u2, v.u1, inv);
-        r = reduceStep(r.u2, r.u1, r.u0, v.u0, inv);
-      } else {
-        r = reduceStep(v.u3, v.u2, v.u1, v.u0, inv);
+      if (Long.compareUnsigned(v.u4, u2) < 0) {
+        UInt192 r;
+        if (v.u4 != 0 || Long.compareUnsigned(v.u3, u2) >= 0) {
+          r = reduceStep(v.u4, v.u3, v.u2, v.u1, inv);
+          r = reduceStep(r.u2, r.u1, r.u0, v.u0, inv);
+        } else {
+          r = reduceStep(v.u3, v.u2, v.u1, v.u0, inv);
+        }
+        return new UInt256(0, r.u2, r.u1, r.u0).shiftRight(shift);
       }
+      return reduceNormalisedSlowPath(v, shift, inv);
+    }
+
+    private UInt256 reduceNormalisedSlowPath(final UInt320 v, final int shift, final long inv) {
+      UInt192 r = reduceStep(0, v.u4, v.u3, v.u2, inv);
+      r = reduceStep(r.u2, r.u1, r.u0, v.u1, inv);
+      r = reduceStep(r.u2, r.u1, r.u0, v.u0, inv);
       return new UInt256(0, r.u2, r.u1, r.u0).shiftRight(shift);
     }
 

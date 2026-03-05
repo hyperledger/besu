@@ -545,6 +545,26 @@ public class UInt256Test {
   }
 
   @Test
+  public void addModTestReduceNormalisedTopLimb() {
+    UInt256 a =
+      UInt256.fromBytesBE(
+        new BigInteger("62d900c9700000000000000000023f00bc1814ff00000000000000ca22300806", 16)
+          .toByteArray());
+    UInt256 b =
+      UInt256.fromBytesBE(
+        new BigInteger("ffffffffffffffffb4fffff4befff4f4f4d4f4f504f4f4bef5f5100b0bf4f5f6", 16).toByteArray());
+    UInt256 m =
+      UInt256.fromBytesBE(
+        new BigInteger("13464637e8bdc0e53b895d7b79348a784", 16)
+          .toByteArray());
+    BigInteger A = new BigInteger(1, a.toBytesBE());
+    BigInteger B = new BigInteger(1, b.toBytesBE());
+    BigInteger M = new BigInteger(1, m.toBytesBE());
+    BigInteger expected = A.add(B).mod(M);
+    assertThat(new BigInteger(1, a.addMod(b, m).toBytesBE())).isEqualTo(expected);
+  }
+
+  @Test
   public void mulSubOverflowWithAddBackBug() {
     // When the dividend's leading limb equals the modulus's leading limb, the trial quotient
     // overflows and is clamped to 2^64-1. Verify correctness for each Modulus size.
