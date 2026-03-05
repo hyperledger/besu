@@ -22,6 +22,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -33,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,6 +85,30 @@ public class DebugTraceBlockByHashTest {
     final String json = out.toString(UTF_8);
     assertThat(json).startsWith("{\"jsonrpc\":\"2.0\"");
     assertThat(json).contains("\"result\":");
+
+    final JsonNode response = mapper.readTree(json);
+    assertThat(response.has("result")).isTrue();
+    assertThat(response.get("result").isArray()).isTrue();
+  }
+
+  @Test
+  public void batchResponseShouldReturnSuccessWithArrayResult() {
+    final Block block =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+
+    final Object[] params = new Object[] {block.getHash()};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlockByHash", params));
+
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockByHash(block.getHash())).thenReturn(Optional.of(block));
+
+    final JsonRpcResponse response = debugTraceBlockByHash.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult()).isNotNull();
   }
 
   @Test

@@ -21,6 +21,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -133,6 +135,37 @@ public class DebugTraceBlockTest {
     final String json = out.toString(UTF_8);
     assertThat(json).startsWith("{\"jsonrpc\":\"2.0\"");
     assertThat(json).contains("\"result\":");
+
+    final JsonNode response = mapper.readTree(json);
+    assertThat(response.has("result")).isTrue();
+    assertThat(response.get("result").isArray()).isTrue();
+  }
+
+  @Test
+  public void batchResponseShouldReturnSuccessWithArrayResult() {
+    final Block parentBlock =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
+    final Block block =
+        new BlockDataGenerator()
+            .block(
+                BlockDataGenerator.BlockOptions.create()
+                    .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                    .setParentHash(parentBlock.getHash()));
+
+    final Object[] params = new Object[] {block.toRlp().toString()};
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", params));
+
+    when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchain.getBlockByHash(block.getHeader().getParentHash()))
+        .thenReturn(Optional.of(parentBlock));
+
+    final JsonRpcResponse response = debugTraceBlock.response(request);
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((JsonRpcSuccessResponse) response).getResult()).isNotNull();
   }
 
   @Test
