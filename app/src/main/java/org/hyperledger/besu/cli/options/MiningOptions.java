@@ -117,7 +117,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
   @Option(
       names = {"--max-blobs-per-transaction"},
       description =
-          "Maximum number of blobs allowed per transaction during block building. "
+          "Maximum number of blobs allowed per transaction. "
               + "Only applies from Osaka hardfork onwards. (default: 6)",
       arity = "1")
   private Integer maxBlobsPerTransaction = null;

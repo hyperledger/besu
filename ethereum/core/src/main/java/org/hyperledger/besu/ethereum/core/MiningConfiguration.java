@@ -124,8 +124,8 @@ public abstract class MiningConfiguration {
   }
 
   /**
-   * Returns the maximum blobs per transaction for block building. Note: Only applies from Osaka
-   * hardfork onwards. Returns empty if not explicitly set by the user.
+   * Returns the maximum blobs per transaction. Note: Only applies from Osaka hardfork onwards.
+   * Returns empty if not explicitly set by the user.
    *
    * @return the maximum blobs per transaction, or empty if not set
    */
@@ -264,8 +264,8 @@ public abstract class MiningConfiguration {
     }
 
     /**
-     * Returns the maximum blobs per transaction for block building. Note: Only applies from Osaka
-     * hardfork onwards. Empty means use the fork-specific default from the gas limit calculator.
+     * Returns the maximum blobs per transaction. Note: Only applies from Osaka hardfork onwards.
+     * Empty means use the fork-specific default from the gas limit calculator.
      */
     OptionalInt getMaxBlobsPerTransaction();
 
