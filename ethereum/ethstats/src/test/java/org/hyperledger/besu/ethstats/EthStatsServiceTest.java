@@ -443,4 +443,22 @@ public class EthStatsServiceTest {
     // Verify initial delay is 0 seconds
     assertThat(initialDelayCaptor.getValue()).isEqualTo(Duration.ofSeconds(0));
   }
+
+  @Test
+  public void shouldGenerateNonEmptyHistoryBlockRange() {
+    final List<Long> blocks = EthStatsService.buildHistoryBlockList(100L);
+
+    assertThat(blocks).hasSize(51);
+    assertThat(blocks).startsWith(50L);
+    assertThat(blocks).endsWith(100L);
+  }
+
+  @Test
+  public void shouldHandleChainHeadSmallerThanHistoryRange() {
+    final List<Long> blocks = EthStatsService.buildHistoryBlockList(30L);
+
+    assertThat(blocks).hasSize(31);
+    assertThat(blocks).startsWith(0L);
+    assertThat(blocks).endsWith(30L);
+  }
 }
