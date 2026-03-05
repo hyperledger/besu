@@ -108,6 +108,12 @@ class GetBlockAccessListsFromPeerTaskTest {
   }
 
   @Test
+  void testRequiresNonEmptyHeaders() {
+    assertThrows(
+        IllegalArgumentException.class, () -> new GetBlockAccessListsFromPeerTask(List.of()));
+  }
+
+  @Test
   void testRequiresHeadersWithBalHash() {
     final BlockHeader headerWithoutBalHash = new BlockHeaderTestFixture().number(2).buildHeader();
 

@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -52,8 +51,12 @@ public class GetBlockAccessListsMessageTest {
   }
 
   @Test
-  public void createWithEmptyHashesThrows() {
-    assertThatExceptionOfType(IllegalArgumentException.class)
-        .isThrownBy(() -> GetBlockAccessListsMessage.create(List.of()));
+  public void createWithEmptyHashes() {
+    final MessageData initialMessage = GetBlockAccessListsMessage.create(List.of());
+    final MessageData raw =
+        new RawMessage(EthProtocolMessages.GET_BLOCK_ACCESS_LISTS, initialMessage.getData());
+    final GetBlockAccessListsMessage message = GetBlockAccessListsMessage.readFrom(raw);
+
+    assertThat(message.blockHashes()).isEmpty();
   }
 }
