@@ -57,6 +57,8 @@ public class MessageDigestFactory {
       case KECCAK256_ALG -> new Keccak.Digest256();
       case RIPEMD160_ALG -> new RIPEMD160.Digest();
       case BLAKE2BF_ALG -> new Blake2bfMessageDigest();
+      // SHA-256 (and other standard algorithms) resolved via JCA provider priority order
+      // enabling SHA-NI hardware acceleration if available
       default -> MessageDigest.getInstance(algorithm);
     };
   }
