@@ -56,6 +56,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -761,13 +762,12 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
       final ValidationParamsVariant validationParamsVariant,
       final long txGasLimit,
       final boolean valid) {
-    final long gasLimitCap = 16_777_216L;
     final var feeMarket = FeeMarket.london(0L);
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
             new OsakaTargetingGasLimitCalculator(
-                0L, feeMarket, gasCalculator, 6, 3, 6, gasLimitCap),
+                0L, feeMarket, gasCalculator, 6, 3, OptionalInt.of(6)),
             feeMarket,
             false,
             Optional.of(BigInteger.ONE),
