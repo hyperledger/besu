@@ -2940,6 +2940,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .ifPresent(builder::setTargetGasLimit);
     }
 
+    miningParametersSupplier
+        .get()
+        .getMaxBlobsPerTransaction()
+        .ifPresent(v -> builder.setMaxBlobsPerTransaction(v));
+
     builder
         .setDiscoveryEnabled(p2PDiscoveryOptions.peerDiscoveryEnabled)
         .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
