@@ -12,8 +12,7 @@
       "nonce" : "0x1E"
     }, "latest",
     {
-      "disableStack": true,
-      "disableMemory": false
+      "disableStack": true
     } ],
     "id" : 1
   },
