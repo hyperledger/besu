@@ -44,7 +44,6 @@ import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
 import org.hyperledger.besu.nat.core.domain.NatServiceType;
 import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -99,6 +98,7 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
     when(natService.queryExternalIPAddress(anyString())).thenReturn("1.2.3.4");
+    when(p2pNetwork.getLocalEnr()).thenReturn(Optional.of("enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-test"));
     when(protocolSpec.getHardforkId()).thenReturn(LONDON);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     method =
@@ -123,6 +123,7 @@ public class AdminNodeInfoTest {
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:30303?discport=7890");
+    expected.put("enr", "enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-test");
     expected.put(
         "id",
         "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
@@ -175,6 +176,7 @@ public class AdminNodeInfoTest {
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@3.4.5.6:8081?discport=8080");
+    expected.put("enr", "enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-test");
     expected.put(
         "id",
         "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
@@ -206,7 +208,7 @@ public class AdminNodeInfoTest {
 
   @Test
   public void handlesLocalEnodeWithListeningAndDiscoveryDisabled() {
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
@@ -222,6 +224,7 @@ public class AdminNodeInfoTest {
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:0");
+    expected.put("enr", "enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-test");
     expected.put(
         "id",
         "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
@@ -252,7 +255,7 @@ public class AdminNodeInfoTest {
 
   @Test
   public void handlesLocalEnodeWithListeningDisabled() {
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
@@ -269,6 +272,7 @@ public class AdminNodeInfoTest {
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:0?discport=7890");
+    expected.put("enr", "enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-test");
     expected.put(
         "id",
         "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
@@ -299,7 +303,7 @@ public class AdminNodeInfoTest {
 
   @Test
   public void handlesLocalEnodeWithDiscoveryDisabled() {
-    final EnodeURL localEnode =
+    final EnodeURLImpl localEnode =
         EnodeURLImpl.builder()
             .nodeId(nodeId)
             .ipAddress("1.2.3.4")
@@ -316,6 +320,7 @@ public class AdminNodeInfoTest {
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:7890?discport=0");
+    expected.put("enr", "enr:-JG4QF0FFhEXDu_G-1LD5lkWh5-test");
     expected.put(
         "id",
         "0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807");
