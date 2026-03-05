@@ -306,8 +306,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockRunnerBuilder).discoveryEnabled(eq(true));
-    verify(mockRunnerBuilder)
-        .ethNetworkConfig(EthNetworkConfig.getNetworkConfig(MAINNET));
+    verify(mockRunnerBuilder).ethNetworkConfig(EthNetworkConfig.getNetworkConfig(MAINNET));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
