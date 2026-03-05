@@ -21,6 +21,7 @@
 - Stop EngineQosTimer as part of shutdown [#9903](https://github.com/hyperledger/besu/pull/9903)
 - Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists
+- Support [EIP-8159](https://eips.ethereum.org/EIPS/eip-8159): eth/71 - block access list exchange
 
 ## 26.2.0
 
