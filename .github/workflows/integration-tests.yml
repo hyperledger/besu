@@ -19,7 +19,7 @@ env:
 jobs:
   integration-tests:
     name: "integration-passed"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       statuses: write
       checks: write
