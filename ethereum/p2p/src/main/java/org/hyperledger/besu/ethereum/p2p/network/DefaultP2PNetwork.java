@@ -75,6 +75,7 @@ import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -506,6 +507,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     LOG.info("Enode URL {}", localEnode.toString());
     LOG.info("Node address {}", Util.publicKeyToAddress(localEnode.getNodeId()));
     localNode.setEnode(localEnode);
+  }
+
+  @Override
+  public Optional<String> getLocalEnr() {
+    return peerDiscoveryAgent.getLocalNodeRecord().map(NodeRecord::asEnr);
   }
 
   @Override

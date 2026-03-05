@@ -161,5 +161,14 @@ public interface P2PNetwork extends Closeable {
 
   void updateNodeRecord();
 
+  /**
+   * Returns the local Ethereum Node Record (ENR) as a string, if available.
+   *
+   * @return an Optional containing the ENR string, or empty if not available.
+   */
+  default Optional<String> getLocalEnr() {
+    return Optional.empty();
+  }
+
   Optional<RlpxAgent> getRlpxAgent();
 }
