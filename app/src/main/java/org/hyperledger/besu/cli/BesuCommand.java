@@ -2558,7 +2558,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (cliBootnodesProvided) {
       try {
         rawBootnodes = BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
-      } catch (final BootnodeResolutionException e) {
+      } catch (final BootnodeResolutionException | IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage(), e);
       }
     } else {
