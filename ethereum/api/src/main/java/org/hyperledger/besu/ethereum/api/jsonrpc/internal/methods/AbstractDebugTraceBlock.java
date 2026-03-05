@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -67,6 +69,29 @@ public abstract class AbstractDebugTraceBlock implements StreamingJsonRpcMethod 
           e.getMessage(), RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS, e);
     }
     return traceOptions;
+  }
+
+  /**
+   * Finds the block to be traced from the request parameters.
+   *
+   * @param request the RPC request context
+   * @return the block to trace, or empty if it cannot be found (not found, invalid params, etc.)
+   */
+  protected abstract Optional<Block> findBlock(JsonRpcRequestContext request);
+
+  /**
+   * Synchronous response path used by batch JSON-RPC requests. Accumulates all transaction traces
+   * in memory rather than streaming, so that the result can be returned as a single object.
+   */
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequestContext request) {
+    final Optional<Block> maybeBlock = findBlock(request);
+    if (maybeBlock.isEmpty()) {
+      return new JsonRpcSuccessResponse(request.getRequest().getId(), null);
+    }
+    final TraceOptions traceOptions = getTraceOptions(request);
+    final DebugTraceBlockStreamer streamer = createStreamer(traceOptions, maybeBlock);
+    return new JsonRpcSuccessResponse(request.getRequest().getId(), streamer.accumulateAll());
   }
 
   protected DebugTraceBlockStreamer createStreamer(

@@ -44,6 +44,16 @@ public class DebugTraceBlockByHash extends AbstractDebugTraceBlock {
   }
 
   @Override
+  protected Optional<Block> findBlock(final JsonRpcRequestContext request) {
+    try {
+      final Hash blockHash = request.getRequiredParameter(0, Hash.class);
+      return getBlockchainQueries().getBlockchain().getBlockByHash(blockHash);
+    } catch (JsonRpcParameterException e) {
+      return Optional.empty();
+    }
+  }
+
+  @Override
   public void streamResponse(
       final JsonRpcRequestContext requestContext, final OutputStream out, final ObjectMapper mapper)
       throws IOException {

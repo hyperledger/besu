@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -84,6 +86,20 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod
     final DebugTraceBlockStreamer streamer = result instanceof DebugTraceBlockStreamer s ? s : null;
     AbstractDebugTraceBlock.writeStreamingResponse(
         requestContext.getRequest().getId(), streamer, out, mapper);
+  }
+
+  /**
+   * Synchronous response path used by batch JSON-RPC requests. Accumulates all transaction traces
+   * in memory rather than streaming.
+   */
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    final Object result = findResultByParamType(requestContext);
+    if (!(result instanceof DebugTraceBlockStreamer streamer)) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+    return new JsonRpcSuccessResponse(
+        requestContext.getRequest().getId(), streamer.accumulateAll());
   }
 
   private TraceOptions getTraceOptions(final JsonRpcRequestContext request) {

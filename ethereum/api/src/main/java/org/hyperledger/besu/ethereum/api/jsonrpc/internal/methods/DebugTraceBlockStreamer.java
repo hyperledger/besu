@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.ethereum.vm.StreamingDebugOperationTracer;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
@@ -45,6 +46,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -117,15 +120,19 @@ public class DebugTraceBlockStreamer {
                   blobGasPrice,
                   blockHashLookup);
             } else {
-              accumulateTransaction(
-                  gen,
-                  transaction,
-                  chainUpdater,
-                  transactionProcessor,
-                  protocolSpec,
-                  header,
-                  blobGasPrice,
-                  blockHashLookup);
+              try {
+                gen.writeObject(
+                    buildTransactionResult(
+                        transaction,
+                        chainUpdater,
+                        transactionProcessor,
+                        protocolSpec,
+                        header,
+                        blobGasPrice,
+                        blockHashLookup));
+              } catch (IOException e) {
+                throw new UncheckedIOException(e);
+              }
             }
           }
 
@@ -133,6 +140,55 @@ public class DebugTraceBlockStreamer {
         });
     gen.writeEndArray();
     gen.flush();
+  }
+
+  /**
+   * Accumulates all transaction traces without streaming. Used for batch JSON-RPC requests where
+   * the entire result must be returned as a single response object.
+   *
+   * @return list of trace results for all transactions in the block
+   */
+  public List<Object> accumulateAll() {
+    final List<Object> results = new ArrayList<>();
+    Tracer.processTracing(
+        blockchainQueries,
+        Optional.of(block.getHeader()),
+        traceableState -> {
+          final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+          final MainnetTransactionProcessor transactionProcessor =
+              protocolSpec.getTransactionProcessor();
+          final TraceBlock.ChainUpdater chainUpdater = new TraceBlock.ChainUpdater(traceableState);
+
+          final BlockHeader header = block.getHeader();
+          final Optional<BlockHeader> maybeParentHeader =
+              blockchainQueries.getBlockchain().getBlockHeader(header.getParentHash());
+          final Wei blobGasPrice =
+              protocolSpec
+                  .getFeeMarket()
+                  .blobGasPricePerGas(
+                      maybeParentHeader
+                          .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                          .orElse(BlobGas.ZERO));
+          final BlockHashLookup blockHashLookup =
+              protocolSpec
+                  .getPreExecutionProcessor()
+                  .createBlockHashLookup(blockchainQueries.getBlockchain(), header);
+
+          for (final Transaction transaction : block.getBody().getTransactions()) {
+            results.add(
+                buildTransactionResult(
+                    transaction,
+                    chainUpdater,
+                    transactionProcessor,
+                    protocolSpec,
+                    header,
+                    blobGasPrice,
+                    blockHashLookup));
+          }
+
+          return Optional.of(Boolean.TRUE);
+        });
+    return results;
   }
 
   private void streamOpcodeTransaction(
@@ -143,8 +199,13 @@ public class DebugTraceBlockStreamer {
       final BlockHeader header,
       final Wei blobGasPrice,
       final BlockHashLookup blockHashLookup) {
-    final DebugOperationTracer tracer =
-        new DebugOperationTracer(traceOptions.opCodeTracerConfig(), true);
+    final StreamingDebugOperationTracer tracer =
+        new StreamingDebugOperationTracer(
+            traceOptions.opCodeTracerConfig(),
+            true,
+            (pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert) ->
+                writeStreamingStructLog(
+                    gen, pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert));
 
     try {
       gen.writeStartObject();
@@ -155,11 +216,6 @@ public class DebugTraceBlockStreamer {
       // structLogs written during execution (before gas/failed/returnValue are known)
       gen.writeFieldName("structLogs");
       gen.writeStartArray();
-
-      tracer.setStreamingWriter(
-          (pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert) ->
-              writeStreamingStructLog(
-                  gen, pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert));
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -187,8 +243,7 @@ public class DebugTraceBlockStreamer {
     }
   }
 
-  private void accumulateTransaction(
-      final JsonGenerator gen,
+  private DebugTraceTransactionResult buildTransactionResult(
       final Transaction transaction,
       final TraceBlock.ChainUpdater chainUpdater,
       final MainnetTransactionProcessor transactionProcessor,
@@ -223,14 +278,8 @@ public class DebugTraceBlockStreamer {
             accessListTracker.getTouchedAccounts());
     tracer.reset();
 
-    final DebugTraceTransactionResult traceResult =
-        DebugTraceTransactionStepFactory.create(traceOptions, protocolSpec).apply(transactionTrace);
-
-    try {
-      gen.writeObject(traceResult);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return DebugTraceTransactionStepFactory.create(traceOptions, protocolSpec)
+        .apply(transactionTrace);
   }
 
   private void writeStreamingStructLog(
@@ -264,8 +313,8 @@ public class DebugTraceBlockStreamer {
         gen.writeEndArray();
       }
 
-      // memory - read directly from frame (mutable view, no copy)
-      if (traceOptions.opCodeTracerConfig().traceMemory() && frame.memoryWordSize() > 0) {
+      // memory - always emit the array when traceMemory is enabled, even if empty
+      if (traceOptions.opCodeTracerConfig().traceMemory()) {
         gen.writeFieldName("memory");
         gen.writeStartArray();
         final int wordCount = frame.memoryWordSize();
