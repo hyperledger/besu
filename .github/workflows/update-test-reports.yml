@@ -8,7 +8,7 @@ on:
 jobs:
   syncTestReports:
     if: github.repository == 'hyperledger/besu'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Get latest merge PR number
         id: latest_merged_pr_number
