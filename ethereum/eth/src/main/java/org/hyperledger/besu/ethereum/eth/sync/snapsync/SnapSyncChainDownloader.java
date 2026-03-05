@@ -66,6 +66,7 @@ public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
   public static final int SMALL_DELAY_MILLISECONDS = 100;
+  public static final int NO_PEER_RETRY_DELAY_MILLISECONDS = 5_000;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolSchedule protocolSchedule;
@@ -478,6 +479,21 @@ public class SnapSyncChainDownloader
 
     // Already completed from another path
     if (overallResult.isDone()) {
+      return;
+    }
+
+    // Guard against starting an expensive 160-concurrent-future pipeline with no peers.
+    // With no peers every future immediately hits NO_PEER_AVAILABLE, spins for 60 s, and
+    // the pipeline restarts every 60 s accumulating scheduler/thread overhead indefinitely.
+    if (ethContext.getEthPeers().peerCount() == 0) {
+      LOG.debug(
+          "No peers available, deferring chain sync pipeline start for {} ms",
+          NO_PEER_RETRY_DELAY_MILLISECONDS);
+      ethContext
+          .getScheduler()
+          .scheduleFutureTask(
+              () -> attemptDownload(overallResult),
+              Duration.ofMillis(NO_PEER_RETRY_DELAY_MILLISECONDS));
       return;
     }
 
