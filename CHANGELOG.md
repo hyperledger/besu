@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Syncing networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. [#9852](https://github.com/hyperledger/besu/pull/9852)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
@@ -11,9 +12,9 @@
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
-  - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
 
 ### Bug fixes
+- BFT forks that change block period on time-based forks don't take effect [9681](https://github.com/hyperledger/besu/issues/9681)
 
 ### Additions and Improvements
 - Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
@@ -21,6 +22,7 @@
 - Add `--max-blobs-per-transaction` CLI option to configure the maximum number of blobs per transaction during block building [#9531](https://github.com/hyperledger/besu/pull/9531)
 - Wire `--max-blobs-per-transaction` into protocol specs and gas limit calculator [#9912](https://github.com/hyperledger/besu/pull/9912)
 - Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
+- Plugin API: Allow the registration of multiple PluginTransactionPoolValidatorFactory [#9964](https://github.com/hyperledger/besu/pull/9964)
 
 ## 26.2.0
 

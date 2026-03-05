@@ -291,6 +291,23 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
+  void setDiscoveryDisabled() {
+    final String discoveryEnabledByDefault = builder.build();
+    assertThat(discoveryEnabledByDefault).doesNotContain("Discovery: disabled");
+
+    builder.setDiscoveryEnabled(false);
+    final String discoveryDisabled = builder.build();
+    assertThat(discoveryDisabled).contains("Discovery: disabled");
+  }
+
+  @Test
+  void setDiscoveryEnabled() {
+    builder.setDiscoveryEnabled(true);
+    final String discoveryEnabled = builder.build();
+    assertThat(discoveryEnabled).doesNotContain("Discovery: disabled");
+  }
+
+  @Test
   void setChainPruningDisabled() {
     final String noChainPruningSet = builder.build();
     assertThat(noChainPruningSet).doesNotContain("Chain pruning enabled");

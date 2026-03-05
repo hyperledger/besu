@@ -60,6 +60,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
+  private boolean isDiscoveryEnabled = true;
   private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
@@ -245,6 +246,17 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setTrieLogRetentionLimit(final long limit) {
     trieLogRetentionLimit = limit;
+    return this;
+  }
+
+  /**
+   * Sets discovery enabled/disabled
+   *
+   * @param discoveryEnabled bool to indicate if discovery is enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setDiscoveryEnabled(final boolean discoveryEnabled) {
+    isDiscoveryEnabled = discoveryEnabled;
     return this;
   }
 
@@ -457,6 +469,10 @@ public class ConfigurationOverviewBuilder {
 
     if (syncMinPeers != null) {
       lines.add("Sync min peers: " + syncMinPeers);
+    }
+
+    if (!isDiscoveryEnabled) {
+      lines.add("P2P Discovery: disabled");
     }
 
     if (rpcHttpApis != null) {
