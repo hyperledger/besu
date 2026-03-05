@@ -2576,10 +2576,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       try {
         if (isV5) {
           builder.setEnrBootNodes(rawBootnodes.stream().map(EthereumNodeRecord::fromEnr).toList());
+          builder.setEnodeBootNodes(Collections.emptyList());
         } else {
           final List<EnodeURLImpl> enodes = buildEnodes(rawBootnodes, getEnodeDnsConfiguration());
           DiscoveryConfiguration.assertValidBootnodes(enodes);
           builder.setEnodeBootNodes(enodes);
+          builder.setEnrBootNodes(Collections.emptyList());
         }
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
