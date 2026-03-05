@@ -336,6 +336,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     }
   }
 
+  @Override
+  public Optional<NodeRecord> getLocalNodeRecord() {
+    return nodeRecordManager.getLocalNode().flatMap(DiscoveryPeer::getNodeRecord);
+  }
+
   /**
    * Looks up a peer by its identifier.
    *
