@@ -132,6 +132,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
             .setNetworkId(BigInteger.valueOf(42))
             .setGenesisConfig(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
             .setEnodeBootNodes(nodes)
+            .setEnrBootNodes(Collections.emptyList())
             .setDnsDiscoveryUrl(null)
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
