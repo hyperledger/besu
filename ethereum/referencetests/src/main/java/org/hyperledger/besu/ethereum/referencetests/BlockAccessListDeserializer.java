@@ -66,6 +66,7 @@ public class BlockAccessListDeserializer extends JsonDeserializer<BlockAccessLis
         ctxt.getTypeFactory().constructCollectionType(List.class, AccountChangesJson.class);
     final List<AccountChangesJson> list;
     try (JsonParser nodeParser = balNode.traverse(codec)) {
+      nodeParser.nextToken();
       list = ctxt.readValue(nodeParser, listType);
     } catch (final IOException e) {
       throw ctxt.weirdStringException(
