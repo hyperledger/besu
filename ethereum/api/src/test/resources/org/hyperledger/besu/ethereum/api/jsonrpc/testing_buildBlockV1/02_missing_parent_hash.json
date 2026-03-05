@@ -1,21 +1,20 @@
 {
-  "description": "Error case: parentBlockHash field is absent from the params object. Expects INVALID_PARAMS error.",
+  "description": "Error case: parentBlockHash (index 0) is null. Expects INVALID_PARAMS error.",
   "request": {
     "id": 2,
     "jsonrpc": "2.0",
     "method": "testing_buildBlockV1",
     "params": [
+      null,
       {
-        "payloadAttributes": {
-          "timestamp": "0x6705D918",
-          "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "suggestedFeeRecipient": "0x0000000000000000000000000000000000000000",
-          "withdrawals": [],
-          "parentBeaconBlockRoot": "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884365149a42212e8822"
-        },
-        "transactions": [],
-        "extraData": "0x"
-      }
+        "timestamp": "0x6705D918",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "suggestedFeeRecipient": "0x0000000000000000000000000000000000000000",
+        "withdrawals": [],
+        "parentBeaconBlockRoot": "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884365149a42212e8822"
+      },
+      [],
+      "0x"
     ]
   },
   "response": {

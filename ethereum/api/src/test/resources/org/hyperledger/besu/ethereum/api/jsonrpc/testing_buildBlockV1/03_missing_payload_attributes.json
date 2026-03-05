@@ -1,15 +1,14 @@
 {
-  "description": "Error case: payloadAttributes field is absent from the params object. Expects INVALID_PARAMS with 'Missing payloadAttributes field' message. Note: parentBlockHash is validated first, so it must be a valid block hash.",
+  "description": "Error case: payloadAttributes (index 1) is null. Expects INVALID_PARAMS error.",
   "request": {
     "id": 3,
     "jsonrpc": "2.0",
     "method": "testing_buildBlockV1",
     "params": [
-      {
-        "parentBlockHash": "0x937c8f382f4945fc6122652239426484d97b400d66c122aea45f2dd4a8afeab6",
-        "transactions": [],
-        "extraData": "0x"
-      }
+      "0x937c8f382f4945fc6122652239426484d97b400d66c122aea45f2dd4a8afeab6",
+      null,
+      [],
+      "0x"
     ]
   },
   "response": {
@@ -17,8 +16,7 @@
     "id": 3,
     "error": {
       "code": -32602,
-      "message": "Invalid params",
-      "data": "Missing payloadAttributes field"
+      "message": "Invalid params"
     }
   },
   "statusCode": 200

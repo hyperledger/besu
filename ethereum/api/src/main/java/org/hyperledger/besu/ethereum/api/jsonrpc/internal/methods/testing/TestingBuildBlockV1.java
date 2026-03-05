@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.testing;
 
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -25,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TestingBuildBlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -79,7 +76,6 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
   private final MiningConfiguration miningConfiguration;
   private final TransactionPool transactionPool;
   private final EthScheduler ethScheduler;
-  private final Optional<Long> amsterdamMilestone;
 
   public TestingBuildBlockV1(
       final ProtocolContext protocolContext,
@@ -92,7 +88,6 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     this.miningConfiguration = miningConfiguration;
     this.transactionPool = transactionPool;
     this.ethScheduler = ethScheduler;
-    this.amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
   }
 
   @Override
@@ -102,20 +97,54 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final TestingBuildBlockParameter parameter;
-    try {
-      parameter = requestContext.getRequiredParameter(0, TestingBuildBlockParameter.class);
-    } catch (JsonRpcParameterException e) {
-      throw new InvalidJsonRpcParameters(
-          "Invalid testing_buildBlockV1 parameter (index 0)", RpcErrorType.INVALID_PARAMS, e);
-    }
-
     final Object requestId = requestContext.getRequest().getId();
 
-    final Hash parentBlockHash = parameter.getParentBlockHash();
-    final EnginePayloadAttributesParameter payloadAttributes = parameter.getPayloadAttributes();
-    final List<String> rawTransactions = parameter.getTransactions();
-    final Bytes extraData = parameter.getExtraData();
+    // Parameter 0: parentBlockHash (required)
+    final Hash parentBlockHash;
+    try {
+      final String parentHashHex = requestContext.getRequiredParameter(0, String.class);
+      parentBlockHash = Hash.fromHexString(parentHashHex);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid parentBlockHash parameter (index 0)", RpcErrorType.INVALID_PARAMS, e);
+    }
+
+    // Parameter 1: payloadAttributes (required)
+    final EnginePayloadAttributesParameter payloadAttributes;
+    try {
+      payloadAttributes =
+          requestContext.getRequiredParameter(1, EnginePayloadAttributesParameter.class);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid payloadAttributes parameter (index 1)", RpcErrorType.INVALID_PARAMS, e);
+    }
+
+    // Parameter 2: transactions (can be null or array)
+    // - null -> use txpool
+    // - [] or [...] -> use provided transactions
+    final String[] txArray;
+    try {
+      txArray = requestContext.getOptionalParameter(2, String[].class).orElse(null);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid transactions parameter (index 2)", RpcErrorType.INVALID_PARAMS, e);
+    }
+    final List<String> rawTransactions = txArray != null ? List.of(txArray) : List.of();
+    final boolean transactionsProvided = txArray != null;
+
+    // Parameter 3: extraData (optional)
+    final Bytes extraData;
+    try {
+      extraData =
+          requestContext
+              .getOptionalParameter(3, String.class)
+              .filter(s -> !s.isEmpty())
+              .map(Bytes::fromHexString)
+              .orElse(Bytes.EMPTY);
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid extraData parameter (index 3)", RpcErrorType.INVALID_PARAMS, e);
+    }
 
     final Blockchain blockchain = protocolContext.getBlockchain();
     final Optional<BlockHeader> maybeParentHeader = blockchain.getBlockHeader(parentBlockHash);
@@ -124,8 +153,7 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestId,
           ValidationResult.invalid(
-              RpcErrorType.INVALID_PARAMS,
-              "Parent block not found: " + parentBlockHash.toHexString()));
+              RpcErrorType.INVALID_PARAMS, "Parent block not found: " + parentBlockHash));
     }
 
     final BlockHeader parentHeader = maybeParentHeader.get();
@@ -134,12 +162,6 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestId,
           ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing payloadAttributes field"));
-    }
-
-    final ValidationResult<RpcErrorType> forkValidation =
-        validateForkSupported(payloadAttributes.getTimestamp());
-    if (!forkValidation.isValid()) {
-      return new JsonRpcErrorResponse(requestId, forkValidation);
     }
 
     final ValidationResult<RpcErrorType> attributesValidation =
@@ -162,6 +184,14 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
       }
     }
 
+    // Determine how to handle transactions based on go-ethereum semantics:
+    // - If transactions field was not provided (null in JSON) -> use txpool (Optional.empty())
+    // - If transactions field is empty array [] -> build empty block (Optional.of(emptyList))
+    // - If transactions field has items -> use those (Optional.of(transactions))
+    final boolean useTransactionsFromTxPool = !transactionsProvided;
+    final Optional<List<Transaction>> maybeTransactions =
+        useTransactionsFromTxPool ? Optional.empty() : Optional.of(transactions);
+
     final List<Withdrawal> withdrawals =
         payloadAttributes.getWithdrawals() != null
             ? payloadAttributes.getWithdrawals().stream()
@@ -177,7 +207,7 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     try {
       miningConfiguration.setCoinbase(payloadAttributes.getSuggestedFeeRecipient());
 
-      if (extraData != null && !extraData.isEmpty()) {
+      if (!extraData.isEmpty()) {
         miningConfiguration.setExtraData(extraData);
       }
 
@@ -191,7 +221,7 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
 
       final BlockCreationResult result =
           blockCreator.createBlock(
-              Optional.of(transactions),
+              maybeTransactions,
               prevRandao,
               timestamp,
               Optional.of(withdrawals),
@@ -238,19 +268,6 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     }
   }
 
-  private ValidationResult<RpcErrorType> validateForkSupported(final long timestamp) {
-    if (amsterdamMilestone.isEmpty()) {
-      return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK, "Amsterdam fork is not enabled");
-    }
-    if (timestamp < amsterdamMilestone.get()) {
-      return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK,
-          "Timestamp must be >= Amsterdam fork timestamp: " + amsterdamMilestone.get());
-    }
-    return ValidationResult.valid();
-  }
-
   private ValidationResult<RpcErrorType> validatePayloadAttributes(
       final EnginePayloadAttributesParameter attributes) {
     if (attributes.getTimestamp() == null || attributes.getTimestamp() == 0) {
@@ -263,11 +280,6 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     if (attributes.getSuggestedFeeRecipient() == null) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "Missing suggestedFeeRecipient field");
-    }
-    if (attributes.getParentBeaconBlockRoot() == null) {
-      return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
-          "Missing parent beacon block root field");
     }
     return ValidationResult.valid();
   }

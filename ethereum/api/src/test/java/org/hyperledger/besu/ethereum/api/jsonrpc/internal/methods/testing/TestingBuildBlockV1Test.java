@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -67,7 +65,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestingBuildBlockV1Test {
 
-  private static final long AMSTERDAM_TIMESTAMP = 100L;
+  private static final long DEFAULT_TIMESTAMP = 100L;
 
   @Mock private ProtocolContext protocolContext;
   @Mock private ProtocolSchedule protocolSchedule;
@@ -81,9 +79,6 @@ class TestingBuildBlockV1Test {
   @BeforeEach
   void setUp() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
-    lenient()
-        .when(protocolSchedule.milestoneFor(AMSTERDAM))
-        .thenReturn(Optional.of(AMSTERDAM_TIMESTAMP));
     method =
         new TestingBuildBlockV1(
             protocolContext, protocolSchedule, miningConfiguration, transactionPool, ethScheduler);
@@ -109,54 +104,20 @@ class TestingBuildBlockV1Test {
   @Test
   void shouldReturnErrorForInvalidTransactionRlp() {
     final BlockHeader parentHeader =
-        new BlockHeaderTestFixture().timestamp(AMSTERDAM_TIMESTAMP).buildHeader();
+        new BlockHeaderTestFixture().timestamp(DEFAULT_TIMESTAMP).buildHeader();
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(parentHeader));
 
     final JsonRpcResponse response =
         method.response(
             requestWithTransactions(
                 parentHeader.getHash().toHexString(),
-                List.of("0xINVALIDRLP"),
-                AMSTERDAM_TIMESTAMP + 1));
+                new String[] {"0xINVALIDRLP"},
+                DEFAULT_TIMESTAMP + 1));
 
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError().getCode())
         .isEqualTo(RpcErrorType.INVALID_TRANSACTION_PARAMS.getCode());
-  }
-
-  @Test
-  void shouldReturnErrorWhenAmsterdamForkNotEnabled() {
-    when(protocolSchedule.milestoneFor(AMSTERDAM)).thenReturn(Optional.empty());
-    method =
-        new TestingBuildBlockV1(
-            protocolContext, protocolSchedule, miningConfiguration, transactionPool, ethScheduler);
-
-    final BlockHeader parentHeader = new BlockHeaderTestFixture().buildHeader();
-    when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(parentHeader));
-
-    final JsonRpcResponse response =
-        method.response(requestWithTimestamp(parentHeader.getHash().toHexString(), 1L));
-
-    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError().getCode())
-        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
-  }
-
-  @Test
-  void shouldReturnErrorWhenTimestampBeforeAmsterdamFork() {
-    final BlockHeader parentHeader = new BlockHeaderTestFixture().buildHeader();
-    when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(parentHeader));
-
-    final JsonRpcResponse response =
-        method.response(
-            requestWithTimestamp(parentHeader.getHash().toHexString(), AMSTERDAM_TIMESTAMP - 1));
-
-    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError().getCode())
-        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
   }
 
   @Test
@@ -169,55 +130,23 @@ class TestingBuildBlockV1Test {
 
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError().getCode())
-        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
-  }
-
-  @Test
-  void shouldThrowExceptionWhenMissingPrevRandao() {
-    final BlockHeader parentHeader =
-        new BlockHeaderTestFixture().timestamp(AMSTERDAM_TIMESTAMP).buildHeader();
-    when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(parentHeader));
-
-    org.junit.jupiter.api.Assertions.assertThrows(
-        org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters.class,
-        () ->
-            method.response(
-                requestWithMissingPrevRandao(
-                    parentHeader.getHash().toHexString(), AMSTERDAM_TIMESTAMP + 1)));
+    assertThat(errorResponse.getError().getCode()).isEqualTo(RpcErrorType.INVALID_PARAMS.getCode());
   }
 
   @Test
   void shouldReturnErrorWhenMissingSuggestedFeeRecipient() {
     final BlockHeader parentHeader =
-        new BlockHeaderTestFixture().timestamp(AMSTERDAM_TIMESTAMP).buildHeader();
+        new BlockHeaderTestFixture().timestamp(DEFAULT_TIMESTAMP).buildHeader();
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(parentHeader));
 
     final JsonRpcResponse response =
         method.response(
             requestWithMissingSuggestedFeeRecipient(
-                parentHeader.getHash().toHexString(), AMSTERDAM_TIMESTAMP + 1));
+                parentHeader.getHash().toHexString(), DEFAULT_TIMESTAMP + 1));
 
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getError().getCode()).isEqualTo(RpcErrorType.INVALID_PARAMS.getCode());
-  }
-
-  @Test
-  void shouldReturnErrorWhenMissingParentBeaconBlockRoot() {
-    final BlockHeader parentHeader =
-        new BlockHeaderTestFixture().timestamp(AMSTERDAM_TIMESTAMP).buildHeader();
-    when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(parentHeader));
-
-    final JsonRpcResponse response =
-        method.response(
-            requestWithMissingParentBeaconBlockRoot(
-                parentHeader.getHash().toHexString(), AMSTERDAM_TIMESTAMP + 1));
-
-    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
-    assertThat(errorResponse.getError().getCode())
-        .isEqualTo(RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS.getCode());
   }
 
   @Test
@@ -399,16 +328,16 @@ class TestingBuildBlockV1Test {
   }
 
   private JsonRpcRequestContext requestWithParentHash(final String parentHash) {
-    return requestWithTransactions(parentHash, Collections.emptyList(), AMSTERDAM_TIMESTAMP + 1);
+    return requestWithTransactions(parentHash, new String[0], DEFAULT_TIMESTAMP + 1);
   }
 
   private JsonRpcRequestContext requestWithTimestamp(
       final String parentHash, final long timestamp) {
-    return requestWithTransactions(parentHash, Collections.emptyList(), timestamp);
+    return requestWithTransactions(parentHash, new String[0], timestamp);
   }
 
   private JsonRpcRequestContext requestWithTransactions(
-      final String parentHash, final List<String> transactions, final long timestamp) {
+      final String parentHash, final String[] transactions, final long timestamp) {
     final Map<String, Object> payloadAttributes = new LinkedHashMap<>();
     payloadAttributes.put("timestamp", Bytes.ofUnsignedLong(timestamp).toQuantityHexString());
     payloadAttributes.put("prevRandao", Hash.ZERO.toHexString());
@@ -416,30 +345,11 @@ class TestingBuildBlockV1Test {
     payloadAttributes.put("withdrawals", Collections.emptyList());
     payloadAttributes.put("parentBeaconBlockRoot", Bytes32.ZERO.toHexString());
 
-    final Map<String, Object> param = new LinkedHashMap<>();
-    param.put("parentBlockHash", parentHash);
-    param.put("payloadAttributes", payloadAttributes);
-    param.put("transactions", transactions);
-
     return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "testing_buildBlockV1", new Object[] {param}));
-  }
-
-  private JsonRpcRequestContext requestWithMissingPrevRandao(
-      final String parentHash, final long timestamp) {
-    final Map<String, Object> payloadAttributes = new LinkedHashMap<>();
-    payloadAttributes.put("timestamp", Bytes.ofUnsignedLong(timestamp).toQuantityHexString());
-    payloadAttributes.put("suggestedFeeRecipient", "0x0000000000000000000000000000000000000000");
-    payloadAttributes.put("withdrawals", Collections.emptyList());
-    payloadAttributes.put("parentBeaconBlockRoot", Bytes32.ZERO.toHexString());
-
-    final Map<String, Object> param = new LinkedHashMap<>();
-    param.put("parentBlockHash", parentHash);
-    param.put("payloadAttributes", payloadAttributes);
-    param.put("transactions", Collections.emptyList());
-
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "testing_buildBlockV1", new Object[] {param}));
+        new JsonRpcRequest(
+            "2.0",
+            "testing_buildBlockV1",
+            new Object[] {parentHash, payloadAttributes, transactions, null}));
   }
 
   private JsonRpcRequestContext requestWithMissingSuggestedFeeRecipient(
@@ -450,29 +360,10 @@ class TestingBuildBlockV1Test {
     payloadAttributes.put("withdrawals", Collections.emptyList());
     payloadAttributes.put("parentBeaconBlockRoot", Bytes32.ZERO.toHexString());
 
-    final Map<String, Object> param = new LinkedHashMap<>();
-    param.put("parentBlockHash", parentHash);
-    param.put("payloadAttributes", payloadAttributes);
-    param.put("transactions", Collections.emptyList());
-
     return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "testing_buildBlockV1", new Object[] {param}));
-  }
-
-  private JsonRpcRequestContext requestWithMissingParentBeaconBlockRoot(
-      final String parentHash, final long timestamp) {
-    final Map<String, Object> payloadAttributes = new LinkedHashMap<>();
-    payloadAttributes.put("timestamp", Bytes.ofUnsignedLong(timestamp).toQuantityHexString());
-    payloadAttributes.put("prevRandao", Hash.ZERO.toHexString());
-    payloadAttributes.put("suggestedFeeRecipient", "0x0000000000000000000000000000000000000000");
-    payloadAttributes.put("withdrawals", Collections.emptyList());
-
-    final Map<String, Object> param = new LinkedHashMap<>();
-    param.put("parentBlockHash", parentHash);
-    param.put("payloadAttributes", payloadAttributes);
-    param.put("transactions", Collections.emptyList());
-
-    return new JsonRpcRequestContext(
-        new JsonRpcRequest("2.0", "testing_buildBlockV1", new Object[] {param}));
+        new JsonRpcRequest(
+            "2.0",
+            "testing_buildBlockV1",
+            new Object[] {parentHash, payloadAttributes, new String[0], null}));
   }
 }

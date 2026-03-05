@@ -5,16 +5,15 @@
     "jsonrpc": "2.0",
     "method": "testing_buildBlockV1",
     "params": [
+      "0x937c8f382f4945fc6122652239426484d97b400d66c122aea45f2dd4a8afeab6",
       {
-        "parentBlockHash": "0x937c8f382f4945fc6122652239426484d97b400d66c122aea45f2dd4a8afeab6",
-        "payloadAttributes": {
-          "timestamp": "0x1",
-          "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "withdrawals": [],
-          "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
-        },
-        "transactions": []
-      }
+        "timestamp": "0x1",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "withdrawals": [],
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      [],
+      "0x"
     ]
   },
   "response": {

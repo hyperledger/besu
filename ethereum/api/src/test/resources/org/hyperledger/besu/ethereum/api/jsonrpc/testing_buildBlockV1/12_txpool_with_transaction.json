@@ -1,6 +1,7 @@
 {
-  "description": "Build a block containing one EIP-1559 ETH transfer. Sender 0xfe3b557e (funded with ~12.5 ETH in genesis) sends 1000 wei to 0x627306090a. The transaction is included: gasUsed=21000 (0x5208), nonce=0, maxFeePerGas=0x10 (> genesis baseFee 0x7), chainId=3503995874084926.",
+  "description": "Build a block using transactions from the transaction pool. When transactions parameter is null, the block creator should pull pending transactions from the mempool. The txpool contains one transaction which is included in the block (gasUsed=0x5208).",
   "request": {
+    "id": 12,
     "jsonrpc": "2.0",
     "method": "testing_buildBlockV1",
     "params": [
@@ -13,16 +14,13 @@
         "withdrawals": [],
         "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
-      [
-        "0x02f86b870c72dd9d5e883e80801082520894627306090abab3a6e1400e9345bc60c78a8bef578203e880c080a087b5ee5be96494e587c6f97c5fdb819c798cf7c5f4fad99ab1c365133c1b2feaa05a1bd572f15f968195d8a7afa535a04897a43f98f005ad581c92503fef4c6b1a"
-      ],
+      null,
       "0x"
-    ],
-    "id": 7
+    ]
   },
   "response": {
     "jsonrpc": "2.0",
-    "id": 7,
+    "id": 12,
     "result": {
       "executionPayload": {
         "parentHash": "0x937c8f382f4945fc6122652239426484d97b400d66c122aea45f2dd4a8afeab6",
