@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.common;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -212,18 +210,21 @@ public class PivotSyncActionsTest {
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
 
+    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
+
     final CompletableFuture<PivotSyncState> result =
         pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
     assertThat(result).isNotDone();
 
     // First peer is under the threshold, we should keep retrying
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isNotDone();
 
     // Second peer meets min peer threshold, we should select the pivot
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 5000);
     final PivotSyncState expected = new PivotSyncState(4000, false);
-    await().atMost(1, SECONDS).untilAsserted(() -> assertThat(result).isDone());
+    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isCompletedWithValue(expected);
   }
 
