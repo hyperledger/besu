@@ -2554,7 +2554,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final boolean isV5 =
         unstableNetworkingOptions.toDomainObject().discoveryConfiguration().isDiscoveryV5Enabled();
     List<String> rawBootnodes = null;
-    if (p2PDiscoveryOptions.bootNodes != null) {
+    final boolean cliBootnodesProvided = p2PDiscoveryOptions.bootNodes != null;
+    if (cliBootnodesProvided) {
       try {
         rawBootnodes = BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
       } catch (final BootnodeResolutionException e) {
@@ -2576,17 +2577,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       try {
         if (isV5) {
           builder.setEnrBootNodes(rawBootnodes.stream().map(EthereumNodeRecord::fromEnr).toList());
-          builder.setEnodeBootNodes(Collections.emptyList());
         } else {
           final List<EnodeURLImpl> enodes = buildEnodes(rawBootnodes, getEnodeDnsConfiguration());
           DiscoveryConfiguration.assertValidBootnodes(enodes);
           builder.setEnodeBootNodes(enodes);
-          builder.setEnrBootNodes(Collections.emptyList());
+        }
+        // CLI --bootnodes is a full override: clear the unused protocol's list
+        if (cliBootnodesProvided) {
+          if (isV5) {
+            builder.setEnodeBootNodes(Collections.emptyList());
+          } else {
+            builder.setEnrBootNodes(Collections.emptyList());
+          }
         }
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
-    } else if (p2PDiscoveryOptions.bootNodes != null) {
+    } else if (cliBootnodesProvided) {
       // Explicitly empty --bootnodes clears all default bootnodes
       builder.setEnodeBootNodes(Collections.emptyList());
       builder.setEnrBootNodes(Collections.emptyList());
