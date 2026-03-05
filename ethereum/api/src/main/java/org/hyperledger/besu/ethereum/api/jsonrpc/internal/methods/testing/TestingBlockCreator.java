@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.testing;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -44,14 +46,16 @@ class TestingBlockCreator extends AbstractBlockCreator {
 
   public TestingBlockCreator(
       final MiningConfiguration miningConfiguration,
+      final Address coinbase,
+      final Bytes extraData,
       final TransactionPool transactionPool,
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final EthScheduler ethScheduler) {
     super(
         miningConfiguration,
-        (__, ___) -> miningConfiguration.getCoinbase().orElseThrow(),
-        parent -> miningConfiguration.getExtraData(),
+        (__, ___) -> coinbase,
+        parent -> extraData,
         transactionPool,
         protocolContext,
         protocolSchedule,

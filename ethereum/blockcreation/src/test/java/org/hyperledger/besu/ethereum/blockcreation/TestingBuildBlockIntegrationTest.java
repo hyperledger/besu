@@ -126,7 +126,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(List.of(txn)),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     assertThat(result).isNotNull();
@@ -182,7 +182,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(List.of(txn)),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     assertThat(result).isNotNull();
@@ -201,7 +201,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(Collections.emptyList()),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     assertThat(result).isNotNull();
@@ -220,7 +220,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(Collections.emptyList()),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     assertThat(result).isNotNull();
@@ -254,7 +254,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(List.of(txn)),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     final Optional<BlockAccessList> maybeBAL = result.getBlockAccessList();
@@ -307,7 +307,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(List.of(txn1, txn2)),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     assertThat(result).isNotNull();
@@ -344,7 +344,7 @@ class TestingBuildBlockIntegrationTest {
         context.blockCreator.createBlock(
             Optional.of(List.of(txn)),
             Optional.empty(),
-            System.currentTimeMillis(),
+            context.parentHeader.getTimestamp() + 1L,
             context.parentHeader);
 
     final Optional<BlockAccessList> maybeBAL = result.getBlockAccessList();
@@ -382,7 +382,7 @@ class TestingBuildBlockIntegrationTest {
             specBuilder -> {
               specBuilder.isReplayProtectionSupported(true);
               if (withBAL) {
-                specBuilder.blockAccessListFactory(new BlockAccessListFactory(true, true));
+                specBuilder.blockAccessListFactory(new BlockAccessListFactory());
               }
               specBuilder.transactionValidatorFactoryBuilder(
                   (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
@@ -401,7 +401,9 @@ class TestingBuildBlockIntegrationTest {
                         MiningConfiguration.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        ImmutableBalConfiguration.builder().isBalApiEnabled(withBAL).build(),
+                        ImmutableBalConfiguration.builder()
+                            .isBalOptimisationEnabled(withBAL)
+                            .build(),
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
             .dataStorageFormat(DataStorageFormat.BONSAI)

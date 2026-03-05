@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.testing;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
@@ -50,6 +52,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.util.HexUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -205,15 +208,13 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     final Long slotNumber = payloadAttributes.getSlotNumber();
 
     try {
-      miningConfiguration.setCoinbase(payloadAttributes.getSuggestedFeeRecipient());
-
-      if (!extraData.isEmpty()) {
-        miningConfiguration.setExtraData(extraData);
-      }
+      final Address coinbase = payloadAttributes.getSuggestedFeeRecipient();
 
       final TestingBlockCreator blockCreator =
           new TestingBlockCreator(
               miningConfiguration,
+              coinbase,
+              extraData,
               transactionPool,
               protocolContext,
               protocolSchedule,
@@ -237,7 +238,7 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
               .map(b -> HexUtils.toFastHex(b, true))
               .collect(Collectors.toList());
 
-      final Optional<List<String>> executionRequests = getExecutionRequests(block);
+      final Optional<List<String>> executionRequests = getExecutionRequests(result);
 
       final BlobsBundleV2 blobsBundle = new BlobsBundleV2(block.getBody().getTransactions());
 
@@ -284,8 +285,17 @@ public class TestingBuildBlockV1 implements JsonRpcMethod {
     return ValidationResult.valid();
   }
 
-  private Optional<List<String>> getExecutionRequests(final Block block) {
-    return block.getHeader().getRequestsHash().map(hash -> List.of());
+  private Optional<List<String>> getExecutionRequests(final BlockCreationResult result) {
+    return result
+        .getRequests()
+        .map(
+            requests ->
+                requests.stream()
+                    .sorted(Comparator.comparing(Request::getType))
+                    .filter(r -> !r.getData().isEmpty())
+                    .map(Request::getEncodedRequest)
+                    .map(b -> HexUtils.toFastHex(b, true))
+                    .toList());
   }
 
   private String encodeBlockAccessList(final Optional<BlockAccessList> maybeBlockAccessList) {
