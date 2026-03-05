@@ -429,8 +429,7 @@ public class BlockSimulator {
       // so that gasPrice, maxFeePerGas, maxPriorityFeePerGas, transactionHash, and
       // transactionsRoot are correct in the response.
       if (transactionValidationParams.isAllowExceedingBalance()) {
-        transactionSimulationResult =
-            restoreGasPricing(transactionSimulationResult, callParameter);
+        transactionSimulationResult = restoreGasPricing(transactionSimulationResult, callParameter);
       }
 
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, finalOperationTracer);
