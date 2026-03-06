@@ -47,8 +47,14 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
       final OptionalInt maxBlobsPerTransaction) {
-    this(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock,
-        maxBlobsPerTransaction, DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
+    this(
+        londonForkBlock,
+        feeMarket,
+        gasCalculator,
+        maxBlobsPerBlock,
+        targetBlobsPerBlock,
+        maxBlobsPerTransaction,
+        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
   }
 
   public OsakaTargetingGasLimitCalculator(
