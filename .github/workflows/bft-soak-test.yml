@@ -24,7 +24,7 @@ on:
       besu_repo:
         required: false
         type: string
-        description: Custom git repository to checkout branch from. Expected format {owner}/{repo}
+        description: 'Custom git repository to checkout branch from. Expected format: owner/repo (e.g., hyperledger/besu)'
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
