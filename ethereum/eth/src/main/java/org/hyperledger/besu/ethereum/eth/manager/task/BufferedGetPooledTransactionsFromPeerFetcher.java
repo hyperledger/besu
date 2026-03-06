@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetPooledTransactionsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
       LoggerFactory.getLogger(BufferedGetPooledTransactionsFromPeerFetcher.class);
   private static final AtomicInteger TASK_ID_GENERATOR = new AtomicInteger(0);
   @VisibleForTesting static final int MAX_HASHES = 256;
+  private static final long MAX_SIZE = 2 * 1024L * 1024L;
 
   private final TransactionPool transactionPool;
   private final PeerTransactionTracker transactionTracker;

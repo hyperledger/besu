@@ -73,12 +73,12 @@ public class NewPooledTransactionHashesMessageProcessor {
     } else {
       LOG.atTrace()
           .setMessage(
-              "Ignoring expired transactions message: peer={}, latency={}, queuedAt={}, keepAlive={}, hashes={}")
+              "Ignoring expired transactions message: peer={}, latency={}, queuedAt={}, keepAlive={}, announcements={}")
           .addArgument(peer)
           .addArgument(latency)
           .addArgument(queueAt)
           .addArgument(keepAlive)
-          .addArgument(transactionsMessage::pendingTransactionHashes)
+          .addArgument(transactionsMessage::pendingTransactionAnnouncements)
           .log();
       metrics.incrementExpiredMessages(METRIC_LABEL);
     }

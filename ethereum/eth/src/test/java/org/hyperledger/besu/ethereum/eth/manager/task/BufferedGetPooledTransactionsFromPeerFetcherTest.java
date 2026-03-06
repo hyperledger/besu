@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetPooledTransactionsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -44,6 +45,8 @@ import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -257,6 +260,39 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     verifyNoMoreInteractions(peerTaskExecutor);
     verify(transactionPool).addRemoteTransactions(firstBatch);
     verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void requestTransactionShouldSplitRequestWhenCumulativeSizeExceedsLimit() {
+    // MAX_SIZE = 2 * 1024 * 1024 = 2MB
+    // 3 announcements at 1200KB each: first two accumulate 2400KB which exceeds 2MB,
+    // so the first batch contains 2 hashes and the second batch contains the remaining 1.
+    final long largeSize = 1200L * 1024;
+    final List<TransactionAnnouncement> announcements =
+        IntStream.range(0, 3)
+            .mapToObj(unused -> generator.transaction())
+            .map(tx -> new TransactionAnnouncement(tx.getHash(), tx.getType(), largeSize))
+            .toList();
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(
+                org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                    .GetPooledTransactionsFromPeerTask.class),
+            eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of()), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)));
+
+    fetcher.addAnnouncements(announcements);
+    fetcher.requestTransactions();
+
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(
+            any(
+                org.hyperledger.besu.ethereum.eth.manager.peertask.task
+                    .GetPooledTransactionsFromPeerTask.class),
+            eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
   }
 
   @Test
