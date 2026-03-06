@@ -145,8 +145,7 @@ public class ProposalTest {
             nodeKey.sign(Bytes32.wrap(oldFormatPayload.hashForSignature().getBytes())));
 
     final Proposal proposal =
-        Proposal.decode(
-            new Proposal(signedPayload, List.of(), List.of()).encode(), blockEncoder);
+        Proposal.decode(new Proposal(signedPayload, List.of(), List.of()).encode(), blockEncoder);
 
     assertThat(proposal.getBlockAccessList()).isEmpty();
     assertThat(proposal.getSignedPayload().getPayload().getRoundIdentifier())
