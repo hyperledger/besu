@@ -79,25 +79,28 @@ public class GetBlockAccessListsFromPeerTask implements PeerTask<List<BlockAcces
       LOG.atDebug().setMessage("Received null response while waiting for block access lists").log();
       throw new InvalidPeerTaskResponseException("Null message data");
     }
-
     final BlockAccessListsMessage balMessage = BlockAccessListsMessage.readFrom(messageData);
-    final List<BlockAccessList> blockAccessLists = balMessage.blockAccessLists();
-    if (blockAccessLists.isEmpty() || blockAccessLists.size() > blockHeaders.size()) {
-      LOG.atDebug()
-          .setMessage("Received invalid block access list response size: received={}, requested={}")
-          .addArgument(blockAccessLists::size)
-          .addArgument(blockHeaders::size)
-          .log();
-      throw new InvalidPeerTaskResponseException(
-          "Unexpected block access list response size "
-              + blockAccessLists.size()
-              + " for request size "
-              + blockHeaders.size());
+    return balMessage.blockAccessLists();
+  }
+
+  @Override
+  public PeerTaskValidationResponse validateResult(final List<BlockAccessList> result) {
+    if (result.isEmpty()) {
+      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
     }
 
-    for (int i = 0; i < blockAccessLists.size(); i++) {
+    if (result.size() > blockHeaders.size()) {
+      LOG.atDebug()
+          .setMessage("Received invalid block access list response size: received={}, requested={}")
+          .addArgument(result::size)
+          .addArgument(blockHeaders::size)
+          .log();
+      return PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED;
+    }
+
+    for (int i = 0; i < result.size(); i++) {
       final Hash expectedBalHash = blockHeaders.get(i).getBalHash().orElse(null);
-      final Hash actualBalHash = BodyValidation.balHash(blockAccessLists.get(i));
+      final Hash actualBalHash = BodyValidation.balHash(result.get(i));
       if (expectedBalHash == null || !expectedBalHash.equals(actualBalHash)) {
         LOG.atDebug()
             .setMessage(
@@ -106,29 +109,15 @@ public class GetBlockAccessListsFromPeerTask implements PeerTask<List<BlockAcces
             .addArgument(expectedBalHash)
             .addArgument(actualBalHash)
             .log();
-        throw new InvalidPeerTaskResponseException(
-            "BAL hash mismatch at index "
-                + i
-                + ": expected "
-                + expectedBalHash
-                + ", actual "
-                + actualBalHash);
+        return PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY;
       }
     }
 
-    return blockAccessLists;
+    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 
   @Override
   public Predicate<EthPeerImmutableAttributes> getPeerRequirementFilter() {
     return ethPeer -> ethPeer.estimatedChainHeight() >= requiredBlockchainHeight;
-  }
-
-  @Override
-  public PeerTaskValidationResponse validateResult(final List<BlockAccessList> result) {
-    if (result.isEmpty()) {
-      return PeerTaskValidationResponse.NO_RESULTS_RETURNED;
-    }
-    return PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD;
   }
 }
