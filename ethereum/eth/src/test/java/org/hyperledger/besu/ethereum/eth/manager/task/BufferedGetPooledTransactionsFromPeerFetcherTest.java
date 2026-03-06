@@ -174,6 +174,92 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   }
 
   @Test
+  public void requestTransactionsShouldRetryForRemainingHashesInBatch() {
+    final List<Transaction> transactions =
+        IntStream.range(0, 4).mapToObj(unused -> generator.transaction()).toList();
+
+    transactionTracker.receivedTransactionAnnouncements(
+        ethPeer, transactions.stream().map(Transaction::getHash).toList());
+
+    final var firstBatch = transactions.subList(0, 2);
+    final var secondBatch = transactions.subList(2, 4);
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(firstBatch), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(secondBatch), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)));
+
+    fetcher.requestTransactions();
+
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    verify(transactionPool).addRemoteTransactions(firstBatch);
+    verify(transactionPool).addRemoteTransactions(secondBatch);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void requestTransactionsShouldAbortRetryOnEmptyResponse() {
+    final List<Transaction> transactions =
+        IntStream.range(0, 4).mapToObj(unused -> generator.transaction()).toList();
+
+    transactionTracker.receivedTransactionAnnouncements(
+        ethPeer, transactions.stream().map(Transaction::getHash).toList());
+
+    final var firstBatch = transactions.subList(0, 2);
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(firstBatch), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of()), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)));
+
+    fetcher.requestTransactions();
+
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    verify(transactionPool).addRemoteTransactions(firstBatch);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void requestTransactionsShouldAbortRetryOnFailureResponse() {
+    final List<Transaction> transactions =
+        IntStream.range(0, 4).mapToObj(unused -> generator.transaction()).toList();
+
+    transactionTracker.receivedTransactionAnnouncements(
+        ethPeer, transactions.stream().map(Transaction::getHash).toList());
+
+    final var firstBatch = transactions.subList(0, 2);
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(firstBatch), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.PEER_DISCONNECTED, List.of()));
+
+    fetcher.requestTransactions();
+
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    verify(transactionPool).addRemoteTransactions(firstBatch);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
   public void requestTransactionShouldNotStartTaskWhenTransactionAlreadySeen1() {
 
     final Transaction transaction = generator.transaction();

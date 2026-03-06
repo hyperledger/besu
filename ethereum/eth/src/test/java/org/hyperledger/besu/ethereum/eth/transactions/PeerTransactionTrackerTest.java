@@ -252,25 +252,6 @@ public class PeerTransactionTrackerTest {
   }
 
   @Test
-  public void shouldNotRetryMissedAnnouncementFromSamePeer() {
-    tracker.receivedTransactionAnnouncements(ethPeer1, List.of(transaction1.getHash()));
-
-    // Claim the announcement for an in-flight fetch
-    final List<Hash> claimed = tracker.claimTransactionAnnouncementsToRequestFromPeer(ethPeer1, 10);
-    assertThat(claimed).containsOnly(transaction1.getHash());
-
-    // Peer re-announces the same tx while the fetch is in-flight
-    tracker.receivedTransactionAnnouncements(ethPeer1, List.of(transaction1.getHash()));
-
-    // Fetch completes but transaction was not returned by the peer (missed)
-    tracker.missedTransactionAnnouncements(ethPeer1, claimed);
-    tracker.consumedTransactionAnnouncements(claimed);
-
-    // Should not retry from the same peer since it was missed
-    assertThat(tracker.claimTransactionAnnouncementsToRequestFromPeer(ethPeer1, 10)).isEmpty();
-  }
-
-  @Test
   public void shouldNotRemoveTransactionFromSendQueuesWhenStopBroadcastingIsFalse() {
     tracker.addToPeerSendQueue(ethPeer1, List.of(transaction1));
     tracker.addToPeerAnnouncementsSendQueue(ethPeer1, List.of(transaction1));

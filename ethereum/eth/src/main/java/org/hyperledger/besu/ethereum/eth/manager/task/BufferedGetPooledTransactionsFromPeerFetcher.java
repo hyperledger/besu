@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class BufferedGetPooledTransactionsFromPeerFetcher {
   private static final Logger LOG =
       LoggerFactory.getLogger(BufferedGetPooledTransactionsFromPeerFetcher.class);
+  private static final AtomicInteger TASK_ID_GENERATOR = new AtomicInteger(0);
   @VisibleForTesting static final int MAX_HASHES = 256;
 
   private final TransactionPool transactionPool;
@@ -54,55 +56,83 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   }
 
   public void requestTransactions() {
+    final int taskId = TASK_ID_GENERATOR.incrementAndGet();
+    int iteration = 0;
     List<Hash> txHashesToRequest;
     while (!(txHashesToRequest =
             transactionTracker.claimTransactionAnnouncementsToRequestFromPeer(peer, MAX_HASHES))
         .isEmpty()) {
-      LOG.atTrace()
-          .setMessage("Transaction hashes to request from peer={}, requesting hashes={}")
-          .addArgument(peer)
-          .addArgument(txHashesToRequest)
-          .log();
-
-      final GetPooledTransactionsFromPeerTask task =
-          new GetPooledTransactionsFromPeerTask(txHashesToRequest);
 
       try {
-        PeerTaskExecutorResult<List<Transaction>> taskResult =
-            ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
-
-        if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
-            || taskResult.result().isEmpty()) {
+        // retry until this batch is complete, in a best effort way,
+        // since loop can be interrupted by a failure or an empty response.
+        while (!txHashesToRequest.isEmpty()) {
+          ++iteration;
           LOG.atTrace()
               .setMessage(
-                  "Failed to retrieve transactions by hash from peer={}, requested hashes={}")
-              .addArgument(peer)
+                  "[{}:{}] Transaction hashes to request from peer={}, requesting hashes={}")
+              .addArgument(taskId)
+              .addArgument(iteration)
+              .addArgument(peer::getLoggableId)
               .addArgument(txHashesToRequest)
               .log();
-        } else {
-          final var retrievedTransactions = taskResult.result().get();
-          final var retrievedHashes = toHashList(retrievedTransactions);
-          transactionTracker.markTransactionsAsSeen(peer, retrievedHashes);
 
-          final var missedHashes =
-              txHashesToRequest.stream().filter(h -> !retrievedHashes.contains(h)).toList();
-          transactionTracker.missedTransactionAnnouncements(peer, missedHashes);
+          final GetPooledTransactionsFromPeerTask task =
+              new GetPooledTransactionsFromPeerTask(txHashesToRequest);
 
-          LOG.atTrace()
-              .setMessage(
-                  "Got transactions requested by hash from peer={}, "
-                      + "requested hashes={}, retrieved hashes={}, missed hashes={}")
-              .addArgument(peer)
-              .addArgument(txHashesToRequest)
-              .addArgument(retrievedHashes)
-              .addArgument(missedHashes)
-              .log();
+          final PeerTaskExecutorResult<List<Transaction>> taskResult =
+              ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
 
-          transactionPool.addRemoteTransactions(retrievedTransactions);
+          // if failure or no results then stop iterating
+          if (taskResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
+              || taskResult.result().map(List::isEmpty).orElse(true)) {
+
+            LOG.atTrace()
+                .setMessage(
+                    "[{}:{}] Aborting task, failed to retrieve transactions by hash from peer={}, requested hashes={}, result={}")
+                .addArgument(taskId)
+                .addArgument(iteration)
+                .addArgument(peer::getLoggableId)
+                .addArgument(txHashesToRequest)
+                .addArgument(
+                    () ->
+                        taskResult.responseCode() == PeerTaskExecutorResponseCode.SUCCESS
+                            ? "empty response"
+                            : taskResult.responseCode())
+                .log();
+
+            // in case of failure or no progress, stop iterating for this batch
+            // so other peers can try to download
+            break;
+
+          } else {
+            final List<Transaction> retrievedTransactions = taskResult.result().get();
+            final List<Hash> retrievedHashes = toHashList(retrievedTransactions);
+            transactionTracker.markTransactionsAsSeen(peer, retrievedHashes);
+            transactionPool.addRemoteTransactions(retrievedTransactions);
+
+            txHashesToRequest.removeIf(retrievedHashes::contains);
+
+            LOG.atTrace()
+                .setMessage(
+                    "[{}:{}] Got {} transactions requested (missing {}) from peer={}, "
+                        + "retrieved hashes={}, missed hashes={}")
+                .addArgument(taskId)
+                .addArgument(iteration)
+                .addArgument(retrievedHashes::size)
+                .addArgument(txHashesToRequest::size)
+                .addArgument(peer::getLoggableId)
+                .addArgument(retrievedHashes)
+                .addArgument(txHashesToRequest)
+                .log();
+          }
         }
       } catch (final Throwable t) {
         LOG.atTrace()
-            .setMessage("Failed to retrieve transactions by hash from peer={}, requested hashes={}")
+            .setMessage(
+                "[{}:{}] Failed to retrieve transactions by hash from peer={}, requested hashes={}")
+            .addArgument(taskId)
+            .addArgument(iteration)
             .addArgument(peer)
             .addArgument(txHashesToRequest)
             .setCause(t)

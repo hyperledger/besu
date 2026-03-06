@@ -195,15 +195,6 @@ public class PeerTransactionTracker
     }
   }
 
-  public synchronized void missedTransactionAnnouncements(
-      final EthPeer peer, final List<Hash> missedHashes) {
-    final SequencedSet<Hash> transactionAnnouncements = transactionAnnouncementsToRequest.get(peer);
-
-    if (transactionAnnouncements != null && !transactionAnnouncements.isEmpty()) {
-      missedHashes.forEach(transactionAnnouncements::remove);
-    }
-  }
-
   public synchronized void consumedTransactionAnnouncements(final List<Hash> requestedHashes) {
     requestedHashes.forEach(inProgressAnnouncements::remove);
   }
@@ -326,23 +317,18 @@ public class PeerTransactionTracker
         .addArgument(() -> logPeerSet(disconnectedPeers))
         .log();
 
-    // keep the trackers for a while after the disconnection,
-    // to not immediately loose some seen txs data and avoiding re-requesting them.
-    ethScheduler.scheduleFutureTask(
-        () ->
-            disconnectedPeers.forEach(
-                disconnectedPeer -> {
-                  seenTransactions.remove(disconnectedPeer);
-                  seenAnnouncements.remove(disconnectedPeer);
-                  transactionsToSend.remove(disconnectedPeer);
-                  transactionAnnouncementsToSend.remove(disconnectedPeer);
-                  transactionAnnouncementsToRequest.remove(disconnectedPeer);
-                  LOG.atTrace()
-                      .setMessage("Removed transaction trackers for disconnected peer {}")
-                      .addArgument(disconnectedPeer::getLoggableId)
-                      .log();
-                }),
-        Duration.ofMinutes(5));
+    disconnectedPeers.forEach(
+        disconnectedPeer -> {
+          seenTransactions.remove(disconnectedPeer);
+          seenAnnouncements.remove(disconnectedPeer);
+          transactionsToSend.remove(disconnectedPeer);
+          transactionAnnouncementsToSend.remove(disconnectedPeer);
+          transactionAnnouncementsToRequest.remove(disconnectedPeer);
+          LOG.atTrace()
+              .setMessage("Removed transaction trackers for disconnected peer {}")
+              .addArgument(disconnectedPeer::getLoggableId)
+              .log();
+        });
   }
 
   private String logPeerSet(final Set<EthPeer> peers) {

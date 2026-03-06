@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.SequencedCollection;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -39,8 +39,7 @@ public final class GetPooledTransactionsMessage extends AbstractMessageData {
     return MESSAGE_CODE;
   }
 
-  public static GetPooledTransactionsMessage create(
-      final SequencedCollection<Hash> pooledTransactions) {
+  public static GetPooledTransactionsMessage create(final Collection<Hash> pooledTransactions) {
     final BytesValueRLPOutput out = new BytesValueRLPOutput();
     out.writeList(pooledTransactions, (h, w) -> w.writeBytes(h.getBytes()));
     return new GetPooledTransactionsMessage(out.encoded());
