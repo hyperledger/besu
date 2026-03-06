@@ -21,23 +21,34 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
+import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.AddressAccessPolicy;
 import org.ethereum.beacon.discovery.DiscoverySystemBuilder;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.crypto.Signer;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factory for creating DiscV5 {@link PeerDiscoveryAgent} instances.
@@ -51,10 +62,14 @@ import org.ethereum.beacon.discovery.crypto.Signer;
  * networking stack.
  */
 public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(PeerDiscoveryAgentFactoryV5.class);
+
   private final NetworkingConfiguration config;
 
   private final NodeRecordManager nodeRecordManager;
   private final NodeKey nodeKey;
+  private final PeerPermissions peerPermissions;
+  private final List<SubnetInfo> allowedSubnets;
   private final ForkIdManager forkIdManager;
 
   /**
@@ -62,6 +77,8 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    *
    * @param nodeKey the local node key used for identity and signing
    * @param config the networking configuration
+   * @param peerPermissions peer permissions to enforce on discovered peers
+   * @param allowedSubnets IP subnets to allow at the UDP packet level (empty means allow all)
    * @param natService NAT service for external address discovery
    * @param storageProvider storage provider for persisting node records
    * @param forkIdManager manager providing fork ID information for peer compatibility
@@ -69,14 +86,37 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   public PeerDiscoveryAgentFactoryV5(
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
+      final PeerPermissions peerPermissions,
+      final List<SubnetInfo> allowedSubnets,
       final NatService natService,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager) {
-    this.config = config;
-    this.nodeKey = nodeKey;
-    this.forkIdManager = forkIdManager;
+    this(
+        config,
+        nodeKey,
+        peerPermissions,
+        allowedSubnets,
+        forkIdManager,
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService));
+  }
+
+  /** Package-private constructor for testing with a pre-built {@link NodeRecordManager}. */
+  PeerDiscoveryAgentFactoryV5(
+      final NetworkingConfiguration config,
+      final NodeKey nodeKey,
+      final PeerPermissions peerPermissions,
+      final List<SubnetInfo> allowedSubnets,
+      final ForkIdManager forkIdManager,
+      final NodeRecordManager nodeRecordManager) {
+    this.config = Objects.requireNonNull(config, "config must not be null");
+    this.nodeKey = Objects.requireNonNull(nodeKey, "nodeKey must not be null");
+    this.peerPermissions =
+        Objects.requireNonNull(peerPermissions, "peerPermissions must not be null");
+    this.allowedSubnets =
+        List.copyOf(Objects.requireNonNull(allowedSubnets, "allowedSubnets must not be null"));
+    this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
     this.nodeRecordManager =
-        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService);
+        Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
   }
 
   /**
@@ -93,6 +133,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
     return new PeerDiscoveryAgentV5(
         config,
+        peerPermissions,
         forkIdManager,
         nodeRecordManager,
         rlpxAgent,
@@ -114,9 +155,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
               // For IPv4 this is covered by NatService; future IPv6 auto-discovery may relax
               // this: https://github.com/hyperledger/besu/issues/9874
               .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
-              // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based
-              // on peer permissions is not yet integrated; all addresses are currently allowed.
-              .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
+              .addressAccessPolicy(createAddressAccessPolicy())
               .bootnodes(
                   discoveryConfig.getEnrBootnodes().stream()
                       .map(EthereumNodeRecord::nodeRecord)
@@ -140,6 +179,92 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       }
 
       return builder.buildMutable();
+    };
+  }
+
+  /**
+   * Creates an {@link AddressAccessPolicy} that enforces subnet filtering at the IP level and full
+   * peer permissions at the node record level.
+   *
+   * <p>The {@code allow(InetSocketAddress)} method checks whether the IP falls within the
+   * configured allowed subnets. If no subnets are configured, all IPs are allowed. This provides
+   * the earliest possible filtering — raw UDP packets from disallowed IPs are dropped before
+   * protocol processing.
+   *
+   * <p>The {@code allow(NodeRecord)} method creates a {@link DiscoveryPeer} from the ENR and checks
+   * full {@link PeerPermissions} including node ID-based and enode-based rules.
+   *
+   * @return the address access policy
+   */
+  AddressAccessPolicy createAddressAccessPolicy() {
+    final boolean hasSubnetRestrictions = !allowedSubnets.isEmpty();
+    final boolean hasPermissionRestrictions = peerPermissions != PeerPermissions.NOOP;
+
+    if (!hasSubnetRestrictions && !hasPermissionRestrictions) {
+      return AddressAccessPolicy.ALLOW_ALL;
+    }
+
+    return new AddressAccessPolicy() {
+      @Override
+      public boolean allow(final InetSocketAddress address) {
+        if (!hasSubnetRestrictions) {
+          return true;
+        }
+        final InetAddress inetAddress = address.getAddress();
+        if (inetAddress == null) {
+          return false;
+        }
+        final String hostAddress = inetAddress.getHostAddress();
+        for (final SubnetInfo subnet : allowedSubnets) {
+          if (subnet.isInRange(hostAddress)) {
+            return true;
+          }
+        }
+        LOG.trace("DiscV5: Rejecting peer at {} — not in any allowed subnet", hostAddress);
+        return false;
+      }
+
+      @Override
+      public boolean allow(final NodeRecord record) {
+        if (hasSubnetRestrictions) {
+          final Optional<InetSocketAddress> udpAddress = record.getUdpAddress();
+          final Optional<InetSocketAddress> tcpAddress = record.getTcpAddress();
+
+          // If no address is present, we cannot verify subnet membership: reject.
+          if (udpAddress.isEmpty() && tcpAddress.isEmpty()) {
+            return false;
+          }
+
+          if (udpAddress.isPresent() && !this.allow(udpAddress.get())) {
+            return false;
+          }
+
+          if (tcpAddress.isPresent() && !this.allow(tcpAddress.get())) {
+            return false;
+          }
+        }
+
+        if (!hasPermissionRestrictions) {
+          return true;
+        }
+
+        try {
+          // .map(Peer.class::cast) widens Optional<DiscoveryPeerV4> to Optional<Peer>
+          final Optional<Peer> localNode = nodeRecordManager.getLocalNode().map(Peer.class::cast);
+          if (localNode.isEmpty()) {
+            // During startup the local node may not be initialized yet; allow through
+            return true;
+          }
+          final DiscoveryPeer remotePeer =
+              DiscoveryPeerFactory.fromNodeRecord(
+                  record, config.discoveryConfiguration().isPreferIpv6Outbound());
+          return peerPermissions.isPermitted(
+              localNode.get(), remotePeer, PeerPermissions.Action.DISCOVERY_ALLOW_IN_PEER_TABLE);
+        } catch (final RuntimeException e) {
+          LOG.debug("DiscV5: Rejecting peer with malformed NodeRecord", e);
+          return false;
+        }
+      }
     };
   }
 

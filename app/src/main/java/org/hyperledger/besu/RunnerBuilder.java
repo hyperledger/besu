@@ -777,6 +777,7 @@ public class RunnerBuilder {
             .nodeKey(nodeKey)
             .config(networkingConfiguration)
             .peerPermissions(peerPermissions)
+            .allowedSubnets(allowedSubnets)
             .natService(natService)
             .metricsSystem(metricsSystem)
             .storageProvider(storageProvider)
