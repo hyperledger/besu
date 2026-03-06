@@ -14,16 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.OptionalInt;
+
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCalculator {
+  private static final Logger LOG = LoggerFactory.getLogger(OsakaTargetingGasLimitCalculator.class);
+
   /** The constant max number of blobs per transaction defined for Osaka */
   private static final int DEFAULT_MAX_BLOBS_PER_TRANSACTION = 6;
 
@@ -41,33 +45,20 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final BaseFeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
-      final int targetBlobsPerBlock) {
-    this(
-        londonForkBlock,
-        feeMarket,
-        gasCalculator,
-        maxBlobsPerBlock,
-        targetBlobsPerBlock,
-        DEFAULT_MAX_BLOBS_PER_TRANSACTION,
-        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
-  }
-
-  public OsakaTargetingGasLimitCalculator(
-      final long londonForkBlock,
-      final BaseFeeMarket feeMarket,
-      final GasCalculator gasCalculator,
-      final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
-      final int maxBlobsPerTransaction,
-      final long transactionGasLimitCap) {
+      final OptionalInt maxBlobsPerTransaction) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
-    this.transactionGasLimitCap = transactionGasLimitCap;
-    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * maxBlobsPerTransaction;
-    checkArgument(
-        maxBlobsPerBlock >= maxBlobsPerTransaction,
-        "maxBlobsPerTransaction (%s) must not be greater than maxBlobsPerBlock (%s)",
-        maxBlobsPerTransaction,
-        maxBlobsPerBlock);
+    int effectiveMaxBlobsPerTx = maxBlobsPerTransaction.orElse(DEFAULT_MAX_BLOBS_PER_TRANSACTION);
+    if (effectiveMaxBlobsPerTx > maxBlobsPerBlock) {
+      LOG.warn(
+          "--max-blobs-per-transaction ({}) exceeds the hardfork max blobs per block ({}), clamping to {}",
+          effectiveMaxBlobsPerTx,
+          maxBlobsPerBlock,
+          maxBlobsPerBlock);
+      effectiveMaxBlobsPerTx = maxBlobsPerBlock;
+    }
+    this.transactionGasLimitCap = DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA;
+    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * effectiveMaxBlobsPerTx;
   }
 
   @Override
