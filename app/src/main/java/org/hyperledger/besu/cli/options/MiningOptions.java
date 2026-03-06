@@ -126,7 +126,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       names = {"--max-blobs-per-block"},
       description =
           "Maximum number of blobs allowed per block when building blocks. "
-              + "Only applies from Osaka hardfork onwards. Must not exceed the protocol maximum. (default: protocol maximum)",
+              + "Only applies from Osaka hardfork onwards. Values above the protocol maximum are clamped. (default: protocol maximum)",
       arity = "1")
   private Integer maxBlobsPerBlock = null;
 
