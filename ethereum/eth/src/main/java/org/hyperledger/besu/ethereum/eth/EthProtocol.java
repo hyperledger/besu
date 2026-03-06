@@ -72,7 +72,7 @@ public class EthProtocol implements SubProtocol {
     return switch (protocolVersion) {
       case EthProtocolVersion.V68 -> 17;
       case EthProtocolVersion.V69, EthProtocolVersion.V70 -> 18;
-      case EthProtocolVersion.V71 -> 19;
+      case EthProtocolVersion.V71 -> 20;
       default -> 0;
     };
   }

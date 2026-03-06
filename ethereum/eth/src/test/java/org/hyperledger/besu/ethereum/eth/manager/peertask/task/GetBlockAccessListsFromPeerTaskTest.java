@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.ChainState;
@@ -51,8 +50,11 @@ class GetBlockAccessListsFromPeerTaskTest {
 
   @Test
   void testGetRequestMessage() {
-    final BlockHeader header1 = mockBlockHeader(1, new BlockAccessList(List.of()));
-    final BlockHeader header2 = mockBlockHeader(2, new BlockAccessList(List.of()));
+    final Hash hash1 = Hash.fromHexString(StringUtils.repeat("00", 31) + "11");
+    final Hash hash2 = Hash.fromHexString(StringUtils.repeat("00", 31) + "21");
+
+    final BlockHeader header1 = mockBlockHeader(1, new BlockAccessList(List.of()), hash1);
+    final BlockHeader header2 = mockBlockHeader(2, new BlockAccessList(List.of()), hash2);
 
     final GetBlockAccessListsFromPeerTask task =
         new GetBlockAccessListsFromPeerTask(List.of(header1, header2));
@@ -62,9 +64,7 @@ class GetBlockAccessListsFromPeerTaskTest {
 
     assertThat(message.getCode()).isEqualTo(EthProtocolMessages.GET_BLOCK_ACCESS_LISTS);
     assertThat(message.blockHashes())
-        .containsExactly(
-            Hash.fromHexString(StringUtils.repeat("00", 31) + "11"),
-            Hash.fromHexString(StringUtils.repeat("00", 31) + "21"));
+        .containsExactly(Hash.fromHexStringLenient("0x11"), Hash.fromHexStringLenient("0x21"));
   }
 
   @Test
@@ -82,7 +82,7 @@ class GetBlockAccessListsFromPeerTaskTest {
   }
 
   @Test
-  void testProcessResponseWithMismatchedBalFails() {
+  void testValidateResultWithMismatchedBal() {
     final BlockAccessList expectedBal = new BlockAccessList(List.of());
     final BlockHeader header = mockBlockHeader(1, expectedBal);
 
@@ -100,11 +100,8 @@ class GetBlockAccessListsFromPeerTaskTest {
     final GetBlockAccessListsFromPeerTask task =
         new GetBlockAccessListsFromPeerTask(List.of(header));
 
-    assertThrows(
-        InvalidPeerTaskResponseException.class,
-        () ->
-            task.processResponse(
-                BlockAccessListsMessage.create(List.of(mismatchingBal)), Set.of()));
+    assertThat(task.validateResult(List.of(mismatchingBal)))
+        .isEqualTo(PeerTaskValidationResponse.RESULTS_DO_NOT_MATCH_QUERY);
   }
 
   @Test
@@ -115,7 +112,8 @@ class GetBlockAccessListsFromPeerTaskTest {
 
   @Test
   void testRequiresHeadersWithBalHash() {
-    final BlockHeader headerWithoutBalHash = new BlockHeaderTestFixture().number(2).buildHeader();
+    final BlockHeader headerWithoutBalHash = Mockito.mock(BlockHeader.class);
+    Mockito.when(headerWithoutBalHash.getBalHash()).thenReturn(java.util.Optional.empty());
 
     assertThrows(
         IllegalArgumentException.class,
@@ -150,13 +148,21 @@ class GetBlockAccessListsFromPeerTaskTest {
         .isEqualTo(PeerTaskValidationResponse.NO_RESULTS_RETURNED);
     assertThat(task.validateResult(List.of(new BlockAccessList(List.of()))))
         .isEqualTo(PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD);
+    assertThat(
+            task.validateResult(
+                List.of(new BlockAccessList(List.of()), new BlockAccessList(List.of()))))
+        .isEqualTo(PeerTaskValidationResponse.TOO_MANY_RESULTS_RETURNED);
   }
 
   private BlockHeader mockBlockHeader(final long blockNumber, final BlockAccessList bal) {
+    return mockBlockHeader(blockNumber, bal, Hash.ZERO);
+  }
+
+  private BlockHeader mockBlockHeader(
+      final long blockNumber, final BlockAccessList bal, final Hash hash) {
     final BlockHeader blockHeader = Mockito.mock(BlockHeader.class);
     Mockito.when(blockHeader.getNumber()).thenReturn(blockNumber);
-    Mockito.when(blockHeader.getBlockHash())
-        .thenReturn(Hash.fromHexString(StringUtils.repeat("00", 31) + blockNumber + "1"));
+    Mockito.when(blockHeader.getBlockHash()).thenReturn(hash);
     Mockito.when(blockHeader.getBalHash())
         .thenReturn(java.util.Optional.of(BodyValidation.balHash(bal)));
     return blockHeader;
