@@ -22,7 +22,6 @@ import static org.hyperledger.besu.controller.BesuController.CACHE_PATH;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.options.EthstatsOptions;
-import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -672,17 +671,8 @@ public class RunnerBuilder {
         });
     discoveryConfiguration.setPreferIpv6Outbound(preferIpv6Outbound);
     if (discoveryEnabled) {
-      final List<EnodeURLImpl> bootstrap;
-      if (ethNetworkConfig.enodeBootNodes() == null) {
-        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).enodeBootNodes();
-      } else {
-        bootstrap = ethNetworkConfig.enodeBootNodes();
-      }
-      discoveryConfiguration.setEnodeBootnodes(bootstrap);
-      discoveryConfiguration.setEnrBootnodes(
-          ethNetworkConfig.enrBootNodes() == null
-              ? EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET).enrBootNodes()
-              : ethNetworkConfig.enrBootNodes());
+      discoveryConfiguration.setEnodeBootnodes(ethNetworkConfig.enodeBootNodes());
+      discoveryConfiguration.setEnrBootnodes(ethNetworkConfig.enrBootNodes());
 
       discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
           besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
@@ -690,7 +680,10 @@ public class RunnerBuilder {
           "Resolved {} bootnodes.",
           discoveryConfiguration.getEnodeBootnodes().size()
               + discoveryConfiguration.getEnrBootnodes().size());
-      LOG.debug("Bootnodes = {}", bootstrap);
+      LOG.debug(
+          "Bootnodes enode={}, enr={}",
+          discoveryConfiguration.getEnodeBootnodes(),
+          discoveryConfiguration.getEnrBootnodes());
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
           networkingConfiguration.discoveryConfiguration().isDiscoveryV5Enabled());
