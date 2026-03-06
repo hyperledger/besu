@@ -63,8 +63,8 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
     this.transactionGasLimitCap = DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA;
     this.transactionBlobGasLimitCap = blobGasPerBlob * effectiveMaxBlobsPerTx;
     if (userMaxBlobsPerBlock.isPresent()) {
-      final int userMax = userMaxBlobsPerBlock.getAsInt();
-      this.blockBuilderBlobGasLimit = Math.min(blobGasPerBlob * userMax, getMaxBlobGasPerBlock());
+      final int effectiveMax = Math.min(userMaxBlobsPerBlock.getAsInt(), maxBlobsPerBlock);
+      this.blockBuilderBlobGasLimit = blobGasPerBlob * effectiveMax;
     } else {
       this.blockBuilderBlobGasLimit = getMaxBlobGasPerBlock();
     }
