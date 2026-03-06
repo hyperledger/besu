@@ -39,6 +39,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 import jakarta.validation.constraints.Positive;
 import org.apache.tuweni.bytes.Bytes;
@@ -244,7 +245,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     }
 
     if (maxBlobsPerBlock != null && maxBlobsPerBlock < 0) {
-      throw new ParameterException(commandLine, "--max-blobs-per-block must be a positive value");
+      throw new ParameterException(commandLine, "--max-blobs-per-block must be a non-negative value");
     }
 
     if (maxBlobsPerBlock != null
@@ -307,10 +308,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       updatableInitValuesBuilder.maxBlobsPerTransaction(maxBlobsPerTransaction);
     }
 
-    if (maxBlobsPerBlock != null) {
-      updatableInitValuesBuilder.maxBlobsPerBlock(maxBlobsPerBlock);
-    }
-
     if (targetGasLimit != null) {
       updatableInitValuesBuilder.targetGasLimit(targetGasLimit);
     }
@@ -318,6 +315,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     return ImmutableMiningConfiguration.builder()
         .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
+        .maxBlobsPerBlock(
+            maxBlobsPerBlock != null ? OptionalInt.of(maxBlobsPerBlock) : OptionalInt.empty())
         .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
         .pluginBlockTxsSelectionMaxTime(pluginBlockTxsSelectionMaxTime)
