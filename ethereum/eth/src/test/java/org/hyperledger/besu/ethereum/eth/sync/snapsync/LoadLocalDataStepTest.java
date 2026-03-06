@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -57,7 +58,7 @@ public class LoadLocalDataStepTest {
   private final Pipe<Task<SnapDataRequest>> completedTasks =
       new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "test_pipe");
 
-  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final PivotSyncState snapSyncState = mock(PivotSyncState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
   private final WorldStateStorageCoordinator worldStateStorageCoordinator =
       mock(WorldStateStorageCoordinator.class);

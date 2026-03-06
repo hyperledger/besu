@@ -18,8 +18,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.TRIE_NODE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.Node;
@@ -59,7 +59,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     if (isExpired(snapSyncState) || pendingChildren.get() > 0) {
       // we do nothing. Our last child will eventually persist us.
@@ -94,7 +94,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SnapSyncProcessState snapSyncState) {
+      final PivotSyncState snapSyncState) {
     if (!isResponseReceived()) {
       // If this node hasn't been downloaded yet, we can't return any child data
       return Stream.empty();
@@ -139,8 +139,8 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   }
 
   @Override
-  public boolean isExpired(final SnapSyncProcessState snapSyncState) {
-    return snapSyncState.isExpired(this);
+  public boolean isExpired(final PivotSyncState snapSyncState) {
+    return snapSyncState.isExpired(this.getRootHash());
   }
 
   public boolean isRequiresPersisting() {

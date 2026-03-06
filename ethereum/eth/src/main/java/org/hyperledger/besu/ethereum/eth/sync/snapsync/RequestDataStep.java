@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetTrieNodeFromPee
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -58,7 +59,7 @@ import org.slf4j.LoggerFactory;
 public class RequestDataStep {
   private static final Logger LOG = LoggerFactory.getLogger(RequestDataStep.class);
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
-  private final SnapSyncProcessState fastSyncState;
+  private final PivotSyncState fastSyncState;
   private final SnapWorldDownloadState downloadState;
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final MetricsSystem metricsSystem;
@@ -68,7 +69,7 @@ public class RequestDataStep {
   public RequestDataStep(
       final EthContext ethContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SnapSyncProcessState fastSyncState,
+      final PivotSyncState fastSyncState,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem) {

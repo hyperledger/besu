@@ -49,7 +49,7 @@ public class DynamicPivotBlockSelector {
   private final EthContext ethContext;
   private final PivotSyncActions syncActions;
 
-  private final SnapSyncProcessState syncState;
+  private final PivotSyncState syncState;
   private final PivotUpdateListener pivotUpdateListener;
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
@@ -59,7 +59,7 @@ public class DynamicPivotBlockSelector {
   public DynamicPivotBlockSelector(
       final EthContext ethContext,
       final PivotSyncActions fastSyncActions,
-      final SnapSyncProcessState fastSyncState,
+      final PivotSyncState fastSyncState,
       final PivotUpdateListener pivotUpdateListener,
       final int pivotBlockWindowValidity,
       final int pivotBlockDistanceBeforeCaching) {
