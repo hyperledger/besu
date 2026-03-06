@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.INVALID_FIRST_BLOCK_RECEIPT_INDEX;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -39,9 +41,11 @@ import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.GetPaginatedReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.messages.PaginatedReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.PooledTransactionsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -261,7 +265,7 @@ public class EthServerTest {
             serializeReceiptsList(
                 expectedResults,
                 TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH69);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -285,7 +289,7 @@ public class EthServerTest {
             serializeReceiptsList(
                 expectedResults,
                 TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
-    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH69);
     assertThat(result).contains(expectedMsg);
   }
 
@@ -334,6 +338,146 @@ public class EthServerTest {
     final PooledTransactionsMessage expectedMsg = PooledTransactionsMessage.create(expectedResult);
     final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.LATEST);
     assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldReturnAllPaginatedReceiptsForKnownBlocks() {
+    final Map<Hash, List<TransactionReceipt>> receiptsByHash = setupBlockReceipts(3);
+    final List<Hash> hashes = new ArrayList<>(receiptsByHash.keySet());
+    setupEthServer();
+
+    final GetPaginatedReceiptsMessage msg = GetPaginatedReceiptsMessage.create(hashes, 0);
+    final EthMessage ethMsg = new EthMessage(ethPeer, msg);
+
+    final List<List<TransactionReceipt>> expectedReceipts =
+        hashes.stream().map(receiptsByHash::get).collect(Collectors.toList());
+    final PaginatedReceiptsMessage expectedMsg =
+        PaginatedReceiptsMessage.createUnsafe(
+            serializePaginatedReceiptsList(expectedReceipts, false), false);
+
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH70);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldLimitPaginatedReceiptsByCount() {
+    final int limit = 6;
+    final Map<Hash, List<TransactionReceipt>> receiptsByHash = setupBlockReceipts(10);
+    final List<Hash> hashes = new ArrayList<>(receiptsByHash.keySet());
+    setupEthServer(b -> b.maxGetReceipts(limit));
+
+    final GetPaginatedReceiptsMessage msg = GetPaginatedReceiptsMessage.create(hashes, 0);
+    final EthMessage ethMsg = new EthMessage(ethPeer, msg);
+
+    final List<List<TransactionReceipt>> expectedReceipts =
+        hashes.stream().limit(limit).map(receiptsByHash::get).collect(Collectors.toList());
+    final PaginatedReceiptsMessage expectedMsg =
+        PaginatedReceiptsMessage.createUnsafe(
+            serializePaginatedReceiptsList(expectedReceipts, false), false);
+
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH70);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldLimitPaginatedReceiptsByMessageSize() {
+    // Use explicit receipts (not blockSequence) to avoid blocks with 0 transactions, which would
+    // be silently included in the response without setting lastBlockIncomplete, causing an
+    // extra empty-list block entry and making the expected vs actual sizes diverge.
+    final Hash block0Hash = dataGenerator.hash();
+    final Hash block1Hash = dataGenerator.hash();
+    final TransactionReceipt receipt0 = dataGenerator.receipt();
+    final TransactionReceipt receipt1 = dataGenerator.receipt();
+    when(blockchain.getTxReceipts(block0Hash)).thenReturn(Optional.of(List.of(receipt0)));
+    when(blockchain.getTxReceipts(block1Hash)).thenReturn(Optional.of(List.of(receipt1)));
+
+    // Size limit: exactly fits receipt0 from block 0 but not receipt1 from block 1.
+    // The server check is: responseSizeEstimate + receiptSize + MAX_PREFIX_SIZE > maxMessageSize.
+    // With sizeLimit = 2*MAX_PREFIX + size(receipt0):
+    //   receipt0 check: MAX_PREFIX + size(receipt0) + MAX_PREFIX = sizeLimit → passes (not >)
+    //   receipt1 check: MAX_PREFIX + size(receipt0) + size(receipt1) + MAX_PREFIX > sizeLimit
+    //                 = size(receipt1) > 0 → always true → lastBlockIncomplete = true
+    final int sizeLimit = 2 * RLP.MAX_PREFIX_SIZE + calculatePaginatedReceiptEncodedSize(receipt0);
+    setupEthServer(b -> b.maxMessageSize(sizeLimit));
+
+    final List<Hash> hashes = List.of(block0Hash, block1Hash);
+    final GetPaginatedReceiptsMessage msg = GetPaginatedReceiptsMessage.create(hashes, 0);
+
+    // block 0: receipt0 fits; block 1: starts but receipt1 doesn't fit → empty list
+    final PaginatedReceiptsMessage expectedMsg =
+        PaginatedReceiptsMessage.createUnsafe(
+            serializePaginatedReceiptsList(List.of(List.of(receipt0), List.of()), true), true);
+
+    final Optional<MessageData> result =
+        ethMessages.dispatch(new EthMessage(ethPeer, msg), EthProtocol.ETH70);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldPaginateWithFirstBlockReceiptIndex() {
+    // Create receipts directly rather than deriving them from blockSequence, which can produce
+    // blocks with 0 transactions (and thus 0 receipts), causing subList(firstIndex, 0) to throw.
+    final Hash firstBlockHash = dataGenerator.hash();
+    final Hash secondBlockHash = dataGenerator.hash();
+    final List<TransactionReceipt> firstBlockReceipts =
+        List.of(dataGenerator.receipt(), dataGenerator.receipt());
+    final List<TransactionReceipt> secondBlockReceipts =
+        List.of(dataGenerator.receipt(), dataGenerator.receipt());
+    when(blockchain.getTxReceipts(firstBlockHash)).thenReturn(Optional.of(firstBlockReceipts));
+    when(blockchain.getTxReceipts(secondBlockHash)).thenReturn(Optional.of(secondBlockReceipts));
+    setupEthServer();
+
+    final int firstIndex = 1;
+    // Use List.of to guarantee ordering: firstBlockHash is always the block that gets paginated
+    final List<Hash> hashes = List.of(firstBlockHash, secondBlockHash);
+    final GetPaginatedReceiptsMessage msg = GetPaginatedReceiptsMessage.create(hashes, firstIndex);
+    final EthMessage ethMsg = new EthMessage(ethPeer, msg);
+
+    // firstIndex skips the first receipt of the first block only; subsequent blocks are unaffected
+    final List<List<TransactionReceipt>> expectedReceipts =
+        List.of(
+            firstBlockReceipts.subList(firstIndex, firstBlockReceipts.size()), secondBlockReceipts);
+    final PaginatedReceiptsMessage expectedMsg =
+        PaginatedReceiptsMessage.createUnsafe(
+            serializePaginatedReceiptsList(expectedReceipts, false), false);
+
+    final Optional<MessageData> result = ethMessages.dispatch(ethMsg, EthProtocol.ETH70);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldReturnCollectedReceiptsUpToUnknownBlockInPaginatedRequest() {
+    // Setup one known block followed by an unknown one
+    final Hash knownHash = dataGenerator.hash();
+    final TransactionReceipt receipt = dataGenerator.receipt();
+    when(blockchain.getTxReceipts(knownHash)).thenReturn(Optional.of(List.of(receipt)));
+    final Hash unknownHash = dataGenerator.hash();
+    when(blockchain.getTxReceipts(unknownHash)).thenReturn(Optional.empty());
+    setupEthServer();
+
+    final GetPaginatedReceiptsMessage msg =
+        GetPaginatedReceiptsMessage.create(List.of(knownHash, unknownHash), 0);
+    final Optional<MessageData> result =
+        ethMessages.dispatch(new EthMessage(ethPeer, msg), EthProtocol.ETH70);
+
+    // Server stops at the unknown block and returns what was collected before it
+    final PaginatedReceiptsMessage expectedMsg =
+        PaginatedReceiptsMessage.createUnsafe(
+            serializePaginatedReceiptsList(List.of(List.of(receipt)), false), false);
+    assertThat(result).contains(expectedMsg);
+  }
+
+  @Test
+  public void shouldDisconnectPeerForInvalidFirstBlockReceiptIndex() {
+    // Blocks have 2 receipts each; requesting firstBlockReceiptIndex = 3 is out of range
+    final Map<Hash, List<TransactionReceipt>> receiptsByHash = setupBlockReceipts(1);
+    final List<Hash> hashes = new ArrayList<>(receiptsByHash.keySet());
+    setupEthServer();
+
+    final GetPaginatedReceiptsMessage msg = GetPaginatedReceiptsMessage.create(hashes, 3);
+    ethMessages.dispatch(new EthMessage(ethPeer, msg), EthProtocol.ETH70);
+
+    verify(ethPeer).disconnect(INVALID_FIRST_BLOCK_RECEIPT_INDEX);
   }
 
   private void setupEthServer() {
@@ -427,5 +571,35 @@ public class EthServerTest {
                 r, rlp, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION));
     rlp.endList();
     return rlp.encodedSize();
+  }
+
+  private int calculatePaginatedReceiptEncodedSize(final TransactionReceipt receipt) {
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    TransactionReceiptEncoder.writeTo(
+        receipt, rlp, TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
+    return rlp.encodedSize();
+  }
+
+  private Bytes serializePaginatedReceiptsList(
+      final List<List<TransactionReceipt>> receipts, final boolean lastBlockIncomplete) {
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.writeLongScalar(lastBlockIncomplete ? 1 : 0);
+    rlp.startList();
+    for (final List<TransactionReceipt> blockReceipts : receipts) {
+      final BytesValueRLPOutput encodedBlockReceipts = new BytesValueRLPOutput();
+      encodedBlockReceipts.startList();
+      for (final TransactionReceipt receipt : blockReceipts) {
+        final BytesValueRLPOutput encodedReceipt = new BytesValueRLPOutput();
+        TransactionReceiptEncoder.writeTo(
+            receipt,
+            encodedReceipt,
+            TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
+        encodedBlockReceipts.writeRaw(encodedReceipt.encoded());
+      }
+      encodedBlockReceipts.endList();
+      rlp.writeRaw(encodedBlockReceipts.encoded());
+    }
+    rlp.endList();
+    return rlp.encoded();
   }
 }
