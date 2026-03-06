@@ -2585,6 +2585,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         }
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
+      } catch (final RuntimeException e) {
+        throw new ParameterException(commandLine, "Invalid bootnode format: " + e.getMessage(), e);
       }
     } else if (cliBootnodesProvided) {
       // Explicitly empty --bootnodes clears all default bootnodes

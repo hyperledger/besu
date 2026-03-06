@@ -113,6 +113,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -1012,6 +1014,45 @@ public class BesuCommandTest extends CommandTestAbstract {
         "Invalid enode URL syntax 'invalid_enode_url'. Enode URL should have the following format "
             + "'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'.";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
+  }
+
+  private static final String VALID_ENR_1 =
+      "enr:-Iu4QLm7bZGdAt9NSeJG0cEnJohWcQTQaI9wFLu3Q7eHIDfrI4cwtzvEW3F3VbG9XdFXlrHyFGeXPn9snTCQJ9bnMRABgmlkgnY0gmlwhAOTJQCJc2VjcDI1NmsxoQIZdZD6tDYpkpEfVo5bgiU8MGRjhcOmHGD2nErK0UKRrIN0Y3CCIyiDdWRwgiMo";
+  private static final String VALID_ENR_2 =
+      "enr:-Iu4QEDJ4Wa_UQNbK8Ay1hFEkXvd8psolVK6OhfTL9irqz3nbXxxWyKwEplPfkju4zduVQj6mMhUCm9R2Lc4YM5jPcIBgmlkgnY0gmlwhANrfESJc2VjcDI1NmsxoQJCYz2-nsqFpeEj6eov9HSi9QssIVIVNr0I89J1vXM9foN0Y3CCIyiDdWRwgiMo";
+
+  @Test
+  public void callingWithValidEnrBootnodeAndV5EnabledMustSucceed() {
+    parseCommand("--Xv5-discovery-enabled", "--bootnodes", VALID_ENR_1);
+
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enrBootNodes()).hasSize(1);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingWithMultipleValidEnrBootnodesAndV5EnabledMustSucceed() {
+    parseCommand("--Xv5-discovery-enabled", "--bootnodes", VALID_ENR_1 + "," + VALID_ENR_2);
+
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enrBootNodes()).hasSize(2);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"enr:-invalidenrdata", "enr:invalidvalue", "invalidvalue"})
+  public void callingWithInvalidBootnodeAndV5EnabledMustDisplayError(final String bootnode) {
+    parseCommand("--Xv5-discovery-enabled", "--bootnodes", bootnode);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isNotEmpty();
   }
 
   @Test
