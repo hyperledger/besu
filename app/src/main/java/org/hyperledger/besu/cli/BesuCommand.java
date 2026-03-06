@@ -1895,9 +1895,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return the block period in seconds, or empty if not applicable
    */
   private OptionalInt getBlockPeriodSeconds(final GenesisConfigOptions genesisConfigOptions) {
-    if (genesisConfigOptions.isClique()) {
-      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
-    }
     if (genesisConfigOptions.isIbft2()) {
       return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
     }
@@ -1918,8 +1915,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return OptionalLong.of(genesisConfigOptions.getBftConfigOptions().getEpochLength());
     } else if (genesisConfigOptions.isQbft()) {
       return OptionalLong.of(genesisConfigOptions.getQbftConfigOptions().getEpochLength());
-    } else if (genesisConfigOptions.isClique()) {
-      return OptionalLong.of(genesisConfigOptions.getCliqueConfigOptions().getEpochLength());
     }
     return OptionalLong.empty();
   }
@@ -1935,8 +1930,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return "IBFT2";
     } else if (genesisConfigOptions.isQbft()) {
       return "QBFT";
-    } else if (genesisConfigOptions.isClique()) {
-      return "Clique";
     } else if (genesisConfigOptions.isEthHash()) {
       return "Ethash";
     }
@@ -2947,7 +2940,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           .ifPresent(builder::setTargetGasLimit);
     }
 
+    miningParametersSupplier
+        .get()
+        .getMaxBlobsPerTransaction()
+        .ifPresent(v -> builder.setMaxBlobsPerTransaction(v));
+
     builder
+        .setDiscoveryEnabled(p2PDiscoveryOptions.peerDiscoveryEnabled)
         .setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled())
         .setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation())
         .setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode())
