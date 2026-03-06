@@ -47,6 +47,18 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
       final OptionalInt maxBlobsPerTransaction) {
+    this(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock,
+        maxBlobsPerTransaction, DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
+  }
+
+  public OsakaTargetingGasLimitCalculator(
+      final long londonForkBlock,
+      final BaseFeeMarket feeMarket,
+      final GasCalculator gasCalculator,
+      final int maxBlobsPerBlock,
+      final int targetBlobsPerBlock,
+      final OptionalInt maxBlobsPerTransaction,
+      final long transactionGasLimitCap) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
     int effectiveMaxBlobsPerTx = maxBlobsPerTransaction.orElse(DEFAULT_MAX_BLOBS_PER_TRANSACTION);
     if (effectiveMaxBlobsPerTx > maxBlobsPerBlock) {
@@ -57,7 +69,7 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
           maxBlobsPerBlock);
       effectiveMaxBlobsPerTx = maxBlobsPerBlock;
     }
-    this.transactionGasLimitCap = DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA;
+    this.transactionGasLimitCap = transactionGasLimitCap;
     this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * effectiveMaxBlobsPerTx;
   }
 
