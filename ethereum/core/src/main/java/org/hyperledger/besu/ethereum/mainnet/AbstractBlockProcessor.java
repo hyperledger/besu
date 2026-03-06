@@ -238,10 +238,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final StateRootCommitter stateRootCommitter =
-        blockProcessingMetrics.wrapStateRootCommitter(
-            protocolSpec
-                .getStateRootCommitterFactory()
-                .forBlock(protocolContext, blockHeader, blockAccessList));
+        protocolSpec
+            .getStateRootCommitterFactory()
+            .forBlock(protocolContext, blockHeader, blockAccessList)
+            .timed(blockProcessingMetrics.stateRootCalculationTimer());
 
     final Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
