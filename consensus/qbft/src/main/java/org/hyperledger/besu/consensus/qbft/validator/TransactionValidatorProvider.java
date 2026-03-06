@@ -21,14 +21,14 @@ import org.hyperledger.besu.consensus.common.validator.VoteProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 /** The Transaction validator provider. */
 public class TransactionValidatorProvider implements ValidatorProvider {
@@ -37,9 +37,15 @@ public class TransactionValidatorProvider implements ValidatorProvider {
   private final ValidatorContractController validatorContractController;
   private final ForksSchedule<QbftConfigOptions> forksSchedule;
   private final Cache<Long, Collection<Address>> afterBlockValidatorCache =
-      CacheBuilder.newBuilder().maximumSize(100).build();
+      Caffeine.newBuilder()
+          .maximumSize(100)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Long, Collection<Address>> forBlockValidatorCache =
-      CacheBuilder.newBuilder().maximumSize(100).build();
+      Caffeine.newBuilder()
+          .maximumSize(100)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /**
    * Instantiates a new Transaction validator provider.
@@ -84,16 +90,12 @@ public class TransactionValidatorProvider implements ValidatorProvider {
       final BlockHeader header,
       final Address contractAddress) {
     final long blockNumber = header.getNumber();
-    try {
-      return validatorCache.get(
-          blockNumber,
-          () ->
-              validatorContractController.getValidators(blockNumber, contractAddress).stream()
-                  .sorted()
-                  .collect(Collectors.toList()));
-    } catch (final ExecutionException e) {
-      throw new RuntimeException("Unable to determine a validators for the requested block.");
-    }
+    return validatorCache.get(
+        blockNumber,
+        ignored ->
+            validatorContractController.getValidators(blockNumber, contractAddress).stream()
+                .sorted()
+                .collect(Collectors.toList()));
   }
 
   @Override

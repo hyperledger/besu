@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.discv4.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,8 +33,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.hash.BloomFilter;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -69,9 +70,10 @@ public class PeerTable {
     this.distanceCache = new ConcurrentHashMap<>();
     this.maxEntriesCnt = N_BUCKETS * DEFAULT_BUCKET_SIZE;
     this.unresponsiveIPs =
-        CacheBuilder.newBuilder()
+        Caffeine.newBuilder()
             .maximumSize(maxEntriesCnt)
             .expireAfterWrite(15L, TimeUnit.MINUTES)
+            .executor(CacheMaintenanceExecutor.getInstance())
             .build();
 
     // A bloom filter with 4096 expected insertions of 64-byte keys with a 0.1% false positive

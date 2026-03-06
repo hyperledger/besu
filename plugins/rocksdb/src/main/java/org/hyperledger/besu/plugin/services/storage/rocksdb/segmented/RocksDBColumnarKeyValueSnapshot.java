@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetrics;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDbIterator;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -34,8 +35,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.rocksdb.AbstractRocksIterator;
@@ -92,9 +93,10 @@ public class RocksDBColumnarKeyValueSnapshot
     if (isReadCacheEnabledForSnapshots) {
       maybeCache =
           Optional.of(
-              CacheBuilder.newBuilder()
+              Caffeine.newBuilder()
                   .maximumSize(100_000)
                   .expireAfterAccess(5, TimeUnit.MINUTES)
+                  .executor(CacheMaintenanceExecutor.getInstance())
                   .build());
     }
   }

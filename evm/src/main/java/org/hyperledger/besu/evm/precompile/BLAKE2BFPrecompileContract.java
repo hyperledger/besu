@@ -21,6 +21,7 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -40,7 +41,10 @@ public class BLAKE2BFPrecompileContract extends AbstractPrecompiledContract {
   private static final String PRECOMPILE_NAME = "BLAKE2F";
 
   private static final Cache<Integer, PrecompileInputResultTuple> blakeCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumSize(1000)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /**
    * Instantiates a new BLAKE2BF precompile contract.

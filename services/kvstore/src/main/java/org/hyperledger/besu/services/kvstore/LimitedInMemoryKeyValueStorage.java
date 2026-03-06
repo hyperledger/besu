@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,8 +32,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
@@ -52,7 +53,11 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
    * @param maxSize the max size
    */
   public LimitedInMemoryKeyValueStorage(final long maxSize) {
-    storage = CacheBuilder.newBuilder().maximumSize(maxSize).build();
+    storage =
+        Caffeine.newBuilder()
+            .maximumSize(maxSize)
+            .executor(CacheMaintenanceExecutor.getInstance())
+            .build();
   }
 
   @Override
