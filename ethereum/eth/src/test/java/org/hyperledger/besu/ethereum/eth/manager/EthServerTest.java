@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
-import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.INVALID_BLOCK_REQUESTED;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.INVALID_FIRST_BLOCK_RECEIPT_INDEX;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -447,16 +446,25 @@ public class EthServerTest {
   }
 
   @Test
-  public void shouldDisconnectPeerForUnknownBlockInPaginatedRequest() {
+  public void shouldReturnCollectedReceiptsUpToUnknownBlockInPaginatedRequest() {
+    // Setup one known block followed by an unknown one
+    final Hash knownHash = dataGenerator.hash();
+    final TransactionReceipt receipt = dataGenerator.receipt();
+    when(blockchain.getTxReceipts(knownHash)).thenReturn(Optional.of(List.of(receipt)));
     final Hash unknownHash = dataGenerator.hash();
     when(blockchain.getTxReceipts(unknownHash)).thenReturn(Optional.empty());
     setupEthServer();
 
     final GetPaginatedReceiptsMessage msg =
-        GetPaginatedReceiptsMessage.create(List.of(unknownHash), 0);
-    ethMessages.dispatch(new EthMessage(ethPeer, msg), EthProtocol.ETH70);
+        GetPaginatedReceiptsMessage.create(List.of(knownHash, unknownHash), 0);
+    final Optional<MessageData> result =
+        ethMessages.dispatch(new EthMessage(ethPeer, msg), EthProtocol.ETH70);
 
-    verify(ethPeer).disconnect(INVALID_BLOCK_REQUESTED);
+    // Server stops at the unknown block and returns what was collected before it
+    final PaginatedReceiptsMessage expectedMsg =
+        PaginatedReceiptsMessage.createUnsafe(
+            serializePaginatedReceiptsList(List.of(List.of(receipt)), false), false);
+    assertThat(result).contains(expectedMsg);
   }
 
   @Test

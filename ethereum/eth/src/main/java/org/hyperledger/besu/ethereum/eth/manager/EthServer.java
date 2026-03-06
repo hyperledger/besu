@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.INVALID_BLOCK_REQUESTED;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.INVALID_FIRST_BLOCK_RECEIPT_INDEX;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -310,9 +309,9 @@ class EthServer {
     for (final Hash blockHash : blockHashes) {
       final Optional<List<TransactionReceipt>> maybeReceipts = blockchain.getTxReceipts(blockHash);
       if (maybeReceipts.isEmpty()) {
-        LOG.debug("Invalid request from peer {}, block {} does not exists", peer, blockHash);
-        peer.disconnect(INVALID_BLOCK_REQUESTED);
-        return PaginatedReceiptsMessage.createUnsafe(Bytes.EMPTY, false);
+        LOG.debug(
+            "Invalid request from peer {}, block {} does not exists, returning", peer, blockHash);
+        break;
       }
 
       final List<TransactionReceipt> blockReceipts = maybeReceipts.get();

@@ -143,7 +143,6 @@ public final class DisconnectMessage extends AbstractMessageData {
     UNEXPECTED_ID((byte) 0x09, "Unexpected ID"),
     LOCAL_IDENTITY((byte) 0x0a, "Local identity"),
     TIMEOUT((byte) 0x0b, "Timeout"),
-    INVALID_BLOCK_REQUESTED((byte) 0x0f, "Invalid block requested"),
     INVALID_RECEIPT_RECEIVED((byte) 0x0f, "Invalid receipt received"),
     INVALID_FIRST_BLOCK_RECEIPT_INDEX((byte) 0x0f, "Invalid first block receipt index"),
     SUBPROTOCOL_TRIGGERED((byte) 0x10, "Sub protocol triggered"),

@@ -29,7 +29,6 @@ public final class GetPaginatedReceiptsMessage extends GetReceiptsMessage {
 
   private GetPaginatedReceiptsMessage(final Bytes data) {
     super(data);
-    deserialize(data);
   }
 
   private GetPaginatedReceiptsMessage(

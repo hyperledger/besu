@@ -128,7 +128,7 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<GetSyncReceiptsFrom
         PaginatedReceiptsMessage.readFrom(messageData);
     try {
       final List<List<SyncTransactionReceipt>> receivedReceipts =
-          completeFirstBlock(paginatedReceiptsMessage.syncReceipts());
+          paginatedReceiptsMessage.syncReceipts();
 
       if (receivedReceipts.isEmpty()) {
         throw new InvalidPeerTaskResponseException("No result returned");
@@ -138,21 +138,24 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<GetSyncReceiptsFrom
         throw new InvalidPeerTaskResponseException("Too many result returned");
       }
 
+      final List<List<SyncTransactionReceipt>> cumulativeReceivedReceipts =
+          completeFirstBlock(receivedReceipts);
+
       final int endIndex;
       final List<SyncTransactionReceipt> lastBlockPartialReceipts;
       if (paginatedReceiptsMessage.lastBlockIncomplete()) {
-        endIndex = receivedReceipts.size() - 1;
-        lastBlockPartialReceipts = receivedReceipts.getLast();
+        endIndex = cumulativeReceivedReceipts.size() - 1;
+        lastBlockPartialReceipts = cumulativeReceivedReceipts.getLast();
       } else {
-        endIndex = receivedReceipts.size();
+        endIndex = cumulativeReceivedReceipts.size();
         lastBlockPartialReceipts = List.of();
       }
 
       final Map<SyncBlock, List<SyncTransactionReceipt>> receiptsByBlock =
-          HashMap.newHashMap(receivedReceipts.size());
+          HashMap.newHashMap(cumulativeReceivedReceipts.size());
 
       for (int i = 0; i < endIndex; i++) {
-        receiptsByBlock.put(request.blocks.get(i), receivedReceipts.get(i));
+        receiptsByBlock.put(request.blocks.get(i), cumulativeReceivedReceipts.get(i));
       }
 
       return new Response(receiptsByBlock, lastBlockPartialReceipts);
@@ -163,8 +166,7 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<GetSyncReceiptsFrom
   }
 
   private List<List<SyncTransactionReceipt>> completeFirstBlock(
-      final List<List<SyncTransactionReceipt>> receivedReceipts)
-      throws InvalidPeerTaskResponseException {
+      final List<List<SyncTransactionReceipt>> receivedReceipts) {
     if (request.firstBlockPartialReceipts.isEmpty()) {
       // nothing to integrate returning as is
       return receivedReceipts;
@@ -247,10 +249,9 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<GetSyncReceiptsFrom
   }
 
   private long calculateTxGasLimitUpperBound(final SyncBlock lastBlockReceived) {
-    // to avoid having to deserialize the tx to get the actual gas limit we approximate it
-    // giving an upper bound, for everything before Osaka we use the block gas limit of 45M
-    // for Osaka onward we can use the max gas limit allowed per tx as specified by the protocol
-    // schedule
+    // to avoid having to deserialize the tx to get the actual gas limit we use an upper bound,
+    // for everything before Osaka we use the block gas limit of 45M and for Osaka onward
+    // we can use the max gas limit allowed per tx as specified by the protocol schedule
     return Math.min(
         protocolSchedule
             .getByBlockHeader(lastBlockReceived.getHeader())
@@ -301,7 +302,7 @@ public class GetSyncReceiptsFromPeerTask implements PeerTask<GetSyncReceiptsFrom
       return completeReceiptsByBlock.isEmpty() && lastBlockPartialReceipts.isEmpty();
     }
 
-    public int size() {
+    public int completeCount() {
       return completeReceiptsByBlock.size();
     }
   }

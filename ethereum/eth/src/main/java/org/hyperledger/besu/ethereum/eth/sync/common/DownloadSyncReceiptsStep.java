@@ -203,7 +203,7 @@ public class DownloadSyncReceiptsStep
                 "[{}:{}] Received complete response for {} blocks, last block partial receipts {}, completed blocks {} (requested {}, initial {}): {}")
             .addArgument(currTaskId)
             .addArgument(iteration)
-            .addArgument(response::size)
+            .addArgument(response::completeCount)
             .addArgument(lastBlockPartialReceipts::size)
             .addArgument(receiptsByBlock::size)
             .addArgument(blocksToRequest::size)
