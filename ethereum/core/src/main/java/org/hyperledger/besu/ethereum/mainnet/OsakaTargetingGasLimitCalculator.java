@@ -39,6 +39,7 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
 
   private final long transactionGasLimitCap;
   private final long transactionBlobGasLimitCap;
+  private final long blockBuilderBlobGasLimit;
 
   public OsakaTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -46,8 +47,10 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
-      final OptionalInt maxBlobsPerTransaction) {
+      final OptionalInt maxBlobsPerTransaction,
+      final OptionalInt userMaxBlobsPerBlock) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
+    final long blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
     int effectiveMaxBlobsPerTx = maxBlobsPerTransaction.orElse(DEFAULT_MAX_BLOBS_PER_TRANSACTION);
     if (effectiveMaxBlobsPerTx > maxBlobsPerBlock) {
       LOG.warn(
@@ -58,7 +61,13 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       effectiveMaxBlobsPerTx = maxBlobsPerBlock;
     }
     this.transactionGasLimitCap = DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA;
-    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * effectiveMaxBlobsPerTx;
+    this.transactionBlobGasLimitCap = blobGasPerBlob * effectiveMaxBlobsPerTx;
+    if (userMaxBlobsPerBlock.isPresent()) {
+      final int userMax = userMaxBlobsPerBlock.getAsInt();
+      this.blockBuilderBlobGasLimit = Math.min(blobGasPerBlob * userMax, getMaxBlobGasPerBlock());
+    } else {
+      this.blockBuilderBlobGasLimit = getMaxBlobGasPerBlock();
+    }
   }
 
   @Override
@@ -99,5 +108,10 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
   @Override
   public long transactionBlobGasLimitCap() {
     return transactionBlobGasLimitCap;
+  }
+
+  @Override
+  public long blockBuilderBlobGasLimit() {
+    return blockBuilderBlobGasLimit;
   }
 }

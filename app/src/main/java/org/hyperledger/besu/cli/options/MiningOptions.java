@@ -122,6 +122,14 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       arity = "1")
   private Integer maxBlobsPerTransaction = null;
 
+  @Option(
+      names = {"--max-blobs-per-block"},
+      description =
+          "Maximum number of blobs allowed per block when building blocks. "
+              + "Only applies from Osaka hardfork onwards. Must not exceed the protocol maximum. (default: protocol maximum)",
+      arity = "1")
+  private Integer maxBlobsPerBlock = null;
+
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
 
@@ -234,6 +242,20 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       throw new ParameterException(
           commandLine, "--max-blobs-per-transaction must be a positive value");
     }
+
+    if (maxBlobsPerBlock != null && maxBlobsPerBlock < 0) {
+      throw new ParameterException(commandLine, "--max-blobs-per-block must be a positive value");
+    }
+
+    if (maxBlobsPerBlock != null
+        && maxBlobsPerTransaction != null
+        && maxBlobsPerBlock < maxBlobsPerTransaction) {
+      logger.warn(
+          "--max-blobs-per-block ({}) is less than --max-blobs-per-transaction ({}). "
+              + "The block limit will be the binding constraint during block building.",
+          maxBlobsPerBlock,
+          maxBlobsPerTransaction);
+    }
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
@@ -253,6 +275,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningConfiguration
         .getMaxBlobsPerTransaction()
         .ifPresent(v -> miningOptions.maxBlobsPerTransaction = v);
+    miningConfiguration.getMaxBlobsPerBlock().ifPresent(v -> miningOptions.maxBlobsPerBlock = v);
 
     miningOptions.unstableOptions.posBlockCreationMaxTime =
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
@@ -282,6 +305,10 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     if (maxBlobsPerTransaction != null) {
       updatableInitValuesBuilder.maxBlobsPerTransaction(maxBlobsPerTransaction);
+    }
+
+    if (maxBlobsPerBlock != null) {
+      updatableInitValuesBuilder.maxBlobsPerBlock(maxBlobsPerBlock);
     }
 
     if (targetGasLimit != null) {

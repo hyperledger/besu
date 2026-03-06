@@ -133,6 +133,16 @@ public abstract class MiningConfiguration {
     return getMutableInitValues().getMaxBlobsPerTransaction();
   }
 
+  /**
+   * Returns the maximum blobs per block for block building. Note: Only applies from Osaka hardfork
+   * onwards. Returns empty if not explicitly set by the user.
+   *
+   * @return the maximum blobs per block, or empty if not set
+   */
+  public OptionalInt getMaxBlobsPerBlock() {
+    return getMutableInitValues().getMaxBlobsPerBlock();
+  }
+
   public Optional<Iterable<Long>> getNonceGenerator() {
     return getMutableRuntimeValues().nonceGenerator;
   }
@@ -268,6 +278,12 @@ public abstract class MiningConfiguration {
      * Empty means use the fork-specific default from the gas limit calculator.
      */
     OptionalInt getMaxBlobsPerTransaction();
+
+    /**
+     * Returns the maximum blobs per block for block building. Note: Only applies from Osaka
+     * hardfork onwards. Empty means use the fork-specific protocol max.
+     */
+    OptionalInt getMaxBlobsPerBlock();
 
     OptionalInt getBlockPeriodSeconds();
 
