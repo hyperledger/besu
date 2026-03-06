@@ -298,7 +298,7 @@ dependencies {
     )
   devnetTarConfig(
     group: 'ethereum', name: 'execution-spec-tests',
-    version: 'bal@v5.1.0', classifier: 'fixtures_bal', ext: 'tar.gz'
+    version: 'bal@v5.2.0', classifier: 'fixtures_bal', ext: 'tar.gz'
     )
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
@@ -466,18 +466,23 @@ def generateTestFilesGroupedByDirectory(
 }
 
 // Extract a group key from path segments for hardfork/EIP-based test grouping.
-// parts = path segments after groupBaseDir, e.g. ["prague", "eip7702_set_code_tx", "test.json"]
+// Supports both old layout (hardfork/eip/file.json) and new per-fork layout (for_fork/hardfork/eip/file.json).
 def extractGroupKey(String[] parts) {
   def groupKey
-  if (parts.length >= 3 && parts[0] == "static") {
+  // Strip leading for_{fork}/ directory if present (new per-fork fixture layout)
+  def effectiveParts = parts
+  if (parts.length >= 2 && parts[0].startsWith("for_")) {
+    effectiveParts = parts[1..parts.length - 1] as String[]
+  }
+  if (effectiveParts.length >= 3 && effectiveParts[0] == "static") {
     // static dirs have deeper nesting: static/state_tests/stCreate2/file.json → static_stCreate2
-    groupKey = "static_" + parts[parts.length - 2]
-  } else if (parts.length >= 3) {
+    groupKey = "static_" + effectiveParts[effectiveParts.length - 2]
+  } else if (effectiveParts.length >= 3) {
     // Normal: hardfork/eip/file.json → hardfork_eip
-    groupKey = parts[0] + "_" + parts[1]
-  } else if (parts.length == 2) {
+    groupKey = effectiveParts[0] + "_" + effectiveParts[1]
+  } else if (effectiveParts.length == 2) {
     // File directly under hardfork dir: hardfork/file.json → hardfork
-    groupKey = parts[0]
+    groupKey = effectiveParts[0]
   } else {
     groupKey = "unknown"
   }

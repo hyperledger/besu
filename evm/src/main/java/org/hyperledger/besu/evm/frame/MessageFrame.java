@@ -241,7 +241,7 @@ public class MessageFrame {
   private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
   /** The mark of the undoable collections at the creation of this message frame */
-  private final long undoMark;
+  private long undoMark;
 
   /**
    * Builder builder.
@@ -809,6 +809,146 @@ public class MessageFrame {
   }
 
   /**
+   * Increment the state gas used (EIP-8037). This is NOT undone on revert since consumed gas is
+   * consumed regardless of execution outcome.
+   *
+   * @param amount The amount of state gas to add
+   */
+  public void incrementStateGasUsed(final long amount) {
+    txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+  }
+
+  /**
+   * Return the accumulated state gas used (EIP-8037).
+   *
+   * @return accumulated state gas used
+   */
+  public long getStateGasUsed() {
+    return txValues.stateGasUsed().get();
+  }
+
+  /**
+   * Gets the state gas reservoir (EIP-8037).
+   *
+   * @return the state gas reservoir amount
+   */
+  public long getStateGasReservoir() {
+    return txValues.stateGasReservoir().get();
+  }
+
+  /**
+   * Sets the state gas reservoir (EIP-8037).
+   *
+   * @param amount the amount to set the reservoir to
+   */
+  public void setStateGasReservoir(final long amount) {
+    txValues.stateGasReservoir().set(amount);
+  }
+
+  /**
+   * Increments the state gas reservoir (EIP-8037). Used for state gas refunds.
+   *
+   * @param amount the amount to add to the reservoir
+   */
+  public void incrementStateGasReservoir(final long amount) {
+    txValues.stateGasReservoir().set(txValues.stateGasReservoir().get() + amount);
+  }
+
+  /**
+   * Consumes state gas: draws from the reservoir first, then from gasRemaining. Also increments
+   * stateGasUsed. Returns false if insufficient total gas (reservoir + gasRemaining).
+   *
+   * @param amount the amount of state gas to consume
+   * @return true if the gas was successfully consumed, false if insufficient gas
+   */
+  public boolean consumeStateGas(final long amount) {
+    final long reservoir = txValues.stateGasReservoir().get();
+    if (reservoir >= amount) {
+      txValues.stateGasReservoir().set(reservoir - amount);
+    } else {
+      // Overflow goes to gasRemaining
+      final long overflow = amount - reservoir;
+      if (gasRemaining < overflow) {
+        return false;
+      }
+      txValues.stateGasReservoir().set(0L);
+      gasRemaining -= overflow;
+    }
+    txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+    return true;
+  }
+
+  /**
+   * Consumes state gas, draining all available gas even when the full amount cannot be covered.
+   * Always increments stateGasUsed by the full amount regardless of gas availability. Used when a
+   * transaction-level (depth-0) contract creation fails after state gas has been partially
+   * committed: we must record the charge for block accounting even though execution fails.
+   *
+   * @param amount the amount of state gas to consume
+   * @return true if sufficient gas was available, false if gas was insufficient (but drained
+   *     anyway)
+   */
+  public boolean consumeStateGasForced(final long amount) {
+    final long reservoir = txValues.stateGasReservoir().get();
+    if (reservoir >= amount) {
+      txValues.stateGasReservoir().set(reservoir - amount);
+      txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+      return true;
+    } else {
+      final long overflow = amount - reservoir;
+      txValues.stateGasReservoir().set(0L);
+      final boolean sufficient = gasRemaining >= overflow;
+      gasRemaining = Math.max(0L, gasRemaining - overflow);
+      txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+      return sufficient;
+    }
+  }
+
+  /**
+   * Accumulates state gas that spilled into gasRemaining in a reverted child frame (EIP-8037). This
+   * counter is NOT undone on revert — it tracks permanently burned spill gas for block accounting.
+   *
+   * @param amount the spill amount to accumulate
+   */
+  public void accumulateStateGasSpillBurned(final long amount) {
+    txValues.stateGasSpillBurned()[0] += amount;
+  }
+
+  /**
+   * Returns the total state gas spill burned by reverted child frames (EIP-8037).
+   *
+   * @return accumulated spill burned
+   */
+  public long getStateGasSpillBurned() {
+    return txValues.stateGasSpillBurned()[0];
+  }
+
+  /**
+   * Accumulates regular gas burned by a CREATE child frame that halted before executing code
+   * (address collision). NOT undone on revert — excluded from block gas accounting but still
+   * charged for fee purposes.
+   *
+   * @param amount the collision gas amount to accumulate
+   */
+  public void accumulateRegularGasCollisionBurned(final long amount) {
+    txValues.regularGasCollisionBurned()[0] += amount;
+  }
+
+  /**
+   * Returns accumulated regular gas burned by pre-execution CREATE collision halts.
+   *
+   * @return accumulated collision gas burned
+   */
+  public long getRegularGasCollisionBurned() {
+    return txValues.regularGasCollisionBurned()[0];
+  }
+
+  /** Clears gasRemaining. State gas reservoir is handled by undo on revert for child frames. */
+  public void clearAllGas() {
+    this.gasRemaining = 0L;
+  }
+
+  /**
    * Add recipient to the self-destruct set if not already present.
    *
    * @param address The recipient to self-destruct
@@ -1249,6 +1389,16 @@ public class MessageFrame {
   }
 
   /**
+   * Advances the undo mark to the current point, so that subsequent rollback() calls will not undo
+   * changes made before this point. Used by the transaction processor to protect intrinsic state
+   * gas charges (EIP-8037 auth delegation and contract creation) from being rolled back when the
+   * initial frame's execution reverts.
+   */
+  public void advanceUndoMark() {
+    this.undoMark = txValues.transientStorage().mark();
+  }
+
+  /**
    * Accessor for versionedHashes, if present.
    *
    * @return optional list of hashes
@@ -1649,7 +1799,11 @@ public class MessageFrame {
                 UndoTable.of(HashBasedTable.create()),
                 UndoSet.of(new HashSet<>()),
                 UndoSet.of(new HashSet<>()),
-                new UndoScalar<>(0L));
+                new UndoScalar<>(0L),
+                new UndoScalar<>(0L),
+                new UndoScalar<>(0L),
+                new long[] {0L},
+                new long[] {0L});
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

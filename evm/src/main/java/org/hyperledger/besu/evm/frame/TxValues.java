@@ -48,6 +48,14 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param creates The set of addresses that creates
  * @param selfDestructs The set of addresses that self-destructs
  * @param gasRefunds The gas refunds
+ * @param stateGasUsed The cumulative state gas used (EIP-8037), undone on revert
+ * @param stateGasReservoir The EIP-8037 state gas reservoir (overflow from regular gas budget),
+ *     undone on revert
+ * @param stateGasSpillBurned EIP-8037 accumulated state gas that spilled from reverted child
+ *     frames; NOT undone on revert (permanent burn counter for block accounting)
+ * @param regularGasCollisionBurned EIP-8037 accumulated regular gas burned by CREATE child frames
+ *     that halted before executing any code (address collision); NOT undone on revert. Excluded
+ *     from block regular gas accounting but still counts toward fee deduction.
  */
 public record TxValues(
     BlockHashLookup blockHashLookup,
@@ -64,7 +72,11 @@ public record TxValues(
     UndoTable<Address, Bytes32, Bytes32> transientStorage,
     UndoSet<Address> creates,
     UndoSet<Address> selfDestructs,
-    UndoScalar<Long> gasRefunds) {
+    UndoScalar<Long> gasRefunds,
+    UndoScalar<Long> stateGasUsed,
+    UndoScalar<Long> stateGasReservoir,
+    long[] stateGasSpillBurned,
+    long[] regularGasCollisionBurned) {
 
   /**
    * For all data stored in this record, undo the changes since the mark.
@@ -78,5 +90,7 @@ public record TxValues(
     creates.undo(mark);
     selfDestructs.undo(mark);
     gasRefunds.undo(mark);
+    stateGasUsed.undo(mark);
+    stateGasReservoir.undo(mark);
   }
 }
