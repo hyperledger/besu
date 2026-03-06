@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -25,12 +24,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
@@ -38,6 +37,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,6 +50,7 @@ import org.mockito.ArgumentCaptor;
 
 public class NewPooledTransactionHashesMessageSenderTest {
   private final EthPeers ethPeers = mock(EthPeers.class);
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   private final EthPeer peer1 = mock(EthPeer.class);
   private final EthPeer peer2 = mock(EthPeer.class);
@@ -67,8 +68,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
   @BeforeEach
   public void setUp() {
     transactionTracker =
-        new PeerTransactionTracker(
-            TransactionPoolConfiguration.DEFAULT, ethPeers, new DeterministicEthScheduler());
+        new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers, ethScheduler);
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     final Transaction tx = mock(Transaction.class);
     pendingTransactions = mock(PendingTransactions.class);
@@ -83,11 +83,11 @@ public class NewPooledTransactionHashesMessageSenderTest {
   @Test
   public void shouldSendPendingTransactionsToEachPeer() throws Exception {
 
-    transactionTracker.addToPeerHashSendQueue(peer1, transaction1);
-    transactionTracker.addToPeerHashSendQueue(peer1, transaction2);
-    transactionTracker.addToPeerHashSendQueue(peer2, transaction3);
+    transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(transaction1));
+    transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(transaction2));
+    transactionTracker.addToPeerAnnouncementsSendQueue(peer2, List.of(transaction3));
 
-    List.of(peer1, peer2).forEach(messageSender::sendTransactionHashesToPeer);
+    List.of(peer1, peer2).forEach(messageSender::sendTransactionAnnouncementsToPeer);
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
@@ -98,13 +98,13 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   @Test
   public void shouldSendTransactionsInBatchesWithLimit() throws Exception {
-    final Set<Transaction> transactions =
-        generator.transactions(6000).stream().collect(Collectors.toSet());
+    final Set<Transaction> transactions = new HashSet<>(generator.transactions(6000));
 
     transactions.forEach(
-        transaction -> transactionTracker.addToPeerHashSendQueue(peer1, transaction));
+        transaction ->
+            transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(transaction)));
 
-    messageSender.sendTransactionHashesToPeer(peer1);
+    messageSender.sendTransactionAnnouncementsToPeer(peer1);
     final ArgumentCaptor<MessageData> messageDataArgumentCaptor =
         ArgumentCaptor.forClass(MessageData.class);
     verify(peer1, times(2)).send(messageDataArgumentCaptor.capture());
@@ -115,35 +115,37 @@ public class NewPooledTransactionHashesMessageSenderTest {
         .hasSize(2)
         .allMatch(
             message -> message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES);
-    final Set<Hash> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
-    final Set<Hash> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
+    final Set<TransactionAnnouncement> firstBatch =
+        getAnnouncementsFromMessage(sentMessages.get(0));
+    final Set<TransactionAnnouncement> secondBatch =
+        getAnnouncementsFromMessage(sentMessages.get(1));
 
-    final int expectedFirstBatchSize = 4096, expectedSecondBatchSize = 1904, toleranceDelta = 0;
-    assertThat(firstBatch)
-        .hasSizeBetween(
-            expectedFirstBatchSize - toleranceDelta, expectedFirstBatchSize + toleranceDelta);
-    assertThat(secondBatch)
-        .hasSizeBetween(
-            expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
+    final int expectedFirstBatchSize = 4096, expectedSecondBatchSize = 1904;
+    assertThat(firstBatch).hasSize(expectedFirstBatchSize);
+    assertThat(secondBatch).hasSize(expectedSecondBatchSize);
 
     assertThat(Sets.union(firstBatch, secondBatch))
-        .containsExactlyInAnyOrderElementsOf(toHashList(transactions));
+        .containsExactlyInAnyOrderElementsOf(
+            transactions.stream().map(TransactionAnnouncement::new).toList());
   }
 
   private MessageData transactionsMessageContaining(final Transaction... transactions) {
     return argThat(
         message -> {
-          final Set<Hash> actualSentTransactions = getTransactionsFromMessage(message);
-          final Set<Hash> expectedTransactions =
-              newHashSet(toHashList(Arrays.asList(transactions)));
+          final Set<TransactionAnnouncement> actualSentAnnouncements =
+              getAnnouncementsFromMessage(message);
+          final Set<TransactionAnnouncement> expectedAnnouncements =
+              Arrays.stream(transactions)
+                  .map(TransactionAnnouncement::new)
+                  .collect(Collectors.toSet());
           return message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES
-              && actualSentTransactions.equals(expectedTransactions);
+              && actualSentAnnouncements.equals(expectedAnnouncements);
         });
   }
 
-  private Set<Hash> getTransactionsFromMessage(final MessageData message) {
+  private Set<TransactionAnnouncement> getAnnouncementsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
         NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.LATEST);
-    return newHashSet(transactionsMessage.pendingTransactionHashes());
+    return newHashSet(transactionsMessage.pendingTransactionAnnouncements());
   }
 }
