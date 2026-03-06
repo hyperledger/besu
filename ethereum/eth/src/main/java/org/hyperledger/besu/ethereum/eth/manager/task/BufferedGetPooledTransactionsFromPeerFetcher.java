@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetPooledTransactionsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
@@ -43,6 +44,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private static final Logger LOG =
       LoggerFactory.getLogger(BufferedGetPooledTransactionsFromPeerFetcher.class);
   private static final int MAX_HASHES = 256;
+  private static final long MAX_SIZE = 2 * 1024L * 1024L;
 
   private final TransactionPool transactionPool;
   private final PeerTransactionTracker transactionTracker;
@@ -51,7 +53,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final String metricLabel;
   private final ScheduledFuture<?> scheduledFuture;
   private final EthPeer peer;
-  private final Queue<Hash> txAnnounces;
+  private final Queue<TransactionAnnouncement> txAnnounces;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
@@ -124,17 +126,19 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     }
   }
 
-  public void addHashes(final Collection<Hash> hashes) {
-    txAnnounces.addAll(hashes);
+  public void addAnnouncements(final Collection<TransactionAnnouncement> announcements) {
+    txAnnounces.addAll(announcements);
   }
 
   private List<Hash> getTxHashesToRetrieve() {
     final List<Hash> toRetrieve = new ArrayList<>(MAX_HASHES);
     int discarded = 0;
-    while (toRetrieve.size() < MAX_HASHES && !txAnnounces.isEmpty()) {
-      final Hash txHashAnnounced = txAnnounces.poll();
-      if (!transactionTracker.hasSeenTransaction(txHashAnnounced)) {
-        toRetrieve.add(txHashAnnounced);
+    long cumulativeSize = 0;
+    while (toRetrieve.size() < MAX_HASHES && cumulativeSize < MAX_SIZE && !txAnnounces.isEmpty()) {
+      final TransactionAnnouncement txAnnounced = txAnnounces.poll();
+      if (!transactionTracker.hasSeenTransaction(txAnnounced.hash())) {
+        toRetrieve.add(txAnnounced.hash());
+        cumulativeSize += txAnnounced.size();
       } else {
         discarded++;
       }
