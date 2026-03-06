@@ -27,8 +27,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -62,7 +64,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     int iteration = 0;
     List<Hash> txHashesToRequest;
     while (!(txHashesToRequest =
-            transactionTracker.claimTransactionAnnouncementsToRequestFromPeer(peer, MAX_HASHES))
+            toModifiableHashList(
+                transactionTracker.claimAnnouncementsToRequestFromPeer(peer, MAX_HASHES, MAX_SIZE)))
         .isEmpty()) {
 
       try {
@@ -140,8 +143,15 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
             .setCause(t)
             .log();
       } finally {
-        transactionTracker.consumedTransactionAnnouncements(txHashesToRequest);
+        transactionTracker.consumedAnnouncements(txHashesToRequest);
       }
     }
+  }
+
+  private static List<Hash> toModifiableHashList(
+      final List<TransactionAnnouncement> announcements) {
+    return announcements.stream()
+        .map(TransactionAnnouncement::hash)
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 }

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -45,8 +44,7 @@ class NewPooledTransactionHashesMessageSender {
     final Capability capability = peer.getConnection().capability(EthProtocol.NAME);
     final List<Transaction> txBatch = new ArrayList<>(MAX_TRANSACTIONS_HASHES);
     Transaction announcementToSend;
-    while ((announcementToSend = transactionTracker.claimTransactionAnnouncementToSendToPeer(peer))
-        != null) {
+    while ((announcementToSend = transactionTracker.claimAnnouncementToSendToPeer(peer)) != null) {
       if (!transactionTracker.hasPeerSeenTransaction(peer, announcementToSend)) {
         txBatch.add(announcementToSend);
       }
@@ -67,24 +65,25 @@ class NewPooledTransactionHashesMessageSender {
 
   private boolean send(
       final EthPeer peer, final List<Transaction> txBatch, final Capability capability) {
-    final List<Hash> txHashes = toHashList(txBatch);
-    transactionTracker.markTransactionAnnouncementsAsSeen(peer, txHashes);
+    transactionTracker.markAnnouncementsAsSeenByTransaction(peer, txBatch);
 
     try {
       LOG.atTrace()
           .setMessage("Sending transaction hashes to peer={}, hashes={}")
           .addArgument(peer)
-          .addArgument(txHashes)
+          .addArgument(() -> toHashList(txBatch))
           .log();
 
       final var message = NewPooledTransactionHashesMessage.create(txBatch, capability);
+      transactionTracker.markAnnouncementsAsSeen(peer, message.pendingTransactionAnnouncements());
+
       peer.send(message);
     } catch (final PeerNotConnected unused) {
       LOG.atTrace()
           .setMessage(
               "Peer no more connected while sending transaction hashes: peer={}, message hashes={}")
           .addArgument(peer)
-          .addArgument(txHashes)
+          .addArgument(() -> toHashList(txBatch))
           .log();
       return false;
     }

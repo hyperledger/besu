@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -87,18 +88,19 @@ public class NewPooledTransactionHashesMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      final var incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
+      final List<TransactionAnnouncement> incomingAnnouncements =
+          transactionsMessage.pendingTransactionAnnouncements();
       final var freshAnnouncements =
-          transactionTracker.receivedTransactionAnnouncements(peer, incomingTransactionHashes);
+          transactionTracker.receivedAnnouncements(peer, incomingAnnouncements);
 
       metrics.incrementAlreadySeenTransactions(
-          METRIC_LABEL, incomingTransactionHashes.size() - freshAnnouncements.size());
+          METRIC_LABEL, incomingAnnouncements.size() - freshAnnouncements.size());
 
       LOG.atTrace()
           .setMessage(
               "Received pooled transaction hashes message: peer={}, incoming hashes={}, fresh hashes={}")
           .addArgument(peer)
-          .addArgument(incomingTransactionHashes)
+          .addArgument(incomingAnnouncements)
           .addArgument(freshAnnouncements)
           .log();
 

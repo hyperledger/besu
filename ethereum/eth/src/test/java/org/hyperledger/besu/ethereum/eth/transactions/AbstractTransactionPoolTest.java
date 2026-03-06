@@ -509,8 +509,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
 
     Set<Transaction> transactionsToSendToPeer = new HashSet<>();
     Transaction tx;
-    while ((tx = peerTransactionTracker.claimTransactionAnnouncementToSendToPeer(peer.getEthPeer()))
-        != null) {
+    while ((tx = peerTransactionTracker.claimAnnouncementToSendToPeer(peer.getEthPeer())) != null) {
       transactionsToSendToPeer.add(tx);
     }
 

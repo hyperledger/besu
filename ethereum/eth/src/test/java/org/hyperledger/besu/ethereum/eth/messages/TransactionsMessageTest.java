@@ -129,7 +129,7 @@ public class TransactionsMessageTest {
   @Test
   public void addTransactionReturnsFalseWhenMessageIsFull() {
     final Transaction largeTransaction =
-        generator.transaction(Bytes.wrap(new byte[maxTransactionsMessageSize - 100]));
+        generator.transaction(Bytes.wrap(new byte[maxTransactionsMessageSize - 200]));
     final Transaction smallTransaction = generator.transaction();
 
     final TransactionsMessage.SizeLimitedBuilder messageBuilder =

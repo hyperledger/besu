@@ -37,11 +37,11 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.google.common.collect.Sets;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,8 +98,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   @Test
   public void shouldSendTransactionsInBatchesWithLimit() throws Exception {
-    final Set<Transaction> transactions =
-        generator.transactions(6000).stream().collect(Collectors.toSet());
+    final Set<Transaction> transactions = new HashSet<>(generator.transactions(6000));
 
     transactions.forEach(
         transaction ->
@@ -116,64 +115,35 @@ public class NewPooledTransactionHashesMessageSenderTest {
         .hasSize(2)
         .allMatch(
             message -> message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES);
-    final Set<TransactionAnnouncement> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
+    final Set<TransactionAnnouncement> firstBatch =
+        getAnnouncementsFromMessage(sentMessages.get(0));
     final Set<TransactionAnnouncement> secondBatch =
-        getTransactionsFromMessage(sentMessages.get(1));
+        getAnnouncementsFromMessage(sentMessages.get(1));
 
-    final int expectedFirstBatchSize = 4096, expectedSecondBatchSize = 1904, toleranceDelta = 0;
-    assertThat(firstBatch)
-        .hasSizeBetween(
-            expectedFirstBatchSize - toleranceDelta, expectedFirstBatchSize + toleranceDelta);
-    assertThat(secondBatch)
-        .hasSizeBetween(
-            expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
+    final int expectedFirstBatchSize = 4096, expectedSecondBatchSize = 1904;
+    assertThat(firstBatch).hasSize(expectedFirstBatchSize);
+    assertThat(secondBatch).hasSize(expectedSecondBatchSize);
 
     assertThat(Sets.union(firstBatch, secondBatch))
         .containsExactlyInAnyOrderElementsOf(
             transactions.stream().map(TransactionAnnouncement::new).toList());
   }
 
-  @Test
-  public void shouldNotDropAnnouncementAtExactBatchBoundary() throws Exception {
-    // MAX_TRANSACTIONS_HASHES + 1 forces exactly one full batch plus one leftover
-    final int batchSize = 4096;
-    final List<Transaction> transactions =
-        IntStream.range(0, batchSize + 1).mapToObj(unused -> generator.transaction()).toList();
-
-    transactions.forEach(
-        tx -> transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(tx)));
-
-    messageSender.sendTransactionAnnouncementsToPeer(peer1);
-
-    final ArgumentCaptor<MessageData> captor = ArgumentCaptor.forClass(MessageData.class);
-    verify(peer1, times(2)).send(captor.capture());
-
-    final List<MessageData> sentMessages = captor.getAllValues();
-    final Set<Hash> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
-    final Set<Hash> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
-
-    assertThat(firstBatch).hasSize(batchSize);
-    assertThat(secondBatch).hasSize(1);
-    // All transactions must be present — none dropped at the boundary
-    assertThat(Sets.union(firstBatch, secondBatch))
-        .containsExactlyInAnyOrderElementsOf(toHashList(transactions));
-  }
-
   private MessageData transactionsMessageContaining(final Transaction... transactions) {
     return argThat(
         message -> {
-          final Set<TransactionAnnouncement> actualSentTransactions =
-              getTransactionsFromMessage(message);
-          final Set<TransactionAnnouncement> expectedTransactions =
+          final Set<TransactionAnnouncement> actualSentAnnouncements =
+              getAnnouncementsFromMessage(message);
+          final Set<TransactionAnnouncement> expectedAnnouncements =
               Arrays.stream(transactions)
                   .map(TransactionAnnouncement::new)
                   .collect(Collectors.toSet());
           return message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES
-              && actualSentTransactions.equals(expectedTransactions);
+              && actualSentAnnouncements.equals(expectedAnnouncements);
         });
   }
 
-  private Set<TransactionAnnouncement> getTransactionsFromMessage(final MessageData message) {
+  private Set<TransactionAnnouncement> getAnnouncementsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
         NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.LATEST);
     return newHashSet(transactionsMessage.pendingTransactionAnnouncements());

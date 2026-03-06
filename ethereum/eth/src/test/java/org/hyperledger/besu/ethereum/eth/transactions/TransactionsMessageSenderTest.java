@@ -118,7 +118,7 @@ public class TransactionsMessageSenderTest {
   @Test
   public void shouldNotSendTransactionAlreadyAnnouncedToPeer() throws Exception {
     // Simulate transaction1 having been announced to peer1 already
-    transactionTracker.markTransactionAnnouncementsAsSeen(peer1, List.of(transaction1.getHash()));
+    transactionTracker.markAnnouncementsAsSeenByTransaction(peer1, List.of(transaction1));
 
     // Queue transaction1 for full broadcast to the same peer
     transactionTracker.addToPeerSendQueue(peer1, List.of(transaction1));

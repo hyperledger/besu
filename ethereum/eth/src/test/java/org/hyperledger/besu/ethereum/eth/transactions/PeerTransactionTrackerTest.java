@@ -233,7 +233,7 @@ public class PeerTransactionTrackerTest {
   public void shouldRemoveConfirmedTransactionsFromAllQueuesOnBlockAdded() {
     tracker.addToPeerSendQueue(ethPeer1, List.of(transaction1, transaction2));
     tracker.addToPeerAnnouncementsSendQueue(ethPeer1, List.of(transaction1, transaction3));
-    tracker.receivedTransactionAnnouncements(ethPeer2, List.of(transaction1.getHash()));
+    tracker.receivedAnnouncements(ethPeer2, TransactionAnnouncement.create(List.of(transaction1)));
 
     final Block block =
         generator.block(BlockDataGenerator.BlockOptions.create().addTransaction(transaction1));
@@ -244,7 +244,7 @@ public class PeerTransactionTrackerTest {
     // transaction1 removed from announcements send queue
     assertThat(claimAllAnnouncementsToSend(tracker, ethPeer1)).containsOnly(transaction3);
     // transaction1 removed from peer2's announcement request queue
-    assertThat(tracker.claimTransactionAnnouncementsToRequestFromPeer(ethPeer2, 10)).isEmpty();
+    assertThat(tracker.claimAnnouncementsToRequestFromPeer(ethPeer2, 10, 100_000L)).isEmpty();
     // transaction1 recorded as recently confirmed
     assertThat(tracker.alreadySeenTransaction(transaction1.getHash())).isTrue();
     // unconfirmed transactions not affected
@@ -274,11 +274,41 @@ public class PeerTransactionTrackerTest {
     assertThat(claimAllAnnouncementsToSend(tracker, ethPeer1)).isEmpty();
   }
 
+  @Test
+  public void claimAnnouncementsToRequestFromPeer_shouldLimitByCumulativeSize() {
+    // MAX_SIZE check is at the START of each iteration, using the size accumulated so far.
+    // With 3 announcements of 600KB and maxSize=1MB:
+    //   iter 1: cumulative=0 < 1MB  → claim ann1 → cumulative=600KB
+    //   iter 2: cumulative=600KB < 1MB → claim ann2 → cumulative=1200KB
+    //   iter 3: cumulative=1200KB ≥ 1MB → exit
+    // So the first call returns [ann1, ann2]; ann3 stays queued.
+    final long annSize = 600_000L;
+    final long maxSize = 1_000_000L;
+
+    final TransactionAnnouncement ann1 =
+        new TransactionAnnouncement(transaction1.getHash(), transaction1.getType(), annSize);
+    final TransactionAnnouncement ann2 =
+        new TransactionAnnouncement(transaction2.getHash(), transaction2.getType(), annSize);
+    final TransactionAnnouncement ann3 =
+        new TransactionAnnouncement(transaction3.getHash(), transaction3.getType(), annSize);
+
+    tracker.receivedAnnouncements(ethPeer1, List.of(ann1, ann2, ann3));
+
+    final List<TransactionAnnouncement> firstBatch =
+        tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 10, maxSize);
+    assertThat(firstBatch).containsExactly(ann1, ann2);
+
+    // ann3 is still in the queue; a second claim should return it
+    final List<TransactionAnnouncement> secondBatch =
+        tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 10, maxSize);
+    assertThat(secondBatch).containsExactly(ann3);
+  }
+
   private List<Transaction> claimAllAnnouncementsToSend(
       final PeerTransactionTracker tracker, final EthPeer peer) {
     final List<Transaction> result = new ArrayList<>();
     Transaction tx;
-    while ((tx = tracker.claimTransactionAnnouncementToSendToPeer(peer)) != null) {
+    while ((tx = tracker.claimAnnouncementToSendToPeer(peer)) != null) {
       result.add(tx);
     }
     return result;
