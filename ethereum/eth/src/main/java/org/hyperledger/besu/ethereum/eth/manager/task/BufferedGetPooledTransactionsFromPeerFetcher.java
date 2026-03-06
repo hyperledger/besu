@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorRespon
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetPooledTransactionsFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
@@ -51,7 +52,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
   private final String metricLabel;
   private final ScheduledFuture<?> scheduledFuture;
   private final EthPeer peer;
-  private final Queue<Hash> txAnnounces;
+  private final Queue<TransactionAnnouncement> txAnnounces;
+  private final int maxTransactionsMessageSize;
 
   public BufferedGetPooledTransactionsFromPeerFetcher(
       final EthContext ethContext,
@@ -59,6 +61,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
       final EthPeer peer,
       final TransactionPool transactionPool,
       final PeerTransactionTracker transactionTracker,
+      final int maxTransactionsMessageSize,
       final TransactionPoolMetrics metrics,
       final String metricLabel) {
     this.ethContext = ethContext;
@@ -70,6 +73,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     this.metricLabel = metricLabel;
     this.txAnnounces =
         Queues.synchronizedQueue(EvictingQueue.create(DEFAULT_MAX_PENDING_TRANSACTIONS));
+    this.maxTransactionsMessageSize = maxTransactionsMessageSize;
   }
 
   public ScheduledFuture<?> getScheduledFuture() {
@@ -124,20 +128,36 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
     }
   }
 
-  public void addHashes(final Collection<Hash> hashes) {
-    txAnnounces.addAll(hashes);
+  public void addAnnouncements(final Collection<TransactionAnnouncement> announcements) {
+    txAnnounces.addAll(announcements);
   }
 
   private List<Hash> getTxHashesToRetrieve() {
     final List<Hash> toRetrieve = new ArrayList<>(MAX_HASHES);
     int discarded = 0;
+    long cumulativeSize = 0;
     while (toRetrieve.size() < MAX_HASHES && !txAnnounces.isEmpty()) {
-      final Hash txHashAnnounced = txAnnounces.poll();
-      if (!transactionTracker.hasSeenTransaction(txHashAnnounced)) {
-        toRetrieve.add(txHashAnnounced);
+      final TransactionAnnouncement txAnnounced = txAnnounces.peek();
+      if (!transactionTracker.hasSeenTransaction(txAnnounced.hash())) {
+        if (cumulativeSize + txAnnounced.size() > maxTransactionsMessageSize) {
+          // defense in case maxTransactionsMessageSize is set too small
+          // this avoids an infinite loop if the first announcement is oversized
+          if (txAnnounced.size() > maxTransactionsMessageSize) {
+            LOG.warn(
+                "maxTransactionsMessageSize ({} bytes) is set too small to fetch tx announcement {}",
+                maxTransactionsMessageSize,
+                txAnnounced);
+            txAnnounces.remove();
+          }
+          // max size reached
+          break;
+        }
+        toRetrieve.add(txAnnounced.hash());
+        cumulativeSize += txAnnounced.size();
       } else {
         discarded++;
       }
+      txAnnounces.remove();
     }
 
     final int alreadySeenCount = discarded;
