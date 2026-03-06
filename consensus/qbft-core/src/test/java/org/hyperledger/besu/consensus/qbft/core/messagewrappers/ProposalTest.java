@@ -110,8 +110,8 @@ public class ProposalTest {
   public void canDecodeProposalMessageFromLegacyNodeWithoutBlockAccessList() {
     // Simulate a pre-26.1.0 validator that encodes ProposalPayload WITHOUT the blockAccessList
     // field.
-    // Old format payload list: [seqNum, roundNum, block]       (2 items)
-    // New format payload list: [seqNum, roundNum, block, null] (3 items)
+    // Old format payload list: [seqNum, roundNum, block]       (3 items)
+    // New format payload list: [seqNum, roundNum, block, null] (4 items)
 
     // The mock must consume the block bytes written by the legacy writeTo override, otherwise the
     // RLP cursor remains on the block hash and readBlockAccessList sees it instead of end-of-list.
