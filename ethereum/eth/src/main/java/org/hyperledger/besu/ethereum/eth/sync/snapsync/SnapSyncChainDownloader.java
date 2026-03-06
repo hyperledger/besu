@@ -66,7 +66,7 @@ public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
   public static final int SMALL_DELAY_MILLISECONDS = 100;
-  public static final int NO_PEER_RETRY_DELAY_MILLISECONDS = 5_000;
+  static final int NO_PEER_RETRY_DELAY_MILLISECONDS = 5_000;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolSchedule protocolSchedule;
