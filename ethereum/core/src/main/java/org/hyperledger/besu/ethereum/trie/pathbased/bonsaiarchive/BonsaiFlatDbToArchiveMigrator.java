@@ -50,7 +50,6 @@ public class BonsaiFlatDbToArchiveMigrator {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
-  @VisibleForTesting static final int NEAR_HEAD_THRESHOLD = 2;
 
   private static final byte[] MIGRATION_PROGRESS_KEY =
       "ARCHIVE_MIGRATION_PROGRESS".getBytes(StandardCharsets.UTF_8);
@@ -108,38 +107,13 @@ public class BonsaiFlatDbToArchiveMigrator {
     }
 
     final AtomicLong target = new AtomicLong(blockchain.getChainHeadBlockNumber());
-    final AtomicBoolean nearHeadMode = new AtomicBoolean(false);
-    final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
-
     final long blockObserverId =
-        blockchain.observeBlockAdded(
-            event -> {
-              if (nearHeadMode.get()) {
-                try {
-                  // When near head write the archive keys for new blocks inline to avoid a gap
-                  // between the last migrated block and the head when the mode switches.
-                  final long newBlockNumber = event.getHeader().getNumber();
-                  final Optional<TrieLog> trieLog =
-                      trieLogManager.getTrieLogLayer(event.getHeader().getHash());
-                  if (trieLog.isPresent()) {
-                    final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
-                    processBlock(trieLog.get(), newBlockNumber, tx);
-                    tx.commit();
-                  }
-                } catch (final Exception e) {
-                  LOG.error("Failed to write Bonsai archive near head block during migration", e);
-                }
-              } else {
-                target.set(event.getHeader().getNumber());
-              }
-            });
-
-    return CompletableFuture.runAsync(
-        () -> migrateBlocks(target, nearHeadMode, blockObserverId), executorService);
+        blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
+    return CompletableFuture.runAsync(() -> migrateBlocks(target), executorService)
+        .whenComplete((result, ex) -> blockchain.removeObserver(blockObserverId));
   }
 
-  private void migrateBlocks(
-      final AtomicLong target, final AtomicBoolean nearHead, final long blockObserverId) {
+  private void migrateBlocks(final AtomicLong target) {
     try {
       final Instant migrationStartTime = Instant.now();
 
@@ -147,26 +121,6 @@ public class BonsaiFlatDbToArchiveMigrator {
       final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
       LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
-
-        /*
-         * This prevents a race at switchover: without it, blocks arriving between the
-         * loop exit and upgradeToFullFlatDbMode() are written with unsuffixed FULL keys.
-         * After the switch, seekForPrev would find stale suffixed keys instead of HEAD.
-         *
-         * When activated, the target freezes and the block observer starts writing archive
-         * keys inline for new blocks. The migrator finishes up to the frozen target, the
-         * observer covers everything after — no gap when the mode switches.
-         */
-        final long currentTarget = target.get();
-        if (!nearHead.get()
-            && currentTarget > NEAR_HEAD_THRESHOLD
-            && blockNumber >= currentTarget - NEAR_HEAD_THRESHOLD) {
-          nearHead.set(true);
-          LOG.debug(
-              "Archive migration entering near head mode at block {}, target frozen at {}",
-              blockNumber,
-              target.get());
-        }
 
         final Optional<TrieLog> maybeTrieLog =
             blockchain
@@ -206,7 +160,6 @@ public class BonsaiFlatDbToArchiveMigrator {
       LOG.error("Bonsai to Bonsai archive migration failed", e);
       throw new RuntimeException(e);
     } finally {
-      blockchain.removeObserver(blockObserverId);
       migrationRunning.set(false);
     }
   }
