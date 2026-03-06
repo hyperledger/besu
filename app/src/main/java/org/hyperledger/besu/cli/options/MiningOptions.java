@@ -240,11 +240,12 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     if (maxBlobsPerTransaction != null && maxBlobsPerTransaction < 0) {
       throw new ParameterException(
-          commandLine, "--max-blobs-per-transaction must be a positive value");
+          commandLine, "--max-blobs-per-transaction must be a non-negative value");
     }
 
     if (maxBlobsPerBlock != null && maxBlobsPerBlock < 0) {
-      throw new ParameterException(commandLine, "--max-blobs-per-block must be a positive value");
+      throw new ParameterException(
+          commandLine, "--max-blobs-per-block must be a non-negative value");
     }
 
     if (maxBlobsPerBlock != null
