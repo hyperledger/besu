@@ -459,7 +459,7 @@ public class BlockSimulator {
       return result;
     }
 
-    Transaction.Builder builder = Transaction.builder().copiedFrom(original);
+    final Transaction.Builder builder = Transaction.builder().copiedFrom(original);
     callParameter.getGasPrice().ifPresent(builder::gasPrice);
     callParameter.getMaxFeePerGas().ifPresent(builder::maxFeePerGas);
     callParameter.getMaxPriorityFeePerGas().ifPresent(builder::maxPriorityFeePerGas);
