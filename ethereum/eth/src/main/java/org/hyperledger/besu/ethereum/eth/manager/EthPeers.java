@@ -72,37 +72,115 @@ import org.slf4j.LoggerFactory;
 public class EthPeers implements PeerSelector {
   private static final Logger LOG = LoggerFactory.getLogger(EthPeers.class);
   public static final Comparator<EthPeerImmutableAttributes> TOTAL_DIFFICULTY =
-      Comparator.comparing((final EthPeerImmutableAttributes p) -> p.estimatedTotalDifficulty());
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          return p1.estimatedTotalDifficulty().compareTo(p2.estimatedTotalDifficulty());
+        }
+
+        @Override
+        public String toString() {
+          return "TOTAL_DIFFICULTY";
+        }
+      };
 
   public static final Comparator<EthPeerImmutableAttributes> CHAIN_HEIGHT =
-      Comparator.comparing((final EthPeerImmutableAttributes p) -> p.estimatedChainHeight());
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          return Long.compare(p1.estimatedChainHeight(), p2.estimatedChainHeight());
+        }
+
+        @Override
+        public String toString() {
+          return "CHAIN_HEIGHT";
+        }
+      };
 
   public static final Comparator<EthPeerImmutableAttributes> MOST_USEFUL_PEER =
-      Comparator.comparing((final EthPeerImmutableAttributes p) -> p.reputationScore())
-          .thenComparing(CHAIN_HEIGHT);
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          final int reputationCompare = Integer.compare(p1.reputationScore(), p2.reputationScore());
+          if (reputationCompare != 0) {
+            return reputationCompare;
+          }
+          return CHAIN_HEIGHT.compare(p1, p2);
+        }
+
+        @Override
+        public String toString() {
+          return "MOST_USEFUL_PEER";
+        }
+      };
 
   public static final Comparator<EthPeerImmutableAttributes> TOTAL_DIFFICULTY_THEN_HEIGHT =
-      TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          final int difficultyCompare = TOTAL_DIFFICULTY.compare(p1, p2);
+          if (difficultyCompare != 0) {
+            return difficultyCompare;
+          }
+          return CHAIN_HEIGHT.compare(p1, p2);
+        }
+
+        @Override
+        public String toString() {
+          return "TOTAL_DIFFICULTY_THEN_HEIGHT";
+        }
+      };
 
   public static final Comparator<EthPeerImmutableAttributes> LEAST_TO_MOST_BUSY =
-      Comparator.comparing(EthPeerImmutableAttributes::outstandingRequests)
-          .thenComparing(EthPeerImmutableAttributes::lastRequestTimestamp);
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          final int outstandingCompare =
+              Integer.compare(p1.outstandingRequests(), p2.outstandingRequests());
+          if (outstandingCompare != 0) {
+            return outstandingCompare;
+          }
+          return Long.compare(p1.lastRequestTimestamp(), p2.lastRequestTimestamp());
+        }
+
+        @Override
+        public String toString() {
+          return "LEAST_TO_MOST_BUSY";
+        }
+      };
 
   /**
    * Comparator that sorts peers by their average latency (EMA).
    *
    * <p>Selects peers with lower latency values, as measured by exponential moving average. Peers
-   * without latency data are treated as worst-case (0.0).
+   * without latency data are treated as neutral (0.0) and effectively deprioritized once real
+   * measurements exist.
    *
    * <p>Note: In mainnet testing, the impact of latency-based selection was within noise margins.
    * Future improvements could integrate peer scoring and other multi-criteria selection methods to
    * achieve more measurable performance gains.
    */
   public static final Comparator<EthPeerImmutableAttributes> BY_LOW_LATENCY =
-      Comparator.comparing(
-              (final EthPeerImmutableAttributes p) ->
-                  p.averageLatencyMs() < 0 ? 0.0 : p.averageLatencyMs())
-          .reversed();
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          final double l1 = p1.averageLatencyMs() < 0 ? 0.0 : p1.averageLatencyMs();
+          final double l2 = p2.averageLatencyMs() < 0 ? 0.0 : p2.averageLatencyMs();
+          return Double.compare(
+              l2, l1); // Reversed to put low latency (high values in reversed) first
+        }
+
+        @Override
+        public String toString() {
+          return "BY_LOW_LATENCY";
+        }
+      };
 
   /**
    * Comparator that sorts peers by their average throughput (EMA).
@@ -115,11 +193,26 @@ public class EthPeers implements PeerSelector {
    * achieve more measurable performance gains.
    */
   public static final Comparator<EthPeerImmutableAttributes> BY_HIGH_THROUGHPUT =
-      Comparator.comparing(
-          (final EthPeerImmutableAttributes p) ->
-              p.averageThroughputBytesPerSecond() < 0
+      new Comparator<EthPeerImmutableAttributes>() {
+        @Override
+        public int compare(
+            final EthPeerImmutableAttributes p1, final EthPeerImmutableAttributes p2) {
+          final double t1 =
+              p1.averageThroughputBytesPerSecond() < 0
                   ? Double.MAX_VALUE
-                  : p.averageThroughputBytesPerSecond());
+                  : p1.averageThroughputBytesPerSecond();
+          final double t2 =
+              p2.averageThroughputBytesPerSecond() < 0
+                  ? Double.MAX_VALUE
+                  : p2.averageThroughputBytesPerSecond();
+          return Double.compare(t1, t2);
+        }
+
+        @Override
+        public String toString() {
+          return "BY_HIGH_THROUGHPUT";
+        }
+      };
 
   public static final int NODE_ID_LENGTH = 64;
   public static final int USEFULL_PEER_SCORE_THRESHOLD = 102;

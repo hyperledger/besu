@@ -133,13 +133,26 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   protected Optional<EthPeer> nextPeerToTry() {
-    return getEthContext()
-        .getEthPeers()
-        .streamBestPeers(
-            peerComparator.orElse(getEthContext().getEthPeers().getBestPeerComparator()))
-        .filter((peer) -> isSuitablePeer(peer) && !triedPeers.contains(peer.ethPeer()))
-        .map(EthPeerImmutableAttributes::ethPeer)
-        .findFirst();
+    final Comparator<EthPeerImmutableAttributes> comparator =
+        peerComparator.orElse(getEthContext().getEthPeers().getBestPeerComparator());
+    final Optional<EthPeer> selectedPeer =
+        getEthContext()
+            .getEthPeers()
+            .streamBestPeers(comparator)
+            .filter((peer) -> isSuitablePeer(peer) && !triedPeers.contains(peer.ethPeer()))
+            .map(EthPeerImmutableAttributes::ethPeer)
+            .findFirst();
+
+    selectedPeer.ifPresent(
+        peer ->
+            LOG.atDebug()
+                .setMessage("Task {} selected peer {} using comparator {}")
+                .addArgument(this.getClass().getSimpleName())
+                .addArgument(peer::getLoggableId)
+                .addArgument(comparator)
+                .log());
+
+    return selectedPeer;
   }
 
   private void refreshPeers() {
