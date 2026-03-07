@@ -201,24 +201,13 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
             .stateGasCostCalculator()
             .chargeCodeDepositStateGas(frame, contractCode.size())) {
           LOG.trace("Contract creation error: insufficient state gas for code deposit");
-          // EIP-8037: For depth-0 (initial tx) frames, use forced charge + no-rollback failure so
-          // that stateGasUsed is preserved for block gas accounting (e.g. short_one_gas test).
-          if (frame.getDepth() == 0) {
-            final long stateGasAmount =
-                evm.getGasCalculator()
-                    .stateGasCostCalculator()
-                    .codeDepositStateGas(contractCode.size(), frame.getBlockValues().getGasLimit());
-            if (stateGasAmount > 0) {
-              frame.consumeStateGasForced(stateGasAmount);
-            }
-            failCodeDepositWithoutRollback(
-                frame, operationTracer, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-          } else {
-            frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-            frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-            operationTracer.traceAccountCreationResult(
-                frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
-          }
+          // EIP-8037: Code-store OOG is a failure path — do NOT charge GAS_CODE_DEPOSIT state gas.
+          // Per spec: "Failure paths (OOG during code deposit): Do NOT charge GAS_CODE_DEPOSIT * L"
+          // State gas is restored by the normal exceptional halt rollback.
+          frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+          frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+          operationTracer.traceAccountCreationResult(
+              frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
           return;
         }
 
@@ -236,26 +225,9 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
           operationTracer.traceAccountCreationResult(frame, Optional.empty());
         }
       } else {
-        // EIP-8037: For depth-0 (initial tx) frames with code that fails validation (e.g.
-        // CODE_TOO_LARGE), charge the code deposit state gas before failing so the charge is
-        // preserved in stateGasUsed for block gas accounting (e.g. over_max test).
-        // Use consumeStateGas (not forced) — it returns false without modifying on failure, so
-        // we can safely fall through to EXCEPTIONAL_HALT if gas is insufficient.
-        if (frame.getDepth() == 0) {
-          final long stateGasAmount =
-              evm.getGasCalculator()
-                  .stateGasCostCalculator()
-                  .codeDepositStateGas(contractCode.size(), frame.getBlockValues().getGasLimit());
-          if (stateGasAmount > 0 && frame.consumeStateGas(stateGasAmount)) {
-            // Sufficient state gas: charge succeeded, fail without rollback so stateGasUsed
-            // is preserved for block accounting.
-            final Optional<ExceptionalHaltReason> haltReason = invalidReason.get();
-            failCodeDepositWithoutRollback(frame, operationTracer, haltReason);
-            return;
-          }
-          // Insufficient state gas or no state gas (non-EIP-8037): fall through to
-          // EXCEPTIONAL_HALT.
-        }
+        // EIP-8037: Code validation failure (CODE_TOO_LARGE, INVALID_CODE) is a failure path.
+        // Per spec: "Failure paths (L > MAX_CODE_SIZE): Do NOT charge GAS_CODE_DEPOSIT * L"
+        // State gas is restored by the normal exceptional halt rollback.
         final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
         frame.setExceptionalHaltReason(exceptionalHaltReason);
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
@@ -264,34 +236,4 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     }
   }
 
-  /**
-   * Fails a depth-0 code deposit without triggering the normal EXCEPTIONAL_HALT rollback path. This
-   * preserves stateGasUsed for EIP-8037 block gas accounting. The world state is still reverted and
-   * all gas is cleared.
-   *
-   * @param frame the message frame
-   * @param operationTracer the operation tracer
-   * @param haltReason the exceptional halt reason to report
-   */
-  private void failCodeDepositWithoutRollback(
-      final MessageFrame frame,
-      final OperationTracer operationTracer,
-      final Optional<ExceptionalHaltReason> haltReason) {
-    LOG.trace(
-        "Contract creation failed (no rollback): {} for address {}",
-        haltReason,
-        frame.getContractAddress());
-    // Revert world state changes without calling frame.rollback() (which would undo stateGasUsed).
-    frame.getWorldUpdater().revert();
-    frame.getWorldUpdater().commit();
-    frame.clearLogs();
-    frame.clearGasRefund();
-    frame.clearAllGas();
-    frame.clearOutputData();
-    // Do NOT call frame.setExceptionalHaltReason() here — MTP zeros the state gas reservoir when
-    // exceptionalHaltReason is present, which would inflate block gas accounting. Setting
-    // COMPLETED_FAILED state is sufficient to signal failure to the caller.
-    frame.setState(MessageFrame.State.COMPLETED_FAILED);
-    operationTracer.traceAccountCreationResult(frame, haltReason);
-  }
 }
