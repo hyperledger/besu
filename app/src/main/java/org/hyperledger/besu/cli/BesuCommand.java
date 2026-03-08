@@ -2569,7 +2569,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       try {
         if (isV5) {
-          builder.setEnrBootNodes(rawBootnodes.stream().map(EthereumNodeRecord::fromEnr).toList());
+          builder.setEnrBootNodes(
+              rawBootnodes.stream()
+                  .map(
+                      enr -> {
+                        try {
+                          return EthereumNodeRecord.fromEnr(enr);
+                        } catch (final Exception e) {
+                          throw new ParameterException(
+                              commandLine,
+                              "Invalid ENR bootnode: '"
+                                  + enr
+                                  + "'. ENR bootnodes must start with 'enr:'. Error: "
+                                  + e.getMessage(),
+                              e);
+                        }
+                      })
+                  .toList());
         } else {
           final List<EnodeURLImpl> enodes = buildEnodes(rawBootnodes, getEnodeDnsConfiguration());
           DiscoveryConfiguration.assertValidBootnodes(enodes);
@@ -2583,6 +2599,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             builder.setEnrBootNodes(Collections.emptyList());
           }
         }
+      } catch (final ParameterException e) {
+        throw e; // re-throw ParameterException from ENR parsing as-is
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       } catch (final RuntimeException e) {

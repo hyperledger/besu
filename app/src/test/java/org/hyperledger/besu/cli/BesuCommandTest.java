@@ -1052,7 +1052,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingWithInvalidBootnodeAndV5EnabledMustDisplayError(final String bootnode) {
     parseCommand("--Xv5-discovery-enabled", "--bootnodes", bootnode);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isNotEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid ENR bootnode: '" + bootnode + "'");
   }
 
   @Test
