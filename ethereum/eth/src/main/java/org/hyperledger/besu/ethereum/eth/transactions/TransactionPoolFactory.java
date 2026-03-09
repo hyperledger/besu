@@ -84,7 +84,8 @@ public class TransactionPoolFactory {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         blobCache,
-        miningConfiguration);
+        miningConfiguration,
+        ethProtocolConfiguration);
   }
 
   static TransactionPool createTransactionPool(
@@ -99,7 +100,8 @@ public class TransactionPoolFactory {
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
       final BlobCache blobCache,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final EthProtocolConfiguration ethProtocolConfiguration) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -139,7 +141,8 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metrics),
+                metrics,
+                ethProtocolConfiguration.getMaxTransactionsMessageSize()),
             transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(

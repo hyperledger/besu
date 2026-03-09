@@ -25,8 +25,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -79,7 +81,11 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
     fetcher =
         new BufferedGetPooledTransactionsFromPeerFetcher(
-            ethContext, ethPeer, transactionPool, transactionTracker);
+            ethContext,
+            ethPeer,
+            transactionPool,
+            transactionTracker,
+            EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE);
   }
 
   @Test
@@ -136,6 +142,73 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     verifyNoMoreInteractions(peerTaskExecutor);
     verify(transactionPool).addRemoteTransactions(taskResult1);
     verify(transactionPool).addRemoteTransactions(taskResult2);
+  }
+
+  @Test
+  public void requestTransactionShouldSplitRequestWhenCumulativeSizeExceedsLimit() {
+    final int maxSize = EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE;
+    final List<Transaction> transactions =
+        IntStream.range(0, 3).mapToObj(unused -> generator.transaction()).toList();
+
+    // Two announcements whose combined size exceeds the limit; the third fits in a second batch
+    final long halfPlusOne = maxSize / 2L + 1;
+    transactionTracker.receivedAnnouncements(
+        ethPeer,
+        List.of(
+            new TransactionAnnouncement(
+                transactions.get(0).getHash(), TransactionType.FRONTIER, halfPlusOne),
+            new TransactionAnnouncement(
+                transactions.get(1).getHash(), TransactionType.FRONTIER, halfPlusOne),
+            new TransactionAnnouncement(
+                transactions.get(2).getHash(), TransactionType.FRONTIER, 1L)));
+
+    final var firstBatch = transactions.subList(0, 2);
+    final var secondBatch = transactions.subList(2, 3);
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(firstBatch), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(secondBatch), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)));
+
+    fetcher.requestTransactions();
+
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    verify(transactionPool).addRemoteTransactions(firstBatch);
+    verify(transactionPool).addRemoteTransactions(secondBatch);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void requestTransactionShouldDiscardOversizedAnnouncementAndNotLoopForever() {
+    final int maxSize = EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE;
+    final Transaction transaction = generator.transaction();
+
+    // Announcement whose size exceeds the message size limit — the peer cannot return it
+    transactionTracker.receivedAnnouncements(
+        ethPeer,
+        List.of(
+            new TransactionAnnouncement(
+                transaction.getHash(), TransactionType.FRONTIER, (long) maxSize + 1)));
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of()), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)));
+
+    fetcher.requestTransactions();
+
+    // Exactly one request is made; the oversized transaction is never added to the pool
+    verify(peerTaskExecutor)
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    verifyNoInteractions(transactionPool);
   }
 
   @Test
@@ -250,6 +323,41 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
         .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
     verifyNoMoreInteractions(peerTaskExecutor);
     verify(transactionPool).addRemoteTransactions(firstBatch);
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
+  public void requestTransactionsShouldDropGapsBeforeLastReturnedTransaction() {
+    // From the spec: gaps before the last returned transaction are assumed unavailable (not
+    // retried)
+    final List<Transaction> transactions =
+        IntStream.range(0, 4).mapToObj(unused -> generator.transaction()).toList();
+
+    transactionTracker.receivedAnnouncements(ethPeer, TransactionAnnouncement.create(transactions));
+
+    // Peer returns t0 and t2, skipping t1 (gap), then t3 on retry
+    final var firstResponse = List.of(transactions.get(0), transactions.get(2));
+    final var secondResponse = List.of(transactions.get(3));
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(firstResponse), PeerTaskExecutorResponseCode.SUCCESS, List.of(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(secondResponse),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(ethPeer)));
+
+    fetcher.requestTransactions();
+
+    verify(peerTaskExecutor, times(2))
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    // t1 (the gap before last returned t2) is dropped and never added to the pool
+    verify(transactionPool).addRemoteTransactions(firstResponse);
+    verify(transactionPool).addRemoteTransactions(secondResponse);
     verifyNoMoreInteractions(transactionPool);
   }
 

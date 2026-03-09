@@ -46,13 +46,15 @@ public class NewPooledTransactionHashesMessageProcessor {
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final TransactionPoolMetrics metrics;
+  private final int maxTransactionsMessageSize;
 
   public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final EthContext ethContext,
-      final TransactionPoolMetrics metrics) {
+      final TransactionPoolMetrics metrics,
+      final int maxTransactionsMessageSize) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -60,6 +62,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     this.metrics = metrics;
     metrics.initExpiredMessagesCounter(METRIC_LABEL);
     this.scheduledTasks = new ConcurrentHashMap<>();
+    this.maxTransactionsMessageSize = maxTransactionsMessageSize;
   }
 
   void processNewPooledTransactionHashesMessage(
@@ -113,7 +116,11 @@ public class NewPooledTransactionHashesMessageProcessor {
                       new FetcherCreatorTask(
                           peer,
                           new BufferedGetPooledTransactionsFromPeerFetcher(
-                              ethContext, peer, transactionPool, transactionTracker)),
+                              ethContext,
+                              peer,
+                              transactionPool,
+                              transactionTracker,
+                              maxTransactionsMessageSize)),
                       transactionPoolConfiguration
                           .getUnstable()
                           .getEth65TrxAnnouncedBufferingPeriod(),

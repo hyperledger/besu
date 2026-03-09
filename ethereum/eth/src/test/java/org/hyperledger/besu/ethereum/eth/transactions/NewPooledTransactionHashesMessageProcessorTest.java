@@ -35,6 +35,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder;
 import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -100,7 +101,8 @@ class NewPooledTransactionHashesMessageProcessorTest {
             transactionPool,
             transactionPoolConfiguration,
             ethContext,
-            new TransactionPoolMetrics(metricsSystem));
+            new TransactionPoolMetrics(metricsSystem),
+            EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
