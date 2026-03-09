@@ -90,7 +90,7 @@ class FlatDbStrategyProviderTest {
   void upgradesFlatDbStrategyToArchiveFlatDbMode() {
     updateFlatDbMode(FlatDbMode.PARTIAL);
 
-    archiveFlatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
+    archiveFlatDbStrategyProvider.upgradeToArchiveFlatDbMode(composedWorldStateStorage);
     assertThat(archiveFlatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
     assertThat(archiveFlatDbStrategyProvider.flatDbStrategy).isNotNull();
     assertThat(archiveFlatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage))

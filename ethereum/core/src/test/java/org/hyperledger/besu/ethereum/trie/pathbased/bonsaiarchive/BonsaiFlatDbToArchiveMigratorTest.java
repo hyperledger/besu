@@ -220,7 +220,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
         .withThrowableThat()
         .havingRootCause()
         .withMessage("No trie log found for block 1");
-    verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
+    verify(worldStateStorage, never()).upgradeToArchiveFlatDbMode();
   }
 
   @Test
@@ -271,7 +271,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
     migrator.migrate().get(10, TimeUnit.SECONDS);
 
-    verify(worldStateStorage).upgradeToFullFlatDbMode();
+    verify(worldStateStorage).upgradeToArchiveFlatDbMode();
   }
 
   @Test
@@ -310,7 +310,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
 
     assertThat(migrator.migrate()).failsWithin(10, TimeUnit.SECONDS);
-    verify(worldStateStorage, never()).upgradeToFullFlatDbMode();
+    verify(worldStateStorage, never()).upgradeToArchiveFlatDbMode();
   }
 
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {

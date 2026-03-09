@@ -169,6 +169,10 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
 
   public void upgradeToFullFlatDbMode() {
     flatDbStrategyProvider.upgradeToFullFlatDbMode(composedWorldStateStorage);
+  }
+
+  public void upgradeToArchiveFlatDbMode() {
+    flatDbStrategyProvider.upgradeToArchiveFlatDbMode(composedWorldStateStorage);
     // Invalidate cached world state snapshots that were created under the previous strategy.
     // Snapshots share the flatDbStrategyProvider, so after the switch they would use the new
     // ARCHIVE read path against stale snapshot data that lacks complete archive-keyed entries.

@@ -156,7 +156,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
         logProgress(blockNumber, startBlock, target.get());
       }
 
-      worldStateStorage.upgradeToFullFlatDbMode();
+      worldStateStorage.upgradeToArchiveFlatDbMode();
       logCompletion(startBlock, target.get(), migrationStartTime);
 
     } catch (final Exception e) {
