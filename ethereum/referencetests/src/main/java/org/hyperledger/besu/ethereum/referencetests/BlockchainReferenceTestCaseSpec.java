@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
@@ -55,9 +56,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -267,6 +270,7 @@ public class BlockchainReferenceTestCaseSpec {
 
     private final Boolean valid;
     private final List<TransactionSequence> transactionSequence;
+    private final BlockAccessList blockAccessList;
 
     @JsonCreator
     public CandidateBlock(
@@ -279,12 +283,14 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
         @JsonProperty("consolidationRequests") final Object consolidationRequests,
         @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence,
-        @JsonProperty("blockAccessList") final Object blockAccessList) {
+        @JsonDeserialize(using = BlockAccessListDeserializer.class)
+            @JsonProperty("blockAccessList")
+            @JsonAlias("rlp_decoded")
+            final BlockAccessList blockAccessList) {
       boolean blockValid = true;
-      // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
       try {
-        rlpAttempt = Bytes.fromHexString(rlp);
+        rlpAttempt = rlp != null ? Bytes.fromHexString(rlp) : null;
       } catch (final IllegalArgumentException e) {
         blockValid = false;
       }
@@ -299,6 +305,7 @@ public class BlockchainReferenceTestCaseSpec {
 
       this.valid = blockValid;
       this.transactionSequence = transactionSequence;
+      this.blockAccessList = blockAccessList;
     }
 
     public boolean isValid() {
@@ -328,6 +335,10 @@ public class BlockchainReferenceTestCaseSpec {
               : Optional.of(input.readList(Withdrawal::readFrom));
       final BlockBody body = new BlockBody(transactions, ommers, withdrawals);
       return new Block(header, body);
+    }
+
+    public Optional<BlockAccessList> getBlockAccessList() {
+      return Optional.ofNullable(blockAccessList);
     }
   }
 }
