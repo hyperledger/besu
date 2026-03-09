@@ -167,7 +167,7 @@ public class AccountChangesJson {
     @JsonCreator
     public CodeChangeJson(
         @JsonProperty("blockAccessIndex") final String blockAccessIndex,
-        @JsonProperty("postCode") final String postCode) {
+        @JsonProperty("newCode") final String postCode) {
       this.blockAccessIndex = blockAccessIndex;
       this.postCode = postCode;
     }

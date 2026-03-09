@@ -298,7 +298,7 @@ dependencies {
     )
   devnetTarConfig(
     group: 'ethereum', name: 'execution-spec-tests',
-    version: 'bal@v5.2.0', classifier: 'fixtures_bal', ext: 'tar.gz'
+    version: 'bal@v5.3.0', classifier: 'fixtures_bal', ext: 'tar.gz'
     )
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
