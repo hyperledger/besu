@@ -903,7 +903,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               scheduler,
               ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager());
 
-      if (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
+      if (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
+          || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.PARTIAL)) {
         final BonsaiFlatDbToArchiveMigrator archiveMigrator =
             createArchiveMigrator(worldStateStorageCoordinator, worldStateArchive, blockchain);
         closeables.add(archiveMigrator);
