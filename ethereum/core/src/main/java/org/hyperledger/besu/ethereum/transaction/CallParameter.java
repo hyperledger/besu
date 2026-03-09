@@ -89,19 +89,25 @@ public abstract class CallParameter implements org.hyperledger.besu.datatypes.Ca
   public abstract Optional<Boolean> getStrict();
 
   /**
-   * 'input' takes precedence over 'data' when both are provided. This method is only used to
-   * deserialize the 'input' field; always use getPayload() to get the value.
+   * 'input' is mutually exclusive with 'data', so it needs special handling. This method is only
+   * used to deserialize the 'input' field, always use getPayload() to get the value.
    */
   @JsonDeserialize(contentUsing = HexStringDeserializer.class)
   protected abstract Optional<Bytes> getInput();
 
   /**
-   * 'data' is the legacy alias for 'input'. When both fields are present, 'input' takes precedence.
-   * This method is only used to deserialize the 'data' field; always use getPayload() to get the
-   * value.
+   * 'data' is mutually exclusive with 'input', so it needs special handling. This method is only
+   * used to deserialize the 'data' field, always use getPayload() to get the value.
    */
   @JsonDeserialize(contentUsing = HexStringDeserializer.class)
   protected abstract Optional<Bytes> getData();
+
+  @Value.Check
+  protected void check() {
+    if (getInput().isPresent() && getData().isPresent() && !getInput().equals(getData())) {
+      throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
+    }
+  }
 
   /**
    * Returns either the 'input' or 'data' field, depending on which is present, or empty if neither

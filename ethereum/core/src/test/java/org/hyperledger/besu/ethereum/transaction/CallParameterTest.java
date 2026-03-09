@@ -90,7 +90,7 @@ public class CallParameterTest {
   }
 
   @Test
-  public void inputAndDataWithDifferentValuesUsesInput() throws JsonProcessingException {
+  public void inputAndDataWithDifferentValueAsPayLoadCauseException() {
     final String json =
         """
             {
@@ -99,9 +99,9 @@ public class CallParameterTest {
             }
             """;
 
-    final CallParameter callParameter = objectMapper.readValue(json, CallParameter.class);
-
-    assertThat(callParameter.getPayload()).contains(Bytes.fromHexString("0x1234"));
+    assertThatExceptionOfType(JsonMappingException.class)
+        .isThrownBy(() -> objectMapper.readValue(json, CallParameter.class))
+        .withMessageContaining("problem: Only one of 'input' or 'data' should be provided");
   }
 
   @Test
