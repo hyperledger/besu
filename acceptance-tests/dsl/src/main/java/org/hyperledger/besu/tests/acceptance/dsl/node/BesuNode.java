@@ -365,8 +365,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public Optional<String> jsonRpcBaseUrl() {
     if (isJsonRpcEnabled()) {
-      return Optional.of(
-          HTTP + jsonRpcConfiguration.getHost() + ":" + portsProperties.getProperty(JSON_RPC));
+      final String port = portsProperties.getProperty(JSON_RPC);
+      if (port == null) {
+        throw new IllegalStateException(
+            "JSON-RPC port not available for node "
+                + name
+                + ". Node may have failed to start or ports file was not written.");
+      }
+      return Optional.of(HTTP + jsonRpcConfiguration.getHost() + ":" + port);
     } else {
       return Optional.empty();
     }

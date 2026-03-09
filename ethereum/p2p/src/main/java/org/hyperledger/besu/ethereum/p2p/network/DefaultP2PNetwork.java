@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.nat.NatMethod;
 import org.hyperledger.besu.nat.NatService;
@@ -76,6 +75,7 @@ import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -336,8 +336,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public RlpxAgent getRlpxAgent() {
-    return rlpxAgent;
+  public Optional<RlpxAgent> getRlpxAgent() {
+    return Optional.of(rlpxAgent);
   }
 
   @Override
@@ -440,11 +440,6 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public void subscribeConnectRequest(final ShouldConnectCallback callback) {
-    rlpxAgent.subscribeConnectRequest(callback);
-  }
-
-  @Override
   public void subscribeDisconnect(final DisconnectCallback callback) {
     rlpxAgent.subscribeDisconnect(callback);
   }
@@ -512,6 +507,11 @@ public class DefaultP2PNetwork implements P2PNetwork {
     LOG.info("Enode URL {}", localEnode.toString());
     LOG.info("Node address {}", Util.publicKeyToAddress(localEnode.getNodeId()));
     localNode.setEnode(localEnode);
+  }
+
+  @Override
+  public Optional<String> getLocalEnr() {
+    return peerDiscoveryAgent.getLocalNodeRecord().map(NodeRecord::asEnr);
   }
 
   @Override
