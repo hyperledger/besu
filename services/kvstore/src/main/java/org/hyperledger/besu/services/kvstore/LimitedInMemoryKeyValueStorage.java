@@ -60,6 +60,14 @@ public class LimitedInMemoryKeyValueStorage implements KeyValueStorage {
             .build();
   }
 
+  /**
+   * Forces pending Caffeine maintenance (eviction, buffer draining) to run synchronously. Caffeine
+   * eviction is asynchronous, so this must be called when deterministic eviction is required.
+   */
+  void cleanUp() {
+    storage.cleanUp();
+  }
+
   @Override
   public void clear() {
     final Lock lock = rwLock.writeLock();
