@@ -117,7 +117,8 @@ public class BonsaiFlatDbToArchiveMigrator {
     try {
       final Instant migrationStartTime = Instant.now();
 
-      final long startBlock = getMigrationProgress().orElse(0L);
+      final long lastProcessedBlock = getMigrationProgress().orElse(-1L);
+      final long startBlock = lastProcessedBlock + 1;
       final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
       LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
@@ -190,12 +191,12 @@ public class BonsaiFlatDbToArchiveMigrator {
   private void logCompletion(
       final long startBlock, final long endBlock, final Instant migrationStartTime) {
     final Duration migrationDuration = Duration.between(migrationStartTime, Instant.now());
-    final String formatedDuration =
+    final String formattedDuration =
         DurationFormatUtils.formatDurationWords(migrationDuration.toMillis(), true, true);
     LOG.info(
         "Bonsai Archive migration completed. Processed {} blocks in {}.",
         endBlock - startBlock + 1,
-        formatedDuration);
+        formattedDuration);
   }
 
   private void processBlock(
