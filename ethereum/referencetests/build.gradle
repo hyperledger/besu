@@ -254,7 +254,7 @@ configurations {
 }
 
 dependencies {
-  compileOnly 'com.google.code.findbugs:jsr305'
+  compileOnly 'org.jspecify:jspecify'
 
   implementation project(':config')
   implementation project(':crypto:algorithms')
