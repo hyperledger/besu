@@ -561,6 +561,22 @@ public class UInt256Test {
     BigInteger M = new BigInteger(1, m.toBytesBE());
     BigInteger expected = A.add(B).mod(M);
     assertThat(new BigInteger(1, a.addMod(b, m).toBytesBE())).isEqualTo(expected);
+
+    a =
+      UInt256.fromBytesBE(
+        new BigInteger("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16)
+          .toByteArray());
+    b =
+      UInt256.fromBytesBE(
+        new BigInteger("80008e949e9e9ec0cf4f4d4f4f4f41523410af5f20b0b7606f4d4f439f5f6000", 16)
+          .toByteArray());
+    m =
+      UInt256.fromBytesBE(new BigInteger("1800000000000000080000000000000017ffffffffffffffd", 16).toByteArray());
+    A = new BigInteger(1, a.toBytesBE());
+    B = new BigInteger(1, b.toBytesBE());
+    M = new BigInteger(1, m.toBytesBE());
+    expected = A.add(B).mod(M);
+    assertThat(new BigInteger(1, a.addMod(b, m).toBytesBE())).isEqualTo(expected);
   }
 
   @Test
