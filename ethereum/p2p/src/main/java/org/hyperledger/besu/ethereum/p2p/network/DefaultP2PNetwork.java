@@ -505,6 +505,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
             .build();
 
     LOG.info("Enode URL {}", localEnode.toString());
+    getLocalEnr().ifPresent(enr -> LOG.info("ENR URL {}", enr));
     LOG.info("Node address {}", Util.publicKeyToAddress(localEnode.getNodeId()));
     localNode.setEnode(localEnode);
   }
