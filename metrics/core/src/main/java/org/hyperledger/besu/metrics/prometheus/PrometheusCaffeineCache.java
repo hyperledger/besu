@@ -96,7 +96,7 @@ class PrometheusCaffeineCache extends CategorizedPrometheusCollector {
                 "caffeine_cache_hit", Context::counterValueExtractor,
                 "caffeine_cache_miss", Context::counterValueExtractor,
                 "caffeine_cache_requests", Context::counterValueExtractor,
-                "caffeine_cache_size", Context::gaugeValueExtractor);
+                "caffeine_cache_estimated_size", Context::gaugeValueExtractor);
 
     private final CacheMetricsCollector cacheMetricsCollector = new CacheMetricsCollector();
     private final Set<String> cacheNames = new ConcurrentHashSet<>();

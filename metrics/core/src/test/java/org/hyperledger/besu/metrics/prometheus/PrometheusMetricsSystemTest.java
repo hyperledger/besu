@@ -318,7 +318,7 @@ public class PrometheusMetricsSystemTest {
 
     assertThat(metricsSystem.streamObservations())
         .containsExactlyInAnyOrder(
-            new Observation(BLOCKCHAIN, "caffeine_cache_size", 1.0, List.of("test")),
+            new Observation(BLOCKCHAIN, "caffeine_cache_estimated_size", 1.0, List.of("test")),
             new Observation(BLOCKCHAIN, "caffeine_cache_requests", 2.0, List.of("test")),
             new Observation(BLOCKCHAIN, "caffeine_cache_hit", 1.0, List.of("test")),
             new Observation(BLOCKCHAIN, "caffeine_cache_miss", 1.0, List.of("test")),
