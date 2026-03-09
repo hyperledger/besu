@@ -903,6 +903,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
               scheduler,
               ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager());
 
+      LOG.info("Flat DB mode is set to {}", worldStateKeyValueStorage.getFlatDbMode());
       if (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
           || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.PARTIAL)) {
         final BonsaiFlatDbToArchiveMigrator archiveMigrator =
