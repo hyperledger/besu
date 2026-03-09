@@ -55,8 +55,7 @@ public class PeerTransactionTracker
   private final int maxTrackedSeenTxsPerPeer;
   private final int maxSendQueueSizePerPeer;
   private final boolean forgetEvictedTxsEnabled;
-  private final Map<EthPeer, Set<Hash>> seenTransactions = new HashMap<>();
-  private final Map<EthPeer, Set<Hash>> seenAnnouncements = new HashMap<>();
+  private final Map<EthPeer, Map<Hash, SeenType>> peerSeenState = new HashMap<>();
   private final Map<EthPeer, SequencedSet<Transaction>> transactionsToSend = new HashMap<>();
   private final Map<EthPeer, SequencedSet<Transaction>> announcementsToSend = new HashMap<>();
   private final Map<EthPeer, SequencedMap<Hash, TransactionAnnouncement>>
@@ -79,8 +78,7 @@ public class PeerTransactionTracker
   }
 
   public synchronized void reset() {
-    seenTransactions.clear();
-    seenAnnouncements.clear();
+    peerSeenState.clear();
     transactionsToSend.clear();
     announcementsToSend.clear();
     announcementsToRequestByHash.clear();
@@ -90,11 +88,8 @@ public class PeerTransactionTracker
 
   private synchronized void logStats() {
     if (LOG.isTraceEnabled()) {
-      seenTransactions.forEach(
-          (ethPeer, hashes) -> LOG.trace("Seen txs: peer={} size={}", ethPeer, hashes.size()));
-      seenAnnouncements.forEach(
-          (ethPeer, hashes) ->
-              LOG.trace("Seen announcements: peer={} size={}", ethPeer, hashes.size()));
+      peerSeenState.forEach(
+          (ethPeer, hashes) -> LOG.trace("Seen state: peer={} size={}", ethPeer, hashes.size()));
       transactionsToSend.forEach(
           (ethPeer, txs) -> LOG.trace("Txs to send: peer={} size={}", ethPeer, txs.size()));
       announcementsToSend.forEach(
@@ -110,36 +105,74 @@ public class PeerTransactionTracker
 
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Hash> seenHashes) {
-    seenTransactions
-        .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
-        .addAll(seenHashes);
+    final Map<Hash, SeenType> seenForPeer =
+        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
+
+    seenHashes.forEach(
+        seenHash ->
+            seenForPeer.compute(
+                seenHash,
+                (unused, seenType) ->
+                    switch (seenType) {
+                      case null -> SeenType.TRANSACTION;
+                      case TRANSACTION -> SeenType.TRANSACTION;
+                      case ANNOUNCEMENT, BOTH -> SeenType.BOTH;
+                    }));
     // remove the seen txs from any request queue
     announcementsToRequestByHash.values().forEach(hashes -> seenHashes.forEach(hashes::remove));
   }
 
   public synchronized void markTransactionAsSeen(
       final EthPeer peer, final Transaction transaction) {
-    final var seenHash = transaction.getHash();
-    seenTransactions
-        .computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer))
-        .add(seenHash);
+    final Hash seenHash = transaction.getHash();
+    final Map<Hash, SeenType> seenForPeer =
+        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
+
+    seenForPeer.compute(
+        seenHash,
+        (unused, seenType) ->
+            switch (seenType) {
+              case null -> SeenType.TRANSACTION;
+              case TRANSACTION -> SeenType.TRANSACTION;
+              case ANNOUNCEMENT, BOTH -> SeenType.BOTH;
+            });
     // remove the seen txs from any request queue
     announcementsToRequestByHash.values().forEach(hashes -> hashes.remove(seenHash));
   }
 
   public synchronized void markAnnouncementsAsSeenByTransaction(
       final EthPeer peer, final Collection<Transaction> announcements) {
-    final Set<Hash> seenAnnouncementForPeer =
-        seenAnnouncements.computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer));
-    announcements.stream().map(Transaction::getHash).forEach(seenAnnouncementForPeer::add);
+    final Map<Hash, SeenType> seenForPeer =
+        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
+
+    announcements.forEach(
+        seenAnn ->
+            seenForPeer.compute(
+                seenAnn.getHash(),
+                (unused, seenType) ->
+                    switch (seenType) {
+                      case null -> SeenType.ANNOUNCEMENT;
+                      case ANNOUNCEMENT -> SeenType.ANNOUNCEMENT;
+                      case TRANSACTION, BOTH -> SeenType.BOTH;
+                    }));
     // do not clean transactionAnnouncementsToRequest to allow for retries with other peers
   }
 
   public synchronized void markAnnouncementsAsSeen(
       final EthPeer peer, final Collection<TransactionAnnouncement> announcements) {
-    final Set<Hash> seenAnnouncementForPeer =
-        seenAnnouncements.computeIfAbsent(peer, key -> createBoundedSet(maxTrackedSeenTxsPerPeer));
-    announcements.stream().map(TransactionAnnouncement::hash).forEach(seenAnnouncementForPeer::add);
+
+    final Map<Hash, SeenType> seenForPeer =
+        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
+    announcements.forEach(
+        seenAnn ->
+            seenForPeer.compute(
+                seenAnn.hash(),
+                (unused, seenType) ->
+                    switch (seenType) {
+                      case null -> SeenType.ANNOUNCEMENT;
+                      case ANNOUNCEMENT -> SeenType.ANNOUNCEMENT;
+                      case TRANSACTION, BOTH -> SeenType.BOTH;
+                    }));
     // do not clean transactionAnnouncementsToRequest to allow for retries with other peers
   }
 
@@ -158,18 +191,26 @@ public class PeerTransactionTracker
   }
 
   public synchronized Transaction claimTransactionToSendToPeer(final EthPeer peer) {
-    final SequencedSet<Transaction> txsToSend = this.transactionsToSend.get(peer);
+    final SequencedSet<Transaction> txsToSend = transactionsToSend.get(peer);
     if (txsToSend != null && !txsToSend.isEmpty()) {
-      return txsToSend.removeFirst();
+      final Transaction tx = txsToSend.removeFirst();
+      if (txsToSend.isEmpty()) {
+        transactionsToSend.remove(peer);
+      }
+      return tx;
     } else {
       return null;
     }
   }
 
   public synchronized Transaction claimAnnouncementToSendToPeer(final EthPeer peer) {
-    final SequencedSet<Transaction> announcementsToSend = this.announcementsToSend.get(peer);
-    if (announcementsToSend != null && !announcementsToSend.isEmpty()) {
-      return announcementsToSend.removeFirst();
+    final SequencedSet<Transaction> annsToSend = announcementsToSend.get(peer);
+    if (annsToSend != null && !annsToSend.isEmpty()) {
+      final Transaction announcement = annsToSend.removeFirst();
+      if (annsToSend.isEmpty()) {
+        announcementsToSend.remove(peer);
+      }
+      return announcement;
     } else {
       return null;
     }
@@ -203,6 +244,9 @@ public class PeerTransactionTracker
       }
       // if announcement is in progress, then keep in the queue, since it could be
       // tried later if the current in progress retrieval should fail
+    }
+    if (announcements.isEmpty()) {
+      announcementsToRequestByHash.remove(peer);
     }
     return returnAnnouncements;
   }
@@ -250,7 +294,9 @@ public class PeerTransactionTracker
 
   public synchronized boolean alreadySeenTransaction(final Hash txHash) {
     return recentlyConfirmedTransactions.contains(txHash)
-        || seenTransactions.values().stream().anyMatch(seen -> seen.contains(txHash));
+        || peerSeenState.values().stream()
+            .map(s -> s.get(txHash))
+            .anyMatch(seenType -> SeenType.TRANSACTION == seenType || SeenType.BOTH == seenType);
   }
 
   public boolean hasPeerSeenTransaction(final EthPeer peer, final Transaction transaction) {
@@ -261,16 +307,24 @@ public class PeerTransactionTracker
     if (recentlyConfirmedTransactions.contains(txHash)) {
       return true;
     }
-    final Set<Hash> seenTransactionsForPeer = seenTransactions.get(peer);
-    return seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash);
+    final Map<Hash, SeenType> seenForPeer = peerSeenState.get(peer);
+    if (seenForPeer != null) {
+      final SeenType seenType = seenForPeer.get(txHash);
+      return SeenType.TRANSACTION == seenType || SeenType.BOTH == seenType;
+    }
+    return false;
   }
 
   public synchronized boolean hasPeerSeenAnnouncement(final EthPeer peer, final Hash txHash) {
     if (recentlyConfirmedTransactions.contains(txHash)) {
       return true;
     }
-    final Set<Hash> seenAnnouncementsForPeer = seenAnnouncements.get(peer);
-    return seenAnnouncementsForPeer != null && seenAnnouncementsForPeer.contains(txHash);
+    final Map<Hash, SeenType> seenForPeer = peerSeenState.get(peer);
+    if (seenForPeer != null) {
+      final SeenType seenType = seenForPeer.get(txHash);
+      return SeenType.ANNOUNCEMENT == seenType || SeenType.BOTH == seenType;
+    }
+    return false;
   }
 
   public synchronized boolean hasPeerSeenTransactionOrAnnouncement(
@@ -278,12 +332,8 @@ public class PeerTransactionTracker
     if (recentlyConfirmedTransactions.contains(txHash)) {
       return true;
     }
-    final Set<Hash> seenTransactionsForPeer = seenTransactions.get(peer);
-    if (seenTransactionsForPeer != null && seenTransactionsForPeer.contains(txHash)) {
-      return true;
-    }
-    final Set<Hash> seenAnnouncementsForPeer = seenAnnouncements.get(peer);
-    return seenAnnouncementsForPeer != null && seenAnnouncementsForPeer.contains(txHash);
+    final Map<Hash, SeenType> seenForPeer = peerSeenState.get(peer);
+    return seenForPeer != null && seenForPeer.get(txHash) != null;
   }
 
   private <T> SequencedSet<T> createBoundedSet(final int maxSize) {
@@ -312,8 +362,7 @@ public class PeerTransactionTracker
     // here we reconcile all the trackers with the active peers, since due to the asynchronous
     // processing of incoming messages it could seldom happen that a tracker is recreated just
     // after a peer was disconnected, resulting in a memory leak.
-    final Set<EthPeer> trackedPeers = new HashSet<>(seenTransactions.keySet());
-    trackedPeers.addAll(seenAnnouncements.keySet());
+    final Set<EthPeer> trackedPeers = new HashSet<>(peerSeenState.keySet());
     trackedPeers.addAll(transactionsToSend.keySet());
     trackedPeers.addAll(announcementsToSend.keySet());
     trackedPeers.addAll(announcementsToRequestByHash.keySet());
@@ -341,8 +390,7 @@ public class PeerTransactionTracker
 
     disconnectedPeers.forEach(
         disconnectedPeer -> {
-          seenTransactions.remove(disconnectedPeer);
-          seenAnnouncements.remove(disconnectedPeer);
+          peerSeenState.remove(disconnectedPeer);
           transactionsToSend.remove(disconnectedPeer);
           announcementsToSend.remove(disconnectedPeer);
           announcementsToRequestByHash.remove(disconnectedPeer);
@@ -367,7 +415,7 @@ public class PeerTransactionTracker
     }
 
     if (reason.stopTracking() && forgetEvictedTxsEnabled) {
-      seenTransactions.values().forEach(st -> st.remove(transaction.getHash()));
+      peerSeenState.values().forEach(st -> st.remove(transaction.getHash()));
     }
   }
 
@@ -390,5 +438,11 @@ public class PeerTransactionTracker
             }
           }
         });
+  }
+
+  private enum SeenType {
+    TRANSACTION,
+    ANNOUNCEMENT,
+    BOTH
   }
 }
