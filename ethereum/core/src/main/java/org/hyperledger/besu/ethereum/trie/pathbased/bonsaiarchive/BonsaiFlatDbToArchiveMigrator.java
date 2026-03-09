@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -168,7 +169,14 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
 
   @Override
   public void close() {
-    executorService.shutdown();
+    executorService.shutdownNow();
+    try {
+      if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+        LOG.warn("Migration executor did not terminate within 10 seconds");
+      }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   @VisibleForTesting
