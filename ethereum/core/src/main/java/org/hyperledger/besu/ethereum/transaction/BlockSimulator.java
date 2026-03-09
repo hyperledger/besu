@@ -423,11 +423,51 @@ public class BlockSimulator {
       transactionUpdater.commit();
       blockUpdater.commit();
 
+      // Restore the original gas pricing from CallParameter into the Transaction.
+      // TransactionSimulator zeroes gas prices when isAllowExceedingBalance is true to avoid
+      // upfront cost failures, but for eth_simulateV1 results we need the caller-provided values
+      // so that gasPrice, maxFeePerGas, maxPriorityFeePerGas, transactionHash, and
+      // transactionsRoot are correct in the response.
+      if (transactionValidationParams.isAllowExceedingBalance()) {
+        transactionSimulationResult = restoreGasPricing(transactionSimulationResult, callParameter);
+      }
+
       blockStateCallSimulationResult.add(transactionSimulationResult, ws, finalOperationTracer);
     }
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
     return blockStateCallSimulationResult;
+  }
+
+  /**
+   * Restores the original gas pricing from the CallParameter into the processed Transaction. During
+   * simulation, TransactionSimulator zeroes gas prices when isAllowExceedingBalance is true to
+   * avoid upfront cost failures. This method rebuilds the Transaction with the caller's original
+   * gas pricing so that the result fields (gasPrice, maxFeePerGas, etc.) and derived values
+   * (transactionHash, transactionsRoot) are correct.
+   */
+  private TransactionSimulatorResult restoreGasPricing(
+      final TransactionSimulatorResult result, final CallParameter callParameter) {
+    final Transaction original = result.transaction();
+    final boolean hasGasPrice = callParameter.getGasPrice().isPresent();
+    final boolean hasMaxFeePerGas = callParameter.getMaxFeePerGas().isPresent();
+    final boolean hasMaxPriorityFeePerGas = callParameter.getMaxPriorityFeePerGas().isPresent();
+    final boolean hasMaxFeePerBlobGas =
+        original.getType().supportsBlob() && callParameter.getMaxFeePerBlobGas().isPresent();
+
+    if (!hasGasPrice && !hasMaxFeePerGas && !hasMaxPriorityFeePerGas && !hasMaxFeePerBlobGas) {
+      return result;
+    }
+
+    final Transaction.Builder builder = Transaction.builder().copiedFrom(original);
+    callParameter.getGasPrice().ifPresent(builder::gasPrice);
+    callParameter.getMaxFeePerGas().ifPresent(builder::maxFeePerGas);
+    callParameter.getMaxPriorityFeePerGas().ifPresent(builder::maxPriorityFeePerGas);
+    if (original.getType().supportsBlob()) {
+      callParameter.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
+    }
+
+    return new TransactionSimulatorResult(builder.build(), result.result());
   }
 
   private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
@@ -494,10 +534,20 @@ public class BlockSimulator {
     var updater = ws.updater();
     for (Address accountToOverride : stateOverrideMap.keySet()) {
       final StateOverride override = stateOverrideMap.get(accountToOverride);
-      MutableAccount account = updater.getOrCreate(accountToOverride);
-      TransactionSimulator.applyOverrides(account, override);
+      if (hasAccountStateOverrides(override)) {
+        MutableAccount account = updater.getOrCreate(accountToOverride);
+        TransactionSimulator.applyOverrides(account, override);
+      }
     }
     updater.commit();
+  }
+
+  private boolean hasAccountStateOverrides(final StateOverride override) {
+    return override.getNonce().isPresent()
+        || override.getBalance().isPresent()
+        || override.getCode().isPresent()
+        || override.getState().isPresent()
+        || override.getStateDiff().isPresent();
   }
 
   /**

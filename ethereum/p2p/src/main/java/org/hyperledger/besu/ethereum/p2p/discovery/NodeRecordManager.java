@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import com.google.common.net.InetAddresses;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -59,8 +59,8 @@ import org.slf4j.LoggerFactory;
  */
 public class NodeRecordManager {
   private static final Logger LOG = LoggerFactory.getLogger(NodeRecordManager.class);
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   private static final String FORK_ID_ENR_FIELD = "eth";
 
@@ -69,6 +69,8 @@ public class NodeRecordManager {
   private final Bytes nodeId;
   private final Supplier<List<Bytes>> forkIdSupplier;
   private final NatService natService;
+
+  private final ReentrantLock lock = new ReentrantLock();
 
   private Optional<DiscoveryPeerV4> localNode = Optional.empty();
   private HostEndpoint primaryEndpoint;
@@ -156,6 +158,74 @@ public class NodeRecordManager {
   }
 
   /**
+   * Updates the stored discovery endpoints with the actual OS-assigned ports after an ephemeral
+   * (port 0) bind, then writes the ENR to disk once all configured endpoints are resolved.
+   *
+   * <p>Each argument carries the resolved port from the corresponding ENR UDP field ({@code udp}
+   * for IPv4, {@code udp6} for IPv6). The argument that maps to the <em>primary</em> endpoint
+   * depends on the primary's address family: for an IPv4 primary the {@code udp} port is used; for
+   * an IPv6-only primary the {@code udp6} port is used. The {@code udp6} port is additionally used
+   * for the dual-stack secondary when the primary is IPv4.
+   *
+   * <p>Each argument is only applied when present and only if the currently stored port is 0. The
+   * ENR write is performed atomically under the same lock as the endpoint update, so concurrent
+   * callbacks from dual-stack UDP servers cannot interleave a write between an endpoint update.
+   *
+   * @param resolvedUdpPort the OS-assigned port for the {@code udp} ENR field, or empty if
+   *     unchanged
+   * @param resolvedUdp6Port the OS-assigned port for the {@code udp6} ENR field, or empty if
+   *     unchanged
+   */
+  public void onDiscoveryPortResolved(
+      final Optional<Integer> resolvedUdpPort, final Optional<Integer> resolvedUdp6Port) {
+    lock.lock();
+    try {
+      // Route the resolved port to the primary endpoint based on its address family.
+      // In single-stack IPv6 mode the primary is IPv6, so its port arrives in
+      // resolvedUdp6Port — not resolvedUdpPort as the field name might suggest.
+      final Optional<Integer> resolvedPrimaryPort =
+          primaryEndpoint.isIpv4() ? resolvedUdpPort : resolvedUdp6Port;
+      updatePrimaryPortIfEphemeral(resolvedPrimaryPort);
+      updateIpv6PortIfEphemeral(resolvedUdp6Port);
+
+      // Write the ENR only when every configured UDP endpoint has a real (non-zero) port.
+      // In dual-stack mode the two UDP servers fire their callbacks concurrently; deferring
+      // until both are resolved ensures the seq counter increments exactly once.
+      if (allEndpointsResolved()) {
+        doUpdateNodeRecord();
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /** Updates the primary endpoint's discovery port if it is currently ephemeral (0). */
+  private void updatePrimaryPortIfEphemeral(final Optional<Integer> resolvedPort) {
+    if (resolvedPort.isPresent() && primaryEndpoint.discoveryPort() == 0) {
+      primaryEndpoint = primaryEndpoint.withDiscoveryPort(resolvedPort.get());
+    }
+  }
+
+  /**
+   * Updates the dual-stack secondary (IPv6) endpoint's discovery port if it is currently ephemeral.
+   * Only applies when the primary is IPv4 (dual-stack mode); the secondary is always IPv6.
+   */
+  private void updateIpv6PortIfEphemeral(final Optional<Integer> resolvedUdp6Port) {
+    if (primaryEndpoint.isIpv4()
+        && resolvedUdp6Port.isPresent()
+        && ipv6Endpoint.map(ep -> ep.discoveryPort() == 0).orElse(false)) {
+      ipv6Endpoint = ipv6Endpoint.map(ep -> ep.withDiscoveryPort(resolvedUdp6Port.get()));
+    }
+  }
+
+  /** Returns {@code true} when every configured UDP endpoint has a real (non-zero) port. */
+  private boolean allEndpointsResolved() {
+    final boolean primaryResolved = primaryEndpoint.discoveryPort() != 0;
+    final boolean ipv6Resolved = ipv6Endpoint.map(ep -> ep.discoveryPort() != 0).orElse(true);
+    return primaryResolved && ipv6Resolved;
+  }
+
+  /**
    * Ensures the local {@link NodeRecord} is up to date.
    *
    * <p>If a persisted ENR exists and all relevant fields match the current configuration (node ID,
@@ -167,6 +237,16 @@ public class NodeRecordManager {
    * @throws IllegalStateException if the local node has not been initialized
    */
   public void updateNodeRecord() {
+    lock.lock();
+    try {
+      doUpdateNodeRecord();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /** Writes the ENR to disk. Must be called with {@link #lock} held. */
+  private void doUpdateNodeRecord() {
     final NodeRecordFactory factory = NodeRecordFactory.DEFAULT;
 
     final Optional<NodeRecord> existingRecord =
@@ -179,8 +259,6 @@ public class NodeRecordManager {
     final int listeningPort = primaryEndpoint.tcpPort();
     final List<Bytes> forkId = forkIdSupplier.get();
 
-    final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
-
     final Optional<Bytes> ipv6AddressBytes =
         ipv6Endpoint.map(ep -> Bytes.of(InetAddresses.forString(ep.host()).getAddress()));
 
@@ -190,13 +268,13 @@ public class NodeRecordManager {
             .filter(
                 record ->
                     nodeId.equals(record.get(EnrField.PKEY_SECP256K1))
-                        && (primaryIsIpv4
+                        && (primaryEndpoint.isIpv4()
                             ? primaryIpv4AddressMatches(
                                 record, ipAddressBytes, discoveryPort, listeningPort)
                             : primaryIpv6AddressMatches(
                                 record, ipAddressBytes, discoveryPort, listeningPort))
                         && forkId.equals(record.get(FORK_ID_ENR_FIELD))
-                        && (!primaryIsIpv4 || ipv6FieldsMatch(record, ipv6AddressBytes)))
+                        && (!primaryEndpoint.isIpv4() || ipv6FieldsMatch(record, ipv6AddressBytes)))
             // Otherwise, create a new ENR with an incremented sequence number,
             // sign it with the local node key, and persist it to disk.
             .orElseGet(
@@ -266,19 +344,15 @@ public class NodeRecordManager {
 
     final UInt64 sequence = existingRecord.map(NodeRecord::getSeq).orElse(UInt64.ZERO).add(1);
 
-    final SignatureAlgorithm signatureAlgorithm = SIGNATURE_ALGORITHM.get();
-
-    final boolean primaryIsIpv4 = ipAddressBytes.size() == 4;
-
     final List<EnrField> fields = new ArrayList<>();
     fields.add(new EnrField(EnrField.ID, IdentitySchema.V4));
     fields.add(
         new EnrField(
-            signatureAlgorithm.getCurveName(),
-            signatureAlgorithm.compressPublicKey(signatureAlgorithm.createPublicKey(nodeId))));
+            SIGNATURE_ALGORITHM.getCurveName(),
+            SIGNATURE_ALGORITHM.compressPublicKey(SIGNATURE_ALGORITHM.createPublicKey(nodeId))));
     fields.add(new EnrField(FORK_ID_ENR_FIELD, Collections.singletonList(forkId)));
 
-    if (primaryIsIpv4) {
+    if (primaryEndpoint.isIpv4()) {
       fields.add(new EnrField(EnrField.IP_V4, ipAddressBytes));
       fields.add(new EnrField(EnrField.TCP, listeningPort));
       fields.add(new EnrField(EnrField.UDP, discoveryPort));
@@ -303,7 +377,12 @@ public class NodeRecordManager {
     record.setSignature(
         nodeKey.sign(Hash.keccak256(record.serializeNoSignature())).encodedBytes().slice(0, 64));
 
-    LOG.info("Writing node record to disk. {}", record);
+    // Use DEBUG for interim writes where ephemeral ports are not yet resolved.
+    if (allEndpointsResolved()) {
+      LOG.info("Writing node record to disk. {}", record);
+    } else {
+      LOG.debug("Writing interim node record to disk (ephemeral ports pending). {}", record);
+    }
 
     final var updater = variablesStorage.updater();
     updater.setLocalEnrSeqno(record.serialize());
