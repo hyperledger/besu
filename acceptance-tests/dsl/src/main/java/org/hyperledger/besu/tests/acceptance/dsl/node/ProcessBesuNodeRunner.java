@@ -463,13 +463,12 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
             () -> {
               final Process process = besuProcesses.get(node.getName());
               if (!process.isAlive()) {
-                throw new IllegalStateException(
-                    "Besu process for node "
-                        + node.getName()
-                        + " exited with code "
-                        + process.exitValue()
-                        + " before writing "
-                        + fileName);
+                LOG.warn(
+                    "Besu process for node {} exited with code {} before writing {}",
+                    node.getName(),
+                    process.exitValue(),
+                    fileName);
+                return true;
               }
 
               try (final Stream<String> s = Files.lines(file.toPath())) {
