@@ -30,6 +30,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.util.log.LogUtil;
 
+import java.io.Closeable;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -46,7 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Migrates a Bonsai storage to Bonsai archive storage format. */
-public class BonsaiFlatDbToArchiveMigrator {
+public class BonsaiFlatDbToArchiveMigrator implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiFlatDbToArchiveMigrator.class);
   private static final int LOG_INTERVAL_SECONDS = 60;
@@ -163,6 +164,11 @@ public class BonsaiFlatDbToArchiveMigrator {
     } finally {
       migrationRunning.set(false);
     }
+  }
+
+  @Override
+  public void close() {
+    executorService.shutdown();
   }
 
   @VisibleForTesting

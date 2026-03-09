@@ -888,6 +888,10 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       }
     }
 
+    final List<Closeable> closeables = new ArrayList<>();
+    closeables.add(protocolContext.getWorldStateArchive());
+    closeables.add(storageProvider);
+
     if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(
         dataStorageConfiguration.getDataStorageFormat())) {
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -902,6 +906,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       if (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
         final BonsaiFlatDbToArchiveMigrator archiveMigrator =
             createArchiveMigrator(worldStateStorageCoordinator, worldStateArchive, blockchain);
+        closeables.add(archiveMigrator);
 
         final AtomicBoolean migrationStarted = new AtomicBoolean(false);
         synchronizer.subscribeInSync(
@@ -925,10 +930,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         blockchain.observeBlockAdded(archiver);
       }
     }
-
-    final List<Closeable> closeables = new ArrayList<>();
-    closeables.add(protocolContext.getWorldStateArchive());
-    closeables.add(storageProvider);
 
     return new BesuController(
         protocolSchedule,
