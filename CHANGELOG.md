@@ -23,6 +23,7 @@
 - Add `--max-blobs-per-transaction` CLI option to configure the maximum number of blobs per transaction [#9912](https://github.com/hyperledger/besu/pull/9912)
 - Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
 - Plugin API: Allow the registration of multiple PluginTransactionPoolValidatorFactory [#9964](https://github.com/hyperledger/besu/pull/9964)
+- Add `-Pcases` case name filtering to JMH benchmark suite [#9982](https://github.com/hyperledger/besu/pull/9982)
 
 ## 26.2.0
 
