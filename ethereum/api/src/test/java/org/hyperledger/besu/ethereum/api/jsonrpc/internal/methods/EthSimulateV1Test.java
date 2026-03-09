@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallExcept
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -133,6 +134,33 @@ public class EthSimulateV1Test {
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) response).getError().getCode())
         .isEqualTo(BlockStateCallError.UPFRONT_COST_EXCEEDS_BALANCE.getCode());
+  }
+
+  @Test
+  public void shouldNotReturnInvalidParamsWhenInputAndDataHaveDifferentValues() {
+    setupMethodWithMockSimulator();
+    setupBlockchainForLatest();
+    when(blockSimulator.process(any(BlockHeader.class), any())).thenReturn(List.of());
+
+    // Reproduces issue #9960: both input and data provided with different values.
+    // Other EL clients (Geth, Nethermind, Reth, Erigon) accept this and use input.
+    final Map<String, Object> callObj =
+        Map.of(
+            "from", "0xc000000000000000000000000000000000000000",
+            "to", "0xd000000000000000000000000000000000000000",
+            "input", "0xDEADBEEF",
+            "data", "0xCAFEBABE");
+    final Map<String, Object> simulateParam =
+        Map.of("blockStateCalls", List.of(Map.of("calls", List.of(callObj))), "validation", false);
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "eth_simulateV1", new Object[] {simulateParam, "latest"}));
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isNotInstanceOf(JsonRpcErrorResponse.class);
+    verify(blockSimulator).process(any(BlockHeader.class), any());
   }
 
   @Test
