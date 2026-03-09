@@ -217,7 +217,6 @@ sourceSets {
         eipBlockchainReferenceTests,
         eipStateReferenceTests,
         executionSpecTests,
-        executionSpecDevnetTests,
         generalstateReferenceTests,
         generalstateRegressionReferenceTests,
         customBlockchainReferenceTests
@@ -227,20 +226,37 @@ sourceSets {
         'src/reference-test/external-resources',
         'src/reference-test/templates',
         'build/execution-spec-tests/',
-        'build/execution-spec-devnet-tests/',
         'src/reference-test/resources/custom'
+    }
+  }
+  referenceTestDevnet {
+    java {
+      compileClasspath += main.output + referenceTest.output
+      runtimeClasspath += main.output + referenceTest.output
+      srcDirs executionSpecDevnetTests
+    }
+    resources {
+      srcDirs 'build/execution-spec-devnet-tests/'
     }
   }
 }
 
-// Both stable and devnet execution-spec-tests tarballs contain fixtures/.meta/index.json
+// stable execution-spec-tests tarball contains fixtures/.meta/index.json
 tasks.named('processReferenceTestResources') {
-  dependsOn extractStableFixtures, extractDevnetFixtures
+  dependsOn extractStableFixtures
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('processReferenceTestDevnetResources') {
+  dependsOn extractDevnetFixtures
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 configurations {
   referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+  referenceTestDevnetAnnotationProcessor.extendsFrom testAnnotationProcessor
+  referenceTestDevnetImplementation.extendsFrom referenceTestImplementation
+  referenceTestDevnetRuntimeOnly.extendsFrom referenceTestRuntimeOnly
   // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
   tarConfig.extendsFrom referenceTestImplementation
   tarConfig {
@@ -322,19 +338,13 @@ tasks.register('referenceTests', Test) {
   description = 'Runs ETH reference tests.'
   testClassesDirs = sourceSets.referenceTest.output.classesDirs
   classpath = sourceSets.referenceTest.runtimeClasspath
-  filter {
-    excludeTestsMatching "org.hyperledger.besu.ethereum.vm.executionspecdevnet.*"
-  }
 }
 
 tasks.register('referenceTestsDevnet', Test) {
   useJUnitPlatform()
   description = 'Runs execution-spec-tests pre-release (devnet) reference tests.'
-  testClassesDirs = sourceSets.referenceTest.output.classesDirs
-  classpath = sourceSets.referenceTest.runtimeClasspath
-  filter {
-    includeTestsMatching "org.hyperledger.besu.ethereum.vm.executionspecdevnet.*"
-  }
+  testClassesDirs = sourceSets.referenceTestDevnet.output.classesDirs
+  classpath = sourceSets.referenceTestDevnet.runtimeClasspath
 }
 
 tasks.register('validateReferenceTestSubmodule') {
