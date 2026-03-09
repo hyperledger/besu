@@ -232,7 +232,9 @@ public class RlpxAgent {
     }
 
     final CompletableFuture<PeerConnection> peerConnectionCompletableFuture;
-    if (checkWhetherToConnect(peer, false)) {
+    final Optional<DisconnectReason> maybeDisconnectReason = gatePeerConnection(peer, false);
+
+    if (maybeDisconnectReason.isEmpty()) {
       synchronized (this) {
         peerConnectionCompletableFuture =
             peersConnectingCache.get(
