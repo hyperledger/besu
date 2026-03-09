@@ -75,7 +75,6 @@ class NewPooledTransactionHashesMessageSender {
           .log();
 
       final var message = NewPooledTransactionHashesMessage.create(txBatch, capability);
-      transactionTracker.markAnnouncementsAsSeen(peer, message.pendingTransactionAnnouncements());
 
       peer.send(message);
     } catch (final PeerNotConnected unused) {

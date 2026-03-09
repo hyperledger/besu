@@ -362,6 +362,34 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   }
 
   @Test
+  public void requestTransactions_shouldAbortWhenPeerReturnsUnrequestedTransaction() {
+    // peer returns a tx whose hash is NOT in the requested batch.
+    // The backward search fails to find it; the fix clears the batch so the loop terminates.
+    final List<Transaction> requested =
+        IntStream.range(0, 2).mapToObj(unused -> generator.transaction()).toList();
+    final Transaction unrequestedTransaction = generator.transaction();
+
+    transactionTracker.receivedAnnouncements(ethPeer, TransactionAnnouncement.create(requested));
+
+    when(peerTaskExecutor.executeAgainstPeer(
+            any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(unrequestedTransaction)),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(ethPeer)));
+
+    fetcher.requestTransactions();
+
+    // Exactly one request — loop aborts after the hash is not found in the batch
+    verify(peerTaskExecutor)
+        .executeAgainstPeer(any(GetPooledTransactionsFromPeerTask.class), eq(ethPeer));
+    verifyNoMoreInteractions(peerTaskExecutor);
+    verify(transactionPool).addRemoteTransactions(List.of(unrequestedTransaction));
+    verifyNoMoreInteractions(transactionPool);
+  }
+
+  @Test
   public void requestTransactionShouldNotStartTaskWhenTransactionAlreadySeen1() {
     final Transaction transaction = generator.transaction();
 

@@ -129,6 +129,22 @@ public class TransactionsMessageSenderTest {
     verifyNoInteractions(peer1);
   }
 
+  @Test
+  public void shouldDropOversizedTransactionAndContinueSending() throws Exception {
+    // A message size of 1 byte makes every transaction "too large to fit"
+    final TransactionsMessageSender tinySender =
+        new TransactionsMessageSender(transactionTracker, 1);
+
+    transactionTracker.addToPeerSendQueue(peer1, List.of(transaction1, transaction2));
+    transactionTracker.addToPeerSendQueue(peer2, List.of(transaction3));
+
+    tinySender.sendTransactionsToPeer(peer1);
+    tinySender.sendTransactionsToPeer(peer2);
+
+    // Every transaction is too large — no message is ever sent to any peer
+    verifyNoInteractions(peer1, peer2);
+  }
+
   private MessageData transactionsMessageContaining(final Transaction... transactions) {
     return argThat(
         message -> {

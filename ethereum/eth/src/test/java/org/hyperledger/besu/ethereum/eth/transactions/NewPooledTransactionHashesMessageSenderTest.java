@@ -18,6 +18,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -33,13 +34,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,8 +61,6 @@ public class NewPooledTransactionHashesMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  public PendingTransactions pendingTransactions;
-
   private PeerTransactionTracker transactionTracker;
   private NewPooledTransactionHashesMessageSender messageSender;
 
@@ -70,9 +69,6 @@ public class NewPooledTransactionHashesMessageSenderTest {
     transactionTracker =
         new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers, ethScheduler);
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
-    final Transaction tx = mock(Transaction.class);
-    pendingTransactions = mock(PendingTransactions.class);
-    when(pendingTransactions.getTransactionByHash(any())).thenReturn(Optional.of(tx));
 
     when(peer1.getConnection())
         .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH68), (cap, msg, conn) -> {}));
@@ -127,6 +123,68 @@ public class NewPooledTransactionHashesMessageSenderTest {
     assertThat(Sets.union(firstBatch, secondBatch))
         .containsExactlyInAnyOrderElementsOf(
             transactions.stream().map(TransactionAnnouncement::new).toList());
+  }
+
+  @Test
+  public void shouldNotSendAnnouncementAlreadySeenByPeer() throws Exception {
+    // Mark transaction1 as already received by peer1 (e.g. via a full-tx send)
+    transactionTracker.markTransactionsAsSeen(peer1, List.of(transaction1.getHash()));
+
+    transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(transaction1, transaction2));
+
+    messageSender.sendTransactionAnnouncementsToPeer(peer1);
+
+    // transaction1 was already seen — only transaction2 is announced
+    verify(peer1).send(transactionsMessageContaining(transaction2));
+    verify(peer1).getConnection();
+    verifyNoMoreInteractions(peer1);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldStopSendingOnPeerNotConnected() throws Exception {
+    // Exactly MAX_TRANSACTIONS_HASHES + 1 transactions: first full batch triggers a send that
+    // fails, causing the loop to break so the second tx is never sent.
+    final int batchSize = 4096; // MAX_TRANSACTIONS_HASHES
+    final Set<Transaction> transactions = new HashSet<>(generator.transactions(batchSize + 1));
+    transactions.forEach(
+        tx -> transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(tx)));
+
+    // peer1.send() always throws PeerNotConnected
+    doThrow(new PeerConnection.PeerNotConnected("peer disconnected")).when(peer1).send(any());
+
+    messageSender.sendTransactionAnnouncementsToPeer(peer1);
+
+    // The first full batch triggered exactly one send call, then the loop broke —
+    // the single remaining tx was NOT sent.
+    verify(peer1, times(1)).send(any());
+    verify(peer1).getConnection();
+    verifyNoMoreInteractions(peer1);
+  }
+
+  @Test
+  public void shouldNotDropAnnouncementsAtExactBatchBoundary() throws Exception {
+    // exactly MAX_TRANSACTIONS_HASHES + 1 must produce two messages (4096 + 1)
+    final int batchSize = 4096; // MAX_TRANSACTIONS_HASHES
+    final Set<Transaction> transactions = new HashSet<>(generator.transactions(batchSize + 1));
+    transactions.forEach(
+        tx -> transactionTracker.addToPeerAnnouncementsSendQueue(peer1, List.of(tx)));
+
+    messageSender.sendTransactionAnnouncementsToPeer(peer1);
+
+    final ArgumentCaptor<MessageData> captor = ArgumentCaptor.forClass(MessageData.class);
+    verify(peer1, times(2)).send(captor.capture());
+    verify(peer1).getConnection();
+    verifyNoMoreInteractions(peer1);
+
+    final List<MessageData> messages = captor.getAllValues();
+    assertThat(getAnnouncementsFromMessage(messages.get(0))).hasSize(batchSize);
+    assertThat(getAnnouncementsFromMessage(messages.get(1))).hasSize(1);
+    assertThat(
+            Sets.union(
+                getAnnouncementsFromMessage(messages.get(0)),
+                getAnnouncementsFromMessage(messages.get(1))))
+        .hasSize(batchSize + 1);
   }
 
   private MessageData transactionsMessageContaining(final Transaction... transactions) {

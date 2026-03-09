@@ -304,6 +304,109 @@ public class PeerTransactionTrackerTest {
     assertThat(secondBatch).containsExactly(ann3);
   }
 
+  @Test
+  public void receivedAnnouncements_shouldReturnOnlyFreshAnnouncements() {
+    // Pre-mark transaction1 as seen via a full-transaction receive
+    tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction1.getHash()));
+
+    final var fresh =
+        tracker.receivedAnnouncements(
+            ethPeer1,
+            TransactionAnnouncement.create(List.of(transaction1, transaction2, transaction3)));
+
+    // transaction1 already seen — excluded from the fresh list
+    assertThat(fresh)
+        .extracting(TransactionAnnouncement::hash)
+        .containsExactlyInAnyOrder(transaction2.getHash(), transaction3.getHash());
+
+    // Only fresh ones are enqueued for retrieval
+    assertThat(tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 10, Long.MAX_VALUE))
+        .extracting(TransactionAnnouncement::hash)
+        .containsExactlyInAnyOrder(transaction2.getHash(), transaction3.getHash());
+  }
+
+  @Test
+  public void markTransactionsAsSeen_shouldRemoveFromAllPeersRequestQueues() {
+    // Both peers have transaction1 in their request queues
+    tracker.receivedAnnouncements(
+        ethPeer1, TransactionAnnouncement.create(List.of(transaction1, transaction2)));
+    tracker.receivedAnnouncements(
+        ethPeer2, TransactionAnnouncement.create(List.of(transaction1, transaction3)));
+
+    // Mark transaction1 as seen (e.g. received as a full tx from ethPeer1)
+    tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction1.getHash()));
+
+    // transaction1 must be removed from BOTH peers' request queues
+    assertThat(tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 10, Long.MAX_VALUE))
+        .extracting(TransactionAnnouncement::hash)
+        .containsOnly(transaction2.getHash())
+        .doesNotContain(transaction1.getHash());
+    assertThat(tracker.claimAnnouncementsToRequestFromPeer(ethPeer2, 10, Long.MAX_VALUE))
+        .extracting(TransactionAnnouncement::hash)
+        .containsOnly(transaction3.getHash())
+        .doesNotContain(transaction1.getHash());
+  }
+
+  @Test
+  public void shouldRemoveConfirmedTransactionsFromAllQueuesOnChainReorg() {
+    tracker.addToPeerSendQueue(ethPeer1, List.of(transaction1, transaction2));
+    tracker.receivedAnnouncements(ethPeer2, TransactionAnnouncement.create(List.of(transaction1)));
+
+    final Block block =
+        generator.block(BlockDataGenerator.BlockOptions.create().addTransaction(transaction1));
+    tracker.onBlockAdded(
+        BlockAddedEvent.createForChainReorg(
+            block,
+            List.of(transaction1),
+            List.of(),
+            List.of(),
+            List.of(),
+            block.getHeader().getParentHash()));
+
+    assertThat(claimAllTransactionsToSend(tracker, ethPeer1)).containsOnly(transaction2);
+    assertThat(tracker.claimAnnouncementsToRequestFromPeer(ethPeer2, 10, Long.MAX_VALUE)).isEmpty();
+    assertThat(tracker.alreadySeenTransaction(transaction1.getHash())).isTrue();
+  }
+
+  @Test
+  public void shouldIgnoreForkBlockEvents() {
+    tracker.addToPeerSendQueue(ethPeer1, List.of(transaction1));
+    tracker.receivedAnnouncements(ethPeer1, TransactionAnnouncement.create(List.of(transaction2)));
+
+    final Block block =
+        generator.block(BlockDataGenerator.BlockOptions.create().addTransaction(transaction1));
+    tracker.onBlockAdded(BlockAddedEvent.createForFork(block));
+
+    // FORK events must not remove anything
+    assertThat(claimAllTransactionsToSend(tracker, ethPeer1)).containsOnly(transaction1);
+    assertThat(tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 10, Long.MAX_VALUE))
+        .isNotEmpty();
+    assertThat(tracker.alreadySeenTransaction(transaction1.getHash())).isFalse();
+  }
+
+  @Test
+  public void claimAnnouncementsToRequestFromPeer_shouldLimitByMaxHashes() {
+    final List<Transaction> transactions = new ArrayList<>(generator.transactions(5));
+    tracker.receivedAnnouncements(ethPeer1, TransactionAnnouncement.create(transactions));
+
+    // Claim at most 3 at a time
+    final List<TransactionAnnouncement> firstBatch =
+        tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 3, Long.MAX_VALUE);
+    assertThat(firstBatch).hasSize(3);
+
+    // The remaining 2 are still queued (not in-progress)
+    final List<TransactionAnnouncement> secondBatch =
+        tracker.claimAnnouncementsToRequestFromPeer(ethPeer1, 3, Long.MAX_VALUE);
+    assertThat(secondBatch).hasSize(2);
+
+    // All 5 unique hashes are covered across both batches
+    assertThat(
+            Stream.concat(firstBatch.stream(), secondBatch.stream())
+                .map(TransactionAnnouncement::hash))
+        .containsExactlyInAnyOrderElementsOf(
+            transactions.stream().map(Transaction::getHash).toList());
+  }
+
   private List<Transaction> claimAllAnnouncementsToSend(
       final PeerTransactionTracker tracker, final EthPeer peer) {
     final List<Transaction> result = new ArrayList<>();

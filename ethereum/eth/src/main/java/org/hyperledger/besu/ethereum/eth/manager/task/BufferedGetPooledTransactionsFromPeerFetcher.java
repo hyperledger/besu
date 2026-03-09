@@ -134,11 +134,19 @@ public class BufferedGetPooledTransactionsFromPeerFetcher {
 
             // do the search backward, for efficiency,
             // since in the normal case we should receive almost all txs
+            boolean found = false;
             for (int i = batchToRequest.size() - 1; i >= 0; i--) {
               if (lastRetrievedHash.equals(batchToRequest.get(i))) {
                 batchToRequest.subList(0, i + 1).clear();
+                found = true;
                 break;
               }
+            }
+
+            if (!found) {
+              // defensive check: peer returned something that we did not request,
+              // clear the batch to avoid infinite cycle
+              batchToRequest.clear();
             }
 
             LOG.atTrace()

@@ -65,6 +65,10 @@ class TransactionsMessageSender {
               new TransactionsMessage.SizeLimitedBuilder(maxTransactionsMessageSize);
           if (limitedTransactionsMessageBuilder.add(txToSend)) {
             transactionsBatch.add(txToSend);
+          } else {
+            LOG.warn(
+                "maxTransactionsMessageSize (%d bytes) is set too small, since transaction %s does not fit"
+                    .formatted(maxTransactionsMessageSize, txToSend.getHash()));
           }
         }
       }

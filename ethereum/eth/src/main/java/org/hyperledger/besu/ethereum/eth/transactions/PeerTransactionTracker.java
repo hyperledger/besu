@@ -192,12 +192,13 @@ public class PeerTransactionTracker
         && currentSize < maxSize
         && itAnnouncements.hasNext()) {
       final TransactionAnnouncement announcement = itAnnouncements.next();
-      currentSize += announcement.size();
+
       if (alreadySeenTransaction(announcement.hash())) {
         itAnnouncements.remove();
       } else if (!inProgressAnnouncements.contains(announcement.hash())) {
         returnAnnouncements.add(announcement);
         inProgressAnnouncements.add(announcement.hash());
+        currentSize += announcement.size();
         itAnnouncements.remove();
       }
       // if announcement is in progress, then keep in the queue, since it could be
