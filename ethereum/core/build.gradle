@@ -32,7 +32,7 @@ dependencies {
   api 'org.slf4j:slf4j-api'
   api 'org.web3j:core'
 
-  compileOnly 'com.google.code.findbugs:jsr305'
+  compileOnly 'org.jspecify:jspecify'
 
   implementation project(path: ':util')
 

@@ -34,7 +34,7 @@ dependencies {
   api 'org.slf4j:slf4j-api'
   api 'org.apache.logging.log4j:log4j-api'
 
-  compileOnly 'com.google.code.findbugs:jsr305'
+  compileOnly 'org.jspecify:jspecify'
 
   implementation project(':config')
   implementation project(':consensus:merge')
