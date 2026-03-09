@@ -84,7 +84,7 @@ dependencies {
 
     api 'org.checkerframework:checker-qual:3.43.0'
 
-    api 'com.google.code.findbugs:jsr305:3.0.2'
+    api 'org.jspecify:jspecify:1.0.0'
 
     api 'com.google.protobuf:protobuf-java:3.25.5'
 
