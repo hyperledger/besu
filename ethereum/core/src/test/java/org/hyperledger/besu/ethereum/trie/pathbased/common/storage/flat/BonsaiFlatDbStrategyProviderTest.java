@@ -151,7 +151,7 @@ class FlatDbStrategyProviderTest {
         codeByHashEnabled
             ? CodeHashCodeStorageStrategy.class
             : AccountHashCodeStorageStrategy.class;
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(expectedCodeStorageClass);
   }
@@ -221,7 +221,7 @@ class FlatDbStrategyProviderTest {
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(AccountHashCodeStorageStrategy.class);
   }
@@ -289,7 +289,7 @@ class FlatDbStrategyProviderTest {
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.ARCHIVE);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }

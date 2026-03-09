@@ -45,11 +45,7 @@ public class BonsaiFlatDbStrategyProvider extends FlatDbStrategyProvider {
             .getPathBasedExtraStorageConfiguration()
             .getUnstable()
             .getFullFlatDbEnabled()
-        ? (dataStorageConfiguration
-                .getDataStorageFormat()
-                .equals(DataStorageFormat.X_BONSAI_ARCHIVE)
-            ? FlatDbMode.ARCHIVE
-            : FlatDbMode.FULL)
+        ? FlatDbMode.FULL
         : FlatDbMode.PARTIAL;
   }
 
