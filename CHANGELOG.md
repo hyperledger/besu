@@ -24,6 +24,7 @@
 - Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
 - Plugin API: Allow the registration of multiple PluginTransactionPoolValidatorFactory [#9964](https://github.com/hyperledger/besu/pull/9964)
 - Add `-Pcases` case name filtering to JMH benchmark suite [#9982](https://github.com/hyperledger/besu/pull/9982)
+- Migrate all Guava caches to Caffeine [#9909](https://github.com/hyperledger/besu/pull/9909)
 
 ## 26.2.0
 

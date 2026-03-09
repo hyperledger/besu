@@ -36,6 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class BytesHolder implements Comparable<BytesHolder> {
   private final Bytes value;
+  private int hashCode;
 
   /**
    * Constructs a BytesHolder with the given bytes value.
@@ -115,7 +116,15 @@ public class BytesHolder implements Comparable<BytesHolder> {
   @Override
   @Deprecated
   public final int hashCode() {
-    return value.hashCode();
+    int hc = hashCode;
+    if (hc == 0) {
+      hc = value.hashCode();
+      if (hc == 0) {
+        hc = 1;
+      }
+      hashCode = hc;
+    }
+    return hc;
   }
 
   /**
