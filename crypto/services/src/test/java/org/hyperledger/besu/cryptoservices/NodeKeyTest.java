@@ -32,6 +32,36 @@ public class NodeKeyTest {
   }
 
   @Test
+  public void ecdhKeyAgreementCompressedIsSymmetric() {
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+    final KeyPair kp1 = signatureAlgorithm.generateKeyPair();
+    final KeyPair kp2 = signatureAlgorithm.generateKeyPair();
+
+    final NodeKey nodeKey1 = new NodeKey(new KeyPairSecurityModule(kp1));
+    final NodeKey nodeKey2 = new NodeKey(new KeyPairSecurityModule(kp2));
+
+    final Bytes compressed1 = nodeKey1.calculateECDHKeyAgreementCompressed(kp2.getPublicKey());
+    final Bytes compressed2 = nodeKey2.calculateECDHKeyAgreementCompressed(kp1.getPublicKey());
+
+    Assertions.assertThat(compressed1).isEqualTo(compressed2);
+    Assertions.assertThat(compressed1.size()).isEqualTo(33);
+  }
+
+  @Test
+  public void ecdhCompressedXCoordinateMatchesUncompressed() {
+    final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+    final KeyPair kp1 = signatureAlgorithm.generateKeyPair();
+    final KeyPair kp2 = signatureAlgorithm.generateKeyPair();
+
+    final NodeKey nodeKey1 = new NodeKey(new KeyPairSecurityModule(kp1));
+
+    final Bytes32 xOnly = nodeKey1.calculateECDHKeyAgreement(kp2.getPublicKey());
+    final Bytes compressed = nodeKey1.calculateECDHKeyAgreementCompressed(kp2.getPublicKey());
+
+    Assertions.assertThat(compressed.slice(1, 32)).isEqualTo(xOnly);
+  }
+
+  @Test
   public void publicKeyShouldMatch() {
     final Bytes keyPairPubKey =
         Bytes.fromHexString(
