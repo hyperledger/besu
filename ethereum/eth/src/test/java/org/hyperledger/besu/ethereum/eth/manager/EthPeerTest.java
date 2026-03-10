@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -208,9 +209,10 @@ public class EthPeerTest {
     final EthMessage otherMessage =
         new EthMessage(
             peer,
-            ReceiptsMessage.create(
-                    singletonList(gen.receipts(gen.block())),
-                    TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION)
+            ReceiptsMessage.createUnsafe(
+                    serializeReceiptsList(
+                        singletonList(gen.receipts(gen.block())),
+                        TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION))
                 .wrapMessageData(BigInteger.ONE));
 
     // Set up stream for headers

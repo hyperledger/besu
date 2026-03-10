@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.OsakaGasCalculator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class OsakaTargetingGasLimitCalculatorTest {
   private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;
-  private static final long TRANSACTION_GAS_LIMIT_CAP = 30_000_000L;
   private final OsakaGasCalculator osakaGasCalculator = new OsakaGasCalculator();
   private final BaseFeeMarket feeMarket = FeeMarket.cancunDefault(0L, Optional.empty());
 
@@ -50,7 +50,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     final OsakaTargetingGasLimitCalculator osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
 
     final long usedBlobGas = osakaGasCalculator.blobGasCost(used);
     assertThat(
@@ -91,7 +91,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var osakaTargetingGasLimitCalculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
 
     // if maxBlobs = 10, then the gas limit would be 131072 * 10 = 1310720
     assertThat(osakaTargetingGasLimitCalculator.currentBlobGasLimit())
@@ -108,7 +108,7 @@ class OsakaTargetingGasLimitCalculatorTest {
     int targetBlobs = 9;
     var calculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
     assertThat(calculator.maxBlobsPerBlock).isEqualTo(maxBlobs);
     assertThat(calculator.targetBlobsPerBlock).isEqualTo(targetBlobs);
 
@@ -131,35 +131,49 @@ class OsakaTargetingGasLimitCalculatorTest {
   }
 
   @Test
-  void maxBlobPerTransactionMustNotExceedMaxBlobsPerBlock() {
-    int maxBlobsPerBlock = 10;
-    int targetBlobsPerBlock = 9;
-    int maxBlobsPerTransaction = 11;
-    Assertions.assertThatThrownBy(
-            () ->
-                new OsakaTargetingGasLimitCalculator(
-                    0L,
-                    feeMarket,
-                    osakaGasCalculator,
-                    maxBlobsPerBlock,
-                    targetBlobsPerBlock,
-                    maxBlobsPerTransaction,
-                    TRANSACTION_GAS_LIMIT_CAP))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining(
-            String.format(
-                "maxBlobsPerTransaction (%d) must not be greater than maxBlobsPerBlock (%d)",
-                maxBlobsPerTransaction, maxBlobsPerBlock));
-  }
-
-  @Test
   void osakaBlobGasLimitPerTransaction() {
     int maxBlobs = 10;
     int targetBlobs = 9;
     var calculator =
         new OsakaTargetingGasLimitCalculator(
-            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs);
+            0L, feeMarket, osakaGasCalculator, maxBlobs, targetBlobs, OptionalInt.empty());
     assertThat(calculator.transactionBlobGasLimitCap()).isEqualTo(0xC0000); // 6 * 131072
+  }
+
+  @Test
+  void osakaBlobGasLimitPerTransactionWithCustomValue() {
+    int maxBlobs = 10;
+    int targetBlobs = 9;
+    int customMaxBlobsPerTx = 3;
+    var calculator =
+        new OsakaTargetingGasLimitCalculator(
+            0L,
+            feeMarket,
+            osakaGasCalculator,
+            maxBlobs,
+            targetBlobs,
+            OptionalInt.of(customMaxBlobsPerTx));
+    // 3 * 131072 = 393216
+    assertThat(calculator.transactionBlobGasLimitCap())
+        .isEqualTo(osakaGasCalculator.getBlobGasPerBlob() * customMaxBlobsPerTx);
+  }
+
+  @Test
+  void maxBlobsPerTransactionClampedToMaxBlobsPerBlock() {
+    int maxBlobsPerBlock = 10;
+    int targetBlobs = 9;
+    int tooManyBlobsPerTx = 15; // exceeds maxBlobsPerBlock
+    var calculator =
+        new OsakaTargetingGasLimitCalculator(
+            0L,
+            feeMarket,
+            osakaGasCalculator,
+            maxBlobsPerBlock,
+            targetBlobs,
+            OptionalInt.of(tooManyBlobsPerTx));
+    // Should be clamped to maxBlobsPerBlock (10), not the user value (15)
+    assertThat(calculator.transactionBlobGasLimitCap())
+        .isEqualTo(osakaGasCalculator.getBlobGasPerBlob() * maxBlobsPerBlock);
   }
 
   @Test
