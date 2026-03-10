@@ -21,11 +21,10 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
-import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
@@ -38,21 +37,17 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.AddressAccessPolicy;
 import org.ethereum.beacon.discovery.DiscoverySystemBuilder;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
-import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.crypto.Signer;
 
 /**
- * Factory for creating DiscV5 {@link PeerDiscoveryAgent} instances backed by the Ethereum Discovery
- * v5 {@link DiscoverySystemBuilder}.
+ * Factory for creating DiscV5 {@link PeerDiscoveryAgent} instances.
  *
- * <p>This factory is responsible for:
+ * <p>This factory is responsible for wiring together the dependencies needed by {@link
+ * PeerDiscoveryAgentV5}. It intentionally does <em>not</em> initialize the local node record or
+ * build the {@link MutableDiscoverySystem} — both are deferred to {@link
+ * PeerDiscoveryAgentV5#start(int)}, where the actual RLPx TCP port is known.
  *
- * <ul>
- *   <li>Initializing the local {@link NodeRecord} via {@link NodeRecordManager}
- *   <li>Configuring and building a mutable DiscV5 discovery system
- *   <li>Wiring Besu-specific components such as fork ID handling and node key services
- * </ul>
- *
- * <p>The resulting {@link PeerDiscoveryAgent} integrates DiscV5 discovery with Besu’s P2P
+ * <p>The resulting {@link PeerDiscoveryAgent} integrates DiscV5 discovery with Besu's P2P
  * networking stack.
  */
 public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFactory {
@@ -85,80 +80,84 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   }
 
   /**
-   * Creates and configures a DiscV5 {@link PeerDiscoveryAgent}.
+   * Creates a DiscV5 {@link PeerDiscoveryAgent}.
+   *
+   * <p>The local node record and discovery system are built lazily during {@link
+   * PeerDiscoveryAgentV5#start(int)} so that the ENR {@code tcp}/{@code tcp6} fields receive the
+   * actual RLPx TCP port rather than the discovery bind port.
    *
    * @param rlpxAgent the RLPx agent
-   * @return a fully configured DiscV5 peer discovery agent
-   * @throws IllegalStateException if the local node record has not been initialized
+   * @return a configured DiscV5 peer discovery agent ready to be started
    */
   @Override
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
-    final NodeRecord localNodeRecord = initializeLocalNodeRecord();
-
-    final DiscoveryConfiguration disc = config.discoveryConfiguration();
-    final DiscoverySystemBuilder builder =
-        new DiscoverySystemBuilder()
-            .signer(new LocalNodeKeySigner(nodeKey))
-            .localNodeRecord(localNodeRecord)
-            .localNodeRecordListener((previous, updated) -> nodeRecordManager.updateNodeRecord())
-            .newAddressHandler((nodeRecord, newAddress) -> Optional.of(nodeRecord))
-            // TODO Integrate address filtering based on peer permissions
-            .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL);
-
-    if (disc.isDualStackEnabled()) {
-      final InetSocketAddress ipv4 = new InetSocketAddress(disc.getBindHost(), disc.getBindPort());
-      final InetSocketAddress ipv6 =
-          new InetSocketAddress(disc.getBindHostIpv6().orElseThrow(), disc.getBindPortIpv6());
-      builder.listen(ipv4, ipv6);
-    } else {
-      builder.listen(disc.getBindHost(), disc.getBindPort());
-    }
-
-    final MutableDiscoverySystem discoverySystem = builder.buildMutable();
-
     return new PeerDiscoveryAgentV5(
-        discoverySystem,
         config,
         forkIdManager,
         nodeRecordManager,
         rlpxAgent,
-        disc.isPreferIpv6Outbound());
+        config.discoveryConfiguration().isPreferIpv6Outbound(),
+        buildDefaultDiscoverySystemFactory());
+  }
+
+  /** Creates the default {@link PeerDiscoveryAgentV5.DiscoverySystemFactory}. */
+  private PeerDiscoveryAgentV5.DiscoverySystemFactory buildDefaultDiscoverySystemFactory() {
+    final DiscoveryConfiguration discoveryConfig = config.discoveryConfiguration();
+
+    return (localNodeRecord, nodeRecordListener) -> {
+      final DiscoverySystemBuilder builder =
+          new DiscoverySystemBuilder()
+              .signer(new NodeKeySigner(nodeKey))
+              .localNodeRecord(localNodeRecord)
+              .localNodeRecordListener(nodeRecordListener)
+              // Ignore peer-reported external addresses for now (always returns Optional.empty()).
+              // For IPv4 this is covered by NatService; future IPv6 auto-discovery may relax
+              // this: https://github.com/hyperledger/besu/issues/9874
+              .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
+              // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based
+              // on peer permissions is not yet integrated; all addresses are currently allowed.
+              .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
+              .bootnodes(
+                  discoveryConfig.getEnrBootnodes().stream()
+                      .map(EthereumNodeRecord::nodeRecord)
+                      .toList());
+
+      if (discoveryConfig.isDualStackEnabled()) {
+        final InetSocketAddress ipv4 =
+            new InetSocketAddress(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
+        final InetSocketAddress ipv6 =
+            new InetSocketAddress(
+                discoveryConfig
+                    .getBindHostIpv6()
+                    .orElseThrow(
+                        () ->
+                            new IllegalStateException(
+                                "Discovery dual-stack is enabled but bindHostIpv6 is not set")),
+                discoveryConfig.getBindPortIpv6());
+        builder.listen(ipv4, ipv6);
+      } else {
+        builder.listen(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
+      }
+
+      return builder.buildMutable();
+    };
   }
 
   /**
-   * Initializes the local node record using the {@link NodeRecordManager}.
-   *
-   * @return the initialized local {@link NodeRecord}
-   * @throws IllegalStateException if the local node record has not been initialized
+   * An implementation of the {@link Signer} interface that uses the node's {@link NodeKey} for
+   * signing and key agreement.
    */
-  private NodeRecord initializeLocalNodeRecord() {
-    final DiscoveryConfiguration disc = config.discoveryConfiguration();
-    nodeRecordManager.initializeLocalNode(
-        new HostEndpoint(disc.getAdvertisedHost(), disc.getBindPort(), disc.getBindPort()),
-        disc.getAdvertisedHostIpv6()
-            .map(host -> new HostEndpoint(host, disc.getBindPortIpv6(), disc.getBindPortIpv6())));
-
-    return nodeRecordManager
-        .getLocalNode()
-        .flatMap(DiscoveryPeer::getNodeRecord)
-        .orElseThrow(() -> new IllegalStateException("Local node record not initialized"));
-  }
-
-  /**
-   * An implementation of the {@link org.ethereum.beacon.discovery.crypto.Signer} interface that
-   * uses a local {@link NodeKey} for signing and key agreement.
-   */
-  private static class LocalNodeKeySigner implements org.ethereum.beacon.discovery.crypto.Signer {
+  private static class NodeKeySigner implements Signer {
     private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
 
     private final NodeKey nodeKey;
 
     /**
-     * Creates a new LocalNodeKeySigner.
+     * Creates a new NodeKeySigner.
      *
      * @param nodeKey the node key to use for signing and key agreement
      */
-    public LocalNodeKeySigner(final NodeKey nodeKey) {
+    public NodeKeySigner(final NodeKey nodeKey) {
       this.nodeKey = nodeKey;
     }
 

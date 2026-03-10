@@ -353,7 +353,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
       timings.register("blockAssembled");
-      return new BlockCreationResult(block, transactionResults, timings, blockAccessList);
+      return new BlockCreationResult(
+          block, transactionResults, timings, blockAccessList, maybeRequests);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException | StorageException ex) {

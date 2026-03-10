@@ -19,25 +19,30 @@ import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.storage.NodeRecordListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,43 +72,63 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   public static final int DISCOVERY_TIMEOUT_SECONDS = 30;
 
-  private final MutableDiscoverySystem discoverySystem;
+  /**
+   * Factory for creating a {@link MutableDiscoverySystem}. The default implementation uses {@link
+   * org.ethereum.beacon.discovery.DiscoverySystemBuilder}; tests can inject a mock.
+   */
+  @FunctionalInterface
+  interface DiscoverySystemFactory {
+    /**
+     * Creates a new {@link MutableDiscoverySystem}.
+     *
+     * @param localNodeRecord the local node record to use
+     * @param nodeRecordListener listener invoked when the discovery library resolves bound ports
+     * @return a configured but not yet started discovery system
+     */
+    MutableDiscoverySystem create(
+        NodeRecord localNodeRecord, NodeRecordListener nodeRecordListener);
+  }
+
   private final DiscoveryConfiguration discoveryConfig;
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
   private final boolean preferIpv6Outbound;
+  private final DiscoverySystemFactory discoverySystemFactory;
+
+  // Initialized lazily in start() once the RLPx TCP port is known.
+  private final AtomicReference<MutableDiscoverySystem> discoverySystem = new AtomicReference<>();
 
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "discv5-peer-discovery"));
 
-  // Indicates whether the discovery agent is running
-  private volatile boolean running = false;
-  // Indicates whether the discovery agent has been stopped
-  private volatile boolean stopped = false;
+  private final AtomicBoolean started = new AtomicBoolean(false);
+  private final AtomicBoolean stopped = new AtomicBoolean(false);
   // Indicates whether a discovery operation is currently in progress
   private final AtomicBoolean discoveryInProgress = new AtomicBoolean(false);
 
   /**
    * Creates a new DiscV5 peer discovery agent.
    *
-   * @param discoverySystem the underlying mutable DiscV5 discovery system
-   * @param config the networking configuration
+   * <p>The {@link MutableDiscoverySystem} is not built at construction time. It is built lazily
+   * during {@link #start(int)} once the actual RLPx TCP port is known, so that the local node
+   * record (ENR) carries the correct {@code tcp}/{@code tcp6} values.
+   *
+   * @param config the full networking configuration
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
    * @param preferIpv6Outbound if true, prefer IPv6 when a peer advertises both address families
+   * @param discoverySystemFactory factory for creating the {@link MutableDiscoverySystem}
    */
-  public PeerDiscoveryAgentV5(
-      final MutableDiscoverySystem discoverySystem,
+  PeerDiscoveryAgentV5(
       final NetworkingConfiguration config,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
-      final boolean preferIpv6Outbound) {
+      final boolean preferIpv6Outbound,
+      final DiscoverySystemFactory discoverySystemFactory) {
 
-    this.discoverySystem =
-        Objects.requireNonNull(discoverySystem, "discoverySystem must not be null");
     this.discoveryConfig =
         Objects.requireNonNull(config, "config must not be null").discoveryConfiguration();
     this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
@@ -111,13 +136,19 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
     this.rlpxAgent = Objects.requireNonNull(rlpxAgent, "rlpxAgent must not be null");
     this.preferIpv6Outbound = preferIpv6Outbound;
+    this.discoverySystemFactory =
+        Objects.requireNonNull(discoverySystemFactory, "discoverySystemFactory must not be null");
   }
 
   /**
    * Starts the DiscV5 discovery system and the adaptive discovery loop.
    *
-   * @param tcpPort the local TCP port used for RLPx connections
-   * @return a future completed with the TCP port once discovery has started
+   * <p>The local node record (ENR) is initialized here using the supplied {@code tcpPort}, ensuring
+   * the {@code tcp} and {@code tcp6} ENR fields reflect the actual RLPx listening port rather than
+   * the discovery bind port.
+   *
+   * @param tcpPort the local RLPx TCP port used for inbound peer connections
+   * @return a future completed with the UDP discovery port once discovery has started
    */
   @Override
   public CompletableFuture<Integer> start(final int tcpPort) {
@@ -125,15 +156,58 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.debug("DiscV5 peer discovery is disabled; not starting agent");
       return CompletableFuture.completedFuture(0);
     }
+    if (stopped.get()) {
+      return CompletableFuture.failedFuture(
+          new IllegalStateException(
+              "Unable to start PeerDiscoveryAgentV5 after it has been stopped"));
+    }
+    if (!started.compareAndSet(false, true)) {
+      return CompletableFuture.failedFuture(
+          new IllegalStateException("Unable to start an already started PeerDiscoveryAgentV5"));
+    }
     LOG.info("Starting DiscV5 peer discovery agent ...");
-    running = true;
-    scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
-    return discoverySystem
+
+    final MutableDiscoverySystem system;
+    try {
+      final NodeRecord localNodeRecord = initializeLocalNodeRecord(tcpPort);
+      system = discoverySystemFactory.create(localNodeRecord, this::handleBoundPortResolved);
+      discoverySystem.set(system);
+    } catch (final Exception e) {
+      started.set(false);
+      return CompletableFuture.failedFuture(e);
+    }
+
+    return system
         .start()
         .thenApply(
             v -> {
+              try {
+                if (!stopped.get()) {
+                  scheduler.scheduleAtFixedRate(this::discoveryTick, 0, 1, TimeUnit.SECONDS);
+                }
+              } catch (final RejectedExecutionException e) {
+                // Benign: stop() shut down the scheduler between the stopped check and the
+                // schedule call. The agent is stopping so there is nothing to schedule.
+                LOG.debug("Scheduler already shut down; skipping discovery tick scheduling", e);
+              }
+              if (stopped.get()) {
+                throw new IllegalStateException(
+                    "DiscV5 peer discovery agent was stopped during startup");
+              }
+              final NodeRecord startedNodeRecord = system.getLocalNodeRecord();
+              // Return the IPv4 UDP port when available (single-stack IPv4 or dual-stack).
+              // The caller uses this port for UPnP IPv4 port forwarding and for the local
+              // enode URL, both of which are IPv4-only concerns. The fallback to udp6 covers
+              // single-stack IPv6 mode where no IPv4 udp field exists in the ENR.
               final int localPort =
-                  discoverySystem.getLocalNodeRecord().getUdpAddress().orElseThrow().getPort();
+                  startedNodeRecord
+                      .getUdpAddress()
+                      .or(startedNodeRecord::getUdp6Address)
+                      .orElseThrow(
+                          () ->
+                              new IllegalStateException(
+                                  "Local ENR has neither udp nor udp6 address after start"))
+                      .getPort();
               LOG.info("P2P DiscV5 peer discovery agent started and listening on {}", localPort);
               return localPort;
             })
@@ -141,7 +215,13 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
             (port, error) -> {
               if (error != null) {
                 LOG.error("Failed to start DiscV5 peer discovery agent", error);
-                running = false;
+                started.set(false);
+                try {
+                  system.stop();
+                } catch (final Exception e) {
+                  LOG.debug("Error while stopping discovery system after failed start", e);
+                }
+                discoverySystem.set(null);
               }
             });
   }
@@ -154,10 +234,12 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   @Override
   public CompletableFuture<?> stop() {
     LOG.info("Stopping DiscV5 Peer Discovery Agent");
-    running = false;
-    stopped = true;
+    stopped.set(true);
     scheduler.shutdownNow();
-    discoverySystem.stop();
+    final MutableDiscoverySystem system = discoverySystem.getAndSet(null);
+    if (system != null) {
+      system.stop();
+    }
     return CompletableFuture.completedFuture(null);
   }
 
@@ -193,7 +275,11 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Stream<DiscoveryPeer> streamDiscoveredPeers() {
-    return discoverySystem
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      return Stream.empty();
+    }
+    return system
         .streamLiveNodes()
         .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
   }
@@ -205,7 +291,10 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public void dropPeer(final PeerId peerId) {
-    discoverySystem.deleteNodeRecord(peerId.getId());
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system != null) {
+      system.deleteNodeRecord(peerId.getId());
+    }
   }
 
   /**
@@ -225,7 +314,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public boolean isStopped() {
-    return stopped;
+    return stopped.get();
   }
 
   /**
@@ -235,7 +324,15 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public void addPeer(final Peer peer) {
-    peer.getNodeRecord().ifPresent(discoverySystem::addNodeRecord);
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system != null) {
+      peer.getNodeRecord().ifPresent(system::addNodeRecord);
+    }
+  }
+
+  @Override
+  public Optional<NodeRecord> getLocalNodeRecord() {
+    return nodeRecordManager.getLocalNode().flatMap(DiscoveryPeer::getNodeRecord);
   }
 
   /**
@@ -246,9 +343,55 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   @Override
   public Optional<Peer> getPeer(final PeerId peerId) {
-    return discoverySystem
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      return Optional.empty();
+    }
+    return system
         .lookupNode(peerId.getId())
         .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound));
+  }
+
+  /**
+   * Handles a {@code localNodeRecordListener} callback from the discovery library.
+   *
+   * <p>When {@code onBoundPortResolved} resolves ephemeral (port 0) UDP ports, this method
+   * propagates the resolved ports to {@link NodeRecordManager}. {@code onDiscoveryPortResolved}
+   * writes the ENR atomically once all configured endpoints are non-zero, so concurrent dual-stack
+   * callbacks cannot race a write against an endpoint update.
+   *
+   * <p>{@code resolvedUdpPort} corresponds to the ENR {@code udp} field (IPv4 or IPv4-primary);
+   * {@code resolvedUdp6Port} corresponds to the ENR {@code udp6} field (IPv6 primary or dual-stack
+   * secondary). {@link NodeRecordManager} routes each to the correct endpoint based on the
+   * primary's address family.
+   */
+  private void handleBoundPortResolved(final NodeRecord previous, final NodeRecord updated) {
+    final Optional<Integer> resolvedUdpPort =
+        extractResolvedPort(previous.getUdpAddress(), updated.getUdpAddress());
+    final Optional<Integer> resolvedUdp6Port =
+        extractResolvedPort(previous.getUdp6Address(), updated.getUdp6Address());
+    if (resolvedUdpPort.isPresent() || resolvedUdp6Port.isPresent()) {
+      nodeRecordManager.onDiscoveryPortResolved(resolvedUdpPort, resolvedUdp6Port);
+    }
+  }
+
+  /**
+   * Returns the resolved port if the address transitioned from unresolved (absent or port 0) to a
+   * real port.
+   */
+  private static Optional<Integer> extractResolvedPort(
+      final Optional<InetSocketAddress> previous, final Optional<InetSocketAddress> updated) {
+    return isUnresolvedPort(previous)
+        ? updated.filter(a -> a.getPort() != 0).map(InetSocketAddress::getPort)
+        : Optional.empty();
+  }
+
+  /**
+   * Returns {@code true} if the address is absent or bound to an ephemeral (port 0) port. Both
+   * states are treated as unresolved.
+   */
+  private static boolean isUnresolvedPort(final Optional<InetSocketAddress> address) {
+    return address.map(a -> a.getPort() == 0).orElse(true);
   }
 
   /** Determines whether the RLPx agent has reached a sufficient number of connected peers. */
@@ -258,7 +401,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
 
   /** Periodic discovery task that enforces adaptive cadence and triggers peer discovery. */
   private void discoveryTick() {
-    if (!running || hasSufficientPeers()) {
+    if (stopped.get() || hasSufficientPeers()) {
       return;
     }
     discoverAndConnect();
@@ -269,7 +412,12 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     if (!discoveryInProgress.compareAndSet(false, true)) {
       return;
     }
-    discoverySystem
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      discoveryInProgress.set(false);
+      return;
+    }
+    system
         .searchForNewPeers()
         .orTimeout(DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .whenComplete(
@@ -292,8 +440,13 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.trace("Discovered {} new peers", newPeers.size());
     }
 
+    final MutableDiscoverySystem system = discoverySystem.get();
+    if (system == null) {
+      return Stream.empty();
+    }
+
     // Combine newly discovered peers with known peers and filter for suitability
-    final Stream<NodeRecord> knownPeers = discoverySystem.streamLiveNodes();
+    final Stream<NodeRecord> knownPeers = system.streamLiveNodes();
     final List<DiscoveryPeer> candidates =
         Stream.concat(newPeers.stream(), knownPeers)
             .distinct()
@@ -305,5 +458,54 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       LOG.trace("Total unique peers eligible for connection: {}", candidates.size());
     }
     return candidates.stream();
+  }
+
+  /**
+   * Initializes the local node record with the correct RLPx TCP ports.
+   *
+   * <p>The {@code tcp} and {@code tcp6} ENR fields are set from the effective ports returned by
+   * {@link RlpxAgent#start()} and {@link RlpxAgent#getIpv6ListeningPort()} respectively. These are
+   * always the real OS-assigned ports, so ephemeral port configuration (port 0) is handled
+   * correctly for TCP.
+   *
+   * <p>The {@code udp} and {@code udp6} fields are initially set from the configured discovery bind
+   * ports. When port 0 is configured, the discovery library resolves the actual OS-assigned port
+   * after bind via {@code onBoundPortResolved} and updates the ENR automatically.
+   *
+   * <p>The IPv6 {@link HostEndpoint} is only included when <em>both</em> an IPv6 advertised host is
+   * configured <em>and</em> an IPv6 RLPx socket is actually bound. If discovery dual-stack is
+   * active but RLPx dual-stack is not, the IPv6 ENR fields are omitted rather than advertising an
+   * incorrect port.
+   *
+   * @param tcpPort the effective IPv4 RLPx TCP port returned by {@link RlpxAgent#start()}
+   * @return the initialized local {@link NodeRecord}
+   */
+  private NodeRecord initializeLocalNodeRecord(final int tcpPort) {
+    final Optional<Integer> ipv6TcpPort = rlpxAgent.getIpv6ListeningPort();
+
+    // Include IPv6 ENR fields only when the discovery layer has an active IPv6 UDP socket
+    // (isDualStackEnabled), an IPv6 host is advertised, and an IPv6 RLPx TCP socket was bound.
+    // Omitting them when any of those conditions is absent avoids advertising inconsistent ENR
+    // fields (e.g. an ip6/udp6 without a live UDP socket, or a tcp6 without a live TCP socket).
+    final Optional<HostEndpoint> ipv6Endpoint =
+        discoveryConfig.isDualStackEnabled()
+            ? discoveryConfig
+                .getAdvertisedHostIpv6()
+                .flatMap(
+                    host ->
+                        ipv6TcpPort.map(
+                            port ->
+                                new HostEndpoint(host, discoveryConfig.getBindPortIpv6(), port)))
+            : Optional.empty();
+
+    nodeRecordManager.initializeLocalNode(
+        new HostEndpoint(
+            discoveryConfig.getAdvertisedHost(), discoveryConfig.getBindPort(), tcpPort),
+        ipv6Endpoint);
+
+    return nodeRecordManager
+        .getLocalNode()
+        .flatMap(DiscoveryPeer::getNodeRecord)
+        .orElseThrow(() -> new IllegalStateException("Local node record not initialized"));
   }
 }
