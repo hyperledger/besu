@@ -141,14 +141,14 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   @Override
   public Bytes32 calculateECDHKeyAgreement(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
-    final org.bouncycastle.math.ec.ECPoint point = ecdhScalarMultiply(privKey, theirPubKey);
+    final ECPoint point = ecdhScalarMultiply(privKey, theirPubKey);
     return UInt256.valueOf(point.getAffineXCoord().toBigInteger());
   }
 
   @Override
   public Bytes calculateECDHKeyAgreementCompressed(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
-    final org.bouncycastle.math.ec.ECPoint point = ecdhScalarMultiply(privKey, theirPubKey);
+    final ECPoint point = ecdhScalarMultiply(privKey, theirPubKey);
     return Bytes.wrap(point.getEncoded(true));
   }
 
@@ -159,16 +159,15 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
    * <p>For secp256k1 the cofactor <em>h</em> is 1, so no cofactor adjustment is needed (matching
    * the behaviour of {@code ECDHBasicAgreement} when <em>h</em> = 1).
    */
-  private org.bouncycastle.math.ec.ECPoint ecdhScalarMultiply(
+  private ECPoint ecdhScalarMultiply(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
     checkArgument(privKey != null, "missing private key");
     checkArgument(theirPubKey != null, "missing remote public key");
 
-    final org.bouncycastle.math.ec.ECPoint cleaned =
-        ECAlgorithms.cleanPoint(curve.getCurve(), theirPubKey.asEcPoint(curve));
+    final ECPoint cleaned = ECAlgorithms.cleanPoint(curve.getCurve(), theirPubKey.asEcPoint(curve));
     checkArgument(!cleaned.isInfinity(), "Infinity is not a valid public key for ECDH");
 
-    final org.bouncycastle.math.ec.ECPoint point = cleaned.multiply(privKey.getD()).normalize();
+    final ECPoint point = cleaned.multiply(privKey.getD()).normalize();
     checkArgument(!point.isInfinity(), "ECDH key agreement point is at infinity");
     return point;
   }

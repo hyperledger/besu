@@ -84,8 +84,7 @@ public class KeyPairSecurityModule implements SecurityModule {
       return signatureAlgorithm.calculateECDHKeyAgreement(
           keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
-      throw new SecurityModuleException(
-          "Unexpected error while calculating ECDH Key Agreement: " + e.getMessage(), e);
+      throw new SecurityModuleException("Unexpected error while calculating ECDH key agreement", e);
     }
   }
 
@@ -99,7 +98,7 @@ public class KeyPairSecurityModule implements SecurityModule {
           keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(
-          "Unexpected error while calculating compressed ECDH Key Agreement", e);
+          "Unexpected error while calculating compressed ECDH key agreement", e);
     }
   }
 
