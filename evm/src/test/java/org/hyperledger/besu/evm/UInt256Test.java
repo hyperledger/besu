@@ -271,7 +271,11 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(big_modulus) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(big_number.mod(big_modulus));
-      assertThat(remainder).withFailMessage(String.format("Failure detected:\n%s.MOD(%s)\n", number.toHexString(), modulus.toHexString())).isEqualTo(expected);
+      assertThat(remainder)
+          .withFailMessage(
+              String.format(
+                  "Failure detected:\n%s.MOD(%s)\n", number.toHexString(), modulus.toHexString()))
+          .isEqualTo(expected);
     }
   }
 
@@ -333,7 +337,12 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(cInt) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(aInt.add(bInt).mod(cInt));
-      assertThat(remainder).withFailMessage(String.format("Failure detected:\n%s.ADDMOD(%s, %s)\n", a.toHexString(), b.toHexString(), c.toHexString())).isEqualTo(expected);
+      assertThat(remainder)
+          .withFailMessage(
+              String.format(
+                  "Failure detected:\n%s.ADDMOD(%s, %s)\n",
+                  a.toHexString(), b.toHexString(), c.toHexString()))
+          .isEqualTo(expected);
     }
   }
 
@@ -406,7 +415,12 @@ public class UInt256Test {
           BigInteger.ZERO.compareTo(cInt) == 0
               ? Bytes32.ZERO
               : bigIntTo32B(aInt.multiply(bInt).mod(cInt));
-      assertThat(remainder).withFailMessage(String.format("Failure detected:\n%s.MULMOD(%s, %s)\n", a.toHexString(), b.toHexString(), c.toHexString())).isEqualTo(expected);
+      assertThat(remainder)
+          .withFailMessage(
+              String.format(
+                  "Failure detected:\n%s.MULMOD(%s, %s)\n",
+                  a.toHexString(), b.toHexString(), c.toHexString()))
+          .isEqualTo(expected);
     }
   }
 
@@ -445,7 +459,10 @@ public class UInt256Test {
           expected = bigIntTo32B(rem, 1);
         }
       }
-      assertThat(remainder).withFailMessage(String.format("Failure detected:\n%s.SMOD(%s)\n", a.toHexString(), b.toHexString())).isEqualTo(expected);
+      assertThat(remainder)
+          .withFailMessage(
+              String.format("Failure detected:\n%s.SMOD(%s)\n", a.toHexString(), b.toHexString()))
+          .isEqualTo(expected);
     }
   }
 }
