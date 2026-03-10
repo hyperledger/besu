@@ -19,8 +19,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.ethereum.transaction.BlockSimulationParameter;
-
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -35,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.transaction.BlockSimulationParameter;
 import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
@@ -46,11 +45,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.mockito.ArgumentCaptor;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -170,14 +168,7 @@ public class EthSimulateV1Test {
         ArgumentCaptor.forClass(BlockSimulationParameter.class);
     verify(blockSimulator).process(any(BlockHeader.class), captor.capture());
     final Bytes payload =
-        captor
-            .getValue()
-            .getBlockStateCalls()
-            .get(0)
-            .getCalls()
-            .get(0)
-            .getPayload()
-            .orElseThrow();
+        captor.getValue().getBlockStateCalls().get(0).getCalls().get(0).getPayload().orElseThrow();
     assertThat(payload).isEqualTo(Bytes.fromHexString("0xDEADBEEF"));
   }
 
