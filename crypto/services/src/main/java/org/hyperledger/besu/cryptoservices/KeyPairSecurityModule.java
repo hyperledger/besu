@@ -89,6 +89,20 @@ public class KeyPairSecurityModule implements SecurityModule {
     }
   }
 
+  @Override
+  public Bytes calculateECDHKeyAgreementCompressed(final PublicKey partyKey)
+      throws SecurityModuleException {
+    try {
+      final Bytes encodedECPoint = ECPointUtil.getEncodedBytes(partyKey.getW());
+      final SECPPublicKey secp256KPartyKey = signatureAlgorithm.createPublicKey(encodedECPoint);
+      return signatureAlgorithm.calculateECDHKeyAgreementCompressed(
+          keyPair.getPrivateKey(), secp256KPartyKey);
+    } catch (final Exception e) {
+      throw new SecurityModuleException(
+          "Unexpected error while calculating compressed ECDH Key Agreement", e);
+    }
+  }
+
   private static class SignatureImpl implements Signature {
 
     private final SECPSignature signature;

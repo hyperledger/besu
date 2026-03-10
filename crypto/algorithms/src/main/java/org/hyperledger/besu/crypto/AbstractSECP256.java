@@ -157,6 +157,18 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   }
 
   @Override
+  public Bytes calculateECDHKeyAgreementCompressed(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
+    checkArgument(privKey != null, "missing private key");
+    checkArgument(theirPubKey != null, "missing remote public key");
+
+    final org.bouncycastle.math.ec.ECPoint point =
+        theirPubKey.asEcPoint(curve).multiply(privKey.getD()).normalize();
+    checkArgument(!point.isInfinity(), "ECDH key agreement point is at infinity");
+    return Bytes.wrap(point.getEncoded(true));
+  }
+
+  @Override
   public SECPPrivateKey createPrivateKey(final BigInteger key) {
     return SECPPrivateKey.create(key, ALGORITHM);
   }
