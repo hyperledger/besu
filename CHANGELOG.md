@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Repository Migration
+- The Besu repository has moved from `hyperledger/besu` to `besu-eth/besu`. GitHub automatically redirects all existing links from the old location.
+
 ### Breaking Changes
 - Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Syncing networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. [#9852](https://github.com/hyperledger/besu/pull/9852)
 
