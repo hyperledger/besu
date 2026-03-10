@@ -369,6 +369,36 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
         });
   }
 
+  @Test
+  public void maxBlobsDefaultValue() {
+    internalTestSuccess(
+        miningParams -> assertThat(miningParams.getMaxBlobsPerTransaction()).isEmpty());
+  }
+
+  @Test
+  public void maxBlobsOption() {
+    internalTestSuccess(
+        miningParams -> assertThat(miningParams.getMaxBlobsPerTransaction()).hasValue(3),
+        "--max-blobs-per-transaction",
+        "3");
+  }
+
+  @Test
+  public void maxBlobsOptionWithZero() {
+    internalTestSuccess(
+        miningParams -> assertThat(miningParams.getMaxBlobsPerTransaction()).hasValue(0),
+        "--max-blobs-per-transaction",
+        "0");
+  }
+
+  @Test
+  public void maxBlobsOptionWithNegativeValue() {
+    internalTestFailure(
+        "--max-blobs-per-transaction must be a non-negative value",
+        "--max-blobs-per-transaction",
+        "-9");
+  }
+
   @Override
   protected MiningConfiguration createDefaultDomainObject() {
     return MiningConfiguration.newDefault();
