@@ -63,6 +63,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // Fixed number of bits per limb.
   private static final int N_BITS_PER_LIMB = 64;
 
+  private static final int N_BYTES_PER_LIMB = 8;
+
   private static final VarHandle LONG_BE =
       MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
 
@@ -79,18 +81,43 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    if (bytes.length == 0) return ZERO;
-    byte[] buf = bytes;
-    if (bytes.length != BYTESIZE) {
-      buf = new byte[BYTESIZE];
-      final int len = Math.min(bytes.length, BYTESIZE);
-      System.arraycopy(bytes, bytes.length - len, buf, BYTESIZE - len, len);
+    if (bytes.length == 0) {
+      return ZERO;
     }
-    final long u3 = (long) LONG_BE.get(buf, 0);
-    final long u2 = (long) LONG_BE.get(buf, 8);
-    final long u1 = (long) LONG_BE.get(buf, 16);
-    final long u0 = (long) LONG_BE.get(buf, 24);
+    if (bytes.length < 8) {
+      return fromBytesSingleLimb(bytes);
+    }
+    int prevIndex = bytes.length;
+    int nextIndex = prevIndex - 8;
+    final long u0 = getLong(bytes, nextIndex, prevIndex);
+    prevIndex = nextIndex;
+
+    nextIndex = Math.max(0, prevIndex - 8);
+    final long u1 = getLong(bytes, nextIndex, prevIndex);
+    prevIndex = nextIndex;
+
+    nextIndex = Math.max(0, prevIndex - 8);
+    final long u2 = getLong(bytes, nextIndex, prevIndex);
+    prevIndex = nextIndex;
+
+    nextIndex = Math.max(0, bytes.length - BYTESIZE);
+    final long u3 = getLong(bytes, nextIndex, prevIndex);
+
     return new UInt256(u3, u2, u1, u0);
+  }
+
+  private static long getLong(final byte[] bytes, final int from, final int to) {
+    int shift = (N_BYTES_PER_LIMB + from - to) * 8;
+    final long value = (long) LONG_BE.get(bytes, from);
+    return shift == N_BITS_PER_LIMB ? 0L : value >>> shift;
+  }
+
+  private static UInt256 fromBytesSingleLimb(final byte[] bytes) {
+    long u0 = 0;
+    for (int i = bytes.length - 1, shift = 0; shift < 64 && i >= 0; i--, shift += 8) {
+      u0 |= ((bytes[i] & 0xFFL) << shift);
+    }
+    return new UInt256(0, 0, 0, u0);
   }
 
   /**
