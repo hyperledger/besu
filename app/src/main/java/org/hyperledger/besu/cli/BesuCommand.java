@@ -2545,17 +2545,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         final List<String> resolvedBootNodeArgs =
             BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
         if (!resolvedBootNodeArgs.isEmpty()) {
-          if (resolvedBootNodeArgs.stream().allMatch((b) -> b.startsWith("enr:"))) {
+          if (resolvedBootNodeArgs.getFirst().startsWith("enr:")) {
             builder.setEnrBootNodes(
                 resolvedBootNodeArgs.stream().map(EthereumNodeRecord::fromEnr).toList());
-          } else if (resolvedBootNodeArgs.stream().allMatch((b) -> b.startsWith("enode:"))) {
-            listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
           } else {
-            throw new ParameterException(
-                commandLine,
-                "Supplied bootnodes must be either all enode or all ENR. "
-                    + "Enode URL should have the following format 'enode://<node_id>@<ip>:<listening_port>[?discport=<discovery_port>]'. "
-                    + "ENR URL should have the following format 'enr:<base64Enr>'");
+            listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
           }
         } else {
           listBootNodes = Collections.emptyList();
@@ -2571,14 +2565,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final Optional<List<String>> bootNodesFromGenesis =
           genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent() && !bootNodesFromGenesis.get().isEmpty()) {
-        if (bootNodesFromGenesis.get().stream().allMatch((b) -> b.startsWith("enr:"))) {
+        if (bootNodesFromGenesis.get().getFirst().startsWith("enr:")) {
           builder.setEnrBootNodes(
               bootNodesFromGenesis.get().stream().map(EthereumNodeRecord::fromEnr).toList());
-        } else if (bootNodesFromGenesis.get().stream().allMatch((b) -> b.startsWith("enode:"))) {
-          listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
         } else {
-          throw new ParameterException(
-              commandLine, "Supplied bootnodes must be either all enode or all ENR.");
+          listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
         }
       }
     }
