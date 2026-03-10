@@ -158,6 +158,7 @@ class CancunTargetingGasLimitCalculatorTest {
           osakaGasCalculator,
           BlobSchedule.PRAGUE_DEFAULT.getMax(),
           newTargetCount,
+          OptionalInt.empty(),
           OptionalInt.empty());
 
   private static final long TARGET_BLOB_GAS_PER_BLOCK_OSAKA = 0x120000;

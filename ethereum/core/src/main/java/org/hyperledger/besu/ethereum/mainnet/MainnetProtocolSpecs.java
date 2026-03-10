@@ -1019,7 +1019,8 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     blobSchedule.getMax(),
                     blobSchedule.getTarget(),
-                    miningConfiguration.getMaxBlobsPerTransaction()))
+                    miningConfiguration.getMaxBlobsPerTransaction(),
+                    miningConfiguration.getMaxBlobsPerBlock()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
@@ -1236,6 +1237,7 @@ public abstract class MainnetProtocolSpecs {
                   blobSchedule.getMax(),
                   blobSchedule.getTarget(),
                   miningConfiguration.getMaxBlobsPerTransaction(),
+                  miningConfiguration.getMaxBlobsPerBlock(),
                   Long.MAX_VALUE);
             })
         // EIP-8037: Amsterdam gas calculator with state gas cost support
