@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.transaction.BlockSimulationParameter;
+
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -42,6 +44,9 @@ import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.mockito.ArgumentCaptor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -160,7 +165,20 @@ public class EthSimulateV1Test {
     final JsonRpcResponse response = method.response(request);
 
     assertThat(response).isNotInstanceOf(JsonRpcErrorResponse.class);
-    verify(blockSimulator).process(any(BlockHeader.class), any());
+
+    final ArgumentCaptor<BlockSimulationParameter> captor =
+        ArgumentCaptor.forClass(BlockSimulationParameter.class);
+    verify(blockSimulator).process(any(BlockHeader.class), captor.capture());
+    final Bytes payload =
+        captor
+            .getValue()
+            .getBlockStateCalls()
+            .get(0)
+            .getCalls()
+            .get(0)
+            .getPayload()
+            .orElseThrow();
+    assertThat(payload).isEqualTo(Bytes.fromHexString("0xDEADBEEF"));
   }
 
   @Test
