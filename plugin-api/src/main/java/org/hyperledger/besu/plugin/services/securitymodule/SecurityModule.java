@@ -62,16 +62,16 @@ public interface SecurityModule {
    * scalar multiplication. This is required by protocols such as DiscV5 which use the compressed
    * point as input keying material for HKDF key derivation.
    *
-   * <p>The default implementation throws {@link UnsupportedOperationException}. Implementations
-   * that need to support DiscV5 must override this method.
+   * <p>The default implementation throws {@link SecurityModuleException}. Implementations that need
+   * to support DiscV5 must override this method.
    *
    * @param partyKey the key with which an agreement is to be created.
    * @return the compressed EC point (33 bytes)
-   * @throws SecurityModuleException if the operation fails
+   * @throws SecurityModuleException if the operation is not supported or fails
    */
   default Bytes calculateECDHKeyAgreementCompressed(final PublicKey partyKey)
       throws SecurityModuleException {
-    throw new UnsupportedOperationException(
+    throw new SecurityModuleException(
         "Compressed ECDH key agreement is not supported by this security module");
   }
 }

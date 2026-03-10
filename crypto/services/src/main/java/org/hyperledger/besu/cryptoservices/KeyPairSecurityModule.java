@@ -99,7 +99,7 @@ public class KeyPairSecurityModule implements SecurityModule {
           keyPair.getPrivateKey(), secp256KPartyKey);
     } catch (final Exception e) {
       throw new SecurityModuleException(
-          "Unexpected error while calculating compressed ECDH Key Agreement: " + e.getMessage(), e);
+          "Unexpected error while calculating compressed ECDH Key Agreement", e);
     }
   }
 

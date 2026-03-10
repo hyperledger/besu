@@ -164,6 +164,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
 
     final org.bouncycastle.math.ec.ECPoint point =
         theirPubKey.asEcPoint(curve).multiply(privKey.getD()).normalize();
+    checkArgument(!point.isInfinity(), "ECDH key agreement point is at infinity");
     return Bytes.wrap(point.getEncoded(true));
   }
 
