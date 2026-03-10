@@ -47,8 +47,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,11 +59,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @SuppressWarnings("DirectInvocationOnMock")
 public class CliqueMiningCoordinatorTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
-  private final KeyPair proposerKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
-  private final KeyPair validatorKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private final KeyPair proposerKeys = SIGNATURE_ALGORITHM.generateKeyPair();
+  private final KeyPair validatorKeys = SIGNATURE_ALGORITHM.generateKeyPair();
   private final Address proposerAddress = Util.publicKeyToAddress(proposerKeys.getPublicKey());
   private final Address validatorAddress = Util.publicKeyToAddress(validatorKeys.getPublicKey());
 
