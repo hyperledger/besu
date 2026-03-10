@@ -75,7 +75,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -92,8 +91,8 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestingBuildBlockIntegrationTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   protected final GenesisConfig genesisConfig =
       GenesisConfig.fromResource("/block-creation-genesis.json");
@@ -109,9 +108,7 @@ class TestingBuildBlockIntegrationTest {
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+        SIGNATURE_ALGORITHM.createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
 
     final Transaction txn =
         new TransactionTestFixture()
@@ -165,9 +162,7 @@ class TestingBuildBlockIntegrationTest {
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+        SIGNATURE_ALGORITHM.createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
 
     final Transaction txn =
         new TransactionTestFixture()
@@ -237,9 +232,7 @@ class TestingBuildBlockIntegrationTest {
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+        SIGNATURE_ALGORITHM.createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
 
     final Transaction txn =
         new TransactionTestFixture()
@@ -281,9 +274,7 @@ class TestingBuildBlockIntegrationTest {
     final GenesisAccount recipient1 = accounts.get(2);
     final GenesisAccount recipient2 = accounts.get(0);
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+        SIGNATURE_ALGORITHM.createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
 
     final Transaction txn1 =
         new TransactionTestFixture()
@@ -327,9 +318,7 @@ class TestingBuildBlockIntegrationTest {
     final GenesisAccount sender = accounts.get(1);
     final GenesisAccount recipient = accounts.get(2);
     final KeyPair keyPair =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+        SIGNATURE_ALGORITHM.createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
 
     final Transaction txn =
         new TransactionTestFixture()
