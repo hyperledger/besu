@@ -209,7 +209,7 @@ publishing {
 
       pom {
         name = "Besu BOM"
-        url = 'http://github.com/besu-eth/besu'
+        url = 'https://github.com/besu-eth/besu'
         licenses {
           license {
             name = 'The Apache License, Version 2.0'
