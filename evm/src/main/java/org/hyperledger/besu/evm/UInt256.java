@@ -1055,7 +1055,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     private UInt256 reduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
       if ((v.u4 | v.u3) == 0
-        && Long.compareUnsigned(v.u4, u0) < 0
+          && Long.compareUnsigned(v.u4, u0) < 0
           && Long.compareUnsigned(v.u3, u0) < 0
           && Long.compareUnsigned(v.u2, u0) < 0) {
         long r;
@@ -1073,7 +1073,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
       if ((v.u4 | v.u3) == 0
-        && Long.compareUnsigned(v.u4, u0) < 0
+          && Long.compareUnsigned(v.u4, u0) < 0
           && Long.compareUnsigned(v.u3, u0) < 0
           && Long.compareUnsigned(v.u2, u0) < 0) {
         long r;
