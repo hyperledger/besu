@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 26.3.0
+
+### Repository Migration
+- The Besu repository has moved from `hyperledger/besu` to `besu-eth/besu`. GitHub automatically redirects all existing links from the old location.
 
 ### Repository Migration
 - The Besu repository has moved from `hyperledger/besu` to `besu-eth/besu`. GitHub automatically redirects all existing links from the old location.
