@@ -24,7 +24,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
  * roots to sequential execution and is deterministic across re-executions.
  *
  * <p>All common tests (sequential vs parallel, re-execution consistency) are inherited from
- * AbstractParallelBlockProcessorIntegrationTest.
+ * AbstractParallelBlockProcessorIntegrationTest. This class uses
+ * ParallelizedConcurrentTransactionProcessor under the hood.
  */
 class OptimisticParallelBlockProcessorIntegrationTest
     extends AbstractParallelBlockProcessorIntegrationTest {

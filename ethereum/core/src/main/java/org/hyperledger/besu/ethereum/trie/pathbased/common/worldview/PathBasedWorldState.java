@@ -208,10 +208,7 @@ public abstract class PathBasedWorldState
   public void persist(final BlockHeader blockHeader, final StateRootCommitter committer) {
 
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
-    LOG.atInfo()
-        .setMessage("Persist world state for block {}")
-        .addArgument(maybeBlockHeader)
-        .log();
+    LOG.atInfo().setMessage("Persist world state for block {}").addArgument(maybeBlockHeader).log();
 
     boolean success = false;
 

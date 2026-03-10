@@ -18,12 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -34,7 +35,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,10 +42,17 @@ import java.util.Optional;
 /**
  * Integration tests for BAL (Block Access List) based parallel block processing. Extends the
  * abstract test class to verify that BAL-based parallel execution produces identical state roots to
- * sequential execution and identical BAL hashes.
+ * sequential execution.
  *
- * <p>All tests are inherited from AbstractParallelBlockProcessorIntegrationTest. This class only
- * provides BAL-specific implementations of hook methods.
+ * <p>BAL-specific flow:
+ *
+ * <ol>
+ *   <li>Sequential execution generates the BAL + reference state root
+ *   <li>Parallel import uses the BAL from step 1 with BalConcurrentTransactionProcessor
+ *   <li>State roots are compared
+ * </ol>
+ *
+ * <p>All common tests are inherited from AbstractParallelBlockProcessorIntegrationTest.
  */
 class BalParallelBlockProcessorIntegrationTest
     extends AbstractParallelBlockProcessorIntegrationTest {
@@ -56,22 +63,29 @@ class BalParallelBlockProcessorIntegrationTest
   }
 
   /**
-   * For BAL mode:
-   * 1. Sequential execution: generates the BAL + state root reference
-   * 2. Parallel import: uses BAL from step 1 with BalConcurrentTransactionProcessor
-   * 3. Compare state roots
+   * BAL-specific comparison:
    *
-   * This ensures BAL tests don't depend on TransactionCollisionDetector.
+   * <ol>
+   *   <li>Discover the correct state root
+   *   <li>Sequential execution generates the BAL
+   *   <li>Parallel import uses the generated BAL with BalConcurrentTransactionProcessor
+   *   <li>Compare state roots
+   * </ol>
    */
   @Override
-  protected StateRootComparisonResult executeAndCompare(
-      final String expectedRoot, final Wei baseFee, final Transaction... txs) {
-
-    final Block block = createBlock(expectedRoot, baseFee, txs);
-    final ProtocolSpec spec = protocolSchedule.getByBlockHeader(block.getHeader());
-    final MainnetTransactionProcessor txProcessor = spec.getTransactionProcessor();
+  protected ComparisonResult executeAndCompare(final Wei baseFee, final Transaction... txs) {
+    final Hash stateRoot = discoverStateRoot(baseFee, txs);
 
     // ========== Step 1: Sequential execution (generates BAL + reference state root) ==========
+    final ExecutionContextTestFixture seqCtx = createFreshContext();
+    final MutableWorldState seqWs = seqCtx.getStateArchive().getWorldState();
+    final Block block = createBlock(seqCtx, stateRoot, baseFee, txs);
+    final ProtocolSpec spec =
+        seqCtx
+            .getProtocolSchedule()
+            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
+    final MainnetTransactionProcessor txProcessor = spec.getTransactionProcessor();
+
     final BlockProcessor seqProcessor =
         new MainnetBlockProcessor(
             txProcessor,
@@ -79,57 +93,56 @@ class BalParallelBlockProcessorIntegrationTest
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            protocolSchedule,
+            seqCtx.getProtocolSchedule(),
             SEQUENTIAL_CONFIG);
 
-    final MutableWorldState seqWorldState = worldStateArchive.getWorldState();
     final BlockProcessingResult seqResult =
-        seqProcessor.processBlock(protocolContext, blockchain, seqWorldState, block);
+        seqProcessor.processBlock(
+            seqCtx.getProtocolContext(), seqCtx.getBlockchain(), seqWs, block);
     assertTrue(
         seqResult.isSuccessful(),
-        "Sequential execution failed — "
-            + seqResult.errorMessage.orElse("(no message)")
-            + " — update the hardcoded expectedRoot in the test");
+        "Sequential execution failed: " + seqResult.errorMessage.orElse("(no message)"));
 
     final Optional<BlockAccessList> generatedBal = getBlockAccessList(seqResult);
     assertThat(generatedBal).as("Sequential execution should produce a BAL").isPresent();
 
     // ========== Step 2: Parallel import using BAL from Step 1 ==========
-    final ExecutionContextTestFixture parContext =
-        ExecutionContextTestFixture.builder(GenesisConfig.fromResource(PARALLEL_GENESIS_RESOURCE))
-            .dataStorageFormat(DataStorageFormat.BONSAI)
-            .build();
-    final MutableWorldState parWorldState = parContext.getStateArchive().getWorldState();
+    final ExecutionContextTestFixture parCtx = createFreshContext();
+    final MutableWorldState parWs = parCtx.getStateArchive().getWorldState();
+    final Block parBlock = createBlock(parCtx, stateRoot, baseFee, txs);
+    final ProtocolSpec parSpec =
+        parCtx
+            .getProtocolSchedule()
+            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
+    final MainnetTransactionProcessor parTxProcessor = parSpec.getTransactionProcessor();
 
-    final BlockProcessor parProcessor = createParallelBlockProcessor(txProcessor, spec);
+    final BlockProcessor parProcessor = createParallelProcessor(parCtx);
     final ParallelTransactionPreprocessing balImportPreprocessing =
         new ParallelTransactionPreprocessingWithBal(
-            txProcessor, generatedBal.get(), BalConfiguration.DEFAULT);
+            parTxProcessor, generatedBal.get(), BalConfiguration.DEFAULT);
 
     final BlockProcessingResult parResult =
         parProcessor.processBlock(
-            parContext.getProtocolContext(),
-            parContext.getBlockchain(),
-            parWorldState,
-            block,
+            parCtx.getProtocolContext(),
+            parCtx.getBlockchain(),
+            parWs,
+            parBlock,
             balImportPreprocessing);
-    assertTrue(parResult.isSuccessful(), "Parallel import failed");
+    assertTrue(
+        parResult.isSuccessful(),
+        "BAL parallel import failed: " + parResult.errorMessage.orElse("(no message)"));
 
     // ========== Step 3: Compare state roots ==========
-    assertThat(parWorldState.rootHash())
-        .as("Parallel import state root should match sequential reference")
-        .isEqualTo(seqWorldState.rootHash());
+    assertThat(parWs.rootHash())
+        .as("BAL parallel import state root must match sequential reference")
+        .isEqualTo(seqWs.rootHash());
 
-    return new StateRootComparisonResult(
-        seqWorldState.rootHash(), parWorldState.rootHash(), seqResult, parResult,
-        seqWorldState, parWorldState);
-  }
+    // Verify the parallel result also produces a BAL
+    final Optional<BlockAccessList> parBal = getBlockAccessList(parResult);
+    assertThat(parBal).as("Parallel import should also produce a BAL").isPresent();
 
-  @Override
-  protected void assertBalHashesMatch(final StateRootComparisonResult result) {
-    // Verify that parallel processing produces a BAL
-    Optional<BlockAccessList> parBal = getBlockAccessList(result.parallelResult());
-    assertThat(parBal).as("Parallel import should produce a BAL").isPresent();
+    return new ComparisonResult(
+        seqWs.rootHash(), parWs.rootHash(), seqResult, parResult, seqWs, parWs);
   }
 
   @Override
