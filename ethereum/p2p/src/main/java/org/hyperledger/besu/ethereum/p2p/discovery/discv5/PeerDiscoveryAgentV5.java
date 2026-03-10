@@ -446,8 +446,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       return Stream.empty();
     }
 
-    final Bytes localNodeId =
-        getLocalNodeRecord().map(NodeRecord::getNodeId).orElse(Bytes.EMPTY);
+    final Bytes localNodeId = getLocalNodeRecord().map(NodeRecord::getNodeId).orElse(Bytes.EMPTY);
 
     // Combine newly discovered peers with known peers and filter for suitability
     final Stream<NodeRecord> knownPeers = system.streamLiveNodes();
