@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResp
 import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.ReceiptsMessage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -78,12 +80,13 @@ public class GetSyncReceiptsFromPeerTask
   }
 
   @Override
-  public MessageData getRequestMessage() {
+  public MessageData getRequestMessage(final Set<Capability> agreedCapabilities) {
     return GetReceiptsMessage.create(requestedHeaders.stream().map(BlockHeader::getHash).toList());
   }
 
   @Override
-  public Map<SyncBlock, List<SyncTransactionReceipt>> processResponse(final MessageData messageData)
+  public Map<SyncBlock, List<SyncTransactionReceipt>> processResponse(
+      final MessageData messageData, final Set<Capability> agreedCapabilities)
       throws InvalidPeerTaskResponseException, MalformedRlpFromPeerException {
     if (messageData == null) {
       throw new InvalidPeerTaskResponseException("Null message data");

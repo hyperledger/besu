@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.core.Utils;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection.PeerSendHandler;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
@@ -934,7 +935,7 @@ public final class EthProtocolManagerTest {
             final ReceiptsMessage receiptsMessage =
                 ReceiptsMessage.readFrom(message.unwrapMessageData().getValue());
             final List<List<TransactionReceipt>> receipts =
-                Lists.newArrayList(receiptsMessage.receipts());
+                receiptsMessage.syncReceipts().stream().map(Utils::syncReceiptsToReceipts).toList();
             assertThat(receipts).hasSize(blockCount);
             for (int i = 0; i < blockCount; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
@@ -988,7 +989,7 @@ public final class EthProtocolManagerTest {
             final ReceiptsMessage receiptsMessage =
                 ReceiptsMessage.readFrom(message.unwrapMessageData().getValue());
             final List<List<TransactionReceipt>> receipts =
-                Lists.newArrayList(receiptsMessage.receipts());
+                receiptsMessage.syncReceipts().stream().map(Utils::syncReceiptsToReceipts).toList();
             assertThat(receipts).hasSize(limit);
             for (int i = 0; i < limit; i++) {
               assertThat(expectedReceipts.get(i)).isEqualTo(receipts.get(i));
@@ -1036,7 +1037,7 @@ public final class EthProtocolManagerTest {
             final ReceiptsMessage receiptsMessage =
                 ReceiptsMessage.readFrom(message.unwrapMessageData().getValue());
             final List<List<TransactionReceipt>> receipts =
-                Lists.newArrayList(receiptsMessage.receipts());
+                receiptsMessage.syncReceipts().stream().map(Utils::syncReceiptsToReceipts).toList();
             assertThat(receipts).hasSize(1);
             assertThat(expectedReceipts).isEqualTo(receipts.get(0));
             done.complete(null);
