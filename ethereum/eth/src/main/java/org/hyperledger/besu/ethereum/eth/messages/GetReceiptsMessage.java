@@ -27,12 +27,7 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 
 public class GetReceiptsMessage extends AbstractMessageData {
-  private List<Hash> blockHashes;
-
-  protected GetReceiptsMessage(final Bytes data) {
-    super(data);
-    deserialize(data);
-  }
+  private final List<Hash> blockHashes;
 
   protected GetReceiptsMessage(final Bytes data, final List<Hash> blockHashes) {
     super(data);
@@ -48,7 +43,8 @@ public class GetReceiptsMessage extends AbstractMessageData {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetReceipts.", code));
     }
-    return new GetReceiptsMessage(message.getData());
+    final RLPInput input = new BytesValueRLPInput(message.getData(), false);
+    return new GetReceiptsMessage(message.getData(), parseBlockHashes(input));
   }
 
   public static GetReceiptsMessage create(final List<Hash> blockHashes) {
@@ -68,17 +64,12 @@ public class GetReceiptsMessage extends AbstractMessageData {
     return blockHashes;
   }
 
-  protected void deserialize(final Bytes data) {
-    final RLPInput input = new BytesValueRLPInput(data, false);
-
-    deserializeBlockHashList(input);
-  }
-
-  protected void deserializeBlockHashList(final RLPInput input) {
-    this.blockHashes = new ArrayList<>(input.enterList());
+  protected static List<Hash> parseBlockHashes(final RLPInput input) {
+    final List<Hash> hashes = new ArrayList<>(input.enterList());
     while (!input.isEndOfCurrentList()) {
-      blockHashes.add(Hash.wrap(input.readBytes32()));
+      hashes.add(Hash.wrap(input.readBytes32()));
     }
     input.leaveList();
+    return hashes;
   }
 }

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.ProtocolViolationException;
 import org.hyperledger.besu.ethereum.eth.messages.BlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -318,14 +319,10 @@ class EthServer {
       final List<TransactionReceipt> requestedReceipts;
 
       if (skipBefore > blockReceipts.size()) {
-        LOG.debug(
-            "Invalid request from peer {}, firstBlockReceiptIndex {} is greater than the receipt count of {} for block {}",
-            peer,
-            skipBefore,
-            blockReceipts.size(),
-            blockHash);
-        peer.disconnect(INVALID_FIRST_BLOCK_RECEIPT_INDEX);
-        return PaginatedReceiptsMessage.createUnsafe(Bytes.EMPTY, false);
+        throw new ProtocolViolationException(
+            "Invalid request from peer %s, firstBlockReceiptIndex %d is greater than or equal the receipt count of %d for block %s"
+                .formatted(peer, skipBefore, blockReceipts.size(), blockHash),
+            INVALID_FIRST_BLOCK_RECEIPT_INDEX);
       }
 
       if (skipBefore > 0) {

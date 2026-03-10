@@ -25,11 +25,7 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 
 public final class GetPaginatedReceiptsMessage extends GetReceiptsMessage {
-  private int firstBlockReceiptIndex;
-
-  private GetPaginatedReceiptsMessage(final Bytes data) {
-    super(data);
-  }
+  private final int firstBlockReceiptIndex;
 
   private GetPaginatedReceiptsMessage(
       final Bytes data, final List<Hash> blockHashes, final int firstBlockReceiptIndex) {
@@ -46,7 +42,10 @@ public final class GetPaginatedReceiptsMessage extends GetReceiptsMessage {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetReceipts.", code));
     }
-    return new GetPaginatedReceiptsMessage(message.getData());
+    final RLPInput input = new BytesValueRLPInput(message.getData(), false);
+    final int firstBlockReceiptIndex = input.readIntScalar();
+    final List<Hash> blockHashes = parseBlockHashes(input);
+    return new GetPaginatedReceiptsMessage(message.getData(), blockHashes, firstBlockReceiptIndex);
   }
 
   public static GetPaginatedReceiptsMessage create(
@@ -61,14 +60,5 @@ public final class GetPaginatedReceiptsMessage extends GetReceiptsMessage {
 
   public int firstBlockReceiptIndex() {
     return firstBlockReceiptIndex;
-  }
-
-  @Override
-  protected void deserialize(final Bytes data) {
-    final RLPInput input = new BytesValueRLPInput(data, false);
-
-    this.firstBlockReceiptIndex = input.readIntScalar();
-
-    deserializeBlockHashList(input);
   }
 }
