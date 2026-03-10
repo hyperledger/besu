@@ -148,9 +148,11 @@ I propose to add [maintainer github handle] as a Besu project maintainer.
 
 - [list significant achievements]
 
-Here are [their past contributions on Besu project](https://github.com/hyperledger/besu/commits?author=[user github handle]).
+Here are [their past contributions on Besu project](https://github.com/besu-eth/besu/commits?author=[user github handle]).
 
 Voting ends two weeks from today.
 
 For more information on this process, see the MAINTAINERS.md file.
 ```
+## Modifying this file
+Other than adding and removing maintainers, any changes to this file (MAINTAINERS.md) must be proposed in a PR and agreed upon by 2/3 of current maintainers.

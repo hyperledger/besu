@@ -143,7 +143,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   private Set<Hash> getTransactionsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
-        NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.ETH66);
+        NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.LATEST);
     return newHashSet(transactionsMessage.pendingTransactionHashes());
   }
 }

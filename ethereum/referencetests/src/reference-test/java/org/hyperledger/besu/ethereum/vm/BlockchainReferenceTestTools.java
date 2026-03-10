@@ -178,7 +178,7 @@ public class BlockchainReferenceTestTools {
                                     : HeaderValidationMode.FULL;
                     final BlockImporter blockImporter = protocolSpec.getBlockImporter();
                     final BlockImportResult importResult =
-                            blockImporter.importBlock(protocolContext, block, validationMode, validationMode);
+                            blockImporter.importBlock(protocolContext, block, validationMode, validationMode, candidateBlock.getBlockAccessList());
 
                     assertThat(importResult.isImported()).isEqualTo(candidateBlock.isValid());
                 } catch (final RLPException e) {
