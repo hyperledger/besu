@@ -1055,6 +1055,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     private UInt256 reduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
       if ((v.u4 | v.u3) == 0
+        && Long.compareUnsigned(v.u4, u0) < 0
           && Long.compareUnsigned(v.u3, u0) < 0
           && Long.compareUnsigned(v.u2, u0) < 0) {
         long r;
@@ -1071,10 +1072,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      // Long.compareUnsigned(v.u4, u0) >= 0 always false since:
-      // - modulus >= 2 always
-      // - that.u4 <= 1
       if ((v.u4 | v.u3) == 0
+        && Long.compareUnsigned(v.u4, u0) < 0
           && Long.compareUnsigned(v.u3, u0) < 0
           && Long.compareUnsigned(v.u2, u0) < 0) {
         long r;
@@ -1091,7 +1090,14 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalisedSlowPath(final UInt320 v, final int shift, final long inv) {
       long r;
-      if (v.u4 != 0 || Long.compareUnsigned(v.u3, u0) >= 0) {
+      if (Long.compareUnsigned(v.u4, u0) >= 0) {
+        r = reduceStep(0, v.u4, inv);
+        r = reduceStep(r, v.u3, inv);
+        r = reduceStep(r, v.u2, inv);
+        r = reduceStep(r, v.u1, inv);
+        r = reduceStep(r, v.u0, inv);
+
+      } else if (v.u4 != 0 || Long.compareUnsigned(v.u3, u0) >= 0) {
         r = reduceStep(v.u4, v.u3, inv);
         r = reduceStep(r, v.u2, inv);
         r = reduceStep(r, v.u1, inv);
