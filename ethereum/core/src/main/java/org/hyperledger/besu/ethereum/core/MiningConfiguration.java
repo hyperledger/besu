@@ -133,6 +133,17 @@ public abstract class MiningConfiguration {
     return getMutableInitValues().getMaxBlobsPerTransaction();
   }
 
+  /**
+   * Returns the maximum blobs per block for block building. Note: Only applies from Osaka hardfork
+   * onwards. Returns empty if not explicitly set by the user.
+   *
+   * @return the maximum blobs per block, or empty if not set
+   */
+  @Value.Default
+  public OptionalInt getMaxBlobsPerBlock() {
+    return OptionalInt.empty();
+  }
+
   public Optional<Iterable<Long>> getNonceGenerator() {
     return getMutableRuntimeValues().nonceGenerator;
   }
