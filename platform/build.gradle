@@ -209,7 +209,7 @@ publishing {
 
       pom {
         name = "Besu BOM"
-        url = 'http://github.com/hyperledger/besu'
+        url = 'http://github.com/besu-eth/besu'
         licenses {
           license {
             name = 'The Apache License, Version 2.0'
@@ -217,9 +217,9 @@ publishing {
           }
         }
         scm {
-          connection = 'scm:git:git://github.com/hyperledger/besu.git'
-          developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
-          url = 'https://github.com/hyperledger/besu'
+          connection = 'scm:git:git://github.com/besu-eth/besu.git'
+          developerConnection = 'scm:git:ssh://github.com/besu-eth/besu.git'
+          url = 'https://github.com/besu-eth/besu'
         }
         withXml {
           // Workaround since Gradle does not natively support adding classifiers in BOM
