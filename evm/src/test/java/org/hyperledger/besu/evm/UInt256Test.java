@@ -29,7 +29,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class UInt256Test {
-  static final int SAMPLE_SIZE = 3;
+  static final int SAMPLE_SIZE = 1_000;
 
   private Bytes32 bigIntTo32B(final BigInteger y) {
     byte[] a = y.toByteArray();
@@ -42,7 +42,8 @@ public class UInt256Test {
     byte[] a = new byte[32];
     Arrays.fill(a, (byte) 0xFF);
     byte[] b = x.toByteArray();
-    System.arraycopy(b, 0, a, 32 - b.length, b.length);
+    final int length = Math.min(32, b.length);
+    System.arraycopy(b, 0, a, 32 - length, length);
     return Bytes32.leftPad(Bytes.wrap(a));
   }
 
