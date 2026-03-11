@@ -29,8 +29,6 @@ jar {
   }
 }
 
-def enableNullAway = project.hasProperty('enableNullAway')
-
 compileJava {
   options.generatedSourceOutputDirectory = file("$buildDir/generated/sources/annotationProcessor/java/main")
   options.compilerArgs += [
@@ -38,7 +36,7 @@ compileJava {
     '-Alog4j.graalvm.artifactId=' + project.name
   ]
   options.errorprone {
-    check('NullAway', enableNullAway ? net.ltgt.gradle.errorprone.CheckSeverity.ERROR : net.ltgt.gradle.errorprone.CheckSeverity.OFF)
+    check('NullAway', net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
     option('NullAway:AnnotatedPackages', 'org.hyperledger.besu.util')
   }
 }
