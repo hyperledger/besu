@@ -79,8 +79,7 @@ public class TransactionAnnouncementDecoder {
     for (final byte b : bytes) {
       final var transactionType =
           TransactionType.fromEthSerializedType(b)
-              .orElseThrow(
-                  () -> new IllegalArgumentException("Invalid transaction type %x".formatted(b)));
+              .orElseThrow(() -> new RLPException("Invalid transaction type 0x%02x".formatted(b)));
       types.add(transactionType);
     }
 
