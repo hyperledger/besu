@@ -112,7 +112,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
    */
   public void importStateChangesFromSource(
       final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
-    importFrom(source, ImportMode.OVERRIDE);
+    importFrom(source, ImportMode.UPSERT);
     storageToClear.addAll(source.storageToClear);
   }
 
@@ -125,17 +125,19 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends PathB
    */
   public void importPriorStateFromSource(
       final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
-    importFrom(source, ImportMode.IF_ABSENT);
+    importFrom(source, ImportMode.INSERT);
   }
 
   private enum ImportMode {
-    OVERRIDE,
-    IF_ABSENT
+    /** Insert new entries and update existing ones with values from the source. */
+    UPSERT,
+    /** Insert new entries only, existing entries are left untouched. */
+    INSERT
   }
 
   private void importFrom(
       final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source, final ImportMode mode) {
-    final boolean priorOnly = mode == ImportMode.IF_ABSENT;
+    final boolean priorOnly = mode == ImportMode.INSERT;
 
     source
         .getAccountsToUpdate()
