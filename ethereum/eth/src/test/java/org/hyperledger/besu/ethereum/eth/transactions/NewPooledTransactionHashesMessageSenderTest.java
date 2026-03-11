@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -25,7 +24,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -115,8 +113,9 @@ public class NewPooledTransactionHashesMessageSenderTest {
         .hasSize(2)
         .allMatch(
             message -> message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES);
-    final Set<Hash> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
-    final Set<Hash> secondBatch = getTransactionsFromMessage(sentMessages.get(1));
+    final Set<TransactionAnnouncement> firstBatch = getTransactionsFromMessage(sentMessages.get(0));
+    final Set<TransactionAnnouncement> secondBatch =
+        getTransactionsFromMessage(sentMessages.get(1));
 
     final int expectedFirstBatchSize = 4096, expectedSecondBatchSize = 1904, toleranceDelta = 0;
     assertThat(firstBatch)
@@ -127,23 +126,27 @@ public class NewPooledTransactionHashesMessageSenderTest {
             expectedSecondBatchSize - toleranceDelta, expectedSecondBatchSize + toleranceDelta);
 
     assertThat(Sets.union(firstBatch, secondBatch))
-        .containsExactlyInAnyOrderElementsOf(toHashList(transactions));
+        .containsExactlyInAnyOrderElementsOf(
+            transactions.stream().map(TransactionAnnouncement::new).toList());
   }
 
   private MessageData transactionsMessageContaining(final Transaction... transactions) {
     return argThat(
         message -> {
-          final Set<Hash> actualSentTransactions = getTransactionsFromMessage(message);
-          final Set<Hash> expectedTransactions =
-              newHashSet(toHashList(Arrays.asList(transactions)));
+          final Set<TransactionAnnouncement> actualSentTransactions =
+              getTransactionsFromMessage(message);
+          final Set<TransactionAnnouncement> expectedTransactions =
+              Arrays.stream(transactions)
+                  .map(TransactionAnnouncement::new)
+                  .collect(Collectors.toSet());
           return message.getCode() == EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES
               && actualSentTransactions.equals(expectedTransactions);
         });
   }
 
-  private Set<Hash> getTransactionsFromMessage(final MessageData message) {
+  private Set<TransactionAnnouncement> getTransactionsFromMessage(final MessageData message) {
     final NewPooledTransactionHashesMessage transactionsMessage =
         NewPooledTransactionHashesMessage.readFrom(message, EthProtocol.LATEST);
-    return newHashSet(transactionsMessage.pendingTransactionHashes());
+    return newHashSet(transactionsMessage.pendingTransactionAnnouncements());
   }
 }
