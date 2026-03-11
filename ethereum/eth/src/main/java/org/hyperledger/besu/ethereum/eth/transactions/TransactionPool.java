@@ -581,6 +581,11 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.getClass();
   }
 
+  @VisibleForTesting
+  SaveRestoreManager getSaveRestoreManager() {
+    return saveRestoreManager;
+  }
+
   public interface TransactionBatchAddedListener {
 
     void onTransactionsAdded(Collection<Transaction> transactions);
@@ -755,6 +760,11 @@ public class TransactionPool implements BlockAddedObserver {
     private final AtomicReference<CompletableFuture<Void>> readInProgress =
         new AtomicReference<>(CompletableFuture.completedFuture(null));
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+
+    @VisibleForTesting
+    Semaphore getDiskAccessLock() {
+      return diskAccessLock;
+    }
 
     CompletableFuture<Void> saveToDisk(final PendingTransactions pendingTransactionsToSave) {
       cancelInProgressReadOperation();
