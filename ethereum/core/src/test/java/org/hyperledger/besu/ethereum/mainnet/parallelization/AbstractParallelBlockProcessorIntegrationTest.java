@@ -75,15 +75,12 @@ import org.web3j.abi.datatypes.generated.Uint256;
 @SuppressWarnings("rawtypes")
 public abstract class AbstractParallelBlockProcessorIntegrationTest {
 
-  // ==================== Genesis Configuration ====================
-  protected static final String PARALLEL_GENESIS_RESOURCE =
+  protected static final String GENESIS_CONFIG =
       "/org/hyperledger/besu/ethereum/mainnet/parallelization/genesis-it.json";
 
-  // ==================== Mining Beneficiary ====================
   protected static final Address MINING_BENEFICIARY =
       Address.fromHexStringStrict("0xa4664C40AACeBD82A2Db79f0ea36C06Bc6A19Adb");
 
-  // ==================== Account Addresses ====================
   protected static final String ACCOUNT_GENESIS_1 = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
   protected static final String ACCOUNT_GENESIS_2 = "0x7f2d653f56ea8de6ffa554c7a0cd4e03af79f3eb";
   protected static final String ACCOUNT_2 = "0x0000000000000000000000000000000000000002";
@@ -95,7 +92,6 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
   protected static final String PARALLEL_TEST_CONTRACT =
       "0x00000000000000000000000000000000000eeeee";
 
-  // ==================== Key Pairs ====================
   protected static final KeyPair ACCOUNT_GENESIS_1_KEYPAIR =
       generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
   protected static final KeyPair ACCOUNT_GENESIS_2_KEYPAIR =
@@ -103,24 +99,17 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
 
   protected static final BalConfiguration SEQUENTIAL_CONFIG = BalConfiguration.DEFAULT;
 
-  // ==================== Abstract Methods ====================
-
   protected abstract String getVariantName();
 
   protected abstract ParallelTransactionPreprocessing createParallelPreprocessing(
       MainnetTransactionProcessor transactionProcessor);
 
-  // ==================== Overridable Hooks ====================
-
   protected BalConfiguration getBalConfiguration() {
     return BalConfiguration.DEFAULT;
   }
 
-  // ==================== Context & Processor Factories ====================
-
   protected ExecutionContextTestFixture createFreshContext() {
-    return ExecutionContextTestFixture.builder(
-            GenesisConfig.fromResource(PARALLEL_GENESIS_RESOURCE))
+    return ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_CONFIG))
         .dataStorageFormat(DataStorageFormat.BONSAI)
         .build();
   }
@@ -168,11 +157,6 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
    * MainnetParallelBlockProcessor) to avoid the block-level fallback. When parallel processing
    * produces a wrong state root, the result is returned as-is (failed), rather than being masked by
    * a silent sequential re-execution.
-   *
-   * <p>Overrides {@code getTransactionProcessingResult} identically to
-   * MainnetParallelBlockProcessor: pre-computed parallel results are used when available, with a
-   * transaction-level fallback to sequential for individual transactions whose parallel result is
-   * not available (collision detected or pre-computation failed).
    */
   static class NoBlockFallbackParallelBlockProcessor extends MainnetParallelBlockProcessor {
 
@@ -388,7 +372,7 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
         .signAndBuild(keyPair);
   }
 
-  // ==================== Encoding Helpers ====================
+  // ==================== Helpers ====================
 
   private Bytes encodeFunctionCall(final String methodName, final Optional<Integer> value) {
     final List<Type> inputParameters =
@@ -396,8 +380,6 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final Function function = new Function(methodName, inputParameters, List.of());
     return Bytes.fromHexString(FunctionEncoder.encode(function));
   }
-
-  // ==================== Assertion Helpers ====================
 
   protected void assertAccountsMatch(
       final MutableWorldState seqWs, final MutableWorldState parWs, final Address address) {

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -140,6 +141,13 @@ class BalParallelBlockProcessorIntegrationTest
     // Verify the parallel result also produces a BAL
     final Optional<BlockAccessList> parBal = getBlockAccessList(parResult);
     assertThat(parBal).as("Parallel import should also produce a BAL").isPresent();
+
+    // Compare BAL hashes
+    final Hash seqBalHash = BodyValidation.balHash(generatedBal.get());
+    final Hash parBalHash = BodyValidation.balHash(parBal.get());
+    assertThat(parBalHash)
+        .as("BAL hash from parallel import must match BAL hash from sequential execution")
+        .isEqualTo(seqBalHash);
 
     return new ComparisonResult(
         seqWs.rootHash(), parWs.rootHash(), seqResult, parResult, seqWs, parWs);
