@@ -29,7 +29,6 @@ import java.util.Set;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-@SuppressWarnings("unused")
 public class TransactionCollisionDetector {
 
   /**
