@@ -113,11 +113,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   private static UInt256 fromBytesSingleLimb(final byte[] bytes) {
-    long u0 = 0;
-    for (int i = bytes.length - 1, shift = 0; shift < 64 && i >= 0; i--, shift += 8) {
-      u0 |= ((bytes[i] & 0xFFL) << shift);
+    long value = 0;
+    for (int i = bytes.length - 1, shift = 0; i >= 0; i--, shift += 8) {
+      value |= ((bytes[i] & 0xFFL) << shift);
     }
-    return new UInt256(0, 0, 0, u0);
+    return new UInt256(0, 0, 0, value);
   }
 
   /**
