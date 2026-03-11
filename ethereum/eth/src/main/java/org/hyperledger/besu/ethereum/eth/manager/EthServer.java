@@ -304,6 +304,10 @@ class EthServer {
     final var blockReceiptsRLPs = new ArrayList<BytesValueRLPOutput>(blockHashes.size());
 
     int skipBefore = getPaginatedReceipts.firstBlockReceiptIndex();
+    LOG.trace(
+        "Paginated receipt request for {} blocks with first block receipt index {}",
+        blockHashes.size(),
+        skipBefore);
     int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
     boolean lastBlockIncomplete = false;
 
@@ -363,7 +367,13 @@ class EthServer {
     blockReceiptsRLPs.forEach(r -> rlp.writeRaw(r.encoded()));
     rlp.endList();
 
-    return PaginatedReceiptsMessage.createUnsafe(rlp.encoded(), lastBlockIncomplete);
+    final Bytes encodedResponse = rlp.encoded();
+    LOG.trace(
+        "Returning paginated receipts for {} blocks, with last block incomplete {}, enconded size {}",
+        blockHashes.size(),
+        lastBlockIncomplete,
+        encodedResponse.size());
+    return PaginatedReceiptsMessage.createUnsafe(encodedResponse, lastBlockIncomplete);
   }
 
   static MessageData constructGetPooledTransactionsResponse(
