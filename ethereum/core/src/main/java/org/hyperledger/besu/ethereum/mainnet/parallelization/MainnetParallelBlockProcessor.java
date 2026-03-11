@@ -173,8 +173,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final MutableWorldState worldState,
       final Block block,
       final Optional<BlockAccessList> blockAccessList) {
-
-    return super.processBlock(
+    return processBlock(
         protocolContext,
         blockchain,
         worldState,

@@ -155,10 +155,9 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
   }
 
   /**
-   * Parallel block processor that extends MainnetBlockProcessor directly (not
-   * MainnetParallelBlockProcessor) to avoid the block-level fallback. When parallel processing
-   * produces a wrong state root, the result is returned as-is (failed), rather than being masked by
-   * a silent sequential re-execution.
+   * Parallel block processor that extends {@link MainnetParallelBlockProcessor} but disables the
+   * block-level fallback. When parallel processing produces a wrong state root, the result is
+   * returned as-is (failed), rather than being masked by a silent sequential re-execution.
    */
   static class NoBlockFallbackParallelBlockProcessor extends MainnetParallelBlockProcessor {
 
