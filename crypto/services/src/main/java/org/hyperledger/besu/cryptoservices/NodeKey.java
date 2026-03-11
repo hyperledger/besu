@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
+import org.hyperledger.besu.plugin.services.securitymodule.data.PublicKey;
 import org.hyperledger.besu.plugin.services.securitymodule.data.Signature;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -70,8 +71,7 @@ public class NodeKey {
    * @return the bytes32
    */
   public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {
-    return securityModule.calculateECDHKeyAgreement(
-        () -> ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey)));
+    return securityModule.calculateECDHKeyAgreement(asPluginPublicKey(partyKey));
   }
 
   /**
@@ -81,7 +81,11 @@ public class NodeKey {
    * @return the compressed EC point (33 bytes)
    */
   public Bytes calculateECDHKeyAgreementCompressed(final SECPPublicKey partyKey) {
-    return securityModule.calculateECDHKeyAgreementCompressed(
-        () -> ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey)));
+    return securityModule.calculateECDHKeyAgreementCompressed(asPluginPublicKey(partyKey));
+  }
+
+  private PublicKey asPluginPublicKey(final SECPPublicKey partyKey) {
+    return () ->
+        ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey));
   }
 }

@@ -117,6 +117,59 @@ public class SECP256K1Test {
   }
 
   @Test
+  public void ecdhKeyAgreementIsSymmetric() {
+    final KeyPair kp1 = secp256K1.generateKeyPair();
+    final KeyPair kp2 = secp256K1.generateKeyPair();
+
+    final Bytes32 secret1 =
+        secp256K1.calculateECDHKeyAgreement(kp1.getPrivateKey(), kp2.getPublicKey());
+    final Bytes32 secret2 =
+        secp256K1.calculateECDHKeyAgreement(kp2.getPrivateKey(), kp1.getPublicKey());
+
+    assertThat(secret1).isEqualTo(secret2);
+  }
+
+  @Test
+  public void ecdhKeyAgreementCompressedIsSymmetric() {
+    final KeyPair kp1 = secp256K1.generateKeyPair();
+    final KeyPair kp2 = secp256K1.generateKeyPair();
+
+    final Bytes compressed1 =
+        secp256K1.calculateECDHKeyAgreementCompressed(kp1.getPrivateKey(), kp2.getPublicKey());
+    final Bytes compressed2 =
+        secp256K1.calculateECDHKeyAgreementCompressed(kp2.getPrivateKey(), kp1.getPublicKey());
+
+    assertThat(compressed1).isEqualTo(compressed2);
+  }
+
+  @Test
+  public void ecdhCompressedReturns33BytesWithCorrectPrefix() {
+    final KeyPair kp1 = secp256K1.generateKeyPair();
+    final KeyPair kp2 = secp256K1.generateKeyPair();
+
+    final Bytes compressed =
+        secp256K1.calculateECDHKeyAgreementCompressed(kp1.getPrivateKey(), kp2.getPublicKey());
+
+    assertThat(compressed.size()).isEqualTo(33);
+    final byte prefix = compressed.get(0);
+    assertThat(prefix == 0x02 || prefix == 0x03).isTrue();
+  }
+
+  @Test
+  public void ecdhCompressedXCoordinateMatchesUncompressed() {
+    final KeyPair kp1 = secp256K1.generateKeyPair();
+    final KeyPair kp2 = secp256K1.generateKeyPair();
+
+    final Bytes32 xOnly =
+        secp256K1.calculateECDHKeyAgreement(kp1.getPrivateKey(), kp2.getPublicKey());
+    final Bytes compressed =
+        secp256K1.calculateECDHKeyAgreementCompressed(kp1.getPrivateKey(), kp2.getPublicKey());
+
+    // The x-coordinate in the compressed point (bytes 1-32) should match the uncompressed result
+    assertThat(compressed.slice(1, 32)).isEqualTo(xOnly);
+  }
+
+  @Test
   public void invalidFileThrowsInvalidKeyPairException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();

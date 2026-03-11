@@ -31,7 +31,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.asn1.x9.X9IntegerConverter;
-import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
@@ -142,30 +141,34 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   @Override
   public Bytes32 calculateECDHKeyAgreement(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
-    checkArgument(privKey != null, "missing private key");
-    checkArgument(theirPubKey != null, "missing remote public key");
-
-    final ECPrivateKeyParameters privKeyP = new ECPrivateKeyParameters(privKey.getD(), curve);
-    final ECPublicKeyParameters pubKeyP =
-        new ECPublicKeyParameters(theirPubKey.asEcPoint(curve), curve);
-
-    final ECDHBasicAgreement agreement = new ECDHBasicAgreement();
-    agreement.init(privKeyP);
-    final BigInteger agreed = agreement.calculateAgreement(pubKeyP);
-
-    return UInt256.valueOf(agreed);
+    final ECPoint point = ecdhScalarMultiply(privKey, theirPubKey);
+    return UInt256.valueOf(point.getAffineXCoord().toBigInteger());
   }
 
   @Override
   public Bytes calculateECDHKeyAgreementCompressed(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
+    final ECPoint point = ecdhScalarMultiply(privKey, theirPubKey);
+    return Bytes.wrap(point.getEncoded(true));
+  }
+
+  /**
+   * Performs the ECDH scalar multiplication: {@code theirPubKey × privKey}. Both the existing
+   * x-coordinate-only method and the compressed-point method delegate here.
+   *
+   * <p>This implementation assumes an elliptic-curve domain with cofactor <em>h</em> = 1, so no
+   * explicit cofactor adjustment is required (matching the behaviour of {@code ECDHBasicAgreement}
+   * when <em>h</em> = 1).
+   */
+  private ECPoint ecdhScalarMultiply(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
     checkArgument(privKey != null, "missing private key");
     checkArgument(theirPubKey != null, "missing remote public key");
 
-    final org.bouncycastle.math.ec.ECPoint point =
-        theirPubKey.asEcPoint(curve).multiply(privKey.getD()).normalize();
+    final ECPoint cleaned = ECAlgorithms.cleanPoint(curve.getCurve(), theirPubKey.asEcPoint(curve));
+    final ECPoint point = cleaned.multiply(privKey.getD()).normalize();
     checkArgument(!point.isInfinity(), "ECDH key agreement point is at infinity");
-    return Bytes.wrap(point.getEncoded(true));
+    return point;
   }
 
   @Override

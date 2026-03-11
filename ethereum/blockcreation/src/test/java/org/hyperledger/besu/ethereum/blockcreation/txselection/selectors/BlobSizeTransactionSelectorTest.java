@@ -82,7 +82,8 @@ class BlobSizeTransactionSelectorTest {
 
   @BeforeEach
   void setup() {
-    when(blockSelectionContext.gasLimitCalculator().currentBlobGasLimit()).thenReturn(MAX_BLOB_GAS);
+    when(blockSelectionContext.gasLimitCalculator().blockBuilderBlobGasLimit())
+        .thenReturn(MAX_BLOB_GAS);
     when(blockSelectionContext.gasCalculator().blobGasCost(anyLong()))
         .thenAnswer(iom -> BLOB_GAS_PER_BLOB * iom.getArgument(0, Long.class));
 
