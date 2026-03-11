@@ -56,6 +56,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import org.hyperledger.besu.datatypes.Hash;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -202,6 +204,35 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         }
         // If the flat database healing process is in progress or the flat database mode is not FULL
         else {
+          // Guard: rootNodeData must be non-null and must hash to the current pivot's state root.
+          // If the pivot block was updated during flat DB heal, rootNodeData still reflects the
+          // previous pivot's root node, producing a corrupt world state (WORLD_ROOT_HASH points to
+          // the new pivot, but the stored root trie node belongs to the old pivot).  Restart the
+          // trie heal so the correct root node is downloaded before finalising.
+          if (rootNodeData == null) {
+            LOG.warn(
+                "Snap sync cannot finalise: root trie node data is null for pivot {}. "
+                    + "Restarting trie heal.",
+                header.toLogString());
+            snapSyncState.setHealFlatDatabaseInProgress(false);
+            startTrieHeal();
+            return false;
+          }
+          final Hash rootNodeHash = Hash.hash(rootNodeData);
+          if (!rootNodeHash.equals(header.getStateRoot())) {
+            LOG.warn(
+                "Snap sync cannot finalise: root trie node hash {} does not match pivot state "
+                    + "root {} for block {}. The pivot block was likely updated during flat "
+                    + "database heal. Restarting trie heal for the current pivot.",
+                rootNodeHash,
+                header.getStateRoot(),
+                header.toLogString());
+            rootNodeData = null;
+            snapSyncState.setHealFlatDatabaseInProgress(false);
+            startTrieHeal();
+            return false;
+          }
+
           final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
           applyForStrategy(
               updater,
