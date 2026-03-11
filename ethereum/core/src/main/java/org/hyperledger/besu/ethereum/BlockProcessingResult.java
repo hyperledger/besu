@@ -209,8 +209,8 @@ public class BlockProcessingResult extends BlockValidationResult {
 
   /**
    * Returns {@code true} if processing failed because the parent world state was not available.
-   * Such failures should not be treated as bad blocks — the block may be valid once the world
-   * state is repaired (e.g. via {@code debug_resyncWorldState}).
+   * Such failures should not be treated as bad blocks — the block may be valid once the world state
+   * is repaired (e.g. via {@code debug_resyncWorldState}).
    *
    * @return {@code true} if the parent world state was unavailable
    */
