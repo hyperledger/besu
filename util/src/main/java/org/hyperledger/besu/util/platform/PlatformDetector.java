@@ -331,7 +331,7 @@ public class PlatformDetector {
     final Pattern pattern = Pattern.compile("[-+]?[\\d]*\\.?[\\d]+");
     final Matcher matcher = pattern.matcher(rawGlibcVersion);
 
-    return matcher.find() ? matcher.group() : null;
+    return matcher.find() ? matcher.group() : UNKNOWN;
   }
 
   private static void detectJemalloc() {
