@@ -39,12 +39,14 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -300,6 +302,15 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     assertThat(parWs.rootHash())
         .as(getVariantName() + " parallel state root must match sequential")
         .isEqualTo(seqWs.rootHash());
+
+    // BAL hash comparison
+    final Optional<BlockAccessList> seqBal = getBlockAccessList(seqResult);
+    final Optional<BlockAccessList> parBal = getBlockAccessList(parResult);
+    assertThat(seqBal).as("Sequential BAL should be present").isPresent();
+    assertThat(parBal).as(getVariantName() + " parallel BAL should be present").isPresent();
+    assertThat(BodyValidation.balHash(parBal.get()))
+        .as(getVariantName() + " parallel BAL hash must match sequential")
+        .isEqualTo(BodyValidation.balHash(seqBal.get()));
 
     return new ComparisonResult(
         seqWs.rootHash(), parWs.rootHash(), seqResult, parResult, seqWs, parWs);
@@ -1114,5 +1125,110 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
       assertContractStorage(result.seqWorldState(), contractAddr, 1, 42);
       assertContractStorageMatches(result.seqWorldState(), result.parWorldState(), contractAddr, 1);
     }
+  }
+
+  @Nested
+  @DisplayName("Mining beneficiary BAL balance tracking")
+  class MiningBeneficiaryBalTests {
+
+    @Test
+    @DisplayName(
+        "Parallel BAL must record correct cumulative mining beneficiary postBalance with priority fees")
+    void miningBeneficiaryPostBalanceWithPriorityFees() {
+      // Two independent transfers with non-zero priority fees.
+      // baseFee=1 so effectivePriorityFee = min(maxPriorityFeePerGas, maxFeePerGas - baseFee) > 0.
+      // The mining beneficiary accumulates the priority fee from each transaction.
+      // The setPostBalance code in getProcessingResult must update the BAL entry
+      // so that each BalanceChange reflects the cumulative balance, not the isolated one.
+      final Transaction tx1 =
+          createTransferTransaction(
+              0,
+              1_000_000_000_000_000_000L,
+              300_000L,
+              2L,
+              10L,
+              ACCOUNT_2,
+              ACCOUNT_GENESIS_1_KEYPAIR);
+      final Transaction tx2 =
+          createTransferTransaction(
+              0,
+              2_000_000_000_000_000_000L,
+              300_000L,
+              3L,
+              10L,
+              ACCOUNT_3,
+              ACCOUNT_GENESIS_2_KEYPAIR);
+
+      final ComparisonResult result = executeAndCompare(Wei.of(1), tx1, tx2);
+
+      final Optional<BlockAccessList> seqBal = getBlockAccessList(result.seqResult());
+      final Optional<BlockAccessList> parBal = getBlockAccessList(result.parResult());
+      assertThat(seqBal).as("Sequential BAL should be present").isPresent();
+      assertThat(parBal).as("Parallel BAL should be present").isPresent();
+
+      final List<BlockAccessList.BalanceChange> seqBalChanges =
+          getBalanceChangesFor(seqBal.get(), MINING_BENEFICIARY);
+      final List<BlockAccessList.BalanceChange> parBalChanges =
+          getBalanceChangesFor(parBal.get(), MINING_BENEFICIARY);
+
+      assertThat(seqBalChanges)
+          .as("Sequential BAL should have balance changes for mining beneficiary")
+          .isNotEmpty();
+      assertThat(parBalChanges)
+          .as("Parallel BAL balance changes for mining beneficiary must match sequential")
+          .isEqualTo(seqBalChanges);
+    }
+
+    @Test
+    @DisplayName(
+        "Multiple transactions with varying priority fees produce correct cumulative beneficiary balances")
+    void multipleTxsWithVaryingPriorityFees() {
+      // Three transactions: two from sender A (nonces 0,1) and one from sender B (nonce 0),
+      // each with a different priority fee. baseFee=1 ensures positive effective priority fees.
+      // The BAL must record the correct post-balance for the mining beneficiary after each tx.
+      final Transaction tx1 =
+          createTransferTransaction(
+              0, 100_000_000_000_000L, 300_000L, 1L, 10L, ACCOUNT_2, ACCOUNT_GENESIS_1_KEYPAIR);
+      final Transaction tx2 =
+          createTransferTransaction(
+              0, 200_000_000_000_000L, 300_000L, 4L, 10L, ACCOUNT_3, ACCOUNT_GENESIS_2_KEYPAIR);
+      final Transaction tx3 =
+          createTransferTransaction(
+              1, 300_000_000_000_000L, 300_000L, 2L, 10L, ACCOUNT_4, ACCOUNT_GENESIS_1_KEYPAIR);
+
+      final ComparisonResult result = executeAndCompare(Wei.of(1), tx1, tx2, tx3);
+
+      final Optional<BlockAccessList> seqBal = getBlockAccessList(result.seqResult());
+      final Optional<BlockAccessList> parBal = getBlockAccessList(result.parResult());
+      assertThat(seqBal).isPresent();
+      assertThat(parBal).isPresent();
+
+      final List<BlockAccessList.BalanceChange> seqBalChanges =
+          getBalanceChangesFor(seqBal.get(), MINING_BENEFICIARY);
+      final List<BlockAccessList.BalanceChange> parBalChanges =
+          getBalanceChangesFor(parBal.get(), MINING_BENEFICIARY);
+
+      assertThat(seqBalChanges).isNotEmpty();
+      assertThat(parBalChanges)
+          .as("Parallel BAL mining beneficiary balance changes must match sequential")
+          .isEqualTo(seqBalChanges);
+
+      // Each balance change should be strictly increasing (cumulative rewards)
+      for (int i = 1; i < seqBalChanges.size(); i++) {
+        assertThat(seqBalChanges.get(i).postBalance())
+            .as("Balance change at index %d must be >= previous", i)
+            .isGreaterThanOrEqualTo(seqBalChanges.get(i - 1).postBalance());
+      }
+    }
+  }
+
+  // ==================== BAL Helpers ====================
+
+  protected List<BalanceChange> getBalanceChangesFor(
+      final BlockAccessList bal, final Address address) {
+    return bal.accountChanges().stream()
+        .filter(ac -> ac.address().equals(address))
+        .flatMap(ac -> ac.balanceChanges().stream())
+        .toList();
   }
 }
