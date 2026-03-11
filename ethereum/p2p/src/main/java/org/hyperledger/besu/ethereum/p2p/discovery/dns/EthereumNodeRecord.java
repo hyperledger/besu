@@ -49,7 +49,7 @@ public record EthereumNodeRecord(
 
   // ENR identity scheme v4 always uses secp256k1, independent of the node's signature algorithm
   private static final SignatureAlgorithm SECP256K1 =
-      SignatureAlgorithmType.DEFAULT_SIGNATURE_ALGORITHM_TYPE.get();
+      SignatureAlgorithmType.create("secp256k1").getInstance();
 
   @SuppressWarnings(
       "MethodInputParametersMustBeFinal") // needed since record constructors are not yet supported
