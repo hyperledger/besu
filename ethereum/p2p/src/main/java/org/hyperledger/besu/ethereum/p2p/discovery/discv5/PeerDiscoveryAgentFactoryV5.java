@@ -214,6 +214,11 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         if (inetAddress == null) {
           return false;
         }
+        // TODO(#10026): SubnetInfo is IPv4-only; IPv6 addresses will throw.
+        //  Skip subnet check for IPv6 until CidrBlock dual-stack support is added.
+        if (inetAddress instanceof java.net.Inet6Address) {
+          return true;
+        }
         final String hostAddress = inetAddress.getHostAddress();
         for (final SubnetInfo subnet : allowedSubnets) {
           if (subnet.isInRange(hostAddress)) {

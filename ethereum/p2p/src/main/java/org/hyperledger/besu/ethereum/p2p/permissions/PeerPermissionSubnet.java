@@ -66,7 +66,12 @@ public class PeerPermissionSubnet extends PeerPermissions {
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
       return true;
     }
+    // TODO(#10026): SubnetInfo is IPv4-only; IPv6 addresses will throw.
+    //  Skip subnet check for IPv6 until CidrBlock dual-stack support is added.
     String remotePeerHostAddress = remotePeer.getEnodeURL().getIpAsString();
+    if (remotePeerHostAddress.contains(":")) {
+      return true;
+    }
     for (SubnetInfo subnet : allowedSubnets) {
       if (subnet.isInRange(remotePeerHostAddress)) {
         return true;
