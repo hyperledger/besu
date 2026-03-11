@@ -77,9 +77,9 @@ public class StackTraceMatchFilter extends AbstractFilter {
     if (t != null) {
       return (messageEquals == null || Objects.equals(t.getMessage(), messageEquals))
               && stackContains != null
-               && Arrays.stream(t.getStackTrace())
-                   .map(StackTraceElement::getClassName)
-                   .anyMatch(cn -> cn.contains(stackContains))
+              && Arrays.stream(t.getStackTrace())
+                  .map(StackTraceElement::getClassName)
+                  .anyMatch(cn -> cn.contains(stackContains))
           ? onMatch
           : onMismatch;
     }
