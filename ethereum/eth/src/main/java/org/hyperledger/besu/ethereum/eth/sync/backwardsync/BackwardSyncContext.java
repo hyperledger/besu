@@ -359,7 +359,7 @@ public class BackwardSyncContext {
         throw new BackwardSyncException(
             "Parent world state unavailable for block "
                 + block.toLogString()
-                + " — backward sync halted. Run debug_resyncWorldState to recover.",
+                + " backward sync halted. Run debug_resyncWorldState to recover.",
             false);
       }
       emitBadChainEvent(block);
