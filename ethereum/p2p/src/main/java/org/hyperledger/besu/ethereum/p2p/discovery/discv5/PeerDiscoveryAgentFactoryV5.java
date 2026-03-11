@@ -294,8 +294,21 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
      */
     @Override
     public Bytes deriveECDHKeyAgreement(final Bytes remotePubKey) {
-      SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(remotePubKey);
-      return nodeKey.calculateECDHKeyAgreement(publicKey);
+      final Bytes uncompressedKey;
+      if (remotePubKey.size() == 33) {
+        // Compressed key (0x02/0x03 prefix) — decompress to the 64-byte format without prefix
+        final byte[] encoded =
+            signatureAlgorithm
+                .getCurve()
+                .getCurve()
+                .decodePoint(remotePubKey.toArrayUnsafe())
+                .getEncoded(false);
+        uncompressedKey = Bytes.wrap(encoded, 1, 64);
+      } else {
+        uncompressedKey = remotePubKey;
+      }
+      final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(uncompressedKey);
+      return nodeKey.calculateECDHKeyAgreementCompressed(publicKey);
     }
 
     /**
