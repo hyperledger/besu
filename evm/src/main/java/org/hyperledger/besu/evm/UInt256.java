@@ -1068,48 +1068,9 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      if ((v.u4 | v.u3) == 0
-          && Long.compareUnsigned(v.u3, u0) <= 0
-          && Long.compareUnsigned(v.u2, u0) <= 0) {
+      if ((v.u4 | v.u3) == 0 && Long.compareUnsigned(v.u2, u0) < 0) {
         long r;
-        if (v.u2 != 0 || Long.compareUnsigned(v.u1, u0) > 0) {
-          r = (Long.compareUnsigned(v.u2, u0) >= 0) ? v.u2 - u0 : v.u2;
-          r = reduceStep(r, v.u1, inv);
-          r = reduceStep(r, v.u0, inv);
-        } else {
-          r = (Long.compareUnsigned(v.u1, u0) >= 0) ? v.u1 - u0 : v.u1;
-          r = reduceStep(r, v.u0, inv);
-        }
-        return UInt256.fromLong(r >>> shift);
-      }
-      return reduceNormalisedSlowPathUInt256(v, shift, inv);
-    }
-
-    private UInt256 reduceNormalisedSlowPathUInt256(
-        final UInt320 v, final int shift, final long inv) {
-      long r;
-      if (v.u4 != 0 || Long.compareUnsigned(v.u3, u0) > 0) {
-        r = (Long.compareUnsigned(v.u4, u0) >= 0) ? v.u4 - u0 : v.u4;
-        r = reduceStep(r, v.u3, inv);
-        r = reduceStep(r, v.u2, inv);
-        r = reduceStep(r, v.u1, inv);
-        r = reduceStep(r, v.u0, inv);
-      } else {
-        r = (Long.compareUnsigned(v.u3, u0) >= 0) ? v.u3 - u0 : v.u3;
-        r = reduceStep(r, v.u2, inv);
-        r = reduceStep(r, v.u1, inv);
-        r = reduceStep(r, v.u0, inv);
-      }
-      return UInt256.fromLong(r >>> shift);
-    }
-
-    private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
-      UInt320 v = that.shiftLeftWide(shift);
-      if ((v.u4 | v.u3) == 0
-          && Long.compareUnsigned(v.u3, u0) <= 0
-          && Long.compareUnsigned(v.u2, u0) <= 0) {
-        long r;
-        if (v.u2 != 0 || Long.compareUnsigned(v.u1, u0) > 0) {
+        if (v.u2 != 0 || Long.compareUnsigned(v.u1, u0) >= 0) {
           r = reduceStep(v.u2, v.u1, inv);
           r = reduceStep(r, v.u0, inv);
         } else {
@@ -1117,13 +1078,34 @@ public record UInt256(long u3, long u2, long u1, long u0) {
         }
         return UInt256.fromLong(r >>> shift);
       }
-      return reduceNormalisedSlowPathUInt257(v, shift, inv);
+      return reduceNormalisedSlowPath(v, shift, inv);
     }
 
-    private UInt256 reduceNormalisedSlowPathUInt257(
-        final UInt320 v, final int shift, final long inv) {
+    private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
+      UInt320 v = that.shiftLeftWide(shift);
+      if ((v.u4 | v.u3) == 0 && Long.compareUnsigned(v.u2, u0) < 0) {
+        long r;
+        if (v.u2 != 0 || Long.compareUnsigned(v.u1, u0) >= 0) {
+          r = reduceStep(v.u2, v.u1, inv);
+          r = reduceStep(r, v.u0, inv);
+        } else {
+          r = reduceStep(v.u1, v.u0, inv);
+        }
+        return UInt256.fromLong(r >>> shift);
+      }
+      return reduceNormalisedSlowPath(v, shift, inv);
+    }
+
+    private UInt256 reduceNormalisedSlowPath(final UInt320 v, final int shift, final long inv) {
       long r;
-      if (v.u4 != 0 || Long.compareUnsigned(v.u3, u0) > 0) {
+      if (Long.compareUnsigned(v.u4, u0) >= 0) {
+        r = reduceStep(0, v.u4, inv);
+        r = reduceStep(r, v.u3, inv);
+        r = reduceStep(r, v.u2, inv);
+        r = reduceStep(r, v.u1, inv);
+        r = reduceStep(r, v.u0, inv);
+
+      } else if (v.u4 != 0 || Long.compareUnsigned(v.u3, u0) >= 0) {
         r = reduceStep(v.u4, v.u3, inv);
         r = reduceStep(r, v.u2, inv);
         r = reduceStep(r, v.u1, inv);
@@ -1256,7 +1238,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      if (v.u4 == 0 && Long.compareUnsigned(v.u4, u1) < 0 && Long.compareUnsigned(v.u3, u1) < 0) {
+      if (v.u4 == 0 && Long.compareUnsigned(v.u3, u1) < 0) {
         UInt128 r;
         if (v.u3 != 0 || Long.compareUnsigned(v.u2, u1) >= 0) {
           r = reduceStep(v.u3, v.u2, v.u1, inv);
@@ -1271,7 +1253,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      if (v.u4 == 0 && Long.compareUnsigned(v.u4, u1) < 0 && Long.compareUnsigned(v.u3, u1) < 0) {
+      if (v.u4 == 0 && Long.compareUnsigned(v.u3, u1) < 0) {
         UInt128 r;
         if (v.u3 != 0 || Long.compareUnsigned(v.u2, u1) >= 0) {
           r = reduceStep(v.u3, v.u2, v.u1, inv);
@@ -1502,10 +1484,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalised(final UInt448 that, final int shift, final long inv) {
       UInt512 v = that.shiftLeftWide(shift);
-      if ((v.u7 | v.u6 | v.u5) == 0
-          && Long.compareUnsigned(v.u6, u2) < 0
-          && Long.compareUnsigned(v.u5, u2) < 0
-          && Long.compareUnsigned(v.u4, u2) < 0) {
+      if ((v.u7 | v.u6 | v.u5) == 0 && Long.compareUnsigned(v.u4, u2) < 0) {
         UInt192 r;
         if (v.u4 != 0 || Long.compareUnsigned(v.u3, u2) >= 0) {
           r = reduceStep(v.u4, v.u3, v.u2, v.u1, inv);
@@ -1720,20 +1699,31 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 reduceNormalised(final UInt256 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      return reduceStep(v.u4, v.u3, v.u2, v.u1, v.u0, inv).shiftRight(shift);
+      UInt256 r;
+      if (Long.compareUnsigned(v.u4, u3) >= 0) {
+        r = reduceStep(0, v.u4, v.u3, v.u2, v.u1, inv);
+        r = reduceStep(r.u3, r.u2, r.u1, r.u0, v.u0, inv);
+      } else {
+        r = reduceStep(v.u4, v.u3, v.u2, v.u1, v.u0, inv);
+      }
+      return r.shiftRight(shift);
     }
 
     private UInt256 reduceNormalised(final UInt257 that, final int shift, final long inv) {
       UInt320 v = that.shiftLeftWide(shift);
-      return reduceStep(v.u4, v.u3, v.u2, v.u1, v.u0, inv).shiftRight(shift);
+      UInt256 r;
+      if (Long.compareUnsigned(v.u4, u3) >= 0) {
+        r = reduceStep(0, v.u4, v.u3, v.u2, v.u1, inv);
+        r = reduceStep(r.u3, r.u2, r.u1, r.u0, v.u0, inv);
+      } else {
+        r = reduceStep(v.u4, v.u3, v.u2, v.u1, v.u0, inv);
+      }
+      return r.shiftRight(shift);
     }
 
     private UInt256 reduceNormalised(final UInt512 that, final int shift, final long inv) {
       UInt576 v = that.shiftLeftWide(shift);
-      if ((v.u8 | v.u7 | v.u6) == 0
-          && Long.compareUnsigned(v.u7, u3) < 0
-          && Long.compareUnsigned(v.u6, u3) < 0
-          && Long.compareUnsigned(v.u5, u3) < 0) {
+      if ((v.u8 | v.u7 | v.u6) == 0 && Long.compareUnsigned(v.u5, u3) < 0) {
         UInt256 r;
         if (v.u5 != 0 || Long.compareUnsigned(v.u4, u3) >= 0) {
           r = reduceStep(v.u5, v.u4, v.u3, v.u2, v.u1, inv);
