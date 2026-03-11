@@ -33,7 +33,7 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
   void persist(BlockHeader blockHeader, StateRootCommitter committer);
 
   default void persist(final BlockHeader blockHeader) {
-    persist(blockHeader, StateRootCommitter.DEFAULT);
+    persist(blockHeader, StateRootCommitter.SYNCHRONOUS);
   }
 
   default MutableWorldState freezeStorage() {

@@ -36,7 +36,9 @@ import java.util.function.Supplier;
  */
 public interface StateRootCommitter {
 
-  StateRootCommitter DEFAULT = (supplier, worldState, stateUpdater, blockHeader) -> supplier.get();
+  /** Computes the state root synchronously via the standard trie path. */
+  StateRootCommitter SYNCHRONOUS =
+      (supplier, worldState, stateUpdater, blockHeader) -> supplier.get();
 
   /**
    * Compute (or retrieve) the state root and apply any additional side-effects.

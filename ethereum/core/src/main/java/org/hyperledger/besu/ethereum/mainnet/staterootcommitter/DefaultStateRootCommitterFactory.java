@@ -26,6 +26,6 @@ public final class DefaultStateRootCommitterFactory implements StateRootCommitte
       final ProtocolContext protocolContext,
       final BlockHeader blockHeader,
       final Optional<BlockAccessList> maybeBal) {
-    return StateRootCommitter.DEFAULT;
+    return StateRootCommitter.SYNCHRONOUS;
   }
 }

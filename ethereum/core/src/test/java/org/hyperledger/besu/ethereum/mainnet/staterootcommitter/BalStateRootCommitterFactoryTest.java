@@ -393,7 +393,7 @@ class BalStateRootCommitterFactoryTest {
     final StateRootCommitter committer =
         factory.forBlock(protocolContext, blockHeader, Optional.empty());
 
-    assertThat(committer).isSameAs(StateRootCommitter.DEFAULT);
+    assertThat(committer).isSameAs(StateRootCommitter.SYNCHRONOUS);
   }
 
   @Test

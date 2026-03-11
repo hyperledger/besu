@@ -60,7 +60,7 @@ public final class BalStateRootCommitterFactory implements StateRootCommitterFac
     if (maybeBal.isEmpty()
         || protocolContext.getWorldStateArchive() instanceof ForestWorldStateArchive
         || isTrieDisabled(protocolContext)) {
-      return StateRootCommitter.DEFAULT;
+      return StateRootCommitter.SYNCHRONOUS;
     }
 
     final CompletableFuture<BalRootComputation> balFuture =
