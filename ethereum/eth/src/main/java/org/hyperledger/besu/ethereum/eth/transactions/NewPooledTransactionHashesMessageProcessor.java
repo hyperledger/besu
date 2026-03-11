@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.time.Instant.now;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.BufferedGetPooledTransactionsFromPeerFetcher;
@@ -48,13 +47,15 @@ public class NewPooledTransactionHashesMessageProcessor {
   private final TransactionPoolConfiguration transactionPoolConfiguration;
   private final EthContext ethContext;
   private final TransactionPoolMetrics metrics;
+  private final int maxTransactionsMessageSize;
 
   public NewPooledTransactionHashesMessageProcessor(
       final PeerTransactionTracker transactionTracker,
       final TransactionPool transactionPool,
       final TransactionPoolConfiguration transactionPoolConfiguration,
       final EthContext ethContext,
-      final TransactionPoolMetrics metrics) {
+      final TransactionPoolMetrics metrics,
+      final int maxTransactionsMessageSize) {
     this.transactionTracker = transactionTracker;
     this.transactionPool = transactionPool;
     this.transactionPoolConfiguration = transactionPoolConfiguration;
@@ -62,6 +63,7 @@ public class NewPooledTransactionHashesMessageProcessor {
     this.metrics = metrics;
     metrics.initExpiredMessagesCounter(METRIC_LABEL);
     this.scheduledTasks = new ConcurrentHashMap<>();
+    this.maxTransactionsMessageSize = maxTransactionsMessageSize;
   }
 
   void processNewPooledTransactionHashesMessage(
@@ -76,12 +78,12 @@ public class NewPooledTransactionHashesMessageProcessor {
     } else {
       LOG.atTrace()
           .setMessage(
-              "Ignoring expired transactions message: peer={}, latency={}, queuedAt={}, keepAlive={}, hashes={}")
+              "Ignoring expired transactions message: peer={}, latency={}, queuedAt={}, keepAlive={}, announcements={}")
           .addArgument(peer)
           .addArgument(latency)
           .addArgument(queueAt)
           .addArgument(keepAlive)
-          .addArgument(transactionsMessage::pendingTransactionHashes)
+          .addArgument(transactionsMessage::pendingTransactionAnnouncements)
           .log();
       metrics.incrementExpiredMessages(METRIC_LABEL);
     }
@@ -90,12 +92,14 @@ public class NewPooledTransactionHashesMessageProcessor {
   private void processNewPooledTransactionHashesMessage(
       final EthPeer peer, final NewPooledTransactionHashesMessage transactionsMessage) {
     try {
-      final List<Hash> incomingTransactionHashes = transactionsMessage.pendingTransactionHashes();
+      final List<TransactionAnnouncement> incomingTransactionAnnouncements =
+          transactionsMessage.pendingTransactionAnnouncements();
 
       LOG.atTrace()
-          .setMessage("Received pooled transaction hashes message: peer={}, incoming hashes={}")
+          .setMessage(
+              "Received pooled transaction hashes message: peer={}, incoming announcements={}")
           .addArgument(peer)
-          .addArgument(incomingTransactionHashes)
+          .addArgument(incomingTransactionAnnouncements)
           .log();
 
       final BufferedGetPooledTransactionsFromPeerFetcher bufferedTask =
@@ -120,13 +124,14 @@ public class NewPooledTransactionHashesMessageProcessor {
                     peer,
                     transactionPool,
                     transactionTracker,
+                    maxTransactionsMessageSize,
                     metrics,
                     METRIC_LABEL);
               });
 
-      bufferedTask.addHashes(
-          incomingTransactionHashes.stream()
-              .filter(hash -> transactionPool.getTransactionByHash(hash).isEmpty())
+      bufferedTask.addAnnouncements(
+          incomingTransactionAnnouncements.stream()
+              .filter(ann -> transactionPool.getTransactionByHash(ann.hash()).isEmpty())
               .toList());
     } catch (final RLPException ex) {
       if (peer != null) {
