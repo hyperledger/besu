@@ -71,7 +71,7 @@ public class NodeKey {
    * @return the bytes32
    */
   public Bytes32 calculateECDHKeyAgreement(final SECPPublicKey partyKey) {
-    return securityModule.calculateECDHKeyAgreement(getPublicKey(partyKey));
+    return securityModule.calculateECDHKeyAgreement(asPluginPublicKey(partyKey));
   }
 
   /**
@@ -81,10 +81,10 @@ public class NodeKey {
    * @return the compressed EC point (33 bytes)
    */
   public Bytes calculateECDHKeyAgreementCompressed(final SECPPublicKey partyKey) {
-    return securityModule.calculateECDHKeyAgreementCompressed(getPublicKey(partyKey));
+    return securityModule.calculateECDHKeyAgreementCompressed(asPluginPublicKey(partyKey));
   }
 
-  private PublicKey getPublicKey(final SECPPublicKey partyKey) {
+  private PublicKey asPluginPublicKey(final SECPPublicKey partyKey) {
     return () ->
         ECPointUtil.fromBouncyCastleECPoint(signatureAlgorithm.publicKeyAsEcPoint(partyKey));
   }

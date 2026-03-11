@@ -156,8 +156,9 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
    * Performs the ECDH scalar multiplication: {@code theirPubKey × privKey}. Both the existing
    * x-coordinate-only method and the compressed-point method delegate here.
    *
-   * <p>For secp256k1 the cofactor <em>h</em> is 1, so no cofactor adjustment is needed (matching
-   * the behaviour of {@code ECDHBasicAgreement} when <em>h</em> = 1).
+   * <p>This implementation assumes an elliptic-curve domain with cofactor <em>h</em> = 1, so no
+   * explicit cofactor adjustment is required (matching the behaviour of {@code ECDHBasicAgreement}
+   * when <em>h</em> = 1).
    */
   private ECPoint ecdhScalarMultiply(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
@@ -165,8 +166,6 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
     checkArgument(theirPubKey != null, "missing remote public key");
 
     final ECPoint cleaned = ECAlgorithms.cleanPoint(curve.getCurve(), theirPubKey.asEcPoint(curve));
-    checkArgument(!cleaned.isInfinity(), "Infinity is not a valid public key for ECDH");
-
     final ECPoint point = cleaned.multiply(privKey.getD()).normalize();
     checkArgument(!point.isInfinity(), "ECDH key agreement point is at infinity");
     return point;
