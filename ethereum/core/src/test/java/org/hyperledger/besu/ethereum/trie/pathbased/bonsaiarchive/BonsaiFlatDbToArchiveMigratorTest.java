@@ -20,7 +20,9 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -301,6 +303,18 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     verify(trieLogManager, times(1)).getTrieLogLayer(hash3);
     // Block 4 must be processed by the second migration
     verify(trieLogManager, times(1)).getTrieLogLayer(hash4);
+  }
+
+  @Test
+  public void usesLowPriorityTransactionsForMigration() throws Exception {
+    appendBlocks(1);
+    final SegmentedInMemoryKeyValueStorage spyStorage = spy(new SegmentedInMemoryKeyValueStorage());
+    when(worldStateStorage.getComposedWorldStateStorage()).thenReturn(spyStorage);
+
+    final BonsaiFlatDbToArchiveMigrator migrator = createMigrator();
+    migrator.migrate().get(10, TimeUnit.SECONDS);
+
+    verify(spyStorage, atLeastOnce()).startLowPriorityTransaction();
   }
 
   @Test

@@ -130,7 +130,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
                 .getBlockHeader(blockNumber)
                 .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
 
-        final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+        final SegmentedKeyValueStorageTransaction tx = storage.startLowPriorityTransaction();
         try {
           if (maybeTrieLog.isPresent()) {
             processBlock(maybeTrieLog.get(), blockNumber, tx);
