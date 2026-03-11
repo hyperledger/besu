@@ -394,7 +394,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   @Test
   public void maxBlobsOptionWithNegativeValue() {
     internalTestFailure(
-        "--max-blobs-per-transaction must be a positive value",
+        "--max-blobs-per-transaction must be a non-negative value",
         "--max-blobs-per-transaction",
         "-9");
   }
