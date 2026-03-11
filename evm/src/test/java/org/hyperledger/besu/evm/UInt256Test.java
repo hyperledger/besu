@@ -545,6 +545,69 @@ public class UInt256Test {
   }
 
   @Test
+  public void addModTestReduceNormalisedTopLimb() {
+    UInt256 a =
+        UInt256.fromBytesBE(
+            new BigInteger("62d900c9700000000000000000023f00bc1814ff00000000000000ca22300806", 16)
+                .toByteArray());
+    UInt256 b =
+        UInt256.fromBytesBE(
+            new BigInteger("ffffffffffffffffb4fffff4befff4f4f4d4f4f504f4f4bef5f5100b0bf4f5f6", 16)
+                .toByteArray());
+    UInt256 m =
+        UInt256.fromBytesBE(new BigInteger("13464637e8bdc0e53b895d7b79348a784", 16).toByteArray());
+    BigInteger A = new BigInteger(1, a.toBytesBE());
+    BigInteger B = new BigInteger(1, b.toBytesBE());
+    BigInteger M = new BigInteger(1, m.toBytesBE());
+    BigInteger expected = A.add(B).mod(M);
+    assertThat(new BigInteger(1, a.addMod(b, m).toBytesBE())).isEqualTo(expected);
+  }
+
+  @Test
+  public void mulSubOverflowWithAddBackBug() {
+    // When the dividend's leading limb equals the modulus's leading limb, the trial quotient
+    // overflows and is clamped to 2^64-1. Verify correctness for each Modulus size.
+
+    // Modulus192 path (b.u3==0, b.u2!=0)
+    UInt256 a1 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff8000000000000000000000000000000000000000d900000000000001", 16)
+                .toByteArray());
+    UInt256 b1 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff800000007effffff800000008000ff0000010000", 16).toByteArray());
+    BigInteger expected1 = new BigInteger("7effffff800000007dff00feffff0001d901fe0000020001", 16);
+    assertThat(new BigInteger(1, a1.mod(b1).toBytesBE())).isEqualTo(expected1);
+
+    // Modulus128 path (b.u3==0, b.u2==0, b.u1!=0)
+    UInt256 a2 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff800000000000000000000000d900000000000001", 16).toByteArray());
+    UInt256 b2 =
+        UInt256.fromBytesBE(new BigInteger("7effffff800000007fffffffffffffff", 16).toByteArray());
+    BigInteger aBI2 = new BigInteger(1, a2.toBytesBE());
+    BigInteger bBI2 = new BigInteger(1, b2.toBytesBE());
+    BigInteger expected2 = aBI2.mod(bBI2);
+    assertThat(new BigInteger(1, a2.mod(b2).toBytesBE())).isEqualTo(expected2);
+
+    // Modulus256 path (b.u3!=0) via mulMod
+    UInt256 a3 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff8000000000000000000000000000000000000000d900000000000001", 16)
+                .toByteArray());
+    UInt256 x3 = UInt256.fromBytesBE(new BigInteger("10000000000000000", 16).toByteArray()); // 2^64
+    UInt256 m3 =
+        UInt256.fromBytesBE(
+            new BigInteger("7effffff800000007effffff800000008000ff00000100007effffff80000000", 16)
+                .toByteArray());
+    BigInteger aBI3 = new BigInteger(1, a3.toBytesBE());
+    BigInteger xBI3 = new BigInteger(1, x3.toBytesBE());
+    BigInteger mBI3 = new BigInteger(1, m3.toBytesBE());
+    BigInteger expected3 = aBI3.multiply(xBI3).mod(mBI3);
+    assertThat(new BigInteger(1, a3.mulMod(x3, m3).toBytesBE())).isEqualTo(expected3);
+  }
+
+  @Test
   public void signedMod() {
     final Random random = new Random(432);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
