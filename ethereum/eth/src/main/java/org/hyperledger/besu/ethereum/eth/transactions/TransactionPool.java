@@ -798,7 +798,7 @@ public class TransactionPool implements BlockAddedObserver {
                     .whenComplete((res, err) -> diskAccessLock.release()));
             return operationInProgress.get();
           } else {
-            CompletableFuture.failedFuture(
+            return CompletableFuture.failedFuture(
                 new TimeoutException("Timeout waiting for disk access lock"));
           }
         } catch (InterruptedException ie) {
