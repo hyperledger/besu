@@ -161,7 +161,8 @@ class TrieLogHelperTest {
             () ->
                 nonValidatingTrieLogHelper.prune(
                     dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir))
-        .isInstanceOf(RuntimeException.class);
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("RLP");
   }
 
   @Test
