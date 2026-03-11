@@ -39,6 +39,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 import jakarta.validation.constraints.Positive;
 import org.apache.tuweni.bytes.Bytes;
@@ -121,6 +122,14 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
               + "Only applies from Osaka hardfork onwards. (default: 6)",
       arity = "1")
   private Integer maxBlobsPerTransaction = null;
+
+  @Option(
+      names = {"--max-blobs-per-block"},
+      description =
+          "Maximum number of blobs allowed per block when building blocks. "
+              + "Only applies from Osaka hardfork onwards. Values above the protocol maximum are clamped. (default: protocol maximum)",
+      arity = "1")
+  private Integer maxBlobsPerBlock = null;
 
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
@@ -232,7 +241,22 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     if (maxBlobsPerTransaction != null && maxBlobsPerTransaction < 0) {
       throw new ParameterException(
-          commandLine, "--max-blobs-per-transaction must be a positive value");
+          commandLine, "--max-blobs-per-transaction must be a non-negative value");
+    }
+
+    if (maxBlobsPerBlock != null && maxBlobsPerBlock < 0) {
+      throw new ParameterException(
+          commandLine, "--max-blobs-per-block must be a non-negative value");
+    }
+
+    if (maxBlobsPerBlock != null
+        && maxBlobsPerTransaction != null
+        && maxBlobsPerBlock < maxBlobsPerTransaction) {
+      logger.warn(
+          "--max-blobs-per-block ({}) is less than --max-blobs-per-transaction ({}). "
+              + "The block limit will be the binding constraint during block building.",
+          maxBlobsPerBlock,
+          maxBlobsPerTransaction);
     }
   }
 
@@ -253,6 +277,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningConfiguration
         .getMaxBlobsPerTransaction()
         .ifPresent(v -> miningOptions.maxBlobsPerTransaction = v);
+    miningConfiguration.getMaxBlobsPerBlock().ifPresent(v -> miningOptions.maxBlobsPerBlock = v);
 
     miningOptions.unstableOptions.posBlockCreationMaxTime =
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
@@ -291,6 +316,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     return ImmutableMiningConfiguration.builder()
         .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
+        .maxBlobsPerBlock(
+            maxBlobsPerBlock != null ? OptionalInt.of(maxBlobsPerBlock) : OptionalInt.empty())
         .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
         .pluginBlockTxsSelectionMaxTime(pluginBlockTxsSelectionMaxTime)
