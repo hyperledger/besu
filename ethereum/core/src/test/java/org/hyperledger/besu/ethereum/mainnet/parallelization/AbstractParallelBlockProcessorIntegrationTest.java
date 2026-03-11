@@ -81,7 +81,7 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
       "/org/hyperledger/besu/ethereum/mainnet/parallelization/genesis-it.json";
 
   protected static final Address MINING_BENEFICIARY =
-      Address.fromHexStringStrict("0xa4664C40AACeBD82A2Db79f0ea36C06Bc6A19Adb");
+      Address.fromHexStringStrict("0xa05b21E5186Ce93d2a226722b85D6e550Ac7D6E3");
 
   protected static final String ACCOUNT_GENESIS_1 = "0x627306090abab3a6e1400e9345bc60c78a8bef57";
   protected static final String ACCOUNT_GENESIS_2 = "0x7f2d653f56ea8de6ffa554c7a0cd4e03af79f3eb";
@@ -98,6 +98,8 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
       generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
   protected static final KeyPair ACCOUNT_GENESIS_2_KEYPAIR =
       generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
+  protected static final KeyPair MINING_BENEFICIARY_KEYPAIR =
+      generateKeyPair("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
 
   protected static final BalConfiguration SEQUENTIAL_CONFIG = BalConfiguration.DEFAULT;
 
@@ -187,19 +189,15 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block,
-        final Optional<BlockAccessList> blockAccessList,
-        final PreprocessingFunction preprocessingBlockFunction) {
-      if (preprocessingBlockFunction instanceof PreprocessingFunction.NoPreprocessing) {
-        return BlockProcessingResult.FAILED;
-      } else {
-        return super.processBlock(
-            protocolContext,
-            blockchain,
-            worldState,
-            block,
-            blockAccessList,
-            preprocessingBlockFunction);
-      }
+        final Optional<BlockAccessList> blockAccessList) {
+      return super.processBlock(
+          protocolContext,
+          blockchain,
+          worldState,
+          block,
+          blockAccessList,
+          new ParallelTransactionPreprocessing(
+              transactionProcessor, Runnable::run, balConfiguration));
     }
   }
 
@@ -210,12 +208,21 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
       final Hash stateRoot,
       final Wei baseFee,
       final Transaction... txs) {
+    return createBlock(ctx, stateRoot, baseFee, MINING_BENEFICIARY, txs);
+  }
+
+  protected Block createBlock(
+      final ExecutionContextTestFixture ctx,
+      final Hash stateRoot,
+      final Wei baseFee,
+      final Address coinbase,
+      final Transaction... txs) {
     final BlockHeader parentHeader = ctx.getBlockchain().getChainHeadHeader();
     final BlockHeader blockHeader =
         new BlockHeaderTestFixture()
             .number(parentHeader.getNumber() + 1L)
             .parentHash(parentHeader.getHash())
-            .coinbase(MINING_BENEFICIARY)
+            .coinbase(coinbase)
             .stateRoot(stateRoot)
             .gasLimit(30_000_000L)
             .baseFeePerGas(baseFee)
@@ -233,9 +240,14 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
    * extracted from the error message.
    */
   protected Hash discoverStateRoot(final Wei baseFee, final Transaction... txs) {
+    return discoverStateRoot(baseFee, MINING_BENEFICIARY, txs);
+  }
+
+  protected Hash discoverStateRoot(
+      final Wei baseFee, final Address coinbase, final Transaction... txs) {
     final ExecutionContextTestFixture ctx = createFreshContext();
     final MutableWorldState ws = ctx.getStateArchive().getWorldState();
-    final Block block = createBlock(ctx, Hash.ZERO, baseFee, txs);
+    final Block block = createBlock(ctx, Hash.ZERO, baseFee, coinbase, txs);
     final BlockProcessor processor = createSequentialProcessor(ctx);
     final BlockProcessingResult result =
         processor.processBlock(ctx.getProtocolContext(), ctx.getBlockchain(), ws, block);
@@ -614,6 +626,42 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
 
       assertThat(((BonsaiAccount) result.seqWorldState().get(addr2)).getBalance())
           .isEqualTo(Wei.of(5_000_000_000_000_000_000L));
+    }
+
+    @Test
+    @DisplayName(
+        "Sender of tx2 is the mining beneficiary triggers collision and produces matching state")
+    void senderIsMiningBeneficiary() {
+      final Transaction tx1 =
+          createTransferTransaction(
+              0,
+              1_000_000_000_000_000_000L,
+              300_000L,
+              0L,
+              5L,
+              MINING_BENEFICIARY.getBytes().toHexString(),
+              ACCOUNT_GENESIS_1_KEYPAIR);
+      final Transaction tx2 =
+          createTransferTransaction(
+              0,
+              2_000_000_000_000_000_000L,
+              300_000L,
+              0L,
+              5L,
+              ACCOUNT_3,
+              MINING_BENEFICIARY_KEYPAIR);
+
+      final ComparisonResult result = executeAndCompare(Wei.of(5), tx1, tx2);
+
+      final Address coinbase =
+          Address.fromHexStringStrict(MINING_BENEFICIARY.getBytes().toHexString());
+      final Address addr3 = Address.fromHexStringStrict(ACCOUNT_3);
+      final Address sender1 = Address.fromHexStringStrict(ACCOUNT_GENESIS_1);
+
+      assertAccountsMatch(result.seqWorldState(), result.parWorldState(), coinbase);
+      assertAccountsMatch(result.seqWorldState(), result.parWorldState(), addr3);
+      assertAccountsMatch(result.seqWorldState(), result.parWorldState(), sender1);
+      assertAccountsMatch(result.seqWorldState(), result.parWorldState(), MINING_BENEFICIARY);
     }
 
     @Test
