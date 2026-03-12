@@ -217,7 +217,10 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
           // .map(Peer.class::cast) widens Optional<DiscoveryPeerV4> to Optional<Peer>
           final Optional<Peer> localNode = nodeRecordManager.getLocalNode().map(Peer.class::cast);
           if (localNode.isEmpty()) {
-            // During startup the local node may not be initialized yet; allow through
+            // Defensive: in practice the local node is always initialized before the
+            // discovery system starts (see PeerDiscoveryAgentV5.initializeLocalNodeRecord),
+            // so this branch should never execute. If it somehow does, allow through
+            // because IP-level checks above have already passed.
             return true;
           }
           final DiscoveryPeer remotePeer =
