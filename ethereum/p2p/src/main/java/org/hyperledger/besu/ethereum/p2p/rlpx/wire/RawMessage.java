@@ -14,19 +14,50 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.wire;
 
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.SnappyCompressor;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public final class RawMessage extends AbstractMessageData {
 
-  private final int code;
+  private static final SnappyCompressor compressor = new SnappyCompressor();
 
+  private final int code;
+  private byte[] compressedData;
+
+  /** Constructor for uncompressed messages. */
   public RawMessage(final int code, final Bytes data) {
     super(data);
     this.code = code;
+    this.compressedData = null;
+  }
+
+  /** Constructor for compressed messages — decompression is deferred until getData() is called. */
+  public RawMessage(final int code, final byte[] compressedData) {
+    super(Bytes.EMPTY);
+    this.code = code;
+    this.compressedData = compressedData;
   }
 
   @Override
   public int getCode() {
     return code;
+  }
+
+  @Override
+  public Bytes getData() {
+    if (compressedData != null && data == Bytes.EMPTY) {
+      data = Bytes.wrap(compressor.decompress(compressedData));
+      compressedData = null;
+    }
+    return data;
+  }
+
+  @Override
+  public int getSize() {
+    if (compressedData == null) {
+      return data.size();
+    }
+    return compressor.uncompressedLength(compressedData);
   }
 }
