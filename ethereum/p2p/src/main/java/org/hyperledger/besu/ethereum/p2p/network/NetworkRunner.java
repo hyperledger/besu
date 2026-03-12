@@ -49,6 +49,7 @@ public class NetworkRunner implements AutoCloseable {
   private final Map<String, SubProtocol> subProtocols;
   private final List<ProtocolManager> protocolManagers;
   private final LabelledMetric<Counter> inboundMessageCounter;
+  private final LabelledMetric<Counter> inboundBytesCounter;
   private final BiFunction<Peer, Boolean, Boolean> ethPeersShouldConnect;
 
   private NetworkRunner(
@@ -61,11 +62,19 @@ public class NetworkRunner implements AutoCloseable {
     this.protocolManagers = protocolManagers;
     this.subProtocols = subProtocols;
     this.ethPeersShouldConnect = ethPeersShouldConnect;
-    inboundMessageCounter =
+    this.inboundMessageCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.NETWORK,
             "p2p_messages_inbound",
             "Count of each P2P message received inbound.",
+            "protocol",
+            "name",
+            "code");
+    this.inboundBytesCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.NETWORK,
+            "p2p_bytes_inbound",
+            "Count of bytes received inbound.",
             "protocol",
             "name",
             "code");
@@ -147,6 +156,12 @@ public class NetworkRunner implements AutoCloseable {
                       protocol.messageName(cap.getVersion(), code),
                       Integer.toString(code))
                   .inc();
+              inboundBytesCounter
+                  .labels(
+                      cap.toString(),
+                      protocol.messageName(cap.getVersion(), code),
+                      Integer.toString(code))
+                  .inc(message.getData().getSize());
               protocolManager.processMessage(cap, message);
             });
       }

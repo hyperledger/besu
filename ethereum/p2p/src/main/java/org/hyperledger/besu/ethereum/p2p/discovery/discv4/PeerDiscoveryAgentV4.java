@@ -20,6 +20,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.HostEndpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
@@ -140,7 +141,8 @@ public abstract class PeerDiscoveryAgentV4 implements PeerDiscoveryAgent {
                 // Once listener is set up, finish initializing
                 final int discoveryPort = localAddress.getPort();
                 nodeRecordManager.initializeLocalNode(
-                    config.getAdvertisedHost(), discoveryPort, tcpPort);
+                    new HostEndpoint(config.getAdvertisedHost(), discoveryPort, tcpPort),
+                    Optional.empty());
                 startController(
                     nodeRecordManager
                         .getLocalNode()

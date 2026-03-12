@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.INVALID_STATE;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
+import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -23,6 +26,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.SoftFailureReason;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
@@ -92,17 +96,25 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
 
-    if (value.compareTo(account.getBalance()) > 0
-        || frame.getDepth() >= 1024
-        || account.getNonce() == -1
-        || code == null) {
+    final boolean insufficientBalance = value.compareTo(account.getBalance()) > 0;
+    final boolean maxDepthReached = frame.getDepth() >= 1024;
+    final boolean invalidState = account.getNonce() == -1 || code == null;
+
+    if (insufficientBalance || maxDepthReached || invalidState) {
       fail(frame);
-    } else {
-      account.incrementNonce();
-      frame.decrementRemainingGas(cost);
-      spawnChildMessage(frame, code);
-      frame.incrementRemainingGas(cost);
+      // Set soft failure reason for callTracer compatibility
+      final SoftFailureReason softFailureReason =
+          insufficientBalance
+              ? LEGACY_INSUFFICIENT_BALANCE
+              : (maxDepthReached ? LEGACY_MAX_CALL_DEPTH : INVALID_STATE);
+      return new OperationResult(cost, getPcIncrement(), softFailureReason);
     }
+
+    account.incrementNonce();
+    frame.decrementRemainingGas(cost);
+    spawnChildMessage(frame, code);
+    frame.incrementRemainingGas(cost);
+
     return new OperationResult(cost, null, getPcIncrement());
   }
 

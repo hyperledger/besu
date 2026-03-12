@@ -30,6 +30,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.PeerDiscoveryAgentV4;
@@ -79,12 +80,13 @@ public final class DefaultP2PNetworkTest {
   @Captor private ArgumentCaptor<DiscoveryPeerV4> peerCaptor;
 
   private final NetworkingConfiguration config =
-      NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
-          .setRlpx(
+      ImmutableNetworkingConfiguration.builder()
+          .discoveryConfiguration(DiscoveryConfiguration.create().setEnabled(false))
+          .rlpxConfiguration(
               RlpxConfiguration.create()
                   .setBindPort(0)
-                  .setSupportedProtocols(MockSubProtocol.create()));
+                  .setSupportedProtocols(MockSubProtocol.create()))
+          .build();
 
   @BeforeEach
   public void before() {
@@ -216,8 +218,8 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void start_withNatManager() {
     final String externalIp = "127.0.0.3";
-    config.getRlpx().setBindPort(30303);
-    config.getDiscovery().setBindPort(30301);
+    config.rlpxConfiguration().setBindPort(30303);
+    config.discoveryConfiguration().setBindPort(30301);
 
     final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
     when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNP);
@@ -229,10 +231,11 @@ public final class DefaultP2PNetworkTest {
 
     network.start();
     verify(upnpNatManager)
-        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
+        .requestPortForward(
+            eq(config.rlpxConfiguration().getBindPort()), eq(NetworkProtocol.TCP), any());
     verify(upnpNatManager)
         .requestPortForward(
-            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
+            eq(config.discoveryConfiguration().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
@@ -240,8 +243,8 @@ public final class DefaultP2PNetworkTest {
   @Test
   public void start_withNatManagerUpnpP2p() {
     final String externalIp = "127.0.0.3";
-    config.getRlpx().setBindPort(30303);
-    config.getDiscovery().setBindPort(30301);
+    config.rlpxConfiguration().setBindPort(30303);
+    config.discoveryConfiguration().setBindPort(30301);
 
     final UpnpNatManager upnpNatManager = mock(UpnpNatManager.class);
     when(upnpNatManager.getNatMethod()).thenReturn(NatMethod.UPNPP2PONLY);
@@ -253,10 +256,11 @@ public final class DefaultP2PNetworkTest {
 
     network.start();
     verify(upnpNatManager)
-        .requestPortForward(eq(config.getRlpx().getBindPort()), eq(NetworkProtocol.TCP), any());
+        .requestPortForward(
+            eq(config.rlpxConfiguration().getBindPort()), eq(NetworkProtocol.TCP), any());
     verify(upnpNatManager)
         .requestPortForward(
-            eq(config.getDiscovery().getBindPort()), eq(NetworkProtocol.UDP), any());
+            eq(config.discoveryConfiguration().getBindPort()), eq(NetworkProtocol.UDP), any());
 
     Assertions.assertThat(network.getLocalEnode().get().getIpAsString()).isEqualTo(externalIp);
   }
@@ -340,7 +344,7 @@ public final class DefaultP2PNetworkTest {
 
     // spy on config to return dns discovery config:
     final NetworkingConfiguration dnsConfig =
-        when(spy(config).getDiscovery()).thenReturn(disco).getMock();
+        when(spy(config).discoveryConfiguration()).thenReturn(disco).getMock();
 
     final Vertx vertx = Vertx.vertx(); // use real instance
 
@@ -367,8 +371,8 @@ public final class DefaultP2PNetworkTest {
 
     // spy on config to return dns discovery config:
     final NetworkingConfiguration dnsConfig = spy(config);
-    doReturn(disco).when(dnsConfig).getDiscovery();
-    doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
+    doReturn(disco).when(dnsConfig).discoveryConfiguration();
+    doReturn(Optional.of("localhost")).when(dnsConfig).dnsDiscoveryServerOverride();
 
     Vertx vertx = Vertx.vertx(); // use real instance
     final DefaultP2PNetwork testClass =
@@ -378,7 +382,7 @@ public final class DefaultP2PNetworkTest {
     // ensure we used the dns server override config when building DNSDaemon:
     try {
       assertThat(testClass.getDnsDaemon()).isPresent();
-      verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
+      verify(dnsConfig, times(2)).dnsDiscoveryServerOverride();
     } finally {
       testClass.stop();
       vertx.close();

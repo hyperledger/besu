@@ -25,6 +25,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
@@ -57,12 +58,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class P2PNetworkTest {
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
-      NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
-          .setRlpx(
+      ImmutableNetworkingConfiguration.builder()
+          .discoveryConfiguration(DiscoveryConfiguration.create().setEnabled(false))
+          .rlpxConfiguration(
               RlpxConfiguration.create()
                   .setBindPort(0)
-                  .setSupportedProtocols(MockSubProtocol.create()));
+                  .setSupportedProtocols(MockSubProtocol.create()))
+          .build();
 
   @AfterEach
   public void closeVertx() {

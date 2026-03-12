@@ -237,17 +237,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     LOG.trace("traceStartBlock for {}", blockHeader.getNumber());
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
-    final Optional<BlockAccessListFactory> maybeBalFactory =
-        protocolSpec.getBlockAccessListFactory().filter(BlockAccessListFactory::isEnabled);
-
     final StateRootCommitter stateRootCommitter =
         blockProcessingMetrics.wrapStateRootCommitter(
             protocolSpec
                 .getStateRootCommitterFactory()
                 .forBlock(protocolContext, blockHeader, blockAccessList));
 
-    Optional<BlockAccessListBuilder> blockAccessListBuilder =
-        maybeBalFactory.map(BlockAccessListFactory::newBlockAccessListBuilder);
+    final Optional<BlockAccessListBuilder> blockAccessListBuilder =
+        protocolSpec
+            .getBlockAccessListFactory()
+            .map(BlockAccessListFactory::newBlockAccessListBuilder);
+
+    // disabled preload after BAL fork
+    if (blockAccessListBuilder.isPresent() && worldState instanceof BonsaiWorldState) {
+      ((BonsaiWorldState) worldState).disableCacheMerkleTrieLoader();
+    }
 
     try {
       final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =

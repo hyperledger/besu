@@ -115,25 +115,7 @@ public enum NetworkDefinition {
       2023, // network id
       false, // can snap sync
       false, // native required
-      60_000_000L), // target gas limit
-  /** Classic network name. */
-  CLASSIC(
-      "/classic.json",
-      61, // chain id
-      1, // network id
-      true, // can snap sync
-      false, // native required
-      60_000_000L, // target gas limit
-      "November 2025"),
-  /** Mordor network name. */
-  MORDOR(
-      "/mordor.json",
-      63, // chain id
-      7, // network id
-      true, // can snap sync
-      false, // native required
-      60_000_000L, // target gas limit
-      "November 2025");
+      60_000_000L); // target gas limit
 
   private final String genesisFile;
   private final long chainId;

@@ -58,6 +58,10 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     return blockchainQueries.get();
   }
 
+  protected JsonRpcResponse blockNotFoundResponse(final JsonRpcRequestContext requestContext) {
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+  }
+
   protected Object pendingResult(final JsonRpcRequestContext request) {
     // TODO: Update once we mine and better understand pending semantics.
     // For now act like we are not mining and just return latest.
@@ -105,12 +109,11 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else if (blockParameterOrBlockHash.isNumeric() || blockParameterOrBlockHash.isEarliest()) {
       final OptionalLong blockNumber = blockParameterOrBlockHash.getNumber();
       if (blockNumber.isEmpty() || blockNumber.getAsLong() < 0) {
-        // TODO should this be null result or invalid params?
         return new JsonRpcErrorResponse(
             requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
       } else if (blockNumber.getAsLong() > getBlockchainQueries().headBlockNumber()) {
-        // return null if a future block is requested
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+        // return block not found if a future block is requested
+        return blockNotFoundResponse(requestContext);
       }
 
       result =
@@ -123,14 +126,14 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
     } else {
       Optional<Hash> blockHash = blockParameterOrBlockHash.getHash();
       if (blockHash.isEmpty()) {
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+        return blockNotFoundResponse(requestContext);
       }
 
-      // return null if block hash does not find a block
+      // return block not found if block hash does not find a block
       Optional<BlockHeader> maybeBlockHeader =
           getBlockchainQueries().getBlockHeaderByHash(blockHash.get());
       if (maybeBlockHeader.isEmpty()) {
-        return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+        return blockNotFoundResponse(requestContext);
       }
 
       if (blockParameterOrBlockHash.getRequireCanonical()

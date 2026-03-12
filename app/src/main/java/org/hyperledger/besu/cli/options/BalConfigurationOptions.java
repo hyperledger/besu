@@ -59,13 +59,6 @@ public class BalConfigurationOptions {
   boolean balLogBalsOnMismatch = false;
 
   @CommandLine.Option(
-      names = {"--Xbal-api-enabled"},
-      hidden = true,
-      description =
-          "Set to enable eth_getBlockAccessListByBlockNumber and eth_getBlockAccessListByBlockHash methods and Block Access Lists in simulation results")
-  private final Boolean balApiEnabled = false;
-
-  @CommandLine.Option(
       names = {"--Xbal-state-root-timeout"},
       hidden = true,
       paramLabel = "<INTEGER>",
@@ -79,6 +72,25 @@ public class BalConfigurationOptions {
       description = "Timeout in milliseconds when waiting for BAL transaction processing results.")
   private long balProcessingTimeoutMs = Duration.ofSeconds(1).toMillis();
 
+  @CommandLine.Option(
+      names = {"--Xbal-prefetch-reading-enabled"},
+      hidden = true,
+      description = "Enable prefetching of state data based on BAL read operations.")
+  boolean balPreFetchReadingEnabled = false;
+
+  @CommandLine.Option(
+      names = {"--Xbal-prefetch-sorting-enabled"},
+      hidden = true,
+      description =
+          "Enable sorting optimization during BAL prefetch operations (default: ${DEFAULT-VALUE}).")
+  boolean balPreFetchSortingEnabled = true;
+
+  @CommandLine.Option(
+      names = {"--Xbal-prefetch-batch-size"},
+      hidden = true,
+      description = "Enable custom BAL prefetch batch size (default: ${DEFAULT-VALUE}).")
+  int balPreFetchBatch = 100;
+
   /**
    * Builds the immutable {@link BalConfiguration} corresponding to the parsed CLI options.
    *
@@ -86,12 +98,14 @@ public class BalConfigurationOptions {
    */
   public BalConfiguration toDomainObject() {
     return ImmutableBalConfiguration.builder()
-        .isBalApiEnabled(balApiEnabled)
         .isBalOptimisationEnabled(balOptimizationEnabled)
         .isPerfectParallelizationEnabled(balPerfectParallelizationEnabled)
         .shouldLogBalsOnMismatch(balLogBalsOnMismatch)
         .isBalLenientOnStateRootMismatch(balLenientOnStateRootMismatch)
         .isBalStateRootTrusted(balTrustStateRoot)
+        .isBalPreFetchReadingEnabled(balPreFetchReadingEnabled)
+        .isBalPreFetchSortingEnabled(balPreFetchSortingEnabled)
+        .balPreFetchBatchSize(balPreFetchBatch)
         .balStateRootTimeout(Duration.ofMillis(balStateRootTimeoutMs))
         .balProcessingTimeout(Duration.ofMillis(balProcessingTimeoutMs))
         .build();

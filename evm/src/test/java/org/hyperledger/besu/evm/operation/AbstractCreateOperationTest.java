@@ -174,8 +174,7 @@ class AbstractCreateOperationTest {
 
     operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrameStack.peek();
-    final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
+    final ContractCreationProcessor ccp = new ContractCreationProcessor(evm, false, List.of(), 0);
     ccp.process(createFrame, OperationTracer.NO_TRACING);
   }
 

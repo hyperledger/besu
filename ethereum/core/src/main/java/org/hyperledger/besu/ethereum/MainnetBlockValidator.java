@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -22,10 +21,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -59,26 +58,33 @@ public class MainnetBlockValidator implements BlockValidator {
   /** The BlockProcessor used to process blocks. */
   protected final BlockProcessor blockProcessor;
 
+  /** The BlockAccessListValidator used to validate block access lists. */
+  protected final BlockAccessListValidator blockAccessListValidator;
+
   /** The maximum size of a block in RLP encoding. */
   private final int maxRlpBlockSize;
 
   /**
    * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
-   * BlockProcessor, and maximum RLP block size.
+   * BlockProcessor, BlockAccessListValidator, and maximum RLP block size.
    *
    * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
    * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
    * @param blockProcessor the BlockProcessor used to process blocks
+   * @param blockAccessListValidator the BlockAccessListValidator used to validate block access
+   *     lists
    * @param maxRlpBlockSize the maximum size of a block in RLP encoding
    */
   protected MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
       final BlockProcessor blockProcessor,
+      final BlockAccessListValidator blockAccessListValidator,
       final int maxRlpBlockSize) {
     this.blockHeaderValidator = blockHeaderValidator;
     this.blockBodyValidator = blockBodyValidator;
     this.blockProcessor = blockProcessor;
+    this.blockAccessListValidator = blockAccessListValidator;
     this.maxRlpBlockSize = maxRlpBlockSize;
   }
 
@@ -189,28 +195,15 @@ public class MainnetBlockValidator implements BlockValidator {
         return retval;
       }
 
-      if (blockAccessList.isPresent()) {
-        final Hash providedBalHash = BodyValidation.balHash(blockAccessList.get());
-        final Optional<Hash> headerBalHash = block.getHeader().getBalHash();
-        String errorMessage = null;
-        if (headerBalHash.isEmpty()) {
-          errorMessage =
-              String.format(
-                  "Block access list provided with hash %s but header is missing balHash",
-                  providedBalHash.getBytes().toHexString());
-        } else if (!headerBalHash.get().equals(providedBalHash)) {
-          errorMessage =
-              String.format(
-                  "Block access list hash mismatch, provided: %s header: %s",
-                  providedBalHash.getBytes().toHexString(),
-                  headerBalHash.get().getBytes().toHexString());
-        }
-        if (errorMessage != null) {
-          var result = new BlockProcessingResult(errorMessage);
-          handleFailedBlockProcessing(
-              block, blockAccessList, result, shouldRecordBadBlock, context);
-          return result;
-        }
+      if (!blockAccessListValidator.validate(
+          blockAccessList, block.getHeader(), block.getBody().getTransactions().size())) {
+        var result =
+            new BlockProcessingResult(
+                String.format(
+                    "Block access list validation failed for block %s",
+                    block.getHeader().getBlockHash()));
+        handleFailedBlockProcessing(block, blockAccessList, result, shouldRecordBadBlock, context);
+        return result;
       }
 
       var result = processBlock(context, worldState, block, blockAccessList);

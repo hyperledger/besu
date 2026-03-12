@@ -54,6 +54,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   private final AtomicBoolean terminatedImmediately = new AtomicBoolean(false);
   protected final PeerConnectionEventDispatcher connectionEventDispatcher;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final LabelledMetric<Counter> outboundBytesCounter;
   private final long initiatedAt;
   private final boolean inboundInitiated;
   private boolean statusSent;
@@ -68,6 +69,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
       final CapabilityMultiplexer multiplexer,
       final PeerConnectionEventDispatcher connectionEventDispatcher,
       final LabelledMetric<Counter> outboundMessagesCounter,
+      final LabelledMetric<Counter> outboundBytesCounter,
       final boolean inboundInitiated) {
     this.peer = peer;
     this.peerInfo = peerInfo;
@@ -82,6 +84,7 @@ public abstract class AbstractPeerConnection implements PeerConnection {
     }
     this.connectionEventDispatcher = connectionEventDispatcher;
     this.outboundMessagesCounter = outboundMessagesCounter;
+    this.outboundBytesCounter = outboundBytesCounter;
     this.inboundInitiated = inboundInitiated;
     this.initiatedAt = System.currentTimeMillis();
 
@@ -118,6 +121,13 @@ public abstract class AbstractPeerConnection implements PeerConnection {
               subProtocol.messageName(capability.getVersion(), message.getCode()),
               Integer.toString(message.getCode()))
           .inc();
+      outboundBytesCounter
+          .labels(
+              capability.toString(),
+              subProtocol.messageName(capability.getVersion(), message.getCode()),
+              Integer.toString(message.getCode()))
+          .inc(message.getSize());
+
     } else {
       outboundMessagesCounter
           .labels(
@@ -125,6 +135,12 @@ public abstract class AbstractPeerConnection implements PeerConnection {
               WireMessageCodes.messageName(message.getCode()),
               Integer.toString(message.getCode()))
           .inc();
+      outboundBytesCounter
+          .labels(
+              "Wire",
+              WireMessageCodes.messageName(message.getCode()),
+              Integer.toString(message.getCode()))
+          .inc(message.getSize());
     }
 
     LOG.atTrace()

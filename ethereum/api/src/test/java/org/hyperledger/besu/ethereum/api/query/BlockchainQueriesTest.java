@@ -559,7 +559,6 @@ public class BlockchainQueriesTest {
 
     when(protocolSchedule.getByBlockHeader(header)).thenReturn(protocolSpec);
     when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
-    when(blockAccessListFactory.isForkActivated()).thenReturn(true);
 
     final BlockchainQueries queriesWithMockedSchedule =
         new BlockchainQueries(
@@ -572,33 +571,6 @@ public class BlockchainQueriesTest {
     final boolean result = queriesWithMockedSchedule.isBlockAccessListSupported(header);
 
     assertThat(result).isTrue();
-  }
-
-  @Test
-  public void isBlockAccessListSupportedShouldReturnFalseWhenForkIsNotActivated() {
-    final BlockchainWithData data = setupBlockchain(3);
-    final BlockHeader header = data.blockData.get(1).block.getHeader();
-
-    // Mock the protocol schedule to return a protocol spec with block access list factory
-    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
-    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
-    final BlockAccessListFactory blockAccessListFactory = mock(BlockAccessListFactory.class);
-
-    when(protocolSchedule.getByBlockHeader(header)).thenReturn(protocolSpec);
-    when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
-    when(blockAccessListFactory.isForkActivated()).thenReturn(false);
-
-    final BlockchainQueries queriesWithMockedSchedule =
-        new BlockchainQueries(
-            protocolSchedule,
-            data.blockchain,
-            data.worldStateArchive,
-            scheduler,
-            MiningConfiguration.newDefault());
-
-    final boolean result = queriesWithMockedSchedule.isBlockAccessListSupported(header);
-
-    assertThat(result).isFalse();
   }
 
   @Test
@@ -654,7 +626,6 @@ public class BlockchainQueriesTest {
     when(protocolSchedule.getByBlockHeader(header4)).thenReturn(postAmsterdamSpec);
     when(postAmsterdamSpec.getBlockAccessListFactory())
         .thenReturn(Optional.of(blockAccessListFactory));
-    when(blockAccessListFactory.isForkActivated()).thenReturn(true);
 
     final BlockchainQueries queriesWithMockedSchedule =
         new BlockchainQueries(

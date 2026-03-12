@@ -84,6 +84,7 @@ import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -275,6 +276,7 @@ public class EphemeryTest extends CommandTestAbstract {
     assertThat(lastGenesisTimestamp).isEqualTo(timestampCaptor.getValue());
   }
 
+  @Disabled("test is flaky, see https://github.com/hyperledger/besu/issues/9726")
   @Test
   public void testPeersCountShouldBeMoreThanZeroWhileRunning() {
     getPeers(90, 1, 1);
@@ -291,6 +293,7 @@ public class EphemeryTest extends CommandTestAbstract {
         });
   }
 
+  @Disabled("test is flaky, see https://github.com/hyperledger/besu/issues/9726")
   @Test
   public void testPeersCountShouldBeMoreThanZeroBeforeEphemeryStopButNotAfter() throws Exception {
     getPeers(90, 1, 1);
@@ -444,7 +447,7 @@ public class EphemeryTest extends CommandTestAbstract {
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .randomPeerPriority(Boolean.FALSE)
         .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)

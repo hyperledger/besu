@@ -39,7 +39,7 @@ public enum BlockStateCallError {
   /** Intrinsic gas exceeds gas limit. */
   INTRINSIC_GAS_EXCEEDS_GAS_LIMIT(-38013, "Intrinsic gas exceeds gas limit"),
   /** Unknown error. */
-  UNKNOWN(-32602, "Internal error"),
+  UNKNOWN(-32603, "Internal error"),
   /** Empty simulation result. */
   EMPTY_SIMULATION_RESULT(-32602, "Transaction simulation returned no result");
 

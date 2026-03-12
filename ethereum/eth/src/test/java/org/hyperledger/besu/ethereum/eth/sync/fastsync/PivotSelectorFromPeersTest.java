@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
@@ -67,10 +66,12 @@ public class PivotSelectorFromPeersTest {
     Mockito.when(ethPeers.getBestPeerComparator())
         .thenReturn((p1, ignored) -> p1 == peer1 ? 1 : -1);
 
-    Optional<FastSyncState> result = selector.selectNewPivotBlock();
-
-    Assertions.assertTrue(result.isPresent());
-    Assertions.assertEquals(9, result.get().getPivotBlockNumber().getAsLong());
+    try {
+      FastSyncState result = selector.selectNewPivotBlock().get();
+      Assertions.assertEquals(9, result.getPivotBlockNumber().getAsLong());
+    } catch (Exception e) {
+      Assertions.fail("Unexpected exception thrown", e);
+    }
   }
 
   @Test
@@ -78,9 +79,12 @@ public class PivotSelectorFromPeersTest {
     Mockito.when(ethContext.getEthPeers()).thenReturn(ethPeers);
     Mockito.when(ethPeers.streamAvailablePeers()).thenReturn(Stream.empty());
 
-    Optional<FastSyncState> result = selector.selectNewPivotBlock();
-
-    Assertions.assertTrue(result.isEmpty());
+    try {
+      selector.selectNewPivotBlock().get();
+      Assertions.fail("Expected CompletableFuture to be failed but it completed successfully");
+    } catch (Exception e) {
+      // Expected - the future should fail when there are insufficient peers
+    }
   }
 
   private EthPeer mockPeer(
