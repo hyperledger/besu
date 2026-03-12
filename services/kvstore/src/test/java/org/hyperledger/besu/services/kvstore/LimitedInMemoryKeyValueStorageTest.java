@@ -39,6 +39,7 @@ public class LimitedInMemoryKeyValueStorageTest extends AbstractKeyValueStorageT
       tx.put(bytesOf(i), bytesOf(i));
       tx.commit();
     }
+    storage.cleanUp();
 
     int hits = 0;
     for (int i = 0; i < limit * 2; i++) {

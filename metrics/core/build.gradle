@@ -50,7 +50,8 @@ dependencies {
   implementation 'io.opentelemetry.semconv:opentelemetry-semconv-incubating'
 
   implementation 'io.prometheus:prometheus-metrics-core'
-  implementation 'io.prometheus:prometheus-metrics-instrumentation-guava'
+  implementation 'io.prometheus:prometheus-metrics-instrumentation-caffeine'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'io.prometheus:prometheus-metrics-instrumentation-jvm'
   implementation 'io.prometheus:prometheus-metrics-exporter-httpserver'
   implementation 'io.prometheus:prometheus-metrics-exporter-pushgateway'

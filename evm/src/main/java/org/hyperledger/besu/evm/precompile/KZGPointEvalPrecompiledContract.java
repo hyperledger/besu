@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -41,7 +42,10 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
 
   private static final String PRECOMPILE_NAME = "KZGPointEval";
   private static final Cache<Integer, PrecompileInputResultTuple> kzgCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumSize(1000)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /** Default result caching to false unless otherwise set. */
   protected static Boolean enableResultCaching = Boolean.FALSE;

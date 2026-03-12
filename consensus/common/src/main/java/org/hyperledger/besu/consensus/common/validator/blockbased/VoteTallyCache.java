@@ -21,14 +21,14 @@ import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ExecutionException;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 class VoteTallyCache {
 
@@ -37,7 +37,10 @@ class VoteTallyCache {
   private final VoteTallyUpdater voteTallyUpdater;
 
   private final Cache<Hash, VoteTally> voteTallyCache =
-      CacheBuilder.newBuilder().maximumSize(100).build();
+      Caffeine.newBuilder()
+          .maximumSize(100)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final BlockInterface blockInterface;
 
   VoteTallyCache(
@@ -72,11 +75,13 @@ class VoteTallyCache {
    *     and including the requested header.
    */
   VoteTally getVoteTallyAfterBlock(final BlockHeader header) {
-    try {
-      return voteTallyCache.get(header.getHash(), () -> populateCacheUptoAndIncluding(header));
-    } catch (final ExecutionException ex) {
-      throw new RuntimeException("Unable to determine a VoteTally object for the requested block.");
+    VoteTally cached = voteTallyCache.getIfPresent(header.getHash());
+    if (cached != null) {
+      return cached;
     }
+    VoteTally computed = populateCacheUptoAndIncluding(header);
+    voteTallyCache.put(header.getHash(), computed);
+    return computed;
   }
 
   private VoteTally populateCacheUptoAndIncluding(final BlockHeader start) {

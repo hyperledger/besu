@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
           .expireAfterWrite(15, TimeUnit.MINUTES) // Evict 15 minutes after each entry is written
+          .executor(CacheMaintenanceExecutor.getInstance())
           .build();
 
   /** The constant FALSE. */

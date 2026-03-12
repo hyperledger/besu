@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1JNI;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.math.BigInteger;
 import java.util.NoSuchElementException;
@@ -47,7 +48,10 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
   final SignatureAlgorithm signatureAlgorithm;
   private static final String PRECOMPILE_NAME = "ECREC";
   private static final Cache<Integer, PrecompileInputResultTuple> ecrecCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumSize(1000)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /**
    * Instantiates a new ECREC precompiled contract with the default signature algorithm.

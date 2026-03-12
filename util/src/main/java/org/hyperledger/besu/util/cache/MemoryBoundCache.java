@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.util.cache;
 
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -42,6 +44,7 @@ public class MemoryBoundCache<K, V> {
             .maximumWeight(maxBytes)
             .weigher(memoryFootprintCalculator::applyAsInt)
             .recordStats()
+            .executor(CacheMaintenanceExecutor.getInstance())
             .build();
   }
 

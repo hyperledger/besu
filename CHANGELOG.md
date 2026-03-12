@@ -33,6 +33,7 @@
 - Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
 - Plugin API: Allow the registration of multiple PluginTransactionPoolValidatorFactory [#9964](https://github.com/hyperledger/besu/pull/9964)
 - Add `-Pcases` case name filtering to JMH benchmark suite [#9982](https://github.com/hyperledger/besu/pull/9982)
+- Migrate all Guava caches to Caffeine [#9909](https://github.com/hyperledger/besu/pull/9909)
 - Use JDK SHA-256 provider to leverage hardware SHA-NI instructions instead of BouncyCastle [#9924](https://github.com/hyperledger/besu/pull/9924)
 - Implement `txpool_status` RPC method [#10002](https://github.com/hyperledger/besu/pull/10002)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists

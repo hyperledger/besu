@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -25,7 +26,10 @@ public class BLS12G2AddPrecompiledContract extends AbstractBLS12PrecompiledContr
 
   private static final int PARAMETER_LENGTH = 512;
   private static final Cache<Integer, PrecompileInputResultTuple> g2AddCache =
-      Caffeine.newBuilder().maximumSize(1000).build();
+      Caffeine.newBuilder()
+          .maximumSize(1000)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
 
   /** Instantiates a new BLS12_G2 Add precompiled contract. */
   BLS12G2AddPrecompiledContract() {
