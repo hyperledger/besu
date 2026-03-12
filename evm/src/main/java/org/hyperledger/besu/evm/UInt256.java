@@ -1061,8 +1061,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
   private UInt256 modReduceNormalised(final UInt512 that, final int shift, final long inv) {
     UInt576 v = that.shiftLeftWide(shift);
-    if ((v.u8 | v.u7 | v.u6) == 0
-        && Long.compareUnsigned(v.u5, u3) < 0) {
+    if ((v.u8 | v.u7 | v.u6) == 0 && Long.compareUnsigned(v.u5, u3) < 0) {
       QR256 qr;
       if (v.u5 != 0 || Long.compareUnsigned(v.u4, u3) >= 0) {
         qr = reduceStep(v.u5, v.u4, v.u3, v.u2, v.u1, inv);
