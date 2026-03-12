@@ -203,17 +203,14 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
 
       @Override
       public boolean allow(final NodeRecord record) {
-        final Optional<InetSocketAddress> udpAddress = record.getUdpAddress();
-        final Optional<InetSocketAddress> tcpAddress = record.getTcpAddress();
-
-        // Check IP-level permissions on available addresses
-        if (udpAddress.isPresent() || tcpAddress.isPresent()) {
-          if (udpAddress.isPresent() && !peerPermissions.isPermitted(udpAddress.get())) {
-            return false;
-          }
-          if (tcpAddress.isPresent() && !peerPermissions.isPermitted(tcpAddress.get())) {
-            return false;
-          }
+        // Check IP-level permissions on all available addresses (IPv4 and IPv6).
+        // A dual-stack ENR carries separate ip/ip6, udp/udp6, tcp/tcp6 fields;
+        // every advertised address must pass the subnet check.
+        if (!isAddressPermitted(record.getUdpAddress())
+            || !isAddressPermitted(record.getUdp6Address())
+            || !isAddressPermitted(record.getTcpAddress())
+            || !isAddressPermitted(record.getTcp6Address())) {
+          return false;
         }
 
         try {
@@ -232,6 +229,10 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
           LOG.debug("DiscV5: Rejecting peer with malformed NodeRecord", e);
           return false;
         }
+      }
+
+      private boolean isAddressPermitted(final Optional<InetSocketAddress> address) {
+        return address.isEmpty() || peerPermissions.isPermitted(address.get());
       }
     };
   }

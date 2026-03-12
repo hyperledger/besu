@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -141,11 +143,13 @@ class PeerDiscoveryAgentFactoryV5Test {
     final PeerPermissions permissions = subnetPermissions("10.0.0.0/8");
     final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
-    // A NodeRecord with no UDP or TCP address cannot be converted to a DiscoveryPeer,
+    // A NodeRecord with no addresses cannot be converted to a DiscoveryPeer,
     // so it is rejected by the catch block as a malformed record.
     final NodeRecord noAddressRecord = mock(NodeRecord.class);
     when(noAddressRecord.getUdpAddress()).thenReturn(Optional.empty());
+    when(noAddressRecord.getUdp6Address()).thenReturn(Optional.empty());
     when(noAddressRecord.getTcpAddress()).thenReturn(Optional.empty());
+    when(noAddressRecord.getTcp6Address()).thenReturn(Optional.empty());
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
 
     assertThat(policy.allow(noAddressRecord)).isFalse();
@@ -172,6 +176,65 @@ class PeerDiscoveryAgentFactoryV5Test {
     // isPermitted(Peer, Peer, Action) is ever called
     assertThat(policy.allow(testNodeRecord)).isFalse();
     verify(mockPermissions, never()).isPermitted(any(Peer.class), any(), any());
+  }
+
+  @Test
+  void rejectDualStackNodeRecordWhenIpv6OutsideSubnet() {
+    // IPv4-only subnet: allows 15.204.180.0/24 but has no IPv6 allowance.
+    // A dual-stack ENR with an IPv6 address should be rejected because the
+    // IPv6 address is not in any allowed subnet.
+    final PeerPermissions permissions = subnetPermissions("15.204.180.0/24");
+    final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
+
+    final NodeRecord dualStackRecord = mock(NodeRecord.class);
+    // IPv4 addresses within subnet
+    lenient()
+        .when(dualStackRecord.getUdpAddress())
+        .thenReturn(Optional.of(new InetSocketAddress("15.204.180.57", 30303)));
+    lenient()
+        .when(dualStackRecord.getTcpAddress())
+        .thenReturn(Optional.of(new InetSocketAddress("15.204.180.57", 30303)));
+    // IPv6 addresses NOT in any allowed subnet
+    lenient()
+        .when(dualStackRecord.getUdp6Address())
+        .thenReturn(Optional.of(new InetSocketAddress("fd00::1", 30303)));
+    lenient()
+        .when(dualStackRecord.getTcp6Address())
+        .thenReturn(Optional.of(new InetSocketAddress("fd00::1", 30303)));
+
+    assertThat(policy.allow(dualStackRecord)).isFalse();
+  }
+
+  @Test
+  void allowDualStackNodeRecordChecksAllAddressFamilies() {
+    // Verify that IP-level checks are invoked for both IPv4 and IPv6 addresses.
+    // Use a mock PeerPermissions to isolate the IP-level check from the peer-level check,
+    // since mocked NodeRecords cannot be converted to DiscoveryPeer.
+    final PeerPermissions mockPermissions = mock(PeerPermissions.class);
+    when(mockPermissions.isPermitted(any(InetSocketAddress.class))).thenReturn(true);
+
+    final AddressAccessPolicy policy = createFactory(mockPermissions).createAddressAccessPolicy();
+
+    final NodeRecord dualStackRecord = mock(NodeRecord.class);
+    lenient()
+        .when(dualStackRecord.getUdpAddress())
+        .thenReturn(Optional.of(new InetSocketAddress("15.204.180.57", 30303)));
+    lenient()
+        .when(dualStackRecord.getTcpAddress())
+        .thenReturn(Optional.of(new InetSocketAddress("15.204.180.57", 30303)));
+    lenient()
+        .when(dualStackRecord.getUdp6Address())
+        .thenReturn(Optional.of(new InetSocketAddress("fd00::1", 30303)));
+    lenient()
+        .when(dualStackRecord.getTcp6Address())
+        .thenReturn(Optional.of(new InetSocketAddress("fd00::1", 30303)));
+
+    policy.allow(dualStackRecord);
+
+    // Verify that isPermitted(InetSocketAddress) was called for both address families
+    verify(mockPermissions, atLeastOnce())
+        .isPermitted(new InetSocketAddress("15.204.180.57", 30303));
+    verify(mockPermissions, atLeastOnce()).isPermitted(new InetSocketAddress("fd00::1", 30303));
   }
 
   @Test
