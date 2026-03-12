@@ -315,10 +315,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.atDebug()
-          .setMessage("Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
+          .setMessage(
+              "Received malformed message code={} data={} (BREACH_OF_PROTOCOL), disconnecting: {}")
+          .addArgument(code)
           .addArgument(messageData::getData)
           .addArgument(ethPeer::toString)
-          .addArgument(e::toString)
+          .setCause(e)
           .log();
 
       ethPeer.disconnect(
