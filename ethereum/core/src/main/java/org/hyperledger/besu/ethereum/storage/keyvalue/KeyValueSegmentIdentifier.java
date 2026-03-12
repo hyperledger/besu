@@ -39,6 +39,18 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), false, true, false),
   TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), false, true, false),
   TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), true, false, true),
+  ACCOUNT_INFO_STATE_FREEZER(
+      "ACCOUNT_INFO_STATE_FREEZER".getBytes(StandardCharsets.UTF_8),
+      EnumSet.of(X_BONSAI_ARCHIVE),
+      true,
+      false,
+      true),
+  ACCOUNT_STORAGE_FREEZER(
+      "ACCOUNT_STORAGE_FREEZER".getBytes(StandardCharsets.UTF_8),
+      EnumSet.of(X_BONSAI_ARCHIVE),
+      true,
+      false,
+      true),
   ACCOUNT_INFO_STATE_ARCHIVE(
       "ACCOUNT_INFO_STATE_ARCHIVE".getBytes(StandardCharsets.UTF_8),
       EnumSet.of(X_BONSAI_ARCHIVE),
