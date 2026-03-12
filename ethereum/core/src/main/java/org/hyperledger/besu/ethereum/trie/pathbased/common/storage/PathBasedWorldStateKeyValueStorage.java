@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.common.storage;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
@@ -255,7 +255,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
                   (nearestKey) -> {
                     moveDBEntry(
                         ACCOUNT_INFO_STATE,
-                        ACCOUNT_INFO_STATE_ARCHIVE,
+                        ACCOUNT_INFO_STATE_FREEZER,
                         nearestKey.key().toArrayUnsafe(),
                         nearestKey.value().get());
                     archivedStateCount.getAndIncrement();
@@ -339,7 +339,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
                     }
                     moveDBEntry(
                         ACCOUNT_STORAGE_STORAGE,
-                        ACCOUNT_STORAGE_ARCHIVE,
+                        ACCOUNT_STORAGE_FREEZER,
                         nearestKey.key().toArrayUnsafe(),
                         nearestKey.value().get());
                     archivedStorageCount.getAndIncrement();
@@ -395,7 +395,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
 
   public Optional<Long> getLatestArchivedBlock() {
     return composedWorldStateStorage
-        .get(ACCOUNT_INFO_STATE_ARCHIVE, ARCHIVED_BLOCKS)
+        .get(ACCOUNT_INFO_STATE_FREEZER, ARCHIVED_BLOCKS)
         .map(Bytes::wrap)
         .map(Bytes::toLong);
   }
@@ -403,7 +403,7 @@ public abstract class PathBasedWorldStateKeyValueStorage
   public void setLatestArchivedBlock(final Long blockNumber) {
     SegmentedKeyValueStorageTransaction tx = composedWorldStateStorage.startTransaction();
     tx.put(
-        ACCOUNT_INFO_STATE_ARCHIVE,
+        ACCOUNT_INFO_STATE_FREEZER,
         ARCHIVED_BLOCKS,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
