@@ -88,9 +88,10 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   // NOTE: we have no control over default value here.
   @CommandLine.Option(
       names = {"--bootnodes"},
-      paramLabel = "<enode://id@host:port>",
+      paramLabel = "<enode://id@host:port>|<enr:base64Enr>",
       description =
-          "Comma separated enode URLs for P2P discovery bootstrap. "
+          "Comma separated enode or ENR URLs for P2P discovery bootstrap. "
+              + "Must be either all enode URLs (discovery V4) or all ENR URLs (discovery V5). "
               + "Default is a predefined list.",
       split = ",",
       arity = "0..*")
