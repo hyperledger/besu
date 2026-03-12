@@ -118,6 +118,11 @@ public class DisabledPendingTransactions implements PendingTransactions {
   }
 
   @Override
+  public Status getStatus() {
+    return new Status(0, 0);
+  }
+
+  @Override
   public Optional<Transaction> restoreBlob(final Transaction transaction) {
     return Optional.empty();
   }
