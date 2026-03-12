@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
@@ -57,7 +57,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
 
     final byte[] expectedKey =
         Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(0)).toArrayUnsafe();
-    final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE, expectedKey);
+    final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE_ARCHIVE, expectedKey);
 
     assertThat(storedValue).isPresent();
     assertThat(Bytes.wrap(storedValue.get())).isEqualTo(accountValue);
@@ -77,14 +77,14 @@ public class BonsaiArchiveFlatDbStrategyTest {
 
     final byte[] expectedKey =
         Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(1)).toArrayUnsafe();
-    final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE, expectedKey);
+    final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE_ARCHIVE, expectedKey);
 
     assertThat(storedValue).isPresent();
     assertThat(Bytes.wrap(storedValue.get())).isEqualTo(accountValue);
 
     final byte[] genesisKey =
         Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(0)).toArrayUnsafe();
-    assertThat(storage.get(ACCOUNT_INFO_STATE, genesisKey)).isEmpty();
+    assertThat(storage.get(ACCOUNT_INFO_STATE_ARCHIVE, genesisKey)).isEmpty();
   }
 
   @Test
@@ -101,7 +101,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
 
     final byte[] expectedKey =
         Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(2)).toArrayUnsafe();
-    final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE, expectedKey);
+    final Optional<byte[]> storedValue = storage.get(ACCOUNT_INFO_STATE_ARCHIVE, expectedKey);
 
     assertThat(storedValue).isPresent();
     assertThat(Bytes.wrap(storedValue.get())).isEqualTo(accountValue);
@@ -129,8 +129,8 @@ public class BonsaiArchiveFlatDbStrategyTest {
     final byte[] block1Key =
         Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(1)).toArrayUnsafe();
 
-    final Optional<byte[]> genesisValue = storage.get(ACCOUNT_INFO_STATE, genesisKey);
-    final Optional<byte[]> block1Value = storage.get(ACCOUNT_INFO_STATE, block1Key);
+    final Optional<byte[]> genesisValue = storage.get(ACCOUNT_INFO_STATE_ARCHIVE, genesisKey);
+    final Optional<byte[]> block1Value = storage.get(ACCOUNT_INFO_STATE_ARCHIVE, block1Key);
 
     assertThat(genesisValue).isPresent();
     assertThat(Bytes.wrap(genesisValue.get())).isEqualTo(genesisAccountValue);
@@ -176,7 +176,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
     for (long blockNum = 0; blockNum <= 3; blockNum++) {
       final byte[] key =
           Bytes.concatenate(accountHash.getBytes(), Bytes.ofUnsignedLong(blockNum)).toArrayUnsafe();
-      final Optional<byte[]> value = storage.get(ACCOUNT_INFO_STATE, key);
+      final Optional<byte[]> value = storage.get(ACCOUNT_INFO_STATE_ARCHIVE, key);
       assertThat(value).as("Block " + blockNum + " should have stored value").isPresent();
       assertThat(Bytes.wrap(value.get())).isEqualTo(expectedValues[(int) blockNum]);
     }
