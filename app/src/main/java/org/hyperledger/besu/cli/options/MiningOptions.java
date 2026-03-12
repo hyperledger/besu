@@ -16,9 +16,9 @@ package org.hyperledger.besu.cli.options;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
@@ -50,10 +50,6 @@ import picocli.CommandLine.ParameterException;
 
 /** The Mining CLI options. */
 public class MiningOptions implements CLIOptions<MiningConfiguration> {
-
-  private static final String DEPRECATION_PREFIX =
-      "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
-
   @Option(
       names = {"--miner-extra-data"},
       description =
@@ -91,18 +87,16 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       names = {"--block-txs-selection-max-time"},
       converter = PositiveNumberConverter.class,
       description =
-          DEPRECATION_PREFIX
-              + "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block."
+          "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block on PoS networks."
               + " Not compatible with PoA networks, see poa-block-txs-selection-max-time. (default: ${DEFAULT-VALUE})")
-  private PositiveNumber nonPoaBlockTxsSelectionMaxTime =
-      DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  private PositiveNumber posBlockTxsSelectionMaxTime = DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 
   @Option(
       names = {"--poa-block-txs-selection-max-time"},
       converter = PositiveNumberConverter.class,
       description =
           "Specifies the maximum time that could be spent selecting transactions to be included in the block, as a percentage of the fixed block time of the PoA network."
-              + " To be only used on PoA networks, for other networks see block-txs-selection-max-time."
+              + " To be only used on PoA networks, for PoS networks see block-txs-selection-max-time."
               + " (default: ${DEFAULT-VALUE})")
   private PositiveNumber poaBlockTxsSelectionMaxTime = DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 
@@ -268,8 +262,8 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningOptions.minTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
     miningOptions.minPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
     miningOptions.minBlockOccupancyRatio = miningConfiguration.getMinBlockOccupancyRatio();
-    miningOptions.nonPoaBlockTxsSelectionMaxTime =
-        miningConfiguration.getNonPoaBlockTxsSelectionMaxTime();
+    miningOptions.posBlockTxsSelectionMaxTime =
+        miningConfiguration.getPosBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime =
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
     miningOptions.pluginBlockTxsSelectionMaxTime =
@@ -318,7 +312,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         .mutableInitValues(updatableInitValuesBuilder.build())
         .maxBlobsPerBlock(
             maxBlobsPerBlock != null ? OptionalInt.of(maxBlobsPerBlock) : OptionalInt.empty())
-        .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
+        .posBlockTxsSelectionMaxTime(posBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
         .pluginBlockTxsSelectionMaxTime(pluginBlockTxsSelectionMaxTime)
         .unstable(
