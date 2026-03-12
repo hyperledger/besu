@@ -18,7 +18,8 @@ import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
 import java.util.List;
 
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +30,8 @@ import org.slf4j.LoggerFactory;
  * allows for the configuration of permitted subnets and uses these configurations to determine
  * whether a peer should be allowed or denied access based on its IP address.
  *
+ * <p>Supports both IPv4 and IPv6 subnets.
+ *
  * <p>Note: If no subnets are specified, all peers are considered permitted by default.
  *
  * @see PeerPermissions
@@ -36,15 +39,15 @@ import org.slf4j.LoggerFactory;
 public class PeerPermissionSubnet extends PeerPermissions {
   private static final Logger LOG = LoggerFactory.getLogger(PeerPermissionSubnet.class);
 
-  private final List<SubnetInfo> allowedSubnets;
+  private final List<IPAddress> allowedSubnets;
 
   /**
    * Constructs a new {@code PeerPermissionSubnet} instance with specified allowed subnets.
    *
-   * @param allowedSubnets A list of {@link SubnetInfo} objects representing the subnets that are
-   *     allowed to interact with the local node. Cannot be {@code null}.
+   * @param allowedSubnets A list of {@link IPAddress} prefix blocks representing the subnets that
+   *     are allowed to interact with the local node. Cannot be {@code null}.
    */
-  public PeerPermissionSubnet(final List<SubnetInfo> allowedSubnets) {
+  public PeerPermissionSubnet(final List<IPAddress> allowedSubnets) {
     this.allowedSubnets = allowedSubnets;
   }
 
@@ -66,9 +69,14 @@ public class PeerPermissionSubnet extends PeerPermissions {
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
       return true;
     }
-    String remotePeerHostAddress = remotePeer.getEnodeURL().getIpAsString();
-    for (SubnetInfo subnet : allowedSubnets) {
-      if (subnet.isInRange(remotePeerHostAddress)) {
+    final String remotePeerHostAddress = remotePeer.getEnodeURL().getIpAsString();
+    final IPAddress remoteAddress = new IPAddressString(remotePeerHostAddress).getAddress();
+    if (remoteAddress == null) {
+      LOG.trace("Could not parse peer address: {}", remotePeerHostAddress);
+      return false;
+    }
+    for (final IPAddress subnet : allowedSubnets) {
+      if (subnet.contains(remoteAddress)) {
         return true;
       }
     }

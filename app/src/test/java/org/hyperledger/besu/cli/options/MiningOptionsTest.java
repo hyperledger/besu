@@ -15,9 +15,9 @@
 package org.hyperledger.besu.cli.options;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.verify;
@@ -180,8 +180,8 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     internalTestSuccess(
         this::runtimeConfiguration,
         miningParams ->
-            assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
-                .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
+            assertThat(miningParams.getPosBlockTxsSelectionMaxTime())
+                .isEqualTo(DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME));
   }
 
   @Test
@@ -212,7 +212,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     internalTestSuccess(
         this::runtimeConfiguration,
         miningParams ->
-            assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
+            assertThat(miningParams.getPosBlockTxsSelectionMaxTime())
                 .isEqualTo(PositiveNumber.fromInt(2)),
         "--genesis-file",
         genesisFilePoS.toString(),
@@ -227,7 +227,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     internalTestSuccess(
         this::runtimeConfiguration,
         miningParams -> {
-          assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
+          assertThat(miningParams.getPosBlockTxsSelectionMaxTime())
               .isEqualTo(PositiveNumber.fromInt(2000));
           assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
               .isEqualTo(PositiveNumber.fromInt(80));
@@ -250,7 +250,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
     internalTestSuccess(
         this::runtimeConfiguration,
         miningParams -> {
-          assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
+          assertThat(miningParams.getPosBlockTxsSelectionMaxTime())
               .isEqualTo(PositiveNumber.fromInt(2000));
           assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
               .isEqualTo(PositiveNumber.fromInt(80));
