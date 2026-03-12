@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -22,12 +23,11 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.services.tasks.Task;
 
 public class CompleteTaskStep {
-  private final SnapSyncProcessState snapSyncState;
+  private final PivotSyncState snapSyncState;
   private final Counter completedRequestsCounter;
   private final Counter retriedRequestsCounter;
 
-  public CompleteTaskStep(
-      final SnapSyncProcessState snapSyncState, final MetricsSystem metricsSystem) {
+  public CompleteTaskStep(final PivotSyncState snapSyncState, final MetricsSystem metricsSystem) {
     this.snapSyncState = snapSyncState;
     completedRequestsCounter =
         metricsSystem.createCounter(

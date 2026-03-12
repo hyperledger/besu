@@ -18,8 +18,8 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAG
 import static org.hyperledger.besu.ethereum.trie.RangeManager.getRangeCount;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -78,7 +78,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SnapSyncProcessState snapSyncState) {
+      final PivotSyncState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
     if (!slots.isEmpty()) {
       // new request is added if the response does not match all the requested range
@@ -141,7 +141,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     if (!isProofValid) {

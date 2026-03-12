@@ -284,7 +284,6 @@ public class PivotSyncActionsTest {
         createPivotSyncActions(
             syncConfig, new PivotSelectorFromPeers(ethContext, syncConfig, syncState));
     final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
-    EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     // Create peers without chain height estimates
     final PeerValidator validator = mock(PeerValidator.class);
@@ -313,13 +312,11 @@ public class PivotSyncActionsTest {
 
     final CompletableFuture<PivotSyncState> result =
         pivotSyncActions.selectPivotBlock(PivotSyncState.EMPTY_SYNC_STATE);
-    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
 
     final long expectedBestChainHeight =
         peers.get(1).getEthPeer().chainState().getEstimatedHeight();
     final PivotSyncState expected =
         new PivotSyncState(expectedBestChainHeight - syncConfig.getSyncPivotDistance(), false);
-    EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isCompletedWithValue(expected);
   }
 
