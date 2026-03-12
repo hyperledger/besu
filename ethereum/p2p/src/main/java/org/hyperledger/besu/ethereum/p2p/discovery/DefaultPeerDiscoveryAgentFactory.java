@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import inet.ipaddr.IPAddress;
 import io.vertx.core.Vertx;
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 
 public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFactory {
 
@@ -42,7 +42,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final List<SubnetInfo> allowedSubnets,
+      final List<IPAddress> allowedSubnets,
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
@@ -71,7 +71,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final List<SubnetInfo> allowedSubnets,
+      final List<IPAddress> allowedSubnets,
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
@@ -112,7 +112,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
     private NodeKey nodeKey;
     private NetworkingConfiguration config;
     private PeerPermissions peerPermissions;
-    private List<SubnetInfo> allowedSubnets = List.of();
+    private List<IPAddress> allowedSubnets = List.of();
     private NatService natService = new NatService(Optional.empty());
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
@@ -142,7 +142,7 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       return this;
     }
 
-    public Builder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
+    public Builder allowedSubnets(final List<IPAddress> allowedSubnets) {
       this.allowedSubnets = allowedSubnets == null ? List.of() : allowedSubnets;
       return this;
     }

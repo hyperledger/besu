@@ -39,7 +39,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.AddressAccessPolicy;
@@ -69,7 +70,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   private final NodeRecordManager nodeRecordManager;
   private final NodeKey nodeKey;
   private final PeerPermissions peerPermissions;
-  private final List<SubnetInfo> allowedSubnets;
+  private final List<IPAddress> allowedSubnets;
   private final ForkIdManager forkIdManager;
 
   /**
@@ -87,7 +88,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final List<SubnetInfo> allowedSubnets,
+      final List<IPAddress> allowedSubnets,
       final NatService natService,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager) {
@@ -105,7 +106,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       final NetworkingConfiguration config,
       final NodeKey nodeKey,
       final PeerPermissions peerPermissions,
-      final List<SubnetInfo> allowedSubnets,
+      final List<IPAddress> allowedSubnets,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager) {
     this.config = Objects.requireNonNull(config, "config must not be null");
@@ -214,18 +215,19 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         if (inetAddress == null) {
           return false;
         }
-        // TODO(#10026): SubnetInfo is IPv4-only; IPv6 addresses will throw.
-        //  Skip subnet check for IPv6 until CidrBlock dual-stack support is added.
-        if (inetAddress instanceof java.net.Inet6Address) {
-          return true;
+        final IPAddress remoteAddress =
+            new IPAddressString(inetAddress.getHostAddress()).getAddress();
+        if (remoteAddress == null) {
+          return false;
         }
-        final String hostAddress = inetAddress.getHostAddress();
-        for (final SubnetInfo subnet : allowedSubnets) {
-          if (subnet.isInRange(hostAddress)) {
+        for (final IPAddress subnet : allowedSubnets) {
+          if (subnet.contains(remoteAddress)) {
             return true;
           }
         }
-        LOG.trace("DiscV5: Rejecting peer at {} — not in any allowed subnet", hostAddress);
+        LOG.trace(
+            "DiscV5: Rejecting peer at {} — not in any allowed subnet",
+            inetAddress.getHostAddress());
         return false;
       }
 
