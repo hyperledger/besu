@@ -206,10 +206,21 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         // Check IP-level permissions on all available addresses (IPv4 and IPv6).
         // A dual-stack ENR carries separate ip/ip6, udp/udp6, tcp/tcp6 fields;
         // every advertised address must pass the subnet check.
-        if (!isAddressPermitted(record.getUdpAddress())
-            || !isAddressPermitted(record.getUdp6Address())
-            || !isAddressPermitted(record.getTcpAddress())
-            || !isAddressPermitted(record.getTcp6Address())) {
+        final Optional<InetSocketAddress> udp = record.getUdpAddress();
+        final Optional<InetSocketAddress> udp6 = record.getUdp6Address();
+        final Optional<InetSocketAddress> tcp = record.getTcpAddress();
+        final Optional<InetSocketAddress> tcp6 = record.getTcp6Address();
+
+        if (!isAddressPermitted(udp)
+            || !isAddressPermitted(udp6)
+            || !isAddressPermitted(tcp)
+            || !isAddressPermitted(tcp6)) {
+          return false;
+        }
+
+        // Reject NodeRecords with no advertised addresses — they cannot be
+        // converted to a DiscoveryPeer for identity-based permission checks.
+        if (udp.isEmpty() && udp6.isEmpty() && tcp.isEmpty() && tcp6.isEmpty()) {
           return false;
         }
 
