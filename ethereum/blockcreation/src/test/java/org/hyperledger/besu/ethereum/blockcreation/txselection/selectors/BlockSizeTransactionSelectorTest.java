@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -189,41 +188,11 @@ class BlockSizeTransactionSelectorTest {
   }
 
   @Test
-  void identifyWhenBlockOccupancyIsAboveThreshold() {
-    selectorsStateManager.blockSelectionStarted();
-
-    // create 2 txs with a gas limit just above the min block occupancy ratio
-    // so the first is accepted while the second not
-    final long justAboveOccupancyRatioGasLimit =
-        (long) (BLOCK_GAS_LIMIT * miningConfiguration.getMinBlockOccupancyRatio()) + 100;
-    final var tx1 = createPendingTransaction(justAboveOccupancyRatioGasLimit);
-
-    final var txEvaluationContext1 =
-        new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
-    evaluateAndAssertSelected(txEvaluationContext1, remainingGas(0));
-
-    assertThat(selector.getWorkingState()).isEqualTo(justAboveOccupancyRatioGasLimit);
-
-    final var tx2 = createPendingTransaction(justAboveOccupancyRatioGasLimit);
-
-    final var txEvaluationContext2 =
-        new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
-    evaluateAndAssertNotSelected(txEvaluationContext2, BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
-
-    assertThat(selector.getWorkingState()).isEqualTo(justAboveOccupancyRatioGasLimit);
-  }
-
-  @Test
   void identifyWhenBlockIsFull() {
     when(blockSelectionContext.gasCalculator().getMinimumTransactionCost())
         .thenReturn(TRANSFER_GAS_LIMIT);
 
     selectorsStateManager.blockSelectionStarted();
-
-    // allow to completely fill the block
-    miningConfiguration.setMinBlockOccupancyRatio(1.0);
 
     // create 2 txs, where the first fill the block leaving less gas than the min required by a
     // transfer
