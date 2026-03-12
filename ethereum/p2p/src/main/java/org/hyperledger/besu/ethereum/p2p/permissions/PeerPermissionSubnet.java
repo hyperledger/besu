@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.p2p.permissions;
 
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 import inet.ipaddr.IPAddress;
@@ -65,14 +67,31 @@ public class PeerPermissionSubnet extends PeerPermissions {
    */
   @Override
   public boolean isPermitted(final Peer localNode, final Peer remotePeer, final Action action) {
-    // If no subnets are specified, all peers are permitted
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
       return true;
     }
     final String remotePeerHostAddress = remotePeer.getEnodeURL().getIpAsString();
     final IPAddress remoteAddress = new IPAddressString(remotePeerHostAddress).getAddress();
+    return isAddressInSubnets(remoteAddress, remotePeerHostAddress);
+  }
+
+  @Override
+  public boolean isPermitted(final InetSocketAddress address) {
+    if (allowedSubnets == null || allowedSubnets.isEmpty()) {
+      return true;
+    }
+    final InetAddress inetAddress = address.getAddress();
+    if (inetAddress == null) {
+      return false;
+    }
+    final String hostAddress = inetAddress.getHostAddress();
+    final IPAddress remoteAddress = new IPAddressString(hostAddress).getAddress();
+    return isAddressInSubnets(remoteAddress, hostAddress);
+  }
+
+  private boolean isAddressInSubnets(final IPAddress remoteAddress, final String addressString) {
     if (remoteAddress == null) {
-      LOG.trace("Could not parse peer address: {}", remotePeerHostAddress);
+      LOG.trace("Could not parse peer address: {}", addressString);
       return false;
     }
     for (final IPAddress subnet : allowedSubnets) {
@@ -80,7 +99,7 @@ public class PeerPermissionSubnet extends PeerPermissions {
         return true;
       }
     }
-    LOG.trace("Peer {} is not allowed in any of the configured subnets.", remotePeerHostAddress);
+    LOG.trace("Peer {} is not allowed in any of the configured subnets.", addressString);
     return false;
   }
 }
