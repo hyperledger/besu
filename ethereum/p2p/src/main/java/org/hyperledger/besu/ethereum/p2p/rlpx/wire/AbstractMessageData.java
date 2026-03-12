@@ -20,14 +20,14 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMessageData implements MessageData {
 
-  protected final Bytes data;
+  protected Bytes data;
 
   protected AbstractMessageData(final Bytes data) {
     this.data = data;
   }
 
   @Override
-  public final int getSize() {
+  public int getSize() {
     return data.size();
   }
 
