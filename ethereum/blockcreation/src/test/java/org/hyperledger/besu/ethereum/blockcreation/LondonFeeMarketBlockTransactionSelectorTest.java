@@ -121,7 +121,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             createMiningParameters(
                 transactionSelectionService,
                 Wei.of(6),
-                MIN_OCCUPANCY_80_PERCENT,
                 DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
@@ -153,7 +152,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             createMiningParameters(
                 transactionSelectionService,
                 Wei.of(6),
-                MIN_OCCUPANCY_80_PERCENT,
                 DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
@@ -184,7 +182,6 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             createMiningParameters(
                 transactionSelectionService,
                 Wei.of(6),
-                MIN_OCCUPANCY_80_PERCENT,
                 DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
