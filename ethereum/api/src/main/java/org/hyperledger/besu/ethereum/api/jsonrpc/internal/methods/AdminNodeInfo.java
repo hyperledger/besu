@@ -98,6 +98,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
     final int discoveryPort = getDiscoveryPort(enode);
 
     response.put("enode", getNodeAsString(enode, ip, listeningPort, discoveryPort));
+    peerNetwork.getLocalEnr().ifPresent(enr -> response.put("enr", enr));
     response.put("ip", ip);
 
     if (enode.isListening()) {

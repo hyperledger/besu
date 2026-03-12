@@ -27,6 +27,7 @@ import java.util.List;
 public class EthProtocolVersion {
   public static final int V68 = 68;
   public static final int V69 = 69;
+  public static final int V70 = 70;
 
   /** eth/68 */
   private static final List<Integer> eth68Messages =
@@ -76,7 +77,7 @@ public class EthProtocolVersion {
   public static List<Integer> getSupportedMessages(final int protocolVersion) {
     return switch (protocolVersion) {
       case EthProtocolVersion.V68 -> eth68Messages;
-      case EthProtocolVersion.V69 -> eth69Messages;
+      case EthProtocolVersion.V69, EthProtocolVersion.V70 -> eth69Messages;
       default -> Collections.emptyList();
     };
   }
