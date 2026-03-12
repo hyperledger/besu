@@ -61,8 +61,7 @@ public class TransactionAnnouncementDecoder {
               .orElseThrow(
                   () ->
                       new RLPException(
-                          "Invalid transaction type 0x%02x"
-                              .formatted(Byte.toUnsignedInt(b))));
+                          "Invalid transaction type 0x%02x".formatted(Byte.toUnsignedInt(b))));
       types.add(transactionType);
     }
 
