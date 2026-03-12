@@ -439,6 +439,10 @@ public class UInt256Test {
       byte[] bArray = new byte[bSize];
       random.nextBytes(aArray);
       random.nextBytes(bArray);
+
+      aArray = negate(aArray, random.nextBoolean());
+      bArray = negate(bArray, random.nextBoolean());
+
       if ((aSize < 32) && (neg)) {
         byte[] tmp = new byte[32];
         Arrays.fill(tmp, (byte) 0xFF);
@@ -471,7 +475,7 @@ public class UInt256Test {
   }
 
   @Test
-  public void div() {
+  public void divRandom() {
     final Random random = new Random(45532);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
@@ -499,7 +503,7 @@ public class UInt256Test {
   }
 
   @Test
-  public void signedDiv() {
+  public void signedDivRandom() {
     final Random random = new Random(957467);
     for (int i = 0; i < SAMPLE_SIZE; i++) {
       int aSize = random.nextInt(1, 33);
