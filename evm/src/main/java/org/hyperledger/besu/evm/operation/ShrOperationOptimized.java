@@ -106,34 +106,30 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
     final int bitShift = shift & 63;
 
     switch (wordShift) {
+      case 0:
+        w3 = shiftRight(w3, w2, bitShift);
+        w2 = shiftRight(w2, w1, bitShift);
+        w1 = shiftRight(w1, w0, bitShift);
+        w0 = shiftRight(w0, 0, bitShift);
+        break;
       case 1:
-        w3 = w2;
-        w2 = w1;
-        w1 = w0;
+        w3 = shiftRight(w2, w1, bitShift);
+        w2 = shiftRight(w1, w0, bitShift);
+        w1 = shiftRight(w0, 0, bitShift);
         w0 = 0;
         break;
       case 2:
-        w3 = w1;
-        w2 = w0;
+        w3 = shiftRight(w1, w0, bitShift);
+        w2 = shiftRight(w0, 0, bitShift);
         w1 = 0;
         w0 = 0;
         break;
       case 3:
-        w3 = w0;
+        w3 = shiftRight(w0, 0, bitShift);
         w2 = 0;
         w1 = 0;
         w0 = 0;
         break;
-      default:
-        break;
-    }
-
-    if (bitShift > 0) {
-      final int inv = 64 - bitShift;
-      w3 = (w3 >>> bitShift) | (w2 << inv);
-      w2 = (w2 >>> bitShift) | (w1 << inv);
-      w1 = (w1 >>> bitShift) | (w0 << inv);
-      w0 = w0 >>> bitShift;
     }
 
     final byte[] out = new byte[32];
@@ -142,5 +138,10 @@ public class ShrOperationOptimized extends AbstractFixedCostOperation {
     putLong(out, 16, w2);
     putLong(out, 24, w3);
     return Bytes.wrap(out);
+  }
+
+  private static long shiftRight(final long value, final long prevValue, final int bitShift) {
+    if (bitShift == 0) return value;
+    return (value >>> bitShift) | (prevValue << (64 - bitShift));
   }
 }
