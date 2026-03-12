@@ -219,9 +219,9 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
           if (localNode.isEmpty()) {
             // Defensive: in practice the local node is always initialized before the
             // discovery system starts (see PeerDiscoveryAgentV5.initializeLocalNodeRecord),
-            // so this branch should never execute. If it somehow does, allow through
-            // because IP-level checks above have already passed.
-            return true;
+            // so this branch should never execute. Reject rather than bypass identity
+            // checks — the peer will be re-discovered on the next FINDNODE round.
+            return false;
           }
           final DiscoveryPeer remotePeer =
               DiscoveryPeerFactory.fromNodeRecord(

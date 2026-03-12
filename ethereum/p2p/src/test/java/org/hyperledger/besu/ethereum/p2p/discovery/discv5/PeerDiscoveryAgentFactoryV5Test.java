@@ -91,6 +91,8 @@ class PeerDiscoveryAgentFactoryV5Test {
 
   @Test
   void allowNodeRecordWithNoopPermissionsAndMatchingSubnet() {
+    when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
+
     final PeerPermissions permissions = subnetPermissions("15.204.180.0/24");
     final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
@@ -119,14 +121,14 @@ class PeerDiscoveryAgentFactoryV5Test {
   }
 
   @Test
-  void allowNodeRecordWhenLocalNodeNotYetInitialized() {
+  void rejectNodeRecordWhenLocalNodeNotYetInitialized() {
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.empty());
 
     final PeerPermissions rejectAll = rejectAllPermissions();
     final AddressAccessPolicy policy = createFactory(rejectAll).createAddressAccessPolicy();
 
-    // Should allow through during startup even with rejecting permissions
-    assertThat(policy.allow(testNodeRecord)).isTrue();
+    // Reject rather than bypass identity checks; the peer will be re-discovered
+    assertThat(policy.allow(testNodeRecord)).isFalse();
   }
 
   @Test
