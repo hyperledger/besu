@@ -254,6 +254,8 @@ configurations {
 }
 
 dependencies {
+  compileOnly 'org.jspecify:jspecify'
+
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
