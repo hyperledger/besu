@@ -14,23 +14,28 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import org.apache.commons.net.util.SubnetUtils;
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 import picocli.CommandLine;
 
-/** The SubnetInfo converter for CLI options. */
-public class SubnetInfoConverter implements CommandLine.ITypeConverter<SubnetInfo> {
+/** The IPAddress converter for CLI --net-restrict option. Supports both IPv4 and IPv6 CIDR. */
+public class SubnetInfoConverter implements CommandLine.ITypeConverter<IPAddress> {
   /** Default Constructor. */
   public SubnetInfoConverter() {}
 
   /**
-   * Converts an IP addresses with CIDR notation into SubnetInfo
+   * Converts an IP address with CIDR notation into an IPAddress prefix block.
    *
-   * @param value The IP addresses with CIDR notation.
-   * @return the SubnetInfo
+   * @param value The IP address with CIDR notation (e.g. "192.168.1.0/24" or "fd00::/64").
+   * @return the IPAddress prefix block
    */
   @Override
-  public SubnetInfo convert(final String value) {
-    return new SubnetUtils(value).getInfo();
+  public IPAddress convert(final String value) {
+    final IPAddressString addrString = new IPAddressString(value);
+    if (!addrString.isValid() || addrString.getNetworkPrefixLength() == null) {
+      throw new CommandLine.TypeConversionException(
+          "Invalid CIDR notation: " + value + ". Expected format: <ip>/<prefix-length>");
+    }
+    return addrString.getAddress().toPrefixBlock();
   }
 }

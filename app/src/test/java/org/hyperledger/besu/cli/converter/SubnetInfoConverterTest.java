@@ -15,45 +15,58 @@
 package org.hyperledger.besu.cli.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
+import inet.ipaddr.IPAddress;
 import org.junit.jupiter.api.Test;
+import picocli.CommandLine;
 
 public class SubnetInfoConverterTest {
 
   @Test
   void testCreateIpRestrictionHandlerWithValidSubnets() {
     String subnet = "192.168.1.0/24";
-    assertThat(parseSubnetRules(subnet).getCidrSignature()).isEqualTo(subnet);
+    IPAddress result = parseSubnetRules(subnet);
+    assertThat(result.toString()).isEqualTo(subnet);
+  }
+
+  @Test
+  void testCreateIpRestrictionHandlerWithValidIpv6Subnet() {
+    IPAddress result = parseSubnetRules("fd00::/64");
+    assertThat(result.toString()).isEqualTo("fd00::/64");
   }
 
   @Test
   void testCreateIpRestrictionHandlerWithInvalidSubnet() {
-    assertThrows(IllegalArgumentException.class, () -> parseSubnetRules("abc"));
+    assertThatThrownBy(() -> parseSubnetRules("abc"))
+        .isInstanceOf(CommandLine.TypeConversionException.class);
   }
 
   @Test
   void testCreateIpRestrictionHandlerMissingCIDR() {
-    assertThrows(IllegalArgumentException.class, () -> parseSubnetRules("192.168.1.0"));
+    assertThatThrownBy(() -> parseSubnetRules("192.168.1.0"))
+        .isInstanceOf(CommandLine.TypeConversionException.class);
   }
 
   @Test
   void testCreateIpRestrictionHandlerBigCIDR() {
-    assertThrows(IllegalArgumentException.class, () -> parseSubnetRules("192.168.1.0:25"));
+    assertThatThrownBy(() -> parseSubnetRules("192.168.1.0:25"))
+        .isInstanceOf(CommandLine.TypeConversionException.class);
   }
 
   @Test
   void testCreateIpRestrictionHandlerWithInvalidCIDR() {
-    assertThrows(IllegalArgumentException.class, () -> parseSubnetRules("192.168.1.0/abc"));
+    assertThatThrownBy(() -> parseSubnetRules("192.168.1.0/abc"))
+        .isInstanceOf(CommandLine.TypeConversionException.class);
   }
 
   @Test
   void testCreateIpRestrictionHandlerWithEmptyString() {
-    assertThrows(IllegalArgumentException.class, () -> parseSubnetRules(""));
+    assertThatThrownBy(() -> parseSubnetRules(""))
+        .isInstanceOf(CommandLine.TypeConversionException.class);
   }
 
-  private SubnetInfo parseSubnetRules(final String subnet) {
+  private IPAddress parseSubnetRules(final String subnet) {
     return new SubnetInfoConverter().convert(subnet);
   }
 }

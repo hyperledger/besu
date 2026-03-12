@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.net.InetAddresses;
-import org.apache.commons.net.util.SubnetUtils;
+import inet.ipaddr.IPAddress;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -259,7 +259,7 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
       converter = SubnetInfoConverter.class,
       description =
           "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
-  private List<SubnetUtils.SubnetInfo> allowedSubnets;
+  private List<IPAddress> allowedSubnets;
 
   @Override
   public P2PDiscoveryConfiguration toDomainObject() {
