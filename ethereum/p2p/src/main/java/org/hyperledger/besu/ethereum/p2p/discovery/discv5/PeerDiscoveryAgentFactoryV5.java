@@ -33,14 +33,10 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.ethereum.beacon.discovery.AddressAccessPolicy;
@@ -70,7 +66,6 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   private final NodeRecordManager nodeRecordManager;
   private final NodeKey nodeKey;
   private final PeerPermissions peerPermissions;
-  private final List<IPAddress> allowedSubnets;
   private final ForkIdManager forkIdManager;
 
   /**
@@ -78,8 +73,8 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    *
    * @param nodeKey the local node key used for identity and signing
    * @param config the networking configuration
-   * @param peerPermissions peer permissions to enforce on discovered peers
-   * @param allowedSubnets IP subnets to allow at the UDP packet level (empty means allow all)
+   * @param peerPermissions peer permissions to enforce on discovered peers (including subnet
+   *     filtering via {@link org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet})
    * @param natService NAT service for external address discovery
    * @param storageProvider storage provider for persisting node records
    * @param forkIdManager manager providing fork ID information for peer compatibility
@@ -88,7 +83,6 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final List<IPAddress> allowedSubnets,
       final NatService natService,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager) {
@@ -96,7 +90,6 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         config,
         nodeKey,
         peerPermissions,
-        allowedSubnets,
         forkIdManager,
         new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService));
   }
@@ -106,15 +99,12 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       final NetworkingConfiguration config,
       final NodeKey nodeKey,
       final PeerPermissions peerPermissions,
-      final List<IPAddress> allowedSubnets,
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager) {
     this.config = Objects.requireNonNull(config, "config must not be null");
     this.nodeKey = Objects.requireNonNull(nodeKey, "nodeKey must not be null");
     this.peerPermissions =
         Objects.requireNonNull(peerPermissions, "peerPermissions must not be null");
-    this.allowedSubnets =
-        List.copyOf(Objects.requireNonNull(allowedSubnets, "allowedSubnets must not be null"));
     this.forkIdManager = Objects.requireNonNull(forkIdManager, "forkIdManager must not be null");
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
@@ -184,75 +174,46 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   }
 
   /**
-   * Creates an {@link AddressAccessPolicy} that enforces subnet filtering at the IP level and full
-   * peer permissions at the node record level.
+   * Creates an {@link AddressAccessPolicy} that delegates IP-level checks to {@link
+   * PeerPermissions#isPermitted(InetSocketAddress)} and full peer identity checks to {@link
+   * PeerPermissions#isPermitted(Peer, Peer, Action)}.
    *
-   * <p>The {@code allow(InetSocketAddress)} method checks whether the IP falls within the
-   * configured allowed subnets. If no subnets are configured, all IPs are allowed. This provides
-   * the earliest possible filtering — raw UDP packets from disallowed IPs are dropped before
-   * protocol processing.
+   * <p>The {@code allow(InetSocketAddress)} method delegates to {@code
+   * peerPermissions.isPermitted(address)}, which in turn checks subnet restrictions via {@link
+   * org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet} if configured. This
+   * provides the earliest possible filtering — raw UDP packets from disallowed IPs are dropped
+   * before protocol processing.
    *
-   * <p>The {@code allow(NodeRecord)} method creates a {@link DiscoveryPeer} from the ENR and checks
-   * full {@link PeerPermissions} including node ID-based and enode-based rules.
+   * <p>The {@code allow(NodeRecord)} method first checks the node record's addresses via the same
+   * IP-level permissions, then creates a {@link DiscoveryPeer} from the ENR and checks full {@link
+   * PeerPermissions} including node ID-based and enode-based rules.
    *
    * @return the address access policy
    */
   AddressAccessPolicy createAddressAccessPolicy() {
-    final boolean hasSubnetRestrictions = !allowedSubnets.isEmpty();
-    final boolean hasPermissionRestrictions = peerPermissions != PeerPermissions.NOOP;
-
-    if (!hasSubnetRestrictions && !hasPermissionRestrictions) {
+    if (peerPermissions == PeerPermissions.NOOP) {
       return AddressAccessPolicy.ALLOW_ALL;
     }
 
     return new AddressAccessPolicy() {
       @Override
       public boolean allow(final InetSocketAddress address) {
-        if (!hasSubnetRestrictions) {
-          return true;
-        }
-        final InetAddress inetAddress = address.getAddress();
-        if (inetAddress == null) {
-          return false;
-        }
-        final IPAddress remoteAddress =
-            new IPAddressString(inetAddress.getHostAddress()).getAddress();
-        if (remoteAddress == null) {
-          return false;
-        }
-        for (final IPAddress subnet : allowedSubnets) {
-          if (subnet.contains(remoteAddress)) {
-            return true;
-          }
-        }
-        LOG.trace(
-            "DiscV5: Rejecting peer at {} — not in any allowed subnet",
-            inetAddress.getHostAddress());
-        return false;
+        return peerPermissions.isPermitted(address);
       }
 
       @Override
       public boolean allow(final NodeRecord record) {
-        if (hasSubnetRestrictions) {
-          final Optional<InetSocketAddress> udpAddress = record.getUdpAddress();
-          final Optional<InetSocketAddress> tcpAddress = record.getTcpAddress();
+        final Optional<InetSocketAddress> udpAddress = record.getUdpAddress();
+        final Optional<InetSocketAddress> tcpAddress = record.getTcpAddress();
 
-          // If no address is present, we cannot verify subnet membership: reject.
-          if (udpAddress.isEmpty() && tcpAddress.isEmpty()) {
+        // Check IP-level permissions on available addresses
+        if (udpAddress.isPresent() || tcpAddress.isPresent()) {
+          if (udpAddress.isPresent() && !peerPermissions.isPermitted(udpAddress.get())) {
             return false;
           }
-
-          if (udpAddress.isPresent() && !this.allow(udpAddress.get())) {
+          if (tcpAddress.isPresent() && !peerPermissions.isPermitted(tcpAddress.get())) {
             return false;
           }
-
-          if (tcpAddress.isPresent() && !this.allow(tcpAddress.get())) {
-            return false;
-          }
-        }
-
-        if (!hasPermissionRestrictions) {
-          return true;
         }
 
         try {

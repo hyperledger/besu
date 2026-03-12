@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 
 import java.net.InetSocketAddress;
@@ -81,16 +82,15 @@ class PeerDiscoveryAgentFactoryV5Test {
   @Test
   void allowAllWhenNoRestrictionsConfigured() {
     final AddressAccessPolicy policy =
-        createFactory(PeerPermissions.NOOP, List.of()).createAddressAccessPolicy();
+        createFactory(PeerPermissions.NOOP).createAddressAccessPolicy();
 
     assertThat(policy).isSameAs(AddressAccessPolicy.ALLOW_ALL);
   }
 
   @Test
   void allowNodeRecordWithNoopPermissionsAndMatchingSubnet() {
-    final IPAddress subnet = subnet("15.204.180.0/24");
-    final AddressAccessPolicy policy =
-        createFactory(PeerPermissions.NOOP, List.of(subnet)).createAddressAccessPolicy();
+    final PeerPermissions permissions = subnetPermissions("15.204.180.0/24");
+    final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
     // 15.204.180.57 is within 15.204.180.0/24
     assertThat(policy.allow(testNodeRecord)).isTrue();
@@ -101,8 +101,7 @@ class PeerDiscoveryAgentFactoryV5Test {
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
 
     final PeerPermissions rejectAll = rejectAllPermissions();
-    final AddressAccessPolicy policy =
-        createFactory(rejectAll, List.of()).createAddressAccessPolicy();
+    final AddressAccessPolicy policy = createFactory(rejectAll).createAddressAccessPolicy();
 
     assertThat(policy.allow(testNodeRecord)).isFalse();
   }
@@ -112,8 +111,7 @@ class PeerDiscoveryAgentFactoryV5Test {
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
 
     final PeerPermissions allowAll = allowAllPermissions();
-    final AddressAccessPolicy policy =
-        createFactory(allowAll, List.of()).createAddressAccessPolicy();
+    final AddressAccessPolicy policy = createFactory(allowAll).createAddressAccessPolicy();
 
     assertThat(policy.allow(testNodeRecord)).isTrue();
   }
@@ -123,8 +121,7 @@ class PeerDiscoveryAgentFactoryV5Test {
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.empty());
 
     final PeerPermissions rejectAll = rejectAllPermissions();
-    final AddressAccessPolicy policy =
-        createFactory(rejectAll, List.of()).createAddressAccessPolicy();
+    final AddressAccessPolicy policy = createFactory(rejectAll).createAddressAccessPolicy();
 
     // Should allow through during startup even with rejecting permissions
     assertThat(policy.allow(testNodeRecord)).isTrue();
@@ -133,49 +130,48 @@ class PeerDiscoveryAgentFactoryV5Test {
   @Test
   void rejectNodeRecordOutsideAllowedSubnet() {
     // 10.0.0.0/8 does not include 15.204.180.57
-    final IPAddress subnet = subnet("10.0.0.0/8");
-    final AddressAccessPolicy policy =
-        createFactory(PeerPermissions.NOOP, List.of(subnet)).createAddressAccessPolicy();
+    final PeerPermissions permissions = subnetPermissions("10.0.0.0/8");
+    final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
     assertThat(policy.allow(testNodeRecord)).isFalse();
   }
 
   @Test
   void rejectNodeRecordWithNoAddressWhenSubnetsConfigured() {
-    final IPAddress subnet = subnet("10.0.0.0/8");
-    final AddressAccessPolicy policy =
-        createFactory(PeerPermissions.NOOP, List.of(subnet)).createAddressAccessPolicy();
+    final PeerPermissions permissions = subnetPermissions("10.0.0.0/8");
+    final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
-    // A NodeRecord with no UDP or TCP address cannot be verified against subnets
+    // A NodeRecord with no UDP or TCP address cannot be converted to a DiscoveryPeer,
+    // so it is rejected by the catch block as a malformed record.
     final NodeRecord noAddressRecord = mock(NodeRecord.class);
     when(noAddressRecord.getUdpAddress()).thenReturn(Optional.empty());
     when(noAddressRecord.getTcpAddress()).thenReturn(Optional.empty());
+    when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
 
     assertThat(policy.allow(noAddressRecord)).isFalse();
   }
 
   @Test
   void allowInetSocketAddressInSubnet() {
-    final IPAddress subnet = subnet("192.168.1.0/24");
-    final AddressAccessPolicy policy =
-        createFactory(PeerPermissions.NOOP, List.of(subnet)).createAddressAccessPolicy();
+    final PeerPermissions permissions = subnetPermissions("192.168.1.0/24");
+    final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
     assertThat(policy.allow(new InetSocketAddress("192.168.1.50", 30303))).isTrue();
     assertThat(policy.allow(new InetSocketAddress("10.0.0.1", 30303))).isFalse();
   }
 
   @Test
-  void rejectNodeRecordBySubnetBeforeCheckingPermissions() {
-    // Subnet check should reject first — permissions must not be consulted.
-    final IPAddress subnet = subnet("10.0.0.0/8");
+  void rejectNodeRecordBySubnetBeforeCheckingPeerPermissions() {
+    // Subnet check should reject first — peer-level permissions must not be consulted.
     final PeerPermissions mockPermissions = mock(PeerPermissions.class);
+    when(mockPermissions.isPermitted(any(InetSocketAddress.class))).thenReturn(false);
 
-    final AddressAccessPolicy policy =
-        createFactory(mockPermissions, List.of(subnet)).createAddressAccessPolicy();
+    final AddressAccessPolicy policy = createFactory(mockPermissions).createAddressAccessPolicy();
 
-    // 15.204.180.57 is outside 10.0.0.0/8 — rejected by subnet before permissions
+    // isPermitted(InetSocketAddress) returns false, so node record is rejected before
+    // isPermitted(Peer, Peer, Action) is ever called
     assertThat(policy.allow(testNodeRecord)).isFalse();
-    verify(mockPermissions, never()).isPermitted(any(), any(), any());
+    verify(mockPermissions, never()).isPermitted(any(Peer.class), any(), any());
   }
 
   @Test
@@ -183,11 +179,10 @@ class PeerDiscoveryAgentFactoryV5Test {
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
 
     // 15.204.0.0/16 includes 15.204.180.57
-    final IPAddress subnet = subnet("15.204.0.0/16");
-    final PeerPermissions allowAll = allowAllPermissions();
+    final PeerPermissions permissions =
+        PeerPermissions.combine(subnetPermissions("15.204.0.0/16"), allowAllPermissions());
 
-    final AddressAccessPolicy policy =
-        createFactory(allowAll, List.of(subnet)).createAddressAccessPolicy();
+    final AddressAccessPolicy policy = createFactory(permissions).createAddressAccessPolicy();
 
     assertThat(policy.allow(testNodeRecord)).isTrue();
   }
@@ -196,10 +191,17 @@ class PeerDiscoveryAgentFactoryV5Test {
     return new IPAddressString(cidr).getAddress().toPrefixBlock();
   }
 
-  private PeerDiscoveryAgentFactoryV5 createFactory(
-      final PeerPermissions peerPermissions, final List<IPAddress> allowedSubnets) {
+  private static PeerPermissions subnetPermissions(final String... cidrs) {
+    final List<IPAddress> subnets =
+        java.util.Arrays.stream(cidrs)
+            .map(PeerDiscoveryAgentFactoryV5Test::subnet)
+            .collect(java.util.stream.Collectors.toList());
+    return new PeerPermissionSubnet(subnets);
+  }
+
+  private PeerDiscoveryAgentFactoryV5 createFactory(final PeerPermissions peerPermissions) {
     return new PeerDiscoveryAgentFactoryV5(
-        config, nodeKey, peerPermissions, allowedSubnets, forkIdManager, nodeRecordManager);
+        config, nodeKey, peerPermissions, forkIdManager, nodeRecordManager);
   }
 
   private static PeerPermissions rejectAllPermissions() {

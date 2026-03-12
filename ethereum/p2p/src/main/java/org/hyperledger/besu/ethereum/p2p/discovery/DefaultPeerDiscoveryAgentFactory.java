@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import inet.ipaddr.IPAddress;
 import io.vertx.core.Vertx;
 
 public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFactory {
@@ -42,7 +41,6 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final List<IPAddress> allowedSubnets,
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
@@ -59,7 +57,6 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
             nodeKey,
             config,
             peerPermissions,
-            allowedSubnets,
             natService,
             metricsSystem,
             storageProvider,
@@ -71,20 +68,13 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final PeerPermissions peerPermissions,
-      final List<IPAddress> allowedSubnets,
       final NatService natService,
       final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager) {
     if (config.discoveryConfiguration().isDiscoveryV5Enabled()) {
       return new PeerDiscoveryAgentFactoryV5(
-          nodeKey,
-          config,
-          peerPermissions,
-          allowedSubnets,
-          natService,
-          storageProvider,
-          forkIdManager);
+          nodeKey, config, peerPermissions, natService, storageProvider, forkIdManager);
     }
     return new PeerDiscoveryAgentFactoryV4(
         vertx,
@@ -112,7 +102,6 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
     private NodeKey nodeKey;
     private NetworkingConfiguration config;
     private PeerPermissions peerPermissions;
-    private List<IPAddress> allowedSubnets = List.of();
     private NatService natService = new NatService(Optional.empty());
     private MetricsSystem metricsSystem;
     private StorageProvider storageProvider;
@@ -139,11 +128,6 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
 
     public Builder peerPermissions(final PeerPermissions peerPermissions) {
       this.peerPermissions = peerPermissions;
-      return this;
-    }
-
-    public Builder allowedSubnets(final List<IPAddress> allowedSubnets) {
-      this.allowedSubnets = allowedSubnets == null ? List.of() : allowedSubnets;
       return this;
     }
 
@@ -184,7 +168,6 @@ public class DefaultPeerDiscoveryAgentFactory implements PeerDiscoveryAgentFacto
           nodeKey,
           config,
           peerPermissions,
-          allowedSubnets,
           natService,
           metricsSystem,
           storageProvider,
