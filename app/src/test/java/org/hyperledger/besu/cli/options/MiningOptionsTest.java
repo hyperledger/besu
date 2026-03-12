@@ -291,7 +291,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
 
   @Test
   public void poaBlockTxsSelectionMaxTimeOptionOver100Percent() throws IOException {
-    final Path genesisFileClique = createFakeGenesisFile(VALID_GENESIS_CLIQUE_POST_LONDON);
+    final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestSuccess(
         this::runtimeConfiguration,
         miningParams -> {
@@ -301,7 +301,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
               .isEqualTo(Duration.ofSeconds(POA_BLOCK_PERIOD_SECONDS * 2));
         },
         "--genesis-file",
-        genesisFileClique.toString(),
+        genesisFileIBFT2.toString(),
         "--poa-block-txs-selection-max-time",
         "200");
   }
