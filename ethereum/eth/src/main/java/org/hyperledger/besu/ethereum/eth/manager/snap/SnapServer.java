@@ -478,12 +478,11 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         } else {
           Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
           if (optCode.isPresent()) {
-            if (!codeBytes.isEmpty()
-                && (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
-                    || stopWatch.getTime() > ResponseSizePredicate.MAX_MILLIS_PER_REQUEST)) {
+            codeBytes.add(optCode.get());
+            if (sumListBytes(codeBytes) > maxResponseBytes
+                || stopWatch.getTime() > ResponseSizePredicate.MAX_MILLIS_PER_REQUEST) {
               break;
             }
-            codeBytes.add(optCode.get());
           }
         }
       }
@@ -598,8 +597,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   }
 
   /**
-   * Predicate that doesn't immediately stop when the delegate predicate returns false, but instead
-   * sets a flag to stop after the current element is processed.
+   * Predicate that delegates to another predicate and allows one element past the limit. This
+   * implements the snap protocol's soft limit behavior where the response should include the
+   * element that first exceeds the limit, ensuring progress and providing proof of completeness.
    */
   static class ExceedingPredicate implements Predicate<Pair<Bytes32, Bytes>> {
     private final Predicate<Pair<Bytes32, Bytes>> delegate;
@@ -611,8 +611,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     @Override
     public boolean test(final Pair<Bytes32, Bytes> pair) {
-      final boolean result = delegate.test(pair);
-      return shouldContinue.getAndSet(result);
+      return shouldContinue.getAndSet(delegate.test(pair));
     }
 
     public boolean shouldGetMore() {
@@ -701,8 +700,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   }
 
   private static int sumListBytes(final List<Bytes> listOfBytes) {
-    // TODO: remove hack, 10% is a fudge factor to account for the overhead of rlp encoding
-    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0) * 11 / 10;
+    return listOfBytes.stream().map(Bytes::size).reduce((a, b) -> a + b).orElse(0);
   }
 
   private static String asLogHash(final Bytes32 hash) {
