@@ -209,7 +209,7 @@ public class DebugTraceBlockStreamer {
 
     try {
       gen.writeStartObject();
-      gen.writeStringField("txHash", transaction.getHash().toHexString());
+      gen.writeStringField("txHash", transaction.getHash().toString());
       gen.writeFieldName("result");
       gen.writeStartObject();
 
