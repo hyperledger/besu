@@ -508,6 +508,20 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
+  public Status getStatus() {
+    long pendingCount = 0;
+    long queuedCount = 0;
+    synchronized (lock) {
+      for (final PendingTransactionsForSender pendingTxsForSender : transactionsBySender.values()) {
+        final Status accountStatus = pendingTxsForSender.getStatus();
+        pendingCount += accountStatus.pendingCount();
+        queuedCount += accountStatus.queuedCount();
+      }
+    }
+    return new Status(pendingCount, queuedCount);
+  }
+
+  @Override
   public String toTraceLog() {
     synchronized (lock) {
       StringBuilder sb =
