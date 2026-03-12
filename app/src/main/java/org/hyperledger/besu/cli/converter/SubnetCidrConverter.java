@@ -18,10 +18,10 @@ import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 import picocli.CommandLine;
 
-/** The IPAddress converter for CLI --net-restrict option. Supports both IPv4 and IPv6 CIDR. */
-public class SubnetInfoConverter implements CommandLine.ITypeConverter<IPAddress> {
+/** Converts CIDR notation strings to IPAddress prefix blocks. Supports both IPv4 and IPv6. */
+public class SubnetCidrConverter implements CommandLine.ITypeConverter<IPAddress> {
   /** Default Constructor. */
-  public SubnetInfoConverter() {}
+  public SubnetCidrConverter() {}
 
   /**
    * Converts an IP address with CIDR notation into an IPAddress prefix block.

@@ -21,7 +21,7 @@ import inet.ipaddr.IPAddress;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
-public class SubnetInfoConverterTest {
+public class SubnetCidrConverterTest {
 
   @Test
   void testCreateIpRestrictionHandlerWithValidSubnets() {
@@ -67,6 +67,6 @@ public class SubnetInfoConverterTest {
   }
 
   private IPAddress parseSubnetRules(final String subnet) {
-    return new SubnetInfoConverter().convert(subnet);
+    return new SubnetCidrConverter().convert(subnet);
   }
 }

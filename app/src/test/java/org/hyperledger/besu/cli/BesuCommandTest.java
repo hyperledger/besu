@@ -1317,7 +1317,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"127.0.0.0/24,10.0.0.0/24", "fd00::/64,fe80::/10"})
+  @ValueSource(
+      strings = {"127.0.0.0/24,10.0.0.0/24", "fd00::/64,fe80::/10", "127.0.0.0/24,fd00::/64"})
   public void netRestrictParsedCorrectly(final String subnets) {
     parseCommand("--net-restrict", subnets);
     verify(mockRunnerBuilder).allowedSubnets(allowedSubnetsArgumentCaptor.capture());
