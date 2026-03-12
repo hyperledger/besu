@@ -576,6 +576,10 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.logStats();
   }
 
+  public PendingTransactions.Status getStatus() {
+    return pendingTransactions.getStatus();
+  }
+
   @VisibleForTesting
   Class<? extends PendingTransactions> pendingTransactionsImplementation() {
     return pendingTransactions.getClass();
