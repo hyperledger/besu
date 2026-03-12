@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.MulOperation;
 import org.hyperledger.besu.evm.operation.MulOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
 
