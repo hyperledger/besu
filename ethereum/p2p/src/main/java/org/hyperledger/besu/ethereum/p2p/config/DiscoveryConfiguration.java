@@ -110,7 +110,7 @@ public class DiscoveryConfiguration {
   }
 
   public List<? extends NodeIdentifier> getBootnodeIdentifiers() {
-    return enodeBootnodes.isEmpty() ? enrBootnodes : enodeBootnodes;
+    return discoveryV5Enabled ? enrBootnodes : enodeBootnodes;
   }
 
   public boolean getIncludeBootnodesOnPeerRefresh() {
