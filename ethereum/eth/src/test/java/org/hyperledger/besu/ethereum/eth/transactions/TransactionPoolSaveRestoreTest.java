@@ -39,9 +39,9 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -276,18 +276,22 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
 
   @Test
   public void diskLockTimeoutIsPropagatedNotSwallowed() throws InterruptedException {
-    // Create a txpool with save and restore enabled
+    // Create a txpool with save and restore enabled and a short lock timeout
+    // so the test does not block for 60 seconds
     this.transactionPool =
-        createTransactionPool(b -> b.enableSaveRestore(true).saveFile(saveFilePath.toFile()));
-
-    // Use a short lock timeout so the test does not block for 60 seconds
-    final var saveRestoreManager = transactionPool.getSaveRestoreManager();
-    saveRestoreManager.setLockTimeout(Duration.ofMillis(100));
+        createTransactionPool(
+            b ->
+                b.enableSaveRestore(true)
+                    .saveFile(saveFilePath.toFile())
+                    .unstable(
+                        ImmutableTransactionPoolConfiguration.Unstable.builder()
+                            .saveRestoreTimeout(Duration.ofMillis(100))
+                            .build()));
 
     // Acquire the lock to simulate another operation holding it. Using acquire()
     // instead of drainPermits() ensures we wait for any in-progress async operation
     // (e.g. loadFromDisk triggered by pool creation) to release the permit first.
-    final var lock = saveRestoreManager.getDiskAccessLock();
+    final var lock = transactionPool.getSaveRestoreManager().getDiskAccessLock();
     lock.acquire();
 
     try {
@@ -296,7 +300,7 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
       // future with .exceptionally() which swallows the error for logging.
       // Before the fix, the failedFuture was not returned and the caller silently got
       // completedFuture(null). After the fix, the failed future must be propagated.
-      final CompletableFuture<Void> result = saveRestoreManager.loadFromDisk();
+      final CompletableFuture<Void> result = transactionPool.getSaveRestoreManager().loadFromDisk();
 
       assertThatThrownBy(result::get)
           .isInstanceOf(ExecutionException.class)
