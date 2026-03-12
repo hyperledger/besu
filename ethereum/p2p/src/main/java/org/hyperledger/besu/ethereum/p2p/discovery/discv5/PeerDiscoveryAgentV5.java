@@ -490,7 +490,9 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    */
   private boolean isPeerPermitted(final Peer localNode, final DiscoveryPeer remotePeer) {
     if (localNode == null) {
-      return true;
+      // Local node not yet initialized — reject rather than bypass identity checks.
+      // The peer will be re-discovered on the next FINDNODE round.
+      return false;
     }
     final boolean permitted =
         peerPermissions.isPermitted(

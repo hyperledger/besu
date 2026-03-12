@@ -90,7 +90,7 @@ class PeerDiscoveryAgentFactoryV5Test {
   }
 
   @Test
-  void allowNodeRecordWithNoopPermissionsAndMatchingSubnet() {
+  void allowNodeRecordWithinSubnet() {
     when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
 
     final PeerPermissions permissions = subnetPermissions("15.204.180.0/24");
