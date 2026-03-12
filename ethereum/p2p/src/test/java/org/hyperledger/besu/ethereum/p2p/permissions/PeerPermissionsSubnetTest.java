@@ -94,8 +94,7 @@ public class PeerPermissionsSubnetTest {
   @Test
   public void inetSocketAddressShouldBePermittedIfNoSubnets() {
     PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(List.of());
-    assertThat(peerPermissionSubnet.isPermitted(new InetSocketAddress("10.0.0.1", 30303)))
-        .isTrue();
+    assertThat(peerPermissionSubnet.isPermitted(new InetSocketAddress("10.0.0.1", 30303))).isTrue();
   }
 
   @Test
@@ -109,8 +108,7 @@ public class PeerPermissionsSubnetTest {
   public void ipv6InetSocketAddressOutsideSubnetShouldNotBePermitted() {
     List<IPAddress> allowedSubnets = List.of(subnet("fd00::/64"));
     PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
-    assertThat(peerPermissionSubnet.isPermitted(new InetSocketAddress("fe80::1", 30303)))
-        .isFalse();
+    assertThat(peerPermissionSubnet.isPermitted(new InetSocketAddress("fe80::1", 30303))).isFalse();
   }
 
   private void checkPermissions(
