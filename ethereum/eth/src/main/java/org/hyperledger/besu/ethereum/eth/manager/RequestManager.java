@@ -82,7 +82,8 @@ public class RequestManager {
               () -> peer.recordUselessResponse("Request ID incorrect"));
     } catch (final RLPException e) {
       LOG.debug(
-          "Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          "Received malformed message code={} data={} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          ethMessage.getData().getCode(),
           ethMessage.getData(),
           peer,
           e);
