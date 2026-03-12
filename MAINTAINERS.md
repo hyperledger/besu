@@ -19,6 +19,7 @@
 | Jason Frame      | jframe           | jframe           |
 | Luis Pinto       | lu-pinto         | lu-pinto         |
 | Lucas Saldanha   | lucassaldanha    | lucassaldanha    |
+| Miroslav Kovář   | mirgee           | mirgee           |
 | Sally MacFarlane | macfarla         | macfarla         |
 | Matilda Clerke   | Matilda-Clerke   | MatildaClerke    |
 | Karim Taam       | matkt            | matkt            |
