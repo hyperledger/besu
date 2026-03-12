@@ -281,12 +281,17 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Bytes accountValue) {
+    putFlatAccount(
+        getStateArchiveContextForWrite(storage).get(), transaction, accountHash, accountValue);
+  }
 
-    // key suffixed with block context, or MIN_BLOCK_SUFFIX if we have no context:
+  public void putFlatAccount(
+      final BonsaiContext context,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Bytes accountValue) {
     byte[] keySuffixed =
-        calculateArchiveKeyWithMinSuffix(
-            getStateArchiveContextForWrite(storage).get(), accountHash.getBytes().toArrayUnsafe());
-
+        calculateArchiveKeyWithMinSuffix(context, accountHash.getBytes().toArrayUnsafe());
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
   }
 
@@ -295,12 +300,15 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final SegmentedKeyValueStorage storage,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash) {
+    removeFlatAccount(getStateArchiveContextForWrite(storage).get(), transaction, accountHash);
+  }
 
-    // insert a key suffixed with block context, with 'deleted account' value
+  public void removeFlatAccount(
+      final BonsaiContext context,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash) {
     byte[] keySuffixed =
-        calculateArchiveKeyWithMinSuffix(
-            getStateArchiveContextForWrite(storage).get(), accountHash.getBytes().toArrayUnsafe());
-
+        calculateArchiveKeyWithMinSuffix(context, accountHash.getBytes().toArrayUnsafe());
     transaction.put(ACCOUNT_INFO_STATE, keySuffixed, DELETED_ACCOUNT_VALUE);
   }
 
@@ -382,14 +390,23 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final Hash accountHash,
       final Hash slotHash,
       final Bytes storageValue) {
+    putFlatAccountStorageValueByStorageSlotHash(
+        getStateArchiveContextForWrite(storage).get(),
+        transaction,
+        accountHash,
+        slotHash,
+        storageValue);
+  }
 
-    // get natural key from account hash and slot key
+  public void putFlatAccountStorageValueByStorageSlotHash(
+      final BonsaiContext context,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash,
+      final Bytes storageValue) {
     byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
-    // keyNearest, use MIN_BLOCK_SUFFIX in the absence of a block context:
-    byte[] keyNearest =
-        calculateArchiveKeyWithMinSuffix(getStateArchiveContextForWrite(storage).get(), naturalKey);
-
-    transaction.put(ACCOUNT_STORAGE_STORAGE, keyNearest, storageValue.toArrayUnsafe());
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(context, naturalKey);
+    transaction.put(ACCOUNT_STORAGE_STORAGE, keySuffixed, storageValue.toArrayUnsafe());
   }
 
   /*
@@ -401,13 +418,17 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash) {
+    removeFlatAccountStorageValueByStorageSlotHash(
+        getStateArchiveContextForWrite(storage).get(), transaction, accountHash, slotHash);
+  }
 
-    // get natural key from account hash and slot key
+  public void removeFlatAccountStorageValueByStorageSlotHash(
+      final BonsaiContext context,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash slotHash) {
     byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
-    // insert a key suffixed with block context, with 'deleted account' value
-    byte[] keySuffixed =
-        calculateArchiveKeyWithMinSuffix(getStateArchiveContextForWrite(storage).get(), naturalKey);
-
+    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(context, naturalKey);
     transaction.put(ACCOUNT_STORAGE_STORAGE, keySuffixed, DELETED_STORAGE_VALUE);
   }
 
