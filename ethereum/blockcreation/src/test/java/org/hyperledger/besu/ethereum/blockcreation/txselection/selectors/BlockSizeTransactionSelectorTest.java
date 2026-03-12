@@ -361,8 +361,8 @@ class BlockSizeTransactionSelectorTest {
   }
 
   /**
-   * EIP-8037 2D gas: Post-processing rejects (BLOCK_FULL) when the actual gas split causes
-   * gas_metered = max(regular, state) to exceed the block gas limit.
+   * EIP-8037 2D gas: Post-processing rejects (TX_TOO_LARGE_FOR_REMAINING_GAS) when the actual gas
+   * split causes gas_metered = max(regular, state) to exceed the block gas limit.
    */
   @Test
   void eip8037PostProcessingRejectsWhenGasMeteredExceedsLimit() {
@@ -399,7 +399,8 @@ class BlockSizeTransactionSelectorTest {
         new TransactionEvaluationContext(
             blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     assertThat(selector.evaluateTransactionPreProcessing(ctx2)).isEqualTo(SELECTED);
-    assertThat(selector.evaluateTransactionPostProcessing(ctx2, result2)).isEqualTo(BLOCK_FULL);
+    assertThat(selector.evaluateTransactionPostProcessing(ctx2, result2))
+        .isEqualTo(TX_TOO_LARGE_FOR_REMAINING_GAS);
   }
 
   /**

@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 public class TransactionGasAccountingTest {
 
   /** Returns a builder with all fields set to 0/false — a valid baseline. */
-  private static TransactionGasAccounting.Builder baseBuilder() {
+  private static ImmutableTransactionGasAccounting.Builder baseBuilder() {
     return TransactionGasAccounting.builder()
         .txGasLimit(0L)
         .remainingGas(0L)
@@ -164,6 +164,6 @@ public class TransactionGasAccountingTest {
   public void build_failsWhenFieldMissing() {
     assertThatThrownBy(() -> TransactionGasAccounting.builder().txGasLimit(100_000L).build())
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("remainingGas must be set");
+        .hasMessageContaining("remainingGas");
   }
 }

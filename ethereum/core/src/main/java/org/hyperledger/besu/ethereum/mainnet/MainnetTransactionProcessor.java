@@ -307,7 +307,7 @@ public class MainnetTransactionProcessor {
           gasCalculator.accessListGasCost(eip2930AccessListEntries.size(), accessListStorageCount);
       final long codeDelegationGas =
           gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
-      final long intrinsicGas =
+      final long intrinsicRegularGas =
           gasCalculator.transactionIntrinsicGasCost(
               transaction, clampedAdd(accessListGas, codeDelegationGas));
 
@@ -319,29 +319,29 @@ public class MainnetTransactionProcessor {
               blockHeader.getGasLimit(),
               transaction.isContractCreation(),
               transaction.codeDelegationListSize());
-      if (transaction.getGasLimit() < intrinsicGas + intrinsicStateGas) {
+      if (transaction.getGasLimit() < intrinsicRegularGas + intrinsicStateGas) {
         LOG.trace(
             "Insufficient gas for intrinsic cost: gasLimit={}, regularIntrinsic={}, stateIntrinsic={}",
             transaction.getGasLimit(),
-            intrinsicGas,
+            intrinsicRegularGas,
             intrinsicStateGas);
         return TransactionProcessingResult.invalid(
             ValidationResult.invalid(
                 TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,
                 String.format(
-                    "intrinsic gas cost %s (regular %s + state %s) exceeds gas limit %s",
-                    intrinsicGas + intrinsicStateGas,
-                    intrinsicGas,
+                    "intrinsic gas cost %d (regular %d + state %d) exceeds gas limit %d",
+                    intrinsicRegularGas + intrinsicStateGas,
+                    intrinsicRegularGas,
                     intrinsicStateGas,
                     transaction.getGasLimit())));
       }
 
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas;
+      final long gasAvailable = transaction.getGasLimit() - intrinsicRegularGas;
       LOG.trace(
           "Gas available for execution {} = {} - {} (limit - intrinsic)",
           gasAvailable,
           transaction.getGasLimit(),
-          intrinsicGas);
+          intrinsicRegularGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
 
@@ -411,9 +411,9 @@ public class MainnetTransactionProcessor {
       // EIP-8037: Initialize the state gas reservoir for Amsterdam+ forks.
       // When multidimensional gas is active, regular gas is capped at TX_MAX_GAS_LIMIT - intrinsic.
       // Gas beyond that cap goes into the state gas reservoir.
-      if (stateGasCalc.transactionRegularGasLimit() < Long.MAX_VALUE) {
+      if (stateGasCalc.isActive()) {
         final long regularBudget =
-            Math.max(0L, stateGasCalc.transactionRegularGasLimit() - intrinsicGas);
+            Math.max(0L, stateGasCalc.transactionRegularGasLimit() - intrinsicRegularGas);
         final long gasLeft = Math.min(regularBudget, gasAvailable);
         final long reservoir = gasAvailable - gasLeft;
         initialFrame.setGasRemaining(gasLeft);
@@ -475,8 +475,11 @@ public class MainnetTransactionProcessor {
             stateGasCalc.transactionRegularGasLimit());
       }
 
-      if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS
-          && !regularGasLimitExceeded) {
+      final boolean txSucceeded =
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS
+              && !regularGasLimitExceeded;
+
+      if (txSucceeded) {
         worldUpdater.commit();
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
@@ -589,10 +592,6 @@ public class MainnetTransactionProcessor {
       // Noop before Amsterdam
       transferLogEmitter.emitClosureLogs(
           worldState, initialFrame.getSelfDestructs(), initialFrame::addLog);
-
-      final boolean txSucceeded =
-          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS
-              && !regularGasLimitExceeded;
 
       operationTracer.traceEndTransaction(
           worldState.updater(),

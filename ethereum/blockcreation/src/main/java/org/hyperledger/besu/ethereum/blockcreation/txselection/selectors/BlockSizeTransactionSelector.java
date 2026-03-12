@@ -82,20 +82,30 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
   public TransactionSelectionResult evaluateTransactionPostProcessing(
       final TransactionEvaluationContext evaluationContext,
       final TransactionProcessingResult processingResult) {
-    final long regularGasUsed =
+    final long txRegularGasUsed =
         gasAccountingStrategy.calculateBlockGas(
             evaluationContext.getTransaction(), processingResult);
     final long stateGasUsed = processingResult.getStateGasUsed();
 
     final GasState state = getWorkingState();
     final GasState newState =
-        new GasState(state.regularGas() + regularGasUsed, state.stateGas() + stateGasUsed);
+        new GasState(state.regularGas() + txRegularGasUsed, state.stateGas() + stateGasUsed);
     setWorkingState(newState);
 
     final long gasMetered =
         gasAccountingStrategy.effectiveGasUsed(newState.regularGas(), newState.stateGas());
     if (gasMetered > blockGasLimit) {
-      return TransactionSelectionResult.BLOCK_FULL;
+      LOG.atTrace()
+          .setMessage(
+              "Transaction {} exceeds block gas limit post-processing:"
+                  + " regularGas={}, stateGas={}, gasMetered={}, blockGasLimit={}")
+          .addArgument(evaluationContext.getPendingTransaction()::toTraceLog)
+          .addArgument(newState.regularGas())
+          .addArgument(newState.stateGas())
+          .addArgument(gasMetered)
+          .addArgument(blockGasLimit)
+          .log();
+      return TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
     }
     return TransactionSelectionResult.SELECTED;
   }
@@ -104,6 +114,9 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
    * Checks if the transaction is too large for the block using the gas accounting strategy. For 1D
    * gas, this checks regular gas only. For 2D gas (EIP-8037), this considers the sum of remaining
    * capacity in both dimensions.
+   *
+   * <p>This is a permissive heuristic: it may allow a transaction through pre-processing that later
+   * exceeds the limit in post-processing, where the actual regular/state split is known.
    *
    * @param transaction The transaction to be checked.
    * @param state The current gas state with regular and state gas.

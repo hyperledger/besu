@@ -282,11 +282,15 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         haltReason,
         frame.getContractAddress());
     // Revert world state changes without calling frame.rollback() (which would undo stateGasUsed).
+    // revert() undoes the world state mutations from this frame's execution.
+    // commit() propagates the reverted (clean) state to the parent updater.
+    // frame.rollback() is deliberately avoided: it would undo stateGasUsed tracking via the
+    // UndoScalar mechanism, which must be preserved for EIP-8037 block gas accounting.
     frame.getWorldUpdater().revert();
     frame.getWorldUpdater().commit();
     frame.clearLogs();
     frame.clearGasRefund();
-    frame.clearAllGas();
+    frame.clearGasRemaining();
     frame.clearOutputData();
     // Do NOT call frame.setExceptionalHaltReason() here — MTP zeros the state gas reservoir when
     // exceptionalHaltReason is present, which would inflate block gas accounting. Setting

@@ -211,11 +211,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     // EIP-7778: Track two separate cumulative gas values
-    // cumulativeBlockGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
+    // cumulativeRegularGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
     //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
     //   - Amsterdam+: pre-refund gas (prevents block gas limit circumvention via refunds)
     // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
-    long cumulativeBlockGasUsed = 0;
+    long cumulativeRegularGasUsed = 0;
     long cumulativeReceiptGasUsed = 0;
     long cumulativeStateGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -299,7 +299,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
           transactionUpdater = blockUpdater;
         }
-        if (!hasAvailableBlockBudget(blockHeader, transaction, cumulativeBlockGasUsed)) {
+        // Pre-check uses regular gas only; state gas is validated post-block via
+        // gasMetered = max(cumulativeRegular, cumulativeState) at block finalization.
+        if (!hasAvailableBlockBudget(blockHeader, transaction, cumulativeRegularGasUsed)) {
           return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
 
@@ -342,7 +344,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
         // EIP-7778: Update both cumulative gas values
         // Block gas uses protocol-specific strategy (pre-refund for Amsterdam+)
-        cumulativeBlockGasUsed +=
+        cumulativeRegularGasUsed +=
             protocolSpec
                 .getBlockGasAccountingStrategy()
                 .calculateBlockGas(transaction, transactionProcessingResult);
@@ -542,7 +544,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       // EIP-8037: gas_metered = max(cumulative_regular, cumulative_state)
-      final long gasMetered = Math.max(cumulativeBlockGasUsed, cumulativeStateGasUsed);
+      final long gasMetered = Math.max(cumulativeRegularGasUsed, cumulativeStateGasUsed);
 
       return new BlockProcessingResult(
           Optional.of(

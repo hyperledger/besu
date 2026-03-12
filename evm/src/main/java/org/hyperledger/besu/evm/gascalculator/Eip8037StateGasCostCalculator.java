@@ -171,6 +171,11 @@ public class Eip8037StateGasCostCalculator implements StateGasCostCalculator {
     return TX_MAX_GAS_LIMIT;
   }
 
+  @Override
+  public boolean isActive() {
+    return true;
+  }
+
   // ---- Charge method overrides ----
 
   @Override
@@ -242,11 +247,18 @@ public class Eip8037StateGasCostCalculator implements StateGasCostCalculator {
   }
 
   @Override
-  public void refundStorageSetStateGas(final MessageFrame frame) {
-    final long blockGasLimit = frame.getBlockValues().getGasLimit();
-    final long refundAmount = storageSetStateGas(blockGasLimit);
-    // State gas refund goes into the regular refund counter, subject to the 1/5 cap.
-    // stateGasUsed is NOT decremented — it tracks gross state gas consumed.
-    frame.incrementGasRefund(refundAmount);
+  public void refundStorageSetStateGas(
+      final MessageFrame frame,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
+    // Only refund for 0→X→0: original is zero, current is nonzero, new is zero
+    if (newValue.isZero() && !currentValue.get().isZero() && originalValue.get().isZero()) {
+      final long blockGasLimit = frame.getBlockValues().getGasLimit();
+      final long refundAmount = storageSetStateGas(blockGasLimit);
+      // State gas refund goes into the regular refund counter, subject to the 1/5 cap.
+      // stateGasUsed is NOT decremented — it tracks gross state gas consumed.
+      frame.incrementGasRefund(refundAmount);
+    }
   }
 }

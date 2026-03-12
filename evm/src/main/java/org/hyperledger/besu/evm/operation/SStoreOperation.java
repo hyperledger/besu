@@ -102,11 +102,9 @@ public class SStoreOperation extends AbstractOperation {
             .calculateStorageRefundAmount(newValue, currentValueSupplier, originalValueSupplier));
 
     // EIP-8037: Refund state gas for 0→X→0 (storage set then clear)
-    if (newValue.isZero()
-        && !currentValueSupplier.get().isZero()
-        && originalValueSupplier.get().isZero()) {
-      gasCalculator().stateGasCostCalculator().refundStorageSetStateGas(frame);
-    }
+    gasCalculator()
+        .stateGasCostCalculator()
+        .refundStorageSetStateGas(frame, newValue, currentValueSupplier, originalValueSupplier);
 
     // EIP-8037: Charge state gas for storage set (0 -> nonzero)
     if (!gasCalculator()

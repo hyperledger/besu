@@ -175,7 +175,7 @@ public abstract class AbstractMessageProcessor {
       }
     }
 
-    frame.clearAllGas();
+    frame.clearGasRemaining();
     frame.clearOutputData();
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }

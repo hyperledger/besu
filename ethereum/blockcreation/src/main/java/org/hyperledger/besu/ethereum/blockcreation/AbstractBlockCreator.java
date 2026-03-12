@@ -328,7 +328,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
               .gasUsed(
                   Math.max(
-                      transactionResults.getCumulativeGasUsed(),
+                      transactionResults.getCumulativeRegularGasUsed(),
                       transactionResults.getCumulativeStateGasUsed()))
               .extraData(extraDataCalculator.get(parentHeader))
               .withdrawalsRoot(
