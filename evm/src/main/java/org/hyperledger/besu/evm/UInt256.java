@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.evm;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.math.BigInteger;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -60,6 +63,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // Fixed number of bits per limb.
   private static final int N_BITS_PER_LIMB = 64;
 
+  private static final int N_BYTES_PER_LIMB = 8;
+
+  private static final VarHandle LONG_BE =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
+
   // --------------------------------------------------------------------------
   // endregion
 
@@ -73,25 +81,43 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    * @return Big-endian UInt256 represented by the bytes.
    */
   public static UInt256 fromBytesBE(final byte[] bytes) {
-    if (bytes.length == 0) return ZERO;
-    long u3 = 0;
-    long u2 = 0;
-    long u1 = 0;
-    long u0 = 0;
-    int b = bytes.length - 1; // Index in bytes array
-    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
-      u0 |= ((bytes[b] & 0xFFL) << shift);
+    if (bytes.length == 0) {
+      return ZERO;
     }
-    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
-      u1 |= ((bytes[b] & 0xFFL) << shift);
+    if (bytes.length < 8) {
+      return fromBytesSingleLimb(bytes);
     }
-    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
-      u2 |= ((bytes[b] & 0xFFL) << shift);
-    }
-    for (int shift = 0; shift < 64 && b >= 0; b--, shift += 8) {
-      u3 |= ((bytes[b] & 0xFFL) << shift);
-    }
+    int prevIndex = bytes.length;
+    int nextIndex = prevIndex - 8;
+    final long u0 = getLong(bytes, nextIndex, prevIndex);
+    prevIndex = nextIndex;
+
+    nextIndex = Math.max(0, prevIndex - 8);
+    final long u1 = getLong(bytes, nextIndex, prevIndex);
+    prevIndex = nextIndex;
+
+    nextIndex = Math.max(0, prevIndex - 8);
+    final long u2 = getLong(bytes, nextIndex, prevIndex);
+    prevIndex = nextIndex;
+
+    nextIndex = Math.max(0, bytes.length - BYTESIZE);
+    final long u3 = getLong(bytes, nextIndex, prevIndex);
+
     return new UInt256(u3, u2, u1, u0);
+  }
+
+  private static long getLong(final byte[] bytes, final int from, final int to) {
+    int shift = (N_BYTES_PER_LIMB + from - to) * 8;
+    final long value = (long) LONG_BE.get(bytes, from);
+    return shift == N_BITS_PER_LIMB ? 0L : value >>> shift;
+  }
+
+  private static UInt256 fromBytesSingleLimb(final byte[] bytes) {
+    long value = 0;
+    for (int i = bytes.length - 1, shift = 0; i >= 0; i--, shift += 8) {
+      value |= ((bytes[i] & 0xFFL) << shift);
+    }
+    return new UInt256(0, 0, 0, value);
   }
 
   /**
@@ -162,23 +188,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    */
   public byte[] toBytesBE() {
     byte[] result = new byte[BYTESIZE];
-    longIntoBytes(result, 0, u3);
-    longIntoBytes(result, 8, u2);
-    longIntoBytes(result, 16, u1);
-    longIntoBytes(result, 24, u0);
+    LONG_BE.set(result, 0, u3);
+    LONG_BE.set(result, 8, u2);
+    LONG_BE.set(result, 16, u1);
+    LONG_BE.set(result, 24, u0);
     return result;
-  }
-
-  // Helper method to write 8 bytes from big-endian int
-  private static void longIntoBytes(final byte[] bytes, final int offset, final long value) {
-    bytes[offset] = (byte) (value >>> 56);
-    bytes[offset + 1] = (byte) (value >>> 48);
-    bytes[offset + 2] = (byte) (value >>> 40);
-    bytes[offset + 3] = (byte) (value >>> 32);
-    bytes[offset + 4] = (byte) (value >>> 24);
-    bytes[offset + 5] = (byte) (value >>> 16);
-    bytes[offset + 6] = (byte) (value >>> 8);
-    bytes[offset + 7] = (byte) value;
   }
 
   /**

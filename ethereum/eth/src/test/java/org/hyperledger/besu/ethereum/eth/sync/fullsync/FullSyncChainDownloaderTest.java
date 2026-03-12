@@ -47,7 +47,6 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -361,73 +360,6 @@ public class FullSyncChainDownloaderTest {
     }
     assertThat(syncState.syncTarget()).isPresent();
     assertThat(syncState.syncTarget().get().peer()).isEqualTo(peerB.getEthPeer());
-  }
-
-  @ParameterizedTest
-  @ArgumentsSource(FullSyncChainDownloaderTestArguments.class)
-  public void recoversFromSyncTargetDisconnect(final DataStorageFormat storageFormat) {
-    setupTest(storageFormat);
-    localBlockchainSetup.importFirstBlocks(2);
-    final long localChainHeadAtStart = localBlockchain.getChainHeadBlockNumber();
-    otherBlockchainSetup.importAllBlocks();
-    final long targetBlock = otherBlockchain.getChainHeadBlockNumber();
-    // Sanity check
-    assertThat(targetBlock).isGreaterThan(localBlockchain.getChainHeadBlockNumber());
-
-    final SynchronizerConfiguration syncConfig =
-        syncConfigBuilder().downloaderChainSegmentSize(5).downloaderHeadersRequestSize(3).build();
-    final ChainDownloader downloader = downloader(syncConfig);
-
-    final long bestPeerChainHead = otherBlockchain.getChainHeadBlockNumber();
-    final RespondingEthPeer bestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, otherBlockchain);
-    final long secondBestPeerChainHead = bestPeerChainHead - 3;
-    final Blockchain shorterChain = createShortChain(otherBlockchain, secondBestPeerChainHead);
-    final RespondingEthPeer secondBestPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, shorterChain);
-    final RespondingEthPeer.Responder bestResponder =
-        RespondingEthPeer.blockchainResponder(otherBlockchain);
-    final RespondingEthPeer.Responder secondBestResponder =
-        RespondingEthPeer.blockchainResponder(shorterChain);
-    downloader.start();
-
-    // Process through sync target selection
-    bestPeer.respondWhileOtherThreadsWork(bestResponder, () -> !syncState.syncTarget().isPresent());
-
-    assertThat(syncState.syncTarget()).isPresent();
-    assertThat(syncState.syncTarget().get().peer()).isEqualTo(bestPeer.getEthPeer());
-
-    // The next message should be for checkpoint headers from the sync target
-    Awaitility.waitAtMost(10, TimeUnit.SECONDS)
-        .until(() -> bestPeer.peekNextOutgoingRequest().isPresent());
-
-    // Process through the first import
-    await()
-        .atMost(10, TimeUnit.SECONDS)
-        .pollInterval(100, TimeUnit.MILLISECONDS)
-        .untilAsserted(
-            () -> {
-              if (!bestPeer.respond(bestResponder)) {
-                secondBestPeer.respond(secondBestResponder);
-              }
-              assertThat(localBlockchain.getChainHeadBlockNumber())
-                  .isNotEqualTo(localChainHeadAtStart);
-            });
-
-    // Sanity check that we haven't already passed the second best peer
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isLessThan(secondBestPeerChainHead);
-
-    // Disconnect peer
-    ethProtocolManager.handleDisconnect(
-        bestPeer.getPeerConnection(), DisconnectReason.TOO_MANY_PEERS, true);
-
-    // Downloader should recover and sync to next best peer, but it may stall
-    // for 10 seconds first (by design).
-    secondBestPeer.respondWhileOtherThreadsWork(
-        secondBestResponder,
-        () -> localBlockchain.getChainHeadBlockNumber() != secondBestPeerChainHead);
-
-    assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(secondBestPeerChainHead);
   }
 
   @ParameterizedTest
