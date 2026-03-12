@@ -103,15 +103,21 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
 
   private CompletableFuture<Void> handleSyncStep(final Hash firstHash) {
     final CompletableFuture<Void> syncStep = new CompletableFuture<>();
-    executeSyncStep(firstHash)
-        .whenComplete(
-            (result, error) -> {
-              if (error != null) {
-                handleSyncStepError(error, firstHash, syncStep);
-              } else {
-                handleSyncStepSuccess(result, firstHash, syncStep);
-              }
-            });
+    try {
+      executeSyncStep(firstHash)
+          .whenComplete(
+              (result, error) -> {
+                if (error != null) {
+                  handleSyncStepError(error, firstHash, syncStep);
+                } else {
+                  handleSyncStepSuccess(result, firstHash, syncStep);
+                }
+              });
+      // Catch Throwable (not just Exception) so that even programming errors complete
+      // syncStep rather than leaving it permanently pending and stalling the sync loop.
+    } catch (final Throwable t) {
+      syncStep.completeExceptionally(t);
+    }
     return syncStep;
   }
 
