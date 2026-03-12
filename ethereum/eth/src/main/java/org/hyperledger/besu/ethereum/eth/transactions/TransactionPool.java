@@ -754,12 +754,27 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   class SaveRestoreManager {
+    private static final Duration DEFAULT_LOCK_TIMEOUT = Duration.ofMinutes(1);
     private final Semaphore diskAccessLock = new Semaphore(1, true);
     private final AtomicReference<CompletableFuture<Void>> writeInProgress =
         new AtomicReference<>(CompletableFuture.completedFuture(null));
     private final AtomicReference<CompletableFuture<Void>> readInProgress =
         new AtomicReference<>(CompletableFuture.completedFuture(null));
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
+    private Duration lockTimeout;
+
+    SaveRestoreManager() {
+      this(DEFAULT_LOCK_TIMEOUT);
+    }
+
+    SaveRestoreManager(final Duration lockTimeout) {
+      this.lockTimeout = lockTimeout;
+    }
+
+    @VisibleForTesting
+    void setLockTimeout(final Duration lockTimeout) {
+      this.lockTimeout = lockTimeout;
+    }
 
     @VisibleForTesting
     Semaphore getDiskAccessLock() {
@@ -800,7 +815,7 @@ public class TransactionPool implements BlockAddedObserver {
         final AtomicReference<CompletableFuture<Void>> operationInProgress) {
       if (configuration.getEnableSaveRestore()) {
         try {
-          if (diskAccessLock.tryAcquire(1, TimeUnit.MINUTES)) {
+          if (diskAccessLock.tryAcquire(lockTimeout.toMillis(), TimeUnit.MILLISECONDS)) {
 
             isCancelled.set(false);
             operationInProgress.set(

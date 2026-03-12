@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import org.hyperledger.besu.datatypes.Wei;
@@ -38,6 +39,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -273,44 +275,32 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
   }
 
   @Test
-  public void diskLockTimeoutIsPropagatedNotSwallowed()
-      throws InterruptedException, ExecutionException {
+  public void diskLockTimeoutIsPropagatedNotSwallowed() throws InterruptedException {
     // Create a txpool with save and restore enabled
     this.transactionPool =
         createTransactionPool(b -> b.enableSaveRestore(true).saveFile(saveFilePath.toFile()));
 
+    // Use a short lock timeout so the test does not block for 60 seconds
+    final var saveRestoreManager = transactionPool.getSaveRestoreManager();
+    saveRestoreManager.setLockTimeout(Duration.ofMillis(100));
+
     // Acquire the lock to simulate another operation holding it. Using acquire()
     // instead of drainPermits() ensures we wait for any in-progress async operation
     // (e.g. loadFromDisk triggered by pool creation) to release the permit first.
-    final var lock = transactionPool.getSaveRestoreManager().getDiskAccessLock();
+    final var lock = saveRestoreManager.getDiskAccessLock();
     lock.acquire();
 
     try {
       // Call loadFromDisk() directly on the SaveRestoreManager to test
       // serializeAndDedupOperation() in isolation, since setDisabled() wraps the
       // future with .exceptionally() which swallows the error for logging.
-      // Both saveToDisk() and loadFromDisk() go through serializeAndDedupOperation(),
-      // so either exercises the same timeout path.
       // Before the fix, the failedFuture was not returned and the caller silently got
       // completedFuture(null). After the fix, the failed future must be propagated.
-      final CompletableFuture<Void> result = transactionPool.getSaveRestoreManager().loadFromDisk();
+      final CompletableFuture<Void> result = saveRestoreManager.loadFromDisk();
 
-      assertThat(result.isCompletedExceptionally())
-          .as("future should complete exceptionally when disk lock times out")
-          .isTrue();
-
-      result
-          .exceptionally(
-              t -> {
-                // unwrap CompletionException if present
-                final Throwable cause =
-                    t instanceof java.util.concurrent.CompletionException ? t.getCause() : t;
-                assertThat(cause)
-                    .as("root cause should be a TimeoutException")
-                    .isInstanceOf(TimeoutException.class);
-                return null;
-              })
-          .get();
+      assertThatThrownBy(result::get)
+          .isInstanceOf(ExecutionException.class)
+          .hasCauseInstanceOf(TimeoutException.class);
     } finally {
       // Always restore the permit so cleanup does not hang
       lock.release();
