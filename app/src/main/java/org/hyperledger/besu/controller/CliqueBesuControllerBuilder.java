@@ -24,14 +24,12 @@ import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueBlockScheduler;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMinerExecutor;
 import org.hyperledger.besu.consensus.clique.blockcreation.CliqueMiningCoordinator;
-import org.hyperledger.besu.consensus.clique.jsonrpc.CliqueJsonRpcMethods;
 import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -67,14 +65,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
     epochManager = new EpochManager(blocksPerEpoch);
     forksSchedule = CliqueForksSchedulesFactory.create(genesisConfigOptions);
-  }
-
-  @Override
-  protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule,
-      final MiningConfiguration miningConfiguration) {
-    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningConfiguration);
   }
 
   @Override
@@ -114,7 +104,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             o ->
                 miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
-                        .getFork(o.getHeader().getNumber() + 1)
+                        .getFork(o.getHeader().getNumber() + 1, o.getHeader().getTimestamp())
                         .getValue()
                         .getBlockPeriodSeconds()));
 
@@ -152,7 +142,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected PluginServiceFactory createAdditionalPluginServices(
       final Blockchain blockchain, final ProtocolContext protocolContext) {
-    return new CliqueQueryPluginServiceFactory(blockchain, nodeKey);
+    return new NoopPluginServiceFactory();
   }
 
   @Override

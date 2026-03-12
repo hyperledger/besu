@@ -7,12 +7,12 @@ on:
 
 jobs:
   syncTestReports:
-    if: github.repository == 'hyperledger/besu'
-    runs-on: ubuntu-22.04
+    if: github.repository == 'besu-eth/besu'
+    runs-on: ubuntu-latest
     steps:
       - name: Get latest merge PR number
         id: latest_merged_pr_number
-        run: echo "PULL_REQUEST_NUMBER=$(gh pr list --repo hyperledger/besu --base main --state merged --json "number,mergedAt" --search "sort:updated-desc" --jq 'max_by(.mergedAt)|.number')" >> "$GITHUB_OUTPUT"
+        run: echo "PULL_REQUEST_NUMBER=$(gh pr list --repo besu-eth/besu --base main --state merged --json "number,mergedAt" --search "sort:updated-desc" --jq 'max_by(.mergedAt)|.number')" >> "$GITHUB_OUTPUT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get unit test reports from latest merged PR

@@ -14,23 +14,38 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 
+import org.hyperledger.besu.crypto.SECPPublicKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
+
+import java.net.InetSocketAddress;
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.ethereum.beacon.discovery.AddressAccessPolicy;
+import org.ethereum.beacon.discovery.DiscoverySystemBuilder;
+import org.ethereum.beacon.discovery.MutableDiscoverySystem;
+import org.ethereum.beacon.discovery.crypto.Signer;
 
 /**
  * Factory for creating DiscV5 {@link PeerDiscoveryAgent} instances.
  *
  * <p>This factory is responsible for wiring together the dependencies needed by {@link
  * PeerDiscoveryAgentV5}. It intentionally does <em>not</em> initialize the local node record or
- * build the {@link org.ethereum.beacon.discovery.MutableDiscoverySystem} — both are deferred to
- * {@link PeerDiscoveryAgentV5#start(int)}, where the actual RLPx TCP port is known.
+ * build the {@link MutableDiscoverySystem} — both are deferred to {@link
+ * PeerDiscoveryAgentV5#start(int)}, where the actual RLPx TCP port is known.
  *
  * <p>The resulting {@link PeerDiscoveryAgent} integrates DiscV5 discovery with Besu's P2P
  * networking stack.
@@ -77,11 +92,121 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   @Override
   public PeerDiscoveryAgent create(final RlpxAgent rlpxAgent) {
     return new PeerDiscoveryAgentV5(
-        nodeKey,
         config,
         forkIdManager,
         nodeRecordManager,
         rlpxAgent,
-        config.discoveryConfiguration().isPreferIpv6Outbound());
+        config.discoveryConfiguration().isPreferIpv6Outbound(),
+        buildDefaultDiscoverySystemFactory());
+  }
+
+  /** Creates the default {@link PeerDiscoveryAgentV5.DiscoverySystemFactory}. */
+  private PeerDiscoveryAgentV5.DiscoverySystemFactory buildDefaultDiscoverySystemFactory() {
+    final DiscoveryConfiguration discoveryConfig = config.discoveryConfiguration();
+
+    return (localNodeRecord, nodeRecordListener) -> {
+      final DiscoverySystemBuilder builder =
+          new DiscoverySystemBuilder()
+              .signer(new NodeKeySigner(nodeKey))
+              .localNodeRecord(localNodeRecord)
+              .localNodeRecordListener(nodeRecordListener)
+              // Ignore peer-reported external addresses for now (always returns Optional.empty()).
+              // For IPv4 this is covered by NatService; future IPv6 auto-discovery may relax
+              // this: https://github.com/hyperledger/besu/issues/9874
+              .newAddressHandler((nodeRecord, newAddress) -> Optional.empty())
+              // TODO(https://github.com/hyperledger/besu/issues/9688): Address filtering based
+              // on peer permissions is not yet integrated; all addresses are currently allowed.
+              .addressAccessPolicy(AddressAccessPolicy.ALLOW_ALL)
+              .bootnodes(
+                  discoveryConfig.getEnrBootnodes().stream()
+                      .map(EthereumNodeRecord::nodeRecord)
+                      .toList());
+
+      if (discoveryConfig.isDualStackEnabled()) {
+        final InetSocketAddress ipv4 =
+            new InetSocketAddress(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
+        final InetSocketAddress ipv6 =
+            new InetSocketAddress(
+                discoveryConfig
+                    .getBindHostIpv6()
+                    .orElseThrow(
+                        () ->
+                            new IllegalStateException(
+                                "Discovery dual-stack is enabled but bindHostIpv6 is not set")),
+                discoveryConfig.getBindPortIpv6());
+        builder.listen(ipv4, ipv6);
+      } else {
+        builder.listen(discoveryConfig.getBindHost(), discoveryConfig.getBindPort());
+      }
+
+      return builder.buildMutable();
+    };
+  }
+
+  /**
+   * An implementation of the {@link Signer} interface that uses the node's {@link NodeKey} for
+   * signing and key agreement.
+   */
+  private static class NodeKeySigner implements Signer {
+    private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+
+    private final NodeKey nodeKey;
+
+    /**
+     * Creates a new NodeKeySigner.
+     *
+     * @param nodeKey the node key to use for signing and key agreement
+     */
+    public NodeKeySigner(final NodeKey nodeKey) {
+      this.nodeKey = nodeKey;
+    }
+
+    /**
+     * Derives a shared secret using ECDH with the given peer public key.
+     *
+     * @param remotePubKey the destination peer's public key
+     * @return the derived shared secret
+     */
+    @Override
+    public Bytes deriveECDHKeyAgreement(final Bytes remotePubKey) {
+      final Bytes uncompressedKey;
+      if (remotePubKey.size() == 33) {
+        // Compressed key (0x02/0x03 prefix) — decompress to the 64-byte format without prefix
+        final byte[] encoded =
+            signatureAlgorithm
+                .getCurve()
+                .getCurve()
+                .decodePoint(remotePubKey.toArrayUnsafe())
+                .getEncoded(false);
+        uncompressedKey = Bytes.wrap(encoded, 1, 64);
+      } else {
+        uncompressedKey = remotePubKey;
+      }
+      final SECPPublicKey publicKey = signatureAlgorithm.createPublicKey(uncompressedKey);
+      return nodeKey.calculateECDHKeyAgreementCompressed(publicKey);
+    }
+
+    /**
+     * Creates a signature of message `x`.
+     *
+     * @param messageHash message, hashed
+     * @return ECDSA signature with properties merged together: r || s
+     */
+    @Override
+    public Bytes sign(final Bytes32 messageHash) {
+      Bytes signature = nodeKey.sign(messageHash).encodedBytes();
+      return signature.slice(0, 64);
+    }
+
+    /**
+     * Derives the compressed public key corresponding to the private key held by this module.
+     *
+     * @return the compressed public key
+     */
+    @Override
+    public Bytes deriveCompressedPublicKeyFromPrivate() {
+      return Bytes.wrap(
+          signatureAlgorithm.publicKeyAsEcPoint(nodeKey.getPublicKey()).getEncoded(true));
+    }
   }
 }
