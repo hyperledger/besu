@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
@@ -287,7 +289,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         calculateArchiveKeyWithMinSuffix(
             getStateArchiveContextForWrite(storage).get(), accountHash.getBytes().toArrayUnsafe());
 
-    transaction.put(ACCOUNT_INFO_STATE, keySuffixed, accountValue.toArrayUnsafe());
+    transaction.put(ACCOUNT_INFO_STATE_ARCHIVE, keySuffixed, accountValue.toArrayUnsafe());
   }
 
   @Override
@@ -301,7 +303,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         calculateArchiveKeyWithMinSuffix(
             getStateArchiveContextForWrite(storage).get(), accountHash.getBytes().toArrayUnsafe());
 
-    transaction.put(ACCOUNT_INFO_STATE, keySuffixed, DELETED_ACCOUNT_VALUE);
+    transaction.put(ACCOUNT_INFO_STATE_ARCHIVE, keySuffixed, DELETED_ACCOUNT_VALUE);
   }
 
   private byte[] trimSuffix(final byte[] suffixedAddress) {
@@ -389,7 +391,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     byte[] keyNearest =
         calculateArchiveKeyWithMinSuffix(getStateArchiveContextForWrite(storage).get(), naturalKey);
 
-    transaction.put(ACCOUNT_STORAGE_STORAGE, keyNearest, storageValue.toArrayUnsafe());
+    transaction.put(ACCOUNT_STORAGE_ARCHIVE, keyNearest, storageValue.toArrayUnsafe());
   }
 
   /*
@@ -408,7 +410,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     byte[] keySuffixed =
         calculateArchiveKeyWithMinSuffix(getStateArchiveContextForWrite(storage).get(), naturalKey);
 
-    transaction.put(ACCOUNT_STORAGE_STORAGE, keySuffixed, DELETED_STORAGE_VALUE);
+    transaction.put(ACCOUNT_STORAGE_ARCHIVE, keySuffixed, DELETED_STORAGE_VALUE);
   }
 
   public static byte[] calculateNaturalSlotKey(final Hash accountHash, final Hash slotHash) {
