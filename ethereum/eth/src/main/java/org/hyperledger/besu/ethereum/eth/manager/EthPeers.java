@@ -95,7 +95,7 @@ public class EthPeers implements PeerSelector {
   private final Cache<PeerConnection, EthPeer> incompleteConnections =
       Caffeine.newBuilder()
           .expireAfterWrite(Duration.ofSeconds(20L))
-          .evictionListener(this::onCacheRemoval)
+          .removalListener(this::onCacheRemoval)
           .executor(CacheMaintenanceExecutor.getInstance())
           .build();
   private final Clock clock;
