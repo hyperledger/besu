@@ -863,7 +863,7 @@ public class ArchiverTests {
     // records the latest archived block
     assertThat(
             testWorldStateStorage.getComposedWorldStateStorage().stream(
-                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE)
+                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER)
                 .count())
         .isEqualTo(3);
 
@@ -872,7 +872,7 @@ public class ArchiverTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE,
+                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER,
                     Arrays.concatenate(
                         address.addressHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000096").toArrayUnsafe())))
@@ -881,7 +881,7 @@ public class ArchiverTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE,
+                    KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER,
                     Arrays.concatenate(
                         address.addressHash().getBytes().toArrayUnsafe(),
                         Bytes.fromHexString("0x0000000000000097").toArrayUnsafe())))
@@ -1090,7 +1090,7 @@ public class ArchiverTests {
     // All 3 previous storage states should be in the storage archiver
     assertThat(
             testWorldStateStorage.getComposedWorldStateStorage().stream(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE)
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER)
                 .count())
         .isEqualTo(3);
 
@@ -1099,7 +1099,7 @@ public class ArchiverTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER,
                     Arrays.concatenate(
                         address.addressHash().getBytes().toArrayUnsafe(),
                         slotKey.getSlotHash().getBytes().toArrayUnsafe(),
@@ -1109,7 +1109,7 @@ public class ArchiverTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER,
                     Arrays.concatenate(
                         address.addressHash().getBytes().toArrayUnsafe(),
                         slotKey.getSlotHash().getBytes().toArrayUnsafe(),
@@ -1119,7 +1119,7 @@ public class ArchiverTests {
             testWorldStateStorage
                 .getComposedWorldStateStorage()
                 .containsKey(
-                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE,
+                    KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER,
                     Arrays.concatenate(
                         address.addressHash().getBytes().toArrayUnsafe(),
                         slotKey.getSlotHash().getBytes().toArrayUnsafe(),
