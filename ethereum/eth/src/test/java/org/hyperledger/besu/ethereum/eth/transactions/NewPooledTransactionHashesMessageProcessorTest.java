@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
@@ -366,8 +367,8 @@ class NewPooledTransactionHashesMessageProcessorTest {
             () ->
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid transaction type 7");
+        .isInstanceOf(RLPException.class)
+        .hasMessageContaining("Invalid transaction type 0x07");
   }
 
   @Test
@@ -405,5 +406,20 @@ class NewPooledTransactionHashesMessageProcessorTest {
     assertThatThrownBy(() -> new TransactionAnnouncement(null))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("Transaction cannot be null");
+  }
+
+  @Test
+  void shouldDisconnectPeerWhenInvalidTransactionType() {
+    final Bytes invalidMessageBytes =
+        Bytes.fromHexString(
+            // ["0x07",["0x00000002"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+            "0xe907c58400000002e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+
+    final NewPooledTransactionHashesMessage message =
+        new NewPooledTransactionHashesMessage(invalidMessageBytes, EthProtocol.ETH68);
+
+    messageHandler.processNewPooledTransactionHashesMessage(peer1, message, now(), ofMinutes(1));
+
+    verify(peer1).disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
   }
 }
