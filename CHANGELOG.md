@@ -36,6 +36,7 @@
 - Use JDK SHA-256 provider to leverage hardware SHA-NI instructions instead of BouncyCastle [#9924](https://github.com/hyperledger/besu/pull/9924)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists
 - Limit pooled tx requests by size and remove pre-eth/68 transaction announcement support [#9990](https://github.com/besu-eth/besu/pull/9990)
+- Use cache locality to improve Shift opcodes [9878](https://github.com/besu-eth/besu/pull/9878)
 
 ## 26.2.0
 
