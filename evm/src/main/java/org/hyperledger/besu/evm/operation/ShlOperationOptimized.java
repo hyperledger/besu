@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.operation.Shift256Operations.getLong;
 import static org.hyperledger.besu.evm.operation.Shift256Operations.isShiftOverflow;
+import static org.hyperledger.besu.evm.operation.Shift256Operations.putLong;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -93,25 +95,52 @@ public class ShlOperationOptimized extends AbstractFixedCostOperation {
       return Bytes.wrap(in);
     }
 
-    final int shiftBytes = shift >>> 3; // /8
-    final int shiftBits = shift & 7; // %8
+    long w0 = getLong(in, 0);
+    long w1 = getLong(in, 8);
+    long w2 = getLong(in, 16);
+    long w3 = getLong(in, 24);
 
-    final byte[] out = new byte[32];
+    // Number of whole 64-bit words to shift (shift / 64).
+    final int wordShift = shift >>> 6;
+    // Remaining intra-word bit shift (shift % 64).
+    final int bitShift = shift & 63;
 
-    // Shift left: bytes move to lower indices (towards index 0)
-    // Bytes at index >= (32 - shiftBytes) are guaranteed zero (already from new byte[32])
-    final int limit = 32 - shiftBytes;
-    for (int i = 0; i < limit; i++) {
-      final int srcIndex = i + shiftBytes;
-      final int curr = in[srcIndex] & 0xFF;
-      if (shiftBits == 0) {
-        out[i] = (byte) curr;
-      } else {
-        final int next = (srcIndex + 1 < 32) ? (in[srcIndex + 1] & 0xFF) : 0;
-        out[i] = (byte) ((curr << shiftBits) | (next >>> (8 - shiftBits)));
-      }
+    switch (wordShift) {
+      case 1:
+        w0 = w1;
+        w1 = w2;
+        w2 = w3;
+        w3 = 0;
+        break;
+      case 2:
+        w0 = w2;
+        w1 = w3;
+        w2 = 0;
+        w3 = 0;
+        break;
+      case 3:
+        w0 = w3;
+        w1 = 0;
+        w2 = 0;
+        w3 = 0;
+        break;
+      default:
+        break;
     }
 
+    if (bitShift > 0) {
+      final int inv = 64 - bitShift;
+      w0 = (w0 << bitShift) | (w1 >>> inv);
+      w1 = (w1 << bitShift) | (w2 >>> inv);
+      w2 = (w2 << bitShift) | (w3 >>> inv);
+      w3 = w3 << bitShift;
+    }
+
+    final byte[] out = new byte[32];
+    putLong(out, 0, w0);
+    putLong(out, 8, w1);
+    putLong(out, 16, w2);
+    putLong(out, 24, w3);
     return Bytes.wrap(out);
   }
 }
