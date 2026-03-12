@@ -22,10 +22,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
@@ -41,6 +45,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
@@ -310,5 +315,326 @@ class PeerDiscoveryAgentV5Test {
     // With NOOP permissions, peers are not rejected by permissions.
     // (They may still be filtered by bonding status, which is a DiscV4 concept, but the
     // permission layer itself does not block them.)
+  }
+
+  // --- streamDiscoveredPeers tests ---
+
+  @Test
+  void streamDiscoveredPeersEmptyWhenNotStarted() {
+    // Agent not started — discoverySystem is null
+    assertThat(agent.streamDiscoveredPeers()).isEmpty();
+  }
+
+  @Test
+  void streamDiscoveredPeersReturnsMappedPeers() throws Exception {
+    final NodeRecord peerRecord =
+        NodeRecordFactory.DEFAULT.fromEnr(
+            "enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl-DdWRwgnZf");
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    when(mockSystem.streamLiveNodes()).thenAnswer(invocation -> Stream.of(peerRecord));
+
+    agent.start(1234);
+    // Wait for start to complete
+    Awaitility.await()
+        .pollInterval(50, TimeUnit.MILLISECONDS)
+        .atMost(3, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(mockSystem, atLeastOnce()).searchForNewPeers());
+
+    final List<DiscoveryPeer> peers = agent.streamDiscoveredPeers().toList();
+    assertThat(peers).hasSize(1);
+    assertThat(peers.getFirst().getEnodeURL().getIpAsString()).isEqualTo("15.204.180.57");
+  }
+
+  // --- dropPeer tests ---
+
+  @Test
+  void dropPeerDelegatesToSystem() throws Exception {
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    agent.start(1234);
+
+    final Bytes peerId = Bytes.random(64);
+    final DiscoveryPeerV4 peer =
+        DiscoveryPeerV4.fromEnode(
+            org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl.builder()
+                .nodeId(peerId)
+                .ipAddress("10.0.0.1")
+                .listeningPort(30303)
+                .discoveryPort(30303)
+                .build());
+
+    agent.dropPeer(peer);
+
+    verify(mockSystem).deleteNodeRecord(peerId);
+  }
+
+  @Test
+  void dropPeerNoOpWhenNotStarted() {
+    final Bytes peerId = Bytes.random(64);
+    final DiscoveryPeerV4 peer =
+        DiscoveryPeerV4.fromEnode(
+            org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl.builder()
+                .nodeId(peerId)
+                .ipAddress("10.0.0.1")
+                .listeningPort(30303)
+                .discoveryPort(30303)
+                .build());
+
+    // Should not throw
+    agent.dropPeer(peer);
+
+    verify(mockSystem, never()).deleteNodeRecord(any());
+  }
+
+  // --- addPeer tests ---
+
+  @Test
+  void addPeerWithNodeRecordDelegatesToSystem() throws Exception {
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    agent.start(1234);
+
+    final NodeRecord peerRecord =
+        NodeRecordFactory.DEFAULT.fromEnr(
+            "enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl-DdWRwgnZf");
+
+    final Peer mockPeer = org.mockito.Mockito.mock(Peer.class);
+    when(mockPeer.getNodeRecord()).thenReturn(Optional.of(peerRecord));
+
+    agent.addPeer(mockPeer);
+
+    verify(mockSystem).addNodeRecord(peerRecord);
+  }
+
+  @Test
+  void addPeerWithoutNodeRecordIsIgnored() throws Exception {
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    agent.start(1234);
+
+    final Peer mockPeer = org.mockito.Mockito.mock(Peer.class);
+    when(mockPeer.getNodeRecord()).thenReturn(Optional.empty());
+
+    agent.addPeer(mockPeer);
+
+    verify(mockSystem, never()).addNodeRecord(any());
+  }
+
+  // --- getPeer tests ---
+
+  @Test
+  void getPeerReturnsMappedPeer() throws Exception {
+    final NodeRecord peerRecord =
+        NodeRecordFactory.DEFAULT.fromEnr(
+            "enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl-DdWRwgnZf");
+
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    when(mockSystem.lookupNode(any())).thenReturn(Optional.of(peerRecord));
+    agent.start(1234);
+
+    // Use a random 64-byte node ID for the peer ID holder (EnodeURL requires 64 bytes)
+    final DiscoveryPeerV4 peerIdHolder =
+        DiscoveryPeerV4.fromEnode(
+            org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl.builder()
+                .nodeId(Bytes.random(64))
+                .ipAddress("10.0.0.1")
+                .listeningPort(30303)
+                .discoveryPort(30303)
+                .build());
+
+    final Optional<Peer> result = agent.getPeer(peerIdHolder);
+    assertThat(result).isPresent();
+    assertThat(result.get().getEnodeURL().getIpAsString()).isEqualTo("15.204.180.57");
+  }
+
+  @Test
+  void getPeerEmptyWhenNotStarted() {
+    final DiscoveryPeerV4 peerIdHolder =
+        DiscoveryPeerV4.fromEnode(
+            org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl.builder()
+                .nodeId(Bytes.random(64))
+                .ipAddress("10.0.0.1")
+                .listeningPort(30303)
+                .discoveryPort(30303)
+                .build());
+
+    assertThat(agent.getPeer(peerIdHolder)).isEmpty();
+  }
+
+  // --- checkForkId tests ---
+
+  @Test
+  void checkForkIdTrueWhenPeerHasNoForkId() {
+    final DiscoveryPeerV4 peer =
+        DiscoveryPeerV4.fromEnode(
+            org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl.builder()
+                .nodeId(Bytes.random(64))
+                .ipAddress("10.0.0.1")
+                .listeningPort(30303)
+                .discoveryPort(30303)
+                .build());
+
+    // Peer has no fork ID — should default to true
+    assertThat(agent.checkForkId(peer)).isTrue();
+    verify(forkIdManager, never()).peerCheck(any(ForkId.class));
+  }
+
+  @Test
+  void checkForkIdDelegatesToManager() {
+    final NodeKey peerKey = NodeKeyUtils.generate();
+    final NodeRecord record =
+        DiscV5TestHelper.createSignedNodeRecordWithForkId(
+            peerKey,
+            "10.0.0.1",
+            30303,
+            30303,
+            List.of(Bytes.fromHexString("0xfc64ec04"), Bytes.EMPTY));
+
+    final DiscoveryPeer peer =
+        org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeerFactory.fromNodeRecord(
+            record, false);
+    assertThat(peer.getForkId()).isPresent();
+
+    when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(false);
+
+    assertThat(agent.checkForkId(peer)).isFalse();
+    verify(forkIdManager).peerCheck(any(ForkId.class));
+  }
+
+  // --- getLocalNodeRecord tests ---
+
+  @Test
+  void getLocalNodeRecordDelegates() {
+    when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
+    when(localPeer.getNodeRecord()).thenReturn(Optional.of(localNodeRecord));
+
+    assertThat(agent.getLocalNodeRecord()).isPresent();
+    assertThat(agent.getLocalNodeRecord().get()).isSameAs(localNodeRecord);
+  }
+
+  // --- candidatePeers filtering tests ---
+
+  @Test
+  void candidatePeersExcludesLocalNodeId() throws Exception {
+    // Create two peer records: one whose nodeId matches the local node, one that doesn't.
+    // Only the non-local peer should be connected.
+    final NodeRecord peerRecord =
+        NodeRecordFactory.DEFAULT.fromEnr(
+            "enr:-KO4QK1ecw-CGrDDZ4YwFrhgqctD0tWMHKJhUVxsS4um3aUFe3yBHRtVL9uYKk16DurN1IdSKTOB1zNCvjBybjZ_KAq"
+                + "GAYtJ5U8wg2V0aMfGhJsZKtCAgmlkgnY0gmlwhA_MtDmJc2VjcDI1NmsxoQNXD7fj3sscyOKBiHYy14igj1vJYWdKYZH7n3T8qRpIcYRzb"
+                + "mFwwIN0Y3CCdl-DdWRwgnZf");
+
+    // Set the local node's nodeId to match the peer record's nodeId — the peer should be excluded
+    when(localNodeRecord.getNodeId()).thenReturn(peerRecord.getNodeId());
+
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    when(mockSystem.searchForNewPeers())
+        .thenReturn(CompletableFuture.completedFuture(List.of(peerRecord)));
+    when(mockSystem.streamLiveNodes()).thenAnswer(invocation -> Stream.of(peerRecord));
+
+    agent.start(1234);
+
+    Awaitility.await()
+        .pollInterval(50, TimeUnit.MILLISECONDS)
+        .atMost(3, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(mockSystem, atLeastOnce()).searchForNewPeers());
+
+    // Peer is excluded because its nodeId matches the local nodeId — connect should NOT be called
+    verify(rlpxAgent, never()).connect(any());
+  }
+
+  @Test
+  void candidatePeersExcludesNonListeningPeers() throws Exception {
+    // Create a NodeRecord without a TCP port — peer won't be listening
+    final NodeKey peerKey = NodeKeyUtils.generate();
+    final NodeRecord noTcpRecord =
+        DiscV5TestHelper.createSignedNodeRecordNoTcp(peerKey, "10.0.0.1", 30303);
+
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    when(mockSystem.searchForNewPeers())
+        .thenReturn(CompletableFuture.completedFuture(List.of(noTcpRecord)));
+    when(mockSystem.streamLiveNodes()).thenAnswer(invocation -> Stream.of(noTcpRecord));
+
+    agent.start(1234);
+
+    Awaitility.await()
+        .pollInterval(50, TimeUnit.MILLISECONDS)
+        .atMost(3, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(mockSystem, atLeastOnce()).searchForNewPeers());
+
+    // Non-listening peers should never be connected
+    verify(rlpxAgent, never()).connect(any());
+  }
+
+  @Test
+  void candidatePeersExcludesForkIncompatiblePeers() throws Exception {
+    final NodeKey peerKey = NodeKeyUtils.generate();
+    final NodeRecord peerRecord =
+        DiscV5TestHelper.createSignedNodeRecordWithForkId(
+            peerKey,
+            "10.0.0.1",
+            30303,
+            30303,
+            List.of(Bytes.fromHexString("0xdeadbeef"), Bytes.EMPTY));
+
+    when(forkIdManager.peerCheck(any(ForkId.class))).thenReturn(false);
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    when(mockSystem.searchForNewPeers())
+        .thenReturn(CompletableFuture.completedFuture(List.of(peerRecord)));
+    when(mockSystem.streamLiveNodes()).thenAnswer(invocation -> Stream.of(peerRecord));
+
+    agent.start(1234);
+
+    Awaitility.await()
+        .pollInterval(50, TimeUnit.MILLISECONDS)
+        .atMost(3, TimeUnit.SECONDS)
+        .untilAsserted(() -> verify(mockSystem, atLeastOnce()).searchForNewPeers());
+
+    // Fork-incompatible peers should never be connected
+    verify(rlpxAgent, never()).connect(any());
+  }
+
+  // --- discoveryTick cadence tests ---
+
+  @Test
+  void discoveryTickSkipsWhenSufficientPeers() throws Exception {
+    // Set up sufficient peers: connectionCount >= maxPeers * 0.8
+    when(rlpxAgent.getConnectionCount()).thenReturn(20);
+    when(rlpxAgent.getMaxPeers()).thenReturn(25);
+
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+
+    agent.start(1234);
+
+    // Give the scheduler time to fire a few ticks
+    Thread.sleep(500);
+
+    // searchForNewPeers should never be called because we have sufficient peers
+    verify(mockSystem, never()).searchForNewPeers();
+  }
+
+  // --- stop tests ---
+
+  @Test
+  void stopCleansUpSystemAndScheduler() throws Exception {
+    when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+    agent.start(1234);
+
+    agent.stop();
+
+    assertThat(agent.isStopped()).isTrue();
+    verify(mockSystem).stop();
+  }
+
+  // --- updateNodeRecord tests ---
+
+  @Test
+  void updateNodeRecordDelegatesWhenEnabled() {
+    agent.updateNodeRecord();
+
+    verify(nodeRecordManager).updateNodeRecord();
   }
 }

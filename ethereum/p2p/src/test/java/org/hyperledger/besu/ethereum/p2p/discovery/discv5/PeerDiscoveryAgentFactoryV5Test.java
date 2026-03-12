@@ -251,6 +251,38 @@ class PeerDiscoveryAgentFactoryV5Test {
     assertThat(policy.allow(testNodeRecord)).isTrue();
   }
 
+  @Test
+  void allowNodeRecordCatchesMalformedRecord() {
+    final PeerPermissions allowAll = allowAllPermissions();
+    final AddressAccessPolicy policy = createFactory(allowAll).createAddressAccessPolicy();
+
+    // A mocked NodeRecord that throws when converting to DiscoveryPeer.
+    // The allow(NodeRecord) method catches RuntimeExceptions from fromNodeRecord.
+    final NodeRecord malformedRecord = mock(NodeRecord.class);
+    when(malformedRecord.getUdpAddress())
+        .thenReturn(Optional.of(new InetSocketAddress("10.0.0.1", 30303)));
+    lenient().when(malformedRecord.getUdp6Address()).thenReturn(Optional.empty());
+    when(malformedRecord.getTcpAddress())
+        .thenReturn(Optional.of(new InetSocketAddress("10.0.0.1", 30303)));
+    lenient().when(malformedRecord.getTcp6Address()).thenReturn(Optional.empty());
+    // forEachField will produce no fields → fromNodeRecord throws due to missing secp256k1
+    when(nodeRecordManager.getLocalNode()).thenReturn(Optional.of(localPeer));
+
+    // Should return false (caught exception), not throw
+    assertThat(policy.allow(malformedRecord)).isFalse();
+  }
+
+  @Test
+  void addressAccessPolicyAllowAllForNoop() {
+    final AddressAccessPolicy policy =
+        createFactory(PeerPermissions.NOOP).createAddressAccessPolicy();
+
+    assertThat(policy).isSameAs(AddressAccessPolicy.ALLOW_ALL);
+    // ALLOW_ALL permits any address
+    assertThat(policy.allow(new InetSocketAddress("192.168.1.1", 30303))).isTrue();
+    assertThat(policy.allow(new InetSocketAddress("10.0.0.1", 30303))).isTrue();
+  }
+
   private static IPAddress subnet(final String cidr) {
     return new IPAddressString(cidr).getAddress().toPrefixBlock();
   }
