@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
@@ -143,7 +143,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     if (nearestAccount.isEmpty()) {
       accountFound =
           storage
-              .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
+              .getNearestBefore(ACCOUNT_INFO_STATE_FREEZER, keyNearest)
               .filter(
                   found ->
                       accountHash.getBytes().commonPrefixLength(found.key())
@@ -341,7 +341,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       // Check the archived storage as old state is moved out of the primary DB segment
       storageFound =
           storage
-              .getNearestBefore(ACCOUNT_STORAGE_ARCHIVE, keyNearest)
+              .getNearestBefore(ACCOUNT_STORAGE_FREEZER, keyNearest)
               // don't return accounts that do not have a matching account hash
               .filter(
                   found ->
