@@ -34,7 +34,9 @@ import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.core.Utils;
@@ -422,6 +424,46 @@ public class GetSyncReceiptsFromPeerTaskTest {
                 // for the requested block, receipts returned are from another block
                 Map.of(mockedRequestedBlock.block, toResponseReceipts(anotherBlockReceipts)),
                 List.of())));
+  }
+
+  @Test
+  public void validateResultPassesForFrontierReceiptsAfterDecoderRoundTrip() {
+    // Regression test: Frontier receipts received over eth/69 were decoded by
+    // SyncTransactionReceiptDecoder into SyncTransactionReceipt with transactionTypeCode=0x00
+    // (getEthSerializedType). SyncTransactionReceiptEncoder.encodeForRootCalculation only checked
+    // for 0xf8 (getSerializedType) as the Frontier marker, so 0x00 was treated as a non-Frontier
+    // typed transaction — it prepended the 0x00 type byte, producing a wrong receipt trie root →
+    // RESULTS_DO_NOT_MATCH_QUERY on any block with Frontier transactions when syncing from a peer
+    // that supports eth/69.
+    //
+    // toResponseReceipt() uses the single-arg constructor (rlpBytes only), so all existing tests
+    // bypass encodeForRootCalculation entirely. This test exercises the real eth/69 decode path.
+    final MockedBlock block = mockBlock(1, 2);
+
+    final GetSyncReceiptsFromPeerTask task =
+        createTask(new Request(List.of(block.block), List.of()), protocolSchedule);
+
+    // Encode in eth/69 format: [typeCode(0x00), status, cumulativeGas, logs] (no bloom filter).
+    // The decoder routes this to decodeEth69Receipt, stores typeCode=Bytes.of(0x00), and sets
+    // isFormattedForRootCalculation=false — so encodeForRootCalculation is invoked.
+    // Pre-fix: isFrontier check only matched 0xf8, not 0x00 → wrong trie root.
+    final SyncTransactionReceiptDecoder decoder = new SyncTransactionReceiptDecoder();
+    final List<SyncTransactionReceipt> decodedReceipts =
+        block.receipts.stream()
+            .map(
+                receipt -> {
+                  final BytesValueRLPOutput out = new BytesValueRLPOutput();
+                  TransactionReceiptEncoder.writeTo(
+                      receipt,
+                      out,
+                      TransactionReceiptEncodingConfiguration.ETH69_RECEIPT_CONFIGURATION);
+                  return decoder.decode(out.encoded());
+                })
+            .toList();
+
+    assertEquals(
+        PeerTaskValidationResponse.RESULTS_VALID_AND_GOOD,
+        task.validateResult(new Response(Map.of(block.block, decodedReceipts), List.of())));
   }
 
   @Test
