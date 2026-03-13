@@ -299,9 +299,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
           transactionUpdater = blockUpdater;
         }
-        // Pre-check uses regular gas only; state gas is validated post-block via
-        // gasMetered = max(cumulativeRegular, cumulativeState) at block finalization.
-        if (!hasAvailableBlockBudget(blockHeader, transaction, cumulativeRegularGasUsed)) {
+        // EIP-8037: 2D-aware budget check — delegates to BlockGasAccountingStrategy so that
+        // block import uses the same headroom logic as block building
+        // (BlockSizeTransactionSelector).
+        if (!hasAvailableBlockBudget(
+            blockHeader,
+            transaction,
+            cumulativeRegularGasUsed,
+            cumulativeStateGasUsed,
+            protocolSpec.getBlockGasAccountingStrategy())) {
           return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
 
@@ -582,14 +588,23 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   @SuppressWarnings(
       "java:S2629") // INFO level logging rarely disabled in this project per maintainer feedback
   protected boolean hasAvailableBlockBudget(
-      final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
-    final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
-    if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
+      final BlockHeader blockHeader,
+      final Transaction transaction,
+      final long cumulativeRegularGasUsed,
+      final long cumulativeStateGasUsed,
+      final BlockGasAccountingStrategy strategy) {
+    if (!strategy.hasBlockCapacity(
+        transaction.getGasLimit(),
+        cumulativeRegularGasUsed,
+        cumulativeStateGasUsed,
+        blockHeader.getGasLimit())) {
       LOG.info(
           "Block processing error: transaction gas limit {} exceeds available block budget"
-              + " remaining {}. Block {} Transaction {}",
+              + " (regular={}, state={}, limit={}). Block {} Transaction {}",
           transaction.getGasLimit(),
-          remainingGasBudget,
+          cumulativeRegularGasUsed,
+          cumulativeStateGasUsed,
+          blockHeader.getGasLimit(),
           blockHeader.getHash().getBytes().toHexString(),
           transaction.getHash().getBytes().toHexString());
       return false;

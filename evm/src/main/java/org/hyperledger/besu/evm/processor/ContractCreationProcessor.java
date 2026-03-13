@@ -292,9 +292,11 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     frame.clearGasRefund();
     frame.clearGasRemaining();
     frame.clearOutputData();
-    // Do NOT call frame.setExceptionalHaltReason() here — MTP zeros the state gas reservoir when
-    // exceptionalHaltReason is present, which would inflate block gas accounting. Setting
-    // COMPLETED_FAILED state is sufficient to signal failure to the caller.
+    // Do NOT call frame.setExceptionalHaltReason() here.
+    // MainnetTransactionProcessor (processTransaction ~line 454) zeros the state gas reservoir when
+    // exceptionalHaltReason is present. For depth-0 code deposit failures, the reservoir must be
+    // preserved to avoid inflating block gas accounting. COMPLETED_FAILED state is sufficient to
+    // signal failure. If MTP's reservoir-zeroing logic changes, this assumption must be revisited.
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
     operationTracer.traceAccountCreationResult(frame, haltReason);
   }

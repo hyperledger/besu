@@ -96,6 +96,13 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
+    // Re-check after state gas charge: when the reservoir is empty, consumeStateGas spills
+    // overflow into gasRemaining. The subsequent decrementRemainingGas(cost) would underflow
+    // if gasRemaining was reduced below cost by the spill.
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     Code code = codeSupplier.get();
 
     if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
