@@ -97,18 +97,14 @@ public class PlatformDetector {
   /**
    * Gets Glibc version.
    *
-   * @return the Glibc version, or {@code null} if the version is unknown or cannot be detected.
+   * @return the Glibc version
    */
-  public static @Nullable String getGlibc() {
+  public static String getGlibc() {
     if (_glibc == null) {
       detectGlibc();
     }
 
-    if (UNKNOWN.equals(_glibc)) {
-      return null;
-    }
-
-    return _glibc;
+    return _glibc == null ? UNKNOWN : _glibc;
   }
 
   /**
