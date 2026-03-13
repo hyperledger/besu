@@ -440,11 +440,14 @@ public class EthPeers implements PeerSelector {
 
     final Bytes id = peer.getId();
     final EthPeer existingPeer = activeConnections.get(id);
-    if (existingPeer != null && !existingPeer.isDisconnected()) {
-      // Peer is actively trying to connect again while we have an existing registration.
-      // This typically happens after a restart race where TCP state diverges between the two
-      // nodes. Disconnect the stale entry and accept the fresh connection.
-      LOG.debug("Replacing stale connection to peer {} with new connection", peer.getLoggableId());
+    if (inbound && existingPeer != null && !existingPeer.isDisconnected()) {
+      // The peer is actively connecting to us while we have an existing registration.
+      // This typically happens after a restart race where TCP state diverges: the peer believes
+      // the old connection is dead but we still hold a stale entry. Accept the fresh inbound
+      // connection and disconnect the stale one.
+      LOG.debug(
+          "Replacing stale connection to peer {} with new inbound connection",
+          peer.getLoggableId());
       existingPeer.disconnect(DisconnectReason.ALREADY_CONNECTED);
     } else if (alreadyConnectedOrConnecting(inbound, id)) {
       LOG.atTrace()
