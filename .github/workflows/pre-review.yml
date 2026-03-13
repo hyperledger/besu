@@ -84,7 +84,7 @@ jobs:
       - name: Gradle Compile
         run: ./gradlew build -x test -x spotlessCheck
   nullaway-util-optional:
-    name: "NullAway util (optional)"
+    name: "util compile for NullAway optional check"
     if: github.event_name == 'pull_request' && contains(join(github.event.pull_request.labels.*.name, ','), 'run-nullaway')
     runs-on: ubuntu-latest
     continue-on-error: true
