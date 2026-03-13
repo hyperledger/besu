@@ -490,39 +490,42 @@ public class EthPeersTest {
   }
 
   @Test
-  public void shouldReplaceStaleConnectionWhenPeerReconnects() {
+  public void shouldReplaceStaleConnectionWhenPeerConnectsInbound() {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     final EthPeer ethPeer = peer.getEthPeer();
     final PeerConnection oldConnection = ethPeer.getConnection();
 
     assertThat(oldConnection.isDisconnected()).isFalse();
 
-    // Same peer attempts to connect again (simulates restart race where server still holds the
-    // old registration but the peer believes the connection is dead)
+    // Peer initiates a new inbound connection to us while we have a stale registration.
+    // This simulates the restart race where we still hold the old entry but the peer
+    // believes the connection is dead and is reconnecting.
     final Optional<DisconnectReason> result =
-        ethPeers.gatePeerConnection(oldConnection.getPeer(), false);
+        ethPeers.gatePeerConnection(oldConnection.getPeer(), true);
 
-    // New connection should be allowed, not rejected with ALREADY_CONNECTED
+    // New inbound connection should be allowed
     assertThat(result).isEmpty();
     // Stale existing connection should have been disconnected
     assertThat(oldConnection.isDisconnected()).isTrue();
   }
 
   @Test
-  public void shouldRejectConnectionWhenGenuinelyAlreadyConnected() {
-    // Verify that a peer that has already been added to activeConnections via the normal path
-    // and whose connection is live does NOT get accepted as a second concurrent connection.
-    // The new behaviour replaces the old entry, so gating returns empty (allowed).
-    // This test documents the invariant: the old connection is always cleaned up.
+  public void shouldRejectOutboundConnectionWhenAlreadyConnected() {
+    // When WE try to connect outbound to a peer we already have in activeConnections,
+    // the existing connection should be kept and the outbound attempt rejected.
+    // This avoids disrupting healthy connections due to static-peer retry timers.
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
-    final PeerConnection firstConnection = peer.getEthPeer().getConnection();
+    final PeerConnection existingConnection = peer.getEthPeer().getConnection();
 
-    assertThat(firstConnection.isDisconnected()).isFalse();
+    assertThat(existingConnection.isDisconnected()).isFalse();
 
-    // Second connection attempt from the same peer
-    ethPeers.gatePeerConnection(firstConnection.getPeer(), false);
+    // We attempt another outbound connection to the same peer
+    final Optional<DisconnectReason> result =
+        ethPeers.gatePeerConnection(existingConnection.getPeer(), false);
 
-    // Old connection must be disconnected regardless
-    assertThat(firstConnection.isDisconnected()).isTrue();
+    // Should be rejected — we already have this peer
+    assertThat(result).contains(DisconnectReason.ALREADY_CONNECTED);
+    // Existing connection should be untouched
+    assertThat(existingConnection.isDisconnected()).isFalse();
   }
 }
