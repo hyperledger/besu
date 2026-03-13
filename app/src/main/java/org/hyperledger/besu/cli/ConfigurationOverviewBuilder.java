@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
