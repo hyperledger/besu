@@ -83,7 +83,7 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
       final TransactionEvaluationContext evaluationContext,
       final TransactionProcessingResult processingResult) {
     final long txRegularGasUsed =
-        gasAccountingStrategy.calculateBlockGas(
+        gasAccountingStrategy.calculateTransactionRegularGas(
             evaluationContext.getTransaction(), processingResult);
     final long stateGasUsed = processingResult.getStateGasUsed();
 

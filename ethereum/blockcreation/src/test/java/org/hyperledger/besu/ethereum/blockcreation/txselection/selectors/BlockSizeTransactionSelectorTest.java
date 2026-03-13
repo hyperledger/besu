@@ -339,7 +339,7 @@ class BlockSizeTransactionSelectorTest {
     final var result1 = mock(TransactionProcessingResult.class);
     when(result1.getEstimateGasUsedByTransaction()).thenReturn(30_000_000L);
     when(result1.getStateGasUsed()).thenReturn(5_000_000L);
-    // calculateBlockGas returns 30M - 5M = 25M regular
+    // calculateTransactionRegularGas returns 30M - 5M = 25M regular
 
     final var ctx1 =
         new TransactionEvaluationContext(

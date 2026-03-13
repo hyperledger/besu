@@ -683,7 +683,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .protocolSpec()
             .getBlockGasAccountingStrategy()
-            .calculateBlockGas(transaction, processingResult);
+            .calculateTransactionRegularGas(transaction, processingResult);
 
     // Receipt gas: Standard post-refund calculation (gasLimit - gasRemaining)
     // This is used for receipt cumulativeGasUsed field

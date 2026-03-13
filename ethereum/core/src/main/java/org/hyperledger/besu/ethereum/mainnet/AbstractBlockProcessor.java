@@ -347,7 +347,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         cumulativeRegularGasUsed +=
             protocolSpec
                 .getBlockGasAccountingStrategy()
-                .calculateBlockGas(transaction, transactionProcessingResult);
+                .calculateTransactionRegularGas(transaction, transactionProcessingResult);
         // Receipt gas always uses standard post-refund calculation
         cumulativeReceiptGasUsed +=
             BlockGasAccountingStrategy.calculateReceiptGas(
