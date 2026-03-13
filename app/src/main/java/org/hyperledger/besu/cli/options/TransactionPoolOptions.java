@@ -250,6 +250,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     private static final String MAX_TRACKED_SEEN_TXS_PER_PEER = "--Xmax-tracked-seen-txs-per-peer";
     private static final String PEER_TRACKER_FORGET_EVICTED_TXS_FLAG =
         "--Xpeer-tracker-forget-evicted-txs";
+    private static final String TX_POOL_SAVE_RESTORE_TIMEOUT_FLAG =
+        "--Xtx-pool-save-restore-timeout";
 
     @CommandLine.Option(
         names = {TX_MESSAGE_KEEP_ALIVE_SEC_FLAG},
@@ -288,6 +290,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         arity = "0..1",
         fallbackValue = "true")
     private Boolean peerTrackerForgetEvictedTxs;
+
+    @CommandLine.Option(
+        names = {TX_POOL_SAVE_RESTORE_TIMEOUT_FLAG},
+        paramLabel = "<LONG>",
+        converter = DurationMillisConverter.class,
+        hidden = true,
+        description =
+            "Timeout in milliseconds for acquiring the disk access lock during txpool save/restore operations (default: ${DEFAULT-VALUE})")
+    private Duration saveRestoreTimeout =
+        TransactionPoolConfiguration.Unstable.DEFAULT_SAVE_RESTORE_TIMEOUT;
   }
 
   private TransactionPoolOptions() {}
@@ -353,6 +365,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         config.getUnstable().getMaxTrackedSeenTxsPerPeer();
     options.unstableOptions.peerTrackerForgetEvictedTxs =
         config.getUnstable().getPeerTrackerForgetEvictedTxs();
+    options.unstableOptions.saveRestoreTimeout = config.getUnstable().getSaveRestoreTimeout();
     return options;
   }
 
@@ -415,6 +428,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
                 .peerTrackerForgetEvictedTxs(
                     Optional.ofNullable(unstableOptions.peerTrackerForgetEvictedTxs)
                         .orElse(deriveDefaultPeersTrackerForgetEvictedTxs(txPoolImplementation)))
+                .saveRestoreTimeout(unstableOptions.saveRestoreTimeout)
                 .build())
         .build();
   }
