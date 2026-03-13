@@ -23,7 +23,7 @@ import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransacti
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER3;
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER4;
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER5;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXECUTION_INTERRUPTED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
@@ -165,7 +165,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             transactionSelectionService,
             Wei.ZERO,
             MIN_OCCUPANCY_80_PERCENT,
-            DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME);
+            DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME);
 
     final Block genesisBlock =
         GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache()).getBlock();
@@ -520,7 +520,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 transactionSelectionService,
                 Wei.ZERO,
                 MIN_OCCUPANCY_100_PERCENT,
-                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
+                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -582,7 +582,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 transactionSelectionService,
                 Wei.ZERO,
                 MIN_OCCUPANCY_100_PERCENT,
-                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
+                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -824,7 +824,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 transactionSelectionService,
                 Wei.ZERO,
                 MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME),
+                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -1765,7 +1765,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .build())
         .transactionSelectionService(transactionSelectionService)
-        .nonPoaBlockTxsSelectionMaxTime(txsSelectionMaxTime)
+        .posBlockTxsSelectionMaxTime(txsSelectionMaxTime)
         .build();
   }
 
