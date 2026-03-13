@@ -444,8 +444,7 @@ public class EthPeers implements PeerSelector {
       // Peer is actively trying to connect again while we have an existing registration.
       // This typically happens after a restart race where TCP state diverges between the two
       // nodes. Disconnect the stale entry and accept the fresh connection.
-      LOG.debug(
-          "Replacing stale connection to peer {} with new connection", peer.getLoggableId());
+      LOG.debug("Replacing stale connection to peer {} with new connection", peer.getLoggableId());
       existingPeer.disconnect(DisconnectReason.ALREADY_CONNECTED);
     } else if (alreadyConnectedOrConnecting(inbound, id)) {
       LOG.atTrace()

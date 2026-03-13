@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersExce
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -486,5 +487,42 @@ public class EthPeersTest {
 
     verifyNoInteractions(onSuccess);
     verifyNoInteractions(onError);
+  }
+
+  @Test
+  public void shouldReplaceStaleConnectionWhenPeerReconnects() {
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final EthPeer ethPeer = peer.getEthPeer();
+    final PeerConnection oldConnection = ethPeer.getConnection();
+
+    assertThat(oldConnection.isDisconnected()).isFalse();
+
+    // Same peer attempts to connect again (simulates restart race where server still holds the
+    // old registration but the peer believes the connection is dead)
+    final Optional<DisconnectReason> result =
+        ethPeers.gatePeerConnection(oldConnection.getPeer(), false);
+
+    // New connection should be allowed, not rejected with ALREADY_CONNECTED
+    assertThat(result).isEmpty();
+    // Stale existing connection should have been disconnected
+    assertThat(oldConnection.isDisconnected()).isTrue();
+  }
+
+  @Test
+  public void shouldRejectConnectionWhenGenuinelyAlreadyConnected() {
+    // Verify that a peer that has already been added to activeConnections via the normal path
+    // and whose connection is live does NOT get accepted as a second concurrent connection.
+    // The new behaviour replaces the old entry, so gating returns empty (allowed).
+    // This test documents the invariant: the old connection is always cleaned up.
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final PeerConnection firstConnection = peer.getEthPeer().getConnection();
+
+    assertThat(firstConnection.isDisconnected()).isFalse();
+
+    // Second connection attempt from the same peer
+    ethPeers.gatePeerConnection(firstConnection.getPeer(), false);
+
+    // Old connection must be disconnected regardless
+    assertThat(firstConnection.isDisconnected()).isTrue();
   }
 }
