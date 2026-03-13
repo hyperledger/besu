@@ -24,7 +24,7 @@ on:
       besu_repo:
         required: false
         type: string
-        description: Custom git repository to checkout branch from
+        description: 'Custom git repository to checkout branch from. Expected format: owner/repo (e.g., besu-eth/besu)'
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true"
@@ -34,7 +34,7 @@ env:
 jobs:
   bft-soak-test:
     name: "BFT Soak Test (${{ inputs.consensus-type }})"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
       statuses: write
