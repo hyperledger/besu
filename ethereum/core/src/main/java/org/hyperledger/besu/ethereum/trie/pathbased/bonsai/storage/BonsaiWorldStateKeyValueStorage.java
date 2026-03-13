@@ -205,7 +205,6 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
         final KeyValueStorageTransaction trieLogStorageTransaction,
         final FlatDbStrategy flatDbStrategy,
         final SegmentedKeyValueStorage worldStorage) {
-
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
       this.flatDbStrategy = flatDbStrategy;
