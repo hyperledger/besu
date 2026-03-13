@@ -104,7 +104,7 @@ jobs:
         with:
           cache-disabled: true
       - name: NullAway util compile
-        run: ./gradlew :util:compileJava -PenableNullAway
+        run: ./gradlew :util:compileJava
   unitTests:
     env:
       GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
