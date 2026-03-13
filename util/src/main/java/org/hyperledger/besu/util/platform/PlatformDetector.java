@@ -99,12 +99,16 @@ public class PlatformDetector {
    *
    * @return the Glibc version
    */
-  public static String getGlibc() {
+  public static @Nullable String getGlibc() {
     if (_glibc == null) {
       detectGlibc();
     }
 
-    return _glibc == null ? UNKNOWN : _glibc;
+    if (UNKNOWN.equals(_glibc)) {
+      return null;
+    }
+
+    return _glibc;
   }
 
   /**
