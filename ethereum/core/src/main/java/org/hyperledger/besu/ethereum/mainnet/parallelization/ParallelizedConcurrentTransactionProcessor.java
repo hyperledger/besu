@@ -128,7 +128,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
                 }
               },
               blockHashLookup,
-              TransactionValidationParams.processingBlock(),
+              TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce(),
               blobGasPrice,
               transactionLocationTracker);
 
@@ -208,7 +208,7 @@ public class ParallelizedConcurrentTransactionProcessor extends ParallelBlockTra
       final boolean hasCollision =
           transactionCollisionDetector.hasCollision(
               transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
-      if (transactionProcessingResult.isSuccessful() && !hasCollision) {
+      if (!transactionProcessingResult.isInvalid() && !hasCollision) {
         final MutableAccount miningBeneficiaryAccount =
             blockAccumulator.getOrCreate(miningBeneficiary);
         Wei reward = parallelizedTransactionContext.miningBeneficiaryReward();
