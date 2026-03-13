@@ -63,10 +63,7 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
       return waitForReady();
     }
     if (firstHash.isPresent()) {
-      LOG.atDebug()
-          .setMessage("BWS step: processing hash {}")
-          .addArgument(firstHash.get())
-          .log();
+      LOG.atDebug().setMessage("BWS step: processing hash {}").addArgument(firstHash.get()).log();
       return handleSyncStep(firstHash.get());
     }
     final Optional<BlockHeader> maybeFirstAncestorHeader =
