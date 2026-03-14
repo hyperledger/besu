@@ -323,8 +323,12 @@ public class BonsaiWorldState extends PathBasedWorldState {
               Bytes32.wrap(oldAccount.getStorageRoot().getBytes()));
       try {
         StorageConsumingMap<StorageSlotKey, PathBasedValue<UInt256>> storageToDelete = null;
-        Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-        while (!entriesToDelete.isEmpty()) {
+        Bytes32 nextKeyHash = Bytes32.ZERO;
+        while (true) {
+          final Map<Bytes32, Bytes> entriesToDelete = storageTrie.entriesFrom(nextKeyHash, 256);
+          if (entriesToDelete.isEmpty()) {
+            break;
+          }
           if (storageToDelete == null) {
             storageToDelete =
                 worldStateUpdater
@@ -337,6 +341,7 @@ public class BonsaiWorldState extends PathBasedWorldState {
                                 new ConcurrentHashMap<>(),
                                 worldStateUpdater.getStoragePreloader()));
           }
+          Bytes32 lastKeyHash = null;
           for (Map.Entry<Bytes32, Bytes> slot : entriesToDelete.entrySet()) {
             final StorageSlotKey storageSlotKey =
                 new StorageSlotKey(Hash.wrap(slot.getKey()), Optional.empty());
@@ -349,13 +354,19 @@ public class BonsaiWorldState extends PathBasedWorldState {
             storageToDelete
                 .computeIfAbsent(storageSlotKey, key -> new PathBasedValue<>(slotValue, null, true))
                 .setPrior(slotValue);
+            lastKeyHash = slot.getKey();
           }
           entriesToDelete.keySet().forEach(storageTrie::remove);
-          if (entriesToDelete.size() == 256) {
-            entriesToDelete = storageTrie.entriesFrom(Bytes32.ZERO, 256);
-          } else {
+          if (entriesToDelete.size() < 256) {
             break;
           }
+          // entriesFrom() is inclusive, so continue from the next lexicographic key;
+          // reusing lastKeyHash would work only because the previous batch was already removed.
+          final Optional<Bytes32> maybeNextKeyHash = incrementBytes32(lastKeyHash);
+          if (maybeNextKeyHash.isEmpty()) {
+            break;
+          }
+          nextKeyHash = maybeNextKeyHash.get();
         }
       } catch (MerkleTrieException e) {
         // need to throw to trigger the heal
@@ -363,6 +374,21 @@ public class BonsaiWorldState extends PathBasedWorldState {
             e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
       }
     }
+  }
+
+  private Optional<Bytes32> incrementBytes32(final Bytes32 value) {
+    final byte[] bytes = value.toArrayUnsafe().clone();
+    for (int i = bytes.length - 1; i >= 0; i--) {
+      final int unsigned = bytes[i] & 0xFF;
+      if (unsigned != 0xFF) {
+        bytes[i] = (byte) (unsigned + 1);
+        for (int j = i + 1; j < bytes.length; j++) {
+          bytes[j] = 0;
+        }
+        return Optional.of(Bytes32.wrap(bytes));
+      }
+    }
+    return Optional.empty();
   }
 
   @Override
