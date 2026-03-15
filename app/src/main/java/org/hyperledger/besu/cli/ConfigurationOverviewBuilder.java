@@ -477,6 +477,13 @@ public class ConfigurationOverviewBuilder {
 
     if (syncMode != null) {
       lines.add("Sync mode: " + syncMode);
+      if (syncMode.equalsIgnoreCase("SNAP")) {
+        if (isSnapServerEnabled) {
+          lines.add("  SNAP Sync server enabled");
+        } else {
+          lines.add("  SNAP Sync server disabled");
+        }
+      }
     }
 
     if (syncMinPeers != null) {
@@ -546,10 +553,6 @@ public class ConfigurationOverviewBuilder {
       }
       chainPruningString.append(")");
       lines.add(chainPruningString.toString());
-    }
-
-    if (isSnapServerEnabled) {
-      lines.add("Snap Sync server enabled");
     }
 
     if (isHighSpec) {
