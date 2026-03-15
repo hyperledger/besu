@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -48,16 +49,19 @@ public class SnapProtocolManager implements ProtocolManager {
   private final List<Capability> supportedCapabilities;
   private final EthPeers ethPeers;
   private final EthMessages snapMessages;
+  private final EthScheduler ethScheduler;
 
   public SnapProtocolManager(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncConfiguration snapConfig,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
+      final EthScheduler ethScheduler,
       final ProtocolContext protocolContext,
       final Synchronizer synchronizer) {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
+    this.ethScheduler = ethScheduler;
     this.supportedCapabilities = calculateCapabilities();
     new SnapServer(
         snapConfig, snapMessages, worldStateStorageCoordinator, protocolContext, synchronizer);
@@ -113,38 +117,49 @@ public class SnapProtocolManager implements ProtocolManager {
       return;
     }
 
-    // This will handle responses
+    // This will handle responses (snap responses received by the client side)
     ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
 
-    // This will handle requests
-    Optional<MessageData> maybeResponseData = Optional.empty();
-    try {
-      final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          ethMessage.getData().unwrapMessageData();
-      maybeResponseData =
-          snapMessages
-              .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
-              .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
-    } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed message code={} data={} (BREACH_OF_PROTOCOL), disconnecting: {}",
-          messageData.getCode(),
-          messageData.getData(),
-          ethPeer,
-          e);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+    // This will handle requests (snap requests received by the server side).
+    // GET_* request messages have even codes (0, 2, 4, 6). Dispatch to a service thread so that
+    // heavy DB work (trie reads, proof generation) does not block the Netty event loop, which
+    // would cause concurrent ETH protocol requests to time out.
+    if (code % 2 == 0) {
+      ethScheduler.scheduleServiceTask(
+          () -> {
+            Optional<MessageData> maybeResponseData = Optional.empty();
+            try {
+              final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+                  ethMessage.getData().unwrapMessageData();
+              maybeResponseData =
+                  snapMessages
+                      .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
+                      .map(
+                          responseData ->
+                              responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
+            } catch (final RLPException e) {
+              LOG.debug(
+                  "Received malformed snap message code={} data={} from {}, ignoring: {}",
+                  messageData.getCode(),
+                  messageData.getData(),
+                  ethPeer,
+                  e.getMessage());
+              // Do not disconnect: Malformed snap messages (e.g. known off-by-one RLP encoding
+              // bugs in some clients) should not cause disconnection.
+            }
+            maybeResponseData.ifPresent(
+                responseData -> {
+                  try {
+                    ethPeer.send(responseData, getSupportedProtocol());
+                  } catch (final PeerConnection.PeerNotConnected error) {
+                    LOG.atTrace()
+                        .setMessage("Peer disconnected before we could respond - nothing to do {}")
+                        .addArgument(error.getMessage())
+                        .log();
+                  }
+                });
+          });
     }
-    maybeResponseData.ifPresent(
-        responseData -> {
-          try {
-            ethPeer.send(responseData, getSupportedProtocol());
-          } catch (final PeerConnection.PeerNotConnected error) {
-            LOG.atTrace()
-                .setMessage("Peer disconnected before we could respond - nothing to do {}")
-                .addArgument(error.getMessage())
-                .log();
-          }
-        });
   }
 
   @Override
