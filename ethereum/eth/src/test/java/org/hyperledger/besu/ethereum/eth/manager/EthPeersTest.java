@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersExce
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -486,5 +487,45 @@ public class EthPeersTest {
 
     verifyNoInteractions(onSuccess);
     verifyNoInteractions(onError);
+  }
+
+  @Test
+  public void shouldReplaceStaleConnectionWhenPeerConnectsInbound() {
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final EthPeer ethPeer = peer.getEthPeer();
+    final PeerConnection oldConnection = ethPeer.getConnection();
+
+    assertThat(oldConnection.isDisconnected()).isFalse();
+
+    // Peer initiates a new inbound connection to us while we have a stale registration.
+    // This simulates the restart race where we still hold the old entry but the peer
+    // believes the connection is dead and is reconnecting.
+    final Optional<DisconnectReason> result =
+        ethPeers.gatePeerConnection(oldConnection.getPeer(), true);
+
+    // New inbound connection should be allowed
+    assertThat(result).isEmpty();
+    // Stale existing connection should have been disconnected
+    assertThat(oldConnection.isDisconnected()).isTrue();
+  }
+
+  @Test
+  public void shouldRejectOutboundConnectionWhenAlreadyConnected() {
+    // When WE try to connect outbound to a peer we already have in activeConnections,
+    // the existing connection should be kept and the outbound attempt rejected.
+    // This avoids disrupting healthy connections due to static-peer retry timers.
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    final PeerConnection existingConnection = peer.getEthPeer().getConnection();
+
+    assertThat(existingConnection.isDisconnected()).isFalse();
+
+    // We attempt another outbound connection to the same peer
+    final Optional<DisconnectReason> result =
+        ethPeers.gatePeerConnection(existingConnection.getPeer(), false);
+
+    // Should be rejected — we already have this peer
+    assertThat(result).contains(DisconnectReason.ALREADY_CONNECTED);
+    // Existing connection should be untouched
+    assertThat(existingConnection.isDisconnected()).isFalse();
   }
 }

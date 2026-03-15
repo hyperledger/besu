@@ -20,6 +20,8 @@
   - Proof of Work consensus (PoW)
 
 ### Bug fixes
+- Fix eth/69 snap sync receipt root mismatch by correctly identifying Frontier transaction type in SyncTransactionReceiptEncoder [#9900](https://github.com/hyperledger/besu/pull/9900)
+- Fix outstanding request counter leak in RequestManager that could cause peers to appear at capacity [#9900](https://github.com/hyperledger/besu/pull/9900)
 - BFT forks that change block period on time-based forks don't take effect [9681](https://github.com/hyperledger/besu/issues/9681)
 - Fix QBFT `RLPException` when decoding proposals from pre-26.1.0 nodes that do not include the `blockAccessList` field [#9977](https://github.com/hyperledger/besu/pull/9977)
 - Wait for peers before starting chain download. Prevents an OutOfMemory (OOM) error when the node has zero peers [#9979](https://github.com/hyperledger/besu/pull/9979)
