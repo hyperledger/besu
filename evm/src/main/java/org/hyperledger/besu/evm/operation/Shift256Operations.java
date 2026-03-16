@@ -78,4 +78,20 @@ public final class Shift256Operations {
   static void putLong(final byte[] arr, final int offset, final long value) {
     LONG_HANDLE.set(arr, offset, value);
   }
+
+  /**
+   * Shifts a 64-bit word right and carries in bits from the previous more-significant word.
+   *
+   * <p>The {@code bitShift == 0} fast path avoids Java long-shift masking, where a shift by 64 is
+   * treated as a shift by 0.
+   *
+   * @param value the current word
+   * @param prevValue the previous more-significant word
+   * @param bitShift the intra-word shift amount in the range {@code [0..63]}
+   * @return the shifted word
+   */
+  static long shiftRight(final long value, final long prevValue, final int bitShift) {
+    if (bitShift == 0) return value;
+    return (value >>> bitShift) | (prevValue << (64 - bitShift));
+  }
 }

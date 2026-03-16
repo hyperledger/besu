@@ -91,10 +91,7 @@ public class ShlOperationOptimized extends AbstractFixedCostOperation {
    * @return the shifted 256-bit value
    */
   private static Bytes shl256(final byte[] in, final int shift) {
-    if (shift == 0) {
-      return Bytes.wrap(in);
-    }
-
+    if (shift == 0) return Bytes.wrap(in);
     long w0 = getLong(in, 0);
     long w1 = getLong(in, 8);
     long w2 = getLong(in, 16);
@@ -104,43 +101,53 @@ public class ShlOperationOptimized extends AbstractFixedCostOperation {
     final int wordShift = shift >>> 6;
     // Remaining intra-word bit shift (shift % 64).
     final int bitShift = shift & 63;
-
     switch (wordShift) {
+      case 0:
+        w0 = shiftLeft(w0, w1, bitShift);
+        w1 = shiftLeft(w1, w2, bitShift);
+        w2 = shiftLeft(w2, w3, bitShift);
+        w3 = shiftLeft(w3, 0, bitShift);
+        break;
       case 1:
-        w0 = w1;
-        w1 = w2;
-        w2 = w3;
+        w0 = shiftLeft(w1, w2, bitShift);
+        w1 = shiftLeft(w2, w3, bitShift);
+        w2 = shiftLeft(w3, 0, bitShift);
         w3 = 0;
         break;
       case 2:
-        w0 = w2;
-        w1 = w3;
+        w0 = shiftLeft(w2, w3, bitShift);
+        w1 = shiftLeft(w3, 0, bitShift);
         w2 = 0;
         w3 = 0;
         break;
       case 3:
-        w0 = w3;
+        w0 = shiftLeft(w3, 0, bitShift);
         w1 = 0;
         w2 = 0;
         w3 = 0;
         break;
-      default:
-        break;
     }
-
-    if (bitShift > 0) {
-      final int inv = 64 - bitShift;
-      w0 = (w0 << bitShift) | (w1 >>> inv);
-      w1 = (w1 << bitShift) | (w2 >>> inv);
-      w2 = (w2 << bitShift) | (w3 >>> inv);
-      w3 = w3 << bitShift;
-    }
-
     final byte[] out = new byte[32];
     putLong(out, 0, w0);
     putLong(out, 8, w1);
     putLong(out, 16, w2);
     putLong(out, 24, w3);
     return Bytes.wrap(out);
+  }
+
+  /**
+   * Shifts a 64-bit word left and carries in bits from the next less-significant word.
+   *
+   * <p>The {@code bitShift == 0} fast path avoids Java long-shift masking, where a shift by 64 is
+   * treated as a shift by 0.
+   *
+   * @param value the current word
+   * @param nextValue the next less-significant word
+   * @param bitShift the intra-word shift amount in the range {@code [0..63]}
+   * @return the shifted word
+   */
+  private static long shiftLeft(final long value, final long nextValue, final int bitShift) {
+    if (bitShift == 0) return value;
+    return (value << bitShift) | (nextValue >>> (64 - bitShift));
   }
 }
