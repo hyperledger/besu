@@ -232,6 +232,7 @@ public class TransactionPoolFactory {
       final TransactionPool transactionPool,
       final TransactionsMessageHandler transactionsMessageHandler,
       final NewPooledTransactionHashesMessageHandler pooledTransactionsMessageHandler) {
+    ethContext.getEthPeers().subscribeConnect(transactionTracker);
     ethContext.getEthPeers().subscribeDisconnect(transactionTracker);
     protocolContext.getBlockchain().observeBlockAdded(transactionPool);
     protocolContext.getBlockchain().observeBlockAdded(transactionTracker);

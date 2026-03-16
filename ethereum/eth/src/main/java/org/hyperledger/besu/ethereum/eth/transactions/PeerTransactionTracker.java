@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyNavigableMap;
+import static java.util.Objects.requireNonNullElse;
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -30,6 +30,7 @@ import org.hyperledger.besu.plugin.data.AddedBlockContext;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,30 +39,35 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SequencedMap;
 import java.util.SequencedSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import org.apache.commons.collections4.map.LRUMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PeerTransactionTracker
-    implements EthPeer.DisconnectCallback, PendingTransactionDroppedListener, BlockAddedObserver {
+    implements EthPeer.DisconnectCallback,
+        EthPeers.ConnectCallback,
+        PendingTransactionDroppedListener,
+        BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(PeerTransactionTracker.class);
-
   private final EthPeers ethPeers;
   private final EthScheduler ethScheduler;
   private final int maxTrackedSeenTxsPerPeer;
   private final int maxSendQueueSizePerPeer;
   private final boolean forgetEvictedTxsEnabled;
-  private final Map<EthPeer, Map<Hash, SeenType>> peerSeenState = new HashMap<>();
+  private final LRUMap<Hash, PeersSeenState> peersSeenStateByHash;
   private final Map<EthPeer, SequencedSet<Transaction>> transactionsToSend = new HashMap<>();
   private final Map<EthPeer, SequencedSet<Transaction>> announcementsToSend = new HashMap<>();
-  private final Map<EthPeer, SequencedMap<Hash, TransactionAnnouncement>>
-      announcementsToRequestByHash = new HashMap<>();
+  private final Map<EthPeer, LRUMap<Hash, TransactionAnnouncement>> announcementsToRequestByHash =
+      new HashMap<>();
   private final Set<Hash> inProgressAnnouncements = new HashSet<>();
-  private final Set<Hash> recentlyConfirmedTransactions;
+  private final BiMap<EthPeer, Integer> peerToSlotIndexMap;
 
   public PeerTransactionTracker(
       final TransactionPoolConfiguration txPoolConfig,
@@ -72,24 +78,24 @@ public class PeerTransactionTracker
     this.maxTrackedSeenTxsPerPeer = txPoolConfig.getUnstable().getMaxTrackedSeenTxsPerPeer();
     this.maxSendQueueSizePerPeer = txPoolConfig.getUnstable().getMaxSendQueueSizePerPeer();
     this.forgetEvictedTxsEnabled = txPoolConfig.getUnstable().getPeerTrackerForgetEvictedTxs();
-    this.recentlyConfirmedTransactions = createBoundedSet(maxTrackedSeenTxsPerPeer);
+    this.peersSeenStateByHash = new LRUMap<>(maxTrackedSeenTxsPerPeer);
+    this.peerToSlotIndexMap = HashBiMap.create(ethPeers.getMaxPeers());
     ethScheduler.scheduleFutureTaskWithFixedDelay(
         this::logStats, Duration.ofMinutes(1), Duration.ofMinutes(1));
   }
 
   public synchronized void reset() {
-    peerSeenState.clear();
+    peerToSlotIndexMap.clear();
+    peersSeenStateByHash.clear();
     transactionsToSend.clear();
     announcementsToSend.clear();
     announcementsToRequestByHash.clear();
     inProgressAnnouncements.clear();
-    recentlyConfirmedTransactions.clear();
   }
 
   private synchronized void logStats() {
     if (LOG.isTraceEnabled()) {
-      peerSeenState.forEach(
-          (ethPeer, hashes) -> LOG.trace("Seen state: peer={} size={}", ethPeer, hashes.size()));
+      LOG.trace("Peers seen state by hash {}", peersSeenStateByHash.size());
       transactionsToSend.forEach(
           (ethPeer, txs) -> LOG.trace("Txs to send: peer={} size={}", ethPeer, txs.size()));
       announcementsToSend.forEach(
@@ -99,25 +105,24 @@ public class PeerTransactionTracker
           (ethPeer, hashes) ->
               LOG.trace("Announcements to request: peer={} size={}", ethPeer, hashes.size()));
       LOG.trace("In progress announcements {}", inProgressAnnouncements.size());
-      LOG.trace("Recently confirmed txs {}", recentlyConfirmedTransactions.size());
     }
   }
 
   public synchronized void markTransactionsAsSeen(
       final EthPeer peer, final Collection<Hash> seenHashes) {
-    final Map<Hash, SeenType> seenForPeer =
-        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
-
-    seenHashes.forEach(
-        seenHash ->
-            seenForPeer.compute(
-                seenHash,
-                (unused, seenType) ->
-                    switch (seenType) {
-                      case null -> SeenType.TRANSACTION;
-                      case TRANSACTION -> SeenType.TRANSACTION;
-                      case ANNOUNCEMENT, BOTH -> SeenType.BOTH;
-                    }));
+    if (!peer.isDisconnected()) {
+      seenHashes.forEach(
+          hash ->
+              peersSeenStateByHash.compute(
+                  hash,
+                  (unused, peersSeenState) -> {
+                    final PeersSeenState computed =
+                        requireNonNullElse(
+                            peersSeenState, new PeersSeenState(ethPeers.getMaxPeers()));
+                    computed.transactionSeen(peerToSlotIndexMap.get(peer));
+                    return computed;
+                  }));
+    }
     // remove the seen txs from any request queue
     announcementsToRequestByHash.values().forEach(hashes -> seenHashes.forEach(hashes::remove));
   }
@@ -125,69 +130,76 @@ public class PeerTransactionTracker
   public synchronized void markTransactionAsSeen(
       final EthPeer peer, final Transaction transaction) {
     final Hash seenHash = transaction.getHash();
-    final Map<Hash, SeenType> seenForPeer =
-        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
-
-    seenForPeer.compute(
-        seenHash,
-        (unused, seenType) ->
-            switch (seenType) {
-              case null -> SeenType.TRANSACTION;
-              case TRANSACTION -> SeenType.TRANSACTION;
-              case ANNOUNCEMENT, BOTH -> SeenType.BOTH;
-            });
+    if (!peer.isDisconnected()) {
+      peersSeenStateByHash.compute(
+          seenHash,
+          (unused, peersSeenState) -> {
+            final PeersSeenState computed =
+                requireNonNullElse(peersSeenState, new PeersSeenState(ethPeers.getMaxPeers()));
+            computed.transactionSeen(peerToSlotIndexMap.get(peer));
+            return computed;
+          });
+    }
     // remove the seen txs from any request queue
     announcementsToRequestByHash.values().forEach(hashes -> hashes.remove(seenHash));
   }
 
   public synchronized void markAnnouncementsAsSeenByTransaction(
       final EthPeer peer, final Collection<Transaction> announcements) {
-    final Map<Hash, SeenType> seenForPeer =
-        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
-
-    announcements.forEach(
-        seenAnn ->
-            seenForPeer.compute(
-                seenAnn.getHash(),
-                (unused, seenType) ->
-                    switch (seenType) {
-                      case null -> SeenType.ANNOUNCEMENT;
-                      case ANNOUNCEMENT -> SeenType.ANNOUNCEMENT;
-                      case TRANSACTION, BOTH -> SeenType.BOTH;
-                    }));
+    if (!peer.isDisconnected()) {
+      announcements.stream()
+          .map(Transaction::getHash)
+          .forEach(
+              hash ->
+                  peersSeenStateByHash.compute(
+                      hash,
+                      (unused, peersSeenState) -> {
+                        final PeersSeenState computed =
+                            requireNonNullElse(
+                                peersSeenState, new PeersSeenState(ethPeers.getMaxPeers()));
+                        computed.announcementSeen(peerToSlotIndexMap.get(peer));
+                        return computed;
+                      }));
+    }
     // do not clean transactionAnnouncementsToRequest to allow for retries with other peers
   }
 
   public synchronized void markAnnouncementsAsSeen(
       final EthPeer peer, final Collection<TransactionAnnouncement> announcements) {
-
-    final Map<Hash, SeenType> seenForPeer =
-        peerSeenState.computeIfAbsent(peer, key -> createBoundedMap(maxTrackedSeenTxsPerPeer));
-    announcements.forEach(
-        seenAnn ->
-            seenForPeer.compute(
-                seenAnn.hash(),
-                (unused, seenType) ->
-                    switch (seenType) {
-                      case null -> SeenType.ANNOUNCEMENT;
-                      case ANNOUNCEMENT -> SeenType.ANNOUNCEMENT;
-                      case TRANSACTION, BOTH -> SeenType.BOTH;
-                    }));
+    if (!peer.isDisconnected()) {
+      announcements.stream()
+          .map(TransactionAnnouncement::hash)
+          .forEach(
+              hash ->
+                  peersSeenStateByHash.compute(
+                      hash,
+                      (unused, peersSeenState) -> {
+                        final PeersSeenState computed =
+                            requireNonNullElse(
+                                peersSeenState, new PeersSeenState(ethPeers.getMaxPeers()));
+                        computed.announcementSeen(peerToSlotIndexMap.get(peer));
+                        return computed;
+                      }));
+    }
     // do not clean transactionAnnouncementsToRequest to allow for retries with other peers
   }
 
   public synchronized void addToPeerSendQueue(
       final EthPeer peer, final List<Transaction> transactions) {
-    transactionsToSend
-        .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
-        .addAll(transactions);
+    if (!peer.isDisconnected()) {
+      transactionsToSend
+          .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
+          .addAll(transactions);
+    }
   }
 
   public synchronized void addToPeerAnnouncementsSendQueue(
       final EthPeer peer, final List<Transaction> transactions) {
-    announcementsToSend
-        .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
-        .addAll(transactions);
+    if (!peer.isDisconnected()) {
+      announcementsToSend
+          .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
+          .addAll(transactions);
+    }
   }
 
   public synchronized Transaction claimTransactionToSendToPeer(final EthPeer peer) {
@@ -219,10 +231,10 @@ public class PeerTransactionTracker
   @SuppressWarnings("MixedMutabilityReturnType")
   public synchronized List<TransactionAnnouncement> claimAnnouncementsToRequestFromPeer(
       final EthPeer peer, final int maxHashes, final long maxSize) {
-    final SequencedMap<Hash, TransactionAnnouncement> announcements =
-        announcementsToRequestByHash.getOrDefault(peer, emptyNavigableMap());
+    final LRUMap<Hash, TransactionAnnouncement> announcements =
+        announcementsToRequestByHash.get(peer);
 
-    if (announcements.isEmpty()) {
+    if (announcements == null) {
       return emptyList();
     }
 
@@ -255,15 +267,20 @@ public class PeerTransactionTracker
     requestedHashes.forEach(inProgressAnnouncements::remove);
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   public synchronized Collection<TransactionAnnouncement> receivedAnnouncements(
       final EthPeer peer, final List<TransactionAnnouncement> incomingAnnouncements) {
+
+    if (peer.isDisconnected()) {
+      return emptyList();
+    }
 
     final List<TransactionAnnouncement> freshAnnouncements =
         new ArrayList<>(incomingAnnouncements.size());
 
-    final Map<Hash, TransactionAnnouncement> announcementsByHashForPeer =
+    final LRUMap<Hash, TransactionAnnouncement> announcementsByHashForPeer =
         announcementsToRequestByHash.computeIfAbsent(
-            peer, key -> createBoundedMap(maxSendQueueSizePerPeer));
+            peer, key -> new LRUMap<>(maxSendQueueSizePerPeer));
 
     for (final TransactionAnnouncement txAnnouncement : incomingAnnouncements) {
       if (!alreadySeenTransaction(txAnnouncement.hash())) {
@@ -277,8 +294,13 @@ public class PeerTransactionTracker
     return freshAnnouncements;
   }
 
+  @SuppressWarnings("MixedMutabilityReturnType")
   public synchronized Collection<Transaction> receivedTransactions(
       final EthPeer peer, final List<Transaction> incomingTransactions) {
+    if (peer.isDisconnected()) {
+      return emptyList();
+    }
+
     final List<Transaction> freshTransactions = new ArrayList<>(incomingTransactions.size());
 
     for (final Transaction transaction : incomingTransactions) {
@@ -293,10 +315,9 @@ public class PeerTransactionTracker
   }
 
   public synchronized boolean alreadySeenTransaction(final Hash txHash) {
-    return recentlyConfirmedTransactions.contains(txHash)
-        || peerSeenState.values().stream()
-            .map(s -> s.get(txHash))
-            .anyMatch(seenType -> SeenType.TRANSACTION == seenType || SeenType.BOTH == seenType);
+    final PeersSeenState peersSeenState = peersSeenStateByHash.get(txHash);
+
+    return (peersSeenState != null && peersSeenState.anyHasSeenTransaction());
   }
 
   public boolean hasPeerSeenTransaction(final EthPeer peer, final Transaction transaction) {
@@ -304,36 +325,25 @@ public class PeerTransactionTracker
   }
 
   public synchronized boolean hasPeerSeenTransaction(final EthPeer peer, final Hash txHash) {
-    if (recentlyConfirmedTransactions.contains(txHash)) {
-      return true;
-    }
-    final Map<Hash, SeenType> seenForPeer = peerSeenState.get(peer);
-    if (seenForPeer != null) {
-      final SeenType seenType = seenForPeer.get(txHash);
-      return SeenType.TRANSACTION == seenType || SeenType.BOTH == seenType;
-    }
-    return false;
+    final PeersSeenState peersSeenState = peersSeenStateByHash.get(txHash);
+    return peersSeenState != null
+        && peersSeenState.hasSeenTransaction(peerToSlotIndexMap.get(peer));
   }
 
   public synchronized boolean hasPeerSeenAnnouncement(final EthPeer peer, final Hash txHash) {
-    if (recentlyConfirmedTransactions.contains(txHash)) {
-      return true;
-    }
-    final Map<Hash, SeenType> seenForPeer = peerSeenState.get(peer);
-    if (seenForPeer != null) {
-      final SeenType seenType = seenForPeer.get(txHash);
-      return SeenType.ANNOUNCEMENT == seenType || SeenType.BOTH == seenType;
-    }
-    return false;
+    final PeersSeenState peersSeenState = peersSeenStateByHash.get(txHash);
+    return peersSeenState != null
+        && peersSeenState.hasSeenAnnouncement(peerToSlotIndexMap.get(peer));
   }
 
   public synchronized boolean hasPeerSeenTransactionOrAnnouncement(
       final EthPeer peer, final Hash txHash) {
-    if (recentlyConfirmedTransactions.contains(txHash)) {
-      return true;
-    }
-    final Map<Hash, SeenType> seenForPeer = peerSeenState.get(peer);
-    return seenForPeer != null && seenForPeer.get(txHash) != null;
+    final PeersSeenState peersSeenState = peersSeenStateByHash.get(txHash);
+    final Integer peerIdx = peerToSlotIndexMap.get(peer);
+
+    return peersSeenState != null
+        && (peersSeenState.hasSeenAnnouncement(peerIdx)
+            || peersSeenState.hasSeenTransaction(peerIdx));
   }
 
   private <T> SequencedSet<T> createBoundedSet(final int maxSize) {
@@ -346,15 +356,6 @@ public class PeerTransactionTracker
         });
   }
 
-  private <K, V> SequencedMap<K, V> createBoundedMap(final int maxSize) {
-    return new LinkedHashMap<>(16, 0.75f, true) {
-      @Override
-      protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
-        return size() > maxSize;
-      }
-    };
-  }
-
   @Override
   public synchronized void onDisconnect(final EthPeer peer) {
     LOG.atTrace().setMessage("onDisconnect for peer {}").addArgument(peer::getLoggableId).log();
@@ -362,7 +363,7 @@ public class PeerTransactionTracker
     // here we reconcile all the trackers with the active peers, since due to the asynchronous
     // processing of incoming messages it could seldom happen that a tracker is recreated just
     // after a peer was disconnected, resulting in a memory leak.
-    final Set<EthPeer> trackedPeers = new HashSet<>(peerSeenState.keySet());
+    final Set<EthPeer> trackedPeers = new HashSet<>(peerToSlotIndexMap.keySet());
     trackedPeers.addAll(transactionsToSend.keySet());
     trackedPeers.addAll(announcementsToSend.keySet());
     trackedPeers.addAll(announcementsToRequestByHash.keySet());
@@ -382,27 +383,60 @@ public class PeerTransactionTracker
     final Set<EthPeer> disconnectedPeers = trackedPeers;
     disconnectedPeers.removeAll(connectedPeers);
     LOG.atTrace()
-        .setMessage(
-            "{} transaction trackers for disconnected peers ({}) will be remove after a graceful delay")
+        .setMessage("{} transaction trackers for disconnected peers ({}) will be removed")
         .addArgument(disconnectedPeers.size())
         .addArgument(() -> logPeerSet(disconnectedPeers))
         .log();
 
     disconnectedPeers.forEach(
         disconnectedPeer -> {
-          peerSeenState.remove(disconnectedPeer);
           transactionsToSend.remove(disconnectedPeer);
           announcementsToSend.remove(disconnectedPeer);
           announcementsToRequestByHash.remove(disconnectedPeer);
+          final Integer removedPeerIndex = peerToSlotIndexMap.remove(disconnectedPeer);
           LOG.atTrace()
-              .setMessage("Removed transaction trackers for disconnected peer {}")
+              .setMessage(
+                  "onPeerDisconnected: removed transaction trackers for disconnected peer {} with index {} peersToSlotIndexMap {}")
               .addArgument(disconnectedPeer::getLoggableId)
+              .addArgument(removedPeerIndex)
+              .addArgument(this::logPeerToSlotIndexMap)
               .log();
         });
   }
 
+  @Override
+  public synchronized void onPeerConnected(final EthPeer newPeer) {
+    final int firstFreeIndex =
+        IntStream.range(0, peerToSlotIndexMap.size())
+            .filter(idx -> !peerToSlotIndexMap.containsValue(idx))
+            .findFirst()
+            .orElse(peerToSlotIndexMap.size());
+    peerToSlotIndexMap.put(newPeer, firstFreeIndex);
+
+    // clear seen status for new peer index, just in case it was reused
+    long start = System.nanoTime();
+    peersSeenStateByHash.values().stream()
+        .parallel()
+        .forEach(peersSeenState -> peersSeenState.clear(firstFreeIndex));
+
+    LOG.atTrace()
+        .setMessage(
+            "onPeerConnected: new peer {} got index {}, its peersSeenState cleared in {} peersToSlotIndexMap {}")
+        .addArgument(newPeer::getLoggableId)
+        .addArgument(firstFreeIndex)
+        .addArgument(() -> Duration.ofNanos(System.nanoTime() - start))
+        .addArgument(this::logPeerToSlotIndexMap)
+        .log();
+  }
+
   private String logPeerSet(final Set<EthPeer> peers) {
     return peers.stream().map(EthPeer::getLoggableId).collect(Collectors.joining(","));
+  }
+
+  private String logPeerToSlotIndexMap() {
+    return peerToSlotIndexMap.entrySet().stream()
+        .map(e -> e.getKey().getLoggableId() + "->" + e.getValue())
+        .collect(Collectors.joining(","));
   }
 
   @Override
@@ -415,7 +449,7 @@ public class PeerTransactionTracker
     }
 
     if (reason.stopTracking() && forgetEvictedTxsEnabled) {
-      peerSeenState.values().forEach(st -> st.remove(transaction.getHash()));
+      peersSeenStateByHash.remove(transaction.getHash());
     }
   }
 
@@ -429,7 +463,17 @@ public class PeerTransactionTracker
             final List<Hash> confirmedTxHashes = toHashList(confirmedTxs);
 
             synchronized (this) {
-              recentlyConfirmedTransactions.addAll(confirmedTxHashes);
+              confirmedTxHashes.forEach(
+                  hash ->
+                      peersSeenStateByHash.compute(
+                          hash,
+                          (unused, peersSeenState) -> {
+                            final PeersSeenState computed =
+                                requireNonNullElse(
+                                    peersSeenState, new PeersSeenState(ethPeers.getMaxPeers()));
+                            computed.transactionSeenAll();
+                            return computed;
+                          }));
               transactionsToSend.values().forEach(txs -> confirmedTxs.forEach(txs::remove));
               announcementsToSend.values().forEach(txs -> confirmedTxs.forEach(txs::remove));
               announcementsToRequestByHash
@@ -440,9 +484,42 @@ public class PeerTransactionTracker
         });
   }
 
-  private enum SeenType {
-    TRANSACTION,
-    ANNOUNCEMENT,
-    BOTH
+  private record PeersSeenState(BitSet transactions, BitSet announcements) {
+    PeersSeenState(final int maxSlots) {
+      this(new BitSet(maxSlots), new BitSet(maxSlots));
+    }
+
+    public void transactionSeenAll() {
+      transactions.set(0, transactions.size());
+    }
+
+    public void transactionSeen(final Integer peerIdx) {
+      if (peerIdx != null) {
+        transactions.set(peerIdx);
+      }
+    }
+
+    public void announcementSeen(final Integer peerIdx) {
+      if (peerIdx != null) {
+        announcements.set(peerIdx);
+      }
+    }
+
+    public boolean anyHasSeenTransaction() {
+      return !transactions.isEmpty();
+    }
+
+    public boolean hasSeenTransaction(final Integer peerIdx) {
+      return peerIdx != null && transactions.get(peerIdx);
+    }
+
+    public boolean hasSeenAnnouncement(final Integer peerIdx) {
+      return peerIdx != null && announcements.get(peerIdx);
+    }
+
+    public void clear(final Integer peerIdx) {
+      transactions.clear(peerIdx);
+      announcements.clear(peerIdx);
+    }
   }
 }

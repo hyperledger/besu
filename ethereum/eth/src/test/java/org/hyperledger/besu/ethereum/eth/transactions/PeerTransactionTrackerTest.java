@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PeerTransactionTrackerTest {
@@ -70,6 +71,17 @@ public class PeerTransactionTrackerTest {
               .build(),
           ethPeers,
           ethScheduler);
+
+  @BeforeEach
+  void setUp() {
+    when(ethPeers.getMaxPeers()).thenReturn(25);
+    when(ethPeer1.isDisconnected()).thenReturn(false);
+    when(ethPeer2.isDisconnected()).thenReturn(false);
+    tracker.onPeerConnected(ethPeer1);
+    tracker.onPeerConnected(ethPeer2);
+    forgetfulTracker.onPeerConnected(ethPeer1);
+    shortMemoryTracker.onPeerConnected(ethPeer1);
+  }
 
   @Test
   public void shouldTrackTransactionsToSendToPeer() {
@@ -192,8 +204,9 @@ public class PeerTransactionTrackerTest {
     assertThat(tracker.hasPeerSeenTransaction(ethPeer1, transaction1)).isFalse();
     assertThat(tracker.hasPeerSeenTransaction(ethPeer2, transaction2)).isTrue();
 
-    // simulate a concurrent interaction, that just after the disconnection of the peer,
-    // recreates the transaction tackers for it
+    // simulate a concurrent interaction: peer1 reconnects and is re-registered,
+    // then immediately marks a transaction as seen before the tracker is fully reconciled
+    tracker.onPeerConnected(ethPeer1);
     tracker.markTransactionsAsSeen(ethPeer1, List.of(transaction1.getHash()));
     // ethPeer1 is here again, due to the above interaction with the tracker
     assertThat(tracker.hasPeerSeenTransaction(ethPeer1, transaction1)).isTrue();

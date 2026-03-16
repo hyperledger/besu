@@ -16,12 +16,15 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.ignoreStubs;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -38,6 +41,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -59,6 +63,14 @@ public class TransactionsMessageSenderTest {
       new TransactionsMessageSender(
           transactionTracker, EthProtocolConfiguration.DEFAULT.getMaxTransactionsMessageSize());
 
+  @BeforeEach
+  void setUp() {
+    when(peer1.isDisconnected()).thenReturn(false);
+    when(peer2.isDisconnected()).thenReturn(false);
+    transactionTracker.onPeerConnected(peer1);
+    transactionTracker.onPeerConnected(peer2);
+  }
+
   @Test
   public void shouldSendTransactionsToEachPeer() throws Exception {
     transactionTracker.addToPeerSendQueue(peer1, List.of(transaction1));
@@ -70,7 +82,7 @@ public class TransactionsMessageSenderTest {
 
     verify(peer1).send(transactionsMessageContaining(transaction1, transaction2));
     verify(peer2).send(transactionsMessageContaining(transaction3));
-    verifyNoMoreInteractions(peer1, peer2);
+    verifyNoMoreInteractions(ignoreStubs(peer1, peer2));
   }
 
   @Test
@@ -112,7 +124,7 @@ public class TransactionsMessageSenderTest {
     // peer1 receives only transaction1; transaction2 filtered out because already seen
     verify(peer1).send(transactionsMessageContaining(transaction1));
     verify(peer2).send(transactionsMessageContaining(transaction3));
-    verifyNoMoreInteractions(peer1, peer2);
+    verifyNoMoreInteractions(ignoreStubs(peer1, peer2));
   }
 
   @Test
@@ -126,7 +138,7 @@ public class TransactionsMessageSenderTest {
     messageSender.sendTransactionsToPeer(peer1);
 
     // peer1 must not receive the full transaction — already announced
-    verifyNoInteractions(peer1);
+    verify(peer1, never()).send(any());
   }
 
   @Test
@@ -142,7 +154,8 @@ public class TransactionsMessageSenderTest {
     tinySender.sendTransactionsToPeer(peer2);
 
     // Every transaction is too large — no message is ever sent to any peer
-    verifyNoInteractions(peer1, peer2);
+    verify(peer1, never()).send(any());
+    verify(peer2, never()).send(any());
   }
 
   private MessageData transactionsMessageContaining(final Transaction... transactions) {
