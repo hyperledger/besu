@@ -103,6 +103,13 @@ public class SelfDestructOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
+    // EIP-8037: Charge state gas for new account creation in SELFDESTRUCT
+    if (!gasCalculator()
+        .stateGasCostCalculator()
+        .chargeSelfDestructNewAccountStateGas(frame, beneficiaryNullable, originatorBalance)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     // We passed preliminary checks, get mutable accounts.
     final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
 
