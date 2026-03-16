@@ -25,6 +25,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -94,6 +96,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
   private final ForkIdManager forkIdManager;
   private final NodeRecordManager nodeRecordManager;
   private final RlpxAgent rlpxAgent;
+  private final MetricsSystem metricsSystem;
   private final boolean preferIpv6Outbound;
   private final DiscoverySystemFactory discoverySystemFactory;
 
@@ -119,6 +122,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
    * @param forkIdManager manager used to validate fork compatibility with peers
    * @param nodeRecordManager manager responsible for maintaining the local node record
    * @param rlpxAgent RLPx agent used to initiate outbound peer connections
+   * @param metricsSystem metrics system for registering DiscV5 metrics
    * @param preferIpv6Outbound if true, prefer IPv6 when a peer advertises both address families
    * @param discoverySystemFactory factory for creating the {@link MutableDiscoverySystem}
    */
@@ -127,6 +131,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       final ForkIdManager forkIdManager,
       final NodeRecordManager nodeRecordManager,
       final RlpxAgent rlpxAgent,
+      final MetricsSystem metricsSystem,
       final boolean preferIpv6Outbound,
       final DiscoverySystemFactory discoverySystemFactory) {
 
@@ -136,6 +141,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
     this.nodeRecordManager =
         Objects.requireNonNull(nodeRecordManager, "nodeRecordManager must not be null");
     this.rlpxAgent = Objects.requireNonNull(rlpxAgent, "rlpxAgent must not be null");
+    this.metricsSystem = Objects.requireNonNull(metricsSystem, "metricsSystem must not be null");
     this.preferIpv6Outbound = preferIpv6Outbound;
     this.discoverySystemFactory =
         Objects.requireNonNull(discoverySystemFactory, "discoverySystemFactory must not be null");
@@ -173,6 +179,7 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       final NodeRecord localNodeRecord = initializeLocalNodeRecord(tcpPort);
       system = discoverySystemFactory.create(localNodeRecord, this::handleBoundPortResolved);
       discoverySystem.set(system);
+      registerMetrics(system);
     } catch (final Exception e) {
       started.set(false);
       return CompletableFuture.failedFuture(e);
@@ -515,5 +522,18 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
         .getLocalNode()
         .flatMap(DiscoveryPeer::getNodeRecord)
         .orElseThrow(() -> new IllegalStateException("Local node record not initialized"));
+  }
+
+  private void registerMetrics(final MutableDiscoverySystem system) {
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.NETWORK,
+        "discv5_live_nodes_current",
+        "Current number of live nodes tracked by the DiscV5 discovery system",
+        () -> system.getBucketStats().getTotalLiveNodeCount());
+    metricsSystem.createIntegerGauge(
+        BesuMetricCategory.NETWORK,
+        "discv5_total_nodes_current",
+        "Current number of total nodes tracked by the DiscV5 discovery system",
+        () -> system.getBucketStats().getTotalNodeCount());
   }
 }
