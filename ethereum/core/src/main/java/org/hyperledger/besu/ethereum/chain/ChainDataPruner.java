@@ -72,8 +72,9 @@ public class ChainDataPruner implements BlockAddedObserver {
     final long storedBlockPruningMark = prunerStorage.getChainPruningMark().orElse(blockNumber);
     final long storedBalPruningMark = prunerStorage.getBalPruningMark().orElse(blockNumber);
 
-    final boolean balPresent = event.getHeader().getBalHash().isPresent();
-    validatePruningMarks(blockNumber, storedBlockPruningMark, storedBalPruningMark, balPresent);
+    final boolean isBalHashPresent = event.getHeader().getBalHash().isPresent();
+    validatePruningMarks(
+        blockNumber, storedBlockPruningMark, storedBalPruningMark, isBalHashPresent);
     recordForkBlock(event, blockNumber);
 
     if (!event.isNewCanonicalHead()) {
@@ -88,14 +89,14 @@ public class ChainDataPruner implements BlockAddedObserver {
       final long blockNumber,
       final long storedPruningMark,
       final long storedBalPruningMark,
-      final boolean balPresent) {
+      final boolean isBalHashPresent) {
     if (config.isBlockPruningEnabled() && blockNumber < storedPruningMark) {
       LOG.warn(
           "Block number {} is less than pruning mark {} - chain-pruning-blocks-retained may be too small",
           blockNumber,
           storedPruningMark);
     }
-    if (config.isBalPruningEnabled() && balPresent && blockNumber < storedBalPruningMark) {
+    if (config.isBalPruningEnabled() && isBalHashPresent && blockNumber < storedBalPruningMark) {
       LOG.warn(
           "Block number {} is less than BAL pruning mark {} - chain-pruning-bals-retained may be too small",
           blockNumber,
