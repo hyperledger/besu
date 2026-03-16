@@ -101,6 +101,18 @@ public class SStoreOperation extends AbstractOperation {
         gasCalculator()
             .calculateStorageRefundAmount(newValue, currentValueSupplier, originalValueSupplier));
 
+    // EIP-8037: Refund state gas for 0→X→0 (storage set then clear)
+    gasCalculator()
+        .stateGasCostCalculator()
+        .refundStorageSetStateGas(frame, newValue, currentValueSupplier, originalValueSupplier);
+
+    // EIP-8037: Charge state gas for storage set (0 -> nonzero)
+    if (!gasCalculator()
+        .stateGasCostCalculator()
+        .chargeStorageSetStateGas(frame, newValue, currentValueSupplier, originalValueSupplier)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     account.setStorageValue(key, newValue);
     frame.storageWasUpdated(key, newValue);
     frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(address, key));
