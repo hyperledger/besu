@@ -66,6 +66,7 @@ public class SnapProtocolManager implements ProtocolManager {
   private List<Capability> calculateCapabilities() {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
     capabilities.add(SnapProtocol.SNAP1);
+    capabilities.add(SnapProtocol.SNAP2);
 
     return capabilities.build();
   }
