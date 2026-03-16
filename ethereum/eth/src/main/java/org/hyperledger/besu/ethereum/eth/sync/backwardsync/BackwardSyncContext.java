@@ -35,6 +35,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -167,38 +168,34 @@ public class BackwardSyncContext {
   }
 
   private Status getOrStartSyncSession() {
-    Optional<Status> maybeCurrentStatus = Optional.ofNullable(this.currentBackwardSyncStatus.get());
-    return maybeCurrentStatus
-        .map(
-            existing -> {
-              final long ageMs = existing.getSessionAgeMs();
-              final long sinceProgressMs = existing.getMillisSinceLastProgress();
-              LOG.atDebug()
-                  .setMessage(
-                      "Reusing existing backward sync session (age {}ms, last progress {}ms ago, target height {})")
-                  .addArgument(ageMs)
-                  .addArgument(sinceProgressMs)
-                  .addArgument(existing::getTargetChainHeight)
-                  .log();
-              if (sinceProgressMs > MILLIS_STALL_WARNING) {
-                LOG.atWarn()
-                    .setMessage(
-                        "Backward sync session appears stalled: no progress for {}ms (session age {}ms, future isDone={}). "
-                            + "If this persists, restarting Besu will begin a new session.")
-                    .addArgument(sinceProgressMs)
-                    .addArgument(ageMs)
-                    .addArgument(() -> existing.currentFuture.isDone())
-                    .log();
-              }
-              return existing;
-            })
-        .orElseGet(
-            () -> {
-              LOG.info("Starting a new backward sync session");
-              Status newStatus = new Status(prepareBackwardSyncFutureWithRetry());
-              this.currentBackwardSyncStatus.set(newStatus);
-              return newStatus;
-            });
+    final Status existing = this.currentBackwardSyncStatus.get();
+    if (existing != null) {
+      final long ageMs = existing.getSessionAgeMs();
+      final long sinceProgressMs = existing.getMillisSinceLastProgress();
+      LOG.atDebug()
+          .setMessage(
+              "Reusing existing backward sync session (age {}ms, last progress {}ms ago, target height {})")
+          .addArgument(ageMs)
+          .addArgument(sinceProgressMs)
+          .addArgument(existing::getTargetChainHeight)
+          .log();
+      if (sinceProgressMs <= MILLIS_STALL_WARNING) {
+        return existing;
+      }
+      LOG.atWarn()
+          .setMessage(
+              "Backward sync session stalled: no progress for {}ms (session age {}ms). Cancelling and starting a new session.")
+          .addArgument(sinceProgressMs)
+          .addArgument(ageMs)
+          .log();
+      existing.currentFuture.cancel(true);
+      // fall through to start a new session
+    }
+
+    LOG.info("Starting a new backward sync session");
+    final Status newStatus = new Status(prepareBackwardSyncFutureWithRetry());
+    this.currentBackwardSyncStatus.set(newStatus);
+    return newStatus;
   }
 
   private boolean isTrusted(final Hash hash) {
@@ -213,18 +210,30 @@ public class BackwardSyncContext {
     return false;
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
-    return prepareBackwardSyncFutureWithRetry(maxRetries)
-        .handle(
-            (unused, throwable) -> {
-              this.currentBackwardSyncStatus.set(null);
-              if (throwable != null) {
-                LOG.info("Current backward sync session failed, it will be restarted");
-                throw extractBackwardSyncException(throwable)
-                    .orElse(new BackwardSyncException(throwable));
-              }
-              return null;
-            });
+    // futureHolder lets the handle compare against its own future, so a stall-restart
+    // that creates a new session won't be accidentally cleared by the old session's handle.
+    final CompletableFuture<Void>[] futureHolder = new CompletableFuture[1];
+    futureHolder[0] =
+        prepareBackwardSyncFutureWithRetry(maxRetries)
+            .handle(
+                (unused, throwable) -> {
+                  currentBackwardSyncStatus.updateAndGet(
+                      s -> s != null && s.currentFuture == futureHolder[0] ? null : s);
+                  if (throwable != null) {
+                    if (throwable instanceof CancellationException
+                        || throwable.getCause() instanceof CancellationException) {
+                      LOG.debug("Backward sync session cancelled for stall recovery");
+                    } else {
+                      LOG.info("Current backward sync session failed, it will be restarted");
+                      throw extractBackwardSyncException(throwable)
+                          .orElse(new BackwardSyncException(throwable));
+                    }
+                  }
+                  return null;
+                });
+    return futureHolder[0];
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(final int retries) {
