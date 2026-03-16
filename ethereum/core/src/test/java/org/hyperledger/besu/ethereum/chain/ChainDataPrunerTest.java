@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.AbstractExecutorService;
@@ -32,6 +33,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import jakarta.validation.constraints.NotNull;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -1376,6 +1383,171 @@ public class ChainDataPrunerTest {
     // All blocks should still exist
     for (int i = 0; i <= 500; i++) {
       assertThat(blockchain.getBlockHeader(i)).isPresent();
+    }
+  }
+
+  @SuppressWarnings("BannedMethod")
+  @Test
+  public void noBalPruningWarningBeforeGlamsterdam() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final BlockchainStorage blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions(),
+            false);
+    final ChainDataPruner chainDataPruner =
+        new ChainDataPruner(
+            blockchainStorage,
+            () -> {},
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            0,
+            ChainDataPruner.PruningMode.CHAIN_PRUNING,
+            new ChainPrunerConfiguration(
+                ChainDataPruner.ChainPruningStrategy.BAL,
+                Long.MAX_VALUE,
+                256,
+                Long.MAX_VALUE,
+                0,
+                0),
+            new BlockingExecutor());
+    Block genesisBlock = gen.genesisBlock();
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
+    blockchain.observeBlockAdded(chainDataPruner);
+
+    gen.setBlockOptionsSupplier(
+        () -> BlockDataGenerator.BlockOptions.create().withoutGeneratedBlockAccessList());
+
+    final Logger log4jLogger = (Logger) LogManager.getLogger(ChainDataPruner.class);
+    final List<LogEvent> capturedEvents = new ArrayList<>();
+    final AbstractAppender testAppender =
+        new AbstractAppender("test", null, null, false, Property.EMPTY_ARRAY) {
+          @Override
+          public void append(final LogEvent event) {
+            capturedEvents.add(event.toImmutable());
+          }
+        };
+    testAppender.start();
+    log4jLogger.addAppender(testAppender);
+
+    try {
+      List<Block> canonicalChain = gen.blockSequence(genesisBlock, 258);
+      List<Block> forkChain = gen.blockSequence(genesisBlock, 16);
+
+      for (Block blk : canonicalChain) {
+        blockchain.appendBlock(blk, gen.receipts(blk));
+      }
+
+      // Fork blocks at lower heights: before the fix, blockNumber < storedBalPruningMark
+      // would trigger a spurious warning even though BAL is not activated yet.
+      for (Block blk : forkChain) {
+        blockchain.storeBlock(blk, gen.receipts(blk));
+      }
+
+      assertThat(
+              capturedEvents.stream()
+                  .filter(e -> e.getLevel().equals(Level.WARN))
+                  .map(e -> e.getMessage().getFormattedMessage())
+                  .anyMatch(msg -> msg.contains("is less than BAL pruning mark")))
+          .as("No BAL pruning warning should be emitted for pre-Glamsterdam blocks")
+          .isFalse();
+    } finally {
+      log4jLogger.removeAppender(testAppender);
+    }
+  }
+
+  @SuppressWarnings("BannedMethod")
+  @Test
+  public void balPruningWarningAfterGlamsterdam() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final BlockchainStorage blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions(),
+            false);
+    final ChainDataPruner chainDataPruner =
+        new ChainDataPruner(
+            blockchainStorage,
+            () -> {},
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            0,
+            ChainDataPruner.PruningMode.CHAIN_PRUNING,
+            new ChainPrunerConfiguration(
+                ChainDataPruner.ChainPruningStrategy.BAL,
+                Long.MAX_VALUE,
+                256,
+                Long.MAX_VALUE,
+                0,
+                0),
+            new BlockingExecutor());
+    Block genesisBlock = gen.genesisBlock();
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
+    blockchain.observeBlockAdded(chainDataPruner);
+
+    // Post-glamsterdam: blocks WITH BAL
+    gen.setBlockOptionsSupplier(
+        () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
+
+    final Logger log4jLogger = (Logger) LogManager.getLogger(ChainDataPruner.class);
+    final List<LogEvent> capturedEvents = new ArrayList<>();
+    final AbstractAppender testAppender =
+        new AbstractAppender("test-post-glamsterdam", null, null, false, Property.EMPTY_ARRAY) {
+          @Override
+          public void append(final LogEvent event) {
+            capturedEvents.add(event.toImmutable());
+          }
+        };
+    testAppender.start();
+    log4jLogger.addAppender(testAppender);
+
+    try {
+      List<BlockDataGenerator.BlockWithAccessList> canonicalChain =
+          gen.blockSequenceWithAccessList(genesisBlock, 258);
+      List<BlockDataGenerator.BlockWithAccessList> forkChain =
+          gen.blockSequenceWithAccessList(genesisBlock, 16);
+
+      for (BlockDataGenerator.BlockWithAccessList blockWithBal : canonicalChain) {
+        final Block blk = blockWithBal.getBlock();
+        blockWithBal
+            .getBlockAccessList()
+            .ifPresent(
+                bal -> {
+                  final BlockchainStorage.Updater updater = blockchainStorage.updater();
+                  updater.putBlockAccessList(blk.getHash(), bal);
+                  updater.commit();
+                });
+        blockchain.appendBlock(blk, gen.receipts(blk));
+      }
+
+      // Fork blocks with BAL at lower heights (1-16).
+      // blockNumber < storedBalPruningMark → warning expected.
+      for (BlockDataGenerator.BlockWithAccessList blockWithBal : forkChain) {
+        final Block blk = blockWithBal.getBlock();
+        blockWithBal
+            .getBlockAccessList()
+            .ifPresent(
+                bal -> {
+                  final BlockchainStorage.Updater updater = blockchainStorage.updater();
+                  updater.putBlockAccessList(blk.getHash(), bal);
+                  updater.commit();
+                });
+        blockchain.storeBlock(blk, gen.receipts(blk));
+      }
+
+      assertThat(
+              capturedEvents.stream()
+                  .filter(e -> e.getLevel().equals(Level.WARN))
+                  .map(e -> e.getMessage().getFormattedMessage())
+                  .anyMatch(msg -> msg.contains("is less than BAL pruning mark")))
+          .as("BAL pruning warning should be emitted for post-Glamsterdam fork blocks")
+          .isTrue();
+    } finally {
+      log4jLogger.removeAppender(testAppender);
     }
   }
 
