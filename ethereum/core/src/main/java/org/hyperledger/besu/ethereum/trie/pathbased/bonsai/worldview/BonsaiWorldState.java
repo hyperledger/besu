@@ -120,6 +120,14 @@ public class BonsaiWorldState extends PathBasedWorldState {
   public Hash calculateRootHash(
       final Optional<PathBasedWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final PathBasedWorldStateUpdateAccumulator<?> worldStateUpdater) {
+
+    final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeBonsaiStateUpdater =
+      maybeStateUpdater.map(BonsaiWorldStateKeyValueStorage.Updater.class::cast);
+    final BonsaiWorldStateUpdateAccumulator bonsaiWorldStateAccumulator =
+      (BonsaiWorldStateUpdateAccumulator) worldStateUpdater;
+
+    clearStorage(maybeBonsaiStateUpdater, bonsaiWorldStateAccumulator);
+
     return internalCalculateRootHash(
         maybeStateUpdater.map(BonsaiWorldStateKeyValueStorage.Updater.class::cast),
         (BonsaiWorldStateUpdateAccumulator) worldStateUpdater);
@@ -128,8 +136,6 @@ public class BonsaiWorldState extends PathBasedWorldState {
   private Hash internalCalculateRootHash(
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
-
-    clearStorage(maybeStateUpdater, worldStateUpdater);
 
     // This must be done before updating the accounts so
     // that we can get the storage state hash
@@ -300,8 +306,14 @@ public class BonsaiWorldState extends PathBasedWorldState {
   }
 
   private void clearStorage(
+    final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
+    final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
+    clearStorage(maybeStateUpdater, worldStateUpdater, false);
+  }
+
+  private void clearStorage(
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
+      final BonsaiWorldStateUpdateAccumulator worldStateUpdater, final boolean isFrontierUpdate) {
     for (final Address address : worldStateUpdater.getStorageToClear()) {
       // because we are clearing persisted values we need the account root as persisted
       final BonsaiAccount oldAccount =
@@ -316,6 +328,23 @@ public class BonsaiWorldState extends PathBasedWorldState {
         // block. A not-uncommon DeFi bot pattern.
         continue;
       }
+
+      if (isFrontierUpdate) {
+        // When computing root hash only (e.g. frontierRootHash), we don't need to enumerate
+        // every storage slot. updateAccountStorageState already handles cleared accounts by
+        // starting from EMPTY_TRIE_HASH while importing blocks.
+        worldStateUpdater
+            .getStorageToUpdate()
+            .computeIfAbsent(
+                address,
+                add ->
+                    new StorageConsumingMap<>(
+                        address,
+                        new ConcurrentHashMap<>(),
+                        worldStateUpdater.getStoragePreloader()));
+        continue;
+      }
+
       final Hash addressHash = address.addressHash();
       final MerkleTrie<Bytes, Bytes> storageTrie =
           createTrie(
@@ -367,14 +396,9 @@ public class BonsaiWorldState extends PathBasedWorldState {
 
   @Override
   public Hash frontierRootHash() {
-    return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx,
-                noOpTx,
-                worldStateKeyValueStorage.getFlatDbStrategy(),
-                worldStateKeyValueStorage.getComposedWorldStateStorage())),
-        accumulator.copy());
+    final BonsaiWorldStateUpdateAccumulator accumulator = (BonsaiWorldStateUpdateAccumulator) this.accumulator.copy();
+    clearStorage(Optional.empty(), accumulator, true);
+    return internalCalculateRootHash(Optional.empty(), accumulator);
   }
 
   @Override
