@@ -43,6 +43,7 @@ public interface TransactionPoolConfiguration {
     int DEFAULT_MAX_TRACKED_SEEN_TXS_PER_PEER = 200_000;
     int DEFAULT_MAX_SEND_QUEUE_SIZE_PER_PEER = 100_000;
     boolean DEFAULT_PEER_TRACKER_FORGET_EVICTED_TXS = false;
+    Duration DEFAULT_SAVE_RESTORE_TIMEOUT = Duration.ofMinutes(1);
 
     TransactionPoolConfiguration.Unstable DEFAULT =
         ImmutableTransactionPoolConfiguration.Unstable.builder().build();
@@ -70,6 +71,11 @@ public interface TransactionPoolConfiguration {
     @Value.Default
     default boolean getPeerTrackerForgetEvictedTxs() {
       return DEFAULT_PEER_TRACKER_FORGET_EVICTED_TXS;
+    }
+
+    @Value.Default
+    default Duration getSaveRestoreTimeout() {
+      return DEFAULT_SAVE_RESTORE_TIMEOUT;
     }
   }
 

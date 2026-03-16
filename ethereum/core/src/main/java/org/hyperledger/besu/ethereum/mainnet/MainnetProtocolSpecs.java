@@ -1019,7 +1019,8 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     blobSchedule.getMax(),
                     blobSchedule.getTarget(),
-                    miningConfiguration.getMaxBlobsPerTransaction()))
+                    miningConfiguration.getMaxBlobsPerTransaction(),
+                    miningConfiguration.getMaxBlobsPerBlock()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))

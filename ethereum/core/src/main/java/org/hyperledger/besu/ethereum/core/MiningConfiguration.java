@@ -41,7 +41,7 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Value.Enclosing
 public abstract class MiningConfiguration {
-  public static final PositiveNumber DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME =
+  public static final PositiveNumber DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt((int) Duration.ofSeconds(5).toMillis());
   public static final PositiveNumber DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME =
       PositiveNumber.fromInt(75);
@@ -133,6 +133,17 @@ public abstract class MiningConfiguration {
     return getMutableInitValues().getMaxBlobsPerTransaction();
   }
 
+  /**
+   * Returns the maximum blobs per block for block building. Note: Only applies from Osaka hardfork
+   * onwards. Returns empty if not explicitly set by the user.
+   *
+   * @return the maximum blobs per block, or empty if not set
+   */
+  @Value.Default
+  public OptionalInt getMaxBlobsPerBlock() {
+    return OptionalInt.empty();
+  }
+
   public Optional<Iterable<Long>> getNonceGenerator() {
     return getMutableRuntimeValues().nonceGenerator;
   }
@@ -157,8 +168,8 @@ public abstract class MiningConfiguration {
   }
 
   @Value.Default
-  public PositiveNumber getNonPoaBlockTxsSelectionMaxTime() {
-    return DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  public PositiveNumber getPosBlockTxsSelectionMaxTime() {
+    return DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
   }
 
   @Value.Default
@@ -203,7 +214,7 @@ public abstract class MiningConfiguration {
       }
     }
 
-    return Duration.ofMillis(getNonPoaBlockTxsSelectionMaxTime().getValue());
+    return Duration.ofMillis(getPosBlockTxsSelectionMaxTime().getValue());
   }
 
   public Duration getPluginTxsSelectionMaxTime(final Duration blockTxsSelectionMaxTime) {
