@@ -148,6 +148,7 @@ public class BlockStateCallResult extends BlockResult {
         result.isSuccessful() ? 1 : 0,
         result.getOutput(),
         simulatorResult.getGasEstimate(),
+        simulatorResult.getGasEstimate(),
         getError(result),
         new LogsResult(transactionLogs));
   }
