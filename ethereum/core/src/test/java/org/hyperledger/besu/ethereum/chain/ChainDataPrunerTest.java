@@ -823,7 +823,8 @@ public class ChainDataPrunerTest {
     gen.setBlockOptionsSupplier(
         () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
-    // Create canonical chain and fork - need 273+ blocks so pruningMark(=chain-256) covers all 16 fork blocks
+    // Create canonical chain and fork - need 273+ blocks so pruningMark(=chain-256) covers all 16
+    // fork blocks
     List<BlockDataGenerator.BlockWithAccessList> canonicalChain =
         gen.blockSequenceWithAccessList(genesisBlock, 280);
     List<BlockDataGenerator.BlockWithAccessList> forkChain =
