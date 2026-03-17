@@ -188,7 +188,6 @@ public class BonsaiArchiveFlatDbStrategyTest {
 
   @Test
   public void clearAll_removesDataFromAccountInfoStateFreezer() {
-    // Put data into the freezer segment
     byte[] accountKey = Hash.fromHexString("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
         .getBytes()
         .toArrayUnsafe();
@@ -197,19 +196,15 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.put(ACCOUNT_INFO_STATE_FREEZER, accountKey, accountValue);
     tx.commit();
 
-    // Verify data exists
     assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isNotEmpty();
 
-    // Clear all - this should remove freezer data
     archiveFlatDbStrategy.clearAll(storage);
 
-    // Verify data is removed
     assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isEmpty();
   }
 
   @Test
   public void clearAll_removesDataFromAccountStorageFreezer() {
-    // Put data into the storage freezer segment
     byte[] storageKey = Arrays.concatenate(
         Hash.fromHexString("0x1111111111111111111111111111111111111111111111111111111111111111")
             .getBytes()
@@ -222,19 +217,15 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.put(ACCOUNT_STORAGE_FREEZER, storageKey, storageValue);
     tx.commit();
 
-    // Verify data exists
     assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isNotEmpty();
 
-    // Clear all - this should remove freezer data
     archiveFlatDbStrategy.clearAll(storage);
 
-    // Verify data is removed
     assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isEmpty();
   }
 
   @Test
   public void resetOnResync_removesDataFromAccountInfoStateFreezer() {
-    // Put data into the freezer segment
     byte[] accountKey = Hash.fromHexString("0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890")
         .getBytes()
         .toArrayUnsafe();
@@ -243,19 +234,15 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.put(ACCOUNT_INFO_STATE_FREEZER, accountKey, accountValue);
     tx.commit();
 
-    // Verify data exists
     assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isNotEmpty();
 
-    // Reset on resync - this should remove freezer data
     archiveFlatDbStrategy.resetOnResync(storage);
 
-    // Verify data is removed
     assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isEmpty();
   }
 
   @Test
   public void resetOnResync_removesDataFromAccountStorageFreezer() {
-    // Put data into the storage freezer segment
     byte[] storageKey = Arrays.concatenate(
         Hash.fromHexString("0x3333333333333333333333333333333333333333333333333333333333333333")
             .getBytes()
@@ -268,13 +255,10 @@ public class BonsaiArchiveFlatDbStrategyTest {
     tx.put(ACCOUNT_STORAGE_FREEZER, storageKey, storageValue);
     tx.commit();
 
-    // Verify data exists
     assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isNotEmpty();
 
-    // Reset on resync - this should remove freezer data
     archiveFlatDbStrategy.resetOnResync(storage);
 
-    // Verify data is removed
     assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isEmpty();
   }
 
