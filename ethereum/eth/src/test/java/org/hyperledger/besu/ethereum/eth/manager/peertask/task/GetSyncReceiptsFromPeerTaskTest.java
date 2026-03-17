@@ -428,25 +428,14 @@ public class GetSyncReceiptsFromPeerTaskTest {
 
   @Test
   public void validateResultPassesForFrontierReceiptsAfterDecoderRoundTrip() {
-    // Regression test: Frontier receipts received over eth/69 were decoded by
-    // SyncTransactionReceiptDecoder into SyncTransactionReceipt with transactionTypeCode=0x00
-    // (getEthSerializedType). SyncTransactionReceiptEncoder.encodeForRootCalculation only checked
-    // for 0xf8 (getSerializedType) as the Frontier marker, so 0x00 was treated as a non-Frontier
-    // typed transaction — it prepended the 0x00 type byte, producing a wrong receipt trie root →
-    // RESULTS_DO_NOT_MATCH_QUERY on any block with Frontier transactions when syncing from a peer
-    // that supports eth/69.
-    //
-    // toResponseReceipt() uses the single-arg constructor (rlpBytes only), so all existing tests
-    // bypass encodeForRootCalculation entirely. This test exercises the real eth/69 decode path.
+    // Regression test for eth/69 Frontier receipt root calculation.
+    // Exercises the full decode path (encodeForRootCalculation is invoked) rather than
+    // the single-arg constructor path used by toResponseReceipt() in other tests.
     final MockedBlock block = mockBlock(1, 2);
 
     final GetSyncReceiptsFromPeerTask task =
         createTask(new Request(List.of(block.block), List.of()), protocolSchedule);
 
-    // Encode in eth/69 format: [typeCode(0x00), status, cumulativeGas, logs] (no bloom filter).
-    // The decoder routes this to decodeEth69Receipt, stores typeCode=Bytes.of(0x00), and sets
-    // isFormattedForRootCalculation=false — so encodeForRootCalculation is invoked.
-    // Pre-fix: isFrontier check only matched 0xf8, not 0x00 → wrong trie root.
     final SyncTransactionReceiptDecoder decoder = new SyncTransactionReceiptDecoder();
     final List<SyncTransactionReceipt> decodedReceipts =
         block.receipts.stream()
