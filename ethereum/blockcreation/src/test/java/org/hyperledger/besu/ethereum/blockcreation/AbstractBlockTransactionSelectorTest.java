@@ -706,6 +706,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         new PluginTransactionSelectorFactory() {
           @Override
           public PluginTransactionSelector create(
+              final org.hyperledger.besu.plugin.data.ProcessableBlockHeader pendingBlockHeader,
               final SelectorsStateManager selectorsStateManager) {
             return pluginTransactionSelector;
           }
@@ -717,6 +718,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         new PluginTransactionSelectorFactory() {
           @Override
           public PluginTransactionSelector create(
+              final org.hyperledger.besu.plugin.data.ProcessableBlockHeader pendingBlockHeader,
               final SelectorsStateManager selectorsStateManager) {
             return colletorPluginTransactionSelector;
           }
@@ -797,6 +799,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         new PluginTransactionSelectorFactory() {
           @Override
           public PluginTransactionSelector create(
+              final org.hyperledger.besu.plugin.data.ProcessableBlockHeader pendingBlockHeader,
               final SelectorsStateManager selectorsStateManager) {
             return pluginTransactionSelector;
           }
@@ -808,6 +811,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         new PluginTransactionSelectorFactory() {
           @Override
           public PluginTransactionSelector create(
+              final org.hyperledger.besu.plugin.data.ProcessableBlockHeader pendingBlockHeader,
               final SelectorsStateManager selectorsStateManager) {
             return colletorPluginTransactionSelector;
           }
@@ -865,7 +869,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
           when(transactionSelector.evaluateTransactionPreProcessing(any())).thenReturn(SELECTED);
           when(transactionSelector.evaluateTransactionPostProcessing(any(), any()))
               .thenReturn(SELECTED);
-          when(transactionSelectorFactory.create(any())).thenReturn(transactionSelector);
+          when(transactionSelectorFactory.create(any(), any())).thenReturn(transactionSelector);
           return new Mocks(transactionSelectorFactory, transactionSelector);
         };
 
@@ -1163,7 +1167,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
-    when(transactionSelectorFactory.create(any()))
+    when(transactionSelectorFactory.create(any(), any()))
         .thenReturn(
             new PluginTransactionSelector() {
               @Override
@@ -1224,7 +1228,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final AtomicReference<BlockTransactionSelector> selector = new AtomicReference<>();
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
-    when(transactionSelectorFactory.create(any()))
+    when(transactionSelectorFactory.create(any(), any()))
         .thenReturn(
             new PluginTransactionSelector() {
               @Override
@@ -1331,7 +1335,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
-    when(transactionSelectorFactory.create(any())).thenReturn(transactionSelector);
+    when(transactionSelectorFactory.create(any(), any())).thenReturn(transactionSelector);
 
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
@@ -1495,7 +1499,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     final PluginTransactionSelectorFactory transactionSelectorFactory =
         mock(PluginTransactionSelectorFactory.class);
-    when(transactionSelectorFactory.create(any())).thenReturn(transactionSelector);
+    when(transactionSelectorFactory.create(any(), any())).thenReturn(transactionSelector);
 
     transactionSelectionService.registerPluginTransactionSelectorFactory(
         transactionSelectorFactory);
@@ -1595,7 +1599,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             miningBeneficiary,
             blobGasPrice,
             protocolSpec,
-            transactionSelectionService.createPluginTransactionSelector(selectorsStateManager),
+            transactionSelectionService.createPluginTransactionSelector(
+                blockHeader, selectorsStateManager),
             ethScheduler,
             selectorsStateManager,
             Optional.empty());
