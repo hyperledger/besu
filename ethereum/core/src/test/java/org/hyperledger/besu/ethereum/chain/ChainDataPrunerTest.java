@@ -206,13 +206,15 @@ public class ChainDataPrunerTest {
 
       if (i > retention) {
         // Prune block on canonical chain and fork for i - retention only
-        assertThat(blockchain.getBlockHeader(canonicalChain.get(i - retention).getBlock().getHash()))
+        assertThat(
+                blockchain.getBlockHeader(canonicalChain.get(i - retention).getBlock().getHash()))
             .isEmpty();
         assertThat(blockchain.getBlockHeader(forkChain.get(i - retention).getBlock().getHash()))
             .isEmpty();
       }
 
-      assertThat(blockchain.getBlockHeader(canonicalChain.get(i - retention + 1).getBlock().getHash()))
+      assertThat(
+              blockchain.getBlockHeader(canonicalChain.get(i - retention + 1).getBlock().getHash()))
           .isPresent();
       assertThat(blockchain.getBlockHeader(forkChain.get(i - retention + 1).getBlock().getHash()))
           .isPresent();
@@ -348,12 +350,16 @@ public class ChainDataPrunerTest {
 
     // Batch boundary derivation:
     // storedMark starts at 1 (genesis always kept). First prune fires when
-    // (blockNumber - retention) - storedMark >= frequency, i.e. blockNumber >= retention + frequency + 1
+    // (blockNumber - retention) - storedMark >= frequency, i.e. blockNumber >= retention +
+    // frequency + 1
     final int retention = 256;
     final int frequency = 100;
-    final int firstBatchAt = retention + frequency + 1;         // 357
-    final int firstBatchPrunedUpTo = firstBatchAt - retention;  // 101
-    final int chainLength = firstBatchAt + 13; // past first batch, not enough for second (needs retention + 2*frequency + 1 = 457)
+    final int firstBatchAt = retention + frequency + 1; // 357
+    final int firstBatchPrunedUpTo = firstBatchAt - retention; // 101
+    final int chainLength =
+        firstBatchAt
+            + 13; // past first batch, not enough for second (needs retention + 2*frequency + 1 =
+    // 457)
 
     List<Block> blocks = gen.blockSequence(genesisBlock, chainLength);
     for (Block blk : blocks) {
@@ -379,7 +385,9 @@ public class ChainDataPrunerTest {
     final int pruningMark = chainLength - retention;
     for (int i = firstBatchPrunedUpTo + 1; i <= pruningMark; i++) {
       assertThat(blockchain.getBlockHeader(i))
-          .as("Block %d should exist (second batch needs block %d)", i, retention + 2 * frequency + 1)
+          .as(
+              "Block %d should exist (second batch needs block %d)",
+              i, retention + 2 * frequency + 1)
           .isPresent();
     }
 
@@ -615,8 +623,8 @@ public class ChainDataPrunerTest {
 
     final int retention = 256;
     final int frequency = 100;
-    final int firstBatchAt = retention + frequency + 1;         // 357
-    final int firstBatchPrunedUpTo = firstBatchAt - retention;  // 101
+    final int firstBatchAt = retention + frequency + 1; // 357
+    final int firstBatchPrunedUpTo = firstBatchAt - retention; // 101
     final int chainLength = firstBatchAt + 13; // past first batch, not enough for second
 
     List<BlockDataGenerator.BlockWithAccessList> blocks =
@@ -711,9 +719,9 @@ public class ChainDataPrunerTest {
 
     final int retention = 256;
     final int frequency = 100;
-    final int firstBatchAt = retention + frequency + 1;          // 357
-    final int firstBatchPrunedUpTo = firstBatchAt - retention;   // 101
-    final int secondBatchAt = firstBatchAt + frequency;          // 457
+    final int firstBatchAt = retention + frequency + 1; // 357
+    final int firstBatchPrunedUpTo = firstBatchAt - retention; // 101
+    final int secondBatchAt = firstBatchAt + frequency; // 457
     final int secondBatchPrunedUpTo = secondBatchAt - retention; // 201
     final int chainLength = secondBatchAt + 13; // past second batch, not enough for third
 
