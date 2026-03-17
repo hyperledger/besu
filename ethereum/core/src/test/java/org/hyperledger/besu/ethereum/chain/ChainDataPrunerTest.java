@@ -74,8 +74,10 @@ public class ChainDataPrunerTest {
     gen.setBlockOptionsSupplier(
         () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
-    // Generate & Import blocks with BAL - just past the 512-block retention threshold
-    gen.blockSequenceWithAccessList(genesisBlock, 520)
+    final int retention = 512;
+    final int chainLength = retention + 8; // just past the pruning threshold
+
+    gen.blockSequenceWithAccessList(genesisBlock, chainLength)
         .forEach(
             blockWithBal -> {
               final Block blk = blockWithBal.getBlock();
@@ -101,13 +103,13 @@ public class ChainDataPrunerTest {
               // Genesis block (block 0) is always kept
               assertThat(blockchain.getBlockHeader(0)).isPresent();
 
-              if (number <= 512) {
+              if (number <= retention) {
                 // No pruning has occurred yet
                 assertThat(blockchain.getBlockHeader(1)).isPresent();
               } else {
-                // Prune block number - 512 only
-                assertThat(blockchain.getBlockHeader(number - 512)).isEmpty();
-                assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
+                // Prune block number - retention only
+                assertThat(blockchain.getBlockHeader(number - retention)).isEmpty();
+                assertThat(blockchain.getBlockHeader(number - retention + 1)).isPresent();
               }
             });
   }
@@ -141,10 +143,15 @@ public class ChainDataPrunerTest {
     gen.setBlockOptionsSupplier(
         () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
+    final int retention = 512;
+    final int forkLength = 16;
+    // need retention + forkLength + 1 canonical blocks so pruning mark covers all fork blocks
+    final int canonicalLength = retention + forkLength + 3;
+
     List<BlockDataGenerator.BlockWithAccessList> canonicalChain =
-        gen.blockSequenceWithAccessList(genesisBlock, 530);
+        gen.blockSequenceWithAccessList(genesisBlock, canonicalLength);
     List<BlockDataGenerator.BlockWithAccessList> forkChain =
-        gen.blockSequenceWithAccessList(genesisBlock, 16);
+        gen.blockSequenceWithAccessList(genesisBlock, forkLength);
 
     // Store fork blocks with their BAL
     for (BlockDataGenerator.BlockWithAccessList blockWithBal : forkChain) {
@@ -160,8 +167,8 @@ public class ChainDataPrunerTest {
       blockchain.storeBlock(blk, gen.receipts(blk));
     }
 
-    // Import first 512 blocks of canonical chain
-    for (int i = 0; i < 512; i++) {
+    // Import first retention blocks of canonical chain
+    for (int i = 0; i < retention; i++) {
       BlockDataGenerator.BlockWithAccessList blockWithBal = canonicalChain.get(i);
       final Block blk = blockWithBal.getBlock();
       blockWithBal
@@ -180,8 +187,8 @@ public class ChainDataPrunerTest {
     assertThat(blockchain.getBlockHeader(canonicalChain.get(0).getBlock().getHash())).isPresent();
     assertThat(blockchain.getBlockHeader(forkChain.get(0).getBlock().getHash())).isPresent();
 
-    // Continue importing canonical chain from block 512 to 527
-    for (int i = 512; i < 527; i++) {
+    // Continue importing canonical chain past the retention threshold
+    for (int i = retention; i < retention + forkLength - 1; i++) {
       BlockDataGenerator.BlockWithAccessList blockWithBal = canonicalChain.get(i);
       final Block blk = blockWithBal.getBlock();
       blockWithBal
@@ -197,17 +204,17 @@ public class ChainDataPrunerTest {
       // Genesis is always kept
       assertThat(blockchain.getBlockHeader(0)).isPresent();
 
-      if (i > 512) {
-        // Prune block on canonical chain and fork for i - 512 only
-        assertThat(blockchain.getBlockHeader(canonicalChain.get(i - 512).getBlock().getHash()))
+      if (i > retention) {
+        // Prune block on canonical chain and fork for i - retention only
+        assertThat(blockchain.getBlockHeader(canonicalChain.get(i - retention).getBlock().getHash()))
             .isEmpty();
-        assertThat(blockchain.getBlockHeader(forkChain.get(i - 512).getBlock().getHash()))
+        assertThat(blockchain.getBlockHeader(forkChain.get(i - retention).getBlock().getHash()))
             .isEmpty();
       }
 
-      assertThat(blockchain.getBlockHeader(canonicalChain.get(i - 511).getBlock().getHash()))
+      assertThat(blockchain.getBlockHeader(canonicalChain.get(i - retention + 1).getBlock().getHash()))
           .isPresent();
-      assertThat(blockchain.getBlockHeader(forkChain.get(i - 511).getBlock().getHash()))
+      assertThat(blockchain.getBlockHeader(forkChain.get(i - retention + 1).getBlock().getHash()))
           .isPresent();
     }
   }
@@ -246,7 +253,10 @@ public class ChainDataPrunerTest {
     gen.setBlockOptionsSupplier(
         () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
-    gen.blockSequenceWithAccessList(genesisBlock, 520)
+    final int retention = 512;
+    final int chainLength = retention + 8; // just past the pruning threshold
+
+    gen.blockSequenceWithAccessList(genesisBlock, chainLength)
         .forEach(
             blockWithBal -> {
               final Block blk = blockWithBal.getBlock();
@@ -280,10 +290,10 @@ public class ChainDataPrunerTest {
                             .isPresent();
                       });
 
-              if (number > 512) {
-                assertThat(blockchain.getBlockHeader(number - 512)).isPresent();
+              if (number > retention) {
+                assertThat(blockchain.getBlockHeader(number - retention)).isPresent();
                 blockchain
-                    .getBlockHeader(number - 512)
+                    .getBlockHeader(number - retention)
                     .ifPresent(
                         oldHeader -> {
                           // Block data still exists
@@ -297,9 +307,9 @@ public class ChainDataPrunerTest {
                           assertThat(blockchainStorage.getBlockAccessList(oldHeader.getBlockHash()))
                               .isEmpty();
                         });
-                assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
+                assertThat(blockchain.getBlockHeader(number - retention + 1)).isPresent();
                 blockchain
-                    .getBlockHeader(number - 511)
+                    .getBlockHeader(number - retention + 1)
                     .ifPresent(
                         recentHeader -> {
                           // Recent blocks should have BAL
@@ -336,45 +346,45 @@ public class ChainDataPrunerTest {
             genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
     blockchain.observeBlockAdded(chainDataPruner);
 
-    // Generate 370 blocks (just past the first batch boundary at block 357)
-    List<Block> blocks = gen.blockSequence(genesisBlock, 370);
+    // Batch boundary derivation:
+    // storedMark starts at 1 (genesis always kept). First prune fires when
+    // (blockNumber - retention) - storedMark >= frequency, i.e. blockNumber >= retention + frequency + 1
+    final int retention = 256;
+    final int frequency = 100;
+    final int firstBatchAt = retention + frequency + 1;         // 357
+    final int firstBatchPrunedUpTo = firstBatchAt - retention;  // 101
+    final int chainLength = firstBatchAt + 13; // past first batch, not enough for second (needs retention + 2*frequency + 1 = 457)
+
+    List<Block> blocks = gen.blockSequence(genesisBlock, chainLength);
     for (Block blk : blocks) {
       blockchain.appendBlock(blk, gen.receipts(blk));
     }
 
-    // At block 370:
-    // - We want to keep 256 blocks (blocks 115-370)
-    // - blockPruningMark = 370 - 256 = 114
-    // - Genesis (block 0) is ALWAYS kept, pruning starts from block 1
-    //
-    // Timeline:
-    // Block 0 (genesis): ALWAYS kept
-    // Block 1-256: No pruning (retention = 256)
-    // Block 257-356: < 100 accumulated
-    // Block 357: First batch prunes blocks 1-101
-    // Block 370: blockPruningMark = 114
-    //            blocksToBePruned = 114 - 101 = 13 < 100
-    //            Only blocks 1-101 are pruned, blocks 102-114 wait for next batch
+    // At block chainLength:
+    // - blockPruningMark = chainLength - retention
+    // - First batch fired at firstBatchAt, pruned blocks 1..firstBatchPrunedUpTo
+    // - Second batch needs block retention + 2*frequency + 1 (not reached)
 
     // Genesis (block 0) is ALWAYS kept
     assertThat(blockchain.getBlockHeader(0)).as("Genesis block should always be kept").isPresent();
 
-    // Blocks 1-101: Should be pruned (first batch at block 357)
-    for (int i = 1; i <= 101; i++) {
+    // Blocks pruned in first batch
+    for (int i = 1; i <= firstBatchPrunedUpTo; i++) {
       assertThat(blockchain.getBlockHeader(i))
-          .as("Block %d should be pruned (first batch at block 357)", i)
+          .as("Block %d should be pruned (first batch at block %d)", i, firstBatchAt)
           .isEmpty();
     }
 
-    // Blocks 102-114: Should NOT be pruned yet (waiting for second batch at block 457)
-    for (int i = 102; i <= 114; i++) {
+    // Blocks past first batch mark but below pruning mark: pending second batch
+    final int pruningMark = chainLength - retention;
+    for (int i = firstBatchPrunedUpTo + 1; i <= pruningMark; i++) {
       assertThat(blockchain.getBlockHeader(i))
-          .as("Block %d should exist (second batch needs block 457)", i)
+          .as("Block %d should exist (second batch needs block %d)", i, retention + 2 * frequency + 1)
           .isPresent();
     }
 
-    // Blocks 115-370: Should exist (within retention window of 256)
-    for (int i = 115; i <= 370; i++) {
+    // Blocks within retention window
+    for (int i = pruningMark + 1; i <= chainLength; i++) {
       assertThat(blockchain.getBlockHeader(i))
           .as("Block %d should exist (within retention)", i)
           .isPresent();
@@ -509,7 +519,10 @@ public class ChainDataPrunerTest {
     gen.setBlockOptionsSupplier(
         () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
-    gen.blockSequence(genesisBlock, 520)
+    final int retention = 512;
+    final int chainLength = retention + 8; // just past the pruning threshold
+
+    gen.blockSequence(genesisBlock, chainLength)
         .forEach(
             blk -> {
               blockchain.appendBlock(blk, gen.receipts(blk));
@@ -519,9 +532,9 @@ public class ChainDataPrunerTest {
               assertThat(blockchain.getBlockHeader(0))
                   .as("Genesis block should always be kept")
                   .isPresent();
-              if (number > 512) {
-                assertThat(blockchain.getBlockHeader(number - 512)).isEmpty();
-                assertThat(blockchain.getBlockHeader(number - 511)).isPresent();
+              if (number > retention) {
+                assertThat(blockchain.getBlockHeader(number - retention)).isEmpty();
+                assertThat(blockchain.getBlockHeader(number - retention + 1)).isPresent();
               }
             });
   }
@@ -600,8 +613,14 @@ public class ChainDataPrunerTest {
     genesisUpdater.putBlockAccessList(genesisBlock.getHash(), genesisBal);
     genesisUpdater.commit();
 
+    final int retention = 256;
+    final int frequency = 100;
+    final int firstBatchAt = retention + frequency + 1;         // 357
+    final int firstBatchPrunedUpTo = firstBatchAt - retention;  // 101
+    final int chainLength = firstBatchAt + 13; // past first batch, not enough for second
+
     List<BlockDataGenerator.BlockWithAccessList> blocks =
-        gen.blockSequenceWithAccessList(genesisBlock, 370);
+        gen.blockSequenceWithAccessList(genesisBlock, chainLength);
     for (BlockDataGenerator.BlockWithAccessList blockWithBal : blocks) {
       final Block blk = blockWithBal.getBlock();
 
@@ -619,16 +638,7 @@ public class ChainDataPrunerTest {
       blockchain.appendBlock(blk, gen.receipts(blk));
     }
 
-    // At block 370:
-    // - balPruningMark = 370 - 256 = 114
-    // - Genesis (block 0) BAL is ALWAYS kept, pruning starts from block 1
-    // - storedBalPruningMark starts at 1 (after genesis)
-    // - First pruning at block 357: balPruningMark = 101
-    //   blocksToBePruned = 101 - 1 = 100
-    //   Prunes BALs for blocks 1-101
-    // - At block 370: balPruningMark = 114
-    //   blocksToBePruned = 114 - 101 = 13 < 100
-    //   Only BALs 1-101 are pruned, BALs 102-114 wait for next batch
+    final int secondBatchAt = retention + 2 * frequency + 1; // 457
 
     // Genesis (block 0): Block and BAL should ALWAYS exist
     assertThat(blockchain.getBlockHeader(0))
@@ -638,23 +648,23 @@ public class ChainDataPrunerTest {
         .as("Genesis BAL should always be kept")
         .isPresent();
 
-    // Blocks 1-101: BALs should be pruned (first batch at block 357)
-    for (int i = 1; i <= 101; i++) {
+    // Blocks 1..firstBatchPrunedUpTo: BALs pruned in first batch
+    for (int i = 1; i <= firstBatchPrunedUpTo; i++) {
       final Block block = blocks.get(i - 1).getBlock();
       assertThat(blockchain.getBlockHeader(i))
           .as("Block %d should exist (BAL mode never prunes blocks)", i)
           .isPresent();
       assertThat(blockchainStorage.getBlockAccessList(block.getHash()))
-          .as("BAL for block %d should be pruned (first batch at block 357)", i)
+          .as("BAL for block %d should be pruned (first batch at block %d)", i, firstBatchAt)
           .isEmpty();
     }
 
-    // Blocks 102-370: BALs should still exist (not enough accumulated to trigger next pruning)
-    for (int i = 102; i <= 370; i++) {
+    // Remaining blocks: BALs still exist (second batch needs block secondBatchAt)
+    for (int i = firstBatchPrunedUpTo + 1; i <= chainLength; i++) {
       final Block block = blocks.get(i - 1).getBlock();
       assertThat(blockchain.getBlockHeader(i)).as("Block %d should exist", i).isPresent();
       assertThat(blockchainStorage.getBlockAccessList(block.getHash()))
-          .as("BAL for block %d should exist (next pruning at block 457)", i)
+          .as("BAL for block %d should exist (next pruning at block %d)", i, secondBatchAt)
           .isPresent();
     }
   }
@@ -699,9 +709,17 @@ public class ChainDataPrunerTest {
     genesisUpdater.putBlockAccessList(genesisBlock.getHash(), genesisBal);
     genesisUpdater.commit();
 
-    // Generate 470 blocks to trigger two pruning batches (at 357 and 457)
+    final int retention = 256;
+    final int frequency = 100;
+    final int firstBatchAt = retention + frequency + 1;          // 357
+    final int firstBatchPrunedUpTo = firstBatchAt - retention;   // 101
+    final int secondBatchAt = firstBatchAt + frequency;          // 457
+    final int secondBatchPrunedUpTo = secondBatchAt - retention; // 201
+    final int chainLength = secondBatchAt + 13; // past second batch, not enough for third
+
+    // Generate blocks to trigger two pruning batches
     List<BlockDataGenerator.BlockWithAccessList> blocks =
-        gen.blockSequenceWithAccessList(genesisBlock, 470);
+        gen.blockSequenceWithAccessList(genesisBlock, chainLength);
     for (BlockDataGenerator.BlockWithAccessList blockWithBal : blocks) {
       final Block blk = blockWithBal.getBlock();
 
@@ -719,23 +737,8 @@ public class ChainDataPrunerTest {
       blockchain.appendBlock(blk, gen.receipts(blk));
     }
 
-    // At block 470:
-    // - We want to keep 256 BALs (blocks 215-470)
-    // - balPruningMark = 470 - 256 = 214
-    // - Genesis (block 0) BAL is ALWAYS kept, pruning starts from block 1
-    //
-    // Timeline of pruning:
-    // Block 357: First batch prunes BALs 1-101 (100 BALs accumulated)
-    //            balPruningMark = 357 - 256 = 101
-    //            blocksToBePruned = 101 - 1 = 100
-    //
-    // Block 457: Second batch prunes BALs 102-201 (100 more BALs accumulated)
-    //            balPruningMark = 457 - 256 = 201
-    //            blocksToBePruned = 201 - 101 = 100
-    //
-    // Block 470: Third batch would need block 557 (not reached yet)
-    //            balPruningMark = 470 - 256 = 214
-    //            blocksToBePruned = 214 - 201 = 13 < 100
+    final int pruningMark = chainLength - retention;
+    final int thirdBatchAt = secondBatchAt + frequency; // 557
 
     // Genesis (block 0): Block and BAL should ALWAYS exist
     assertThat(blockchain.getBlockHeader(0))
@@ -745,43 +748,43 @@ public class ChainDataPrunerTest {
         .as("Genesis BAL should always be kept")
         .isPresent();
 
-    // First batch (blocks 1-101): BALs should be pruned
-    for (int i = 1; i <= 101; i++) {
+    // First batch: BALs pruned
+    for (int i = 1; i <= firstBatchPrunedUpTo; i++) {
       final Block block = blocks.get(i - 1).getBlock();
       assertThat(blockchain.getBlockHeader(i))
           .as("Block %d should exist (BAL mode never prunes blocks)", i)
           .isPresent();
       assertThat(blockchainStorage.getBlockAccessList(block.getHash()))
-          .as("BAL for block %d should be pruned (first batch at block 357)", i)
+          .as("BAL for block %d should be pruned (first batch at block %d)", i, firstBatchAt)
           .isEmpty();
     }
 
-    // Second batch (blocks 102-201): BALs should be pruned
-    for (int i = 102; i <= 201; i++) {
+    // Second batch: BALs pruned
+    for (int i = firstBatchPrunedUpTo + 1; i <= secondBatchPrunedUpTo; i++) {
       final Block block = blocks.get(i - 1).getBlock();
       assertThat(blockchain.getBlockHeader(i))
           .as("Block %d should exist (BAL mode never prunes blocks)", i)
           .isPresent();
       assertThat(blockchainStorage.getBlockAccessList(block.getHash()))
-          .as("BAL for block %d should be pruned (second batch at block 457)", i)
+          .as("BAL for block %d should be pruned (second batch at block %d)", i, secondBatchAt)
           .isEmpty();
     }
 
-    // Blocks 202-214: Should be pruned eventually but frequency not reached yet
-    for (int i = 202; i <= 214; i++) {
+    // Past second batch mark but not enough for third: pending
+    for (int i = secondBatchPrunedUpTo + 1; i <= pruningMark; i++) {
       final Block block = blocks.get(i - 1).getBlock();
       assertThat(blockchain.getBlockHeader(i)).as("Block %d should exist", i).isPresent();
       assertThat(blockchainStorage.getBlockAccessList(block.getHash()))
-          .as("BAL for block %d should exist (third batch needs block 557)", i)
+          .as("BAL for block %d should exist (third batch needs block %d)", i, thirdBatchAt)
           .isPresent();
     }
 
-    // Blocks 215-470: Should be kept (within retention window)
-    for (int i = 215; i <= 470; i++) {
+    // Within retention window
+    for (int i = pruningMark + 1; i <= chainLength; i++) {
       final Block block = blocks.get(i - 1).getBlock();
       assertThat(blockchain.getBlockHeader(i)).as("Block %d should exist", i).isPresent();
       assertThat(blockchainStorage.getBlockAccessList(block.getHash()))
-          .as("BAL for block %d should exist (within retention of 256 blocks)", i)
+          .as("BAL for block %d should exist (within retention of %d blocks)", i, retention)
           .isPresent();
     }
   }
@@ -823,7 +826,7 @@ public class ChainDataPrunerTest {
     gen.setBlockOptionsSupplier(
         () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
 
-    // Create canonical chain and fork - need 273+ blocks so pruningMark(=chain-256) covers all 16
+    // Create canonical chain and fork - need 272+ blocks so pruningMark(=chain-256) covers all 16
     // fork blocks
     List<BlockDataGenerator.BlockWithAccessList> canonicalChain =
         gen.blockSequenceWithAccessList(genesisBlock, 280);
