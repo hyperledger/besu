@@ -77,6 +77,7 @@ public class ConfigurationOverviewBuilder {
   private Long targetGasLimit;
   private Integer maxBlobsPerTransaction;
   private Integer maxBlobsPerBlock;
+  private static final String SNAP_SYNC_MODE = "SNAP";
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -477,6 +478,10 @@ public class ConfigurationOverviewBuilder {
 
     if (syncMode != null) {
       lines.add("Sync mode: " + syncMode);
+      if (syncMode.equalsIgnoreCase(SNAP_SYNC_MODE)) {
+        final String snapServerStatus = isSnapServerEnabled ? "enabled" : "disabled";
+        lines.add("  SNAP Sync server " + snapServerStatus);
+      }
     }
 
     if (syncMinPeers != null) {
@@ -546,10 +551,6 @@ public class ConfigurationOverviewBuilder {
       }
       chainPruningString.append(")");
       lines.add(chainPruningString.toString());
-    }
-
-    if (isSnapServerEnabled) {
-      lines.add("Snap Sync server enabled");
     }
 
     if (isHighSpec) {
