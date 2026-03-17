@@ -190,4 +190,4 @@ jobs:
           merge-multiple: true
       - name: Report 10 slowest tests
         if: always()
-        run: .github/workflows/reportSlowestTests.sh 10
+        run: python3 .github/workflows/reportSlowestTests.sh 10

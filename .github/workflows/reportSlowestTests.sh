@@ -14,34 +14,35 @@
 ## SPDX-License-Identifier: Apache-2.0
 ##
 
-import re
 import glob
 import os
 import sys
+import xml.etree.ElementTree as ET
 
 count = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 runner = sys.argv[2] if len(sys.argv) > 2 else None
 
 results = []
 for f in glob.glob('**/build/test-results/**/TEST-*.xml', recursive=True):
-    with open(f) as fh:
-        content = fh.read()
-    m = re.search(r'<testsuite\s[^>]*\bname="([^"]+)"[^>]*\btime="([^"]+)"', content)
-    if not m:
-        m = re.search(r'<testsuite\s[^>]*\btime="([^"]+)"[^>]*\bname="([^"]+)"', content)
-        if m:
-            t, name = float(m.group(1)), m.group(2)
-        else:
-            continue
-    else:
-        name, t = m.group(1), float(m.group(2))
-    results.append((t, name))
+    try:
+        tree = ET.parse(f)
+    except ET.ParseError:
+        continue
+    root = tree.getroot()
+    suites = root.findall('testsuite') if root.tag == 'testsuites' else [root]
+    for suite in suites:
+        name = suite.get('name')
+        time = suite.get('time')
+        if name and time:
+            try:
+                results.append((float(time), name))
+            except ValueError:
+                pass
 
 if not results:
     sys.exit(0)
 
 results.sort(reverse=True)
-summary = os.environ.get('GITHUB_STEP_SUMMARY', '/dev/stdout')
 
 heading = f'## {count} Slowest Test Classes (runner {runner})' if runner else f'## {count} Slowest Test Classes'
 lines = [
@@ -56,5 +57,9 @@ for i, (t, name) in enumerate(results[:count], 1):
     short = name.split('.')[-1]
     lines.append(f'| {i} | `{short}` | {time_str} |\n')
 
-with open(summary, 'a') as f:
-    f.writelines(lines)
+summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
+if summary_path:
+    with open(summary_path, 'a', encoding='utf-8') as f:
+        f.writelines(lines)
+else:
+    sys.stdout.writelines(lines)
