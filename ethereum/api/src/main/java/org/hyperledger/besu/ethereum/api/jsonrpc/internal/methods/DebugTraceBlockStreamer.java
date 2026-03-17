@@ -64,6 +64,7 @@ public class DebugTraceBlockStreamer {
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
   private final StringBuilder hexBuf = new StringBuilder(66);
+  private final TreeMap<UInt256, UInt256> sortedStorage = new TreeMap<>();
 
   public DebugTraceBlockStreamer(
       final Block block,
@@ -77,69 +78,71 @@ public class DebugTraceBlockStreamer {
   }
 
   public void streamTo(final OutputStream out, final ObjectMapper mapper) throws IOException {
-    final JsonGenerator gen = mapper.getFactory().createGenerator(out);
-    gen.setCodec(mapper);
-    gen.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
-    gen.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+    try (JsonGenerator gen = mapper.getFactory().createGenerator(out)) {
+      gen.setCodec(mapper);
+      gen.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+      gen.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
 
-    gen.writeStartArray();
-    Tracer.processTracing(
-        blockchainQueries,
-        Optional.of(block.getHeader()),
-        traceableState -> {
-          final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
-          final MainnetTransactionProcessor transactionProcessor =
-              protocolSpec.getTransactionProcessor();
-          final TraceBlock.ChainUpdater chainUpdater = new TraceBlock.ChainUpdater(traceableState);
+      gen.writeStartArray();
+      Tracer.processTracing(
+          blockchainQueries,
+          Optional.of(block.getHeader()),
+          traceableState -> {
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+            final MainnetTransactionProcessor transactionProcessor =
+                protocolSpec.getTransactionProcessor();
+            final TraceBlock.ChainUpdater chainUpdater =
+                new TraceBlock.ChainUpdater(traceableState);
 
-          final BlockHeader header = block.getHeader();
-          final Optional<BlockHeader> maybeParentHeader =
-              blockchainQueries.getBlockchain().getBlockHeader(header.getParentHash());
-          final Wei blobGasPrice =
-              protocolSpec
-                  .getFeeMarket()
-                  .blobGasPricePerGas(
-                      maybeParentHeader
-                          .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
-                          .orElse(BlobGas.ZERO));
-          final BlockHashLookup blockHashLookup =
-              protocolSpec
-                  .getPreExecutionProcessor()
-                  .createBlockHashLookup(blockchainQueries.getBlockchain(), header);
+            final BlockHeader header = block.getHeader();
+            final Optional<BlockHeader> maybeParentHeader =
+                blockchainQueries.getBlockchain().getBlockHeader(header.getParentHash());
+            final Wei blobGasPrice =
+                protocolSpec
+                    .getFeeMarket()
+                    .blobGasPricePerGas(
+                        maybeParentHeader
+                            .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                            .orElse(BlobGas.ZERO));
+            final BlockHashLookup blockHashLookup =
+                protocolSpec
+                    .getPreExecutionProcessor()
+                    .createBlockHashLookup(blockchainQueries.getBlockchain(), header);
 
-          final boolean isOpcodeTracer = traceOptions.tracerType() == TracerType.OPCODE_TRACER;
+            final boolean isOpcodeTracer = traceOptions.tracerType() == TracerType.OPCODE_TRACER;
 
-          for (final Transaction transaction : block.getBody().getTransactions()) {
-            if (isOpcodeTracer) {
-              streamOpcodeTransaction(
-                  gen,
-                  transaction,
-                  chainUpdater,
-                  transactionProcessor,
-                  header,
-                  blobGasPrice,
-                  blockHashLookup);
-            } else {
-              try {
-                gen.writeObject(
-                    buildTransactionResult(
-                        transaction,
-                        chainUpdater,
-                        transactionProcessor,
-                        protocolSpec,
-                        header,
-                        blobGasPrice,
-                        blockHashLookup));
-              } catch (IOException e) {
-                throw new UncheckedIOException(e);
+            for (final Transaction transaction : block.getBody().getTransactions()) {
+              if (isOpcodeTracer) {
+                streamOpcodeTransaction(
+                    gen,
+                    transaction,
+                    chainUpdater,
+                    transactionProcessor,
+                    header,
+                    blobGasPrice,
+                    blockHashLookup);
+              } else {
+                try {
+                  gen.writeObject(
+                      buildTransactionResult(
+                          transaction,
+                          chainUpdater,
+                          transactionProcessor,
+                          protocolSpec,
+                          header,
+                          blobGasPrice,
+                          blockHashLookup));
+                } catch (IOException e) {
+                  throw new UncheckedIOException(e);
+                }
               }
             }
-          }
 
-          return Optional.of(Boolean.TRUE);
-        });
-    gen.writeEndArray();
-    gen.flush();
+            return Optional.of(Boolean.TRUE);
+          });
+      gen.writeEndArray();
+      gen.flush();
+    }
   }
 
   /**
@@ -335,8 +338,9 @@ public class DebugTraceBlockStreamer {
             if (!updatedStorage.isEmpty()) {
               gen.writeFieldName("storage");
               gen.writeStartObject();
-              for (final Map.Entry<UInt256, UInt256> entry :
-                  new TreeMap<>(updatedStorage).entrySet()) {
+              sortedStorage.clear();
+              sortedStorage.putAll(updatedStorage);
+              for (final Map.Entry<UInt256, UInt256> entry : sortedStorage.entrySet()) {
                 StructLog.toCompactHex(entry.getKey(), false, hexBuf);
                 final String key = hexBuf.toString();
                 StructLog.toCompactHex(entry.getValue(), false, hexBuf);

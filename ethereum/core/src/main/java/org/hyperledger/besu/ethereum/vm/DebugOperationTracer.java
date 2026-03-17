@@ -33,14 +33,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugOperationTracer extends AbstractDebugOperationTracer {
 
-  private Consumer<TraceFrame> frameConsumer;
   private List<TraceFrame> traceFrames = new ArrayList<>();
   private TraceFrame lastFrame;
 
@@ -55,10 +53,6 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
    */
   public DebugOperationTracer(final OpCodeTracerConfig options, final boolean recordChildCallGas) {
     super(options, recordChildCallGas);
-  }
-
-  public void setFrameConsumer(final Consumer<TraceFrame> consumer) {
-    this.frameConsumer = consumer;
   }
 
   @Override
@@ -89,7 +83,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
                         : Optional.empty());
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
-    if (frameConsumer == null && !traceFrames.isEmpty()) {
+    if (!traceFrames.isEmpty()) {
       final TraceFrame lastTraceFrame = traceFrames.removeLast();
       final TraceFrame updatedLast =
           TraceFrame.from(lastTraceFrame).setGasRemainingPostExecution(gasRemaining).build();
@@ -136,11 +130,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
             .setGasAvailableForChildCall(operationResult.getGasAvailableForChildCall())
             .build();
 
-    if (frameConsumer != null) {
-      frameConsumer.accept(lastFrame);
-    } else {
-      traceFrames.add(lastFrame);
-    }
+    traceFrames.add(lastFrame);
     frame.reset();
   }
 
@@ -150,30 +140,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
     final Address recipient = frame.getRecipientAddress();
     final Bytes inputData = frame.getInputData().copy();
 
-    if (frameConsumer != null) {
-      if (traceFrames.isEmpty()) {
-        final TraceFrame traceFrame =
-            TraceFrame.builder()
-                .setPc(frame.getPC())
-                .setOpcodeNumber(Integer.MAX_VALUE)
-                .setGasRemaining(frame.getRemainingGas())
-                .setGasRefund(frame.getGasRefund())
-                .setDepth(frame.getDepth())
-                .setRecipient(recipient)
-                .setValue(frame.getValue())
-                .setInputData(inputData)
-                .setOutputData(frame.getOutputData())
-                .setWorldUpdater(frame.getWorldUpdater())
-                .setMaybeRefunds(Optional.ofNullable(frame.getRefunds()))
-                .setMaybeCode(Optional.ofNullable(frame.getCode()))
-                .setStackItemsProduced(frame.getMaxStackSize())
-                .setVirtualOperation(true)
-                .setPrecompiledGasCost(gasRequirement)
-                .setPrecompileIOData(recipient, inputData, output)
-                .build();
-        frameConsumer.accept(traceFrame);
-      }
-    } else if (traceFrames.isEmpty()) {
+    if (traceFrames.isEmpty()) {
       final TraceFrame traceFrame =
           TraceFrame.builder()
               .setPc(frame.getPC())
@@ -210,11 +177,6 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
   @Override
   public void traceAccountCreationResult(
       final MessageFrame frame, final Optional<ExceptionalHaltReason> haltReason) {
-    if (frameConsumer != null) {
-      // When using a frameConsumer, already-emitted frames can't be modified retroactively.
-      // CREATE failure is still captured at the transaction level via failed:true.
-      return;
-    }
     haltReason.ifPresent(
         exceptionalHaltReason -> {
           if (!traceFrames.isEmpty()) {
