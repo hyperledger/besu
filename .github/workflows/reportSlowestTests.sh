@@ -23,7 +23,7 @@ count = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 runner = sys.argv[2] if len(sys.argv) > 2 else '?'
 
 results = []
-for f in glob.glob('**/TEST-*.xml', recursive=True):
+for f in glob.glob('**/build/test-results/**/TEST-*.xml', recursive=True):
     with open(f) as fh:
         content = fh.read()
     m = re.search(r'<testsuite\s[^>]*\bname="([^"]+)"[^>]*\btime="([^"]+)"', content)
