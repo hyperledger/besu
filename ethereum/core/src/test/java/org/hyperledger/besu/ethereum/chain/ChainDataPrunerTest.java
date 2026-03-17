@@ -358,8 +358,7 @@ public class ChainDataPrunerTest {
     final int firstBatchPrunedUpTo = firstBatchAt - retention; // 101
     final int chainLength =
         firstBatchAt
-            + 13; // past first batch, not enough for second (needs retention + 2*frequency + 1 =
-    // 457)
+            + 13; // past first batch, not enough for second (needs retention + 2*freq + 1 = 457)
 
     List<Block> blocks = gen.blockSequence(genesisBlock, chainLength);
     for (Block blk : blocks) {
@@ -376,7 +375,8 @@ public class ChainDataPrunerTest {
     //                             → first batch fires, prunes blocks 1..firstBatchPrunedUpTo
     // block chainLength (= 370):  blockPruningMark = chainLength - retention (= 114)
     //                             blocksToBePruned = 13 < frequency
-    //                             → second batch not fired; needs block retention + 2*frequency + 1 (= 457)
+    //                             → second batch not fired; needs block retention + 2*freq + 1
+    // (= 457)
 
     // Genesis (block 0) is ALWAYS kept
     assertThat(blockchain.getBlockHeader(0)).as("Genesis block should always be kept").isPresent();
@@ -764,10 +764,13 @@ public class ChainDataPrunerTest {
     //                              blocksToBePruned = firstBatchPrunedUpTo - 1 = frequency
     //                              → first batch fires, prunes BALs 1..firstBatchPrunedUpTo
     // block secondBatchAt (= 457): balPruningMark = secondBatchPrunedUpTo (= 201)
-    //                              blocksToBePruned = secondBatchPrunedUpTo - firstBatchPrunedUpTo = frequency
-    //                              → second batch fires, prunes BALs firstBatchPrunedUpTo+1..secondBatchPrunedUpTo
+    //                              blocksToBePruned = secondBatchPrunedUpTo - firstBatchPrunedUpTo
+    // = frequency
+    //                              → second batch fires, prunes BALs
+    // firstBatchPrunedUpTo+1..secondBatchPrunedUpTo
     // block chainLength (= 470):   balPruningMark = pruningMark (= 214)
-    //                              blocksToBePruned = pruningMark - secondBatchPrunedUpTo = 13 < frequency
+    //                              blocksToBePruned = pruningMark - secondBatchPrunedUpTo = 13 <
+    // frequency
     //                              → third batch not fired; needs block thirdBatchAt (= 557)
 
     // Genesis (block 0): Block and BAL should ALWAYS exist
