@@ -575,7 +575,7 @@ subprojects {
           }
           pom {
             name = "Besu - ${project.name}"
-            url = 'http://github.com/hyperledger/besu'
+            url = 'http://github.com/besu-eth/besu'
             licenses {
               license {
                 name = 'The Apache License, Version 2.0'
@@ -583,9 +583,9 @@ subprojects {
               }
             }
             scm {
-              connection = 'scm:git:git://github.com/hyperledger/besu.git'
-              developerConnection = 'scm:git:ssh://github.com/hyperledger/besu.git'
-              url = 'https://github.com/hyperledger/besu'
+              connection = 'scm:git:git://github.com/besu-eth/besu.git'
+              developerConnection = 'scm:git:ssh://github.com/besu-eth/besu.git'
+              url = 'https://github.com/besu-eth/besu'
             }
           }
         }
@@ -640,6 +640,7 @@ subprojects {
         "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
         "\t-Pincludes=<includePattern>\tInclude pattern (regular expression) for benchmarks to be executed. Defaults to including all benchmarks.\n" +
         "\t-Pexcludes=<excludePattern>\tComma-separated exclude pattern (regular expression) for benchmarks to not be executed. Defaults to including all benchmarks.\n" +
+        "\t-Pcases=<caseNames>\t\tComma-separated list of @Param caseName values to run (e.g. MOD_32_32,MOD_256_256). Defaults to running all cases.\n" +
         "\t-PasyncProfiler=<libPath>\tLibrary path to fetch the Async profiler from. Default is to disable profiling.\n" +
         "\t-PasyncProfilerOptions=<asyncProfilerOptions>\tOptions to pass on to the Async profiler separated by ';'. Default is to produce a flamegraph with all other default profiler options.\n"
     }
@@ -654,6 +655,12 @@ subprojects {
       var inc = _strListCmdArg('includes', [''])
       includes = inc.size() > 1 ? [".*(${inc.join('|')}).*"] : inc
       excludes = _strListCmdArg('excludes', [])
+      var cases = _strListCmdArg('cases', [])
+      if (!cases.isEmpty()) {
+        def casesListProp = project.objects.listProperty(String)
+        casesListProp.addAll(cases)
+        benchmarkParameters = ['caseName': casesListProp]
+      }
       var asyncProfiler = _strCmdArg('asyncProfiler')
       var asyncProfilerOptions = _strCmdArg('asyncProfilerOptions', 'output=flamegraph')
       zip64.set(true)

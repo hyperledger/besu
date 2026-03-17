@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.p2p.network;
 
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.ConnectCallback;
 import org.hyperledger.besu.ethereum.p2p.rlpx.DisconnectCallback;
@@ -23,8 +24,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.Closeable;
 import java.util.Collection;
@@ -86,8 +85,6 @@ public interface P2PNetwork extends Closeable {
    * @param callback The callback to invoke when a new connection is established
    */
   void subscribeConnect(final ConnectCallback callback);
-
-  void subscribeConnectRequest(final ShouldConnectCallback callback);
 
   /**
    * Subscribe a {@link Consumer} to all incoming new Peer disconnect events.
@@ -160,11 +157,18 @@ public interface P2PNetwork extends Closeable {
    * @return the enodeURL associated with this node if P2P has been enabled. Returns empty
    *     otherwise.
    */
-  Optional<EnodeURL> getLocalEnode();
+  Optional<EnodeURLImpl> getLocalEnode();
 
   void updateNodeRecord();
 
-  default RlpxAgent getRlpxAgent() {
-    return null;
+  /**
+   * Returns the local Ethereum Node Record (ENR) as a string, if available.
+   *
+   * @return an Optional containing the ENR string, or empty if not available.
+   */
+  default Optional<String> getLocalEnr() {
+    return Optional.empty();
   }
+
+  Optional<RlpxAgent> getRlpxAgent();
 }
