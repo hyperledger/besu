@@ -170,8 +170,8 @@ public class TransactionAnnouncementEncoderDecoderTest {
             () ->
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Invalid transaction type 7");
+        .isInstanceOf(RLPException.class)
+        .hasMessageContaining("Invalid transaction type 0x07");
   }
 
   @Test
