@@ -366,10 +366,17 @@ public class ChainDataPrunerTest {
       blockchain.appendBlock(blk, gen.receipts(blk));
     }
 
-    // At block chainLength:
-    // - blockPruningMark = chainLength - retention
-    // - First batch fired at firstBatchAt, pruned blocks 1..firstBatchPrunedUpTo
-    // - Second batch needs block retention + 2*frequency + 1 (not reached)
+    // At block chainLength (= firstBatchAt + 13 = 370):
+    // - blockPruningMark = chainLength - retention (= 114)
+    // - Genesis (block 0) is ALWAYS kept, pruning starts from block 1
+    //
+    // Pruning timeline:
+    // block firstBatchAt (= 357): blockPruningMark = firstBatchPrunedUpTo (= 101)
+    //                             blocksToBePruned = firstBatchPrunedUpTo - 1 = frequency
+    //                             → first batch fires, prunes blocks 1..firstBatchPrunedUpTo
+    // block chainLength (= 370):  blockPruningMark = chainLength - retention (= 114)
+    //                             blocksToBePruned = 13 < frequency
+    //                             → second batch not fired; needs block retention + 2*frequency + 1 (= 457)
 
     // Genesis (block 0) is ALWAYS kept
     assertThat(blockchain.getBlockHeader(0)).as("Genesis block should always be kept").isPresent();
@@ -748,6 +755,21 @@ public class ChainDataPrunerTest {
     final int pruningMark = chainLength - retention;
     final int thirdBatchAt = secondBatchAt + frequency; // 557
 
+    // At block chainLength (= secondBatchAt + 13 = 470):
+    // - balPruningMark = chainLength - retention (= 214)
+    // - Genesis (block 0) BAL is ALWAYS kept, pruning starts from block 1
+    //
+    // Pruning timeline:
+    // block firstBatchAt (= 357):  balPruningMark = firstBatchPrunedUpTo (= 101)
+    //                              blocksToBePruned = firstBatchPrunedUpTo - 1 = frequency
+    //                              → first batch fires, prunes BALs 1..firstBatchPrunedUpTo
+    // block secondBatchAt (= 457): balPruningMark = secondBatchPrunedUpTo (= 201)
+    //                              blocksToBePruned = secondBatchPrunedUpTo - firstBatchPrunedUpTo = frequency
+    //                              → second batch fires, prunes BALs firstBatchPrunedUpTo+1..secondBatchPrunedUpTo
+    // block chainLength (= 470):   balPruningMark = pruningMark (= 214)
+    //                              blocksToBePruned = pruningMark - secondBatchPrunedUpTo = 13 < frequency
+    //                              → third batch not fired; needs block thirdBatchAt (= 557)
+
     // Genesis (block 0): Block and BAL should ALWAYS exist
     assertThat(blockchain.getBlockHeader(0))
         .as("Genesis block should exist (BAL mode never prunes blocks)")
@@ -888,7 +910,7 @@ public class ChainDataPrunerTest {
           .as("Canonical block %d should still exist", i)
           .isPresent();
 
-      // BALs should be pruned (since i <= 44)
+      // BALs should be pruned (since i <= 24, the pruning mark)
       assertThat(blockchainStorage.getBlockAccessList(forkBlock.getHash()))
           .as("Fork block %d BAL should be pruned", i)
           .isEmpty();
@@ -902,8 +924,8 @@ public class ChainDataPrunerTest {
           .isEmpty();
     }
 
-    // Verify blocks 45-256 still have BALs and fork blocks metadata
-    for (int i = 45; i <= 256; i++) {
+    // Verify blocks 25-280 still have BALs and fork blocks metadata
+    for (int i = 25; i <= 280; i++) {
       final Block canonicalBlock = canonicalChain.get(i - 1).getBlock();
       assertThat(blockchainStorage.getBlockAccessList(canonicalBlock.getHash()))
           .as("Canonical block %d BAL should exist (within retention)", i)
