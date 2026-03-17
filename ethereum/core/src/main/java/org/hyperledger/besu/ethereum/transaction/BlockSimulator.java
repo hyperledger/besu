@@ -527,9 +527,10 @@ public class BlockSimulator {
     long timestamp = blockOverrides.getTimestamp().orElseThrow();
     long blockNumber = blockOverrides.getBlockNumber().orElseThrow();
 
-    // For simulation, if feeRecipient is not overridden, inherit from the parent block's
-    // coinbase so that a feeRecipient set in an earlier simulated block persists across
-    // subsequent blocks.
+    // The fee recipient is stored in the header coinbase field. Precedence:
+    // (1) an explicit feeRecipient in blockOverrides, otherwise
+    // (2) the parent header's coinbase — this allows a feeRecipient set in an earlier simulated
+    // block to persist across subsequent blocks without needing to repeat it in every override.
     BlockHeaderBuilder builder =
         BlockHeaderBuilder.createDefault()
             .parentHash(header.getHash())
