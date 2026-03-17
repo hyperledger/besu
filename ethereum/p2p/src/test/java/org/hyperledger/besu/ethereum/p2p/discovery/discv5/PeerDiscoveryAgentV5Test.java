@@ -43,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.storage.BucketStats;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -238,8 +239,7 @@ class PeerDiscoveryAgentV5Test {
   void metricsReflectDiscoverySystemBucketStats() throws Exception {
     final StubMetricsSystem stubMetrics = new StubMetricsSystem();
 
-    final org.ethereum.beacon.discovery.storage.BucketStats bucketStats =
-        mock(org.ethereum.beacon.discovery.storage.BucketStats.class);
+    final BucketStats bucketStats = mock(BucketStats.class);
     when(mockSystem.getBucketStats()).thenReturn(bucketStats);
     when(bucketStats.getTotalLiveNodeCount()).thenReturn(5);
     when(bucketStats.getTotalNodeCount()).thenReturn(12);
