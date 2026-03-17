@@ -441,6 +441,28 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     return Bytes.of(calculateArchiveKeyWithSuffix(context, naturalKey, MAX_BLOCK_SUFFIX));
   }
 
+  @Override
+  public void clearAll(final SegmentedKeyValueStorage storage) {
+    // Clear archive segments first
+    storage.clear(ACCOUNT_INFO_STATE_ARCHIVE);
+    storage.clear(ACCOUNT_STORAGE_ARCHIVE);
+    storage.clear(ACCOUNT_INFO_STATE_FREEZER);
+    storage.clear(ACCOUNT_STORAGE_FREEZER);
+    // Then call parent to clear other segments
+    super.clearAll(storage);
+  }
+
+  @Override
+  public void resetOnResync(final SegmentedKeyValueStorage storage) {
+    // Clear archive segments
+    storage.clear(ACCOUNT_INFO_STATE_ARCHIVE);
+    storage.clear(ACCOUNT_STORAGE_ARCHIVE);
+    storage.clear(ACCOUNT_INFO_STATE_FREEZER);
+    storage.clear(ACCOUNT_STORAGE_FREEZER);
+    // Then call parent to reset other segments
+    super.resetOnResync(storage);
+  }
+
   // TODO JF: move this out of this class so can be used with ArchiveCodeStorageStrategy without
   // being static
   public static byte[] calculateArchiveKeyWithSuffix(
