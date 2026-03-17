@@ -145,6 +145,9 @@ jobs:
           path: testList.txt
       - name: run unit tests
         run: cat testList.txt | xargs -P 1 ./gradlew -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Report 10 slowest tests
+        if: always()
+        run: .github/workflows/reportSlowestTests.sh 10 ${{ matrix.runner_index }}
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Unit Test Results
