@@ -47,10 +47,11 @@ if not results:
 results.sort(reverse=True)
 total_classes = len(results)
 
-heading = f'## {count} Slowest Test Classes (runner {runner})' if runner else f'## {count} Slowest Test Classes'
+heading = f'{count} Slowest Test Classes (runner {runner})' if runner else f'{count} Slowest Test Classes'
+summary_line = f'{total_tests:,} tests across {total_classes} classes'
 lines = [
-    heading + '\n',
-    f'_{total_tests:,} tests across {total_classes} classes_\n\n',
+    f'<details open>\n',
+    f'<summary><b>{heading}</b> — {summary_line}</summary>\n\n',
     '| Rank | Class | Time |\n',
     '|------|-------|------|\n',
 ]
@@ -60,6 +61,7 @@ for i, (t, name) in enumerate(results[:count], 1):
     time_str = f'{mins}m {secs:.0f}s' if mins else f'{secs:.1f}s'
     short = name.split('.')[-1]
     lines.append(f'| {i} | `{short}` | {time_str} |\n')
+lines.append('\n</details>\n')
 
 summary_path = os.environ.get('GITHUB_STEP_SUMMARY')
 if summary_path:
