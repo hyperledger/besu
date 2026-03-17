@@ -58,7 +58,7 @@ public class PeerTransactionTracker
   private static final Logger LOG = LoggerFactory.getLogger(PeerTransactionTracker.class);
   private final EthPeers ethPeers;
   private final EthScheduler ethScheduler;
-  private final int maxTrackedSeenTxsPerPeer;
+  private final int maxTrackedSeenTxs;
   private final int maxSendQueueSizePerPeer;
   private final boolean forgetEvictedTxsEnabled;
   private final LRUMap<Hash, PeersSeenState> peersSeenStateByHash;
@@ -75,10 +75,10 @@ public class PeerTransactionTracker
       final EthScheduler scheduler) {
     this.ethPeers = ethPeers;
     this.ethScheduler = scheduler;
-    this.maxTrackedSeenTxsPerPeer = txPoolConfig.getUnstable().getMaxTrackedSeenTxsPerPeer();
+    this.maxTrackedSeenTxs = txPoolConfig.getUnstable().getMaxTrackedSeenTxs();
     this.maxSendQueueSizePerPeer = txPoolConfig.getUnstable().getMaxSendQueueSizePerPeer();
     this.forgetEvictedTxsEnabled = txPoolConfig.getUnstable().getPeerTrackerForgetEvictedTxs();
-    this.peersSeenStateByHash = new LRUMap<>(maxTrackedSeenTxsPerPeer);
+    this.peersSeenStateByHash = new LRUMap<>(maxTrackedSeenTxs);
     this.peerToSlotIndexMap = HashBiMap.create(ethPeers.getMaxPeers());
     ethScheduler.scheduleFutureTaskWithFixedDelay(
         this::logStats, Duration.ofMinutes(1), Duration.ofMinutes(1));

@@ -66,7 +66,7 @@ public class PeerTransactionTrackerTest {
           ImmutableTransactionPoolConfiguration.builder()
               .unstable(
                   ImmutableTransactionPoolConfiguration.Unstable.builder()
-                      .maxTrackedSeenTxsPerPeer(2)
+                      .maxTrackedSeenTxs(2)
                       .build())
               .build(),
           ethPeers,
