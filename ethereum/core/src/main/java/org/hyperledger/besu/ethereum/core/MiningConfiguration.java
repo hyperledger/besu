@@ -187,6 +187,7 @@ public abstract class MiningConfiguration {
     return new TransactionSelectionService() {
       @Override
       public PluginTransactionSelector createPluginTransactionSelector(
+          final ProcessableBlockHeader pendingBlockHeader,
           final SelectorsStateManager selectorsStateManager) {
         return PluginTransactionSelector.ACCEPT_ALL;
       }
