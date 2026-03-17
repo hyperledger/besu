@@ -61,11 +61,10 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
             if (message.getPeer().isDisconnected()) {
               return;
             }
+            final NewPooledTransactionHashesMessage transactionsMessage;
             try {
-              final NewPooledTransactionHashesMessage transactionsMessage =
+              transactionsMessage =
                   NewPooledTransactionHashesMessage.readFrom(rawMessage, capability);
-              transactionsMessageProcessor.processNewPooledTransactionHashesMessage(
-                  message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive);
             } catch (final Exception e) {
               LOG.debug(
                   "Malformed pooled transaction hashes message received (BREACH_OF_PROTOCOL), disconnecting: {}",
@@ -74,7 +73,10 @@ class NewPooledTransactionHashesMessageHandler implements EthMessages.MessageCal
               message
                   .getPeer()
                   .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+              return;
             }
+            transactionsMessageProcessor.processNewPooledTransactionHashesMessage(
+                message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive);
           });
     }
   }

@@ -20,7 +20,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractMessageData implements MessageData {
 
-  protected Bytes data;
+  protected final Bytes data;
 
   protected AbstractMessageData(final Bytes data) {
     this.data = data;

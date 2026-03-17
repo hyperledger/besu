@@ -57,11 +57,9 @@ class TransactionsMessageHandler implements EthMessages.MessageCallback {
             if (message.getPeer().isDisconnected()) {
               return;
             }
+            final TransactionsMessage transactionsMessage;
             try {
-              final TransactionsMessage transactionsMessage =
-                  TransactionsMessage.readFrom(rawMessage);
-              transactionsMessageProcessor.processTransactionsMessage(
-                  message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive);
+              transactionsMessage = TransactionsMessage.readFrom(rawMessage);
             } catch (final Exception e) {
               LOG.debug(
                   "Malformed transactions message received (BREACH_OF_PROTOCOL), disconnecting: {}",
@@ -70,7 +68,10 @@ class TransactionsMessageHandler implements EthMessages.MessageCallback {
               message
                   .getPeer()
                   .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+              return;
             }
+            transactionsMessageProcessor.processTransactionsMessage(
+                message.getPeer(), transactionsMessage, startedAt, txMsgKeepAlive);
           });
     }
   }

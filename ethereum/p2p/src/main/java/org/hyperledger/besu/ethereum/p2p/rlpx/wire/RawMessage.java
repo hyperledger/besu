@@ -23,13 +23,17 @@ public final class RawMessage extends AbstractMessageData {
   private static final SnappyCompressor compressor = new SnappyCompressor();
 
   private final int code;
-  private byte[] compressedData;
+  private final byte[] compressedData;
+  private volatile boolean decompressed;
+  private volatile Bytes decompressedData;
 
   /** Constructor for uncompressed messages. */
   public RawMessage(final int code, final Bytes data) {
     super(data);
     this.code = code;
     this.compressedData = null;
+    this.decompressed = true;
+    this.decompressedData = data;
   }
 
   /** Constructor for compressed messages — decompression is deferred until getData() is called. */
@@ -37,6 +41,8 @@ public final class RawMessage extends AbstractMessageData {
     super(Bytes.EMPTY);
     this.code = code;
     this.compressedData = compressedData;
+    this.decompressed = false;
+    this.decompressedData = null;
   }
 
   @Override
@@ -46,17 +52,17 @@ public final class RawMessage extends AbstractMessageData {
 
   @Override
   public Bytes getData() {
-    if (compressedData != null && data == Bytes.EMPTY) {
-      data = Bytes.wrap(compressor.decompress(compressedData));
-      compressedData = null;
+    if (!decompressed) {
+      decompressedData = Bytes.wrap(compressor.decompress(compressedData));
+      decompressed = true;
     }
-    return data;
+    return decompressedData;
   }
 
   @Override
   public int getSize() {
-    if (compressedData == null) {
-      return data.size();
+    if (decompressed) {
+      return decompressedData.size();
     }
     return compressor.uncompressedLength(compressedData);
   }
