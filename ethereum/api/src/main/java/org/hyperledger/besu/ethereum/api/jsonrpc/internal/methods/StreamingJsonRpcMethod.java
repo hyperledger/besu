@@ -37,8 +37,7 @@ public interface StreamingJsonRpcMethod extends JsonRpcMethod {
 
   /**
    * Default synchronous response path for batch JSON-RPC requests. Returns an error since streaming
-   * cannot be used within a batch response. Must use the non-streaming
-   * JsonRp instead
+   * cannot be used within a batch response. Must use the non-streaming JsonRp instead
    */
   @Override
   default JsonRpcResponse response(final JsonRpcRequestContext request) {
