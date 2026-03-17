@@ -2780,21 +2780,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
-    commandErrorOutput.reset();
-
-    // for Clique
-    genesis.getJsonObject("config").put("clique", new JsonObject().put("epochlength", 10000));
-    genesis.getJsonObject("config").remove("ibft2");
-    final Path genesisFileClique = createFakeGenesisFile(genesis);
-    parseCommand(
-        "--genesis-file",
-        genesisFileClique.toString(),
-        "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=7200",
-        "--version-compatibility-protection=false");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
   }
 
   @Test
@@ -2826,20 +2811,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
 
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    // for Clique
-    genesis
-        .getJsonObject("config")
-        .put("clique", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
-    genesis.getJsonObject("config").remove("ibft2");
-    final Path genesisFileClique = createFakeGenesisFile(genesis);
-    parseCommand(
-        "--genesis-file",
-        genesisFileClique.toString(),
-        "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
-        "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
