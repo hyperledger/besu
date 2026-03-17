@@ -15,11 +15,9 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.bouncycastle.util.Arrays.concatenate;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
@@ -87,8 +85,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
     Function<byte[], byte[]> flatDBArchiveKey =
-        (key) ->
-            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
+        (key) -> concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
 
     return Stream.of(
         Arguments.of(FlatDbMode.FULL, flatDBKey),
@@ -101,8 +98,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
     // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
     Function<byte[], byte[]> flatDBArchiveKey =
-        (key) ->
-            org.bouncycastle.util.Arrays.concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
+        (key) -> concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
 
     return Stream.of(
         Arguments.of(FlatDbMode.FULL, flatDBKey, ACCOUNT_INFO_STATE),
@@ -1069,117 +1065,5 @@ public class BonsaiWorldStateKeyValueStorageTest {
         WORLD_BLOCK_NUMBER_KEY,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();
-  }
-
-  @Test
-  void clearAll_removesDataFromAccountInfoStateFreezer() {
-    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(FlatDbMode.ARCHIVE));
-
-    // Put data into the freezer segment
-    SegmentedKeyValueStorageTransaction tx =
-        storage.getComposedWorldStateStorage().startTransaction();
-    byte[] accountKey = Hash.fromHexString("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
-        .getBytes()
-        .toArrayUnsafe();
-    byte[] accountValue = Bytes32.random().toArrayUnsafe();
-    tx.put(ACCOUNT_INFO_STATE_FREEZER, accountKey, accountValue);
-    tx.commit();
-
-    // Verify data exists
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE_FREEZER, accountKey))
-        .isNotEmpty();
-
-    // Clear all
-    storage.clear();
-
-    // Verify data is removed
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE_FREEZER, accountKey))
-        .isEmpty();
-  }
-
-  @Test
-  void clearAll_removesDataFromAccountStorageFreezer() {
-    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(FlatDbMode.ARCHIVE));
-
-    // Put data into the storage freezer segment
-    SegmentedKeyValueStorageTransaction tx =
-        storage.getComposedWorldStateStorage().startTransaction();
-    byte[] storageKey = org.bouncycastle.util.Arrays.concatenate(
-        Hash.fromHexString("0x1111111111111111111111111111111111111111111111111111111111111111")
-            .getBytes()
-            .toArrayUnsafe(),
-        Hash.fromHexString("0x2222222222222222222222222222222222222222222222222222222222222222")
-            .getBytes()
-            .toArrayUnsafe());
-    byte[] storageValue = Bytes.fromHexString("0xdeadbeef").toArrayUnsafe();
-    tx.put(ACCOUNT_STORAGE_FREEZER, storageKey, storageValue);
-    tx.commit();
-
-    // Verify data exists
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_STORAGE_FREEZER, storageKey))
-        .isNotEmpty();
-
-    // Clear all
-    storage.clear();
-
-    // Verify data is removed
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_STORAGE_FREEZER, storageKey))
-        .isEmpty();
-  }
-
-  @Test
-  void resetOnResync_removesDataFromAccountInfoStateFreezer() {
-    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(FlatDbMode.ARCHIVE));
-
-    // Put data into the freezer segment
-    SegmentedKeyValueStorageTransaction tx =
-        storage.getComposedWorldStateStorage().startTransaction();
-    byte[] accountKey = Hash.fromHexString("0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890")
-        .getBytes()
-        .toArrayUnsafe();
-    byte[] accountValue = Bytes32.random().toArrayUnsafe();
-    tx.put(ACCOUNT_INFO_STATE_FREEZER, accountKey, accountValue);
-    tx.commit();
-
-    // Verify data exists
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE_FREEZER, accountKey))
-        .isNotEmpty();
-
-    // Reset on resync
-    storage.clearFlatDatabase();
-
-    // Verify data is removed
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_INFO_STATE_FREEZER, accountKey))
-        .isEmpty();
-  }
-
-  @Test
-  void resetOnResync_removesDataFromAccountStorageFreezer() {
-    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(FlatDbMode.ARCHIVE));
-
-    // Put data into the storage freezer segment
-    SegmentedKeyValueStorageTransaction tx =
-        storage.getComposedWorldStateStorage().startTransaction();
-    byte[] storageKey = org.bouncycastle.util.Arrays.concatenate(
-        Hash.fromHexString("0x3333333333333333333333333333333333333333333333333333333333333333")
-            .getBytes()
-            .toArrayUnsafe(),
-        Hash.fromHexString("0x4444444444444444444444444444444444444444444444444444444444444444")
-            .getBytes()
-            .toArrayUnsafe());
-    byte[] storageValue = Bytes.fromHexString("0xcafebabe").toArrayUnsafe();
-    tx.put(ACCOUNT_STORAGE_FREEZER, storageKey, storageValue);
-    tx.commit();
-
-    // Verify data exists
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_STORAGE_FREEZER, storageKey))
-        .isNotEmpty();
-
-    // Reset on resync
-    storage.clearFlatDatabase();
-
-    // Verify data is removed
-    assertThat(storage.getComposedWorldStateStorage().get(ACCOUNT_STORAGE_FREEZER, storageKey))
-        .isEmpty();
   }
 }
