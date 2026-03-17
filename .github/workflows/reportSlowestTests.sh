@@ -13,9 +13,6 @@
 ##
 ## SPDX-License-Identifier: Apache-2.0
 ##
-## Usage: reportSlowestTests.sh <count> <runner_index>
-## Reads all TEST-*.xml files under the current directory, finds the N slowest
-## test classes, and appends a markdown summary to $GITHUB_STEP_SUMMARY.
 
 import re
 import glob
