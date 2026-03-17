@@ -20,7 +20,7 @@ import os
 import sys
 
 count = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-runner = sys.argv[2] if len(sys.argv) > 2 else '?'
+runner = sys.argv[2] if len(sys.argv) > 2 else None
 
 results = []
 for f in glob.glob('**/build/test-results/**/TEST-*.xml', recursive=True):
@@ -43,8 +43,9 @@ if not results:
 results.sort(reverse=True)
 summary = os.environ.get('GITHUB_STEP_SUMMARY', '/dev/stdout')
 
+heading = f'## {count} Slowest Test Classes (runner {runner})' if runner else f'## {count} Slowest Test Classes'
 lines = [
-    f'## {count} Slowest Test Classes (runner {runner})\n',
+    heading + '\n',
     '| Rank | Class | Time |\n',
     '|------|-------|------|\n',
 ]

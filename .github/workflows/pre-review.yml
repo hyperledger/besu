@@ -145,9 +145,6 @@ jobs:
           path: testList.txt
       - name: run unit tests
         run: cat testList.txt | xargs -P 1 ./gradlew -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: Report 10 slowest tests
-        if: always()
-        run: .github/workflows/reportSlowestTests.sh 10 ${{ matrix.runner_index }}
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Unit Test Results
@@ -180,3 +177,17 @@ jobs:
             || contains(needs.*.result, 'cancelled')
             || contains(needs.*.result, 'skipped')
           }}
+      - name: Checkout Repo
+        if: always()
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+      - name: Download all unit test results
+        if: always()
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
+        with:
+          pattern: unit-*-test-results
+          merge-multiple: true
+      - name: Report 10 slowest tests
+        if: always()
+        run: .github/workflows/reportSlowestTests.sh 10
