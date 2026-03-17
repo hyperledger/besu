@@ -23,6 +23,7 @@ count = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 runner = sys.argv[2] if len(sys.argv) > 2 else None
 
 results = []
+total_tests = 0
 for f in glob.glob('**/build/test-results/**/TEST-*.xml', recursive=True):
     try:
         tree = ET.parse(f)
@@ -36,6 +37,7 @@ for f in glob.glob('**/build/test-results/**/TEST-*.xml', recursive=True):
         if name and time:
             try:
                 results.append((float(time), name))
+                total_tests += int(suite.get('tests', 0))
             except ValueError:
                 pass
 
@@ -43,10 +45,12 @@ if not results:
     sys.exit(0)
 
 results.sort(reverse=True)
+total_classes = len(results)
 
 heading = f'## {count} Slowest Test Classes (runner {runner})' if runner else f'## {count} Slowest Test Classes'
 lines = [
     heading + '\n',
+    f'_{total_tests:,} tests across {total_classes} classes_\n\n',
     '| Rank | Class | Time |\n',
     '|------|-------|------|\n',
 ]
