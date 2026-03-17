@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.common.trielog;
+package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,8 +41,8 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiPreImageProxy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiArchiver;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -66,7 +66,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-public class ArchiverTests {
+public class BonsaiArchiverTests {
 
   // Number of blocks in the chain. This is different to the number of blocks
   // we have successfully archived state for
@@ -109,7 +109,7 @@ public class ArchiverTests {
   @SuppressWarnings("BannedMethod")
   @BeforeEach
   public void setup() {
-    Configurator.setLevel(LogManager.getLogger(ArchiverTests.class).getName(), Level.TRACE);
+    Configurator.setLevel(LogManager.getLogger(BonsaiArchiverTests.class).getName(), Level.TRACE);
     worldStateStorage = Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
     blockchain = Mockito.mock(Blockchain.class);
     trieLogManager = Mockito.mock(TrieLogManager.class);
