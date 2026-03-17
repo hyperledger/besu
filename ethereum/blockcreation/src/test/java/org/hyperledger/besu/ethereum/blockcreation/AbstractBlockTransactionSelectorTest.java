@@ -21,7 +21,6 @@ import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER1;
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER2;
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER3;
-import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER4;
 import static org.hyperledger.besu.ethereum.blockcreation.AbstractBlockTransactionSelectorTest.Sender.SENDER5;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXECUTION_INTERRUPTED;
@@ -132,8 +131,6 @@ import org.mockito.stubbing.Answer;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public abstract class AbstractBlockTransactionSelectorTest {
-  protected static final double MIN_OCCUPANCY_80_PERCENT = 0.8;
-  protected static final double MIN_OCCUPANCY_100_PERCENT = 1;
   protected static final BigInteger CHAIN_ID = BigInteger.valueOf(42L);
 
   protected final MetricsSystem metricsSystem = new NoOpMetricsSystem();
@@ -162,10 +159,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     transactionSelectionService = new TransactionSelectionServiceImpl();
     defaultTestMiningConfiguration =
         createMiningParameters(
-            transactionSelectionService,
-            Wei.ZERO,
-            MIN_OCCUPANCY_80_PERCENT,
-            DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME);
+            transactionSelectionService, Wei.ZERO, DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME);
 
     final Block genesisBlock =
         GenesisState.fromConfig(genesisConfig, protocolSchedule, new CodeCache()).getBlock();
@@ -386,10 +380,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(results.getSelectedTransactions().containsAll(transactionsToInject.subList(0, 3)))
         .isTrue();
     assertThat(results.getNotSelectedTransactions())
-        .containsOnly(
-            entry(
-                transactionsToInject.get(3),
-                TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD));
+        .containsOnly(entry(transactionsToInject.get(3), TransactionSelectionResult.BLOCK_FULL));
     assertThat(results.getReceipts().size()).isEqualTo(3);
     assertThat(results.getCumulativeRegularGasUsed()).isEqualTo(300_000);
 
@@ -432,43 +423,6 @@ public abstract class AbstractBlockTransactionSelectorTest {
     assertThat(results.getSelectedTransactions()).containsExactly(txs[0], txs[2]);
     assertThat(results.getNotSelectedTransactions())
         .containsOnly(entry(txs[1], TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS));
-  }
-
-  @Test
-  public void transactionSelectionStopsWhenSufficientBlockOccupancyIsReached() {
-    final ProcessableBlockHeader blockHeader = createBlock(300_000);
-    final Address miningBeneficiary = AddressHelpers.ofValue(1);
-    final BlockTransactionSelector selector =
-        createBlockSelectorAndSetupTxPool(
-            defaultTestMiningConfiguration,
-            transactionProcessor,
-            blockHeader,
-            miningBeneficiary,
-            Wei.ZERO,
-            transactionSelectionService);
-
-    // Add 4 transactions to the Pending Transactions 15% (ok), 79% (ok), 25% (too large), 10%
-    // (not included, it would fit, however previous transaction was too large and block was
-    // suitably populated).
-    // NOTE - PendingTransactions will output these in nonce order.
-    final Transaction[] txs =
-        new Transaction[] {
-          createTransaction(0, Wei.of(10), (long) (blockHeader.getGasLimit() * 0.15), SENDER1),
-          createTransaction(0, Wei.of(10), (long) (blockHeader.getGasLimit() * 0.79), SENDER2),
-          createTransaction(0, Wei.of(10), (long) (blockHeader.getGasLimit() * 0.25), SENDER3),
-          createTransaction(0, Wei.of(10), (long) (blockHeader.getGasLimit() * 0.1), SENDER4)
-        };
-
-    for (Transaction tx : txs) {
-      ensureTransactionIsValid(tx);
-    }
-    transactionPool.addRemoteTransactions(Arrays.stream(txs).toList());
-
-    final TransactionSelectionResults results = selector.buildTransactionListForBlock();
-
-    assertThat(results.getSelectedTransactions()).containsExactly(txs[0], txs[1]);
-    assertThat(results.getNotSelectedTransactions())
-        .containsOnly(entry(txs[2], TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD));
   }
 
   @Test
@@ -517,10 +471,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.ZERO,
-                MIN_OCCUPANCY_100_PERCENT,
-                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService, Wei.ZERO, DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -534,7 +485,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     // 1) 90% of block (skipped since too large)
     // 2) enough gas to only leave space for a transaction with the min gas cost (selected)
     // 3) min gas cost (selected and 100% block gas used)
-    // 4) min gas cost (not selected since selection stopped after tx 3)
+    // 4) min gas cost (not selected since block is full)
     // NOTE - PendingTransactions outputs these in nonce order
 
     final long gasLimit0s1 = (long) (blockHeader.getGasLimit() * 0.9);
@@ -565,9 +516,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             entry(
                 transactionsToInject.get(1),
                 TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS),
-            entry(
-                transactionsToInject.get(4),
-                TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD));
+            entry(transactionsToInject.get(4), TransactionSelectionResult.BLOCK_FULL));
     assertThat(results.getCumulativeRegularGasUsed()).isEqualTo(blockHeader.getGasLimit());
   }
 
@@ -579,10 +528,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.ZERO,
-                MIN_OCCUPANCY_100_PERCENT,
-                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService, Wei.ZERO, DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -826,10 +772,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.ZERO,
-                MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService, Wei.ZERO, DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -1141,10 +1084,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.ZERO,
-                MIN_OCCUPANCY_100_PERCENT,
-                PositiveNumber.fromInt(txsSelectionMaxTime)),
+                transactionSelectionService, Wei.ZERO, PositiveNumber.fromInt(txsSelectionMaxTime)),
             transactionProcessor,
             createBlock(301_000),
             AddressHelpers.ofValue(1),
@@ -1199,10 +1139,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.ZERO,
-                MIN_OCCUPANCY_100_PERCENT,
-                PositiveNumber.fromInt(txsSelectionMaxTime)),
+                transactionSelectionService, Wei.ZERO, PositiveNumber.fromInt(txsSelectionMaxTime)),
             transactionProcessor,
             createBlock(301_000),
             AddressHelpers.ofValue(1),
@@ -1255,10 +1192,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
     selector.set(
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.ZERO,
-                MIN_OCCUPANCY_100_PERCENT,
-                PositiveNumber.fromInt(1000)),
+                transactionSelectionService, Wei.ZERO, PositiveNumber.fromInt(1000)),
             transactionProcessor,
             createBlock(301_000),
             AddressHelpers.ofValue(1),
@@ -1346,13 +1280,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 ? createMiningParameters(
                     transactionSelectionService,
                     Wei.ZERO,
-                    MIN_OCCUPANCY_100_PERCENT,
                     poaGenesisBlockPeriod,
                     PositiveNumber.fromInt(75))
                 : createMiningParameters(
                     transactionSelectionService,
                     Wei.ZERO,
-                    MIN_OCCUPANCY_100_PERCENT,
                     PositiveNumber.fromInt(blockTxsSelectionMaxTime)),
             transactionProcessor,
             blockHeader,
@@ -1510,13 +1442,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
                 ? createMiningParameters(
                     transactionSelectionService,
                     Wei.ZERO,
-                    MIN_OCCUPANCY_100_PERCENT,
                     poaGenesisBlockPeriod,
                     PositiveNumber.fromInt(75))
                 : createMiningParameters(
                     transactionSelectionService,
                     Wei.ZERO,
-                    MIN_OCCUPANCY_100_PERCENT,
                     PositiveNumber.fromInt(blockTxsSelectionMaxTime)),
             transactionProcessor,
             blockHeader,
@@ -1762,14 +1692,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected MiningConfiguration createMiningParameters(
       final TransactionSelectionService transactionSelectionService,
       final Wei minGasPrice,
-      final double minBlockOccupancyRatio,
       final PositiveNumber txsSelectionMaxTime) {
     return ImmutableMiningConfiguration.builder()
-        .mutableInitValues(
-            MutableInitValues.builder()
-                .minTransactionGasPrice(minGasPrice)
-                .minBlockOccupancyRatio(minBlockOccupancyRatio)
-                .build())
+        .mutableInitValues(MutableInitValues.builder().minTransactionGasPrice(minGasPrice).build())
         .transactionSelectionService(transactionSelectionService)
         .posBlockTxsSelectionMaxTime(txsSelectionMaxTime)
         .build();
@@ -1778,14 +1703,12 @@ public abstract class AbstractBlockTransactionSelectorTest {
   protected MiningConfiguration createMiningParameters(
       final TransactionSelectionService transactionSelectionService,
       final Wei minGasPrice,
-      final double minBlockOccupancyRatio,
       final int genesisBlockPeriodSeconds,
       final PositiveNumber minBlockTimePercentage) {
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
             MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
-                .minBlockOccupancyRatio(minBlockOccupancyRatio)
                 .blockPeriodSeconds(genesisBlockPeriodSeconds)
                 .build())
         .transactionSelectionService(transactionSelectionService)
