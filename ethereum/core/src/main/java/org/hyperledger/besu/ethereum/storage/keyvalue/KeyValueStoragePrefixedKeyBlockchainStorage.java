@@ -366,22 +366,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
           blockHash.getBytes(),
           NO_COPY_RLP_ENCODER.encodeList(
               transactionReceipts.stream()
-                  .map(
-                      r -> {
-                        final Bytes rawBytes = r.getRlpBytes();
-                        // EIP-2718 typed receipts received from the network arrive via
-                        // readBytes() which strips the outer RLP bytes-element wrapper,
-                        // leaving raw typeCode||rlp_body (first byte in 0x01-0x7f).
-                        // These must be re-wrapped as a single RLP bytes element so that
-                        // TransactionReceiptDecoder.decodeTypedReceiptComponents can decode
-                        // them (it expects readBytes() to return the full typeCode||body).
-                        // Receipts that are already valid RLP elements (first byte >= 0x80:
-                        // either an RLP string prefix 0x80-0xbf, or list prefix 0xc0-0xff)
-                        // are stored as-is.
-                        return Byte.toUnsignedInt(rawBytes.get(0)) < 0x80
-                            ? NO_COPY_RLP_ENCODER.encode(rawBytes)
-                            : rawBytes;
-                      })
+                  .map(r -> normalizeReceiptRlpElement(r.getRlpBytes()))
                   .toList()));
     }
 
@@ -469,6 +454,22 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     private void remove(final Bytes prefix, final Bytes key) {
       blockchainTransaction.remove(Bytes.concatenate(prefix, key).toArrayUnsafe());
+    }
+
+    /**
+     * Normalizes a receipt RLP element for storage.
+     *
+     * <p>EIP-2718 typed receipts received from the network arrive via readBytes() which strips the
+     * outer RLP bytes-element wrapper, leaving raw typeCode||rlp_body (first byte in 0x01-0x7f).
+     * These must be re-wrapped as a single RLP bytes element so that
+     * TransactionReceiptDecoder.decodeTypedReceiptComponents can decode them. Receipts that are
+     * already valid RLP elements (first byte >= 0x80) are stored as-is.
+     */
+    private Bytes normalizeReceiptRlpElement(final Bytes rawBytes) {
+      if (rawBytes.isEmpty() || Byte.toUnsignedInt(rawBytes.get(0)) >= 0x80) {
+        return rawBytes;
+      }
+      return NO_COPY_RLP_ENCODER.encode(rawBytes);
     }
 
     private Bytes rlpEncode(final List<TransactionReceipt> receipts) {
