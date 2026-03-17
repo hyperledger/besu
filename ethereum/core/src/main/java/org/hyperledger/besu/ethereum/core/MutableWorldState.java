@@ -15,12 +15,9 @@
 package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterImplSync;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
