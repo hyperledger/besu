@@ -58,10 +58,9 @@ public class PeerTransactionTracker
   private static final Logger LOG = LoggerFactory.getLogger(PeerTransactionTracker.class);
   private final EthPeers ethPeers;
   private final EthScheduler ethScheduler;
-  private final int maxTrackedSeenTxs;
   private final int maxSendQueueSizePerPeer;
   private final boolean forgetEvictedTxsEnabled;
-  private final LRUMap<Hash, PeersSeenState> peersSeenStateByHash;
+  private final FixedCapacityLRUMap<Hash, PeersSeenState> peersSeenStateByHash;
   private final Map<EthPeer, SequencedSet<Transaction>> transactionsToSend = new HashMap<>();
   private final Map<EthPeer, SequencedSet<Transaction>> announcementsToSend = new HashMap<>();
   private final Map<EthPeer, LRUMap<Hash, TransactionAnnouncement>> announcementsToRequestByHash =
@@ -75,10 +74,10 @@ public class PeerTransactionTracker
       final EthScheduler scheduler) {
     this.ethPeers = ethPeers;
     this.ethScheduler = scheduler;
-    this.maxTrackedSeenTxs = txPoolConfig.getUnstable().getMaxTrackedSeenTxs();
     this.maxSendQueueSizePerPeer = txPoolConfig.getUnstable().getMaxSendQueueSizePerPeer();
     this.forgetEvictedTxsEnabled = txPoolConfig.getUnstable().getPeerTrackerForgetEvictedTxs();
-    this.peersSeenStateByHash = new LRUMap<>(maxTrackedSeenTxs);
+    this.peersSeenStateByHash =
+        new FixedCapacityLRUMap<>(txPoolConfig.getUnstable().getMaxTrackedSeenTxs());
     this.peerToSlotIndexMap = HashBiMap.create(ethPeers.getMaxPeers());
     ethScheduler.scheduleFutureTaskWithFixedDelay(
         this::logStats, Duration.ofMinutes(1), Duration.ofMinutes(1));
@@ -188,7 +187,8 @@ public class PeerTransactionTracker
       final EthPeer peer, final List<Transaction> transactions) {
     if (!peer.isDisconnected()) {
       transactionsToSend
-          .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
+          .computeIfAbsent(
+              peer, key -> createBoundedSet(transactions.size(), maxSendQueueSizePerPeer))
           .addAll(transactions);
     }
   }
@@ -197,7 +197,8 @@ public class PeerTransactionTracker
       final EthPeer peer, final List<Transaction> transactions) {
     if (!peer.isDisconnected()) {
       announcementsToSend
-          .computeIfAbsent(peer, key -> createBoundedSet(maxSendQueueSizePerPeer))
+          .computeIfAbsent(
+              peer, key -> createBoundedSet(transactions.size(), maxSendQueueSizePerPeer))
           .addAll(transactions);
     }
   }
@@ -280,7 +281,7 @@ public class PeerTransactionTracker
 
     final LRUMap<Hash, TransactionAnnouncement> announcementsByHashForPeer =
         announcementsToRequestByHash.computeIfAbsent(
-            peer, key -> new LRUMap<>(maxSendQueueSizePerPeer));
+            peer, key -> new LRUMap<>(maxSendQueueSizePerPeer, incomingAnnouncements.size()));
 
     for (final TransactionAnnouncement txAnnouncement : incomingAnnouncements) {
       if (!alreadySeenTransaction(txAnnouncement.hash())) {
@@ -346,9 +347,9 @@ public class PeerTransactionTracker
             || peersSeenState.hasSeenTransaction(peerIdx));
   }
 
-  private <T> SequencedSet<T> createBoundedSet(final int maxSize) {
+  private <T> SequencedSet<T> createBoundedSet(final int initialCapacity, final int maxSize) {
     return Collections.newSequencedSetFromMap(
-        new LinkedHashMap<>(16, 0.75f, true) {
+        new LinkedHashMap<>((int) Math.ceil(initialCapacity / 0.75f), 0.75f, true) {
           @Override
           protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
             return size() > maxSize;
@@ -520,6 +521,24 @@ public class PeerTransactionTracker
     public void clear(final Integer peerIdx) {
       transactions.clear(peerIdx);
       announcements.clear(peerIdx);
+    }
+  }
+
+  private static class FixedCapacityLRUMap<K, V> extends LRUMap<K, V> {
+    private static final float DEFAULT_LOAD_FACTOR = 0.8f;
+
+    public FixedCapacityLRUMap(final int maxEntries) {
+      super(maxEntries, DEFAULT_LOAD_FACTOR);
+    }
+
+    @Override
+    protected int calculateNewCapacity(final int proposedCapacity) {
+      return (int) Math.ceil(proposedCapacity / DEFAULT_LOAD_FACTOR);
+    }
+
+    @Override
+    protected void checkCapacity() {
+      // no- op since the fixed map never needs to resize
     }
   }
 }

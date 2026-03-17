@@ -136,7 +136,7 @@ public class PeerTransactionTrackerTest {
     assertThat(shortMemoryTracker.alreadySeenTransaction(transaction1.getHash())).isTrue();
     assertThat(shortMemoryTracker.alreadySeenTransaction(transaction2.getHash())).isTrue();
 
-    // now the cache is full and the last recent entry if the transaction1
+    // now the cache is full and the last recent entry is the transaction1
     // so it should be evicted when inserting transaction3
     shortMemoryTracker.markTransactionsAsSeen(ethPeer1, List.of(transaction3.getHash()));
 
