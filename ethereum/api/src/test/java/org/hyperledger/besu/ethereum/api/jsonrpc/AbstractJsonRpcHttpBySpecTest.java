@@ -68,7 +68,7 @@ public abstract class AbstractJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpS
       Pattern.compile("\"error\"\\s*:\\s*\"([^\"]+)\"");
 
   private URL specURL;
-  private boolean initialized = false;
+  private volatile boolean initialized = false;
 
   /**
    * Subclasses implement this to perform one-time blockchain + service setup. Called the first time
