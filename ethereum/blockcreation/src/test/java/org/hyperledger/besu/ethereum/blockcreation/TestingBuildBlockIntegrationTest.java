@@ -391,7 +391,8 @@ class TestingBuildBlockIntegrationTest {
                         new BadBlockManager(),
                         false,
                         ImmutableBalConfiguration.builder()
-                            .isBalOptimisationEnabled(withBAL)
+                            .isBalStateRootTrusted(withBAL)
+                            .isPerfectParallelizationEnabled(withBAL)
                             .build(),
                         new NoOpMetricsSystem())
                     .createProtocolSchedule())
