@@ -14,12 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
@@ -135,7 +133,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // Find the nearest account state for this address and block context
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestAccount =
         storage
-            .getNearestBefore(ACCOUNT_INFO_STATE, keyNearest)
+            .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, keyNearest)
             .filter(
                 found ->
                     accountHash.getBytes().commonPrefixLength(found.key())
@@ -182,7 +180,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     final Stream<Pair<Bytes32, Bytes>> stream =
         storage
             .streamFromKey(
-                ACCOUNT_INFO_STATE,
+                ACCOUNT_INFO_STATE_ARCHIVE,
                 calculateArchiveKeyNoContextMinSuffix(startKeyHash.toArrayUnsafe()),
                 calculateArchiveKeyNoContextMaxSuffix(endKeyHash.toArrayUnsafe()))
             .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
@@ -192,7 +190,11 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
                     new Pair<>(
                         Bytes32.wrap(trimSuffix(e.toArrayUnsafe())),
                         Bytes.of(
-                            storage.getNearestBefore(ACCOUNT_INFO_STATE, e).get().value().get())));
+                            storage
+                                .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, e)
+                                .get()
+                                .value()
+                                .get())));
     return stream;
   }
 
@@ -202,7 +204,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     final Stream<Pair<Bytes32, Bytes>> stream =
         storage
             .streamFromKey(
-                ACCOUNT_INFO_STATE,
+                ACCOUNT_INFO_STATE_ARCHIVE,
                 calculateArchiveKeyNoContextMinSuffix(startKeyHash.toArrayUnsafe()))
             .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
             .distinct()
@@ -211,7 +213,11 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
                     new Pair<Bytes32, Bytes>(
                         Bytes32.wrap(trimSuffix(e.toArrayUnsafe())),
                         Bytes.of(
-                            storage.getNearestBefore(ACCOUNT_INFO_STATE, e).get().value().get())));
+                            storage
+                                .getNearestBefore(ACCOUNT_INFO_STATE_ARCHIVE, e)
+                                .get()
+                                .value()
+                                .get())));
     return stream;
   }
 
@@ -223,7 +229,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final Function<Bytes, Bytes> valueMapper) {
     return storage
         .streamFromKey(
-            ACCOUNT_STORAGE_STORAGE,
+            ACCOUNT_STORAGE_ARCHIVE,
             calculateArchiveKeyNoContextMinSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))))
         .map(e -> Bytes.of(calculateArchiveKeyNoContextMaxSuffix(trimSuffix(e.getKey()))))
@@ -236,7 +242,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
                     valueMapper.apply(
                         Bytes.of(
                                 storage
-                                    .getNearestBefore(ACCOUNT_STORAGE_STORAGE, key)
+                                    .getNearestBefore(ACCOUNT_STORAGE_ARCHIVE, key)
                                     .get()
                                     .value()
                                     .get())
@@ -252,7 +258,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
       final Function<Bytes, Bytes> valueMapper) {
     return storage
         .streamFromKey(
-            ACCOUNT_STORAGE_STORAGE,
+            ACCOUNT_STORAGE_ARCHIVE,
             calculateArchiveKeyNoContextMinSuffix(
                 calculateNaturalSlotKey(accountHash, Hash.wrap(Bytes32.wrap(startKeyHash)))),
             calculateArchiveKeyNoContextMaxSuffix(
@@ -267,7 +273,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
                     valueMapper.apply(
                         Bytes.of(
                                 storage
-                                    .getNearestBefore(ACCOUNT_STORAGE_STORAGE, key)
+                                    .getNearestBefore(ACCOUNT_STORAGE_ARCHIVE, key)
                                     .get()
                                     .value()
                                     .get())
@@ -334,7 +340,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // Find the nearest storage for this address, slot key hash, and block context
     Optional<SegmentedKeyValueStorage.NearestKeyValue> nearestStorage =
         storage
-            .getNearestBefore(ACCOUNT_STORAGE_STORAGE, keyNearest)
+            .getNearestBefore(ACCOUNT_STORAGE_ARCHIVE, keyNearest)
             .filter(
                 found -> Bytes.of(naturalKey).commonPrefixLength(found.key()) >= naturalKey.length);
 
