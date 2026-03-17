@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
@@ -26,6 +29,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
+import org.bouncycastle.util.Arrays;
 
 import java.util.Optional;
 
@@ -180,6 +184,98 @@ public class BonsaiArchiveFlatDbStrategyTest {
       assertThat(value).as("Block " + blockNum + " should have stored value").isPresent();
       assertThat(Bytes.wrap(value.get())).isEqualTo(expectedValues[(int) blockNum]);
     }
+  }
+
+  @Test
+  public void clearAll_removesDataFromAccountInfoStateFreezer() {
+    // Put data into the freezer segment
+    byte[] accountKey = Hash.fromHexString("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+        .getBytes()
+        .toArrayUnsafe();
+    byte[] accountValue = Bytes.fromHexString("0xAABBCCDD").toArrayUnsafe();
+    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    tx.put(ACCOUNT_INFO_STATE_FREEZER, accountKey, accountValue);
+    tx.commit();
+
+    // Verify data exists
+    assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isNotEmpty();
+
+    // Clear all - this should remove freezer data
+    archiveFlatDbStrategy.clearAll(storage);
+
+    // Verify data is removed
+    assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isEmpty();
+  }
+
+  @Test
+  public void clearAll_removesDataFromAccountStorageFreezer() {
+    // Put data into the storage freezer segment
+    byte[] storageKey = Arrays.concatenate(
+        Hash.fromHexString("0x1111111111111111111111111111111111111111111111111111111111111111")
+            .getBytes()
+            .toArrayUnsafe(),
+        Hash.fromHexString("0x2222222222222222222222222222222222222222222222222222222222222222")
+            .getBytes()
+            .toArrayUnsafe());
+    byte[] storageValue = Bytes.fromHexString("0xdeadbeef").toArrayUnsafe();
+    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    tx.put(ACCOUNT_STORAGE_FREEZER, storageKey, storageValue);
+    tx.commit();
+
+    // Verify data exists
+    assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isNotEmpty();
+
+    // Clear all - this should remove freezer data
+    archiveFlatDbStrategy.clearAll(storage);
+
+    // Verify data is removed
+    assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isEmpty();
+  }
+
+  @Test
+  public void resetOnResync_removesDataFromAccountInfoStateFreezer() {
+    // Put data into the freezer segment
+    byte[] accountKey = Hash.fromHexString("0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890")
+        .getBytes()
+        .toArrayUnsafe();
+    byte[] accountValue = Bytes.fromHexString("0x11223344").toArrayUnsafe();
+    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    tx.put(ACCOUNT_INFO_STATE_FREEZER, accountKey, accountValue);
+    tx.commit();
+
+    // Verify data exists
+    assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isNotEmpty();
+
+    // Reset on resync - this should remove freezer data
+    archiveFlatDbStrategy.resetOnResync(storage);
+
+    // Verify data is removed
+    assertThat(storage.get(ACCOUNT_INFO_STATE_FREEZER, accountKey)).isEmpty();
+  }
+
+  @Test
+  public void resetOnResync_removesDataFromAccountStorageFreezer() {
+    // Put data into the storage freezer segment
+    byte[] storageKey = Arrays.concatenate(
+        Hash.fromHexString("0x3333333333333333333333333333333333333333333333333333333333333333")
+            .getBytes()
+            .toArrayUnsafe(),
+        Hash.fromHexString("0x4444444444444444444444444444444444444444444444444444444444444444")
+            .getBytes()
+            .toArrayUnsafe());
+    byte[] storageValue = Bytes.fromHexString("0xcafebabe").toArrayUnsafe();
+    SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    tx.put(ACCOUNT_STORAGE_FREEZER, storageKey, storageValue);
+    tx.commit();
+
+    // Verify data exists
+    assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isNotEmpty();
+
+    // Reset on resync - this should remove freezer data
+    archiveFlatDbStrategy.resetOnResync(storage);
+
+    // Verify data is removed
+    assertThat(storage.get(ACCOUNT_STORAGE_FREEZER, storageKey)).isEmpty();
   }
 
   private void setWorldBlockNumber(final long blockNumber) {
