@@ -706,8 +706,7 @@ public class BonsaiArchiverTests {
     // Generate some trie logs to return for a specific block
 
     // For state to be moved from the archive DB segment to the archive freezer DB segment, we need
-    // the
-    // archive DB segment to have the account in already
+    // the archive DB segment to have the account in already
     SegmentedKeyValueStorageTransaction tx =
         testWorldStateStorage.getComposedWorldStateStorage().startTransaction();
     final BonsaiAccount block150Account =
@@ -861,8 +860,7 @@ public class BonsaiArchiverTests {
         .isEqualTo(1);
 
     // Both the previous account states should be in the archive freezer segment, plus the special
-    // key that
-    // records the latest archived block
+    // key that records the latest archived block
     assertThat(
             testWorldStateStorage.getComposedWorldStateStorage().stream(
                     KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER)
@@ -948,8 +946,7 @@ public class BonsaiArchiverTests {
     // Generate some trie logs to return for a specific block
 
     // For storage to be moved from the archive DB segment to the archive freezer DB segment, we
-    // need the
-    // archive DB segment to have the storage in already
+    // need the archive DB segment to have the storage in already
     SegmentedKeyValueStorageTransaction tx =
         testWorldStateStorage.getComposedWorldStateStorage().startTransaction();
     StorageSlotKey slotKey = new StorageSlotKey(UInt256.fromHexString("0x1"));

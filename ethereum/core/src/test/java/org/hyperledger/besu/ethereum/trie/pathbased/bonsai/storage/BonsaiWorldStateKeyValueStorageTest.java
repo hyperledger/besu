@@ -80,19 +80,6 @@ public class BonsaiWorldStateKeyValueStorageTest {
         new Object[][] {{FlatDbMode.FULL}, {FlatDbMode.PARTIAL}, {FlatDbMode.ARCHIVE}});
   }
 
-  public static Stream<Arguments> flatDbModeAndKeyMapper() {
-    Function<byte[], byte[]> flatDBKey = (key) -> key; // No-op
-
-    // For archive we want <32-byte-hex>000000000000000n where n is the current archive block number
-    Function<byte[], byte[]> flatDBArchiveKey =
-        (key) -> concatenate(key, Bytes.ofUnsignedLong(2).toArrayUnsafe());
-
-    return Stream.of(
-        Arguments.of(FlatDbMode.FULL, flatDBKey),
-        Arguments.of(FlatDbMode.PARTIAL, flatDBKey),
-        Arguments.of(FlatDbMode.ARCHIVE, flatDBArchiveKey));
-  }
-
   public static Stream<Arguments> flatDbModeKeyMapperAndSegment() {
     Function<byte[], byte[]> flatDBKey = (key) -> key; // No-op
 
