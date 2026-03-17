@@ -510,9 +510,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // and flat archive DB
     // and we want to ensure keys put to the archive DB include the archive block context/suffix
     byte[] lookupKey = keyMapper.apply(account.addressHash().getBytes().toArrayUnsafe());
-    assertThat(
-            Bytes.wrap(
-                storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
+    assertThat(Bytes.wrap(storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
         .isEqualTo(
             Bytes.fromHexString(
                 "0xF84E823D98887B5E41A364EA8BFCA056E81F171BCC55A6FF8345E692C0F86E5B48E01B996CADC001622FB5E363B421A0C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470"));
@@ -568,19 +566,13 @@ public class BonsaiWorldStateKeyValueStorageTest {
     // Convert the key to lookup the entry we expect to find in K/V storage. No-op for everything
     // except ARCHIVE, which needs to append the 000000000000000x suffix to the key
     byte[] lookupKey = keyMapper.apply(account1.addressHash().getBytes().toArrayUnsafe());
-    assertThat(
-            Bytes32.wrap(
-                storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
+    assertThat(Bytes32.wrap(storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
         .isEqualTo(account1Value);
     lookupKey = keyMapper.apply(account2.addressHash().getBytes().toArrayUnsafe());
-    assertThat(
-            Bytes32.wrap(
-                storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
+    assertThat(Bytes32.wrap(storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
         .isEqualTo(account2Value);
     lookupKey = keyMapper.apply(account3.addressHash().getBytes().toArrayUnsafe());
-    assertThat(
-            Bytes32.wrap(
-                storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
+    assertThat(Bytes32.wrap(storage.getComposedWorldStateStorage().get(segment, lookupKey).get()))
         .isEqualTo(account3Value);
 
     // Streaming the entire range to ensure we get all 3 accounts back
