@@ -443,24 +443,23 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
 
   @Override
   public void clearAll(final SegmentedKeyValueStorage storage) {
-    // Clear archive segments first
-    storage.clear(ACCOUNT_INFO_STATE_ARCHIVE);
-    storage.clear(ACCOUNT_STORAGE_ARCHIVE);
-    storage.clear(ACCOUNT_INFO_STATE_FREEZER);
-    storage.clear(ACCOUNT_STORAGE_FREEZER);
+    clearArchiveSegments(storage);
     // Then call parent to clear other segments
     super.clearAll(storage);
   }
 
   @Override
   public void resetOnResync(final SegmentedKeyValueStorage storage) {
-    // Clear archive segments
+    clearArchiveSegments(storage);
+    // Then call parent to reset other segments
+    super.resetOnResync(storage);
+  }
+
+  private static void clearArchiveSegments(SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE_ARCHIVE);
     storage.clear(ACCOUNT_STORAGE_ARCHIVE);
     storage.clear(ACCOUNT_INFO_STATE_FREEZER);
     storage.clear(ACCOUNT_STORAGE_FREEZER);
-    // Then call parent to reset other segments
-    super.resetOnResync(storage);
   }
 
   // TODO JF: move this out of this class so can be used with ArchiveCodeStorageStrategy without
