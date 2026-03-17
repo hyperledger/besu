@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.ignoreStubs;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -66,9 +67,16 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   @BeforeEach
   public void setUp() {
+    when(ethPeers.getMaxPeers()).thenReturn(25);
+    when(peer1.isDisconnected()).thenReturn(false);
+    when(peer2.isDisconnected()).thenReturn(false);
+
     transactionTracker =
         new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers, ethScheduler);
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
+
+    transactionTracker.onPeerConnected(peer1);
+    transactionTracker.onPeerConnected(peer2);
 
     when(peer1.getConnection())
         .thenReturn(new MockPeerConnection(Set.of(EthProtocol.ETH68), (cap, msg, conn) -> {}));
@@ -89,7 +97,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
     verify(peer2).send(transactionsMessageContaining(transaction3));
     verify(peer1).getConnection();
     verify(peer2).getConnection();
-    verifyNoMoreInteractions(peer1, peer2);
+    verifyNoMoreInteractions(ignoreStubs(peer1, peer2));
   }
 
   @Test
@@ -137,7 +145,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
     // transaction1 was already seen — only transaction2 is announced
     verify(peer1).send(transactionsMessageContaining(transaction2));
     verify(peer1).getConnection();
-    verifyNoMoreInteractions(peer1);
+    verifyNoMoreInteractions(ignoreStubs(peer1));
   }
 
   @Test
@@ -159,7 +167,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
     // the single remaining tx was NOT sent.
     verify(peer1, times(1)).send(any());
     verify(peer1).getConnection();
-    verifyNoMoreInteractions(peer1);
+    verifyNoMoreInteractions(ignoreStubs(peer1));
   }
 
   @Test
@@ -175,7 +183,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
     final ArgumentCaptor<MessageData> captor = ArgumentCaptor.forClass(MessageData.class);
     verify(peer1, times(2)).send(captor.capture());
     verify(peer1).getConnection();
-    verifyNoMoreInteractions(peer1);
+    verifyNoMoreInteractions(ignoreStubs(peer1));
 
     final List<MessageData> messages = captor.getAllValues();
     assertThat(getAnnouncementsFromMessage(messages.get(0))).hasSize(batchSize);

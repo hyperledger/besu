@@ -76,8 +76,11 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   public void setup() {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    when(ethPeers.getMaxPeers()).thenReturn(25);
+    when(ethPeer.isDisconnected()).thenReturn(false);
     transactionTracker =
         new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers, ethScheduler);
+    transactionTracker.onPeerConnected(ethPeer);
     when(ethContext.getPeerTaskExecutor()).thenReturn(peerTaskExecutor);
     fetcher =
         new BufferedGetPooledTransactionsFromPeerFetcher(
