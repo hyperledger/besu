@@ -945,7 +945,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -999,7 +999,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -1045,7 +1045,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -1294,8 +1294,8 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH69);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH69);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.LATEST);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.LATEST);
   }
 
   @Test

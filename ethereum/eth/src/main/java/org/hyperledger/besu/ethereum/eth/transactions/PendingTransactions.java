@@ -73,6 +73,8 @@ public interface PendingTransactions {
 
   String logStats();
 
+  Status getStatus();
+
   Optional<Transaction> restoreBlob(Transaction transaction);
 
   @FunctionalInterface
@@ -80,4 +82,6 @@ public interface PendingTransactions {
     Map<PendingTransaction, TransactionSelectionResult> evaluatePendingTransactions(
         List<PendingTransaction> candidatePendingTransactions);
   }
+
+  record Status(long pendingCount, long queuedCount) {}
 }

@@ -1019,7 +1019,8 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     blobSchedule.getMax(),
                     blobSchedule.getTarget(),
-                    miningConfiguration.getMaxBlobsPerTransaction()))
+                    miningConfiguration.getMaxBlobsPerTransaction(),
+                    miningConfiguration.getMaxBlobsPerBlock()))
         .evmBuilder(
             (gasCalculator, __) ->
                 MainnetEVMs.osaka(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
@@ -1224,10 +1225,27 @@ public abstract class MainnetProtocolSpecs {
         .blockAccessListFactory(new BlockAccessListFactory())
         .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
-
-        // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
-        .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
-        .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)
+        // EIP-8037: Disable validation-time TX_MAX_GAS_LIMIT cap (enforced at runtime on regular
+        // gas)
+        .gasLimitCalculatorBuilder(
+            (feeMarket, gasCalculator, blobSchedule) -> {
+              final long londonForkBlock = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
+              return new OsakaTargetingGasLimitCalculator(
+                  londonForkBlock,
+                  (BaseFeeMarket) feeMarket,
+                  gasCalculator,
+                  blobSchedule.getMax(),
+                  blobSchedule.getTarget(),
+                  miningConfiguration.getMaxBlobsPerTransaction(),
+                  miningConfiguration.getMaxBlobsPerBlock(),
+                  Long.MAX_VALUE);
+            })
+        // EIP-8037: Amsterdam gas calculator with state gas cost support
+        .gasCalculator(AmsterdamGasCalculator::new)
+        // Amsterdam (EIP-7778 + EIP-8037): Pre-refund 2D gas accounting
+        .blockGasAccountingStrategy(BlockGasAccountingStrategy.AMSTERDAM)
+        // Amsterdam: Validator uses pre-refund gas_metered = max(regular, state) from processing
+        .blockGasUsedValidator(BlockGasUsedValidator.AMSTERDAM)
         .hardforkId(AMSTERDAM);
   }
 
