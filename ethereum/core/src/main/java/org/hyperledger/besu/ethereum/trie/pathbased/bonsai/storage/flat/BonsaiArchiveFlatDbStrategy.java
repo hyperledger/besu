@@ -455,7 +455,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     super.resetOnResync(storage);
   }
 
-  private static void clearArchiveSegments(SegmentedKeyValueStorage storage) {
+  private static void clearArchiveSegments(final SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE_ARCHIVE);
     storage.clear(ACCOUNT_STORAGE_ARCHIVE);
     storage.clear(ACCOUNT_INFO_STATE_FREEZER);
