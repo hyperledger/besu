@@ -28,10 +28,17 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import jakarta.validation.constraints.NotNull;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -1380,6 +1387,146 @@ public class ChainDataPrunerTest {
   }
 
   @Test
+  public void noBalPruningWarningBeforeGlamsterdam() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final BlockchainStorage blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions(),
+            false);
+    final ChainDataPruner chainDataPruner =
+        new ChainDataPruner(
+            blockchainStorage,
+            () -> {},
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            0,
+            ChainDataPruner.PruningMode.CHAIN_PRUNING,
+            new ChainPrunerConfiguration(
+                ChainDataPruner.ChainPruningStrategy.BAL,
+                Long.MAX_VALUE,
+                256,
+                Long.MAX_VALUE,
+                0,
+                0),
+            new BlockingExecutor());
+    Block genesisBlock = gen.genesisBlock();
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
+    blockchain.observeBlockAdded(chainDataPruner);
+
+    gen.setBlockOptionsSupplier(
+        () -> BlockDataGenerator.BlockOptions.create().withoutGeneratedBlockAccessList());
+
+    final List<LogEvent> capturedEvents =
+        withLogCapture(
+            ChainDataPruner.class,
+            () -> {
+              List<Block> canonicalChain = gen.blockSequence(genesisBlock, 258);
+              List<Block> forkChain = gen.blockSequence(genesisBlock, 16);
+
+              for (Block blk : canonicalChain) {
+                blockchain.appendBlock(blk, gen.receipts(blk));
+              }
+
+              // Fork blocks at lower heights: blockNumber < storedBalPruningMark,
+              // but no warning expected because BAL is not activated yet.
+              for (Block blk : forkChain) {
+                blockchain.storeBlock(blk, gen.receipts(blk));
+              }
+            });
+
+    assertThat(
+            capturedEvents.stream()
+                .filter(e -> e.getLevel().equals(Level.WARN))
+                .map(e -> e.getMessage().getFormattedMessage())
+                .anyMatch(msg -> msg.contains("is less than BAL pruning mark")))
+        .as("No BAL pruning warning should be emitted for pre-Glamsterdam blocks")
+        .isFalse();
+  }
+
+  @Test
+  public void balPruningWarningAfterGlamsterdam() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final BlockchainStorage blockchainStorage =
+        new KeyValueStoragePrefixedKeyBlockchainStorage(
+            new InMemoryKeyValueStorage(),
+            new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+            new MainnetBlockHeaderFunctions(),
+            false);
+    final ChainDataPruner chainDataPruner =
+        new ChainDataPruner(
+            blockchainStorage,
+            () -> {},
+            new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
+            0,
+            ChainDataPruner.PruningMode.CHAIN_PRUNING,
+            new ChainPrunerConfiguration(
+                ChainDataPruner.ChainPruningStrategy.BAL,
+                Long.MAX_VALUE,
+                256,
+                Long.MAX_VALUE,
+                0,
+                0),
+            new BlockingExecutor());
+    Block genesisBlock = gen.genesisBlock();
+    final MutableBlockchain blockchain =
+        DefaultBlockchain.createMutable(
+            genesisBlock, blockchainStorage, new NoOpMetricsSystem(), 0);
+    blockchain.observeBlockAdded(chainDataPruner);
+
+    gen.setBlockOptionsSupplier(
+        () -> BlockDataGenerator.BlockOptions.create().withGeneratedBlockAccessList());
+
+    final List<LogEvent> capturedEvents =
+        withLogCapture(
+            ChainDataPruner.class,
+            () -> {
+              List<BlockDataGenerator.BlockWithAccessList> canonicalChain =
+                  gen.blockSequenceWithAccessList(genesisBlock, 258);
+              List<BlockDataGenerator.BlockWithAccessList> forkChain =
+                  gen.blockSequenceWithAccessList(genesisBlock, 16);
+
+              for (BlockDataGenerator.BlockWithAccessList blockWithBal : canonicalChain) {
+                final Block blk = blockWithBal.getBlock();
+                blockWithBal
+                    .getBlockAccessList()
+                    .ifPresent(
+                        bal -> {
+                          final BlockchainStorage.Updater updater = blockchainStorage.updater();
+                          updater.putBlockAccessList(blk.getHash(), bal);
+                          updater.commit();
+                        });
+                blockchain.appendBlock(blk, gen.receipts(blk));
+              }
+
+              // Fork blocks with BAL at lower heights (1-16).
+              // blockNumber < storedBalPruningMark → warning expected.
+              for (BlockDataGenerator.BlockWithAccessList blockWithBal : forkChain) {
+                final Block blk = blockWithBal.getBlock();
+                blockWithBal
+                    .getBlockAccessList()
+                    .ifPresent(
+                        bal -> {
+                          final BlockchainStorage.Updater updater = blockchainStorage.updater();
+                          updater.putBlockAccessList(blk.getHash(), bal);
+                          updater.commit();
+                        });
+                blockchain.storeBlock(blk, gen.receipts(blk));
+              }
+            });
+
+    assertThat(
+            capturedEvents.stream()
+                .filter(e -> e.getLevel().equals(Level.WARN))
+                .map(e -> e.getMessage().getFormattedMessage())
+                .anyMatch(msg -> msg.contains("is less than BAL pruning mark")))
+        .as("BAL pruning warning should be emitted for post-Glamsterdam fork blocks")
+        .isTrue();
+  }
+
+  @Test
   public void testPreMergePruningAction() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final BlockchainStorage blockchainStorage =
@@ -1426,6 +1573,32 @@ public class ChainDataPrunerTest {
 
     checkBlocks(blockchain, 1, mergeBlock - 1, Optional::isEmpty);
     checkBlocks(blockchain, mergeBlock, blockchain.getChainHeadBlockNumber(), Optional::isPresent);
+  }
+
+  /**
+   * Attaches a temporary log4j appender to the given class's logger, runs the action, and returns
+   * all captured log events. The appender is properly stopped and removed regardless of outcome.
+   */
+  @SuppressWarnings("BannedMethod")
+  private static List<LogEvent> withLogCapture(final Class<?> loggerClass, final Runnable action) {
+    final Logger logger = (Logger) LogManager.getLogger(loggerClass);
+    final List<LogEvent> events = new CopyOnWriteArrayList<>();
+    final AbstractAppender appender =
+        new AbstractAppender("test-capture", null, null, false, Property.EMPTY_ARRAY) {
+          @Override
+          public void append(final LogEvent event) {
+            events.add(event.toImmutable());
+          }
+        };
+    appender.start();
+    logger.addAppender(appender);
+    try {
+      action.run();
+    } finally {
+      logger.removeAppender(appender);
+      appender.stop();
+    }
+    return events;
   }
 
   /**
