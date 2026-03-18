@@ -68,7 +68,7 @@
           {
             "gasUsed": "0xa637",
             "logs": [],
-            "maxUsedGas": "0xa637",
+            "maxUsedGas": "0xcfc4",
             "returnData": "0x",
             "status": "0x1"
           },
