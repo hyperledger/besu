@@ -33,8 +33,8 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.Cache;
 
 /** The NoOp metrics system. */
 public class NoOpMetricsSystem implements ObservableMetricsSystem {
@@ -154,7 +154,7 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
-  public void createGuavaCacheCollector(
+  public void createCaffeineCacheCollector(
       final MetricCategory category, final String name, final Cache<?, ?> cache) {}
 
   @Override

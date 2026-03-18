@@ -40,6 +40,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledSuppliedMetric;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.time.Clock;
@@ -59,10 +60,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -92,10 +93,10 @@ public class EthPeers implements PeerSelector {
   private final Map<Bytes, EthPeer> activeConnections = new ConcurrentHashMap<>();
 
   private final Cache<PeerConnection, EthPeer> incompleteConnections =
-      CacheBuilder.newBuilder()
+      Caffeine.newBuilder()
           .expireAfterWrite(Duration.ofSeconds(20L))
-          .concurrencyLevel(1)
           .removalListener(this::onCacheRemoval)
+          .executor(CacheMaintenanceExecutor.getInstance())
           .build();
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
@@ -754,17 +755,14 @@ public class EthPeers implements PeerSelector {
   }
 
   private void onCacheRemoval(
-      final RemovalNotification<PeerConnection, EthPeer> removalNotification) {
-    if (removalNotification.wasEvicted()) {
-      final PeerConnection peerConnectionRemoved = removalNotification.getKey();
-      final EthPeer peer = removalNotification.getValue();
+      final PeerConnection peerConnectionRemoved, final EthPeer peer, final RemovalCause cause) {
+    if (cause.wasEvicted()) {
       if (peer == null) {
         return;
       }
       final PeerConnection peerConnectionOfEthPeer = peer.getConnection();
       if (peerConnectionRemoved != null) {
         if (!peerConnectionRemoved.equals(peerConnectionOfEthPeer)) {
-          // If this connection is not the connection of the EthPeer by now we can disconnect
           peerConnectionRemoved.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
         }
       }

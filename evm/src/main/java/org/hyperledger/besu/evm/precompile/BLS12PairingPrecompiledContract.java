@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +32,7 @@ public class BLS12PairingPrecompiledContract extends AbstractBLS12PrecompiledCon
           .maximumWeight(16_000_000)
           .weigher((k, v) -> ((PrecompileInputResultTuple) v).cachedInput().size())
           .expireAfterWrite(15, TimeUnit.MINUTES) // Evict 15 minutes after each entry is written
+          .executor(CacheMaintenanceExecutor.getInstance())
           .build();
 
   /** Instantiates a new BLS12Pairing precompiled contract. */

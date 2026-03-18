@@ -19,14 +19,15 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Collection;
 import java.util.Optional;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,15 +36,30 @@ public class BadBlockManager {
 
   public static final int MAX_BAD_BLOCKS_SIZE = 100;
   private final Cache<Hash, Block> badBlocks =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, BlockHeader> badHeaders =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, Hash> latestValidHashes =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, BlockAccessList> blockAccessLists =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Hash, BlockAccessList> generatedBlockAccessLists =
-      CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+      Caffeine.newBuilder()
+          .maximumSize(MAX_BAD_BLOCKS_SIZE)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Subscribers<BadBlockListener> badBlockSubscribers = Subscribers.create(true);
 
   /**

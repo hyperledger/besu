@@ -36,6 +36,8 @@ dependencies {
 
   implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
+  implementation project(':util')
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.guava:guava'
   implementation 'io.consensys.tuweni:tuweni-bytes'
   implementation 'io.consensys.tuweni:tuweni-units'

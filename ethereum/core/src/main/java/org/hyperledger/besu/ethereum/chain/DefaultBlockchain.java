@@ -40,6 +40,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -56,9 +57,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Streams;
 import org.slf4j.Logger;
@@ -144,17 +145,42 @@ public class DefaultBlockchain implements MutableBlockchain {
 
     final int headersSize = Math.max(headersCacheSize, blocksCacheSize);
     blockHeadersCache =
-        Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(headersSize).build());
+        Optional.of(
+            Caffeine.newBuilder()
+                .recordStats()
+                .maximumSize(headersSize)
+                .executor(CacheMaintenanceExecutor.getInstance())
+                .build());
 
     if (blocksCacheSize != 0) {
       blockBodiesCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       transactionReceiptsCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       totalDifficultyCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       blockAccessListCache =
-          Optional.of(CacheBuilder.newBuilder().recordStats().maximumSize(blocksCacheSize).build());
+          Optional.of(
+              Caffeine.newBuilder()
+                  .recordStats()
+                  .maximumSize(blocksCacheSize)
+                  .executor(CacheMaintenanceExecutor.getInstance())
+                  .build());
       registerCacheMetrics(metricsSystem);
     } else {
       // Only headers cache is created, rest are empty
@@ -177,15 +203,15 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   private void registerCacheMetrics(final MetricsSystem metricsSystem) {
     registerHeadersCacheMetrics(metricsSystem);
-    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockBodies", blockBodiesCache.get());
-    metricsSystem.createGuavaCacheCollector(
+    metricsSystem.createCaffeineCacheCollector(BLOCKCHAIN, "blockBodies", blockBodiesCache.get());
+    metricsSystem.createCaffeineCacheCollector(
         BLOCKCHAIN, "transactionReceipts", transactionReceiptsCache.get());
-    metricsSystem.createGuavaCacheCollector(
+    metricsSystem.createCaffeineCacheCollector(
         BLOCKCHAIN, "totalDifficulty", totalDifficultyCache.get());
   }
 
   private void registerHeadersCacheMetrics(final MetricsSystem metricsSystem) {
-    metricsSystem.createGuavaCacheCollector(BLOCKCHAIN, "blockHeaders", blockHeadersCache.get());
+    metricsSystem.createCaffeineCacheCollector(BLOCKCHAIN, "blockHeaders", blockHeadersCache.get());
   }
 
   private void createCounters(final MetricsSystem metricsSystem) {

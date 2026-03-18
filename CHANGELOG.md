@@ -13,6 +13,7 @@
 - Deprecated `--min-block-occupancy-ratio` for removal and make it noop. That option, that is ignored on PoS networks, is related to the deprecated PoW, and allowed to broadcast a mined block as soon as it reached a satisfying fill threshold. The option is still recognized, but it has no effect and will be completely removed in a future release. [#10036](https://github.com/besu-eth/besu/pull/10036)
 - Plugin API
   - Removed `TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD`, in general it could be replaced with `BLOCK_FULL`
+- Prometheus cache metric names changed from `guava_cache_*` to `caffeine_cache_*` — update any Grafana dashboards or Prometheus alerts accordingly [#9909](https://github.com/besu-eth/besu/pull/9909)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
@@ -43,6 +44,7 @@ are provided with different values, using input as per the execution-apis spec i
 - Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
 - Plugin API: Allow the registration of multiple PluginTransactionPoolValidatorFactory [#9964](https://github.com/hyperledger/besu/pull/9964)
 - Add `-Pcases` case name filtering to JMH benchmark suite [#9982](https://github.com/hyperledger/besu/pull/9982)
+- Migrate all Guava caches to Caffeine [#9909](https://github.com/hyperledger/besu/pull/9909)
 - Use JDK SHA-256 provider to leverage hardware SHA-NI instructions instead of BouncyCastle [#9924](https://github.com/hyperledger/besu/pull/9924)
 - Implement `txpool_status` RPC method [#10002](https://github.com/hyperledger/besu/pull/10002)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists

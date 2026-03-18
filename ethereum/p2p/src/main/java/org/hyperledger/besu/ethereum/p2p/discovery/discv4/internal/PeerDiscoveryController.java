@@ -47,6 +47,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.util.CacheMaintenanceExecutor;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -67,9 +68,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
@@ -125,7 +126,11 @@ public class PeerDiscoveryController {
   protected final TimerUtil timerUtil;
   private final PeerTable peerTable;
   private final Cache<Bytes, DiscoveryPeerV4> bondingPeers =
-      CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, TimeUnit.MINUTES).build();
+      Caffeine.newBuilder()
+          .maximumSize(50)
+          .expireAfterWrite(10, TimeUnit.MINUTES)
+          .executor(CacheMaintenanceExecutor.getInstance())
+          .build();
   private final Cache<Bytes, Packet> cachedEnrRequests;
 
   private final Collection<DiscoveryPeerV4> bootstrapNodes;
@@ -239,7 +244,11 @@ public class PeerDiscoveryController {
 
     this.cachedEnrRequests =
         maybeCacheForEnrRequests.orElse(
-            CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build());
+            Caffeine.newBuilder()
+                .maximumSize(50)
+                .expireAfterWrite(10, SECONDS)
+                .executor(CacheMaintenanceExecutor.getInstance())
+                .build());
 
     this.filterOnEnrForkId = filterOnEnrForkId;
   }
@@ -893,7 +902,11 @@ public class PeerDiscoveryController {
     private boolean filterOnEnrForkId;
 
     private Cache<Bytes, Packet> cachedEnrRequests =
-        CacheBuilder.newBuilder().maximumSize(50).expireAfterWrite(10, SECONDS).build();
+        Caffeine.newBuilder()
+            .maximumSize(50)
+            .expireAfterWrite(10, SECONDS)
+            .executor(CacheMaintenanceExecutor.getInstance())
+            .build();
     private RlpxAgent rlpxAgent;
 
     // set defaults for all PacketPackage classes, allowing calling code to override if needed
