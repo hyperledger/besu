@@ -165,16 +165,6 @@ public abstract class CommandTestAbstract {
                       "ibft2",
                       new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
 
-  protected static final JsonObject VALID_GENESIS_CLIQUE_POST_LONDON =
-      (new JsonObject())
-          .put(
-              "config",
-              new JsonObject()
-                  .put("londonBlock", 0)
-                  .put(
-                      "clique",
-                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
-
   protected static final JsonObject VALID_GENESIS_CLIQUE_WITH_POS_TRANSITION =
       (new JsonObject())
           .put(
