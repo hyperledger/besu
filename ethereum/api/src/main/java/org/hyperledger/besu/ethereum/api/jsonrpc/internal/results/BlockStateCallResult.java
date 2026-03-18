@@ -147,7 +147,8 @@ public class BlockStateCallResult extends BlockResult {
     return new CallProcessingResult(
         result.isSuccessful() ? 1 : 0,
         result.getOutput(),
-        simulatorResult.getGasEstimate(),
+        result.getGasSpent(),
+        result.getEstimateGasUsedByTransaction(),
         getError(result),
         new LogsResult(transactionLogs));
   }
