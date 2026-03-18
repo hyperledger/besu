@@ -191,7 +191,7 @@ public class RequestManager {
      * Releases the outstanding request capacity for this stream. Uses CAS to ensure exactly-once
      * semantics: either dispatchResponse() or close() will release the capacity, but not both.
      */
-    public void releaseOutstandingRequest() {
+    void releaseOutstandingRequest() {
       outstandingRequestReleaser.run();
     }
 

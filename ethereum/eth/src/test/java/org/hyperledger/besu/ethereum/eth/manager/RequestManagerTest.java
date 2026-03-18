@@ -231,6 +231,20 @@ public class RequestManagerTest {
   }
 
   @Test
+  public void recordsUselessResponseWhenRequestIdDoesNotMatchOutstandingRequest() throws Exception {
+    final EthPeer peer = createPeer();
+    final RequestManager requestManager = new RequestManager(peer, EthProtocol.NAME);
+
+    // Dispatch responses with request IDs that were never issued - each should record a useless
+    // response. After USELESS_RESPONSE_THRESHOLD useless responses the peer should be disconnected.
+    for (int i = 0; i < PeerReputation.USELESS_RESPONSE_THRESHOLD; i++) {
+      requestManager.dispatchResponse(mockMessage(peer));
+    }
+
+    assertThat(peer.isDisconnected()).isTrue();
+  }
+
+  @Test
   public void disconnectsPeerOnBadMessage() throws Exception {
     final EthPeer peer = createPeer();
     final RequestManager requestManager = new RequestManager(peer, EthProtocol.NAME);
