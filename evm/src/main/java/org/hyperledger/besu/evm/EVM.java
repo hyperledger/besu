@@ -53,6 +53,7 @@ import org.hyperledger.besu.evm.operation.ModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulModOperation;
 import org.hyperledger.besu.evm.operation.MulModOperationOptimized;
 import org.hyperledger.besu.evm.operation.MulOperation;
+import org.hyperledger.besu.evm.operation.MulOperationOptimized;
 import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.NotOperationOptimized;
 import org.hyperledger.besu.evm.operation.Operation;
@@ -77,6 +78,7 @@ import org.hyperledger.besu.evm.operation.ShrOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
+import org.hyperledger.besu.evm.operation.SubOperationOptimized;
 import org.hyperledger.besu.evm.operation.SwapNOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.VirtualOperation;
@@ -244,8 +246,14 @@ public class EVM {
                   evmConfiguration.enableOptimizedOpcodes()
                       ? AddOperationOptimized.staticOperation(frame)
                       : AddOperation.staticOperation(frame);
-              case 0x02 -> MulOperation.staticOperation(frame);
-              case 0x03 -> SubOperation.staticOperation(frame);
+              case 0x02 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? MulOperationOptimized.staticOperation(frame)
+                      : MulOperation.staticOperation(frame);
+              case 0x03 ->
+                  evmConfiguration.enableOptimizedOpcodes()
+                      ? SubOperationOptimized.staticOperation(frame)
+                      : SubOperation.staticOperation(frame);
               case 0x04 -> DivOperation.staticOperation(frame);
               case 0x05 -> SDivOperation.staticOperation(frame);
               case 0x06 ->
