@@ -119,10 +119,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.of(6),
-                MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService, Wei.of(6), DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -151,10 +148,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.of(6),
-                MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService, Wei.of(6), DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
@@ -182,10 +176,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
             createMiningParameters(
-                transactionSelectionService,
-                Wei.of(6),
-                MIN_OCCUPANCY_80_PERCENT,
-                DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
+                transactionSelectionService, Wei.of(6), DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME),
             transactionProcessor,
             blockHeader,
             miningBeneficiary,
