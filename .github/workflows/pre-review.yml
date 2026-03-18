@@ -115,7 +115,7 @@ jobs:
       - name: List unit tests
         run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
-        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/testcase[1]/@classname' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
       - name: Get unit test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
