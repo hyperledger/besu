@@ -10,6 +10,9 @@
 
 ### Breaking Changes
 - Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Syncing networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. [#9852](https://github.com/hyperledger/besu/pull/9852)
+- Deprecated `--min-block-occupancy-ratio` for removal and make it noop. That option, that is ignored on PoS networks, is related to the deprecated PoW, and allowed to broadcast a mined block as soon as it reached a satisfying fill threshold. The option is still recognized, but it has no effect and will be completely removed in a future release. [#10036](https://github.com/besu-eth/besu/pull/10036)
+- Plugin API
+  - Removed `TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD`, in general it could be replaced with `BLOCK_FULL`
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
@@ -18,10 +21,13 @@
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
   - Proof of Work consensus (PoW)
+- `--min-block-occupancy-ratio` is deprecated and will be removed in a future release
 - Plugin API
   - `PluginTransactionSelectorFactory.create(final SelectorsStateManager selectorsStateManager)` is deprecated for removal
 
 ### Bug fixes
+- Fix eth/69 snap sync receipt root mismatch by correctly identifying Frontier transaction type in SyncTransactionReceiptEncoder [#9900](https://github.com/hyperledger/besu/pull/9900)
+- Fix outstanding request counter leak in RequestManager that could cause peers to appear at capacity [#9900](https://github.com/hyperledger/besu/pull/9900)
 - BFT forks that change block period on time-based forks don't take effect [9681](https://github.com/hyperledger/besu/issues/9681)
 - Fix QBFT `RLPException` when decoding proposals from pre-26.1.0 nodes that do not include the `blockAccessList` field [#9977](https://github.com/hyperledger/besu/pull/9977)
 - Fix eth_simulateV1 discrepancy [9960] (https://github.com/besu-eth/besu/issues/9960) eth_simulateV1 now accepts calls where both input and data
@@ -41,11 +47,9 @@ are provided with different values, using input as per the execution-apis spec i
 - Implement `txpool_status` RPC method [#10002](https://github.com/hyperledger/besu/pull/10002)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists
 - Limit pooled tx requests by size and remove pre-eth/68 transaction announcement support [#9990](https://github.com/besu-eth/besu/pull/9990)
-<<<<<<< optimize/register-based-shift
 - Use cache locality to improve Shift opcodes [#9878](https://github.com/besu-eth/besu/pull/9878)
-=======
+- Add maxUsedGas field to eth_simulateV1 results [#10066](https://github.com/besu-eth/besu/pull/10066)
 - Plugin API: pass pending block header when creating selectors [#10034](https://github.com/besu-eth/besu/pull/10034)
->>>>>>> main
 
 ## 26.2.0
 
