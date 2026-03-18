@@ -46,6 +46,7 @@ are provided with different values, using input as per the execution-apis spec i
 - Use JDK SHA-256 provider to leverage hardware SHA-NI instructions instead of BouncyCastle [#9924](https://github.com/hyperledger/besu/pull/9924)
 - Implement `txpool_status` RPC method [#10002](https://github.com/hyperledger/besu/pull/10002)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists
+- Support [EIP-8159](https://eips.ethereum.org/EIPS/eip-8159): eth/71 - block access list exchange
 - Limit pooled tx requests by size and remove pre-eth/68 transaction announcement support [#9990](https://github.com/besu-eth/besu/pull/9990)
 - Use cache locality to improve Shift opcodes [#9878](https://github.com/besu-eth/besu/pull/9878)
 - Add maxUsedGas field to eth_simulateV1 results [#10066](https://github.com/besu-eth/besu/pull/10066)
