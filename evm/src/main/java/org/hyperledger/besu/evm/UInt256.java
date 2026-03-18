@@ -237,10 +237,6 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return new UInt192(u2, u1, u0);
   }
 
-  private UInt256 asUInt256() {
-    return new UInt256(u3, u2, u1, u0);
-  }
-
   // --------------------------------------------------------------------------
   // endregion
 
@@ -497,7 +493,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    */
   public UInt256 mod(final UInt256 modulus) {
     if (isZero()) return ZERO;
-    if (modulus.u3 != 0) return modulus.asUInt256().modReduce(this);
+    if (modulus.u3 != 0) return modulus.modReduce(this);
     if (modulus.u2 != 0) return modulus.asUInt192().modReduce(this);
     if (modulus.u1 != 0) return modulus.asUInt128().modReduce(this);
     if ((modulus.u0 == 0) || (modulus.u0 == 1)) return ZERO;
@@ -532,7 +528,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
    */
   public UInt256 div(final UInt256 divisor) {
     if (isZero()) return ZERO;
-    if (divisor.u3 != 0) return divisor.asUInt256().divReduce(this);
+    if (divisor.u3 != 0) return divisor.divReduce(this);
     if (divisor.u2 != 0) return divisor.asUInt192().divReduce(this);
     if (divisor.u1 != 0) return divisor.asUInt128().divReduce(this);
     if ((divisor.u0 == 0) || (divisor.u0 == 1)) return (divisor.u0 == 1) ? this : ZERO;
@@ -568,7 +564,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     if (isZero()) return other.mod(modulus);
     if (other.isZero()) return this.mod(modulus);
     if (modulus.isZeroOrOne()) return ZERO;
-    if (modulus.u3 != 0) return modulus.asUInt256().sum(this, other);
+    if (modulus.u3 != 0) return modulus.sum(this, other);
     if (modulus.u2 != 0) return modulus.asUInt192().sum(this, other);
     if (modulus.u1 != 0) return modulus.asUInt128().sum(this, other);
     return modulus.asUInt64().sum(this, other);
@@ -585,7 +581,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     if (this.isZero() || other.isZero() || modulus.isZeroOrOne()) return ZERO;
     if (this.isOne()) return other.mod(modulus);
     if (other.isOne()) return this.mod(modulus);
-    if (modulus.u3 != 0) return modulus.asUInt256().mul(this, other);
+    if (modulus.u3 != 0) return modulus.mul(this, other);
     if (modulus.u2 != 0) return modulus.asUInt192().mul(this, other);
     if (modulus.u1 != 0) return modulus.asUInt128().mul(this, other);
     return modulus.asUInt64().mul(this, other);
