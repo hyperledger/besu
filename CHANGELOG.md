@@ -52,6 +52,13 @@ are provided with different values, using input as per the execution-apis spec i
 - Add maxUsedGas field to eth_simulateV1 results [#10066](https://github.com/besu-eth/besu/pull/10066)
 - Plugin API: pass pending block header when creating selectors [#10034](https://github.com/besu-eth/besu/pull/10034)
 
+### Performance
+- UInt256 arithmetics with long limbs [#9677](https://github.com/besu-eth/besu/pull/9677)
+- Fix edge case in MOD variant operations regarding multiply subtract step [#9934](https://github.com/besu-eth/besu/pull/9934)
+- Fix addMod case with 256bit moduluses [#10001](https://github.com/besu-eth/besu/pull/10001)
+- Performance improvements on MOD variant instructions while converting from byte[] to longs [#9976](https://github.com/besu-eth/besu/pull/9976) 
+- Implement DIV and SDIV with long limbs [#9923](https://github.com/besu-eth/besu/pull/9923)
+
 ## 26.2.0
 
 ### Breaking Changes
