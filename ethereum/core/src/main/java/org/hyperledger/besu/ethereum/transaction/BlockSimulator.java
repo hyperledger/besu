@@ -372,7 +372,8 @@ public class BlockSimulator {
         } else {
           // this shouldn't happen, and isTraceTransfers will go away with Glamsterdam
           throw new IllegalArgumentException(
-              "Custom tracer and EthTraceTransfers are mutually exclusive");
+              "A custom tracer and traceTransfers cannot be used together."
+                  + " Disable traceTransfers or omit the custom tracer.");
         }
       }
 

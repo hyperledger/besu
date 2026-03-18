@@ -68,6 +68,8 @@ public class BlockStateCallSimulationResult {
    *
    * @param result the transaction simulation result
    * @param worldState the world state after the transaction
+   * @param operationTracer the tracer used for the transaction; if it is an {@link
+   *     EthTransferLogOperationTracer}, its logs are used in place of the receipt logs
    */
   public void add(
       final TransactionSimulatorResult result,
