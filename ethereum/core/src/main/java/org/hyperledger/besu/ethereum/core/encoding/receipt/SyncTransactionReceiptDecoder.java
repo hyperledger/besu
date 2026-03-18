@@ -98,7 +98,7 @@ public class SyncTransactionReceiptDecoder {
       final Bytes statusOrStateRoot) {
     Bytes transactionTypeCode =
         transactionByteRlp.isEmpty()
-            ? Bytes.of(TransactionType.FRONTIER.getSerializedType())
+            ? Bytes.of(TransactionType.FRONTIER.getEthSerializedType())
             : transactionByteRlp;
     Bytes cumulativeGasUsed = input.readBytes();
     List<List<Bytes>> logs = parseLogs(input);
@@ -117,7 +117,7 @@ public class SyncTransactionReceiptDecoder {
     if (bloomFilter != null) {
       syncTransactionReceipt = new SyncTransactionReceipt(rawRlp);
     } else {
-      Bytes transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getSerializedType());
+      Bytes transactionTypeCode = Bytes.of(TransactionType.FRONTIER.getEthSerializedType());
       List<List<Bytes>> logs = parseLogs(input);
       syncTransactionReceipt =
           new SyncTransactionReceipt(
