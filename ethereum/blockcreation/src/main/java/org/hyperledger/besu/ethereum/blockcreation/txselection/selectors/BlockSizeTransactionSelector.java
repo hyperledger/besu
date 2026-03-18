@@ -65,10 +65,7 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
           .setMessage("Transaction {} too large to select for block creation")
           .addArgument(evaluationContext.getPendingTransaction()::toTraceLog)
           .log();
-      if (blockOccupancyAboveThreshold(state)) {
-        LOG.trace("Block occupancy above threshold, completing operation");
-        return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-      } else if (blockFull(state)) {
+      if (blockFull(state)) {
         LOG.trace("Block full, completing operation");
         return TransactionSelectionResult.BLOCK_FULL;
       } else {
@@ -125,29 +122,6 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
   private boolean transactionTooLargeForBlock(final Transaction transaction, final GasState state) {
     return !gasAccountingStrategy.hasBlockCapacity(
         transaction.getGasLimit(), state.regularGas(), state.stateGas(), blockGasLimit);
-  }
-
-  /**
-   * Checks if the block occupancy is above the threshold.
-   *
-   * @param state The current gas state.
-   * @return True if the block occupancy is above the threshold, false otherwise.
-   */
-  private boolean blockOccupancyAboveThreshold(final GasState state) {
-    final long gasUsed =
-        gasAccountingStrategy.effectiveGasUsed(state.regularGas(), state.stateGas());
-    final long gasRemaining = blockGasLimit - gasUsed;
-    final double occupancyRatio = (double) gasUsed / (double) blockGasLimit;
-
-    LOG.trace(
-        "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
-        context.miningConfiguration().getMinBlockOccupancyRatio(),
-        gasUsed,
-        blockGasLimit,
-        gasRemaining,
-        occupancyRatio);
-
-    return occupancyRatio >= context.miningConfiguration().getMinBlockOccupancyRatio();
   }
 
   /**
