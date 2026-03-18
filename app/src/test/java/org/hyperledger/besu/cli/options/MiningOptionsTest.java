@@ -408,10 +408,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningConfiguratio
   protected MiningConfiguration createCustomizedDomainObject() {
     return ImmutableMiningConfiguration.builder()
         .mutableInitValues(
-            MutableInitValues.builder()
-                .extraData(Bytes.fromHexString("0xabc321"))
-                .minBlockOccupancyRatio(0.5)
-                .build())
+            MutableInitValues.builder().extraData(Bytes.fromHexString("0xabc321")).build())
         .unstable(Unstable.builder().posBlockCreationMaxTime(1000).build())
         .build();
   }

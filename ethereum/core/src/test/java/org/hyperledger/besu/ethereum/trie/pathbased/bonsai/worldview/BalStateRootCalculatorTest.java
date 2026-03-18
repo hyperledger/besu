@@ -50,7 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class BlockAccessListStateRootHashCalculatorTest {
+class BalStateRootCalculatorTest {
 
   private static final Duration FUTURE_TIMEOUT = Duration.ofSeconds(3);
 
@@ -304,6 +304,6 @@ class BlockAccessListStateRootHashCalculatorTest {
             .number(chainHeadHeader.getNumber() + 1L)
             .buildHeader();
 
-    return BlockAccessListStateRootHashCalculator.computeAsync(protocolContext, blockHeader, bal);
+    return BalStateRootCalculator.computeAsync(protocolContext, blockHeader, bal);
   }
 }
