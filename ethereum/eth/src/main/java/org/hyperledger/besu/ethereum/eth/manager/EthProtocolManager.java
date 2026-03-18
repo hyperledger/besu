@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.ProtocolViolationException;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
@@ -175,6 +176,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     capabilities.add(EthProtocol.ETH68);
     capabilities.add(EthProtocol.ETH69);
+    capabilities.add(EthProtocol.ETH70);
     capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
     capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
 
@@ -313,14 +315,26 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.atDebug()
-          .setMessage("Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
+          .setMessage(
+              "Received malformed message code={} data={} (BREACH_OF_PROTOCOL), disconnecting: {}")
+          .addArgument(code)
           .addArgument(messageData::getData)
           .addArgument(ethPeer::toString)
-          .addArgument(e::toString)
+          .setCause(e)
           .log();
 
       ethPeer.disconnect(
           DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+    } catch (final ProtocolViolationException e) {
+      LOG.atDebug()
+          .setMessage("Received invalid message {} ({}), disconnecting: {}, {}")
+          .addArgument(messageData::getData)
+          .addArgument(e::getReason)
+          .addArgument(ethPeer::toString)
+          .addArgument(e::toString)
+          .log();
+
+      ethPeer.disconnect(e.getReason());
     }
     maybeResponseData.ifPresent(
         responseData -> {
