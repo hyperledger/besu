@@ -84,6 +84,7 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
+import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -112,6 +113,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -139,8 +141,7 @@ public abstract class MainnetProtocolSpecs {
   // A consensus bug at Ethereum mainnet transaction 0xcf416c53
   // deleted an empty account even when the message execution scope
   // failed, but the transaction itself succeeded.
-  private static final Set<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES =
-      Set.of(RIPEMD160_PRECOMPILE);
+  private static final HashSet<Address> SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES;
 
   private static final Wei FRONTIER_BLOCK_REWARD = Wei.fromEth(5);
 
@@ -150,6 +151,11 @@ public abstract class MainnetProtocolSpecs {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetProtocolSpecs.class);
   private static final int POW_SLOT_TIME_ESTIMATION = 13;
+
+  static {
+    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES = new HashSet<>();
+    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES.add(RIPEMD160_PRECOMPILE);
+  }
 
   private MainnetProtocolSpecs() {}
 
@@ -198,10 +204,10 @@ public abstract class MainnetProtocolSpecs {
             (feeMarket, gasCalculator, gasLimitCalculator) ->
                 MainnetBlockHeaderValidator.createLegacyFeeMarketOmmerValidator())
         .blockBodyValidatorBuilder(MainnetBlockBodyValidator::new)
+        .blockAccessListValidatorBuilder(__ -> BlockAccessListValidator.ALWAYS_REJECT_BAL)
         .transactionReceiptFactory(new FrontierTransactionReceiptFactory())
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .isBlockAccessListEnabled(balConfiguration.isBalApiEnabled())
         .balConfiguration(balConfiguration)
         .blockProcessorBuilder(
             isParallelTxProcessingEnabled
@@ -1168,6 +1174,7 @@ public abstract class MainnetProtocolSpecs {
             isParallelTxProcessingEnabled,
             balConfiguration,
             metricsSystem)
+        .gasCalculator(AmsterdamGasCalculator::new)
         // EIP-7708: Override evmBuilder to use Amsterdam EVM with transfer logging
         .evmBuilder(
             (gasCalculator, __) ->
@@ -1215,9 +1222,10 @@ public abstract class MainnetProtocolSpecs {
                             new CodeDelegationService()))
                     .transferLogEmitter(EIP7708TransferLogEmitter.INSTANCE)
                     .build())
-        .blockAccessListFactory(
-            new BlockAccessListFactory(balConfiguration.isBalApiEnabled(), true))
+        .blockAccessListFactory(new BlockAccessListFactory())
+        .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
         .stateRootCommitterFactory(new StateRootCommitterFactoryBal(balConfiguration))
+
         // EIP-7778: Block gas accounting without refunds (prevents block gas limit circumvention)
         .blockGasAccountingStrategy(BlockGasAccountingStrategy.EIP7778)
         .blockGasUsedValidator(BlockGasUsedValidator.EIP7778)

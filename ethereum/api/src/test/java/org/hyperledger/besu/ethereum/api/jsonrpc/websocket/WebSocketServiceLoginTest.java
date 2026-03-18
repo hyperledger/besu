@@ -217,7 +217,6 @@ public class WebSocketServiceLoginTest {
                     mock(EthPeers.class),
                     vertx,
                     mock(ApiConfiguration.class),
-                    BalConfiguration.DEFAULT,
                     Optional.empty(),
                     mock(TransactionSimulator.class),
                     new DeterministicEthScheduler()));

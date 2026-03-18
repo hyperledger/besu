@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -136,7 +137,8 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
         || type.equals(float.class)
         || type.equals(Percentage.class)
         || type.equals(Fraction.class)
-        || type.equals(PositiveNumber.class);
+        || type.equals(PositiveNumber.class)
+        || type.equals(Duration.class);
   }
 
   private String getEntryAsString(final OptionSpec spec) {

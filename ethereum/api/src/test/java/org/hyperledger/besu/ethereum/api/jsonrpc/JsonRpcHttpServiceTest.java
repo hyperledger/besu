@@ -1839,7 +1839,8 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
               block.getHeader().getNumber(),
               block.getHeader().getBaseFee(),
               block.getHash(),
-              i));
+              i,
+              block.getHeader().getTimestamp()));
     }
     final List<Hash> ommers =
         block.getBody().getOmmers().stream().map(BlockHeader::getHash).collect(Collectors.toList());

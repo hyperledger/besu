@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -70,6 +71,16 @@ public class SegmentedInMemoryKeyValueStorage
   }
 
   /**
+   * Get in memory hash value store
+   *
+   * @return map
+   */
+  public ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+      getHashValueStore() {
+    return hashValueStore;
+  }
+
+  /**
    * Create and populate a navigable segment map, with a compatible Bytes comparator.
    *
    * @param sourceMap sourcemap to initialize the segmentmap with.
@@ -79,7 +90,7 @@ public class SegmentedInMemoryKeyValueStorage
       final Map<Bytes, Optional<byte[]>> sourceMap) {
 
     Comparator<Bytes> byteWiseComparator =
-        Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compare);
+        Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compareUnsigned);
 
     NavigableMap<Bytes, Optional<byte[]>> segMap = new ConcurrentSkipListMap<>(byteWiseComparator);
 
@@ -146,6 +157,28 @@ public class SegmentedInMemoryKeyValueStorage
     } finally {
       lock.unlock();
     }
+  }
+
+  @Override
+  public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
+      throws StorageException {
+    final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+          hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+
+      for (byte[] key : keys) {
+        final Optional<byte[]> value = segmentMap.getOrDefault(Bytes.wrap(key), Optional.empty());
+        results.add(value);
+      }
+    } finally {
+      lock.unlock();
+    }
+
+    return results;
   }
 
   @Override

@@ -40,20 +40,25 @@ import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 public class GetHeadersFromPeerTaskTest {
 
+  private final ProtocolSchedule protocolSchedule = Mockito.mock(ProtocolSchedule.class);
+
   @Test
   public void testGetSubProtocol() {
-    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(0, 1, 0, Direction.FORWARD, null);
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(0, 1, 0, Direction.FORWARD, protocolSchedule);
     Assertions.assertEquals(EthProtocol.get(), task.getSubProtocol());
   }
 
   @Test
   public void testGetRequestMessageForHash() {
     GetHeadersFromPeerTask task =
-        new GetHeadersFromPeerTask(Hash.ZERO, 0, 1, 0, Direction.FORWARD, null);
+        new GetHeadersFromPeerTask(Hash.ZERO, 0, 1, 0, Direction.FORWARD, protocolSchedule);
     MessageData requestMessageData = task.getRequestMessage();
     Assertions.assertEquals(
         "0xe4a00000000000000000000000000000000000000000000000000000000000000000018080",
@@ -62,7 +67,8 @@ public class GetHeadersFromPeerTaskTest {
 
   @Test
   public void testGetRequestMessageForBlockNumber() {
-    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(123, 1, 0, Direction.FORWARD, null);
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(123, 1, 0, Direction.FORWARD, protocolSchedule);
     MessageData requestMessageData = task.getRequestMessage();
     Assertions.assertEquals("0xc47b018080", requestMessageData.getData().toHexString());
   }
@@ -70,7 +76,7 @@ public class GetHeadersFromPeerTaskTest {
   @Test
   public void testGetRequestMessageForHashWhenBlockNumberAlsoProvided() {
     GetHeadersFromPeerTask task =
-        new GetHeadersFromPeerTask(Hash.ZERO, 123, 1, 0, Direction.FORWARD, null);
+        new GetHeadersFromPeerTask(Hash.ZERO, 123, 1, 0, Direction.FORWARD, protocolSchedule);
     MessageData requestMessageData = task.getRequestMessage();
     Assertions.assertEquals(
         "0xe4a00000000000000000000000000000000000000000000000000000000000000000018080",
@@ -79,7 +85,8 @@ public class GetHeadersFromPeerTaskTest {
 
   @Test
   public void testProcessResponseWithNullMessageData() {
-    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(0, 1, 0, Direction.FORWARD, null);
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(0, 1, 0, Direction.FORWARD, protocolSchedule);
     Assertions.assertThrows(
         InvalidPeerTaskResponseException.class,
         () -> task.processResponse(null),
@@ -108,10 +115,11 @@ public class GetHeadersFromPeerTaskTest {
         List.of(blockchain.getChainHeadHeader()), task.processResponse(responseMessage));
   }
 
-  @Test
-  public void testGetPeerRequirementFilter() {
-    ProtocolSchedule protocolSchedule = Mockito.mock(ProtocolSchedule.class);
-    Mockito.when(protocolSchedule.anyMatch(Mockito.any())).thenReturn(false);
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  public void testGetPeerRequirementFilter(final boolean isPoS) {
+    Mockito.reset(protocolSchedule);
+    Mockito.when(protocolSchedule.anyMatch(Mockito.any())).thenReturn(isPoS);
 
     GetHeadersFromPeerTask task =
         new GetHeadersFromPeerTask(5, 1, 0, Direction.FORWARD, protocolSchedule);
@@ -119,7 +127,8 @@ public class GetHeadersFromPeerTaskTest {
     EthPeer failForShortChainHeight = mockPeer(1);
     EthPeer successfulCandidate = mockPeer(5);
 
-    Assertions.assertFalse(
+    Assertions.assertEquals(
+        isPoS,
         task.getPeerRequirementFilter()
             .test(EthPeerImmutableAttributes.from(failForShortChainHeight)));
     Assertions.assertTrue(
@@ -128,7 +137,8 @@ public class GetHeadersFromPeerTaskTest {
 
   @Test
   public void testValidateResultForEmptyResult() {
-    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(5, 1, 0, Direction.FORWARD, null);
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(5, 1, 0, Direction.FORWARD, protocolSchedule);
     Assertions.assertEquals(
         PeerTaskValidationResponse.NO_RESULTS_RETURNED,
         task.validateResult(Collections.emptyList()));
@@ -136,7 +146,8 @@ public class GetHeadersFromPeerTaskTest {
 
   @Test
   public void testShouldDisconnectPeerForTooManyHeadersReturned() {
-    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(5, 1, 1, Direction.FORWARD, null);
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(5, 1, 1, Direction.FORWARD, protocolSchedule);
 
     BlockHeader header1 = Mockito.mock(BlockHeader.class);
     BlockHeader header2 = Mockito.mock(BlockHeader.class);
@@ -149,7 +160,8 @@ public class GetHeadersFromPeerTaskTest {
 
   @Test
   public void testValidateResultForNonSequentialHeaders() {
-    GetHeadersFromPeerTask task = new GetHeadersFromPeerTask(1, 3, 0, Direction.FORWARD, null);
+    GetHeadersFromPeerTask task =
+        new GetHeadersFromPeerTask(1, 3, 0, Direction.FORWARD, protocolSchedule);
 
     Hash block1Hash = Hash.fromHexStringLenient("01");
     Hash block2Hash = Hash.fromHexStringLenient("02");

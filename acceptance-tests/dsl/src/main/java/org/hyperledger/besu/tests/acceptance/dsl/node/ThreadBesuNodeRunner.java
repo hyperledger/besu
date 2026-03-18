@@ -482,7 +482,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   public static class BesuControllerModule {
     @Provides
     @Singleton
-    public SynchronizerConfiguration provideSynchronizationConfiguration() {
+    public SynchronizerConfiguration provideSynchronizationConfiguration(final BesuNode node) {
+      // Use the synchronizer configuration set on the node, otherwise use default
+      if (node.getSynchronizerConfiguration() != null) {
+        return node.getSynchronizerConfiguration();
+      }
       final SynchronizerConfiguration synchronizerConfiguration =
           SynchronizerConfiguration.builder().build();
       return synchronizerConfiguration;

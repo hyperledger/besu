@@ -47,7 +47,9 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
+import org.hyperledger.besu.util.InvalidConfigurationException;
 
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 
 import org.slf4j.Logger;
@@ -116,8 +118,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
 
     final SyncTargetRangeSource checkpointRangeSource =
         new SyncTargetRangeSource(
-            new RangeHeadersFetcher(
-                syncConfig, protocolSchedule, ethContext, fastSyncState, metricsSystem),
+            new RangeHeadersFetcher(syncConfig, protocolSchedule, ethContext, fastSyncState),
             this::shouldContinueDownloadingFromPeer,
             ethContext.getScheduler(),
             target.peer(),
@@ -146,12 +147,20 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
         new DownloadSyncReceiptsStep(
             protocolSchedule,
             ethContext,
-            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()));
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()),
+            Duration.ofMillis(syncConfig.getReceiptsDownloadStepTimeoutMillis()));
+    final BlockHeader pivotBlockHeader =
+        fastSyncState
+            .getPivotBlockHeader()
+            .orElseThrow(
+                () -> new InvalidConfigurationException("Pivot block header not available."));
     final ImportSyncBlocksStep importSyncBlocksStep =
         new ImportSyncBlocksStep(
             protocolContext,
             ethContext,
-            fastSyncState.getPivotBlockHeader().get(),
+            syncState,
+            BlockHeader.GENESIS_BLOCK_NUMBER,
+            pivotBlockHeader.getNumber(),
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled());
 
     return PipelineBuilder.createPipelineFrom(

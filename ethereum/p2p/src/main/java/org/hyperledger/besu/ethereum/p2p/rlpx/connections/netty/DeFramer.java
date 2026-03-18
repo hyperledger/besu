@@ -74,6 +74,7 @@ final class DeFramer extends ByteToMessageDecoder {
   private final PeerLookup peerLookup;
   private boolean hellosExchanged;
   private final LabelledMetric<Counter> outboundMessagesCounter;
+  private final LabelledMetric<Counter> outboundBytesCounter;
 
   DeFramer(
       final Framer framer,
@@ -98,6 +99,14 @@ final class DeFramer extends ByteToMessageDecoder {
             BesuMetricCategory.NETWORK,
             "p2p_messages_outbound",
             "Count of each P2P message sent outbound.",
+            "protocol",
+            "name",
+            "code");
+    this.outboundBytesCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.NETWORK,
+            "p2p_bytes_outbound",
+            "Count of bytes sent outbound.",
             "protocol",
             "name",
             "code");
@@ -165,6 +174,7 @@ final class DeFramer extends ByteToMessageDecoder {
                 capabilityMultiplexer,
                 connectionEventDispatcher,
                 outboundMessagesCounter,
+                outboundBytesCounter,
                 inboundInitiated);
 
         // Check peer is who we expected

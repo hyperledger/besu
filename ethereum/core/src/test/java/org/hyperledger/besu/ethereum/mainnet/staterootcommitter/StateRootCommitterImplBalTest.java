@@ -107,7 +107,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -162,7 +161,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -216,7 +214,6 @@ class StateRootCommitterImplBalTest {
             .isBalStateRootTrusted(false)
             .isBalLenientOnStateRootMismatch(false)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -272,7 +269,6 @@ class StateRootCommitterImplBalTest {
             .isBalStateRootTrusted(false)
             .isBalLenientOnStateRootMismatch(false)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -324,7 +320,6 @@ class StateRootCommitterImplBalTest {
             .isBalStateRootTrusted(false)
             .isBalLenientOnStateRootMismatch(true) // Lenient mode
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -374,7 +369,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -398,7 +392,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -437,7 +430,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(false) // Disabled
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -504,7 +496,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -549,7 +540,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -597,7 +587,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -651,7 +640,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -728,7 +716,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -797,7 +784,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -881,7 +867,6 @@ class StateRootCommitterImplBalTest {
         ImmutableBalConfiguration.builder()
             .isBalStateRootTrusted(true)
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 
@@ -943,7 +928,6 @@ class StateRootCommitterImplBalTest {
             .isBalStateRootTrusted(false) // Verification mode
             .isBalLenientOnStateRootMismatch(true) // Lenient to allow mismatch
             .isBalOptimisationEnabled(true)
-            .isBalApiEnabled(true)
             .balStateRootTimeout(DEFAULT_TIMEOUT)
             .build();
 

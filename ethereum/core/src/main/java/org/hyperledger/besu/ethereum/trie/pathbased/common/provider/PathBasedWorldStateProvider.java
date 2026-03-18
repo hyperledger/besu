@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.World
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -234,10 +234,15 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
       return Optional.empty();
     }
     return cachedWorldStorageManager
-        .getWorldState(blockHeader.getHash())
+        .getWorldState(blockHeader.getBlockHash())
         .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
-        .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
-        .flatMap(worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getHash()))
+        .or(
+            () ->
+                cachedWorldStorageManager.getHeadWorldState(
+                    blockHeaderHash ->
+                        blockchain.getBlockHeader(blockHeaderHash).map(BlockHeader.class::cast)))
+        .flatMap(
+            worldState -> rollFullWorldStateToBlockHash(worldState, blockHeader.getBlockHash()))
         .map(MutableWorldState::freezeStorage);
   }
 

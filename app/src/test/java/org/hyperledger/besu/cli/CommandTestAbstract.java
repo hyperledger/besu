@@ -75,6 +75,7 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -115,7 +116,6 @@ import java.util.function.Supplier;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -342,6 +342,9 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.p2pAdvertisedHost(anyString())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenPort(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pListenInterface(anyString())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pAdvertisedHostIpv6(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenInterfaceIpv6(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2pListenPortIpv6(anyInt())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.p2pEnabled(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.natMethod(any())).thenReturn(mockRunnerBuilder);
@@ -359,7 +362,6 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.permissioningService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.transactionValidatorService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.metricsConfiguration(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.balConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.staticNodes(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.identityString(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuPluginContext(any())).thenReturn(mockRunnerBuilder);
@@ -372,6 +374,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.poaDiscoveryRetryBootnodes(anyBoolean())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.preferIpv6Outbound(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
     when(mockBesuComponent.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
@@ -637,8 +640,8 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    protected Vertx createVertx(final VertxOptions vertxOptions) {
-      vertx = super.createVertx(vertxOptions);
+    protected Vertx createVertx(final MetricsSystem metricsSystem) {
+      vertx = super.createVertx(metricsSystem);
       return vertx;
     }
 

@@ -68,7 +68,7 @@ public class Era1BlockImporterTest {
     final BesuController targetController =
         new BesuController.Builder()
             .fromEthNetworkConfig(
-                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.FAST)
+                EthNetworkConfig.getNetworkConfig(NetworkDefinition.MAINNET), SyncMode.SNAP)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
             .storageProvider(new InMemoryKeyValueStorageProvider())
@@ -79,7 +79,7 @@ public class Era1BlockImporterTest {
             .clock(TestClock.fixed())
             .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .apiConfiguration(ImmutableApiConfiguration.builder().build())
             .dataDirectory(dataDirectory)

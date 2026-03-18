@@ -47,7 +47,6 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -56,7 +55,6 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -402,12 +400,6 @@ public class FullSyncChainDownloaderTest {
     // The next message should be for checkpoint headers from the sync target
     Awaitility.waitAtMost(10, TimeUnit.SECONDS)
         .until(() -> bestPeer.peekNextOutgoingRequest().isPresent());
-    final Optional<MessageData> maybeNextMessage = bestPeer.peekNextOutgoingRequest();
-    assertThat(maybeNextMessage).isPresent();
-    final MessageData nextMessage = maybeNextMessage.get().unwrapMessageData().getValue();
-    assertThat(nextMessage.getCode()).isEqualTo(EthProtocolMessages.GET_BLOCK_HEADERS);
-    final GetBlockHeadersMessage headersMessage = GetBlockHeadersMessage.readFrom(nextMessage);
-    assertThat(headersMessage.skip()).isGreaterThan(0);
 
     // Process through the first import
     await()

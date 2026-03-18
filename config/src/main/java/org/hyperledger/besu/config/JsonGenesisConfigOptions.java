@@ -389,66 +389,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public OptionalLong getClassicForkBlock() {
-    return getOptionalLong("classicforkblock");
-  }
-
-  @Override
-  public OptionalLong getEcip1015BlockNumber() {
-    return getOptionalLong("ecip1015block");
-  }
-
-  @Override
-  public OptionalLong getDieHardBlockNumber() {
-    return getOptionalLong("diehardblock");
-  }
-
-  @Override
-  public OptionalLong getGothamBlockNumber() {
-    return getOptionalLong("gothamblock");
-  }
-
-  @Override
-  public OptionalLong getDefuseDifficultyBombBlockNumber() {
-    return getOptionalLong("ecip1041block");
-  }
-
-  @Override
-  public OptionalLong getAtlantisBlockNumber() {
-    return getOptionalLong("atlantisblock");
-  }
-
-  @Override
-  public OptionalLong getAghartaBlockNumber() {
-    return getOptionalLong("aghartablock");
-  }
-
-  @Override
-  public OptionalLong getPhoenixBlockNumber() {
-    return getOptionalLong("phoenixblock");
-  }
-
-  @Override
-  public OptionalLong getThanosBlockNumber() {
-    return getOptionalLong("thanosblock");
-  }
-
-  @Override
-  public OptionalLong getMagnetoBlockNumber() {
-    return getOptionalLong("magnetoblock");
-  }
-
-  @Override
-  public OptionalLong getMystiqueBlockNumber() {
-    return getOptionalLong("mystiqueblock");
-  }
-
-  @Override
-  public OptionalLong getSpiralBlockNumber() {
-    return getOptionalLong("spiralblock");
-  }
-
-  @Override
   public Optional<BigInteger> getChainId() {
     return getOptionalBigInteger("chainid");
   }
@@ -461,11 +401,6 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalInt getEvmStackSize() {
     return getOptionalInt("evmstacksize");
-  }
-
-  @Override
-  public OptionalLong getEcip1017EraRounds() {
-    return getOptionalLong("ecip1017erarounds");
   }
 
   @Override
@@ -544,23 +479,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
     getExperimentalEipsTime().ifPresent(l -> builder.put("experimentalEipsTime", l));
 
-    // classic fork blocks
-    getClassicForkBlock().ifPresent(l -> builder.put("classicForkBlock", l));
-    getEcip1015BlockNumber().ifPresent(l -> builder.put("ecip1015Block", l));
-    getDieHardBlockNumber().ifPresent(l -> builder.put("dieHardBlock", l));
-    getGothamBlockNumber().ifPresent(l -> builder.put("gothamBlock", l));
-    getDefuseDifficultyBombBlockNumber().ifPresent(l -> builder.put("ecip1041Block", l));
-    getAtlantisBlockNumber().ifPresent(l -> builder.put("atlantisBlock", l));
-    getAghartaBlockNumber().ifPresent(l -> builder.put("aghartaBlock", l));
-    getPhoenixBlockNumber().ifPresent(l -> builder.put("phoenixBlock", l));
-    getThanosBlockNumber().ifPresent(l -> builder.put("thanosBlock", l));
-    getMagnetoBlockNumber().ifPresent(l -> builder.put("magnetoBlock", l));
-    getMystiqueBlockNumber().ifPresent(l -> builder.put("mystiqueBlock", l));
-    getSpiralBlockNumber().ifPresent(l -> builder.put("spiralBlock", l));
-
     getContractSizeLimit().ifPresent(l -> builder.put("contractSizeLimit", l));
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
-    getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
 
     getWithdrawalRequestContractAddress()
         .ifPresent(l -> builder.put("withdrawalRequestContractAddress", l));
@@ -669,18 +589,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getLondonBlockNumber(),
             getArrowGlacierBlockNumber(),
             getGrayGlacierBlockNumber(),
-            getMergeNetSplitBlockNumber(),
-            getEcip1015BlockNumber(),
-            getDieHardBlockNumber(),
-            getGothamBlockNumber(),
-            getDefuseDifficultyBombBlockNumber(),
-            getAtlantisBlockNumber(),
-            getAghartaBlockNumber(),
-            getPhoenixBlockNumber(),
-            getThanosBlockNumber(),
-            getMagnetoBlockNumber(),
-            getMystiqueBlockNumber(),
-            getSpiralBlockNumber());
+            getMergeNetSplitBlockNumber());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
 
     return forkBlockNumbers

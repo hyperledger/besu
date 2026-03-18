@@ -51,7 +51,7 @@ public interface TransferLogEmitter {
    * <p>The behavior depends on the originator and beneficiary:
    *
    * <ul>
-   *   <li>If originator equals beneficiary: emits a Selfdestruct log (LOG2)
+   *   <li>If originator equals beneficiary: emits a Burn log (LOG2)
    *   <li>Otherwise: emits a Transfer log (LOG3)
    * </ul>
    *
@@ -70,10 +70,10 @@ public interface TransferLogEmitter {
   }
 
   /**
-   * Emit Selfdestruct logs for accounts being closed at the end of a transaction.
+   * Emit Burn logs for accounts being closed at the end of a transaction.
    *
-   * <p>For each selfdestructed account with a nonzero balance, a Selfdestruct log (LOG2) is
-   * emitted. Logs are emitted in lexicographical order by address.
+   * <p>For each selfdestructed account with a nonzero balance, a Burn log (LOG2) is emitted. Logs
+   * are emitted in lexicographical order by address.
    *
    * @param worldState the world state to query account balances
    * @param selfDestructs the set of addresses marked for selfdestruct

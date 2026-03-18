@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -30,8 +29,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV2;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,18 +39,15 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EngineGetPayloadBodiesByRangeV2 extends ExecutionEngineJsonRpcMethod {
+public class EngineGetPayloadBodiesByRangeV2 extends AbstractEngineGetPayloadBodies {
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByRangeV2.class);
-  private static final int MAX_REQUEST_BLOCKS = 1024;
-  private final BlockResultFactory blockResultFactory;
 
   public EngineGetPayloadBodiesByRangeV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,
       final BlockResultFactory blockResultFactory,
       final EngineCallListener engineCallListener) {
-    super(vertx, protocolContext, engineCallListener);
-    this.blockResultFactory = blockResultFactory;
+    super(vertx, protocolContext, blockResultFactory, engineCallListener);
   }
 
   @Override
@@ -134,21 +128,5 @@ public class EngineGetPayloadBodiesByRangeV2 extends ExecutionEngineJsonRpcMetho
         blockResultFactory.payloadBodiesCompleteV2(blockBodies, blockAccessLists);
 
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV2);
-  }
-
-  protected int getMaxRequestBlocks() {
-    return MAX_REQUEST_BLOCKS;
-  }
-
-  private Optional<String> getBlockAccessList(final Blockchain blockchain, final Hash blockHash) {
-    return blockchain
-        .getBlockAccessList(blockHash)
-        .map(EngineGetPayloadBodiesByRangeV2::encodeBlockAccessList);
-  }
-
-  private static String encodeBlockAccessList(final BlockAccessList blockAccessList) {
-    final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    blockAccessList.writeTo(output);
-    return output.encoded().toHexString();
   }
 }
