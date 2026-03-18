@@ -13,6 +13,7 @@
 - Deprecated `--min-block-occupancy-ratio` for removal and make it noop. That option, that is ignored on PoS networks, is related to the deprecated PoW, and allowed to broadcast a mined block as soon as it reached a satisfying fill threshold. The option is still recognized, but it has no effect and will be completely removed in a future release. [#10036](https://github.com/besu-eth/besu/pull/10036)
 - Plugin API
   - Removed `TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD`, in general it could be replaced with `BLOCK_FULL`
+- Prometheus cache metric names changed from `guava_cache_*` to `caffeine_cache_*` — update any Grafana dashboards or Prometheus alerts accordingly [#9909](https://github.com/besu-eth/besu/pull/9909)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
