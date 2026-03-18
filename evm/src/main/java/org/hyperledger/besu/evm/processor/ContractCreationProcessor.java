@@ -169,7 +169,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     final Bytes contractCode =
         frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
-
     // Oversized contracts must fail without charging hash cost or code deposit state gas.
     // We must check this first.
     final var invalidReason =
@@ -217,13 +216,10 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         .chargeCodeDepositStateGas(frame, contractCode.size())) {
       LOG.trace("Contract creation error: insufficient state gas for code deposit");
       if (frame.getDepth() == 0) {
-        final long stateGasAmount =
-            evm.getGasCalculator()
-                .stateGasCostCalculator()
-                .codeDepositStateGas(contractCode.size(), frame.getBlockValues().getGasLimit());
-        if (stateGasAmount > 0) {
-          frame.consumeStateGasForced(stateGasAmount);
-        }
+        // Do NOT force-charge state gas here. The spec's charge_state_gas raises
+        // OutOfGasError without modifying anything (no reservoir drain, no stateGasUsed
+        // increment). failCodeDepositWithoutRollback clears remaining gas, matching
+        // the spec's exception handler behavior of burning gas_left.
         failCodeDepositWithoutRollback(
             frame, operationTracer, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       } else {
