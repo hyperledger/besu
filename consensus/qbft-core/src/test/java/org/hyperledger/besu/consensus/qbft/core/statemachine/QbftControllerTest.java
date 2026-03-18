@@ -353,6 +353,17 @@ public class QbftControllerTest {
   }
 
   @Test
+  public void blockTimerForHeightBelowChainHeadIsDiscarded() {
+    // Blockchain head has advanced beyond the timer's target height
+    when(blockChain.getChainHeadBlockNumber()).thenReturn(5L);
+    final BlockTimerExpiry blockTimerExpiry = new BlockTimerExpiry(roundIdentifier);
+    constructQbftController();
+    qbftController.start();
+    qbftController.handleBlockTimerExpiry(blockTimerExpiry);
+    verify(blockHeightManager, never()).handleBlockTimerExpiry(any());
+  }
+
+  @Test
   public void proposalForUnknownValidatorIsDiscarded() {
     setupProposal(roundIdentifier, unknownValidator);
     verifyNotHandledAndNoFutureMsgs(new QbftReceivedMessageEventFixture(proposalMessage));
