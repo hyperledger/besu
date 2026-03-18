@@ -61,16 +61,16 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   @Override
   protected final void executeTask() {
     final CompletableFuture<R> promise = new CompletableFuture<>();
+    // Register timeout immediately so it fires even if the request is queued in
+    // pendingRequests and never dispatched to a peer.
+    ethContext.getScheduler().failAfterTimeout(promise, timeout);
+
     responseStream = sendRequest();
     responseStream.then(
-        stream -> {
-          // Start the timeout now that the request has actually been sent
-          ethContext.getScheduler().failAfterTimeout(promise, timeout);
-
-          stream.then(
-              (streamClosed, message, peer1) ->
-                  handleMessage(promise, streamClosed, message, peer1));
-        },
+        stream ->
+            stream.then(
+                (streamClosed, message, peer1) ->
+                    handleMessage(promise, streamClosed, message, peer1)),
         promise::completeExceptionally);
 
     promise.whenComplete(
