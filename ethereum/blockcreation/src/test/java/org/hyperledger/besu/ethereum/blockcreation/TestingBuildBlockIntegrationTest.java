@@ -431,7 +431,6 @@ class TestingBuildBlockIntegrationTest {
                 MutableInitValues.builder()
                     .extraData(Bytes.fromHexString("deadbeef"))
                     .minTransactionGasPrice(Wei.ONE)
-                    .minBlockOccupancyRatio(0d)
                     .coinbase(Address.ZERO)
                     .build())
             .build();
