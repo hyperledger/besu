@@ -88,11 +88,10 @@ public class SnapDownloaderFactory {
       return Optional.empty();
     }
 
-    final PivotSyncState pivotSyncState =
+    final PivotSyncState snapSyncState =
         chainSyncState != null
             ? new PivotSyncState(chainSyncState.pivotBlockHeader(), false)
             : PivotSyncState.EMPTY_SYNC_STATE;
-    final SnapSyncProcessState snapSyncState = new SnapSyncProcessState(pivotSyncState);
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();

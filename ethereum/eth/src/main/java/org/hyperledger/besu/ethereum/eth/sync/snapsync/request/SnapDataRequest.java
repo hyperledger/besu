@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountTrieNodeHealingRequest;
@@ -120,7 +120,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     return doPersist(
         worldStateStorageCoordinator, updater, downloadState, snapSyncState, snapSyncConfiguration);
@@ -130,19 +130,19 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration);
 
   public abstract boolean isResponseReceived();
 
-  public boolean isExpired(final SnapSyncProcessState snapSyncState) {
+  public boolean isExpired(final PivotSyncState snapSyncState) {
     return false;
   }
 
   public abstract Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SnapSyncProcessState snapSyncState);
+      final PivotSyncState snapSyncState);
 
   public void registerParent(final TrieNodeHealingRequest parent) {
     if (this.possibleParent.isPresent()) {
@@ -161,7 +161,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
     if (pendingChildren.decrementAndGet() == 0) {
       return persist(

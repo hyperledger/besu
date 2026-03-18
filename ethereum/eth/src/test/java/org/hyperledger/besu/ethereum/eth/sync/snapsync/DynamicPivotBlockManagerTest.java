@@ -35,7 +35,7 @@ import org.junit.jupiter.api.Test;
 
 public class DynamicPivotBlockManagerTest {
 
-  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final PivotSyncState snapSyncState = mock(PivotSyncState.class);
   private final PivotSyncActions fastSyncActions = mock(PivotSyncActions.class);
   private final SyncState syncState = mock(SyncState.class);
   private final EthContext ethContext = mock(EthContext.class);
