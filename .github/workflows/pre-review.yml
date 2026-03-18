@@ -111,6 +111,7 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
+          add-job-summary: on-failure
       - name: List unit tests
         run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
@@ -177,3 +178,17 @@ jobs:
             || contains(needs.*.result, 'cancelled')
             || contains(needs.*.result, 'skipped')
           }}
+      - name: Checkout Repo
+        if: always()
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+      - name: Download all unit test results
+        if: always()
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
+        with:
+          pattern: unit-*-test-results
+          merge-multiple: true
+      - name: Report 10 slowest tests
+        if: always()
+        run: python3 .github/workflows/reportSlowestTests.sh 10
