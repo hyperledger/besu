@@ -178,6 +178,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     capabilities.add(EthProtocol.ETH68);
     capabilities.add(EthProtocol.ETH69);
     capabilities.add(EthProtocol.ETH70);
+    capabilities.add(EthProtocol.ETH71);
     capabilities.removeIf(cap -> cap.getVersion() > ethProtocolConfiguration.getMaxEthCapability());
     capabilities.removeIf(cap -> cap.getVersion() < ethProtocolConfiguration.getMinEthCapability());
 
@@ -327,10 +328,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     } catch (final RLPException e) {
       LOG.atDebug()
-          .setMessage("Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
+          .setMessage(
+              "Received malformed message code={} data={} (BREACH_OF_PROTOCOL), disconnecting: {}")
+          .addArgument(code)
           .addArgument(messageData::getData)
           .addArgument(ethPeer::toString)
-          .addArgument(e::toString)
+          .setCause(e)
           .log();
 
       ethPeer.disconnect(
