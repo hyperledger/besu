@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramingException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -297,12 +298,12 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       return;
     }
 
-    // This will handle responses
-    ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
-
-    // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
+      // This will handle responses
+      ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
+
+      // This will handle requests
       if (EthProtocol.requestIdCompatible(code)) {
         final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
             ethMessage.getData().unwrapMessageData();
@@ -313,6 +314,17 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       } else {
         maybeResponseData = ethMessages.dispatch(ethMessage, capability);
       }
+    } catch (final FramingException e) {
+      LOG.atDebug()
+          .setMessage(
+              "Failed to decompress message with code {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
+          .addArgument(code)
+          .addArgument(ethPeer::toString)
+          .addArgument(e::toString)
+          .log();
+
+      ethPeer.disconnect(
+          DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     } catch (final RLPException e) {
       LOG.atDebug()
           .setMessage("Received malformed message {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
