@@ -33,7 +33,8 @@ import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptConverter;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -183,8 +184,17 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
         blockchainStorage.startTransaction(), variablesStorage.updater(), receiptCompaction);
   }
 
+  private static final SyncTransactionReceiptDecoder SYNC_RECEIPT_DECODER =
+      new SyncTransactionReceiptDecoder();
+
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
-    return RLP.input(bytes).readList(in -> TransactionReceiptDecoder.readFrom(in, true));
+    return RLP.input(bytes)
+        .readList(
+            in -> {
+              final Bytes rawReceipt = in.nextIsList() ? in.currentListAsBytes() : in.readBytes();
+              return SyncTransactionReceiptConverter.toTransactionReceipt(
+                  SYNC_RECEIPT_DECODER.decode(rawReceipt));
+            });
   }
 
   private BlockAccessList rlpDecodeBlockAccessList(final Bytes bytes) {
