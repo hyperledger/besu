@@ -21,18 +21,21 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Difficulty operation. */
 public class DifficultyOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Difficulty operation.
    *
    * @param gasCalculator the gas calculator
    */
   public DifficultyOperation(final GasCalculator gasCalculator) {
-    super(0x44, "DIFFICULTY", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x44, "DIFFICULTY", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     frame.pushStackItem(frame.getBlockValues().getDifficultyBytes());
     return successResponse;
   }

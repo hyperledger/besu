@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -25,8 +26,12 @@ import org.apache.tuweni.bytes.Bytes32;
 /** The CLZ operation. */
 public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 5;
+
   /** The CLZ operation success result. */
-  static final OperationResult clzSuccess = new OperationResult(5, null);
+  static final OperationResult clzSuccess = new OperationResult(GAS_COST, null);
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Count Leading Zeros Operation
@@ -34,7 +39,7 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public CountLeadingZerosOperation(final GasCalculator gasCalculator) {
-    super(0x1e, "CLZ", 1, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x1e, "CLZ", 1, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -49,6 +54,9 @@ public class CountLeadingZerosOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     Bytes value = frame.popStackItem();
     final int numberOfLeadingZeros;
     if (value.size() > Bytes32.SIZE) {

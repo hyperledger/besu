@@ -22,11 +22,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Dup operation. */
 public class DupOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3L;
+
   /** The constant DUP_BASE. */
   public static final int DUP_BASE = 0x7F;
 
   /** The Dup success operation result. */
-  static final OperationResult dupSuccess = new OperationResult(3, null);
+  static final OperationResult dupSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /** The Underflow response. */
   protected final Operation.OperationResult underflowResponse;
@@ -46,7 +51,7 @@ public class DupOperation extends AbstractFixedCostOperation {
         index,
         index + 1,
         gasCalculator,
-        gasCalculator.getVeryLowTierGasCost());
+        GAS_COST);
     this.index = index;
     this.underflowResponse =
         new Operation.OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
@@ -66,6 +71,9 @@ public class DupOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame, final int index) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     frame.pushStackItem(frame.getStackItem(index - 1));
 
     return dupSuccess;

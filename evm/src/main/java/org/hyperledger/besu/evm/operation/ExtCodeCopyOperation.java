@@ -71,7 +71,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
 
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

@@ -22,18 +22,21 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The Gas limit operation. */
 public class GasLimitOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Gas limit operation.
    *
    * @param gasCalculator the gas calculator
    */
   public GasLimitOperation(final GasCalculator gasCalculator) {
-    super(0x45, "GASLIMIT", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x45, "GASLIMIT", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     frame.pushStackItem(Words.longBytes(frame.getBlockValues().getGasLimit()));
 
     return successResponse;

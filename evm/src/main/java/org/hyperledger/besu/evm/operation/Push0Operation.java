@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -25,8 +26,13 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Push0 operation. */
 public class Push0Operation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2L;
+
   /** The Push0 operation success result. */
-  static final OperationResult push0Success = new OperationResult(2, null);
+  static final OperationResult push0Success = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Push 0 operation.
@@ -34,7 +40,7 @@ public class Push0Operation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public Push0Operation(final GasCalculator gasCalculator) {
-    super(PUSH_BASE, "PUSH0", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(PUSH_BASE, "PUSH0", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -49,6 +55,9 @@ public class Push0Operation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     frame.pushStackItem(Bytes.EMPTY);
     return push0Success;
   }

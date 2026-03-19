@@ -45,7 +45,7 @@ public class PushOperationTest {
           .miningBeneficiary(Address.ZERO)
           .blockHashLookup((__, ___) -> Hash.ZERO)
           .type(MessageFrame.Type.MESSAGE_CALL)
-          .initialGas(1)
+          .initialGas(100)
           .address(Address.ZERO)
           .contract(Address.ZERO)
           .inputData(Bytes32.ZERO)

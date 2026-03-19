@@ -41,7 +41,7 @@ public class MStoreOperation extends AbstractOperation {
     final Bytes value = frame.popStackItem();
 
     final long cost = gasCalculator().mStoreOperationGasCost(frame, location);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

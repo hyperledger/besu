@@ -25,21 +25,24 @@ import java.util.Optional;
 /** The Base fee operation. */
 public class BaseFeeOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Base fee operation.
    *
    * @param gasCalculator the gas calculator
    */
   public BaseFeeOperation(final GasCalculator gasCalculator) {
-    super(0x48, "BASEFEE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x48, "BASEFEE", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final Optional<Wei> maybeBaseFee = frame.getBlockValues().getBaseFee();
     if (maybeBaseFee.isEmpty()) {
-      return new Operation.OperationResult(gasCost, ExceptionalHaltReason.INVALID_OPERATION);
+      return new Operation.OperationResult(GAS_COST, ExceptionalHaltReason.INVALID_OPERATION);
     }
     frame.pushStackItem(maybeBaseFee.orElseThrow());
     return successResponse;

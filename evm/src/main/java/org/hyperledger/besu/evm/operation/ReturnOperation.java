@@ -42,7 +42,7 @@ public class ReturnOperation extends AbstractOperation {
     final long length = clampedToLong(frame.popStackItem());
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

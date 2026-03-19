@@ -57,7 +57,7 @@ public class ExpOperation extends AbstractOperation {
     final int numBytes = (power.bitLength() + 7) / 8;
 
     final long cost = gasCalculator.expOperationGasCost(numBytes);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

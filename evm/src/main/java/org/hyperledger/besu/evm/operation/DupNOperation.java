@@ -33,23 +33,28 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
  */
 public class DupNOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3L;
+
   /** The DUPN opcode value. */
   public static final int OPCODE = 0xe6;
 
   /** Pre-computed success result with pcIncrement = 2. */
-  static final OperationResult DUPN_SUCCESS = new OperationResult(3, null, 2);
+  static final OperationResult DUPN_SUCCESS = new OperationResult(GAS_COST, null, 2);
 
   /** Pre-computed invalid immediate result. */
   static final OperationResult INVALID_IMMEDIATE =
-      new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION, 2);
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INVALID_OPERATION, 2);
 
   /** Pre-computed underflow result with pcIncrement = 2. */
   static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS, 2);
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS, 2);
 
   /** Pre-computed overflow result with pcIncrement = 2. */
   static final OperationResult OVERFLOW_RESPONSE =
-      new OperationResult(3, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS, 2);
+      new OperationResult(GAS_COST, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS, 2);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS, 2);
 
   /**
    * Instantiates a new DUPN operation.
@@ -57,7 +62,7 @@ public class DupNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public DupNOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "DUPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(OPCODE, "DUPN", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -75,6 +80,9 @@ public class DupNOperation extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     // Get immediate byte, treating end-of-code as 0
     final int imm = (pc + 1 >= code.length) ? 0 : code[pc + 1] & 0xFF;
 

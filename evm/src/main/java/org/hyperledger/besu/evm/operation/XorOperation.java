@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -23,8 +24,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** The XOR operation. */
 public class XorOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3;
+
   /** The XOR operation success result. */
-  static final OperationResult xorSuccess = new OperationResult(3, null);
+  static final OperationResult xorSuccess = new OperationResult(GAS_COST, null);
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Xor operation.
@@ -32,7 +37,7 @@ public class XorOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public XorOperation(final GasCalculator gasCalculator) {
-    super(0x18, "XOR", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x18, "XOR", 2, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -48,6 +53,9 @@ public class XorOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
 

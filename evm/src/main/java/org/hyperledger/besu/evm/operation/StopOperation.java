@@ -23,11 +23,13 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Stop operation. */
 public class StopOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 0L;
+
   /** Opcode of STOP operation */
   public static final int OPCODE = 0x00;
 
   /** The Stop operation success result. */
-  static final OperationResult stopSuccess = new OperationResult(0, null);
+  static final OperationResult stopSuccess = new OperationResult(GAS_COST, null);
 
   /**
    * Instantiates a new Stop operation.
@@ -35,7 +37,7 @@ public class StopOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public StopOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "STOP", 0, 0, gasCalculator, gasCalculator.getZeroTierGasCost());
+    super(OPCODE, "STOP", 0, 0, gasCalculator, GAS_COST);
   }
 
   @Override

@@ -40,7 +40,7 @@ public class MLoadOperation extends AbstractOperation {
     final long location = clampedToLong(frame.popStackItem());
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

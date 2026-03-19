@@ -325,7 +325,7 @@ public class EVM {
               case 0x50 -> PopOperation.staticOperation(frame);
               case 0x56 -> JumpOperation.staticOperation(frame);
               case 0x57 -> JumpiOperation.staticOperation(frame);
-              case 0x5b -> JumpDestOperation.JUMPDEST_SUCCESS;
+              case 0x5b -> JumpDestOperation.staticOperation(frame);
               case 0x5f ->
                   enableShanghai
                       ? Push0Operation.staticOperation(frame)
@@ -423,9 +423,6 @@ public class EVM {
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
         frame.setExceptionalHaltReason(Optional.of(haltReason));
-        frame.setState(State.EXCEPTIONAL_HALT);
-      } else if (frame.decrementRemainingGas(result.getGasCost()) < 0) {
-        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
         frame.setState(State.EXCEPTIONAL_HALT);
       }
       if (frame.getState() == State.CODE_EXECUTING) {
