@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLU
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
@@ -50,6 +49,10 @@ import picocli.CommandLine.ParameterException;
 
 /** The Mining CLI options. */
 public class MiningOptions implements CLIOptions<MiningConfiguration> {
+
+  private static final String DEPRECATION_PREFIX =
+      "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
+
   @Option(
       names = {"--miner-extra-data"},
       description =
@@ -59,8 +62,13 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
   @Option(
       names = {"--min-block-occupancy-ratio"},
-      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})")
-  private Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+      hidden = true,
+      description =
+          DEPRECATION_PREFIX
+              + "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})")
+  @SuppressWarnings("UnusedVariable")
+  @Deprecated
+  private Double minBlockOccupancyRatio = null;
 
   @Option(
       names = {"--min-gas-price"},
@@ -261,7 +269,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningOptions.extraData = miningConfiguration.getExtraData();
     miningOptions.minTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
     miningOptions.minPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
-    miningOptions.minBlockOccupancyRatio = miningConfiguration.getMinBlockOccupancyRatio();
     miningOptions.posBlockTxsSelectionMaxTime =
         miningConfiguration.getPosBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime =
@@ -296,8 +303,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
         MutableInitValues.builder()
             .extraData(extraData)
             .minTransactionGasPrice(minTransactionGasPrice)
-            .minPriorityFeePerGas(minPriorityFeePerGas)
-            .minBlockOccupancyRatio(minBlockOccupancyRatio);
+            .minPriorityFeePerGas(minPriorityFeePerGas);
 
     if (maxBlobsPerTransaction != null) {
       updatableInitValuesBuilder.maxBlobsPerTransaction(maxBlobsPerTransaction);

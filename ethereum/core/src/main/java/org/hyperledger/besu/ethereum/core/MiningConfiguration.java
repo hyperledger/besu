@@ -114,15 +114,6 @@ public abstract class MiningConfiguration {
     return this;
   }
 
-  public double getMinBlockOccupancyRatio() {
-    return getMutableRuntimeValues().minBlockOccupancyRatio;
-  }
-
-  public MiningConfiguration setMinBlockOccupancyRatio(final double minBlockOccupancyRatio) {
-    getMutableRuntimeValues().minBlockOccupancyRatio = minBlockOccupancyRatio;
-    return this;
-  }
-
   /**
    * Returns the maximum blobs per transaction. Note: Only applies from Osaka hardfork onwards.
    * Returns empty if not explicitly set by the user.
@@ -187,6 +178,7 @@ public abstract class MiningConfiguration {
     return new TransactionSelectionService() {
       @Override
       public PluginTransactionSelector createPluginTransactionSelector(
+          final ProcessableBlockHeader pendingBlockHeader,
           final SelectorsStateManager selectorsStateManager) {
         return PluginTransactionSelector.ACCEPT_ALL;
       }
@@ -245,7 +237,6 @@ public abstract class MiningConfiguration {
 
     Wei DEFAULT_MIN_TRANSACTION_GAS_PRICE = Wei.of(1000);
     Wei DEFAULT_MIN_PRIORITY_FEE_PER_GAS = Wei.ZERO;
-    double DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO = 0.8;
 
     MutableInitValues DEFAULT = ImmutableMiningConfiguration.MutableInitValues.builder().build();
 
@@ -267,11 +258,6 @@ public abstract class MiningConfiguration {
     @Value.Default
     default Wei getMinPriorityFeePerGas() {
       return DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
-    }
-
-    @Value.Default
-    default double getMinBlockOccupancyRatio() {
-      return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
     }
 
     /**
@@ -296,7 +282,6 @@ public abstract class MiningConfiguration {
     private volatile Bytes extraData;
     private volatile Wei minTransactionGasPrice;
     private volatile Wei minPriorityFeePerGas;
-    private volatile double minBlockOccupancyRatio;
     private volatile Optional<Address> coinbase;
     private volatile OptionalLong targetGasLimit;
     private volatile Optional<Iterable<Long>> nonceGenerator;
@@ -308,7 +293,6 @@ public abstract class MiningConfiguration {
       extraData = initValues.getExtraData();
       minTransactionGasPrice = initValues.getMinTransactionGasPrice();
       minPriorityFeePerGas = initValues.getMinPriorityFeePerGas();
-      minBlockOccupancyRatio = initValues.getMinBlockOccupancyRatio();
       coinbase = initValues.getCoinbase();
       targetGasLimit = initValues.getTargetGasLimit();
       nonceGenerator = initValues.nonceGenerator();
@@ -322,7 +306,6 @@ public abstract class MiningConfiguration {
       if (o == null || getClass() != o.getClass()) return false;
       final MutableRuntimeValues that = (MutableRuntimeValues) o;
       return miningEnabled == that.miningEnabled
-          && Double.compare(minBlockOccupancyRatio, that.minBlockOccupancyRatio) == 0
           && Objects.equals(extraData, that.extraData)
           && Objects.equals(minTransactionGasPrice, that.minTransactionGasPrice)
           && Objects.equals(coinbase, that.coinbase)
@@ -340,7 +323,6 @@ public abstract class MiningConfiguration {
           extraData,
           minTransactionGasPrice,
           minPriorityFeePerGas,
-          minBlockOccupancyRatio,
           coinbase,
           targetGasLimit,
           nonceGenerator,
@@ -358,8 +340,6 @@ public abstract class MiningConfiguration {
           + minTransactionGasPrice
           + ", minPriorityFeePerGas="
           + minPriorityFeePerGas
-          + ", minBlockOccupancyRatio="
-          + minBlockOccupancyRatio
           + ", coinbase="
           + coinbase
           + ", targetGasLimit="
