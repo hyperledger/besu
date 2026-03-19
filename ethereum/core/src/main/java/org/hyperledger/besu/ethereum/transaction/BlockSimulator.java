@@ -377,6 +377,14 @@ public class BlockSimulator {
         }
       }
 
+      if (callParameter.getGas().isPresent()
+          && callParameter.getGas().getAsLong()
+              > blockStateCallSimulationResult.getRemainingGas()) {
+        throw new BlockStateCallException(
+            BlockStateCallError.BLOCK_GAS_LIMIT_EXCEEDED.getMessage(),
+            BlockStateCallError.BLOCK_GAS_LIMIT_EXCEEDED);
+      }
+
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
               blockHeader,
