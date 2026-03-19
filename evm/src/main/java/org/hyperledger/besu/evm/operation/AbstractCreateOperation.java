@@ -91,17 +91,16 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     final Code code = codeSupplier.get();
 
+    // EIP-8037: Deduct regular gas before charging state gas (ordering requirement).
+    frame.decrementRemainingGas(cost);
+
     // EIP-8037: Charge state gas for CREATE operation.
     if (!gasCalculator().stateGasCostCalculator().chargeCreateStateGas(frame)) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    // Re-check after state gas charge: when the reservoir is empty, consumeStateGas spills
-    // overflow into gasRemaining. The subsequent decrementRemainingGas(cost) would underflow
-    // if gasRemaining was reduced below cost by the spill.
-    if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
+    // Add regular gas back — the EVM loop will deduct it via the OperationResult.
+    frame.incrementRemainingGas(cost);
 
     if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());
