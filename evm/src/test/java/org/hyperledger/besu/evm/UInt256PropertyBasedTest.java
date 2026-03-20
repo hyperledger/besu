@@ -87,6 +87,7 @@ public class UInt256PropertyBasedTest {
             Tuple.of(4, Arbitraries.of(Pattern.ALL_ZERO)),
             Tuple.of(4, Arbitraries.of(Pattern.ALL_FF)),
             Tuple.of(4, Arbitraries.of(Pattern.LIMB_SIGN_BITS)),
+            Tuple.of(4, Arbitraries.of(Pattern.FIXED_TOP_LIMBS)),
             Tuple.of(10, Arbitraries.of(Pattern.RANDOM)));
 
     return lengths.flatMap(
@@ -129,29 +130,38 @@ public class UInt256PropertyBasedTest {
     ALL_ZERO,
     ALL_FF,
     LIMB_SIGN_BITS,
+    FIXED_TOP_LIMBS,
     RANDOM
   }
 
   private static byte[] applyPattern(final byte[] bytes, final Pattern pat) {
-    switch (pat) {
-      case ALL_ZERO:
+    return switch (pat) {
+      case ALL_ZERO -> {
         Arrays.fill(bytes, (byte) 0x00);
-        return bytes;
-      case ALL_FF:
+        yield bytes;
+      }
+      case ALL_FF -> {
         Arrays.fill(bytes, (byte) 0xFF);
-        return bytes;
-      case LIMB_SIGN_BITS:
+        yield bytes;
+      }
+      case LIMB_SIGN_BITS -> {
         Arrays.fill(bytes, (byte) 0x00);
         forceMsbAtIndexIfPresent(bytes, 0);
         forceMsbAtIndexIfPresent(bytes, 8);
         forceMsbAtIndexIfPresent(bytes, 16);
         forceMsbAtIndexIfPresent(bytes, 24);
         forceMsbAtIndexIfPresent(bytes, bytes.length - 1);
-        return bytes;
-      case RANDOM:
-      default:
-        return bytes;
-    }
+        yield bytes;
+      }
+      case FIXED_TOP_LIMBS -> {
+        int size = (int) Math.ceil(bytes.length / 8D) * 8;
+        final byte[] newArray = new byte[size];
+        System.arraycopy(bytes, 0, newArray, size - bytes.length, bytes.length);
+        Arrays.fill(newArray, 0, 8, (byte) 0x80);
+        yield newArray;
+      }
+      case RANDOM -> bytes;
+    };
   }
 
   private static void forceMsbAtIndexIfPresent(final byte[] bytes, final int index) {
