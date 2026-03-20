@@ -121,7 +121,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
@@ -184,18 +183,18 @@ public abstract class CommandTestAbstract {
   private final HashMap<String, String> environment = new HashMap<>();
 
   private final List<TestBesuCommand> besuCommands = new ArrayList<>();
-  private static KeyPair keyPair;
 
-  protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
-      new RpcEndpointServiceImpl();
+  private static final KeyPair keyPair;
 
-  @BeforeAll
-  public static void initKeyPair() {
+  static {
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
     final Bytes32 keyPairPrvKey =
         Bytes32.fromHexString("0xf7a58d5e755d51fa2f6206e91dd574597c73248aaf946ec1964b8c6268d6207b");
     keyPair = signatureAlgorithm.createKeyPair(signatureAlgorithm.createPrivateKey(keyPairPrvKey));
   }
+
+  protected static final RpcEndpointServiceImpl rpcEndpointServiceImpl =
+      new RpcEndpointServiceImpl();
 
   @Mock(lenient = true, answer = Answers.RETURNS_SELF)
   protected RunnerBuilder mockRunnerBuilder;
