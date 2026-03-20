@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -56,6 +57,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
   private final NodeRecordManager nodeRecordManager;
   private final NodeKey nodeKey;
   private final ForkIdManager forkIdManager;
+  private final MetricsSystem metricsSystem;
 
   /**
    * Creates a new DiscV5 peer discovery agent factory.
@@ -63,6 +65,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
    * @param nodeKey the local node key used for identity and signing
    * @param config the networking configuration
    * @param natService NAT service for external address discovery
+   * @param metricsSystem metrics system for registering DiscV5 metrics
    * @param storageProvider storage provider for persisting node records
    * @param forkIdManager manager providing fork ID information for peer compatibility
    */
@@ -70,11 +73,13 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
       final NodeKey nodeKey,
       final NetworkingConfiguration config,
       final NatService natService,
+      final MetricsSystem metricsSystem,
       final StorageProvider storageProvider,
       final ForkIdManager forkIdManager) {
     this.config = config;
     this.nodeKey = nodeKey;
     this.forkIdManager = forkIdManager;
+    this.metricsSystem = metricsSystem;
     this.nodeRecordManager =
         new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService);
   }
@@ -96,6 +101,7 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
         forkIdManager,
         nodeRecordManager,
         rlpxAgent,
+        metricsSystem,
         config.discoveryConfiguration().isPreferIpv6Outbound(),
         buildDefaultDiscoverySystemFactory());
   }
