@@ -602,12 +602,15 @@ public class UInt256Test {
               },
               {"0xbf1256135bb3f72de074d0f237", "0x8b63235ac1765530"},
               {"0x5b35862b0027a502b1d4cbc4a09e25", "0x932542f4003763"},
-              // mulSubOverflow addBack bugs
               {
+                // Multiply and subtract overflows and we need to decrement quotient estimation -
+                // UInt192 case
                 "0x8200000000000000000000000000000000000000000000000000000000000000",
                 "0x8200000000000000fe000004000000ffff000000fffff700"
               },
               {
+                // Multiply and subtract overflows and we need to decrement quotient estimation -
+                // UInt128 case
                 "0x820000000000000000000000000000000000000000000000",
                 "0x8200000000000000fe00000000000001"
               },

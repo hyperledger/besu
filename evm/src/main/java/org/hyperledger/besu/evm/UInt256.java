@@ -1011,7 +1011,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     carry = u2 - 1 + ((Long.compareUnsigned(v2, res) < 0) ? 1 : 0);
 
     long z3 = v3 + u3 - carry - borrow;
-    // q = MAX may still be 1 too high; check if result >= modulus (i.e. negative wrapped)
+    // q = MAX may still be 1 too high - need to pass q - 1 (-2L) to addBack; check if result >=
+    // modulus (i.e. negative wrapped)
     if (Long.compareUnsigned(z3, u3) > 0
         || (z3 == u3
             && (Long.compareUnsigned(z2, u2) > 0
@@ -1175,8 +1176,10 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // --------------------------------------------------------------------------
   // endregion
 
-  // region Records
-  // --------------------------------------------------------------------------
+  // region Quotient / Remainder types
+  // These types are used to store the result of division. Due to the nature of the algorithm
+  // (div2by1) quotient (q) can't
+  // ever exceed 64 bits while remainder (r) can range from 64 to 256 bits.
   private record QR64(long q, long r) {}
 
   private record QR128(long q, UInt128 r) {}
@@ -1185,6 +1188,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
   private record QR256(long q, UInt256 r) {}
 
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region UInt* types
+  // --------------------------------------------------------------------------
   record UInt64(long u0) {
     UInt64 shiftLeft(final int shift) {
       return (shift == 0) ? this : new UInt64(u0 << shift);
@@ -1421,7 +1429,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) <= 0) ? 1 : 0);
 
       long z1 = v1 + u1 - carry;
-      // q = MAX may still be 1 too high; check if result >= modulus (i.e. negative wrapped)
+      // q = MAX may still be 1 too high - need to pass q - 1 (-2L) to addBack; check if result >=
+      // modulus (i.e. negative wrapped)
       if (Long.compareUnsigned(z1, u1) > 0 || (z1 == u1 && Long.compareUnsigned(z0, u0) >= 0)) {
         return addBack(z1, z0, -2L);
       }
@@ -1652,7 +1661,8 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       carry = u1 - 1 + ((Long.compareUnsigned(v1, res) < 0) ? 1 : 0);
 
       long z2 = v2 - carry + u2 - borrow;
-      // q = MAX may still be 1 too high; check if result >= modulus (i.e. negative wrapped)
+      // q = MAX may still be 1 too high - need to pass q - 1 (-2L) to addBack; check if result >=
+      // modulus (i.e. negative wrapped)
       if (Long.compareUnsigned(z2, u2) > 0
           || (z2 == u2
               && (Long.compareUnsigned(z1, u1) > 0

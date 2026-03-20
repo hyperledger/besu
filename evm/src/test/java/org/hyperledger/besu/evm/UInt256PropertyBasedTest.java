@@ -87,7 +87,7 @@ public class UInt256PropertyBasedTest {
             Tuple.of(4, Arbitraries.of(Pattern.ALL_ZERO)),
             Tuple.of(4, Arbitraries.of(Pattern.ALL_FF)),
             Tuple.of(4, Arbitraries.of(Pattern.LIMB_SIGN_BITS)),
-            Tuple.of(4, Arbitraries.of(Pattern.EQUAL_TOP_LIMBS)),
+            Tuple.of(4, Arbitraries.of(Pattern.FIXED_TOP_LIMBS)),
             Tuple.of(10, Arbitraries.of(Pattern.RANDOM)));
 
     return lengths.flatMap(
@@ -130,7 +130,7 @@ public class UInt256PropertyBasedTest {
     ALL_ZERO,
     ALL_FF,
     LIMB_SIGN_BITS,
-    EQUAL_TOP_LIMBS,
+    FIXED_TOP_LIMBS,
     RANDOM
   }
 
@@ -153,7 +153,7 @@ public class UInt256PropertyBasedTest {
         forceMsbAtIndexIfPresent(bytes, bytes.length - 1);
         yield bytes;
       }
-      case EQUAL_TOP_LIMBS -> {
+      case FIXED_TOP_LIMBS -> {
         int size = (int) Math.ceil(bytes.length / 8D) * 8;
         final byte[] newArray = new byte[size];
         System.arraycopy(bytes, 0, newArray, size - bytes.length, bytes.length);
