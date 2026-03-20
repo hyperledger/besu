@@ -47,7 +47,8 @@ public class BlockchainUtilParameterizedTest {
   private static Block genesisBlock;
   // Pre-generated canonical chain data (crypto happens once in @BeforeAll)
   private static final List<Block> canonicalBlocks = new ArrayList<>(chainHeight);
-  private static final List<List<TransactionReceipt>> canonicalReceipts = new ArrayList<>(chainHeight);
+  private static final List<List<TransactionReceipt>> canonicalReceipts =
+      new ArrayList<>(chainHeight);
 
   // Rebuilt cheaply from canonical data before each test — never accumulates fork chains
   private MutableBlockchain localBlockchain;
