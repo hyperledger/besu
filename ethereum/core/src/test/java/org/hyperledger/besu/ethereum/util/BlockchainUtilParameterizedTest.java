@@ -46,8 +46,8 @@ public class BlockchainUtilParameterizedTest {
   private static final int chainHeight = 89;
   private static Block genesisBlock;
   // Pre-generated canonical chain data (crypto happens once in @BeforeAll)
-  private static final List<Block> canonicalBlocks = new ArrayList<>();
-  private static final List<List<TransactionReceipt>> canonicalReceipts = new ArrayList<>();
+  private static final List<Block> canonicalBlocks = new ArrayList<>(chainHeight);
+  private static final List<List<TransactionReceipt>> canonicalReceipts = new ArrayList<>(chainHeight);
 
   // Rebuilt cheaply from canonical data before each test — never accumulates fork chains
   private MutableBlockchain localBlockchain;
@@ -107,7 +107,7 @@ public class BlockchainUtilParameterizedTest {
       final List<TransactionReceipt> remoteReceipts = blockDataGenerator.receipts(remoteBlock);
       remoteBlockchain.appendBlock(remoteBlock, remoteReceipts);
     }
-    headers = new ArrayList<>();
+    headers = new ArrayList<>(chainHeight + 1);
     for (long i = 0L; i <= remoteBlockchain.getChainHeadBlockNumber(); i++) {
       headers.add(remoteBlockchain.getBlockHeader(i).get());
     }
