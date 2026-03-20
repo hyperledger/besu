@@ -57,6 +57,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -145,6 +146,7 @@ public class BlockSimulatorTest {
     when(mutableWorldState.updater()).thenReturn(updater);
 
     CallParameter callParameter = mock(CallParameter.class);
+    when(callParameter.getGas()).thenReturn(OptionalLong.empty());
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     TransactionSimulatorResult transactionSimulatorResult = mock(TransactionSimulatorResult.class);
@@ -179,6 +181,7 @@ public class BlockSimulatorTest {
     when(mutableWorldState.updater()).thenReturn(updater);
 
     CallParameter callParameter = mock(CallParameter.class);
+    when(callParameter.getGas()).thenReturn(OptionalLong.empty());
     BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
 
     when(transactionSimulator.processWithWorldUpdater(
@@ -305,6 +308,54 @@ public class BlockSimulatorTest {
             .validate(Set.of(precompileAddress1, precompileAddress2));
 
     assertThat(validationResult).isEmpty();
+  }
+
+  @Test
+  public void shouldThrowBlockGasLimitExceededWhenTxGasExceedsBlockLimitWithValidationDisabled() {
+    when(mutableWorldState.updater()).thenReturn(updater);
+
+    // gasLimitCalculator.nextGasLimit returns 1L (from setUp), so block gas limit = 1
+    CallParameter callParameter = mock(CallParameter.class);
+    when(callParameter.getGas()).thenReturn(OptionalLong.of(1_000_000L));
+    BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
+
+    BlockSimulationParameter parameter =
+        new BlockSimulationParameter.BlockSimulationParameterBuilder()
+            .blockStateCalls(List.of(blockStateCall))
+            .validation(false)
+            .build();
+
+    BlockStateCallException exception =
+        assertThrows(
+            BlockStateCallException.class,
+            () -> blockSimulator.process(blockHeader, parameter, mutableWorldState));
+
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.BLOCK_GAS_LIMIT_EXCEEDED);
+    assertThat(exception.getError().getCode()).isEqualTo(-38015);
+  }
+
+  @Test
+  public void shouldThrowBlockGasLimitExceededWhenTxGasExceedsBlockLimitWithValidationEnabled() {
+    when(mutableWorldState.updater()).thenReturn(updater);
+
+    // gasLimitCalculator.nextGasLimit returns 1L (from setUp), so block gas limit = 1
+    CallParameter callParameter = mock(CallParameter.class);
+    when(callParameter.getGas()).thenReturn(OptionalLong.of(1_000_000L));
+    BlockStateCall blockStateCall = new BlockStateCall(List.of(callParameter), null, null);
+
+    BlockSimulationParameter parameter =
+        new BlockSimulationParameter.BlockSimulationParameterBuilder()
+            .blockStateCalls(List.of(blockStateCall))
+            .validation(true)
+            .build();
+
+    BlockStateCallException exception =
+        assertThrows(
+            BlockStateCallException.class,
+            () -> blockSimulator.process(blockHeader, parameter, mutableWorldState));
+
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.BLOCK_GAS_LIMIT_EXCEEDED);
+    assertThat(exception.getError().getCode()).isEqualTo(-38015);
   }
 
   private BlockSimulationParameter createSimulationParameter(final BlockStateCall blockStateCall) {
