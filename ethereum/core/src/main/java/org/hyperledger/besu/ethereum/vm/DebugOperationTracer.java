@@ -289,7 +289,7 @@ public class DebugOperationTracer implements OperationTracer {
     } else if (frame.getMaybeUpdatedMemory().isEmpty()
         && lastFrame != null
         && lastFrame.getDepth() == frame.getDepth()
-        && lastFrame.getMemory().map(m -> m.length).orElse(0) == frame.memoryWordSize()) {
+        && lastFrame.getMemory().get().length == frame.memoryWordSize()) {
       return lastFrame.getMemory();
     }
     final Bytes[] memoryContents = new Bytes[frame.memoryWordSize()];
