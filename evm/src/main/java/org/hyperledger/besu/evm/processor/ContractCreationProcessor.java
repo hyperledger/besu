@@ -169,26 +169,25 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     final Bytes contractCode =
         frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
-    // Oversized contracts must fail without charging hash cost or code deposit state gas.
+    // Oversized contracts must fail without charging code deposit gas or state gas.
     // We must check this first.
-    final var invalidReason =
+    final Optional<ExceptionalHaltReason> firstValidationFailure =
         contractValidationRules.stream()
             .map(rule -> rule.validate(contractCode, frame, evm))
-            .filter(Optional::isPresent)
+            .flatMap(Optional::stream)
             .findFirst();
-    if (invalidReason.isPresent()) {
-      final Optional<ExceptionalHaltReason> exceptionalHaltReason = invalidReason.get();
+    if (firstValidationFailure.isPresent()) {
       if (frame.getDepth() == 0) {
-        failCodeDepositWithoutRollback(frame, operationTracer, exceptionalHaltReason);
+        failCodeDepositWithoutRollback(frame, operationTracer, firstValidationFailure);
       } else {
-        frame.setExceptionalHaltReason(exceptionalHaltReason);
+        frame.setExceptionalHaltReason(firstValidationFailure);
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
-        operationTracer.traceAccountCreationResult(frame, exceptionalHaltReason);
+        operationTracer.traceAccountCreationResult(frame, firstValidationFailure);
       }
       return;
     }
 
-    // Check and charge hash cost (regular gas) before state gas
+    // Check and charge code deposit gas (regular gas) before state gas
     final long depositFee = evm.getGasCalculator().codeDepositGasCost(contractCode.size());
     if (frame.getRemainingGas() < depositFee) {
       LOG.trace(

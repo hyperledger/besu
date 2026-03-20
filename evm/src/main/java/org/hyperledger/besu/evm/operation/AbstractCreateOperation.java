@@ -89,8 +89,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    final Code code = codeSupplier.get();
-
     // EIP-8037: Charge state gas for CREATE operation.
     if (!gasCalculator().stateGasCostCalculator().chargeCreateStateGas(frame)) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
@@ -102,6 +100,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
+
+    // Resolve initcode after state gas charge to avoid unnecessary work (e.g. memory read,
+    // Code object creation) on paths where state gas is insufficient.
+    final Code code = codeSupplier.get();
 
     if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());

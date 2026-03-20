@@ -57,6 +57,8 @@ class ContractCreationProcessorTest
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     // At depth 0, validation failures use COMPLETED_FAILED to preserve state gas reservoir
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_FAILED);
+    // Gas should be cleared — failCodeDepositWithoutRollback burns all remaining gas
+    assertThat(messageFrame.getRemainingGas()).isEqualTo(0L);
   }
 
   @Test
@@ -102,6 +104,8 @@ class ContractCreationProcessorTest
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     // At depth 0, validation failures use COMPLETED_FAILED to preserve state gas reservoir
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_FAILED);
+    // Gas should be cleared — failCodeDepositWithoutRollback burns all remaining gas
+    assertThat(messageFrame.getRemainingGas()).isEqualTo(0L);
   }
 
   @Test
@@ -141,6 +145,8 @@ class ContractCreationProcessorTest
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     // At depth 0, validation failures use COMPLETED_FAILED to preserve state gas reservoir
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_FAILED);
+    // Gas should be cleared — failCodeDepositWithoutRollback burns all remaining gas
+    assertThat(messageFrame.getRemainingGas()).isEqualTo(0L);
   }
 
   @Test
