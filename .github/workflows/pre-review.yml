@@ -37,6 +37,45 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - uses: gradle/actions/wrapper-validation@94baf225fe0a508e581a564467443d0e2379123b
+  copyright-headers:
+    name: "Copyright Header Check"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          fetch-depth: 0
+      - name: Check copyright headers on new files
+        run: |
+          BASE_BRANCH="${{ github.base_ref || github.event.merge_group.base_ref || 'main' }}"
+          git fetch origin "$BASE_BRANCH" --depth=1
+
+          NEW_FILES=$(git diff --name-only --diff-filter=A "origin/${BASE_BRANCH}...HEAD")
+
+          if [ -z "$NEW_FILES" ]; then
+            echo "No new files added — nothing to check."
+            exit 0
+          fi
+
+          FAILED=false
+          while IFS= read -r file; do
+            if [ -f "$file" ] && echo "$file" | grep -qE '\.(java|kt|groovy|sol)$'; then
+              if head -5 "$file" | grep -qE 'Copyright.*(ConsenSys AG|Hyperledger Besu|[0-9]{4} ConsenSys)'; then
+                echo "::error file=$file::Old-style copyright header found. New files must use: ' * Copyright contributors to Besu.'"
+                FAILED=true
+              fi
+            fi
+          done <<< "$NEW_FILES"
+
+          if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "One or more new files contain an old-style copyright header."
+            echo "Replace the copyright line with:"
+            echo "  * Copyright contributors to Besu."
+            exit 1
+          fi
+          echo "All new file copyright headers are correct."
   spotless-checkLicense:
     name: "Spotless & Check License"
     runs-on: ubuntu-latest
@@ -66,7 +105,7 @@ jobs:
   compile:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [spotless-checkLicense, gradle-wrapper, repolint]
+    needs: [spotless-checkLicense, gradle-wrapper, repolint, copyright-headers]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -87,7 +126,7 @@ jobs:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-latest
-    needs: [spotless-checkLicense, gradle-wrapper, repolint]
+    needs: [spotless-checkLicense, gradle-wrapper, repolint, copyright-headers]
     permissions:
       checks: write
       statuses: write
