@@ -40,10 +40,9 @@ public class TStoreOperation extends AbstractOperation {
 
     final long cost = gasCalculator().getTransientStoreOperationGasCost();
 
-    final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
-      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else if (remainingGas < cost) {
+      return new OperationResult(frame.getRemainingGas(), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    } else if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     } else {
       frame.setTransientStorageValue(frame.getRecipientAddress(), key, value);

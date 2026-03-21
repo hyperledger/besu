@@ -22,18 +22,21 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The SLOTNUM operation (EIP-7843). */
 public class SlotNumOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new SlotNum operation.
    *
    * @param gasCalculator the gas calculator
    */
   public SlotNumOperation(final GasCalculator gasCalculator) {
-    super(0x4b, "SLOTNUM", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x4b, "SLOTNUM", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final long slotNumber = frame.getBlockValues().getSlotNumber();
     frame.pushStackItem(Words.longBytes(slotNumber));
 

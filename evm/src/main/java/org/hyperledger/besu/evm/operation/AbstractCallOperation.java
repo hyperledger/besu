@@ -232,10 +232,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final Account contract = getAccount(to, frame);
     cost = clampedAdd(cost, gasCalculator().calculateCodeDelegationResolutionGas(frame, contract));
 
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-    frame.decrementRemainingGas(cost);
 
     // EIP-8037: Charge state gas for new account creation in CALL
     if (!gasCalculator()
@@ -260,7 +259,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       // For the following, we either increment the gas or return zero, so we don't get double
       // charged. If we return zero then the traces don't have the right per-opcode cost.
       final long gasAvailableForChildCall = gasAvailableForChildCall(frame);
-      frame.incrementRemainingGas(gasAvailableForChildCall + cost);
+      frame.incrementRemainingGas(gasAvailableForChildCall);
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       final SoftFailureReason softFailureReason =
@@ -292,8 +291,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     builder.build();
-    // see note in stack depth check about incrementing cost
-    frame.incrementRemainingGas(cost);
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
     return new OperationResult(cost, null, 0);

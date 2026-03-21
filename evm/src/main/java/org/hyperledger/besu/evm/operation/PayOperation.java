@@ -64,7 +64,7 @@ public class PayOperation extends AbstractOperation {
     final boolean accountIsWarm = frame.warmUpAddress(to);
 
     final long cost = cost(to, hasValue, recipient, accountIsWarm);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

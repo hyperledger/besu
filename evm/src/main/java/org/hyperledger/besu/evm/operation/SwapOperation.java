@@ -24,11 +24,16 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Swap operation. */
 public class SwapOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3L;
+
   /** The constant SWAP_BASE. */
   public static final int SWAP_BASE = 0x8F;
 
   /** The Swap operation success result. */
-  static final OperationResult swapSuccess = new OperationResult(3, null);
+  static final OperationResult swapSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   private final int index;
 
@@ -48,7 +53,7 @@ public class SwapOperation extends AbstractFixedCostOperation {
         index + 1,
         index + 1,
         gasCalculator,
-        gasCalculator.getVeryLowTierGasCost());
+        GAS_COST);
     this.index = index;
     this.underflowResponse =
         new Operation.OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
@@ -68,6 +73,9 @@ public class SwapOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame, final int index) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index));
     frame.setStackItem(index, tmp);

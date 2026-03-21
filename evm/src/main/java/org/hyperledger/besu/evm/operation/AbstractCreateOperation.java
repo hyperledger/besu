@@ -79,7 +79,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     }
 
     final long cost = cost(frame, codeSupplier);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Wei value = Wei.wrap(frame.getStackItem(0));
@@ -89,21 +89,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    // EIP-8037: Charge state gas for CREATE operation (new account creation: 112 * cpsb)
-    // Charged before balance/depth/initcode-size checks — state gas is consumed even on failure.
-    // For oversized initcode, the spill mechanism tracks the burned state gas via spillBurned.
+    final Code code = codeSupplier.get();
+
+    // EIP-8037: Charge state gas for CREATE operation (regular gas already deducted above).
     if (!gasCalculator().stateGasCostCalculator().chargeCreateStateGas(frame)) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
-
-    // Re-check after state gas charge: when the reservoir is empty, consumeStateGas spills
-    // overflow into gasRemaining. The subsequent decrementRemainingGas(cost) would underflow
-    // if gasRemaining was reduced below cost by the spill.
-    if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
-    Code code = codeSupplier.get();
 
     if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());
@@ -125,10 +116,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     }
 
     account.incrementNonce();
-    frame.decrementRemainingGas(cost);
 
     spawnChildMessage(frame, code);
-    frame.incrementRemainingGas(cost);
 
     return new OperationResult(cost, null, getPcIncrement());
   }

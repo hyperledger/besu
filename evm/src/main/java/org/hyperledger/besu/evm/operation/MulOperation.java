@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -25,8 +26,13 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Mul operation. */
 public class MulOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 5;
+
   /** The Mul operation success result. */
-  static final OperationResult mulSuccess = new OperationResult(5, null);
+  static final OperationResult mulSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Mul operation.
@@ -34,7 +40,7 @@ public class MulOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public MulOperation(final GasCalculator gasCalculator) {
-    super(0x02, "MUL", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x02, "MUL", 2, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -50,6 +56,9 @@ public class MulOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     BigInteger a = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
     BigInteger b = new BigInteger(1, frame.popStackItem().toArrayUnsafe());
     BigInteger c = a.multiply(b);

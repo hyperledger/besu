@@ -52,8 +52,10 @@ class ChainIdOperationTest {
     ChainIdOperation operation = new ChainIdOperation(new ConstantinopleGasCalculator(), chainId);
     final ArgumentCaptor<Bytes> arg = ArgumentCaptor.forClass(Bytes.class);
     when(messageFrame.getRemainingGas()).thenReturn(100L);
+    when(messageFrame.decrementRemainingGas(2L)).thenReturn(98L);
     operation.execute(messageFrame, null);
     Mockito.verify(messageFrame).getRemainingGas();
+    Mockito.verify(messageFrame).decrementRemainingGas(2L);
     Mockito.verify(messageFrame).pushStackItem(arg.capture());
     Mockito.verifyNoMoreInteractions(messageFrame);
     assertThat(arg.getValue()).isEqualTo(chainId);

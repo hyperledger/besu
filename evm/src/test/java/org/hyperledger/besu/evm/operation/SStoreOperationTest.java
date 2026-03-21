@@ -323,9 +323,9 @@ class SStoreOperationTest {
     assertThat(frame.getStateGasReservoir()).isEqualTo(0L);
     // Total state gas consumed
     assertThat(frame.getStateGasUsed()).isEqualTo(expectedStateGas);
-    // gasRemaining decreased by the spill amount only (regular SSTORE cost is deducted by the
-    // EVM after execute returns, not by the operation itself)
-    final long expectedRemainingGas = gasBeforeSstore - expectedSpill;
+    // gasRemaining decreased by both the regular SSTORE cost and the state gas spill
+    final long regularCost = result.getGasCost();
+    final long expectedRemainingGas = gasBeforeSstore - regularCost - expectedSpill;
     assertThat(frame.getRemainingGas()).isEqualTo(expectedRemainingGas);
   }
 

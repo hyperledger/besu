@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -27,7 +28,12 @@ import org.apache.tuweni.bytes.Bytes32;
 /** The Mod operation. */
 public class ModOperation extends AbstractFixedCostOperation {
 
-  private static final OperationResult modSuccess = new OperationResult(5, null);
+  private static final long GAS_COST = 5;
+
+  private static final OperationResult modSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Mod operation.
@@ -35,7 +41,7 @@ public class ModOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public ModOperation(final GasCalculator gasCalculator) {
-    super(0x06, "MOD", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x06, "MOD", 2, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -51,6 +57,9 @@ public class ModOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
     if (value1.isZero()) {

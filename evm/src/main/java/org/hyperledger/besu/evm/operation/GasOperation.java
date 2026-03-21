@@ -24,19 +24,22 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Gas operation. */
 public class GasOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Gas operation.
    *
    * @param gasCalculator the gas calculator
    */
   public GasOperation(final GasCalculator gasCalculator) {
-    super(0x5A, "GAS", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x5A, "GAS", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
-    final long gasRemaining = frame.getRemainingGas() - gasCost;
+    frame.decrementRemainingGas(GAS_COST);
+    final long gasRemaining = frame.getRemainingGas();
     final Bytes value = Words.longBytes(gasRemaining);
     frame.pushStackItem(value);
 

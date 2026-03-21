@@ -54,7 +54,7 @@ public class LogOperation extends AbstractOperation {
     }
 
     final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
-    if (frame.getRemainingGas() < cost) {
+    if (frame.decrementRemainingGas(cost) < 0) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 

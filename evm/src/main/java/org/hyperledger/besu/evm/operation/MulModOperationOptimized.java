@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.UInt256;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -24,7 +25,12 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Mul mod operation. */
 public class MulModOperationOptimized extends AbstractFixedCostOperation {
 
-  private static final OperationResult mulModSuccess = new OperationResult(8, null);
+  private static final long GAS_COST = 8;
+
+  private static final OperationResult mulModSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Mul mod operation.
@@ -32,7 +38,7 @@ public class MulModOperationOptimized extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public MulModOperationOptimized(final GasCalculator gasCalculator) {
-    super(0x09, "MULMOD", 3, 1, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x09, "MULMOD", 3, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -48,6 +54,9 @@ public class MulModOperationOptimized extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes value0 = frame.popStackItem();
     final Bytes value1 = frame.popStackItem();
     final Bytes value2 = frame.popStackItem();

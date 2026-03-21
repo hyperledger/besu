@@ -21,18 +21,21 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Address operation. */
 public class AddressOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Address operation.
    *
    * @param gasCalculator the gas calculator
    */
   public AddressOperation(final GasCalculator gasCalculator) {
-    super(0x30, "ADDRESS", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x30, "ADDRESS", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     frame.pushStackItem(frame.getRecipientAddress().getBytes());
 
     return successResponse;

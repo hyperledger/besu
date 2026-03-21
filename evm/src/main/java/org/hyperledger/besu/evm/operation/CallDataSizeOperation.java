@@ -24,18 +24,21 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Call data size operation. */
 public class CallDataSizeOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Call data size operation.
    *
    * @param gasCalculator the gas calculator
    */
   public CallDataSizeOperation(final GasCalculator gasCalculator) {
-    super(0x36, "CALLDATASIZE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x36, "CALLDATASIZE", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final Bytes callData = frame.getInputData();
     frame.pushStackItem(Words.intBytes(callData.size()));
 

@@ -22,17 +22,20 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Blob Base fee operation. */
 public class BlobBaseFeeOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Blob Base fee operation.
    *
    * @param gasCalculator the gas calculator
    */
   public BlobBaseFeeOperation(final GasCalculator gasCalculator) {
-    super(0x4a, "BLOBBASEFEE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x4a, "BLOBBASEFEE", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
 
     final Wei blobGasPrice = frame.getBlobGasPrice();
     frame.pushStackItem(blobGasPrice.toBytes());

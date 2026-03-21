@@ -25,18 +25,21 @@ import org.apache.tuweni.bytes.MutableBytes32;
 /** The Call data load operation. */
 public class CallDataLoadOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3;
+
   /**
    * Instantiates a new Call data load operation.
    *
    * @param gasCalculator the gas calculator
    */
   public CallDataLoadOperation(final GasCalculator gasCalculator) {
-    super(0x35, "CALLDATALOAD", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x35, "CALLDATALOAD", 1, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final Bytes startWord = frame.popStackItem().trimLeadingZeros();
 
     // If the start index doesn't fit in an int, it comes after anything in data, and so the

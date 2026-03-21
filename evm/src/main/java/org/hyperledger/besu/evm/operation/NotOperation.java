@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -24,8 +25,12 @@ import org.apache.tuweni.bytes.Bytes32;
 /** The Not operation. */
 public class NotOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3;
+
   /** The Not operation success result. */
-  static final OperationResult notSuccess = new OperationResult(3, null);
+  static final OperationResult notSuccess = new OperationResult(GAS_COST, null);
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Not operation.
@@ -33,7 +38,7 @@ public class NotOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public NotOperation(final GasCalculator gasCalculator) {
-    super(0x19, "NOT", 1, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x19, "NOT", 1, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -49,6 +54,9 @@ public class NotOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes value = Bytes32.leftPad(frame.popStackItem());
 
     final Bytes result = value.not();

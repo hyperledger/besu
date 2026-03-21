@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -22,6 +23,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Push operation. */
 public class PushOperation extends AbstractFixedCostOperation {
+
+  private static final long GAS_COST = 3L;
 
   /** The constant PUSH_BASE. */
   public static final int PUSH_BASE = 0x5F;
@@ -32,7 +35,10 @@ public class PushOperation extends AbstractFixedCostOperation {
   private final int length;
 
   /** The Push operation success result. */
-  static final OperationResult pushSuccess = new OperationResult(3, null);
+  static final OperationResult pushSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Push operation.
@@ -47,7 +53,7 @@ public class PushOperation extends AbstractFixedCostOperation {
         0,
         1,
         gasCalculator,
-        gasCalculator.getVeryLowTierGasCost());
+        GAS_COST);
     this.length = length;
   }
 
@@ -68,6 +74,9 @@ public class PushOperation extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final int copyStart = pc + 1;
     Bytes push;
     if (code.length <= copyStart) {

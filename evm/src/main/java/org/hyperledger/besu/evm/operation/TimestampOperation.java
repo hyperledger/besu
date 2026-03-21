@@ -22,18 +22,21 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The Timestamp operation. */
 public class TimestampOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Timestamp operation.
    *
    * @param gasCalculator the gas calculator
    */
   public TimestampOperation(final GasCalculator gasCalculator) {
-    super(0x42, "TIMESTAMP", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x42, "TIMESTAMP", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final long timestamp = frame.getBlockValues().getTimestamp();
     frame.pushStackItem(Words.longBytes(timestamp));
 
