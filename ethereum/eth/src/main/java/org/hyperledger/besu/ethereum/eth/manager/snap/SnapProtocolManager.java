@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramingException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -113,18 +114,25 @@ public class SnapProtocolManager implements ProtocolManager {
       return;
     }
 
-    // This will handle responses
-    ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
-
-    // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
+      // This will handle responses
+      ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
+
+      // This will handle requests
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
           ethMessage.getData().unwrapMessageData();
       maybeResponseData =
           snapMessages
               .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
               .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
+    } catch (final FramingException e) {
+      LOG.debug(
+          "Failed to decompress message with code {} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          code,
+          ethPeer,
+          e);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed message code={} data={} (BREACH_OF_PROTOCOL), disconnecting: {}",
