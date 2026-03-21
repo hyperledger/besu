@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.manager;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -81,8 +80,6 @@ public class EthPeer implements Comparable<EthPeer> {
               }));
   private final Bytes localNodeId;
 
-  private Optional<BlockHeader> checkpointHeader = Optional.empty();
-
   private final int maxMessageSize;
   private final Clock clock;
   private final List<NodeMessagePermissioningProvider> permissioningProviders;
@@ -141,7 +138,6 @@ public class EthPeer implements Comparable<EthPeer> {
     this.requestManagers = new ConcurrentHashMap<>();
     this.localNodeId = localNodeId;
     this.id = connection.getPeer().getId();
-
     initEthRequestManagers();
     initSnapRequestManagers();
   }
@@ -665,14 +661,6 @@ public class EthPeer implements Comparable<EthPeer> {
     if (headStateCompare != 0) return headStateCompare;
 
     return getConnection().getPeerInfo().compareTo(ethPeer.getConnection().getPeerInfo());
-  }
-
-  public void setCheckpointHeader(final BlockHeader header) {
-    checkpointHeader = Optional.of(header);
-  }
-
-  public Optional<BlockHeader> getCheckpointHeader() {
-    return checkpointHeader;
   }
 
   public Bytes getId() {

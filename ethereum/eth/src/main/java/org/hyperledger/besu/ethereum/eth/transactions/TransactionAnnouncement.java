@@ -50,4 +50,8 @@ public record TransactionAnnouncement(Hash hash, TransactionType type, Long size
     }
     return transactions;
   }
+
+  public static List<TransactionAnnouncement> create(final List<Transaction> transactions) {
+    return transactions.stream().map(TransactionAnnouncement::new).toList();
+  }
 }
