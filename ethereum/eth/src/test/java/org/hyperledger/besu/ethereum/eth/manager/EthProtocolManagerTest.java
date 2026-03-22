@@ -407,6 +407,27 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
+  public void disconnectOnMalformedGetBlockAccessListsMessage() {
+    try (final EthProtocolManager ethManager =
+        EthProtocolManagerTestBuilder.builder()
+            .setProtocolSchedule(protocolSchedule)
+            .setBlockchain(blockchain)
+            .setEthScheduler(new DeterministicEthScheduler(() -> false))
+            .setWorldStateArchive(protocolContext.getWorldStateArchive())
+            .setTransactionPool(transactionPool)
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .build()) {
+      final MessageData malformedMessageData =
+          new RawMessage(EthProtocolMessages.GET_BLOCK_ACCESS_LISTS, Bytes.fromHexString("0xc1ff"));
+      final MockPeerConnection peer = setupPeer(ethManager, (cap, msg, conn) -> {});
+
+      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, malformedMessageData));
+
+      assertThat(peer.isDisconnected()).isTrue();
+    }
+  }
+
+  @Test
   public void respondToGetHeaders() throws ExecutionException, InterruptedException {
     final CompletableFuture<Void> done = new CompletableFuture<>();
     try (final EthProtocolManager ethManager =
@@ -945,7 +966,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -999,7 +1020,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -1045,7 +1066,7 @@ public final class EthProtocolManagerTest {
 
       // Run test
       final PeerConnection peer = setupPeer(ethManager, onSend);
-      ethManager.processMessage(EthProtocol.LATEST, new DefaultMessage(peer, messageData));
+      ethManager.processMessage(EthProtocol.ETH69, new DefaultMessage(peer, messageData));
       done.get();
     }
   }
@@ -1294,8 +1315,8 @@ public final class EthProtocolManagerTest {
 
   @Test
   public void shouldUseRightCapabilityDependingOnSyncMode() {
-    assertHighestCapability(SyncMode.SNAP, EthProtocol.ETH69);
-    assertHighestCapability(SyncMode.FULL, EthProtocol.ETH69);
+    assertHighestCapability(SyncMode.SNAP, EthProtocol.LATEST);
+    assertHighestCapability(SyncMode.FULL, EthProtocol.LATEST);
   }
 
   @Test
