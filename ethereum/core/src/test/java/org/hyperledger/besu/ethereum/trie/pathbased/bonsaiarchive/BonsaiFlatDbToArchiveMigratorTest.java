@@ -15,8 +15,8 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsaiarchive;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateArchiveKeyWithMinSuffix;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiArchiveFlatDbStrategy.calculateNaturalSlotKey;
 import static org.mockito.ArgumentMatchers.any;
@@ -132,7 +132,7 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final byte[] naturalKey =
         calculateNaturalSlotKey(TEST_ADDRESS.addressHash(), slotKey.getSlotHash());
     final byte[] key = calculateArchiveKeyWithMinSuffix(new BonsaiContext(1L), naturalKey);
-    assertThat(storage.get(ACCOUNT_STORAGE_STORAGE, key)).isPresent();
+    assertThat(storage.get(ACCOUNT_STORAGE_ARCHIVE, key)).isPresent();
   }
 
   @Test
@@ -372,6 +372,6 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     final byte[] key =
         calculateArchiveKeyWithMinSuffix(
             new BonsaiContext(blockNumber), TEST_ADDRESS.addressHash().getBytes().toArrayUnsafe());
-    return storage.get(ACCOUNT_INFO_STATE, key);
+    return storage.get(ACCOUNT_INFO_STATE_ARCHIVE, key);
   }
 }

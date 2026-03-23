@@ -61,9 +61,12 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private final Blockchain blockchain;
   private final ScheduledExecutorService executorService;
   private final BonsaiArchiveFlatDbStrategy archiveStrategy;
-  private final Counter migratedBlocksCounter;
+  private final AtomicLong migratedBlockNumber = new AtomicLong(0);
+  private final AtomicLong lastBlockWrites = new AtomicLong(0);
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
   protected final AtomicBoolean migrationRunning = new AtomicBoolean(false);
+
+  private final Counter writesCounter;
 
   /**
    * Creates a new BonsaiFlatDbToArchiveMigrator.
@@ -87,11 +90,21 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     this.blockchain = blockchain;
     this.executorService = executorService;
     this.archiveStrategy = archiveStrategy;
-    this.migratedBlocksCounter =
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.BLOCKCHAIN,
+        "bonsai_archive_migration_block",
+        "The current block the Bonsai archive migration has reached",
+        migratedBlockNumber::get);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.BLOCKCHAIN,
+        "bonsai_archive_migration_last_block_writes",
+        "Number of archive writes produced by the last block processed during migration",
+        lastBlockWrites::get);
+    this.writesCounter =
         metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
-            "bonsai_archive_migration_block",
-            "Bonsai archive migration head block");
+            "bonsai_archive_migration_writes_total",
+            "Total number of archive key-value writes performed by the Bonsai archive migration");
   }
 
   /**
@@ -122,6 +135,9 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
       final long lastProcessedBlock = getMigrationProgress().orElse(-1L);
       final long startBlock = lastProcessedBlock + 1;
       final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
+      // Seed the gauge with already-processed blocks so it reflects total progress across restarts.
+      // Block 0 has no trie log so the effective migrated count is max(0, lastProcessedBlock).
+      migratedBlockNumber.set(Math.max(0, lastProcessedBlock));
       LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
 
@@ -133,8 +149,10 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
         final SegmentedKeyValueStorageTransaction tx = storage.startLowPriorityTransaction();
         try {
           if (maybeTrieLog.isPresent()) {
-            processBlock(maybeTrieLog.get(), blockNumber, tx);
-            migratedBlocksCounter.inc();
+            final long blockWrites = processBlock(maybeTrieLog.get(), blockNumber, tx);
+            lastBlockWrites.set(blockWrites);
+            writesCounter.inc(blockWrites);
+            migratedBlockNumber.incrementAndGet();
           } else if (blockNumber > 0) {
             throw new IllegalStateException("No trie log found for block " + blockNumber);
           }
@@ -189,14 +207,18 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   }
 
   private void logProgress(final long blockNumber, final long startBlock, final long endBlock) {
-    final long totalBlocks = endBlock - startBlock;
     LogUtil.throttledLog(
         () -> {
-          long progressPercent =
-              totalBlocks > 0 ? ((blockNumber - startBlock) * 100) / totalBlocks : 100;
-          LOG.info(
-              "Bonsai Archive migration progress: {}% (block {}/{})",
-              progressPercent, blockNumber, endBlock);
+          long progressPercent = endBlock > 0 ? (blockNumber * 100) / endBlock : 100;
+          if (startBlock > 0) {
+            LOG.info(
+                "Bonsai Archive migration progress: {}% (block {}/{}, resumed from block {})",
+                progressPercent, blockNumber, endBlock, startBlock);
+          } else {
+            LOG.info(
+                "Bonsai Archive migration progress: {}% (block {}/{})",
+                progressPercent, blockNumber, endBlock);
+          }
         },
         shouldLogProgress,
         LOG_INTERVAL_SECONDS);
@@ -207,21 +229,31 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     final Duration migrationDuration = Duration.between(migrationStartTime, Instant.now());
     final String formattedDuration =
         DurationFormatUtils.formatDurationWords(migrationDuration.toMillis(), true, true);
-    LOG.info(
-        "Bonsai Archive migration completed. Processed {} blocks in {}.",
-        endBlock - startBlock + 1,
-        formattedDuration);
+    if (startBlock > 0) {
+      LOG.info(
+          "Bonsai Archive migration completed. Processed blocks {}-{} ({} blocks) in {}.",
+          startBlock,
+          endBlock,
+          endBlock - startBlock + 1,
+          formattedDuration);
+    } else {
+      LOG.info(
+          "Bonsai Archive migration completed. Processed {} blocks in {}.",
+          endBlock - startBlock + 1,
+          formattedDuration);
+    }
   }
 
-  private void processBlock(
+  private long processBlock(
       final TrieLog trieLog, final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
-    processAccountChanges(trieLog, blockNumber, tx);
-    processStorageChanges(trieLog, blockNumber, tx);
+    return processAccountChanges(trieLog, blockNumber, tx)
+        + processStorageChanges(trieLog, blockNumber, tx);
   }
 
-  private void processAccountChanges(
+  private long processAccountChanges(
       final TrieLog trieLog, final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
     final BonsaiContext context = new BonsaiContext(blockNumber);
+    final long[] count = {0};
     trieLog
         .getAccountChanges()
         .forEach(
@@ -233,12 +265,15 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
               } else {
                 archiveStrategy.removeFlatAccount(context, tx, address.addressHash());
               }
+              count[0]++;
             });
+    return count[0];
   }
 
-  private void processStorageChanges(
+  private long processStorageChanges(
       final TrieLog trieLog, final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
     final BonsaiContext context = new BonsaiContext(blockNumber);
+    final long[] count = {0};
     trieLog
         .getStorageChanges()
         .forEach(
@@ -256,7 +291,9 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
                         archiveStrategy.removeFlatAccountStorageValueByStorageSlotHash(
                             context, tx, address.addressHash(), slotKey.getSlotHash());
                       }
+                      count[0]++;
                     }));
+    return count[0];
   }
 
   private void saveProgress(final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
