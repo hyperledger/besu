@@ -169,7 +169,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     final Bytes contractCode =
         frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
-
     // Oversized contracts must fail without charging code deposit gas or state gas.
     // We must check this first.
     final Optional<ExceptionalHaltReason> firstValidationFailure =
