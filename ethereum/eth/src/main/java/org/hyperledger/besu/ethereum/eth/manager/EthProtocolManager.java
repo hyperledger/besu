@@ -317,11 +317,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final FramingException e) {
       LOG.atDebug()
-          .setMessage(
-              "Failed to decompress message with code {} (BREACH_OF_PROTOCOL), disconnecting: {}, {}")
+          .setMessage("Disconnecting peer {} due to decompression failure for message code {}")
+          .addArgument(ethPeer::getLoggableId)
           .addArgument(code)
-          .addArgument(ethPeer::toString)
-          .addArgument(e::toString)
+          .setCause(e)
           .log();
 
       ethPeer.disconnect(

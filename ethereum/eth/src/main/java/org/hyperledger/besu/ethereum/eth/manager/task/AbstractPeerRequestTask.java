@@ -114,10 +114,12 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           });
     } catch (final FramingException e) {
       // Peer sent us data that failed to decompress - disconnect
-      LOG.debug(
-          "Disconnecting with BREACH_OF_PROTOCOL due to decompression failure: {}",
-          peer.getLoggableId(),
-          e);
+      LOG.atDebug()
+          .setMessage("Disconnecting peer {} due to decompression failure for message code {}")
+          .addArgument(peer::getLoggableId)
+          .addArgument(message.getCode())
+          .setCause(e)
+          .log();
       peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
       promise.completeExceptionally(new PeerBreachedProtocolException());
     } catch (final RLPException e) {

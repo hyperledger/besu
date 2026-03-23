@@ -23,7 +23,7 @@ public final class RawMessage extends AbstractMessageData {
   private static final SnappyCompressor compressor = new SnappyCompressor();
 
   private final int code;
-  private byte[] compressedData;
+  private volatile byte[] compressedData;
   private volatile boolean decompressed;
   private volatile Bytes decompressedData;
 
