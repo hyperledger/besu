@@ -106,8 +106,10 @@ public class SnapProtocolManager implements ProtocolManager {
 
     final EthMessage ethMessage = new EthMessage(ethPeer, message.getData());
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug("Unsolicited message {} received from, disconnecting: {}", code, ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED);
+      LOG.debug(
+          "Dropping unsolicited snap message {} from peer {} - likely a late response after timeout",
+          code,
+          ethPeer);
       return;
     }
 
