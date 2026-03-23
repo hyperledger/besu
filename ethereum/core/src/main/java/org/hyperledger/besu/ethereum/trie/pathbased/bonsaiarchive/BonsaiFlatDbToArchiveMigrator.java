@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -61,8 +62,11 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private final ScheduledExecutorService executorService;
   private final BonsaiArchiveFlatDbStrategy archiveStrategy;
   private final AtomicLong migratedBlockNumber = new AtomicLong(0);
+  private final AtomicLong lastBlockWrites = new AtomicLong(0);
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
   protected final AtomicBoolean migrationRunning = new AtomicBoolean(false);
+
+  private final Counter writesCounter;
 
   /**
    * Creates a new BonsaiFlatDbToArchiveMigrator.
@@ -91,6 +95,16 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
         "bonsai_archive_migration_block",
         "The current block the Bonsai archive migration has reached",
         migratedBlockNumber::get);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.BLOCKCHAIN,
+        "bonsai_archive_migration_last_block_writes",
+        "Number of archive writes produced by the last block processed during migration",
+        lastBlockWrites::get);
+    this.writesCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "bonsai_archive_migration_writes_total",
+            "Total number of archive key-value writes performed by the Bonsai archive migration");
   }
 
   /**
@@ -135,7 +149,9 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
         final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
         try {
           if (maybeTrieLog.isPresent()) {
-            processBlock(maybeTrieLog.get(), blockNumber, tx);
+            final long blockWrites = processBlock(maybeTrieLog.get(), blockNumber, tx);
+            lastBlockWrites.set(blockWrites);
+            writesCounter.inc(blockWrites);
             migratedBlockNumber.incrementAndGet();
           } else if (blockNumber > 0) {
             throw new IllegalStateException("No trie log found for block " + blockNumber);
@@ -228,15 +244,16 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     }
   }
 
-  private void processBlock(
+  private long processBlock(
       final TrieLog trieLog, final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
-    processAccountChanges(trieLog, blockNumber, tx);
-    processStorageChanges(trieLog, blockNumber, tx);
+    return processAccountChanges(trieLog, blockNumber, tx)
+        + processStorageChanges(trieLog, blockNumber, tx);
   }
 
-  private void processAccountChanges(
+  private long processAccountChanges(
       final TrieLog trieLog, final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
     final BonsaiContext context = new BonsaiContext(blockNumber);
+    final long[] count = {0};
     trieLog
         .getAccountChanges()
         .forEach(
@@ -248,12 +265,15 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
               } else {
                 archiveStrategy.removeFlatAccount(context, tx, address.addressHash());
               }
+              count[0]++;
             });
+    return count[0];
   }
 
-  private void processStorageChanges(
+  private long processStorageChanges(
       final TrieLog trieLog, final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
     final BonsaiContext context = new BonsaiContext(blockNumber);
+    final long[] count = {0};
     trieLog
         .getStorageChanges()
         .forEach(
@@ -271,7 +291,9 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
                         archiveStrategy.removeFlatAccountStorageValueByStorageSlotHash(
                             context, tx, address.addressHash(), slotKey.getSlotHash());
                       }
+                      count[0]++;
                     }));
+    return count[0];
   }
 
   private void saveProgress(final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
