@@ -365,8 +365,9 @@ public class BesuNodeFactory {
     rpcConfig.addRpcApi("ADMIN,TXPOOL");
     if (fixedPort) {
       rpcConfig.setPort(
-          Math.abs(name.hashCode() % 60000)
-              + 1024); // Generate a consistent port for p2p based on node name
+          Math.abs(name.hashCode() % 8000)
+              + 20000); // Generate a consistent port based on node name, in range 20000-27999
+      // (avoids Linux ephemeral port range 32768-60999 and privileged ports)
     }
 
     BesuNodeConfigurationBuilder builder =
@@ -383,10 +384,9 @@ public class BesuNodeFactory {
             .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
-          Math.abs(name.hashCode() % 60000)
-              + 1024
-              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
-      // clashing with RPC port or other nodes with a similar name)
+          Math.abs(name.hashCode() % 8000)
+              + 20000
+              + 500); // P2P port offset by 500 from RPC to avoid clashing
     }
     return create(builder.build());
   }
@@ -398,8 +398,9 @@ public class BesuNodeFactory {
     rpcConfig.addRpcApi("ADMIN,TXPOOL");
     if (fixedPort) {
       rpcConfig.setPort(
-          Math.abs(name.hashCode() % 60000)
-              + 1024); // Generate a consistent port for p2p based on node name
+          Math.abs(name.hashCode() % 8000)
+              + 20000); // Generate a consistent port based on node name, in range 20000-27999
+      // (avoids Linux ephemeral port range 32768-60999 and privileged ports)
     }
 
     BesuNodeConfigurationBuilder builder =
@@ -418,10 +419,9 @@ public class BesuNodeFactory {
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
       builder.p2pPort(
-          Math.abs(name.hashCode() % 60000)
-              + 1024
-              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
-      // clashing with RPC port or other nodes with a similar name)
+          Math.abs(name.hashCode() % 8000)
+              + 20000
+              + 500); // P2P port offset by 500 from RPC to avoid clashing
     }
     return create(builder.build());
   }
