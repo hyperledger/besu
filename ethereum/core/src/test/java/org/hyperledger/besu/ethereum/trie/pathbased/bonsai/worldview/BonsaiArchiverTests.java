@@ -671,6 +671,8 @@ public class BonsaiArchiverTests {
     final BonsaiReferenceTestWorldStateStorage testWorldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
+    // Simulate post-migration state: archive migration has completed, mode is ARCHIVE
+    bonsaiWorldStateKeyValueStorage.upgradeToArchiveFlatDbMode();
     assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
 
     // Assume we've archived up to block 150L i.e. we're up to date with the chain head
@@ -911,6 +913,8 @@ public class BonsaiArchiverTests {
     final BonsaiReferenceTestWorldStateStorage testWorldStateStorage =
         new BonsaiReferenceTestWorldStateStorage(bonsaiWorldStateKeyValueStorage, preImageProxy);
 
+    // Simulate post-migration state: archive migration has completed, mode is ARCHIVE
+    bonsaiWorldStateKeyValueStorage.upgradeToArchiveFlatDbMode();
     assertThat(testWorldStateStorage.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
 
     // Assume we've archived up to block 150L i.e. we're up to date with the chain head
