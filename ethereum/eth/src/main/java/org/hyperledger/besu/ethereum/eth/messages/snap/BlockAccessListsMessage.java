@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
-import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
+import org.hyperledger.besu.ethereum.eth.messages.BlockAccessListsMessageData;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,13 +49,8 @@ public final class BlockAccessListsMessage extends AbstractSnapMessageData {
 
   public static BlockAccessListsMessage create(
       final Optional<BigInteger> requestId, final Iterable<BlockAccessList> blockAccessLists) {
-    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    requestId.ifPresent(tmp::writeBigIntegerScalar);
-    blockAccessLists.forEach(
-        blockAccessList -> BlockAccessListEncoder.encode(blockAccessList, tmp));
-    tmp.endList();
-    return new BlockAccessListsMessage(tmp.encoded());
+    return new BlockAccessListsMessage(
+        BlockAccessListsMessageData.encode(requestId, blockAccessLists));
   }
 
   /**
@@ -85,17 +75,6 @@ public final class BlockAccessListsMessage extends AbstractSnapMessageData {
   }
 
   public List<BlockAccessList> blockAccessLists(final boolean withRequestId) {
-    final RLPInput input = new BytesValueRLPInput(data, false);
-    final List<BlockAccessList> blockAccessLists = new ArrayList<>();
-    input.enterList();
-    if (withRequestId) {
-      input.skipNext();
-    }
-
-    while (!input.isEndOfCurrentList()) {
-      blockAccessLists.add(BlockAccessListDecoder.decode(input.readAsRlp()));
-    }
-    input.leaveList();
-    return blockAccessLists;
+    return BlockAccessListsMessageData.decode(data, withRequestId);
   }
 }
