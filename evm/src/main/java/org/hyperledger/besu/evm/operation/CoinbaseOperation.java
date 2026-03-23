@@ -22,18 +22,21 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Coinbase operation. */
 public class CoinbaseOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2;
+
   /**
    * Instantiates a new Coinbase operation.
    *
    * @param gasCalculator the gas calculator
    */
   public CoinbaseOperation(final GasCalculator gasCalculator) {
-    super(0x41, "COINBASE", 0, 1, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x41, "COINBASE", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final Address coinbase = frame.getMiningBeneficiary();
     frame.pushStackItem(coinbase.getBytes());
 

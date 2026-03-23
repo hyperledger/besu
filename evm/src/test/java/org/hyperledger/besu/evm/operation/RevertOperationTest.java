@@ -47,7 +47,7 @@ class RevertOperationTest {
     when(messageFrame.readMemory(0, 14)).thenReturn(revertReasonBytes);
     when(messageFrame.memoryWordSize()).thenReturn(0);
     when(messageFrame.calculateMemoryExpansion(anyLong(), anyLong())).thenReturn(14L);
-    when(messageFrame.getRemainingGas()).thenReturn(10_000L);
+    when(messageFrame.decrementRemainingGas(anyLong())).thenReturn(9_997L);
   }
 
   @Test

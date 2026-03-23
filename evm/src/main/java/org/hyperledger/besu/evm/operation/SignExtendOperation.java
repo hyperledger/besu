@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -25,7 +26,12 @@ import org.apache.tuweni.bytes.MutableBytes32;
 /** The Sign extend operation. */
 public class SignExtendOperation extends AbstractFixedCostOperation {
 
-  private static final OperationResult signExtendSuccess = new OperationResult(5, null);
+  private static final long GAS_COST = 5;
+
+  private static final OperationResult signExtendSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Sign extend operation.
@@ -33,7 +39,7 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SignExtendOperation(final GasCalculator gasCalculator) {
-    super(0x0B, "SIGNEXTEND", 2, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x0B, "SIGNEXTEND", 2, 1, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -49,6 +55,9 @@ public class SignExtendOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes value0 = frame.popStackItem().trimLeadingZeros();
     final Bytes value1 = Bytes32.leftPad(frame.popStackItem());
 

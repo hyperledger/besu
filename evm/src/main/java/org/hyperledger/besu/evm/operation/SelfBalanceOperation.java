@@ -25,18 +25,21 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Self balance operation. */
 public class SelfBalanceOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 5;
+
   /**
    * Instantiates a new Self balance operation.
    *
    * @param gasCalculator the gas calculator
    */
   public SelfBalanceOperation(final GasCalculator gasCalculator) {
-    super(0x47, "SELFBALANCE", 0, 1, gasCalculator, gasCalculator.getLowTierGasCost());
+    super(0x47, "SELFBALANCE", 0, 1, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
+    frame.decrementRemainingGas(GAS_COST);
     final Address accountAddress = frame.getRecipientAddress();
     final Account account = getAccount(accountAddress, frame);
     frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());

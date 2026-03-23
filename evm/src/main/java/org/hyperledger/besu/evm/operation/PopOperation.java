@@ -15,14 +15,20 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 /** The Pop operation. */
 public class PopOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 2L;
+
   /** The Pop operation success result. */
-  static final OperationResult popSuccess = new OperationResult(2, null);
+  static final OperationResult popSuccess = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /**
    * Instantiates a new Pop operation.
@@ -30,7 +36,7 @@ public class PopOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public PopOperation(final GasCalculator gasCalculator) {
-    super(0x50, "POP", 1, 0, gasCalculator, gasCalculator.getBaseTierGasCost());
+    super(0x50, "POP", 1, 0, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -46,6 +52,9 @@ public class PopOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     frame.popStackItem();
     return popSuccess;
   }

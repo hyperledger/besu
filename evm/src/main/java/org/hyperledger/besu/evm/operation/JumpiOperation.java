@@ -24,10 +24,14 @@ import org.apache.tuweni.bytes.Bytes;
 /** The JUMPI operation. */
 public class JumpiOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 10L;
+
   private static final OperationResult invalidJumpResponse =
-      new Operation.OperationResult(10L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  private static final OperationResult jumpiResponse = new OperationResult(10L, null, 0);
-  private static final OperationResult nojumpResponse = new OperationResult(10L, null);
+      new Operation.OperationResult(GAS_COST, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+  private static final OperationResult jumpiResponse = new OperationResult(GAS_COST, null, 0);
+  private static final OperationResult nojumpResponse = new OperationResult(GAS_COST, null);
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   private static final JumpService jumpService = new JumpService();
 
@@ -37,7 +41,7 @@ public class JumpiOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public JumpiOperation(final GasCalculator gasCalculator) {
-    super(0x57, "JUMPI", 2, 0, gasCalculator, gasCalculator.getHighTierGasCost());
+    super(0x57, "JUMPI", 2, 0, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -52,6 +56,9 @@ public class JumpiOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     final Bytes dest = frame.popStackItem().trimLeadingZeros();
     final Bytes condition = frame.popStackItem().trimLeadingZeros();
 

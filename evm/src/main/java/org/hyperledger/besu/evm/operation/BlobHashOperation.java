@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -47,6 +48,10 @@ public class BlobHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    final long cost = 3;
+    if (frame.decrementRemainingGas(cost) < 0) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
     Bytes versionedHashIndexParam = frame.popStackItem();
     if (frame.getVersionedHashes().isPresent()) {
       List<VersionedHash> versionedHashes = frame.getVersionedHashes().get();
@@ -54,7 +59,7 @@ public class BlobHashOperation extends AbstractOperation {
       if (trimmedIndex.size() > 4) {
         // won't fit in an int
         frame.pushStackItem(Bytes.EMPTY);
-        return new OperationResult(3, null);
+        return new OperationResult(cost, null);
       }
       int versionedHashIndex = trimmedIndex.toInt();
       if (versionedHashIndex < versionedHashes.size() && versionedHashIndex >= 0) {
@@ -66,6 +71,6 @@ public class BlobHashOperation extends AbstractOperation {
     } else {
       frame.pushStackItem(Bytes.EMPTY);
     }
-    return new OperationResult(3, null);
+    return new OperationResult(cost, null);
   }
 }

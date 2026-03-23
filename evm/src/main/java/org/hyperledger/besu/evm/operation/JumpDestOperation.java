@@ -15,14 +15,20 @@
 package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 /** The Jump dest operation. */
 public class JumpDestOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 1L;
+
   /** constant for a successful jumpdest * */
-  public static final OperationResult JUMPDEST_SUCCESS = new OperationResult(1L, null);
+  public static final OperationResult JUMPDEST_SUCCESS = new OperationResult(GAS_COST, null);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0x5B;
@@ -33,12 +39,25 @@ public class JumpDestOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public JumpDestOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "JUMPDEST", 0, 0, gasCalculator, gasCalculator.getJumpDestOperationGasCost());
+    super(OPCODE, "JUMPDEST", 0, 0, gasCalculator, GAS_COST);
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
       final MessageFrame frame, final EVM evm) {
     return successResponse;
+  }
+
+  /**
+   * Performs JumpDest operation with gas self-deduction.
+   *
+   * @param frame the frame
+   * @return the operation result
+   */
+  public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
+    return JUMPDEST_SUCCESS;
   }
 }

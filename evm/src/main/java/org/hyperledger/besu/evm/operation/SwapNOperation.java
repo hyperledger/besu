@@ -34,19 +34,24 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class SwapNOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 3L;
+
   /** The SWAPN opcode value. */
   public static final int OPCODE = 0xe7;
 
   /** Pre-computed success result with pcIncrement = 2. */
-  static final OperationResult SWAPN_SUCCESS = new OperationResult(3, null, 2);
+  static final OperationResult SWAPN_SUCCESS = new OperationResult(GAS_COST, null, 2);
 
   /** Pre-computed invalid immediate result. */
   static final OperationResult INVALID_IMMEDIATE =
-      new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION, 2);
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INVALID_OPERATION, 2);
 
   /** Pre-computed underflow result with pcIncrement = 2. */
   static final OperationResult UNDERFLOW_RESPONSE =
-      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS, 2);
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS, 2);
+
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS, 2);
 
   /**
    * Instantiates a new SWAPN operation.
@@ -54,7 +59,7 @@ public class SwapNOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public SwapNOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "SWAPN", 0, 0, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(OPCODE, "SWAPN", 0, 0, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -72,6 +77,9 @@ public class SwapNOperation extends AbstractFixedCostOperation {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final byte[] code, final int pc) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     // Get immediate byte, treating end-of-code as 0
     final int imm = (pc + 1 >= code.length) ? 0 : code[pc + 1] & 0xFF;
 

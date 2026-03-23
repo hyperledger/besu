@@ -22,9 +22,13 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Jump operation. */
 public class JumpOperation extends AbstractFixedCostOperation {
 
+  private static final long GAS_COST = 8L;
+
   private static final Operation.OperationResult invalidJumpResponse =
-      new Operation.OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-  private static final OperationResult jumpResponse = new OperationResult(8L, null, 0);
+      new Operation.OperationResult(GAS_COST, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+  private static final OperationResult jumpResponse = new OperationResult(GAS_COST, null, 0);
+  private static final OperationResult outOfGasResult =
+      new OperationResult(GAS_COST, ExceptionalHaltReason.INSUFFICIENT_GAS);
 
   private static final JumpService jumpService = new JumpService();
 
@@ -34,7 +38,7 @@ public class JumpOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public JumpOperation(final GasCalculator gasCalculator) {
-    super(0x56, "JUMP", 2, 0, gasCalculator, gasCalculator.getMidTierGasCost());
+    super(0x56, "JUMP", 2, 0, gasCalculator, GAS_COST);
   }
 
   @Override
@@ -50,6 +54,9 @@ public class JumpOperation extends AbstractFixedCostOperation {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.decrementRemainingGas(GAS_COST) < 0) {
+      return outOfGasResult;
+    }
     return jumpService.performJump(
         frame, frame.popStackItem().trimLeadingZeros(), jumpResponse, invalidJumpResponse);
   }
