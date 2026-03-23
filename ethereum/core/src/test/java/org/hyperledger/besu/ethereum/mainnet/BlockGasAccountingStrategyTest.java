@@ -51,7 +51,8 @@ public class BlockGasAccountingStrategyTest {
     when(result.getEstimateGasUsedByTransaction()).thenReturn(PRE_REFUND_GAS);
 
     // Frontier strategy: gasLimit - gasRemaining = 100,000 - 30,000 = 70,000
-    final long blockGas = BlockGasAccountingStrategy.FRONTIER.calculateBlockGas(tx, result);
+    final long blockGas =
+        BlockGasAccountingStrategy.FRONTIER.calculateTransactionRegularGas(tx, result);
 
     assertThat(blockGas).isEqualTo(PRE_REFUND_GAS);
   }
@@ -68,7 +69,8 @@ public class BlockGasAccountingStrategyTest {
     when(result.getStateGasUsed()).thenReturn(0L);
 
     // Amsterdam strategy: estimateGasUsedByTransaction - stateGasUsed = 70,000 - 0 = 70,000
-    final long blockGas = BlockGasAccountingStrategy.AMSTERDAM.calculateBlockGas(tx, result);
+    final long blockGas =
+        BlockGasAccountingStrategy.AMSTERDAM.calculateTransactionRegularGas(tx, result);
 
     assertThat(blockGas).isEqualTo(PRE_REFUND_GAS);
   }
@@ -92,9 +94,11 @@ public class BlockGasAccountingStrategyTest {
     when(result.getStateGasUsed()).thenReturn(0L);
 
     // Frontier: 100,000 - 40,000 = 60,000 (benefits from refund)
-    final long frontierGas = BlockGasAccountingStrategy.FRONTIER.calculateBlockGas(tx, result);
+    final long frontierGas =
+        BlockGasAccountingStrategy.FRONTIER.calculateTransactionRegularGas(tx, result);
     // Amsterdam: 70,000 (no refund benefit for block accounting)
-    final long amsterdamGas = BlockGasAccountingStrategy.AMSTERDAM.calculateBlockGas(tx, result);
+    final long amsterdamGas =
+        BlockGasAccountingStrategy.AMSTERDAM.calculateTransactionRegularGas(tx, result);
 
     assertThat(frontierGas).isEqualTo(60_000L);
     assertThat(amsterdamGas).isEqualTo(70_000L);
@@ -116,8 +120,10 @@ public class BlockGasAccountingStrategyTest {
     when(result.getEstimateGasUsedByTransaction()).thenReturn(gasUsed);
     when(result.getStateGasUsed()).thenReturn(0L);
 
-    final long frontierGas = BlockGasAccountingStrategy.FRONTIER.calculateBlockGas(tx, result);
-    final long amsterdamGas = BlockGasAccountingStrategy.AMSTERDAM.calculateBlockGas(tx, result);
+    final long frontierGas =
+        BlockGasAccountingStrategy.FRONTIER.calculateTransactionRegularGas(tx, result);
+    final long amsterdamGas =
+        BlockGasAccountingStrategy.AMSTERDAM.calculateTransactionRegularGas(tx, result);
 
     assertThat(frontierGas).isEqualTo(gasUsed);
     assertThat(amsterdamGas).isEqualTo(gasUsed);
@@ -135,7 +141,8 @@ public class BlockGasAccountingStrategyTest {
     when(result.getStateGasUsed()).thenReturn(10_000L);
 
     // Amsterdam block gas = estimateGas - stateGas = 70,000 - 10,000 = 60,000
-    final long blockGas = BlockGasAccountingStrategy.AMSTERDAM.calculateBlockGas(tx, result);
+    final long blockGas =
+        BlockGasAccountingStrategy.AMSTERDAM.calculateTransactionRegularGas(tx, result);
     assertThat(blockGas).isEqualTo(60_000L);
   }
 

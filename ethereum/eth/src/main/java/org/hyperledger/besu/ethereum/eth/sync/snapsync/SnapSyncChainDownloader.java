@@ -66,6 +66,7 @@ public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
   public static final int SMALL_DELAY_MILLISECONDS = 100;
+  static final int NO_PEER_RETRY_DELAY_MILLISECONDS = 5_000;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolSchedule protocolSchedule;
@@ -481,6 +482,21 @@ public class SnapSyncChainDownloader
       return;
     }
 
+    // Guard against starting an expensive 160-concurrent-future pipeline with no peers.
+    // With no peers every future immediately hits NO_PEER_AVAILABLE, spins for 60 s, and
+    // the pipeline restarts every 60 s accumulating scheduler/thread overhead indefinitely.
+    if (ethContext.getEthPeers().peerCount() == 0) {
+      LOG.debug(
+          "No peers available, deferring chain sync pipeline start for {} ms",
+          NO_PEER_RETRY_DELAY_MILLISECONDS);
+      ethContext
+          .getScheduler()
+          .scheduleFutureTask(
+              () -> attemptDownload(overallResult),
+              Duration.ofMillis(NO_PEER_RETRY_DELAY_MILLISECONDS));
+      return;
+    }
+
     performSingleDownloadCycle()
         .whenComplete(
             (downloadResult, error) -> {
@@ -531,7 +547,7 @@ public class SnapSyncChainDownloader
     chainSyncStateStorage.storeState(chainSyncState.get());
 
     if (shouldRetry(error)) {
-      LOG.warn("Chain sync encountered error, will retry from saved state", error);
+      LOG.debug("Chain sync encountered error, will retry from saved state", error);
 
       // Schedule next attempt without recursion
       // Use a small delay to avoid tight retry loops

@@ -434,6 +434,11 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
+  public synchronized Status getStatus() {
+    return prioritizedTransactions.getStatus();
+  }
+
+  @Override
   public Optional<Transaction> restoreBlob(final Transaction transaction) {
     return prioritizedTransactions.getBlobCache().restoreBlob(transaction);
   }

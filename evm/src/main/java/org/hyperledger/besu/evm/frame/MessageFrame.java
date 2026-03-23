@@ -17,9 +17,7 @@ package org.hyperledger.besu.evm.frame;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
-import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
-import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -33,7 +31,6 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
@@ -44,7 +41,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -924,31 +920,6 @@ public class MessageFrame {
   }
 
   /**
-   * Accumulates regular gas burned by a CREATE child frame that halted before executing code
-   * (address collision). NOT undone on revert — excluded from block gas accounting but still
-   * charged for fee purposes.
-   *
-   * @param amount the collision gas amount to accumulate
-   */
-  public void accumulateRegularGasCollisionBurned(final long amount) {
-    txValues.regularGasCollisionBurned()[0] += amount;
-  }
-
-  /**
-   * Returns accumulated regular gas burned by pre-execution CREATE collision halts.
-   *
-   * @return accumulated collision gas burned
-   */
-  public long getRegularGasCollisionBurned() {
-    return txValues.regularGasCollisionBurned()[0];
-  }
-
-  /** Clears gasRemaining. State gas reservoir is handled by undo on revert for child frames. */
-  public void clearAllGas() {
-    this.gasRemaining = 0L;
-  }
-
-  /**
    * Add recipient to the self-destruct set if not already present.
    *
    * @param address The recipient to self-destruct
@@ -1784,26 +1755,16 @@ public class MessageFrame {
         HashSet<Address> warmedUpAddresses = new HashSet<>();
         warmedUpAddresses.add(contract);
         newTxValues =
-            new TxValues(
+            TxValues.forTransaction(
                 blockHashLookup,
                 maxStackSize,
                 UndoSet.of(warmedUpAddresses),
-                UndoTable.of(HashBasedTable.create()),
                 originator,
                 gasPrice,
                 blobGasPrice,
                 blockValues,
-                new ArrayDeque<>(),
                 miningBeneficiary,
-                versionedHashes,
-                UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new HashSet<>()),
-                UndoSet.of(new HashSet<>()),
-                new UndoScalar<>(0L),
-                new UndoScalar<>(0L),
-                new UndoScalar<>(0L),
-                new long[] {0L},
-                new long[] {0L});
+                versionedHashes);
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

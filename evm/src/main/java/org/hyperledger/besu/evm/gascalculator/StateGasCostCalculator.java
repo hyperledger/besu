@@ -27,10 +27,10 @@ import org.apache.tuweni.units.bigints.UInt256;
  * Strategy interface for EIP-8037 state creation gas cost calculations.
  *
  * <p>EIP-8037 introduces multidimensional gas metering, splitting gas into regular gas and state
- * gas. State-creation operations (CREATE, SSTORE 0-&gt;nonzero, CALL to new accounts, code
- * deposits, EIP-7702 delegations) get their costs split into a regular gas portion and a state gas
- * portion, where the state gas depends on a dynamic cost_per_state_byte (cpsb) derived from the
- * block gas limit.
+ * gas. State-creation operations (CREATE, SSTORE 0->nonzero, CALL to new accounts, code deposits,
+ * EIP-7702 delegations) get their costs split into a regular gas portion and a state gas portion,
+ * where the state gas depends on a dynamic cost_per_state_byte (cpsb) derived from the block gas
+ * limit.
  *
  * <p>Operations call the {@code charge*} methods to deduct state gas. The default (NONE)
  * implementation is a no-op; the EIP-8037 implementation performs the actual deduction.
@@ -79,7 +79,7 @@ public interface StateGasCostCalculator {
   long newAccountStateGas(long blockGasLimit);
 
   /**
-   * Returns the state gas for storage set 0-&gt;nonzero (32 * cpsb).
+   * Returns the state gas for storage set 0->nonzero (32 * cpsb).
    *
    * @param blockGasLimit the block gas limit
    * @return the state gas for storage set
@@ -124,6 +124,15 @@ public interface StateGasCostCalculator {
    * @return the maximum regular gas per transaction
    */
   long transactionRegularGasLimit();
+
+  /**
+   * Returns whether multidimensional gas metering (EIP-8037) is active.
+   *
+   * @return true when state gas metering is active
+   */
+  default boolean isActive() {
+    return false;
+  }
 
   // ---- Charge methods (strategy pattern for state gas deduction) ----
 
@@ -208,12 +217,19 @@ public interface StateGasCostCalculator {
   }
 
   /**
-   * Refunds state gas for SSTORE when reverting a storage set (0→X→0). Replenishes the state gas
-   * reservoir and decrements stateGasUsed.
+   * Refunds state gas for SSTORE when reverting a storage set (0→X→0). Only refunds when the new
+   * value is zero, the current value is nonzero, and the original value is zero.
    *
    * @param frame the message frame
+   * @param newValue the new storage value being written
+   * @param currentValue supplier for the current storage value
+   * @param originalValue supplier for the original storage value
    */
-  default void refundStorageSetStateGas(final MessageFrame frame) {}
+  default void refundStorageSetStateGas(
+      final MessageFrame frame,
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {}
 
   /**
    * Computes the intrinsic state gas for a transaction. This is the worst-case state gas charged

@@ -319,7 +319,6 @@ public abstract class AbstractIsolationTests {
                       .extraData(Bytes.fromHexString("deadbeef"))
                       .targetGasLimit(30_000_000L)
                       .minTransactionGasPrice(Wei.ONE)
-                      .minBlockOccupancyRatio(0d)
                       .coinbase(Address.ZERO)
                       .build())
               .build();

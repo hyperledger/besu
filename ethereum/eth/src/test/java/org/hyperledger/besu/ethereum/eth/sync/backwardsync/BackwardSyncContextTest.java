@@ -303,7 +303,7 @@ public class BackwardSyncContextTest {
         .untilAsserted(
             () -> {
               respondUntilFutureIsDone(future);
-              assertThat(future).isCompleted();
+              assertThat(future).isDone();
             });
 
     future.get();
@@ -337,10 +337,10 @@ public class BackwardSyncContextTest {
         .untilAsserted(
             () -> {
               respondUntilFutureIsDone(future);
-              assertThat(future).isCompleted();
+              assertThat(future).isDone();
             });
 
-    future.get(); // Should succeed since we waited for completion
+    future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 
