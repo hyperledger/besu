@@ -211,11 +211,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final PreprocessingFunction preprocessingBlockFunction) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     // EIP-7778: Track two separate cumulative gas values
-    // cumulativeBlockGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
+    // cumulativeRegularGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
     //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
     //   - Amsterdam+: pre-refund gas (prevents block gas limit circumvention via refunds)
     // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
-    long cumulativeBlockGasUsed = 0;
+    long cumulativeRegularGasUsed = 0;
     long cumulativeReceiptGasUsed = 0;
     long cumulativeStateGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -239,10 +239,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final StateRootCommitter stateRootCommitter =
-        blockProcessingMetrics.wrapStateRootCommitter(
-            protocolSpec
-                .getStateRootCommitterFactory()
-                .forBlock(protocolContext, blockHeader, blockAccessList));
+        protocolSpec
+            .getStateRootCommitterFactory()
+            .forBlock(protocolContext, blockHeader, blockAccessList)
+            .timed(blockProcessingMetrics.stateRootCalculationTimer());
 
     final Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
@@ -299,7 +299,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         if (!(transactionUpdater instanceof StackedUpdater<?, ?>)) {
           transactionUpdater = blockUpdater;
         }
-        if (!hasAvailableBlockBudget(blockHeader, transaction, cumulativeBlockGasUsed)) {
+        // EIP-8037: 2D-aware budget check — delegates to BlockGasAccountingStrategy so that
+        // block import uses the same headroom logic as block building
+        // (BlockSizeTransactionSelector).
+        if (!hasAvailableBlockBudget(
+            blockHeader,
+            transaction,
+            cumulativeRegularGasUsed,
+            cumulativeStateGasUsed,
+            protocolSpec.getBlockGasAccountingStrategy())) {
           return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
         }
 
@@ -342,10 +350,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
         // EIP-7778: Update both cumulative gas values
         // Block gas uses protocol-specific strategy (pre-refund for Amsterdam+)
-        cumulativeBlockGasUsed +=
+        cumulativeRegularGasUsed +=
             protocolSpec
                 .getBlockGasAccountingStrategy()
-                .calculateBlockGas(transaction, transactionProcessingResult);
+                .calculateTransactionRegularGas(transaction, transactionProcessingResult);
         // Receipt gas always uses standard post-refund calculation
         cumulativeReceiptGasUsed +=
             BlockGasAccountingStrategy.calculateReceiptGas(
@@ -542,7 +550,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
 
       // EIP-8037: gas_metered = max(cumulative_regular, cumulative_state)
-      final long gasMetered = Math.max(cumulativeBlockGasUsed, cumulativeStateGasUsed);
+      final long gasMetered = Math.max(cumulativeRegularGasUsed, cumulativeStateGasUsed);
 
       return new BlockProcessingResult(
           Optional.of(
@@ -580,14 +588,23 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   @SuppressWarnings(
       "java:S2629") // INFO level logging rarely disabled in this project per maintainer feedback
   protected boolean hasAvailableBlockBudget(
-      final BlockHeader blockHeader, final Transaction transaction, final long currentGasUsed) {
-    final long remainingGasBudget = blockHeader.getGasLimit() - currentGasUsed;
-    if (Long.compareUnsigned(transaction.getGasLimit(), remainingGasBudget) > 0) {
+      final BlockHeader blockHeader,
+      final Transaction transaction,
+      final long cumulativeRegularGasUsed,
+      final long cumulativeStateGasUsed,
+      final BlockGasAccountingStrategy strategy) {
+    if (!strategy.hasBlockCapacity(
+        transaction.getGasLimit(),
+        cumulativeRegularGasUsed,
+        cumulativeStateGasUsed,
+        blockHeader.getGasLimit())) {
       LOG.info(
           "Block processing error: transaction gas limit {} exceeds available block budget"
-              + " remaining {}. Block {} Transaction {}",
+              + " (regular={}, state={}, limit={}). Block {} Transaction {}",
           transaction.getGasLimit(),
-          remainingGasBudget,
+          cumulativeRegularGasUsed,
+          cumulativeStateGasUsed,
+          blockHeader.getGasLimit(),
           blockHeader.getHash().getBytes().toHexString(),
           transaction.getHash().getBytes().toHexString());
       return false;

@@ -30,13 +30,13 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 public interface BlockGasAccountingStrategy {
 
   /**
-   * Calculate the gas to add to the block's cumulative gas used for a transaction.
+   * Calculate a transaction's regular gas contribution to the block's cumulative gas used.
    *
    * @param transaction the transaction being processed
    * @param result the transaction processing result
-   * @return the gas amount to add to the block's cumulative gas used
+   * @return the regular gas used by the transaction for block accounting
    */
-  long calculateBlockGas(Transaction transaction, TransactionProcessingResult result);
+  long calculateTransactionRegularGas(Transaction transaction, TransactionProcessingResult result);
 
   /**
    * Check whether the block has capacity for a transaction with the given gas limit. For 1D gas
@@ -88,7 +88,7 @@ public interface BlockGasAccountingStrategy {
   BlockGasAccountingStrategy AMSTERDAM =
       new BlockGasAccountingStrategy() {
         @Override
-        public long calculateBlockGas(
+        public long calculateTransactionRegularGas(
             final Transaction transaction, final TransactionProcessingResult result) {
           return result.getEstimateGasUsedByTransaction() - result.getStateGasUsed();
         }

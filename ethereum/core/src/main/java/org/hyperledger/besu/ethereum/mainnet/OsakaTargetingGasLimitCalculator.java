@@ -39,6 +39,7 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
 
   private final long transactionGasLimitCap;
   private final long transactionBlobGasLimitCap;
+  private final long blockBuilderBlobGasLimit;
 
   public OsakaTargetingGasLimitCalculator(
       final long londonForkBlock,
@@ -46,9 +47,17 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final GasCalculator gasCalculator,
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
-      final OptionalInt maxBlobsPerTransaction) {
-    this(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock,
-        maxBlobsPerTransaction, DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
+      final OptionalInt maxBlobsPerTransaction,
+      final OptionalInt userMaxBlobsPerBlock) {
+    this(
+        londonForkBlock,
+        feeMarket,
+        gasCalculator,
+        maxBlobsPerBlock,
+        targetBlobsPerBlock,
+        maxBlobsPerTransaction,
+        userMaxBlobsPerBlock,
+        DEFAULT_TRANSACTION_GAS_LIMIT_CAP_OSAKA);
   }
 
   public OsakaTargetingGasLimitCalculator(
@@ -58,8 +67,10 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       final int maxBlobsPerBlock,
       final int targetBlobsPerBlock,
       final OptionalInt maxBlobsPerTransaction,
+      final OptionalInt userMaxBlobsPerBlock,
       final long transactionGasLimitCap) {
     super(londonForkBlock, feeMarket, gasCalculator, maxBlobsPerBlock, targetBlobsPerBlock);
+    final long blobGasPerBlob = gasCalculator.getBlobGasPerBlob();
     int effectiveMaxBlobsPerTx = maxBlobsPerTransaction.orElse(DEFAULT_MAX_BLOBS_PER_TRANSACTION);
     if (effectiveMaxBlobsPerTx > maxBlobsPerBlock) {
       LOG.warn(
@@ -70,7 +81,13 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
       effectiveMaxBlobsPerTx = maxBlobsPerBlock;
     }
     this.transactionGasLimitCap = transactionGasLimitCap;
-    this.transactionBlobGasLimitCap = gasCalculator.getBlobGasPerBlob() * effectiveMaxBlobsPerTx;
+    this.transactionBlobGasLimitCap = blobGasPerBlob * effectiveMaxBlobsPerTx;
+    if (userMaxBlobsPerBlock.isPresent()) {
+      final int effectiveMax = Math.min(userMaxBlobsPerBlock.getAsInt(), maxBlobsPerBlock);
+      this.blockBuilderBlobGasLimit = blobGasPerBlob * effectiveMax;
+    } else {
+      this.blockBuilderBlobGasLimit = getMaxBlobGasPerBlock();
+    }
   }
 
   @Override
@@ -111,5 +128,10 @@ public class OsakaTargetingGasLimitCalculator extends CancunTargetingGasLimitCal
   @Override
   public long transactionBlobGasLimitCap() {
     return transactionBlobGasLimitCap;
+  }
+
+  @Override
+  public long blockBuilderBlobGasLimit() {
+    return blockBuilderBlobGasLimit;
   }
 }

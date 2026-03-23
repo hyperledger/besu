@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection.selectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_TOO_LARGE_FOR_REMAINING_GAS;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
@@ -45,7 +44,6 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,9 +52,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class BlockSizeTransactionSelectorTest {
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair KEYS = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  private static final KeyPair KEYS = SIGNATURE_ALGORITHM.generateKeyPair();
   private static final long TRANSFER_GAS_LIMIT = 21_000L;
   private static final long BLOCK_GAS_LIMIT = 1_000_000L;
 
@@ -192,41 +190,11 @@ class BlockSizeTransactionSelectorTest {
   }
 
   @Test
-  void identifyWhenBlockOccupancyIsAboveThreshold() {
-    selectorsStateManager.blockSelectionStarted();
-
-    // create 2 txs with a gas limit just above the min block occupancy ratio
-    // so the first is accepted while the second not
-    final long justAboveOccupancyRatioGasLimit =
-        (long) (BLOCK_GAS_LIMIT * miningConfiguration.getMinBlockOccupancyRatio()) + 100;
-    final var tx1 = createPendingTransaction(justAboveOccupancyRatioGasLimit);
-
-    final var txEvaluationContext1 =
-        new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx1, null, null, null, NEVER_CANCELLED);
-    evaluateAndAssertSelected(txEvaluationContext1, remainingGas(0));
-
-    assertThat(selector.getWorkingState().regularGas()).isEqualTo(justAboveOccupancyRatioGasLimit);
-
-    final var tx2 = createPendingTransaction(justAboveOccupancyRatioGasLimit);
-
-    final var txEvaluationContext2 =
-        new TransactionEvaluationContext(
-            blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
-    evaluateAndAssertNotSelected(txEvaluationContext2, BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
-
-    assertThat(selector.getWorkingState().regularGas()).isEqualTo(justAboveOccupancyRatioGasLimit);
-  }
-
-  @Test
   void identifyWhenBlockIsFull() {
     when(blockSelectionContext.gasCalculator().getMinimumTransactionCost())
         .thenReturn(TRANSFER_GAS_LIMIT);
 
     selectorsStateManager.blockSelectionStarted();
-
-    // allow to completely fill the block
-    miningConfiguration.setMinBlockOccupancyRatio(1.0);
 
     // create 2 txs, where the first fill the block leaving less gas than the min required by a
     // transfer
@@ -340,7 +308,7 @@ class BlockSizeTransactionSelectorTest {
     final var result1 = mock(TransactionProcessingResult.class);
     when(result1.getEstimateGasUsedByTransaction()).thenReturn(30_000_000L);
     when(result1.getStateGasUsed()).thenReturn(5_000_000L);
-    // calculateBlockGas returns 30M - 5M = 25M regular
+    // calculateTransactionRegularGas returns 30M - 5M = 25M regular
 
     final var ctx1 =
         new TransactionEvaluationContext(
@@ -362,8 +330,8 @@ class BlockSizeTransactionSelectorTest {
   }
 
   /**
-   * EIP-8037 2D gas: Post-processing rejects (BLOCK_FULL) when the actual gas split causes
-   * gas_metered = max(regular, state) to exceed the block gas limit.
+   * EIP-8037 2D gas: Post-processing rejects (TX_TOO_LARGE_FOR_REMAINING_GAS) when the actual gas
+   * split causes gas_metered = max(regular, state) to exceed the block gas limit.
    */
   @Test
   void eip8037PostProcessingRejectsWhenGasMeteredExceedsLimit() {
@@ -400,7 +368,8 @@ class BlockSizeTransactionSelectorTest {
         new TransactionEvaluationContext(
             blockSelectionContext.pendingBlockHeader(), tx2, null, null, null, NEVER_CANCELLED);
     assertThat(selector.evaluateTransactionPreProcessing(ctx2)).isEqualTo(SELECTED);
-    assertThat(selector.evaluateTransactionPostProcessing(ctx2, result2)).isEqualTo(BLOCK_FULL);
+    assertThat(selector.evaluateTransactionPostProcessing(ctx2, result2))
+        .isEqualTo(TX_TOO_LARGE_FOR_REMAINING_GAS);
   }
 
   /**
@@ -416,7 +385,6 @@ class BlockSizeTransactionSelectorTest {
         .thenReturn(TRANSFER_GAS_LIMIT);
     selector = new BlockSizeTransactionSelector(blockSelectionContext, selectorsStateManager);
     selectorsStateManager.blockSelectionStarted();
-    miningConfiguration.setMinBlockOccupancyRatio(1.0);
 
     // Fill block with both dimensions nearly full: regular=990K, state=990K
     // gasMetered = max(990K, 990K) = 990K; remaining = 10K < 21K min cost

@@ -48,9 +48,9 @@ public class TransactionSelectionResults {
       new ConcurrentHashMap<>();
 
   // EIP-7778: Track two separate cumulative gas values
-  // cumulativeGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
+  // cumulativeRegularGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
   // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
-  private long cumulativeGasUsed = 0;
+  private long cumulativeRegularGasUsed = 0;
   private long cumulativeReceiptGasUsed = 0;
   // EIP-8037: Track cumulative state gas used for multidimensional gas metering
   private long cumulativeStateGasUsed = 0;
@@ -66,7 +66,7 @@ public class TransactionSelectionResults {
         .computeIfAbsent(transaction.getType(), type -> new ArrayList<>())
         .add(transaction);
     receipts.add(receipt);
-    cumulativeGasUsed += blockGasUsed;
+    cumulativeRegularGasUsed += blockGasUsed;
     cumulativeReceiptGasUsed += receiptGasUsed;
     cumulativeStateGasUsed += stateGasUsed;
     LOG.atTrace()
@@ -74,7 +74,7 @@ public class TransactionSelectionResults {
             "New selected transaction {}, total transactions {}, cumulative block gas {}, cumulative receipt gas {}")
         .addArgument(transaction::toTraceLog)
         .addArgument(selectedTransactions::size)
-        .addArgument(cumulativeGasUsed)
+        .addArgument(cumulativeRegularGasUsed)
         .addArgument(cumulativeReceiptGasUsed)
         .log();
   }
@@ -96,8 +96,8 @@ public class TransactionSelectionResults {
     return receipts;
   }
 
-  public long getCumulativeGasUsed() {
-    return cumulativeGasUsed;
+  public long getCumulativeRegularGasUsed() {
+    return cumulativeRegularGasUsed;
   }
 
   public long getCumulativeReceiptGasUsed() {
@@ -145,8 +145,9 @@ public class TransactionSelectionResults {
       return false;
     }
     TransactionSelectionResults that = (TransactionSelectionResults) o;
-    return cumulativeGasUsed == that.cumulativeGasUsed
+    return cumulativeRegularGasUsed == that.cumulativeRegularGasUsed
         && cumulativeReceiptGasUsed == that.cumulativeReceiptGasUsed
+        && cumulativeStateGasUsed == that.cumulativeStateGasUsed
         && selectedTransactions.equals(that.selectedTransactions)
         && notSelectedTransactions.equals(that.notSelectedTransactions)
         && receipts.equals(that.receipts);
@@ -158,15 +159,18 @@ public class TransactionSelectionResults {
         selectedTransactions,
         notSelectedTransactions,
         receipts,
-        cumulativeGasUsed,
-        cumulativeReceiptGasUsed);
+        cumulativeRegularGasUsed,
+        cumulativeReceiptGasUsed,
+        cumulativeStateGasUsed);
   }
 
   public String toTraceLog() {
-    return "cumulativeGasUsed="
-        + cumulativeGasUsed
+    return "cumulativeRegularGasUsed="
+        + cumulativeRegularGasUsed
         + ", cumulativeReceiptGasUsed="
         + cumulativeReceiptGasUsed
+        + ", cumulativeStateGasUsed="
+        + cumulativeStateGasUsed
         + ", selectedTransactions="
         + selectedTransactions.stream()
             .map(Transaction::getHash)

@@ -29,11 +29,11 @@ record GasState(long regularGas, long stateGas) {
 
   /**
    * Duplicator function for {@link
-   * org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager}. Records are immutable,
-   * so duplication returns the same instance.
+   * org.hyperledger.besu.plugin.services.txselection.SelectorsStateManager}. Since records are
+   * immutable value types, returning the same instance is safe — no caller can mutate it.
    *
    * @param state the state to duplicate
-   * @return the same instance (records are immutable value types)
+   * @return the same instance
    */
   static GasState duplicate(final GasState state) {
     return state;
