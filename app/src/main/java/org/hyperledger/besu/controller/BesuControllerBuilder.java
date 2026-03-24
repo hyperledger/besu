@@ -847,7 +847,12 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(
-            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages, synchronizer);
+            protocolSchedule,
+            protocolContext,
+            worldStateStorageCoordinator,
+            ethPeers,
+            snapMessages,
+            synchronizer);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -1258,6 +1263,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
@@ -1269,6 +1275,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             syncConfig.getSnapSyncConfiguration(),
             ethPeers,
             snapMessages,
+            protocolSchedule,
             protocolContext,
             synchronizer));
   }
