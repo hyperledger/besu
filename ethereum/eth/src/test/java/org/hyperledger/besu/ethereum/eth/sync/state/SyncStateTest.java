@@ -70,7 +70,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class SyncStateTest {
 
   private static final Difficulty standardDifficultyPerBlock = Difficulty.ONE;
-  private static final long OUR_CHAIN_HEAD_NUMBER = 20;
+  private static final long OUR_CHAIN_HEAD_NUMBER = 3;
   private static final Difficulty OUR_CHAIN_DIFFICULTY =
       standardDifficultyPerBlock.multiply(OUR_CHAIN_HEAD_NUMBER);
   private static final long TARGET_CHAIN_DELTA = 20;
