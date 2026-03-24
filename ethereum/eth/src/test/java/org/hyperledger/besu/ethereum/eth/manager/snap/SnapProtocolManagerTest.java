@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
@@ -52,6 +53,7 @@ class SnapProtocolManagerTest {
   @Mock private EthMessages snapMessages;
   @Mock private ProtocolContext protocolContext;
   @Mock private Synchronizer synchronizer;
+  @Mock private EthScheduler ethScheduler;
   @Mock private EthPeer ethPeer;
 
   private SnapProtocolManager snapProtocolManager;
@@ -65,6 +67,7 @@ class SnapProtocolManagerTest {
             snapConfig,
             ethPeers,
             snapMessages,
+            ethScheduler,
             protocolContext,
             synchronizer);
   }
