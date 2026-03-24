@@ -61,7 +61,7 @@ public class LogTest {
     // The autodetect path in Log.readFrom should recognise raw bytes32 topics (not lists) and
     // fall through to readBytes32() rather than attempting to read [leadingZeros, shortData].
     final Log log = gen.log(2);
-    final Log copy = Log.readFrom(RLP.input(RLP.encode(log::writeTo)), true);
+    final Log copy = Log.readFrom(RLP.input(RLP.encode(rlpOut -> log.writeTo(rlpOut, false))), true);
     assertThat(copy).isEqualTo(log);
   }
 
@@ -76,7 +76,7 @@ public class LogTest {
             LogTopic.of(Bytes32.wrap(bytesWithLeadingZeros(20, 32))),
             LogTopic.of(Bytes32.wrap(bytesWithLeadingZeros(30, 32))));
     final Log log = new Log(gen.address(), logData, logTopics);
-    final Log copy = Log.readFrom(RLP.input(RLP.encode(log::writeTo)), true);
+    final Log copy = Log.readFrom(RLP.input(RLP.encode(rlpOut -> log.writeTo(rlpOut, false))), true);
     assertThat(copy).isEqualTo(log);
   }
 
