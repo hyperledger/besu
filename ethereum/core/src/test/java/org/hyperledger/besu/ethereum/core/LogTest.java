@@ -55,6 +55,29 @@ public class LogTest {
     assertThat(copy).isEqualTo(log);
   }
 
+  @Test
+  public void readFrom_compactedTrue_withWireFormatTopics() {
+    // Simulates a log stored in wire (non-compacted) format being read back with compacted=true.
+    // The autodetect path in Log.readFrom should recognise raw bytes32 topics (not lists) and
+    // fall through to readBytes32() rather than attempting to read [leadingZeros, shortData].
+    final Log log = gen.log(2);
+    final Log copy = Log.readFrom(RLP.input(RLP.encode(log::writeTo)), true);
+    assertThat(copy).isEqualTo(log);
+  }
+
+  @Test
+  public void readFrom_compactedTrue_withWireFormatTopicsContainingLeadingZeros() {
+    // Same as above but with leading zeros in topics/data to exercise the full bytes32 path.
+    final Bytes logData = bytesWithLeadingZeros(10, 100);
+    final List<LogTopic> logTopics =
+        List.of(
+            LogTopic.of(Bytes32.wrap(bytesWithLeadingZeros(20, 32))),
+            LogTopic.of(Bytes32.wrap(bytesWithLeadingZeros(30, 32))));
+    final Log log = new Log(gen.address(), logData, logTopics);
+    final Log copy = Log.readFrom(RLP.input(RLP.encode(log::writeTo)), true);
+    assertThat(copy).isEqualTo(log);
+  }
+
   private Bytes bytesWithLeadingZeros(final int noLeadingZeros, final int totalSize) {
     return Bytes.concatenate(
         Bytes.repeat((byte) 0, noLeadingZeros), gen.bytesValue(totalSize - noLeadingZeros));
