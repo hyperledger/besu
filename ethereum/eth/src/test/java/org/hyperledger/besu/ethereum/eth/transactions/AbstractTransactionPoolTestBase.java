@@ -530,7 +530,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         .maxFeePerGas(Optional.of(Wei.of(5000L)))
         .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
         .type(TransactionType.BLOB)
-        .blobsWithCommitments(Optional.of(BLOB_TEST_FIXTURE.createBlobsWithCommitments(6)))
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(6)))
         .createTransaction(KEY_PAIR1);
   }
 
@@ -556,7 +556,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         .maxPriorityFeePerGas(Optional.of(Wei.of(1000L * 10)))
         .maxFeePerBlobGas(Optional.of(Wei.of(5000L)))
         .type(TransactionType.BLOB)
-        .blobsWithCommitments(Optional.of(BLOB_TEST_FIXTURE.createBlobsWithCommitments(6)))
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(6)))
         .createTransaction(KEY_PAIR1);
   }
 
