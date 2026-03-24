@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
+import java.util.Set;
+
 public final class SnapV1 {
 
   public static final int GET_ACCOUNT_RANGE = 0x00;
@@ -26,8 +28,8 @@ public final class SnapV1 {
   public static final int TRIE_NODES = 0x07;
 
   /** The set of inbound request message codes that the snap server must handle. */
-  public static final java.util.Set<Integer> REQUEST_CODES =
-      java.util.Set.of(GET_ACCOUNT_RANGE, GET_STORAGE_RANGE, GET_BYTECODES, GET_TRIE_NODES);
+  public static final Set<Integer> REQUEST_CODES =
+      Set.of(GET_ACCOUNT_RANGE, GET_STORAGE_RANGE, GET_BYTECODES, GET_TRIE_NODES);
 
   private SnapV1() {
     // Holder for constants only
