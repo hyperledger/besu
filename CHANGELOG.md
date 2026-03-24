@@ -3,8 +3,8 @@
 ## Upcoming Release
 
 ### Bug fixes
-- Upgrade besu-native libraries version to 1.5.0. This fixes the issue of secp256r1 native library exporting openssl
-symbols in jvm space by using statically linked openssl library. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
+- Upgrade besu-native libraries version to 1.5.0. This fixes the issue of besu-native/secp256r1 exporting OpenSSL 
+  symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
 
 ## 26.3.0
 
