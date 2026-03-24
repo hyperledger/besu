@@ -123,24 +123,7 @@ public class PeerTransactionTracker
                   }));
     }
     // remove the seen txs from any request queue
-    announcementsToRequestByHash.values().forEach(hashes -> seenHashes.forEach(hashes::remove));
-  }
-
-  public synchronized void markTransactionAsSeen(
-      final EthPeer peer, final Transaction transaction) {
-    final Hash seenHash = transaction.getHash();
-    if (!peer.isDisconnected()) {
-      peersSeenStateByHash.compute(
-          seenHash,
-          (unused, peersSeenState) -> {
-            final PeersSeenState computed =
-                requireNonNullElse(peersSeenState, new PeersSeenState(ethPeers.getMaxPeers()));
-            computed.transactionSeen(peerToSlotIndexMap.get(peer));
-            return computed;
-          });
-    }
-    // remove the seen txs from any request queue
-    announcementsToRequestByHash.values().forEach(hashes -> hashes.remove(seenHash));
+    removeAnnouncementsToRequest(seenHashes);
   }
 
   public synchronized void markAnnouncementsAsSeenByTransaction(
@@ -268,7 +251,6 @@ public class PeerTransactionTracker
     requestedHashes.forEach(inProgressAnnouncements::remove);
   }
 
-  @SuppressWarnings("MixedMutabilityReturnType")
   public synchronized Collection<TransactionAnnouncement> receivedAnnouncements(
       final EthPeer peer, final List<TransactionAnnouncement> incomingAnnouncements) {
 
@@ -277,17 +259,15 @@ public class PeerTransactionTracker
     }
 
     final List<TransactionAnnouncement> freshAnnouncements =
-        new ArrayList<>(incomingAnnouncements.size());
+        incomingAnnouncements.stream()
+            .filter(txAnnouncement -> !alreadySeenTransaction(txAnnouncement.hash()))
+            .toList();
 
-    final LRUMap<Hash, TransactionAnnouncement> announcementsByHashForPeer =
-        announcementsToRequestByHash.computeIfAbsent(
-            peer, key -> new LRUMap<>(maxSendQueueSizePerPeer, incomingAnnouncements.size()));
-
-    for (final TransactionAnnouncement txAnnouncement : incomingAnnouncements) {
-      if (!alreadySeenTransaction(txAnnouncement.hash())) {
-        freshAnnouncements.add(txAnnouncement);
-        announcementsByHashForPeer.put(txAnnouncement.hash(), txAnnouncement);
-      }
+    if (!freshAnnouncements.isEmpty()) {
+      final LRUMap<Hash, TransactionAnnouncement> announcementsByHashForPeer =
+          announcementsToRequestByHash.computeIfAbsent(
+              peer, key -> new LRUMap<>(maxSendQueueSizePerPeer, incomingAnnouncements.size()));
+      freshAnnouncements.forEach(ann -> announcementsByHashForPeer.put(ann.hash(), ann));
     }
 
     markAnnouncementsAsSeen(peer, incomingAnnouncements);
@@ -295,20 +275,14 @@ public class PeerTransactionTracker
     return freshAnnouncements;
   }
 
-  @SuppressWarnings("MixedMutabilityReturnType")
   public synchronized Collection<Transaction> receivedTransactions(
       final EthPeer peer, final List<Transaction> incomingTransactions) {
     if (peer.isDisconnected()) {
       return emptyList();
     }
 
-    final List<Transaction> freshTransactions = new ArrayList<>(incomingTransactions.size());
-
-    for (final Transaction transaction : incomingTransactions) {
-      if (!alreadySeenTransaction(transaction.getHash())) {
-        freshTransactions.add(transaction);
-      }
-    }
+    final List<Transaction> freshTransactions =
+        incomingTransactions.stream().filter(tx -> !alreadySeenTransaction(tx.getHash())).toList();
 
     markTransactionsAsSeen(peer, toHashList(incomingTransactions));
 
@@ -444,9 +418,11 @@ public class PeerTransactionTracker
   public synchronized void onTransactionDropped(
       final Transaction transaction, final RemovalReason reason) {
     if (reason.stopBroadcasting()) {
-      transactionsToSend.values().forEach(txs -> txs.remove(transaction));
-      announcementsToSend.values().forEach(txs -> txs.remove(transaction));
-      announcementsToRequestByHash.values().forEach(txs -> txs.remove(transaction.getHash()));
+      final List<Transaction> droppedTxs = List.of(transaction);
+      removeFromSendQueues(transactionsToSend, droppedTxs);
+      removeFromSendQueues(announcementsToSend, droppedTxs);
+      final List<Hash> droppedHashes = List.of(transaction.getHash());
+      removeAnnouncementsToRequest(droppedHashes);
     }
 
     if (reason.stopTracking() && forgetEvictedTxsEnabled) {
@@ -475,14 +451,36 @@ public class PeerTransactionTracker
                             computed.transactionSeenAll();
                             return computed;
                           }));
-              transactionsToSend.values().forEach(txs -> confirmedTxs.forEach(txs::remove));
-              announcementsToSend.values().forEach(txs -> confirmedTxs.forEach(txs::remove));
-              announcementsToRequestByHash
-                  .values()
-                  .forEach(txs -> confirmedTxHashes.forEach(txs::remove));
+              removeFromSendQueues(transactionsToSend, confirmedTxs);
+              removeFromSendQueues(announcementsToSend, confirmedTxs);
+              removeAnnouncementsToRequest(confirmedTxHashes);
             }
           }
         });
+  }
+
+  private void removeFromSendQueues(
+      final Map<EthPeer, SequencedSet<Transaction>> sendQueues, final List<Transaction> removeTxs) {
+    final Iterator<SequencedSet<Transaction>> itSendQueue = sendQueues.values().iterator();
+    while (itSendQueue.hasNext()) {
+      final SequencedSet<Transaction> sendQueue = itSendQueue.next();
+      removeTxs.forEach(sendQueue::remove);
+      if (sendQueue.isEmpty()) {
+        itSendQueue.remove();
+      }
+    }
+  }
+
+  private void removeAnnouncementsToRequest(final Collection<Hash> seenHashes) {
+    final Iterator<LRUMap<Hash, TransactionAnnouncement>> itAnnReqs =
+        announcementsToRequestByHash.values().iterator();
+    while (itAnnReqs.hasNext()) {
+      final LRUMap<Hash, TransactionAnnouncement> annReqs = itAnnReqs.next();
+      seenHashes.forEach(annReqs::remove);
+      if (annReqs.isEmpty()) {
+        itAnnReqs.remove();
+      }
+    }
   }
 
   private record PeersSeenState(BitSet transactions, BitSet announcements) {

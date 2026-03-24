@@ -49,7 +49,7 @@ class TransactionsMessageSender {
     while ((txToSend = transactionTracker.claimTransactionToSendToPeer(peer)) != null) {
 
       if (!transactionTracker.hasPeerSeenTransactionOrAnnouncement(peer, txToSend.getHash())) {
-        transactionTracker.markTransactionAsSeen(peer, txToSend);
+        transactionTracker.markTransactionsAsSeen(peer, List.of(txToSend.getHash()));
 
         final var added = limitedTransactionsMessageBuilder.add(txToSend);
 

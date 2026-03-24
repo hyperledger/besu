@@ -227,7 +227,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
     // so we only expect one sent.
     transactionTracker.receivedAnnouncements(ethPeer, TransactionAnnouncement.create(transactions));
 
-    transactionTracker.markTransactionAsSeen(ethPeer, transactions.get(alreadySeenTxIndex));
+    transactionTracker.markTransactionsAsSeen(
+        ethPeer, List.of(transactions.get(alreadySeenTxIndex).getHash()));
 
     final var taskResult = new ArrayList<>(transactions);
     taskResult.remove(alreadySeenTxIndex);
