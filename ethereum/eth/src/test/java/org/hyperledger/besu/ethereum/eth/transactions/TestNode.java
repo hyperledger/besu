@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
@@ -68,7 +69,6 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
-import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
@@ -120,12 +120,13 @@ public class TestNode implements Closeable {
     this.nodeKey = kp != null ? NodeKeyUtils.createFrom(kp) : NodeKeyUtils.generate();
 
     final NetworkingConfiguration networkingConfiguration =
-        NetworkingConfiguration.create()
-            .setDiscovery(discoveryCfg)
-            .setRlpx(
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(discoveryCfg)
+            .rlpxConfiguration(
                 RlpxConfiguration.create()
                     .setBindPort(listenPort)
-                    .setSupportedProtocols(EthProtocol.get()));
+                    .setSupportedProtocols(EthProtocol.get()))
+            .build();
 
     final GenesisConfig genesisConfig = GenesisConfig.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
@@ -219,7 +220,7 @@ public class TestNode implements Closeable {
         NetworkRunner.builder()
             .subProtocols(EthProtocol.get())
             .protocolManagers(singletonList(ethProtocolManager))
-            .ethPeersShouldConnect((p, d) -> true)
+            .peerConnectionGatekeeper((p, d) -> Optional.empty())
             .network(
                 capabilities ->
                     createP2PNetwork(
@@ -232,9 +233,7 @@ public class TestNode implements Closeable {
             .metricsSystem(new NoOpMetricsSystem())
             .build();
     network = networkRunner.getNetwork();
-    final RlpxAgent rlpxAgent = network.getRlpxAgent();
-    rlpxAgent.subscribeConnectRequest((p, d) -> true);
-    ethPeers.setRlpxAgent(rlpxAgent);
+    network.getRlpxAgent().ifPresent(ethPeers::setRlpxAgent);
     network.subscribeDisconnect(
         (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
 

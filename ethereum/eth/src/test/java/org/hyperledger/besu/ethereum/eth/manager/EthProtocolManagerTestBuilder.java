@@ -208,7 +208,7 @@ public class EthProtocolManagerTestBuilder {
               25,
               25,
               false,
-              SyncMode.FAST,
+              SyncMode.SNAP,
               forkIdManager);
     }
     ethPeers.setChainHeadTracker(EthProtocolManagerTestUtil.getChainHeadTrackerMock());

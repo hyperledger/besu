@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -100,7 +101,13 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 balConfiguration,
                 metricsSystem)
             .createProtocolSchedule();
-    return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
+    final BftProtocolSchedule bftSchedule =
+        new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
+
+    // Once we have the schedule we can update the fork schedule with the type of each milestone
+    forksSchedule.applyMilestoneTypes(bftSchedule);
+
+    return bftSchedule;
   }
 
   /**
@@ -138,6 +145,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))
+        .withdrawalsValidator(new WithdrawalsValidator.NotApplicableWithdrawals())
         .miningBeneficiaryCalculator(
             header -> configOptions.getMiningBeneficiary().orElseGet(header::getCoinbase));
   }

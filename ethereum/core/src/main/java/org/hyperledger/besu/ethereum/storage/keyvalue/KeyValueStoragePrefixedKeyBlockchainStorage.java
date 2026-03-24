@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -66,6 +67,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   private static final Bytes TOTAL_DIFFICULTY_PREFIX = Bytes.of(6);
   private static final Bytes TRANSACTION_LOCATION_PREFIX = Bytes.of(7);
   private static final Bytes BLOCK_ACCESS_LIST_PREFIX = Bytes.of(8);
+  private static final SimpleNoCopyRlpEncoder NO_COPY_RLP_ENCODER = new SimpleNoCopyRlpEncoder();
+
   final KeyValueStorage blockchainStorage;
   final VariablesStorage variablesStorage;
   final BlockHeaderFunctions blockHeaderFunctions;
@@ -361,8 +364,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
       set(
           TRANSACTION_RECEIPTS_PREFIX,
           blockHash.getBytes(),
-          Bytes.wrap(
-              transactionReceipts.stream().map(SyncTransactionReceipt::getRlpBytes).toList()));
+          NO_COPY_RLP_ENCODER.encodeList(
+              transactionReceipts.stream()
+                  .map(r -> normalizeReceiptRlpElement(r.getRlpBytes()))
+                  .toList()));
     }
 
     @Override
@@ -449,6 +454,22 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     private void remove(final Bytes prefix, final Bytes key) {
       blockchainTransaction.remove(Bytes.concatenate(prefix, key).toArrayUnsafe());
+    }
+
+    /**
+     * Normalizes a receipt RLP element for storage.
+     *
+     * <p>EIP-2718 typed receipts received from the network arrive via readBytes() which strips the
+     * outer RLP bytes-element wrapper, leaving raw typeCode||rlp_body (first byte in 0x01-0x7f).
+     * These must be re-wrapped as a single RLP bytes element so that
+     * TransactionReceiptDecoder.decodeTypedReceiptComponents can decode them. Receipts that are
+     * already valid RLP elements (first byte >= 0x80) are stored as-is.
+     */
+    private Bytes normalizeReceiptRlpElement(final Bytes rawBytes) {
+      if (rawBytes.isEmpty() || Byte.toUnsignedInt(rawBytes.get(0)) >= 0x80) {
+        return rawBytes;
+      }
+      return NO_COPY_RLP_ENCODER.encode(rawBytes);
     }
 
     private Bytes rlpEncode(final List<TransactionReceipt> receipts) {

@@ -18,8 +18,9 @@ import org.hyperledger.besu.util.number.Percentage;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
-import org.apache.commons.net.util.SubnetUtils;
+import inet.ipaddr.IPAddress;
 import org.apache.tuweni.bytes.Bytes;
 
 public record P2PDiscoveryConfiguration(
@@ -28,12 +29,16 @@ public record P2PDiscoveryConfiguration(
     String p2pHost,
     String p2pInterface,
     Integer p2pPort,
+    Optional<String> p2pHostIpv6,
+    Optional<String> p2pInterfaceIpv6,
+    Integer p2pPortIpv6,
     Integer maxPeers,
     Boolean isLimitRemoteWireConnectionsEnabled,
     Percentage maxRemoteConnectionsPercentage,
     Boolean randomPeerPriority,
     Collection<Bytes> bannedNodeIds,
-    List<SubnetUtils.SubnetInfo> allowedSubnets,
+    List<IPAddress> allowedSubnets,
     Boolean poaDiscoveryRetryBootnodes,
     List<String> bootNodes,
-    String discoveryDnsUrl) {}
+    String discoveryDnsUrl,
+    boolean preferIpv6Outbound) {}

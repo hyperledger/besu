@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.hyperledger.besu.cli.options.ChainPruningOptions.CHAIN_DATA_PRUNING_RETAINED_MINIMUM;
-import static org.hyperledger.besu.config.NetworkDefinition.CLASSIC;
 import static org.hyperledger.besu.config.NetworkDefinition.DEV;
 import static org.hyperledger.besu.config.NetworkDefinition.EPHEMERY;
 import static org.hyperledger.besu.config.NetworkDefinition.EXPERIMENTAL_EIPS;
@@ -30,7 +29,6 @@ import static org.hyperledger.besu.config.NetworkDefinition.HOODI;
 import static org.hyperledger.besu.config.NetworkDefinition.LINEA_SEPOLIA;
 import static org.hyperledger.besu.config.NetworkDefinition.LUKSO;
 import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
-import static org.hyperledger.besu.config.NetworkDefinition.MORDOR;
 import static org.hyperledger.besu.config.NetworkDefinition.SEPOLIA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.HOODI_BOOTSTRAP_NODES;
@@ -105,6 +103,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
@@ -115,6 +114,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -195,6 +196,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     DEFAULT_API_CONFIGURATION = ImmutableApiConfiguration.builder().build();
   }
 
+  public BesuCommandTest() throws IOException {}
+
   @BeforeEach
   public void setup() {
     try {
@@ -251,7 +254,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
 
@@ -306,13 +309,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockRunnerBuilder).discoveryEnabled(eq(true));
-    verify(mockRunnerBuilder)
-        .ethNetworkConfig(
-            new EthNetworkConfig(
-                GenesisConfig.fromResource(MAINNET.getGenesisFile()),
-                MAINNET.getNetworkId(),
-                MAINNET_BOOTSTRAP_NODES,
-                MAINNET_DISCOVERY_URL));
+    verify(mockRunnerBuilder).ethNetworkConfig(EthNetworkConfig.getNetworkConfig(MAINNET));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
@@ -344,7 +341,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(miningArg.getValue().getExtraData())
         .isEqualTo(BesuVersionUtils.versionForExtraData());
     assertThat(ethNetworkArg.getValue().networkId()).isEqualTo(1);
-    assertThat(ethNetworkArg.getValue().bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
+    assertThat(ethNetworkArg.getValue().enodeBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
   }
 
   // Testing each option
@@ -402,7 +399,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", toml.toAbsolutePath().toString());
 
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEmpty();
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -537,7 +534,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
   }
@@ -556,7 +553,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
+    assertThat(config.enodeBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
     verify(mockLogger, never()).warn(contains("Mainnet is deprecated and will be shutdown"));
@@ -573,7 +570,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEqualTo(SEPOLIA_BOOTSTRAP_NODES);
+    assertThat(config.enodeBootNodes()).isEqualTo(SEPOLIA_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(SEPOLIA_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(11155111));
   }
@@ -589,7 +586,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
+    assertThat(config.enodeBootNodes()).isEqualTo(HOODI_BOOTSTRAP_NODES);
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(HOODI_DISCOVERY_URL);
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(560048));
   }
@@ -605,7 +602,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2022));
   }
@@ -621,7 +618,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.enodeBootNodes()).isEmpty();
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2023));
   }
@@ -703,7 +700,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue().genesisConfig())
         .isEqualTo(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
-    assertThat(networkArg.getValue().bootNodes()).isEmpty();
+    assertThat(networkArg.getValue().enodeBootNodes()).isEmpty();
     assertThat(networkArg.getValue().networkId()).isEqualTo(GENESIS_CONFIG_TEST_CHAINID);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -883,7 +880,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final EthNetworkConfig config = networkArg.getValue();
     assertThat(config.dnsDiscoveryUrl()).isEqualTo(DNS_DISCOVERY_URL);
 
-    assertThat(config.bootNodes())
+    assertThat(config.enodeBootNodes())
         .extracting(bootnode -> bootnode.toURI().toString())
         .containsExactly(VALID_ENODE_STRINGS);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -922,7 +919,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.bootNodes()).extracting(EnodeURL::toURI).containsExactly(bootnode);
+    assertThat(config.enodeBootNodes()).extracting(EnodeURL::toURI).containsExactly(bootnode);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -956,7 +953,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEmpty();
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enrBootNodes()).isEmpty();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1019,6 +1017,46 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedErrorOutputStart);
   }
 
+  private static final String VALID_ENR_1 =
+      "enr:-Iu4QLm7bZGdAt9NSeJG0cEnJohWcQTQaI9wFLu3Q7eHIDfrI4cwtzvEW3F3VbG9XdFXlrHyFGeXPn9snTCQJ9bnMRABgmlkgnY0gmlwhAOTJQCJc2VjcDI1NmsxoQIZdZD6tDYpkpEfVo5bgiU8MGRjhcOmHGD2nErK0UKRrIN0Y3CCIyiDdWRwgiMo";
+  private static final String VALID_ENR_2 =
+      "enr:-Iu4QEDJ4Wa_UQNbK8Ay1hFEkXvd8psolVK6OhfTL9irqz3nbXxxWyKwEplPfkju4zduVQj6mMhUCm9R2Lc4YM5jPcIBgmlkgnY0gmlwhANrfESJc2VjcDI1NmsxoQJCYz2-nsqFpeEj6eov9HSi9QssIVIVNr0I89J1vXM9foN0Y3CCIyiDdWRwgiMo";
+
+  @Test
+  public void callingWithValidEnrBootnodeAndV5EnabledMustSucceed() {
+    parseCommand("--Xv5-discovery-enabled", "--bootnodes", VALID_ENR_1);
+
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enrBootNodes()).hasSize(1);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void callingWithMultipleValidEnrBootnodesAndV5EnabledMustSucceed() {
+    parseCommand("--Xv5-discovery-enabled", "--bootnodes", VALID_ENR_1 + "," + VALID_ENR_2);
+
+    verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enrBootNodes()).hasSize(2);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEmpty();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"enr:-invalidenrdata", "enr:invalidvalue", "invalidvalue"})
+  public void callingWithInvalidBootnodeAndV5EnabledMustDisplayError(final String bootnode) {
+    parseCommand("--Xv5-discovery-enabled", "--bootnodes", bootnode);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid ENR bootnode: '" + bootnode + "'");
+  }
+
   @Test
   public void bootnodesOptionMustBeUsed() {
     parseCommand("--bootnodes", String.join(",", VALID_ENODE_STRINGS));
@@ -1026,7 +1064,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes())
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes())
         .isEqualTo(
             Stream.of(VALID_ENODE_STRINGS)
                 .map(EnodeURLImpl::fromString)
@@ -1158,12 +1196,12 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncMode_fast() {
-    parseCommand("--sync-mode", "FAST");
+  public void syncMode_checkpoint() {
+    parseCommand("--sync-mode", "CHECKPOINT");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1189,7 +1227,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': 'bogus' is not a valid sync mode. Valid values are: FULL, SNAP");
   }
 
   @Test
@@ -1237,31 +1275,19 @@ public class BesuCommandTest extends CommandTestAbstract {
     verifyNoInteractions(mockRunnerBuilder);
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandOutput.toString(UTF_8)).contains("--fast-sync-min-peers");
+    assertThat(commandOutput.toString(UTF_8)).contains("--sync-min-peers");
     // whitelist is now a hidden option
     assertThat(commandOutput.toString(UTF_8)).doesNotContain("whitelist");
   }
 
   @Test
-  public void checkValidDefaultFastSyncMinPeers() {
-    parseCommand("--sync-mode", "FAST");
+  public void checkValidDefaultSnapSyncMinPeers() {
+    parseCommand("--sync-mode", "SNAP");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void parsesValidFastSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "11");
-    verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
-
-    final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1280,42 +1306,33 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void parsesValidSyncMinPeersOption() {
-    parseCommand("--sync-mode", "FAST", "--sync-min-peers", "11");
+    parseCommand("--sync-mode", "SNAP", "--sync-min-peers", "11");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
-    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Test
-  public void parsesInvalidFastSyncMinPeersOptionWrongFormatShouldFail() {
-
-    parseCommand("--sync-mode", "FAST", "--fast-sync-min-peers", "ten");
-    verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
-  }
-
-  @Test
-  public void netRestrictParsedCorrectly() {
-    final String subnet1 = "127.0.0.1/24";
-    final String subnet2 = "10.0.0.1/24";
-    parseCommand("--net-restrict", String.join(",", subnet1, subnet2));
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"127.0.0.0/24,10.0.0.0/24", "fd00::/64,fe80::/10", "127.0.0.0/24,fd00::/64"})
+  public void netRestrictParsedCorrectly(final String subnets) {
+    parseCommand("--net-restrict", subnets);
     verify(mockRunnerBuilder).allowedSubnets(allowedSubnetsArgumentCaptor.capture());
-    assertThat(allowedSubnetsArgumentCaptor.getValue().size()).isEqualTo(2);
-    assertThat(allowedSubnetsArgumentCaptor.getValue().get(0).getCidrSignature())
-        .isEqualTo(subnet1);
-    assertThat(allowedSubnetsArgumentCaptor.getValue().get(1).getCidrSignature())
-        .isEqualTo(subnet2);
+    final List<String> expected = Splitter.on(',').splitToList(subnets);
+    assertThat(allowedSubnetsArgumentCaptor.getValue()).hasSize(expected.size());
+    for (int i = 0; i < expected.size(); i++) {
+      assertThat(allowedSubnetsArgumentCaptor.getValue().get(i).toString())
+          .isEqualTo(expected.get(i));
+    }
   }
 
-  @Test
-  public void netRestrictInvalidShouldFail() {
-    final String subnet = "127.0.0.1/abc";
+  @ParameterizedTest
+  @ValueSource(strings = {"127.0.0.1/abc", "abc", ""})
+  public void netRestrictInvalidShouldFail(final String subnet) {
     parseCommand("--net-restrict", subnet);
     verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandErrorOutput.toString(UTF_8))
@@ -2010,38 +2027,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void classicValuesAreUsed() {
-    parseCommand("--network", "classic");
-
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
-    verify(mockControllerBuilder).build();
-
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(CLASSIC));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void mordorValuesAreUsed() {
-    parseCommand("--network", "mordor");
-
-    final ArgumentCaptor<EthNetworkConfig> networkArg =
-        ArgumentCaptor.forClass(EthNetworkConfig.class);
-
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
-    verify(mockControllerBuilder).build();
-
-    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(MORDOR));
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void sepoliaValuesCanBeOverridden() {
     networkValuesCanBeOverridden("sepolia");
   }
@@ -2066,16 +2051,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     networkValuesCanBeOverridden("dev");
   }
 
-  @Test
-  public void classicValuesCanBeOverridden() {
-    networkValuesCanBeOverridden("classic");
-  }
-
-  @Test
-  public void mordorValuesCanBeOverridden() {
-    networkValuesCanBeOverridden("mordor");
-  }
-
   private void networkValuesCanBeOverridden(final String network) {
     parseCommand(
         "--network",
@@ -2091,7 +2066,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
-    assertThat(networkArg.getValue().bootNodes())
+    assertThat(networkArg.getValue().enodeBootNodes())
         .isEqualTo(
             Stream.of(VALID_ENODE_STRINGS)
                 .map(EnodeURLImpl::fromString)
@@ -2465,7 +2440,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void logWarnIfFastSyncMinPeersUsedWithFullSync() {
-    parseCommand("--sync-mode", "FULL", "--fast-sync-min-peers", "1");
+    parseCommand("--sync-mode", "FULL", "--sync-min-peers", "1");
     verify(mockLogger).warn("--sync-min-peers is ignored in FULL sync-mode");
   }
 
@@ -2474,114 +2449,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand();
     verify(mockLogger)
         .info(argThat(arg -> arg.contains("# Besu version " + BesuVersionUtils.shortVersion())));
-  }
-
-  @Test
-  public void checkpointPostMergeShouldFailWhenGenesisHasNoTTD() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("invalid_post_merge_near_head_checkpoint.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("PoS checkpoint sync requires TTD in the genesis file");
-  }
-
-  @Test
-  public void checkpointPostMergeShouldFailWhenGenesisUsesCheckpointFromPreMerge()
-      throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("valid_pre_merge_checkpoint.json"), StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-    // using the default genesis which has a checkpoint sync block prior to the merge
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
-  }
-
-  @Test
-  public void checkpointPostMergeShouldFailWhenSyncModeIsNotCheckpoint() {
-
-    parseCommand("--sync-mode", "SNAP", "--Xcheckpoint-post-merge-enabled");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode");
-  }
-
-  @Test
-  public void checkpointPostMergeWithPostMergeBlockSucceeds() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkpointPostMergeWithPostMergeBlockTDEqualsTTDSucceeds() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("valid_pos_checkpoint_pos_TD_equals_TTD.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void checkpointMergeAtGenesisWithGenesisBlockDifficultyZeroFails() throws IOException {
-    final String configText =
-        Resources.toString(
-            Resources.getResource("invalid_post_merge_merge_at_genesis.json"),
-            StandardCharsets.UTF_8);
-    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
-
-    parseCommand(
-        "--genesis-file",
-        genesisFile.toString(),
-        "--sync-mode",
-        "CHECKPOINT",
-        "--Xcheckpoint-post-merge-enabled");
-
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
   }
 
   @Test
@@ -2913,21 +2780,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
-    commandErrorOutput.reset();
-
-    // for Clique
-    genesis.getJsonObject("config").put("clique", new JsonObject().put("epochlength", 10000));
-    genesis.getJsonObject("config").remove("ibft2");
-    final Path genesisFileClique = createFakeGenesisFile(genesis);
-    parseCommand(
-        "--genesis-file",
-        genesisFileClique.toString(),
-        "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=7200",
-        "--version-compatibility-protection=false");
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-            "--Xchain-pruning-blocks-retained must be >= " + CHAIN_DATA_PRUNING_RETAINED_MINIMUM);
   }
 
   @Test
@@ -2959,20 +2811,6 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
         "--version-compatibility-protection=false");
 
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    // for Clique
-    genesis
-        .getJsonObject("config")
-        .put("clique", new JsonObject().put("epochlength", CHAIN_DATA_PRUNING_RETAINED_MINIMUM));
-    genesis.getJsonObject("config").remove("ibft2");
-    final Path genesisFileClique = createFakeGenesisFile(genesis);
-    parseCommand(
-        "--genesis-file",
-        genesisFileClique.toString(),
-        "--Xchain-pruning-enabled=ALL",
-        "--Xchain-pruning-blocks-retained=" + CHAIN_DATA_PRUNING_RETAINED_MINIMUM,
-        "--version-compatibility-protection=false");
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -3165,6 +3003,44 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(networkArg.getValue().genesisConfig().getConfigOptions().getChainId().get())
         .isEqualTo("39438151");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkpointPostMergeWithPostMergeBlockSucceeds() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_post_merge_near_head_checkpoint.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "SNAP",
+        "--Xcheckpoint-post-merge-enabled");
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void checkpointPostMergeWithPostMergeBlockTDEqualsTTDSucceeds() throws IOException {
+    final String configText =
+        Resources.toString(
+            Resources.getResource("valid_pos_checkpoint_pos_TD_equals_TTD.json"),
+            StandardCharsets.UTF_8);
+    final Path genesisFile = createFakeGenesisFile(new JsonObject(configText));
+
+    parseCommand(
+        "--genesis-file",
+        genesisFile.toString(),
+        "--sync-mode",
+        "SNAP",
+        "--Xcheckpoint-post-merge-enabled");
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

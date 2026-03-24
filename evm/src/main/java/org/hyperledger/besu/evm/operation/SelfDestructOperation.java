@@ -103,6 +103,19 @@ public class SelfDestructOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
+    // EIP-8037: Deduct regular gas before charging state gas (ordering requirement).
+    frame.decrementRemainingGas(cost);
+
+    // EIP-8037: Charge state gas for new account creation in SELFDESTRUCT
+    if (!gasCalculator()
+        .stateGasCostCalculator()
+        .chargeSelfDestructNewAccountStateGas(frame, beneficiaryNullable, originatorBalance)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    // Add regular gas back — the EVM loop will deduct it via the OperationResult.
+    frame.incrementRemainingGas(cost);
+
     // We passed preliminary checks, get mutable accounts.
     final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
 
@@ -115,8 +128,8 @@ public class SelfDestructOperation extends AbstractOperation {
     originatorAccount.decrementBalance(originatorBalance);
     beneficiaryAccount.incrementBalance(originatorBalance);
 
-    // EIP-7708: if the contract will be actually be destroyed and it is not a self transfer emit
-    // Selfdestruct log
+    // EIP-7708: if the contract will actually be destroyed and it is not a self transfer emit
+    // Burn log
     if (!originatorAddress.equals(beneficiaryAddress) || willBeDestroyed) {
       transferLogEmitter.emitSelfDestructLog(
           frame, originatorAddress, beneficiaryAddress, originatorBalance);

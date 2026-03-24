@@ -61,6 +61,7 @@ import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
+import org.hyperledger.besu.evm.operation.DivOperationOptimized;
 import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.EqOperation;
@@ -109,6 +110,7 @@ import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.SDivOperation;
+import org.hyperledger.besu.evm.operation.SDivOperationOptimized;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLoadOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
@@ -116,10 +118,13 @@ import org.hyperledger.besu.evm.operation.SModOperation;
 import org.hyperledger.besu.evm.operation.SModOperationOptimized;
 import org.hyperledger.besu.evm.operation.SStoreOperation;
 import org.hyperledger.besu.evm.operation.SarOperation;
+import org.hyperledger.besu.evm.operation.SarOperationOptimized;
 import org.hyperledger.besu.evm.operation.SelfBalanceOperation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.operation.ShlOperation;
+import org.hyperledger.besu.evm.operation.ShlOperationOptimized;
 import org.hyperledger.besu.evm.operation.ShrOperation;
+import org.hyperledger.besu.evm.operation.ShrOperationOptimized;
 import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.SlotNumOperation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
@@ -202,8 +207,6 @@ public class MainnetEVMs {
     }
     registry.put(new MulOperation(gasCalculator));
     registry.put(new SubOperation(gasCalculator));
-    registry.put(new DivOperation(gasCalculator));
-    registry.put(new SDivOperation(gasCalculator));
     if (evmConfiguration.enableOptimizedOpcodes()) {
       registry.put(new AddOperationOptimized(gasCalculator));
       registry.put(new ModOperationOptimized(gasCalculator));
@@ -214,6 +217,8 @@ public class MainnetEVMs {
       registry.put(new XorOperationOptimized(gasCalculator));
       registry.put(new OrOperationOptimized(gasCalculator));
       registry.put(new NotOperationOptimized(gasCalculator));
+      registry.put(new DivOperationOptimized(gasCalculator));
+      registry.put(new SDivOperationOptimized(gasCalculator));
     } else {
       registry.put(new AddOperation(gasCalculator));
       registry.put(new ModOperation(gasCalculator));
@@ -224,6 +229,8 @@ public class MainnetEVMs {
       registry.put(new XorOperation(gasCalculator));
       registry.put(new OrOperation(gasCalculator));
       registry.put(new NotOperation(gasCalculator));
+      registry.put(new DivOperation(gasCalculator));
+      registry.put(new SDivOperation(gasCalculator));
     }
     registry.put(new ExpOperation(gasCalculator));
     registry.put(new SignExtendOperation(gasCalculator));
@@ -493,9 +500,15 @@ public class MainnetEVMs {
       final EvmConfiguration evmConfiguration) {
     registerByzantiumOperations(registry, gasCalculator, evmConfiguration);
     registry.put(new Create2Operation(gasCalculator));
-    registry.put(new SarOperation(gasCalculator));
-    registry.put(new ShlOperation(gasCalculator));
-    registry.put(new ShrOperation(gasCalculator));
+    if (evmConfiguration.enableOptimizedOpcodes()) {
+      registry.put(new ShlOperationOptimized(gasCalculator));
+      registry.put(new ShrOperationOptimized(gasCalculator));
+      registry.put(new SarOperationOptimized(gasCalculator));
+    } else {
+      registry.put(new ShlOperation(gasCalculator));
+      registry.put(new ShrOperation(gasCalculator));
+      registry.put(new SarOperation(gasCalculator));
+    }
     registry.put(new ExtCodeHashOperation(gasCalculator));
   }
 

@@ -23,13 +23,13 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.ChainSyncStateStorage;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotUpdateListener;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.SingleBlockHeaderDownloader;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.WorldStateHealFinishedListener;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.common.ChainSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.common.ChainSyncStateStorage;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotUpdateListener;
+import org.hyperledger.besu.ethereum.eth.sync.common.SingleBlockHeaderDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.common.WorldStateHealFinishedListener;
+import org.hyperledger.besu.ethereum.eth.sync.common.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -66,6 +66,7 @@ public class SnapSyncChainDownloader
     implements ChainDownloader, PivotUpdateListener, WorldStateHealFinishedListener {
   private static final Logger LOG = LoggerFactory.getLogger(SnapSyncChainDownloader.class);
   public static final int SMALL_DELAY_MILLISECONDS = 100;
+  static final int NO_PEER_RETRY_DELAY_MILLISECONDS = 5_000;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
   private final ProtocolSchedule protocolSchedule;
@@ -144,7 +145,7 @@ public class SnapSyncChainDownloader
       final EthContext ethContext,
       final SyncState syncState,
       final MetricsSystem metricsSystem,
-      final FastSyncState fastSyncState,
+      final PivotSyncState fastSyncState,
       final SyncDurationMetrics syncDurationMetrics,
       final Path fastSyncDataDirectory) {
 
@@ -294,6 +295,7 @@ public class SnapSyncChainDownloader
 
       LOG.info("Created initial chain sync state: {}", newState);
       chainSyncState.set(newState);
+      chainSyncStateStorage.storeState(newState);
       return CompletableFuture.completedFuture(newState);
     }
 
@@ -329,6 +331,7 @@ public class SnapSyncChainDownloader
 
               LOG.info("Created initial chain sync state: {}", newState);
               chainSyncState.set(newState);
+              chainSyncStateStorage.storeState(newState);
               return newState;
             });
   }
@@ -479,6 +482,21 @@ public class SnapSyncChainDownloader
       return;
     }
 
+    // Guard against starting an expensive 160-concurrent-future pipeline with no peers.
+    // With no peers every future immediately hits NO_PEER_AVAILABLE, spins for 60 s, and
+    // the pipeline restarts every 60 s accumulating scheduler/thread overhead indefinitely.
+    if (ethContext.getEthPeers().peerCount() == 0) {
+      LOG.debug(
+          "No peers available, deferring chain sync pipeline start for {} ms",
+          NO_PEER_RETRY_DELAY_MILLISECONDS);
+      ethContext
+          .getScheduler()
+          .scheduleFutureTask(
+              () -> attemptDownload(overallResult),
+              Duration.ofMillis(NO_PEER_RETRY_DELAY_MILLISECONDS));
+      return;
+    }
+
     performSingleDownloadCycle()
         .whenComplete(
             (downloadResult, error) -> {
@@ -529,7 +547,7 @@ public class SnapSyncChainDownloader
     chainSyncStateStorage.storeState(chainSyncState.get());
 
     if (shouldRetry(error)) {
-      LOG.warn("Chain sync encountered error, will retry from saved state", error);
+      LOG.debug("Chain sync encountered error, will retry from saved state", error);
 
       // Schedule next attempt without recursion
       // Use a small delay to avoid tight retry loops

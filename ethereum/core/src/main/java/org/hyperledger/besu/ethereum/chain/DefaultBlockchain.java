@@ -92,7 +92,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Counter gasUsedCounter = NoOpMetricsSystem.NO_OP_COUNTER;
   private Counter numberOfTransactionsCounter = NoOpMetricsSystem.NO_OP_COUNTER;
 
-  private Difficulty difficultyForSyncing = Difficulty.ZERO;
+  private Difficulty difficultyForSyncing = null;
 
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
@@ -528,20 +528,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
-  public synchronized void appendSyncBlock(
-      final SyncBlock block, final List<TransactionReceipt> receipts) {
-    cacheBlockHeader(block.getHeader());
-    appendSyncBlockHelper(block, receipts, true);
-  }
-
-  @Override
-  public synchronized void appendSyncBlockWithoutIndexingTransactions(
-      final SyncBlock block, final List<TransactionReceipt> receipts) {
-    cacheBlockHeader(block.getHeader());
-    appendSyncBlockHelper(block, receipts, false);
-  }
-
-  @Override
   public synchronized void storeBlock(
       final Block block,
       final List<TransactionReceipt> receipts,
@@ -641,36 +627,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
   }
 
-  private void appendSyncBlockHelper(
-      final SyncBlock block,
-      final List<TransactionReceipt> receipts,
-      final boolean transactionIndexing) {
-
-    if (blockIsAlreadyTracked(block.getHeader())) {
-      return;
-    }
-
-    final Hash hash = block.getHash();
-    final Difficulty td = calculateTotalDifficultyForSyncing(block.getHeader());
-
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
-
-    updater.putBlockHeader(hash, block.getHeader());
-    updater.putSyncBlockBody(hash, block.getBody());
-    updater.putTransactionReceipts(hash, receipts);
-    updater.putTotalDifficulty(hash, td);
-
-    final BlockAddedEvent blockAddedEvent;
-
-    blockAddedEvent = updateCanonicalChainData(updater, block, receipts, transactionIndexing);
-    if (blockAddedEvent.isNewCanonicalHead()) {
-      updateCacheForNewCanonicalHead(block, td);
-    }
-
-    updater.commit();
-    blockAddedObservers.forEach(observer -> observer.onBlockAdded(blockAddedEvent));
-  }
-
   @Override
   public synchronized void unsafeImportBlock(
       final Block block,
@@ -751,7 +707,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private Difficulty calculateTotalDifficultyForSyncing(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       difficultyForSyncing = blockHeader.getDifficulty();
-    } else if (difficultyForSyncing.equals(Difficulty.ZERO)) {
+    } else if (difficultyForSyncing == null) {
       final Difficulty parentTotalDifficulty =
           blockchainStorage
               .getTotalDifficulty(blockHeader.getParentHash())
@@ -800,39 +756,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     }
   }
 
-  private BlockAddedEvent updateCanonicalChainData(
-      final BlockchainStorage.Updater updater,
-      final SyncBlock newBlock,
-      final List<TransactionReceipt> receipts,
-      final boolean transactionIndexing) {
-
-    final Hash chainHead = blockchainStorage.getChainHead().orElse(null);
-
-    if (newBlock.getHeader().getNumber() != BlockHeader.GENESIS_BLOCK_NUMBER && chainHead == null) {
-      throw new IllegalStateException("Blockchain is missing chain head.");
-    }
-
-    try {
-      if (newBlock.getHeader().getParentHash().equals(chainHead) || chainHead == null) {
-        return handleNewHead(updater, newBlock, receipts, transactionIndexing);
-      } else {
-        LOG.error(
-            "New block {} parent hash {} does not match current head block {} hash {} (chainHead= {}).",
-            newBlock.getHeader().getNumber(),
-            newBlock.getHeader().getParentHash(),
-            chainHeader.getNumber(),
-            chainHeader.getHash(),
-            chainHead);
-        throw new RuntimeException("Blocks during sync should always be in order");
-      }
-    } catch (final NoSuchElementException e) {
-      // Any Optional.get() calls in this block should be present, missing data means data
-      // corruption or a bug.
-      updater.rollback();
-      throw new IllegalStateException("Blockchain is missing data that should be present.", e);
-    }
-  }
-
   private BlockAddedEvent handleStoreOnly(final BlockWithReceipts blockWithReceipts) {
     return BlockAddedEvent.createForStoredOnly(blockWithReceipts.getBlock());
   }
@@ -862,37 +785,6 @@ public class DefaultBlockchain implements MutableBlockchain {
         LogWithMetadata.generate(
             blockWithReceipts.getBlock(), blockWithReceipts.getReceipts(), false),
         blockWithReceipts.getReceipts());
-  }
-
-  private BlockAddedEvent handleNewHead(
-      final Updater updater,
-      final SyncBlock newBlock,
-      final List<TransactionReceipt> receipts,
-      final boolean transactionIndexing) {
-    // This block advances the chain, update the chain head
-    final Hash newBlockHash = newBlock.getHash();
-
-    updater.putBlockHash(newBlock.getHeader().getNumber(), newBlockHash);
-    updater.setChainHead(newBlockHash);
-    final List<Hash> listOfTxHashes =
-        newBlock.getBody().getEncodedTransactions().stream().map(Hash::hash).toList();
-    if (transactionIndexing) {
-      indexTransactionsForBlock(updater, newBlockHash, listOfTxHashes);
-    }
-    gasUsedCounter.inc(newBlock.getHeader().getGasUsed());
-    numberOfTransactionsCounter.inc(newBlock.getBody().getTransactionCount());
-
-    return BlockAddedEvent.createForSyncHeadAdvancement(
-        newBlock.getHeader(),
-        () -> new Block(newBlock.getHeader(), newBlock.getBody().getBodySupplier().get()),
-        LogWithMetadata.generate(
-            newBlock.getHeader().getNumber(),
-            newBlock.getHash(),
-            newBlock.getHeader().getTimestamp(),
-            listOfTxHashes,
-            receipts,
-            false),
-        receipts);
   }
 
   private BlockAddedEvent handleFork(final BlockchainStorage.Updater updater, final Block fork) {
@@ -1110,12 +1002,6 @@ public class DefaultBlockchain implements MutableBlockchain {
     chainHeader = block.getHeader();
     totalDifficulty = uInt256;
     chainHeadTransactionCount = block.getBody().getTransactions().size();
-  }
-
-  private void updateCacheForNewCanonicalHead(final SyncBlock block, final Difficulty uInt256) {
-    chainHeader = block.getHeader();
-    totalDifficulty = uInt256;
-    chainHeadTransactionCount = block.getBody().getTransactionCount();
   }
 
   private static void indexTransactionsForBlock(

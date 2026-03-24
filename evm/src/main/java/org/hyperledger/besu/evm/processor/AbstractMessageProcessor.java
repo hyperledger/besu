@@ -20,13 +20,11 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -69,7 +67,7 @@ public abstract class AbstractMessageProcessor {
 
   // List of addresses to force delete when they are touched but empty
   // when the state changes in the message are were not meant to be committed.
-  private final Collection<? super Address> forceDeleteAccountsWhenEmpty;
+  private final Set<? super Address> forceDeleteAccountsWhenEmpty;
   final EVM evm;
 
   /**
@@ -78,7 +76,7 @@ public abstract class AbstractMessageProcessor {
    * @param evm the evm
    * @param forceDeleteAccountsWhenEmpty the force delete accounts when empty
    */
-  AbstractMessageProcessor(final EVM evm, final Collection<Address> forceDeleteAccountsWhenEmpty) {
+  AbstractMessageProcessor(final EVM evm, final Set<Address> forceDeleteAccountsWhenEmpty) {
     this.evm = evm;
     this.forceDeleteAccountsWhenEmpty = forceDeleteAccountsWhenEmpty;
   }
@@ -100,19 +98,35 @@ public abstract class AbstractMessageProcessor {
   protected abstract void codeSuccess(MessageFrame frame, final OperationTracer operationTracer);
 
   private void clearAccumulatedStateBesidesGasAndOutput(final MessageFrame frame) {
-    ArrayList<Address> addresses =
-        frame.getWorldUpdater().getTouchedAccounts().stream()
-            .filter(AccountState::isEmpty)
-            .map(Account::getAddress)
-            .filter(forceDeleteAccountsWhenEmpty::contains)
-            .collect(Collectors.toCollection(ArrayList::new));
+    final var worldUpdater = frame.getWorldUpdater();
+    final var touchedAccounts = worldUpdater.getTouchedAccounts();
 
-    // Clear any pending changes.
-    frame.getWorldUpdater().revert();
+    if (touchedAccounts.isEmpty() || forceDeleteAccountsWhenEmpty.isEmpty()) {
+      // Fast path: no touched accounts or no force-delete targets.
+      // Just revert and commit without the stream pipeline overhead.
+      worldUpdater.revert();
+      worldUpdater.commit();
+    } else {
+      // Full path: find empty accounts that need force-deletion
+      ArrayList<Address> addresses = new ArrayList<>();
+      for (final Account account : touchedAccounts) {
+        if (account.isEmpty()) {
+          Address address = account.getAddress();
+          if (forceDeleteAccountsWhenEmpty.contains(address)) {
+            addresses.add(address);
+          }
+        }
+      }
 
-    // Force delete any requested accounts and commit the changes.
-    ((Collection<Address>) addresses).forEach(h -> frame.getWorldUpdater().deleteAccount(h));
-    frame.getWorldUpdater().commit();
+      // Clear any pending changes.
+      worldUpdater.revert();
+
+      // Force delete any requested accounts and commit the changes.
+      for (final Address address : addresses) {
+        worldUpdater.deleteAccount(address);
+      }
+      worldUpdater.commit();
+    }
 
     frame.clearLogs();
     frame.clearGasRefund();
@@ -121,12 +135,41 @@ public abstract class AbstractMessageProcessor {
   }
 
   /**
+   * EIP-8037: Handles state gas spill on revert/halt. When state changes are rolled back, the state
+   * gas that was consumed is restored. Any "spill" (state gas that had overflowed from the
+   * reservoir into gasRemaining) is routed back: for child frames it returns to the reservoir for
+   * parent re-use; for the initial frame it is tracked in stateGasSpillBurned for transaction-level
+   * gas accounting.
+   *
+   * @param frame The message frame
+   */
+  private void handleStateGasSpill(final MessageFrame frame) {
+    final long stateGasUsedBefore = frame.getStateGasUsed();
+    final long reservoirBefore = frame.getStateGasReservoir();
+
+    clearAccumulatedStateBesidesGasAndOutput(frame);
+
+    final long stateGasRestored = stateGasUsedBefore - frame.getStateGasUsed();
+    final long reservoirRestored = frame.getStateGasReservoir() - reservoirBefore;
+    final long spill = Math.max(0L, stateGasRestored - reservoirRestored);
+    if (spill > 0) {
+      if (frame.getMessageFrameStack().size() > 1) {
+        // Child frame: return spill to reservoir for parent to re-use
+        frame.incrementStateGasReservoir(spill);
+      } else {
+        // Initial frame: track spill for transaction-level gas accounting
+        frame.accumulateStateGasSpillBurned(spill);
+      }
+    }
+  }
+
+  /**
    * Gets called when the message frame encounters an exceptional halt.
    *
    * @param frame The message frame
    */
   private void exceptionalHalt(final MessageFrame frame) {
-    clearAccumulatedStateBesidesGasAndOutput(frame);
+    handleStateGasSpill(frame);
     frame.clearGasRemaining();
     frame.clearOutputData();
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
@@ -138,7 +181,7 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   protected void revert(final MessageFrame frame) {
-    clearAccumulatedStateBesidesGasAndOutput(frame);
+    handleStateGasSpill(frame);
     frame.setState(MessageFrame.State.COMPLETED_FAILED);
   }
 
@@ -193,7 +236,8 @@ public abstract class AbstractMessageProcessor {
       }
     }
 
-    if (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
+    final boolean wasCodeExecuting = (frame.getState() == MessageFrame.State.CODE_EXECUTING);
+    if (wasCodeExecuting) {
       codeExecute(frame, operationTracer);
 
       if (frame.getState() == MessageFrame.State.CODE_SUSPENDED) {

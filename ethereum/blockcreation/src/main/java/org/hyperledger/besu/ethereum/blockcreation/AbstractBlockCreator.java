@@ -222,7 +222,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final var pluginTransactionSelector =
           miningConfiguration
               .getTransactionSelectionService()
-              .createPluginTransactionSelector(selectorsStateManager);
+              .createPluginTransactionSelector(processableBlockHeader, selectorsStateManager);
       final var operationTracer = pluginTransactionSelector.getOperationTracer();
       operationTracer.traceStartBlock(
           disposableWorldState, processableBlockHeader, miningBeneficiary);
@@ -230,7 +230,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Optional<BlockAccessListBuilder> blockAccessListBuilder =
           newProtocolSpec
               .getBlockAccessListFactory()
-              .filter(BlockAccessListFactory::isForkActivated)
               .map(BlockAccessListFactory::newBlockAccessListBuilder);
       final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
           blockAccessListBuilder.map(
@@ -327,7 +326,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   BodyValidation.transactionsRoot(transactionResults.getSelectedTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
               .logsBloom(BodyValidation.logsBloom(transactionResults.getReceipts()))
-              .gasUsed(transactionResults.getCumulativeGasUsed())
+              .gasUsed(
+                  Math.max(
+                      transactionResults.getCumulativeRegularGasUsed(),
+                      transactionResults.getCumulativeStateGasUsed()))
               .extraData(extraDataCalculator.get(parentHeader))
               .withdrawalsRoot(
                   withdrawalsCanBeProcessed
@@ -354,7 +356,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
       timings.register("blockAssembled");
-      return new BlockCreationResult(block, transactionResults, timings, blockAccessList);
+      return new BlockCreationResult(
+          block, transactionResults, timings, blockAccessList, maybeRequests);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException | StorageException ex) {

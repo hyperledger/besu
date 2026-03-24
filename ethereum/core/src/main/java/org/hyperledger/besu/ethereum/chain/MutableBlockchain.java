@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
-import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
@@ -64,31 +63,6 @@ public interface MutableBlockchain extends Blockchain {
       final Block block, final List<TransactionReceipt> receipts) {
     appendBlockWithoutIndexingTransactions(block, receipts, Optional.empty());
   }
-
-  /**
-   * Adds a syncBlock to the blockchain.
-   *
-   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
-   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
-   * as long as they are connected.
-   *
-   * @param syncBlock The syncBlock to append.
-   * @param receipts The list of receipts associated with this syncBlock's transactions.
-   */
-  void appendSyncBlock(SyncBlock syncBlock, List<TransactionReceipt> receipts);
-
-  /**
-   * Adds a syncBlock to the blockchain without indexing transactions.
-   *
-   * <p>Block must be connected to the existing blockchain (its parent must already be stored),
-   * otherwise an {@link IllegalArgumentException} is thrown. Blocks representing forks are allowed
-   * as long as they are connected.
-   *
-   * @param syncBlock The block to append.
-   * @param receipts The list of receipts associated with this block's transactions.
-   */
-  void appendSyncBlockWithoutIndexingTransactions(
-      SyncBlock syncBlock, List<TransactionReceipt> receipts);
 
   /**
    * Adds a block to the blockchain, without updating the chain state.

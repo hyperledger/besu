@@ -1,8 +1,84 @@
 # Changelog
 
-## Unreleased
+## Upcoming Release
+
+### Bug fixes
+- Upgrade besu-native libraries version to 1.5.0. This fixes the issue of besu-native/secp256r1 exporting OpenSSL
+  symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
+
+### Additions and Improvements
+- Add DiscV5 discovery metrics (`discv5_live_nodes_current`, `discv5_total_nodes_current`) to track node counts in the routing table [#9692](https://github.com/besu-eth/besu/issues/9692)
+
+## 26.3.0
+
+### Repository Migration
+- The Besu repository has moved from `hyperledger/besu` to `besu-eth/besu`. GitHub automatically redirects all existing links from the old location.
+
+### Repository Migration
+- The Besu repository has moved from `hyperledger/besu` to `besu-eth/besu`. GitHub automatically redirects all existing links from the old location.
 
 ### Breaking Changes
+- Clique consensus has been removed. Besu can no longer start or mine on pure Clique networks. Syncing networks that started as Clique and have since transitioned to PoS via `terminalTotalDifficulty` (e.g. Linea Mainnet) are still supported. [#9852](https://github.com/hyperledger/besu/pull/9852)
+- Deprecated `--min-block-occupancy-ratio` for removal and make it noop. That option, that is ignored on PoS networks, is related to the deprecated PoW, and allowed to broadcast a mined block as soon as it reached a satisfying fill threshold. The option is still recognized, but it has no effect and will be completely removed in a future release. [#10036](https://github.com/besu-eth/besu/pull/10036)
+- Plugin API
+  - Removed `TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD`, in general it could be replaced with `BLOCK_FULL`
+- Experimental Bonsai Archive column families have changed to improve performance during bonsai to archive migration. If you are using the Bonsai archive you will need to do a full resync [#10058](https://github.com/besu-eth/besu/pull/10058/changes)
+
+### Upcoming Breaking Changes
+- RPC changes to enhance compatibility with other ELs
+  - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
+  - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
+- Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
+- Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
+  - Proof of Work consensus (PoW)
+- `--min-block-occupancy-ratio` is deprecated and will be removed in a future release
+- Plugin API
+  - `PluginTransactionSelectorFactory.create(final SelectorsStateManager selectorsStateManager)` is deprecated for removal
+
+### Bug fixes
+- Fix eth/69 snap sync receipt root mismatch by correctly identifying Frontier transaction type in SyncTransactionReceiptEncoder [#9900](https://github.com/hyperledger/besu/pull/9900)
+- Fix outstanding request counter leak in RequestManager that could cause peers to appear at capacity [#9900](https://github.com/hyperledger/besu/pull/9900)
+- BFT forks that change block period on time-based forks don't take effect [9681](https://github.com/hyperledger/besu/issues/9681)
+- Fix QBFT `RLPException` when decoding proposals from pre-26.1.0 nodes that do not include the `blockAccessList` field [#9977](https://github.com/hyperledger/besu/pull/9977)
+- Fix eth_simulateV1 discrepancy [9960] (https://github.com/besu-eth/besu/issues/9960) eth_simulateV1 now accepts calls where both input and data
+are provided with different values, using input as per the execution-apis spec instead of returning an error.
+- Fix eth_simulateV1 returning wrong error code when transaction gas exceeds block gas limit: now correctly returns -38015 (BLOCK_GAS_LIMIT_EXCEEDED) instead of -38014 or succeeding [#10073](https://github.com/besu-eth/besu/pull/10073)
+- Wait for peers before starting chain download. Prevents an OutOfMemory (OOM) error when the node has zero peers [#9979](https://github.com/hyperledger/besu/pull/9979)
+
+### Additions and Improvements
+- Defer Snappy decompression of inbound P2P messages from the Netty I/O thread to the worker thread, reducing memory held in the transaction worker queue to compressed size [#10048](https://github.com/besu-eth/besu/pull/10048)
+- Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
+- `--net-restrict` now supports IPv6 CIDR notation (e.g. `fd00::/64`) in addition to IPv4, enabling subnet-based peer filtering in IPv6 and dual-stack deployments [#10028](https://github.com/besu-eth/besu/pull/10028)
+- Stop EngineQosTimer as part of shutdown [#9903](https://github.com/hyperledger/besu/pull/9903)
+- Add `--max-blobs-per-transaction` CLI option to configure the maximum number of blobs per transaction [#9912](https://github.com/hyperledger/besu/pull/9912)
+- Add `--max-blobs-per-block` CLI option to configure the maximum number of blobs per block when block building [#9983](https://github.com/hyperledger/besu/pull/9983)
+- Add blockTimestamp to transaction RPC results [#9887](https://github.com/hyperledger/besu/pull/9887)
+- Plugin API: Allow the registration of multiple PluginTransactionPoolValidatorFactory [#9964](https://github.com/hyperledger/besu/pull/9964)
+- Add `-Pcases` case name filtering to JMH benchmark suite [#9982](https://github.com/hyperledger/besu/pull/9982)
+- Use JDK SHA-256 provider to leverage hardware SHA-NI instructions instead of BouncyCastle [#9924](https://github.com/hyperledger/besu/pull/9924)
+- Implement `txpool_status` RPC method [#10002](https://github.com/hyperledger/besu/pull/10002)
+- Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists
+- Support [EIP-8159](https://eips.ethereum.org/EIPS/eip-8159): eth/71 - block access list exchange
+- Support [EIP-8189](https://eips.ethereum.org/EIPS/eip-8189): snap/2 - block access list exchange
+- Limit pooled tx requests by size and remove pre-eth/68 transaction announcement support [#9990](https://github.com/besu-eth/besu/pull/9990)
+- Use cache locality to improve Shift opcodes [#9878](https://github.com/besu-eth/besu/pull/9878)
+- Add maxUsedGas field to eth_simulateV1 results [#10066](https://github.com/besu-eth/besu/pull/10066)
+- Plugin API: pass pending block header when creating selectors [#10034](https://github.com/besu-eth/besu/pull/10034)
+
+### Performance
+- UInt256 arithmetics with long limbs [#9677](https://github.com/besu-eth/besu/pull/9677)
+- Fix edge case in MOD variant operations regarding multiply subtract step [#9934](https://github.com/besu-eth/besu/pull/9934)
+- Fix addMod case with 256bit moduluses [#10001](https://github.com/besu-eth/besu/pull/10001)
+- Performance improvements on MOD variant instructions while converting from byte[] to longs [#9976](https://github.com/besu-eth/besu/pull/9976) 
+- Implement DIV and SDIV with long limbs [#9923](https://github.com/besu-eth/besu/pull/9923)
+- Defer Snappy decompression of inbound P2P messages from the Netty I/O thread to the worker thread, reducing memory held in the transaction worker queue to compressed size [#10048](https://github.com/besu-eth/besu/pull/10048)
+
+## 26.2.0
+
+### Breaking Changes
+- ETC Classic support in Besu is removed. This includes all ETC related hardforks including Mordor and Spiral. [#9671](https://github.com/hyperledger/besu/pull/9671)
+- Forest db subcommands `x-backup-state` and `x-restore-state` are removed [#9821](https://github.com/hyperledger/besu/pull/9821)
+- Omit totalDifficulty from post-merge blockResults [#9836](https://github.com/hyperledger/besu/pull/9836)
 - **Chain pruning CLI options have been redesigned with new behavior:** [#9637](https://github.com/hyperledger/besu/pull/9637)
   - `--Xchain-pruning-enabled` now accepts three strategy values instead of boolean:
     - `ALL` - prunes both blocks and BALs (replaces the old `--Xchain-pruning-enabled=true`)
@@ -21,29 +97,45 @@
   - Renamed `--Xchain-pruning-blocks-retained-limit` to `--Xchain-pruning-retained-minimum` (applies to both blocks and BALs)
     - New default value: `113056` blocks (3533 epochs × 32 slots, based on Weak Subjectivity Period)
     - Previous default: `7200` blocks
+  - Fast Sync is no longer supported, snap sync can be used instead [#9814](https://github.com/hyperledger/besu/pull/9814)
+  - CHECKPOINT sync is deprecated. Selecting CHECKPOINT sync now performs a SNAP sync: [#9814](https://github.com/hyperledger/besu/pull/9814)
+  - eth_simulateV1 returns BLOCK_NOT_FOUND instead of null success response when called with a future block [#9837](https://github.com/hyperledger/besu/pull/9837)
+  - eth_simulateV1: when validation is enabled, map UPFRONT_COST_EXCEEDS_BALANCE (-38014) error code to -32602 [#9837](https://github.com/hyperledger/besu/pull/9837)
 
 ### Upcoming Breaking Changes
 - RPC changes to enhance compatibility with other ELs
   - Block number parameter in RPCs will only support hex values. Support for non-hex (decimal) block number parameters is deprecated.
   - This affects several RPCs, including `admin_logsRemoveCache`, `debug_getRawHeader`, `eth_call`, `eth_simulateV1`, `trace_call` and more.
-- ETC Classic and Mordor network support in Besu is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Holesky network is deprecated [#9437](https://github.com/hyperledger/besu/pull/9437)
 - Sunsetting features - for more context on the reasoning behind the deprecation of these features, including alternative options, read [this blog post](https://www.lfdecentralizedtrust.org/blog/sunsetting-tessera-and-simplifying-hyperledger-besu)
-    - ETC (Ethereum Classic) network support
     - Proof of Work consensus (PoW)
     - Clique Block Production (mining) - you will still be able to sync existing Clique networks, but not be a validator or create new Clique networks.
-    - Fast Sync
 
 ### Additions and Improvements
+- Support substring and glob matching for `--test-name` in `block-test` evmtool subcommand [#9790](https://github.com/hyperledger/besu/pull/9790)
+- Improve performance of snap sync chain download [#9510](https://github.com/hyperledger/besu/pull/9510) and [#9621](https://github.com/hyperledger/besu/pull/9621)
 - Add ability to pass a custom tracer to block simulation [#9708](https://github.com/hyperledger/besu/pull/9708)
 - Add support for `4byteTracer` in `debug_trace*` methods to collect function selectors from internal calls via PR [#9642](https://github.com/hyperledger/besu/pull/9642). Thanks to [@JukLee0ira](https://github.com/JukLee0ira).
 - Update assertj to v3.27.7 [#9710](https://github.com/hyperledger/besu/pull/9710)
 - Update rocksdbjni lib version from 9.7.3 to 10.4.2 [#9767](https://github.com/hyperledger/besu/pull/9767)
+- Update vertx to 4.5.24 [#9645](https://github.com/hyperledger/besu/pull/9645)
+- Add byte-level metrics for P2P message exchange [#9666](https://github.com/hyperledger/besu/pull/9666)
+- Add IPv6 dual-stack support for DiscV5 peer discovery (enabled via `--Xv5-discovery-enabled`): new `--p2p-host-ipv6`, `--p2p-interface-ipv6`, and `--p2p-port-ipv6` CLI options enable a second UDP discovery socket; `--p2p-ipv6-outbound-enabled` controls whether IPv6 is preferred for outbound connections when a peer advertises both address families [#9763](https://github.com/hyperledger/besu/pull/9763); RLPx now also binds a second TCP socket on the IPv6 interface so IPv6-only peers can establish connections [#9873](https://github.com/hyperledger/besu/pull/9873)
+
+#### Performance
+- EVM optimisations - Improves 70% of EEST benchmarks [#9775](https://github.com/hyperledger/besu/pull/9775)
+- EVM optimisations - Improve SAR, SHR and SHL opcodes performance [#9796](https://github.com/hyperledger/besu/pull/9796)
 
 ### Bug fixes
+- Fix epoch reset not clearing DROP votes in Clique/IBFT/QBFT consensus [#9870](https://github.com/hyperledger/besu/pull/9870)
+- Fix DiscV5 ENR `udp`/`udp6` fields: when `--p2p-port=0` is used, the OS-assigned UDP port is now correctly propagated to the ENR after the socket is bound; in dual-stack mode both UDP sockets resolve before the ENR `seq` is incremented [#9888](https://github.com/hyperledger/besu/pull/9888)
+- Fix DiscV5 ENR `tcp`/`tcp6` fields: previously these reflected the UDP discovery bind port instead of the actual RLPx listening port; ENR initialisation is now deferred until the RLPx TCP port is known [#9873](https://github.com/hyperledger/besu/pull/9873)
+- Fix QBFT Shanghai support by reintroducing NotApplicableWithdrawals withdrawals validator [#9830](https://github.com/hyperledger/besu/pull/9830)
 - Fix callTracer handling of failed CREATE operations, including correct input field extraction and proper error reporting for both soft failures and revert reasons
+- Upgrade netty to 4.2.10-Final - Fixes `setsockopt() failed: Protocol not available` [#9783](https://github.com/hyperledger/besu/pull/9783)
+- Allow nonce to be max value when `isAllowFutureNonce` is true [#9759](https://github.com/hyperledger/besu/pull/9759)
 
-## 26.1.0-RC1
+## 26.1.0
 
 ### Breaking Changes
 - Remove experimental CLI flag `--Xenable-extra-debug-tracers`. Call tracer (`callTracer`) is now always available for `debug_trace*` methods.
@@ -70,7 +162,7 @@
   - Optimise EIP-196 AltBn128: EcAdd 33-128% faster, EcMul 8% faster [#9570](https://github.com/hyperledger/besu/pull/9570)
   - Improved `getBlobsV2` by disabling HTTP response compression for engine API, with up to 10× throughput improvement observed for large numbers of blobs. [#9667](https://github.com/hyperledger/besu/pull/9667)
   - Replace BytesTrieSet with HashSet, improves CREATE, CREATE2, SELFDESTRUCT and jumpdest analysis by up to 48% [#9641](https://github.com/hyperledger/besu/pull/9641)
-  - Parallelize state root computation for Bonsai (#9576)[https://github.com/hyperledger/besu/pull/9576]
+  - Parallelize state root computation for Bonsai [#9576](https://github.com/hyperledger/besu/pull/9576)
 - Update to Netty 4.2.9.Final [#9587](https://github.com/hyperledger/besu/pull/9587)
 - Update to log4j 2.25.3 [#9600](https://github.com/hyperledger/besu/pull/9600)
 - Add `engine_getBlobsV3` method [#9582](https://github.com/hyperledger/besu/pull/9582)

@@ -19,7 +19,7 @@ env:
 
 jobs:
   acceptanceTestEthereum:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     name: "Acceptance Runner"
     permissions:
       statuses: write
@@ -47,7 +47,7 @@ jobs:
       - name: List all acceptance tests
         run: ./gradlew acceptanceTest --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
-        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTest'" | tee tmp/currentTests.list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/testcase[1]/@classname' '{}'; echo ' acceptanceTest'" | tee tmp/currentTests.list
       - name: Get acceptance test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
@@ -96,7 +96,7 @@ jobs:
           path: 'acceptance-tests/tests/build/reports/tests/**'
   accepttests-passed:
     name: "accepttests-passed"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [ acceptanceTestEthereum ]
     permissions:
       checks: write

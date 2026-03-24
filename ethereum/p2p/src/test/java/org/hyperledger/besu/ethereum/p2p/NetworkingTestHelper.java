@@ -15,14 +15,16 @@
 package org.hyperledger.besu.ethereum.p2p;
 
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 
 public class NetworkingTestHelper {
 
   public static NetworkingConfiguration configWithRandomPorts() {
-    return NetworkingConfiguration.create()
-        .setRlpx(RlpxConfiguration.create().setBindPort(0))
-        .setDiscovery(DiscoveryConfiguration.create().setBindPort(0));
+    return ImmutableNetworkingConfiguration.builder()
+        .rlpxConfiguration(RlpxConfiguration.create().setBindPort(0))
+        .discoveryConfiguration(DiscoveryConfiguration.create().setBindPort(0))
+        .build();
   }
 }

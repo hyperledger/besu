@@ -5,7 +5,9 @@
 *.iml
 *.launch
 *.log
+*.orig
 .classpath
+.claude
 .DS_Store
 .externalToolBuilders/
 .gradle/

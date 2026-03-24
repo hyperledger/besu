@@ -91,29 +91,32 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   final referenceTestsDir = layout.buildDirectory.dir("execution-spec-tests")
   final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
-  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
-  outputs.files generatedTestsDir
-  // generate blockchain_tests grouped by hardfork/EIP:
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
-    "blockchain_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
-    "ExecutionSpecBlockchainTest",
-    "org.hyperledger.besu.ethereum.vm.executionspec",
-    )
+  inputs.dir referenceTestsDir
+  inputs.files fileTree("src/reference-test/templates")
+  outputs.dir generatedTestsDir
+  doLast {
+    // generate blockchain_tests grouped by hardfork/EIP:
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
+      file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+      "fixtures",
+      "blockchain_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
+      "ExecutionSpecBlockchainTest",
+      "org.hyperledger.besu.ethereum.vm.executionspec",
+      )
 
-  // generate state_tests grouped by hardfork/EIP:
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
-    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
-    "state_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
-    "ExecutionSpecStateTest",
-    "org.hyperledger.besu.ethereum.vm.executionspec",
-    )
+    // generate state_tests grouped by hardfork/EIP:
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
+      file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+      "fixtures",
+      "state_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspec").asFile.path,
+      "ExecutionSpecStateTest",
+      "org.hyperledger.besu.ethereum.vm.executionspec",
+      )
+  }
 }
 
 def extractDevnetFixtures = tasks.register("extractDevnetFixtures", Copy) {
@@ -128,28 +131,30 @@ def executionSpecDevnetTests = tasks.register("executionSpecDevnetTests") {
   final referenceTestsDir = layout.buildDirectory.dir("execution-spec-devnet-tests")
   final generatedTestsDir = layout.buildDirectory.dir("generated/sources/reference-test/$name/java")
 
-  inputs.files fileTree(referenceTestsDir), fileTree(generatedTestsDir)
-  outputs.files generatedTestsDir
+  inputs.dir referenceTestsDir
+  inputs.files fileTree("src/reference-test/templates")
+  outputs.dir generatedTestsDir
+  doLast {
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
+      file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+      "fixtures",
+      "blockchain_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
+      "ExecutionSpecDevnetBlockchainTest",
+      "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
+      )
 
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/blockchain_tests")),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
-    "fixtures",
-    "blockchain_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
-    "ExecutionSpecDevnetBlockchainTest",
-    "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
-    )
-
-  generateTestFilesGroupedByDirectory(
-    fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
-    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
-    "fixtures",
-    "state_tests",
-    generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
-    "ExecutionSpecDevnetStateTest",
-    "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
-    )
+    generateTestFilesGroupedByDirectory(
+      fileTree(referenceTestsDir.get().dir("fixtures/state_tests")),
+      file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+      "fixtures",
+      "state_tests",
+      generatedTestsDir.get().dir("org/hyperledger/besu/ethereum/vm/executionspecdevnet").asFile.path,
+      "ExecutionSpecDevnetStateTest",
+      "org.hyperledger.besu.ethereum.vm.executionspecdevnet",
+      )
+  }
 }
 
 def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
@@ -184,6 +189,24 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
+def customBlockchainReferenceTests = tasks.register("customBlockchainReferenceTests") {
+  final referenceTestsPath = "src/reference-test/resources/custom"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    "custom",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/custom",
+    "CustomBlockchainReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.custom"
+    )
+}
+
 sourceSets {
   referenceTest {
     java {
@@ -194,28 +217,46 @@ sourceSets {
         eipBlockchainReferenceTests,
         eipStateReferenceTests,
         executionSpecTests,
-        executionSpecDevnetTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests
+        generalstateRegressionReferenceTests,
+        customBlockchainReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
         'src/reference-test/external-resources',
         'src/reference-test/templates',
         'build/execution-spec-tests/',
-        'build/execution-spec-devnet-tests/'
+        'src/reference-test/resources/custom'
+    }
+  }
+  referenceTestDevnet {
+    java {
+      compileClasspath += main.output + referenceTest.output
+      runtimeClasspath += main.output + referenceTest.output
+      srcDirs executionSpecDevnetTests
+    }
+    resources {
+      srcDirs 'build/execution-spec-devnet-tests/'
     }
   }
 }
 
-// Both stable and devnet execution-spec-tests tarballs contain fixtures/.meta/index.json
+// stable execution-spec-tests tarball contains fixtures/.meta/index.json
 tasks.named('processReferenceTestResources') {
-  dependsOn extractStableFixtures, extractDevnetFixtures
+  dependsOn extractStableFixtures
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('processReferenceTestDevnetResources') {
+  dependsOn extractDevnetFixtures
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 configurations {
   referenceTestAnnotationProcessor.extendsFrom testAnnotationProcessor
+  referenceTestDevnetAnnotationProcessor.extendsFrom testAnnotationProcessor
+  referenceTestDevnetImplementation.extendsFrom referenceTestImplementation
+  referenceTestDevnetRuntimeOnly.extendsFrom referenceTestRuntimeOnly
   // we need this because referenceTestImplementation defaults to 'canBeResolved=false'.
   tarConfig.extendsFrom referenceTestImplementation
   tarConfig {
@@ -229,6 +270,8 @@ configurations {
 }
 
 dependencies {
+  compileOnly 'org.jspecify:jspecify'
+
   implementation project(':config')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
@@ -271,7 +314,7 @@ dependencies {
     )
   devnetTarConfig(
     group: 'ethereum', name: 'execution-spec-tests',
-    version: 'bal@v5.1.0', classifier: 'fixtures_bal', ext: 'tar.gz'
+    version: 'bal@v5.5.1', classifier: 'fixtures_bal', ext: 'tar.gz'
     )
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
@@ -295,19 +338,13 @@ tasks.register('referenceTests', Test) {
   description = 'Runs ETH reference tests.'
   testClassesDirs = sourceSets.referenceTest.output.classesDirs
   classpath = sourceSets.referenceTest.runtimeClasspath
-  filter {
-    excludeTestsMatching "org.hyperledger.besu.ethereum.vm.executionspecdevnet.*"
-  }
 }
 
 tasks.register('referenceTestsDevnet', Test) {
   useJUnitPlatform()
   description = 'Runs execution-spec-tests pre-release (devnet) reference tests.'
-  testClassesDirs = sourceSets.referenceTest.output.classesDirs
-  classpath = sourceSets.referenceTest.runtimeClasspath
-  filter {
-    includeTestsMatching "org.hyperledger.besu.ethereum.vm.executionspecdevnet.*"
-  }
+  testClassesDirs = sourceSets.referenceTestDevnet.output.classesDirs
+  classpath = sourceSets.referenceTestDevnet.runtimeClasspath
 }
 
 tasks.register('validateReferenceTestSubmodule') {
@@ -330,14 +367,14 @@ tasks.register('validateReferenceTestSubmodule') {
 
     if (!result.toString().contains(expectedHash)) {
       throw new GradleException("""For the Ethereum Reference Tests the git commit did not match what was expected.
-  
-If this is a deliberate change where you are updating the reference tests 
-then update "expectedHash" in `ethereum/referencetests/build.gradle` as the 
+
+If this is a deliberate change where you are updating the reference tests
+then update "expectedHash" in `ethereum/referencetests/build.gradle` as the
 commit hash for this task.
 Expected hash   :  ${expectedHash}
 Full git output : ${result}
 
-If this is accidental you can correct the reference test versions with the 
+If this is accidental you can correct the reference test versions with the
 following commands:
     pushd ${submodulePath}
     git fetch
@@ -439,18 +476,23 @@ def generateTestFilesGroupedByDirectory(
 }
 
 // Extract a group key from path segments for hardfork/EIP-based test grouping.
-// parts = path segments after groupBaseDir, e.g. ["prague", "eip7702_set_code_tx", "test.json"]
+// Supports both old layout (hardfork/eip/file.json) and new per-fork layout (for_fork/hardfork/eip/file.json).
 def extractGroupKey(String[] parts) {
   def groupKey
-  if (parts.length >= 3 && parts[0] == "static") {
+  // Strip leading for_{fork}/ directory if present (new per-fork fixture layout)
+  def effectiveParts = parts
+  if (parts.length >= 2 && parts[0].startsWith("for_")) {
+    effectiveParts = parts[1..parts.length - 1] as String[]
+  }
+  if (effectiveParts.length >= 3 && effectiveParts[0] == "static") {
     // static dirs have deeper nesting: static/state_tests/stCreate2/file.json → static_stCreate2
-    groupKey = "static_" + parts[parts.length - 2]
-  } else if (parts.length >= 3) {
+    groupKey = "static_" + effectiveParts[effectiveParts.length - 2]
+  } else if (effectiveParts.length >= 3) {
     // Normal: hardfork/eip/file.json → hardfork_eip
-    groupKey = parts[0] + "_" + parts[1]
-  } else if (parts.length == 2) {
+    groupKey = effectiveParts[0] + "_" + effectiveParts[1]
+  } else if (effectiveParts.length == 2) {
     // File directly under hardfork dir: hardfork/file.json → hardfork
-    groupKey = parts[0]
+    groupKey = effectiveParts[0]
   } else {
     groupKey = "unknown"
   }

@@ -237,6 +237,13 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
     frame.decrementRemainingGas(cost);
 
+    // EIP-8037: Charge state gas for new account creation in CALL
+    if (!gasCalculator()
+        .stateGasCostCalculator()
+        .chargeCallNewAccountStateGas(frame, recipientAddress, transferValue)) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     frame.clearReturnData();
 
     final Account account = getAccount(frame.getRecipientAddress(), frame);
@@ -313,9 +320,15 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     frame.setReturnData(outputData);
-    frame.addLogs(childFrame.getLogs());
-    frame.addSelfDestructs(childFrame.getSelfDestructs());
-    frame.addCreates(childFrame.getCreates());
+    if (!childFrame.getLogs().isEmpty()) {
+      frame.addLogs(childFrame.getLogs());
+    }
+    if (!childFrame.getSelfDestructs().isEmpty()) {
+      frame.addSelfDestructs(childFrame.getSelfDestructs());
+    }
+    if (!childFrame.getCreates().isEmpty()) {
+      frame.addCreates(childFrame.getCreates());
+    }
 
     final long gasRemaining = childFrame.getRemainingGas();
     frame.incrementRemainingGas(gasRemaining);

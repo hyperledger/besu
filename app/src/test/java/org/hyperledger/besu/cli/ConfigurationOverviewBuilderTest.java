@@ -281,6 +281,33 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
+  void setMaxBlobsPerTransaction() {
+    final String noMaxBlobsSet = builder.build();
+    assertThat(noMaxBlobsSet).doesNotContain("Max Blobs Per Transaction");
+
+    builder.setMaxBlobsPerTransaction(6);
+    final String maxBlobsSet = builder.build();
+    assertThat(maxBlobsSet).contains("Max Blobs Per Transaction: 6");
+  }
+
+  @Test
+  void setDiscoveryDisabled() {
+    final String discoveryEnabledByDefault = builder.build();
+    assertThat(discoveryEnabledByDefault).doesNotContain("Discovery: disabled");
+
+    builder.setDiscoveryEnabled(false);
+    final String discoveryDisabled = builder.build();
+    assertThat(discoveryDisabled).contains("Discovery: disabled");
+  }
+
+  @Test
+  void setDiscoveryEnabled() {
+    builder.setDiscoveryEnabled(true);
+    final String discoveryEnabled = builder.build();
+    assertThat(discoveryEnabled).doesNotContain("Discovery: disabled");
+  }
+
+  @Test
   void setChainPruningDisabled() {
     final String noChainPruningSet = builder.build();
     assertThat(noChainPruningSet).doesNotContain("Chain pruning enabled");
@@ -298,7 +325,7 @@ class ConfigurationOverviewBuilderTest {
     builder.setChainPruningEnabled(ChainPruningStrategy.ALL, 113_152L, 113_152L);
     final String chainPruningSet = builder.build();
     assertThat(chainPruningSet)
-        .contains("Chain pruning enabled (retained BALs: 113152; blocks: 113152)");
+        .contains("Chain and BAL pruning enabled (retained BALs: 113152; Blocks: 113152)");
   }
 
   @Test
@@ -306,7 +333,7 @@ class ConfigurationOverviewBuilderTest {
     builder.setChainPruningEnabled(ChainPruningStrategy.ALL, 150_000L, 113_152L);
     final String chainPruningSet = builder.build();
     assertThat(chainPruningSet)
-        .contains("Chain pruning enabled (retained BALs: 113152; blocks: 150000)");
+        .contains("Chain and BAL pruning enabled (retained BALs: 113152; Blocks: 150000)");
   }
 
   @Test
@@ -314,7 +341,7 @@ class ConfigurationOverviewBuilderTest {
     builder.setChainPruningEnabled(ChainPruningStrategy.BAL, null, 50_000L);
     final String chainPruningSet = builder.build();
     assertThat(chainPruningSet)
-        .contains("Chain pruning enabled (retained BALs: 50000)")
+        .contains("BAL pruning enabled (retained BALs: 50000)")
         .doesNotContain("blocks:")
         .doesNotContain(";");
   }

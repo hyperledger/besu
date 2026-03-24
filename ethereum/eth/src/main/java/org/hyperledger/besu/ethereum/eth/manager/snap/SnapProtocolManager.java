@@ -22,8 +22,10 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramingException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
@@ -54,18 +56,22 @@ public class SnapProtocolManager implements ProtocolManager {
       final SnapSyncConfiguration snapConfig,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final Synchronizer synchronizer) {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
-    this.supportedCapabilities = calculateCapabilities();
+    this.supportedCapabilities = calculateCapabilities(protocolSchedule);
     new SnapServer(
         snapConfig, snapMessages, worldStateStorageCoordinator, protocolContext, synchronizer);
   }
 
-  private List<Capability> calculateCapabilities() {
+  private List<Capability> calculateCapabilities(final ProtocolSchedule protocolSchedule) {
     final ImmutableList.Builder<Capability> capabilities = ImmutableList.builder();
     capabilities.add(SnapProtocol.SNAP1);
+    if (protocolSchedule.anyMatch(spec -> spec.spec().isBlockAccessListEnabled())) {
+      capabilities.add(SnapProtocol.SNAP2);
+    }
 
     return capabilities.build();
   }
@@ -94,8 +100,7 @@ public class SnapProtocolManager implements ProtocolManager {
    */
   @Override
   public void processMessage(final Capability cap, final Message message) {
-    final MessageData messageData = AbstractSnapMessageData.create(message);
-    final int code = messageData.getCode();
+    final int code = message.getData().getCode();
     LOG.trace("Process snap message {}, {}", cap, code);
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
@@ -103,31 +108,43 @@ public class SnapProtocolManager implements ProtocolManager {
           "Ignoring message received from unknown peer connection: {}", message.getConnection());
       return;
     }
-    final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
+
+    final EthMessage ethMessage = new EthMessage(ethPeer, message.getData());
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug(
-          "Unsolicited message {} received from, disconnecting: {}",
-          ethMessage.getData().getCode(),
-          ethPeer);
+      LOG.debug("Unsolicited message {} received from, disconnecting: {}", code, ethPeer);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED);
       return;
     }
 
-    // This will handle responses
-    ethPeers.dispatchMessage(ethPeer, ethMessage, getSupportedProtocol());
-
-    // This will handle requests
     Optional<MessageData> maybeResponseData = Optional.empty();
     try {
+      final MessageData messageData = AbstractSnapMessageData.create(message);
+      final EthMessage decodedEthMessage = new EthMessage(ethPeer, messageData);
+
+      // This will handle responses
+      ethPeers.dispatchMessage(ethPeer, decodedEthMessage, getSupportedProtocol());
+
+      // This will handle requests
       final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-          ethMessage.getData().unwrapMessageData();
+          decodedEthMessage.getData().unwrapMessageData();
       maybeResponseData =
           snapMessages
               .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
               .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
+    } catch (final FramingException e) {
+      LOG.atDebug()
+          .setMessage("Disconnecting peer {} due to decompression failure for message code {}")
+          .addArgument(ethPeer::getLoggableId)
+          .addArgument(code)
+          .setCause(e)
+          .log();
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     } catch (final RLPException e) {
       LOG.debug(
-          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+          "Received malformed message code={} (BREACH_OF_PROTOCOL), disconnecting: {}",
+          code,
+          ethPeer,
+          e);
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
     maybeResponseData.ifPresent(

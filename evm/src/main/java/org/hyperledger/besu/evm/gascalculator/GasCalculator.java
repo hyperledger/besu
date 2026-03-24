@@ -600,6 +600,16 @@ public interface GasCalculator {
   }
 
   /**
+   * Returns the gas cost per item for the block access list size constraint (EIP-7928).
+   *
+   * @return the cost per BAL item (address or storage key) for the size limit; 0 if BAL size
+   *     constraint is not applicable for this fork
+   */
+  default long getBlockAccessListItemCost() {
+    return 0L;
+  }
+
+  /**
    * Returns the blob gas cost per blob. This is the gas cost for each blob of data that is added to
    * the block.
    *
@@ -661,5 +671,14 @@ public interface GasCalculator {
   default long calculateCodeDelegationResolutionGas(
       final MessageFrame frame, final Account targetAccount) {
     return 0L;
+  }
+
+  /**
+   * Returns the state gas cost calculator for EIP-8037 multidimensional gas metering.
+   *
+   * @return the state gas cost calculator (NONE by default)
+   */
+  default StateGasCostCalculator stateGasCostCalculator() {
+    return StateGasCostCalculator.NONE;
   }
 }

@@ -62,7 +62,7 @@ public class PeerDiscoveryAgentFactoryV4 implements PeerDiscoveryAgentFactory {
     return VertxPeerDiscoveryAgent.create(
         vertx,
         nodeKey,
-        config.getDiscovery(),
+        config.discoveryConfiguration(),
         peerPermissions,
         natService,
         metricsSystem,
