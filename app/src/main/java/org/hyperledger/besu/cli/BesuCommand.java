@@ -88,6 +88,7 @@ import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
+import org.hyperledger.besu.config.DiscoveryOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
@@ -1895,9 +1896,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return the block period in seconds, or empty if not applicable
    */
   private OptionalInt getBlockPeriodSeconds(final GenesisConfigOptions genesisConfigOptions) {
-    if (genesisConfigOptions.isClique()) {
-      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getBlockPeriodSeconds());
-    }
     if (genesisConfigOptions.isIbft2()) {
       return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getBlockPeriodSeconds());
     }
@@ -1918,8 +1916,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return OptionalLong.of(genesisConfigOptions.getBftConfigOptions().getEpochLength());
     } else if (genesisConfigOptions.isQbft()) {
       return OptionalLong.of(genesisConfigOptions.getQbftConfigOptions().getEpochLength());
-    } else if (genesisConfigOptions.isClique()) {
-      return OptionalLong.of(genesisConfigOptions.getCliqueConfigOptions().getEpochLength());
     }
     return OptionalLong.empty();
   }
@@ -1935,8 +1931,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       return "IBFT2";
     } else if (genesisConfigOptions.isQbft()) {
       return "QBFT";
-    } else if (genesisConfigOptions.isClique()) {
-      return "Clique";
     } else if (genesisConfigOptions.isEthHash()) {
       return "Ethash";
     }
@@ -2524,6 +2518,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       if (p2PDiscoveryOptions.bootNodes == null) {
         builder.setEnodeBootNodes(new ArrayList<>());
+        builder.setEnrBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
     }
@@ -2546,46 +2541,75 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
-    List<EnodeURLImpl> listBootNodes = null;
-    if (p2PDiscoveryOptions.bootNodes != null) {
+    // Resolve bootnodes: CLI --bootnodes overrides genesis defaults.
+    // The discovery protocol version determines the expected format:
+    //   V5 → ENR strings ("enr:..."),  V4 → enode URLs ("enode://...")
+    final boolean isV5 =
+        unstableNetworkingOptions.toDomainObject().discoveryConfiguration().isDiscoveryV5Enabled();
+    List<String> rawBootnodes = null;
+    final boolean cliBootnodesProvided = p2PDiscoveryOptions.bootNodes != null;
+    if (cliBootnodesProvided) {
       try {
-        final List<String> resolvedBootNodeArgs =
-            BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
-        if (!resolvedBootNodeArgs.isEmpty()) {
-          if (resolvedBootNodeArgs.getFirst().startsWith("enr:")) {
-            builder.setEnrBootNodes(
-                resolvedBootNodeArgs.stream().map(EthereumNodeRecord::fromEnr).toList());
-          } else {
-            listBootNodes = buildEnodes(resolvedBootNodeArgs, getEnodeDnsConfiguration());
-          }
-        } else {
-          listBootNodes = Collections.emptyList();
-        }
-
-      } catch (final BootnodeResolutionException e) {
+        rawBootnodes = BootnodeResolver.resolve(p2PDiscoveryOptions.bootNodes);
+      } catch (final BootnodeResolutionException | IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage(), e);
-
-      } catch (final IllegalArgumentException e) {
-        throw new ParameterException(commandLine, e.getMessage());
       }
     } else {
-      final Optional<List<String>> bootNodesFromGenesis =
-          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
-      if (bootNodesFromGenesis.isPresent() && !bootNodesFromGenesis.get().isEmpty()) {
-        if (bootNodesFromGenesis.get().getFirst().startsWith("enr:")) {
-          builder.setEnrBootNodes(
-              bootNodesFromGenesis.get().stream().map(EthereumNodeRecord::fromEnr).toList());
-        } else {
-          listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
-        }
-      }
+      final DiscoveryOptions discoveryOptions =
+          genesisConfigOptionsSupplier.get().getDiscoveryOptions();
+      rawBootnodes =
+          isV5
+              ? discoveryOptions.getV5BootNodes().orElse(null)
+              : discoveryOptions.getBootNodes().orElse(null);
     }
-    if (listBootNodes != null) {
+
+    if (rawBootnodes != null && !rawBootnodes.isEmpty()) {
       if (!p2PDiscoveryOptions.peerDiscoveryEnabled) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       }
-      DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
-      builder.setEnodeBootNodes(listBootNodes);
+      try {
+        if (isV5) {
+          builder.setEnrBootNodes(
+              rawBootnodes.stream()
+                  .map(
+                      enr -> {
+                        try {
+                          return EthereumNodeRecord.fromEnr(enr);
+                        } catch (final Exception e) {
+                          throw new ParameterException(
+                              commandLine,
+                              "Invalid ENR bootnode: '"
+                                  + enr
+                                  + "'. ENR bootnodes must start with 'enr:'. Error: "
+                                  + e.getMessage(),
+                              e);
+                        }
+                      })
+                  .toList());
+        } else {
+          final List<EnodeURLImpl> enodes = buildEnodes(rawBootnodes, getEnodeDnsConfiguration());
+          DiscoveryConfiguration.assertValidBootnodes(enodes);
+          builder.setEnodeBootNodes(enodes);
+        }
+        // CLI --bootnodes is a full override: clear the unused protocol's list
+        if (cliBootnodesProvided) {
+          if (isV5) {
+            builder.setEnodeBootNodes(Collections.emptyList());
+          } else {
+            builder.setEnrBootNodes(Collections.emptyList());
+          }
+        }
+      } catch (final ParameterException e) {
+        throw e; // re-throw ParameterException from ENR parsing as-is
+      } catch (final IllegalArgumentException e) {
+        throw new ParameterException(commandLine, e.getMessage());
+      } catch (final RuntimeException e) {
+        throw new ParameterException(commandLine, "Invalid bootnode format: " + e.getMessage(), e);
+      }
+    } else if (cliBootnodesProvided) {
+      // Explicitly empty --bootnodes clears all default bootnodes
+      builder.setEnodeBootNodes(Collections.emptyList());
+      builder.setEnrBootNodes(Collections.emptyList());
     }
     return builder.build();
   }
@@ -2946,6 +2970,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       MergeCoordinator.getDefaultGasLimitByChainId(genesisConfigOptionsSupplier.get().getChainId())
           .ifPresent(builder::setTargetGasLimit);
     }
+
+    miningParametersSupplier
+        .get()
+        .getMaxBlobsPerTransaction()
+        .ifPresent(v -> builder.setMaxBlobsPerTransaction(v));
+
+    miningParametersSupplier
+        .get()
+        .getMaxBlobsPerBlock()
+        .ifPresent(v -> builder.setMaxBlobsPerBlock(v));
 
     builder
         .setDiscoveryEnabled(p2PDiscoveryOptions.peerDiscoveryEnabled)

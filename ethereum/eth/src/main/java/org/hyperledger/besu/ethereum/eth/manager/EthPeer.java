@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.messages.GetBlockBodiesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetNodeDataMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetPooledTransactionsMessage;
-import org.hyperledger.besu.ethereum.eth.messages.GetReceiptsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
@@ -113,6 +112,8 @@ public class EthPeer implements Comparable<EthPeer> {
     roundMessages.put(EthProtocolMessages.NODE_DATA, EthProtocolMessages.GET_NODE_DATA);
     roundMessages.put(
         EthProtocolMessages.POOLED_TRANSACTIONS, EthProtocolMessages.GET_POOLED_TRANSACTIONS);
+    roundMessages.put(
+        EthProtocolMessages.BLOCK_ACCESS_LISTS, EthProtocolMessages.GET_BLOCK_ACCESS_LISTS);
 
     roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
     roundMessages.put(SnapV1.STORAGE_RANGE, SnapV1.GET_STORAGE_RANGE);
@@ -159,6 +160,9 @@ public class EthPeer implements Comparable<EthPeer> {
                 EthProtocolMessages.GET_NODE_DATA, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
                 EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+                new RequestManager(this, EthProtocol.NAME)),
+            Map.entry(
+                EthProtocolMessages.GET_BLOCK_ACCESS_LISTS,
                 new RequestManager(this, EthProtocol.NAME))));
   }
 
@@ -327,13 +331,6 @@ public class EthPeer implements Comparable<EthPeer> {
     final GetBlockBodiesMessage message = GetBlockBodiesMessage.create(blockHashes);
     return sendRequest(
         requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_BLOCK_BODIES), message);
-  }
-
-  public RequestManager.ResponseStream getReceipts(final List<Hash> blockHashes)
-      throws PeerNotConnected {
-    final GetReceiptsMessage message = GetReceiptsMessage.create(blockHashes);
-    return sendRequest(
-        requestManagers.get(EthProtocol.NAME).get(EthProtocolMessages.GET_RECEIPTS), message);
   }
 
   public RequestManager.ResponseStream getNodeData(final Iterable<Hash> nodeHashes)

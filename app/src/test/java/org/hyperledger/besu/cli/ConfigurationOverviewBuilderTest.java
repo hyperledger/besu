@@ -281,6 +281,16 @@ class ConfigurationOverviewBuilderTest {
   }
 
   @Test
+  void setMaxBlobsPerTransaction() {
+    final String noMaxBlobsSet = builder.build();
+    assertThat(noMaxBlobsSet).doesNotContain("Max Blobs Per Transaction");
+
+    builder.setMaxBlobsPerTransaction(6);
+    final String maxBlobsSet = builder.build();
+    assertThat(maxBlobsSet).contains("Max Blobs Per Transaction: 6");
+  }
+
+  @Test
   void setDiscoveryDisabled() {
     final String discoveryEnabledByDefault = builder.build();
     assertThat(discoveryEnabledByDefault).doesNotContain("Discovery: disabled");

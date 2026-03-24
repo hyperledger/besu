@@ -75,6 +75,9 @@ public class ConfigurationOverviewBuilder {
 
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
+  private Integer maxBlobsPerTransaction;
+  private Integer maxBlobsPerBlock;
+  private static final String SNAP_SYNC_MODE = "SNAP";
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -399,6 +402,29 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the max blobs per transaction.
+   *
+   * @param maxBlobsPerTransaction the max blobs per transaction
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setMaxBlobsPerTransaction(
+      final Integer maxBlobsPerTransaction) {
+    this.maxBlobsPerTransaction = maxBlobsPerTransaction;
+    return this;
+  }
+
+  /**
+   * Sets the max blobs per block for block building.
+   *
+   * @param maxBlobsPerBlock the max blobs per block
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setMaxBlobsPerBlock(final Integer maxBlobsPerBlock) {
+    this.maxBlobsPerBlock = maxBlobsPerBlock;
+    return this;
+  }
+
+  /**
    * Sets the chain pruning configuration.
    *
    * @param pruningStrategy the chain pruning strategy
@@ -452,6 +478,10 @@ public class ConfigurationOverviewBuilder {
 
     if (syncMode != null) {
       lines.add("Sync mode: " + syncMode);
+      if (syncMode.equalsIgnoreCase(SNAP_SYNC_MODE)) {
+        final String snapServerStatus = isSnapServerEnabled ? "enabled" : "disabled";
+        lines.add("  SNAP Sync server " + snapServerStatus);
+      }
     }
 
     if (syncMinPeers != null) {
@@ -523,10 +553,6 @@ public class ConfigurationOverviewBuilder {
       lines.add(chainPruningString.toString());
     }
 
-    if (isSnapServerEnabled) {
-      lines.add("Snap Sync server enabled");
-    }
-
     if (isHighSpec) {
       lines.add("Experimental high spec configuration enabled");
     }
@@ -557,6 +583,14 @@ public class ConfigurationOverviewBuilder {
 
     if (targetGasLimit != null) {
       lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
+    }
+
+    if (maxBlobsPerTransaction != null) {
+      lines.add("Max Blobs Per Transaction: " + maxBlobsPerTransaction);
+    }
+
+    if (maxBlobsPerBlock != null) {
+      lines.add("Max Blobs Per Block (builder): " + maxBlobsPerBlock);
     }
 
     lines.add("");
