@@ -21,7 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.StructLog;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -46,25 +45,84 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class DebugTraceBlockStreamer {
 
+  private static final int BUF_SIZE = 256 * 1024;
+
+  private static final byte[] HEX = {
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+  };
+
+  private static final byte[] TX_OPEN =
+      "{\"txHash\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_RESULT_STRUCT_OPEN =
+      "\",\"result\":{\"structLogs\":[".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_GAS_PREFIX =
+      "],\"gas\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_FAILED_TRUE_RV =
+      ",\"failed\":true,\"returnValue\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_FAILED_FALSE_RV =
+      ",\"failed\":false,\"returnValue\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_CLOSE =
+      "\"}}".getBytes(StandardCharsets.US_ASCII);
+
+  private static final byte[] SL_PC =
+      "{\"pc\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_OP =
+      ",\"op\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_GAS =
+      "\",\"gas\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_GAS_COST =
+      ",\"gasCost\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_DEPTH =
+      ",\"depth\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_STACK =
+      ",\"stack\":[".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_MEMORY =
+      ",\"memory\":[".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_STORAGE =
+      ",\"storage\":{".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_REASON =
+      ",\"reason\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_ERROR =
+      ",\"error\":[\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] QUOTE_BRACKET =
+      "\"]".getBytes(StandardCharsets.US_ASCII);
+
+  private static final byte COMMA = ',';
+  private static final byte QUOTE = '"';
+  private static final byte COLON = ':';
+  private static final byte OBJ_CLOSE = '}';
+  private static final byte ARR_CLOSE = ']';
+
   private final Block block;
   private final TraceOptions traceOptions;
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
-  private final StringBuilder hexBuf = new StringBuilder(66);
+
+  private final byte[] hexBuf = new byte[130];
+  private final byte[] numBuf = new byte[20];
+  private final byte[] writeBuf = new byte[BUF_SIZE];
   private final TreeMap<UInt256, UInt256> sortedStorage = new TreeMap<>();
+  private final HashMap<String, byte[]> opcodeCache = new HashMap<>(256);
+
+  private OutputStream rawOut;
+  private int writePos;
+  private boolean firstStructLog;
+  private boolean firstTx;
 
   public DebugTraceBlockStreamer(
       final Block block,
@@ -77,18 +135,51 @@ public class DebugTraceBlockStreamer {
     this.blockchainQueries = blockchainQueries;
   }
 
-  public void streamTo(final OutputStream out, final ObjectMapper mapper) throws IOException {
-    try (JsonGenerator gen = mapper.getFactory().createGenerator(out)) {
-      gen.setCodec(mapper);
-      gen.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
-      gen.disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+  // ── unsynchronized buffer management ──────────────────────────────
 
-      gen.writeStartArray();
+  private void flushBuf() throws IOException {
+    if (writePos > 0) {
+      rawOut.write(writeBuf, 0, writePos);
+      writePos = 0;
+    }
+  }
+
+  private void writeByte(final int b) throws IOException {
+    if (writePos >= BUF_SIZE) flushBuf();
+    writeBuf[writePos++] = (byte) b;
+  }
+
+  private void writeBytes(final byte[] src) throws IOException {
+    writeBytes(src, 0, src.length);
+  }
+
+  private void writeBytes(final byte[] src, final int off, final int len) throws IOException {
+    if (len >= BUF_SIZE) {
+      flushBuf();
+      rawOut.write(src, off, len);
+      return;
+    }
+    if (writePos + len > BUF_SIZE) flushBuf();
+    System.arraycopy(src, off, writeBuf, writePos, len);
+    writePos += len;
+  }
+
+  // ── public API ────────────────────────────────────────────────────
+
+  public void streamTo(final OutputStream out, final ObjectMapper mapper) throws IOException {
+    this.rawOut = out;
+    this.writePos = 0;
+    this.firstTx = true;
+
+    try {
+      writeByte('[');
+
       Tracer.processTracing(
           blockchainQueries,
           Optional.of(block.getHeader()),
           traceableState -> {
-            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
+            final ProtocolSpec protocolSpec =
+                protocolSchedule.getByBlockHeader(block.getHeader());
             final MainnetTransactionProcessor transactionProcessor =
                 protocolSpec.getTransactionProcessor();
             final TraceBlock.ChainUpdater chainUpdater =
@@ -96,25 +187,30 @@ public class DebugTraceBlockStreamer {
 
             final BlockHeader header = block.getHeader();
             final Optional<BlockHeader> maybeParentHeader =
-                blockchainQueries.getBlockchain().getBlockHeader(header.getParentHash());
+                blockchainQueries
+                    .getBlockchain()
+                    .getBlockHeader(header.getParentHash());
             final Wei blobGasPrice =
                 protocolSpec
                     .getFeeMarket()
                     .blobGasPricePerGas(
                         maybeParentHeader
-                            .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                            .map(
+                                parent ->
+                                    calculateExcessBlobGasForParent(protocolSpec, parent))
                             .orElse(BlobGas.ZERO));
             final BlockHashLookup blockHashLookup =
                 protocolSpec
                     .getPreExecutionProcessor()
-                    .createBlockHashLookup(blockchainQueries.getBlockchain(), header);
+                    .createBlockHashLookup(
+                        blockchainQueries.getBlockchain(), header);
 
-            final boolean isOpcodeTracer = traceOptions.tracerType() == TracerType.OPCODE_TRACER;
+            final boolean isOpcodeTracer =
+                traceOptions.tracerType() == TracerType.OPCODE_TRACER;
 
             for (final Transaction transaction : block.getBody().getTransactions()) {
               if (isOpcodeTracer) {
                 streamOpcodeTransaction(
-                    gen,
                     transaction,
                     chainUpdater,
                     transactionProcessor,
@@ -123,15 +219,19 @@ public class DebugTraceBlockStreamer {
                     blockHashLookup);
               } else {
                 try {
-                  gen.writeObject(
-                      buildTransactionResult(
-                          transaction,
-                          chainUpdater,
-                          transactionProcessor,
-                          protocolSpec,
-                          header,
-                          blobGasPrice,
-                          blockHashLookup));
+                  final byte[] json =
+                      mapper.writeValueAsBytes(
+                          buildTransactionResult(
+                              transaction,
+                              chainUpdater,
+                              transactionProcessor,
+                              protocolSpec,
+                              header,
+                              blobGasPrice,
+                              blockHashLookup));
+                  if (!firstTx) writeByte(COMMA);
+                  firstTx = false;
+                  writeBytes(json);
                 } catch (IOException e) {
                   throw new UncheckedIOException(e);
                 }
@@ -140,17 +240,14 @@ public class DebugTraceBlockStreamer {
 
             return Optional.of(Boolean.TRUE);
           });
-      gen.writeEndArray();
-      gen.flush();
+
+      writeByte(']');
+      flushBuf();
+    } finally {
+      this.rawOut = null;
     }
   }
 
-  /**
-   * Accumulates all transaction traces without streaming. Used for batch JSON-RPC requests where
-   * the entire result must be returned as a single response object.
-   *
-   * @return list of trace results for all transactions in the block
-   */
   public List<Object> accumulateAll() {
     final List<Object> results = new ArrayList<>();
     Tracer.processTracing(
@@ -160,7 +257,8 @@ public class DebugTraceBlockStreamer {
           final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
           final MainnetTransactionProcessor transactionProcessor =
               protocolSpec.getTransactionProcessor();
-          final TraceBlock.ChainUpdater chainUpdater = new TraceBlock.ChainUpdater(traceableState);
+          final TraceBlock.ChainUpdater chainUpdater =
+              new TraceBlock.ChainUpdater(traceableState);
 
           final BlockHeader header = block.getHeader();
           final Optional<BlockHeader> maybeParentHeader =
@@ -194,31 +292,33 @@ public class DebugTraceBlockStreamer {
     return results;
   }
 
+  // ── streaming opcode transaction ──────────────────────────────────
+
   private void streamOpcodeTransaction(
-      final JsonGenerator gen,
       final Transaction transaction,
       final TraceBlock.ChainUpdater chainUpdater,
       final MainnetTransactionProcessor transactionProcessor,
       final BlockHeader header,
       final Wei blobGasPrice,
       final BlockHashLookup blockHashLookup) {
+
     final StreamingDebugOperationTracer tracer =
         new StreamingDebugOperationTracer(
             traceOptions.opCodeTracerConfig(),
             true,
             (pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert) ->
-                writeStreamingStructLog(
-                    gen, pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert));
+                writeStructLog(
+                    pc, opcode, gasRemaining, gasCost, depth, stack, frame, halt, revert));
 
     try {
-      gen.writeStartObject();
-      gen.writeStringField("txHash", transaction.getHash().toHexString());
-      gen.writeFieldName("result");
-      gen.writeStartObject();
+      if (!firstTx) writeByte(COMMA);
+      firstTx = false;
 
-      // structLogs written during execution (before gas/failed/returnValue are known)
-      gen.writeFieldName("structLogs");
-      gen.writeStartArray();
+      writeBytes(TX_OPEN);
+      writeAscii(transaction.getHash().toHexString());
+      writeBytes(TX_RESULT_STRUCT_OPEN);
+
+      firstStructLog = true;
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
@@ -232,19 +332,17 @@ public class DebugTraceBlockStreamer {
               blobGasPrice,
               Optional.empty());
 
-      gen.writeEndArray(); // end structLogs
-
-      final long gas = transaction.getGasLimit() - result.getGasRemaining();
-      gen.writeNumberField("gas", gas);
-      gen.writeBooleanField("failed", !result.isSuccessful());
-      gen.writeStringField("returnValue", result.getOutput().toUnprefixedHexString());
-
-      gen.writeEndObject(); // end result
-      gen.writeEndObject(); // end tx entry
+      writeBytes(TX_GAS_PREFIX);
+      writeLong(transaction.getGasLimit() - result.getGasRemaining());
+      writeBytes(result.isSuccessful() ? TX_FAILED_FALSE_RV : TX_FAILED_TRUE_RV);
+      writeAscii(result.getOutput().toUnprefixedHexString());
+      writeBytes(TX_CLOSE);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
+
+  // ── non-streaming fallback (flat tracer, etc.) ────────────────────
 
   private DebugTraceTransactionResult buildTransactionResult(
       final Transaction transaction,
@@ -285,8 +383,9 @@ public class DebugTraceBlockStreamer {
         .apply(transactionTrace);
   }
 
-  private void writeStreamingStructLog(
-      final JsonGenerator gen,
+  // ── struct log writer (hot path) ──────────────────────────────────
+
+  private void writeStructLog(
       final int pc,
       final String opcode,
       final long gasRemaining,
@@ -297,38 +396,49 @@ public class DebugTraceBlockStreamer {
       final ExceptionalHaltReason haltReason,
       final Bytes revertReason) {
     try {
-      gen.writeStartObject();
+      if (!firstStructLog) writeByte(COMMA);
+      firstStructLog = false;
 
-      gen.writeNumberField("pc", pc);
-      gen.writeStringField("op", opcode);
-      gen.writeNumberField("gas", gasRemaining);
-      gen.writeNumberField("gasCost", gasCost);
-      gen.writeNumberField("depth", depth + 1);
+      writeBytes(SL_PC);
+      writeInt(pc);
 
-      // stack - use pre-execution stack references directly (no copy)
+      writeBytes(SL_OP);
+      writeBytes(opcodeToBytes(opcode));
+
+      writeBytes(SL_GAS);
+      writeLong(gasRemaining);
+
+      writeBytes(SL_GAS_COST);
+      writeLong(gasCost);
+
+      writeBytes(SL_DEPTH);
+      writeInt(depth + 1);
+
       if (stack != null) {
-        gen.writeFieldName("stack");
-        gen.writeStartArray();
-        for (final Bytes entry : stack) {
-          StructLog.toCompactHex(entry, true, hexBuf);
-          gen.writeString(hexBuf.toString());
+        writeBytes(SL_STACK);
+        for (int s = 0; s < stack.length; s++) {
+          if (s > 0) writeByte(COMMA);
+          writeByte(QUOTE);
+          final int len = compactHexBytes(stack[s], true);
+          writeBytes(hexBuf, 0, len);
+          writeByte(QUOTE);
         }
-        gen.writeEndArray();
+        writeByte(ARR_CLOSE);
       }
 
-      // memory - always emit the array when traceMemory is enabled, even if empty
-      if (traceOptions.opCodeTracerConfig().traceMemory()) {
-        gen.writeFieldName("memory");
-        gen.writeStartArray();
+      if (traceOptions.opCodeTracerConfig().traceMemory() && frame.memoryWordSize() > 0) {
+        writeBytes(SL_MEMORY);
         final int wordCount = frame.memoryWordSize();
         for (int i = 0; i < wordCount; i++) {
-          StructLog.toCompactHex(frame.readMutableMemory(i * 32L, 32), true, hexBuf);
-          gen.writeString(hexBuf.toString());
+          if (i > 0) writeByte(COMMA);
+          writeByte(QUOTE);
+          final int len = compactHexBytes(frame.readMutableMemory(i * 32L, 32), true);
+          writeBytes(hexBuf, 0, len);
+          writeByte(QUOTE);
         }
-        gen.writeEndArray();
+        writeByte(ARR_CLOSE);
       }
 
-      // storage - read directly from world updater (no intermediate copy)
       if (traceOptions.opCodeTracerConfig().traceStorage()) {
         try {
           final MutableAccount account =
@@ -336,17 +446,24 @@ public class DebugTraceBlockStreamer {
           if (account != null) {
             final Map<UInt256, UInt256> updatedStorage = account.getUpdatedStorage();
             if (!updatedStorage.isEmpty()) {
-              gen.writeFieldName("storage");
-              gen.writeStartObject();
+              writeBytes(SL_STORAGE);
               sortedStorage.clear();
               sortedStorage.putAll(updatedStorage);
+              boolean firstEntry = true;
               for (final Map.Entry<UInt256, UInt256> entry : sortedStorage.entrySet()) {
-                StructLog.toCompactHex(entry.getKey(), false, hexBuf);
-                final String key = hexBuf.toString();
-                StructLog.toCompactHex(entry.getValue(), false, hexBuf);
-                gen.writeStringField(key, hexBuf.toString());
+                if (!firstEntry) writeByte(COMMA);
+                firstEntry = false;
+                writeByte(QUOTE);
+                final int kLen = compactHexBytes(entry.getKey(), false);
+                writeBytes(hexBuf, 0, kLen);
+                writeByte(QUOTE);
+                writeByte(COLON);
+                writeByte(QUOTE);
+                final int vLen = compactHexBytes(entry.getValue(), false);
+                writeBytes(hexBuf, 0, vLen);
+                writeByte(QUOTE);
               }
-              gen.writeEndObject();
+              writeByte(OBJ_CLOSE);
             }
           }
         } catch (final ModificationNotAllowedException e) {
@@ -354,23 +471,91 @@ public class DebugTraceBlockStreamer {
         }
       }
 
-      // reason (revert reason)
       if (revertReason != null) {
-        StructLog.toCompactHex(revertReason, true, hexBuf);
-        gen.writeStringField("reason", hexBuf.toString());
+        writeBytes(SL_REASON);
+        final int len = compactHexBytes(revertReason, true);
+        writeBytes(hexBuf, 0, len);
+        writeByte(QUOTE);
       }
 
-      // error
       if (haltReason != null) {
-        gen.writeFieldName("error");
-        gen.writeStartArray();
-        gen.writeString(haltReason.name());
-        gen.writeEndArray();
+        writeBytes(SL_ERROR);
+        writeBytes(haltReason.name().getBytes(StandardCharsets.US_ASCII));
+        writeBytes(QUOTE_BRACKET);
       }
 
-      gen.writeEndObject();
+      writeByte(OBJ_CLOSE);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  // ── primitives ────────────────────────────────────────────────────
+
+  private int compactHexBytes(final Bytes abytes, final boolean prefix) {
+    final byte[] bytes = abytes.toArrayUnsafe();
+    final int size = bytes.length;
+    if (size == 0) {
+      if (prefix) {
+        hexBuf[0] = '0'; hexBuf[1] = 'x'; hexBuf[2] = '0';
+        return 3;
+      } else {
+        hexBuf[0] = '0';
+        return 1;
+      }
+    }
+    int pos = 0;
+    if (prefix) {
+      hexBuf[pos++] = '0';
+      hexBuf[pos++] = 'x';
+    }
+    boolean leadingZero = true;
+    for (int i = 0; i < size; i++) {
+      final byte b = bytes[i];
+      final int hi = (b >> 4) & 0xF;
+      if (!leadingZero || hi != 0) {
+        hexBuf[pos++] = HEX[hi];
+        leadingZero = false;
+      }
+      final int lo = b & 0xF;
+      if (!leadingZero || lo != 0 || i == size - 1) {
+        hexBuf[pos++] = HEX[lo];
+        leadingZero = false;
+      }
+    }
+    return pos;
+  }
+
+  private byte[] opcodeToBytes(final String opcode) {
+    return opcodeCache.computeIfAbsent(opcode, s -> s.getBytes(StandardCharsets.US_ASCII));
+  }
+
+private void writeLong(final long value) throws IOException {
+    if (value >= 0 && value <= 9) {
+      writeByte('0' + (int) value);
+      return;
+    }
+    long remaining = value;
+    boolean neg = false;
+    if (remaining < 0) {
+      neg = true;
+      remaining = -remaining;
+    }
+    int pos = numBuf.length;
+    while (remaining > 0) {
+      numBuf[--pos] = (byte) ('0' + (int) (remaining % 10));
+      remaining /= 10;
+    }
+    if (neg) {
+      numBuf[--pos] = '-';
+    }
+    writeBytes(numBuf, pos, numBuf.length - pos);
+}
+  private void writeInt(final int value) throws IOException {
+    writeLong(value);
+  }
+
+  private void writeAscii(final String s) throws IOException {
+    writeBytes(s.getBytes(StandardCharsets.US_ASCII));
   }
 }

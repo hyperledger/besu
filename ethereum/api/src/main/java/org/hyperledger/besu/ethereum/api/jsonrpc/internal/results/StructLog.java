@@ -185,6 +185,35 @@ public class StructLog {
   }
 
   /**
+   * Writes compact hex directly into a char[] buffer. Returns the number of chars written.
+   * No StringBuilder, no String allocation.
+   */
+  public static int toCompactHex(final Bytes abytes, final boolean prefix, final char[] buf) {
+    final byte[] bytes = abytes.toArrayUnsafe();
+    final int size = bytes.length;
+    if (size == 0) {
+      if (prefix) { buf[0] = '0'; buf[1] = 'x'; buf[2] = '0'; return 3; }
+      else { buf[0] = '0'; return 1; }
+    }
+    int pos = 0;
+    if (prefix) { buf[pos++] = '0'; buf[pos++] = 'x'; }
+    boolean leadingZero = true;
+    for (int i = 0; i < size; i++) {
+      final byte b = bytes[i];
+      final int hi = (b >> 4) & 0xF;
+      if (!leadingZero || hi != 0) {
+        buf[pos++] = hexChars[hi];
+        leadingZero = false;
+      }
+      final int lo = b & 0xF;
+      if (!leadingZero || lo != 0 || i == size - 1) {
+        buf[pos++] = hexChars[lo];
+        leadingZero = false;
+      }
+    }
+    return pos;
+  }
+  /**
    * Appends compact hex representation to an existing StringBuilder, avoiding allocation. The
    * StringBuilder is cleared before use but retains its internal buffer.
    */
