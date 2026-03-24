@@ -109,6 +109,8 @@ public class EthPeer implements Comparable<EthPeer> {
     roundMessages.put(EthProtocolMessages.NODE_DATA, EthProtocolMessages.GET_NODE_DATA);
     roundMessages.put(
         EthProtocolMessages.POOLED_TRANSACTIONS, EthProtocolMessages.GET_POOLED_TRANSACTIONS);
+    roundMessages.put(
+        EthProtocolMessages.BLOCK_ACCESS_LISTS, EthProtocolMessages.GET_BLOCK_ACCESS_LISTS);
 
     roundMessages.put(SnapV1.ACCOUNT_RANGE, SnapV1.GET_ACCOUNT_RANGE);
     roundMessages.put(SnapV1.STORAGE_RANGE, SnapV1.GET_STORAGE_RANGE);
@@ -154,6 +156,9 @@ public class EthPeer implements Comparable<EthPeer> {
                 EthProtocolMessages.GET_NODE_DATA, new RequestManager(this, EthProtocol.NAME)),
             Map.entry(
                 EthProtocolMessages.GET_POOLED_TRANSACTIONS,
+                new RequestManager(this, EthProtocol.NAME)),
+            Map.entry(
+                EthProtocolMessages.GET_BLOCK_ACCESS_LISTS,
                 new RequestManager(this, EthProtocol.NAME))));
   }
 

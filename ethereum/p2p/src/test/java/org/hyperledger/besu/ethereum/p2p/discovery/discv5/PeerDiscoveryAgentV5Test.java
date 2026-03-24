@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.discovery.discv5;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,8 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.NodeRecordManager;
 import org.hyperledger.besu.ethereum.p2p.discovery.discv4.internal.DiscoveryPeerV4;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -40,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import org.awaitility.Awaitility;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.storage.BucketStats;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,6 +101,7 @@ class PeerDiscoveryAgentV5Test {
             forkIdManager,
             nodeRecordManager,
             rlpxAgent,
+            new NoOpMetricsSystem(),
             false,
             (nodeRecord, listener) -> mockSystem);
   }
@@ -178,6 +183,7 @@ class PeerDiscoveryAgentV5Test {
             forkIdManager,
             nodeRecordManager,
             rlpxAgent,
+            new NoOpMetricsSystem(),
             false,
             (nodeRecord, listener) -> {
               throw new RuntimeException("factory exploded");
@@ -214,6 +220,7 @@ class PeerDiscoveryAgentV5Test {
             forkIdManager,
             nodeRecordManager,
             rlpxAgent,
+            new NoOpMetricsSystem(),
             false,
             (nodeRecord, listener) -> mockSystem);
 
@@ -225,6 +232,39 @@ class PeerDiscoveryAgentV5Test {
       verify(mockSystem, never()).start();
     } finally {
       disabledAgent.stop();
+    }
+  }
+
+  @Test
+  void metricsReflectDiscoverySystemBucketStats() throws Exception {
+    final StubMetricsSystem stubMetrics = new StubMetricsSystem();
+
+    final BucketStats bucketStats = mock(BucketStats.class);
+    when(mockSystem.getBucketStats()).thenReturn(bucketStats);
+    when(bucketStats.getTotalLiveNodeCount()).thenReturn(5);
+    when(bucketStats.getTotalNodeCount()).thenReturn(12);
+
+    final PeerDiscoveryAgentV5 metricsAgent =
+        new PeerDiscoveryAgentV5(
+            config,
+            forkIdManager,
+            nodeRecordManager,
+            rlpxAgent,
+            stubMetrics,
+            false,
+            (nodeRecord, listener) -> mockSystem);
+    try {
+      when(mockSystem.start()).thenReturn(CompletableFuture.completedFuture(null));
+      metricsAgent.start(1234).get();
+
+      assertThat(stubMetrics.getGaugeValue("discv5_live_nodes_current")).isEqualTo(5.0);
+      assertThat(stubMetrics.getGaugeValue("discv5_total_nodes_current")).isEqualTo(12.0);
+
+      // Verify gauge is live — reflects updated values
+      when(bucketStats.getTotalLiveNodeCount()).thenReturn(10);
+      assertThat(stubMetrics.getGaugeValue("discv5_live_nodes_current")).isEqualTo(10.0);
+    } finally {
+      metricsAgent.stop();
     }
   }
 }
