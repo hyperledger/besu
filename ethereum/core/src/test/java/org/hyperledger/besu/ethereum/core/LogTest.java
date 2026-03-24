@@ -67,7 +67,9 @@ public class LogTest {
 
   @Test
   public void readFrom_compactedTrue_withWireFormatTopicsContainingLeadingZeros() {
-    // Same as above but with leading zeros in topics/data to exercise the full bytes32 path.
+    // Log topic and data with leading zeros to exercise the full bytes32 path, with compacted=true.
+    // The autodetect path in Log.readFrom should recognise raw bytes32 topics (not lists) and
+    // fall through to readBytes32() rather than attempting to read [leadingZeros, shortData].
     final Bytes logData = bytesWithLeadingZeros(10, 100);
     final List<LogTopic> logTopics =
         List.of(
