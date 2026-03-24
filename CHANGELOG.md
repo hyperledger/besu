@@ -3,8 +3,11 @@
 ## Upcoming Release
 
 ### Bug fixes
-- Upgrade besu-native libraries version to 1.5.0. This fixes the issue of besu-native/secp256r1 exporting OpenSSL 
+- Upgrade besu-native libraries version to 1.5.0. This fixes the issue of besu-native/secp256r1 exporting OpenSSL
   symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
+
+### Additions and Improvements
+- Add DiscV5 discovery metrics (`discv5_live_nodes_current`, `discv5_total_nodes_current`) to track node counts in the routing table [#9692](https://github.com/besu-eth/besu/issues/9692)
 
 ## 26.3.0
 
