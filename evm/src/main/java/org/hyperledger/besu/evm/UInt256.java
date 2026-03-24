@@ -992,7 +992,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     return new QR256(q, new UInt256(z3, z2, z1, z0));
   }
 
-  private UInt256 mulSubOverflow(final long v3, final long v2, final long v1, final long v0) {
+  private QR256 mulSubOverflow(final long v3, final long v2, final long v1, final long v0) {
     // Overflow case: div2by1 quotient would be <1, 0>, but adjusts to <0, -1>
     // <p1, p0> = -1 * u0 = <u0 - 1, -u0>
     long res, borrow;
@@ -1011,21 +1011,22 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     carry = u2 - 1 + ((Long.compareUnsigned(v2, res) < 0) ? 1 : 0);
 
     long z3 = v3 + u3 - carry - borrow;
-    // q = MAX may still be 1 too high; check if result >= modulus (i.e. negative wrapped)
+    // q = MAX may still be 1 too high - need to pass q - 1 (-2L) to addBack; check if result >=
+    // modulus (i.e. negative wrapped)
     if (Long.compareUnsigned(z3, u3) > 0
         || (z3 == u3
             && (Long.compareUnsigned(z2, u2) > 0
                 || (z2 == u2
                     && (Long.compareUnsigned(z1, u1) > 0
                         || (z1 == u1 && Long.compareUnsigned(z0, u0) >= 0)))))) {
-      return addBack(z3, z2, z1, z0, 1L).r;
+      return addBack(z3, z2, z1, z0, -2L);
     }
-    return new UInt256(z3, z2, z1, z0);
+    return new QR256(-1L, new UInt256(z3, z2, z1, z0));
   }
 
   private QR256 reduceStep(
       final long v4, final long v3, final long v2, final long v1, final long v0, final long inv) {
-    if (v4 == u3) return new QR256(-1L, mulSubOverflow(v3, v2, v1, v0));
+    if (v4 == u3) return mulSubOverflow(v3, v2, v1, v0);
     QR64 qr = div2by1(v4, v3, u3, inv);
     if (qr.q != 0) return mulSub(qr.r, v2, v1, v0, qr.q);
     return new QR256(0, new UInt256(v3, v2, v1, v0));
@@ -1175,8 +1176,10 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // --------------------------------------------------------------------------
   // endregion
 
-  // region Records
-  // --------------------------------------------------------------------------
+  // region Quotient / Remainder types
+  // These types are used to store the result of division. Due to the nature of the algorithm
+  // (div2by1) quotient (q) can't
+  // ever exceed 64 bits while remainder (r) can range from 64 to 256 bits.
   private record QR64(long q, long r) {}
 
   private record QR128(long q, UInt128 r) {}
@@ -1185,6 +1188,11 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
   private record QR256(long q, UInt256 r) {}
 
+  // --------------------------------------------------------------------------
+  // endregion
+
+  // region UInt* types
+  // --------------------------------------------------------------------------
   record UInt64(long u0) {
     UInt64 shiftLeft(final int shift) {
       return (shift == 0) ? this : new UInt64(u0 << shift);
@@ -1414,22 +1422,23 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       return new QR128(q, new UInt128(z1, z0));
     }
 
-    private UInt128 mulSubOverflow(final long v1, final long v0) {
+    private QR128 mulSubOverflow(final long v1, final long v0) {
       // Overflow case: div2by1 quotient would be <1, 0>, but adjusts to <0, MAX>
       // <p1, p0> = -1 * u0 = <u0 - 1, -u0>
       long z0 = v0 + u0;
       long carry = u0 - 1 + ((Long.compareUnsigned(v0, z0) <= 0) ? 1 : 0);
 
       long z1 = v1 + u1 - carry;
-      // q = MAX may still be 1 too high; check if result >= modulus (i.e. negative wrapped)
+      // q = MAX may still be 1 too high - need to pass q - 1 (-2L) to addBack; check if result >=
+      // modulus (i.e. negative wrapped)
       if (Long.compareUnsigned(z1, u1) > 0 || (z1 == u1 && Long.compareUnsigned(z0, u0) >= 0)) {
-        return addBack(z1, z0, 1L).r;
+        return addBack(z1, z0, -2L);
       }
-      return new UInt128(z1, z0);
+      return new QR128(-1L, new UInt128(z1, z0));
     }
 
     private QR128 reduceStep(final long v2, final long v1, final long v0, final long inv) {
-      if (v2 == u1) return new QR128(-1L, mulSubOverflow(v1, v0));
+      if (v2 == u1) return mulSubOverflow(v1, v0);
       QR64 qr = div2by1(v2, v1, u1, inv);
       if (qr.q != 0) return mulSub(qr.r, v0, qr.q);
       return new QR128(0, new UInt128(qr.r, v0));
@@ -1640,7 +1649,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       return new QR192(q, new UInt192(z2, z1, z0));
     }
 
-    private UInt192 mulSubOverflow(final long v2, final long v1, final long v0) {
+    private QR192 mulSubOverflow(final long v2, final long v1, final long v0) {
       // Overflow case: div2by1 quotient would be <1, 0>, but adjusts to <0, -1>
       // <p1, p0> = -1 * u0 = <u0 - 1, -u0>
       long z0 = v0 + u0;
@@ -1652,19 +1661,21 @@ public record UInt256(long u3, long u2, long u1, long u0) {
       carry = u1 - 1 + ((Long.compareUnsigned(v1, res) < 0) ? 1 : 0);
 
       long z2 = v2 - carry + u2 - borrow;
-      // q = MAX may still be 1 too high; check if result >= modulus (i.e. negative wrapped)
+      // q = MAX may still be 1 too high - need to pass q - 1 (-2L) to addBack; check if result >=
+      // modulus (i.e. negative wrapped)
       if (Long.compareUnsigned(z2, u2) > 0
           || (z2 == u2
               && (Long.compareUnsigned(z1, u1) > 0
                   || (z1 == u1 && Long.compareUnsigned(z0, u0) >= 0)))) {
-        return addBack(z2, z1, z0, 1L).r;
+
+        return addBack(z2, z1, z0, -2L);
       }
-      return new UInt192(z2, z1, z0);
+      return new QR192(-1L, new UInt192(z2, z1, z0));
     }
 
     private QR192 reduceStep(
         final long v3, final long v2, final long v1, final long v0, final long inv) {
-      if (v3 == u2) return new QR192(-1L, mulSubOverflow(v2, v1, v0));
+      if (v3 == u2) return mulSubOverflow(v2, v1, v0);
       QR64 qr = div2by1(v3, v2, u2, inv);
       if (qr.q != 0) return mulSub(qr.r, v1, v0, qr.q);
       return new QR192(0, new UInt192(v2, v1, v0));
