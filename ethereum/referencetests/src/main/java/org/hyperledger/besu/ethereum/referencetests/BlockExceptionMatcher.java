@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
 
 /**
  * Maps execution-spec-tests exception keys (e.g. {@code "BlockException.GAS_USED_OVERFLOW"}) to the
@@ -74,21 +75,33 @@ public final class BlockExceptionMatcher {
   private BlockExceptionMatcher() {}
 
   /**
-   * Returns whether {@code actualErrorMessage} matches the error pattern associated with {@code
-   * exceptionKey}.
+   * Returns whether {@code actualErrorMessage} matches the error pattern for any of the exception
+   * keys in {@code exceptionKeyExpr}.
    *
-   * @param exceptionKey the exception key from the fixture (e.g. {@code
-   *     "BlockException.GAS_USED_OVERFLOW"})
+   * <p>The expression may contain multiple keys separated by {@code |} (e.g. {@code
+   * "TransactionException.INSUFFICIENT_ACCOUNT_FUNDS|TransactionException.INTRINSIC_GAS_TOO_LOW"}),
+   * meaning the fixture accepts any of those exceptions. Returns {@code true} if the actual error
+   * message matches at least one of them.
+   *
+   * @param exceptionKeyExpr the exception key expression from the fixture
    * @param actualErrorMessage the error message produced by Besu during block processing
-   * @return {@code true} if the message matches the expected pattern, {@code false} if the key is
-   *     unknown or the message does not match
+   * @return {@code true} if the message matches at least one of the expected patterns
    */
-  public static boolean matches(final String exceptionKey, final String actualErrorMessage) {
-    final String substringPattern = SUBSTRING_MAP.get(exceptionKey);
+  public static boolean matches(final String exceptionKeyExpr, final String actualErrorMessage) {
+    for (final String key : Splitter.on('|').split(exceptionKeyExpr)) {
+      if (matchesSingle(key.strip(), actualErrorMessage)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean matchesSingle(final String key, final String actualErrorMessage) {
+    final String substringPattern = SUBSTRING_MAP.get(key);
     if (substringPattern != null) {
       return actualErrorMessage.contains(substringPattern);
     }
-    final Pattern regexPattern = REGEX_MAP.get(exceptionKey);
+    final Pattern regexPattern = REGEX_MAP.get(key);
     if (regexPattern != null) {
       return regexPattern.matcher(actualErrorMessage).find();
     }
@@ -96,14 +109,25 @@ public final class BlockExceptionMatcher {
   }
 
   /**
-   * Returns a human-readable description of the expected pattern for the given exception key, or
-   * empty if the key is unknown.
+   * Returns a human-readable description of all expected patterns for the given expression, or
+   * empty if every constituent key is unknown.
    */
-  public static Optional<String> describeExpected(final String exceptionKey) {
-    final String s = SUBSTRING_MAP.get(exceptionKey);
-    if (s != null) return Optional.of("contains \"" + s + "\"");
-    final Pattern p = REGEX_MAP.get(exceptionKey);
-    if (p != null) return Optional.of("matches /" + p.pattern() + "/");
-    return Optional.empty();
+  public static Optional<String> describeExpected(final String exceptionKeyExpr) {
+    final StringBuilder sb = new StringBuilder();
+    for (final String key : Splitter.on('|').split(exceptionKeyExpr)) {
+      final String k = key.strip();
+      final String s = SUBSTRING_MAP.get(k);
+      if (s != null) {
+        if (!sb.isEmpty()) sb.append(" OR ");
+        sb.append("contains \"").append(s).append('"');
+        continue;
+      }
+      final Pattern p = REGEX_MAP.get(k);
+      if (p != null) {
+        if (!sb.isEmpty()) sb.append(" OR ");
+        sb.append("matches /").append(p.pattern()).append('/');
+      }
+    }
+    return sb.isEmpty() ? Optional.empty() : Optional.of(sb.toString());
   }
 }
