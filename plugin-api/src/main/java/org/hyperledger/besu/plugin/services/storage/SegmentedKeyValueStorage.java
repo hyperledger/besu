@@ -94,8 +94,7 @@ public interface SegmentedKeyValueStorage extends Closeable {
   /**
    * Begins a transaction with low write priority. On RocksDB-backed storage this sets {@code
    * WriteOptions.low_pri = true}, which causes RocksDB to throttle this transaction's writes more
-   * aggressively than normal writes when compaction back-pressure builds, preserving throughput for
-   * high-priority operations such as {@code newPayload}.
+   * aggressively than normal writes when compaction back-pressure builds.
    *
    * <p>Non-RocksDB implementations fall back to {@link #startTransaction()}.
    *
