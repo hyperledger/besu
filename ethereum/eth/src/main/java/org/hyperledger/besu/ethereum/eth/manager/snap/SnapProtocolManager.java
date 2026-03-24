@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 public class SnapProtocolManager implements ProtocolManager {
   private static final Logger LOG = LoggerFactory.getLogger(SnapProtocolManager.class);
 
-
   private final List<Capability> supportedCapabilities;
   private final EthPeers ethPeers;
   private final EthMessages snapMessages;
@@ -160,7 +159,8 @@ public class SnapProtocolManager implements ProtocolManager {
                         responseData ->
                             responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
           } catch (final RLPException e) {
-            LOG.debug("Received malformed snap message code={} from {}, ignoring", code, ethPeer, e);
+            LOG.debug(
+                "Received malformed snap message code={} from {}, ignoring", code, ethPeer, e);
             // Do not disconnect: malformed snap messages should not cause disconnection.
           }
           maybeResponseData.ifPresent(responseData -> sendSnapResponse(ethPeer, responseData));
