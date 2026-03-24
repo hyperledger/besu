@@ -1,5 +1,14 @@
 # Changelog
 
+## Upcoming Release
+
+### Bug fixes
+- Upgrade besu-native libraries version to 1.5.0. This fixes the issue of besu-native/secp256r1 exporting OpenSSL
+  symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
+
+### Additions and Improvements
+- Add DiscV5 discovery metrics (`discv5_live_nodes_current`, `discv5_total_nodes_current`) to track node counts in the routing table [#9692](https://github.com/besu-eth/besu/issues/9692)
+
 ## 26.3.0
 
 ### Repository Migration
@@ -50,6 +59,7 @@ are provided with different values, using input as per the execution-apis spec i
 - Implement `txpool_status` RPC method [#10002](https://github.com/hyperledger/besu/pull/10002)
 - Support [EIP-7975](https://eips.ethereum.org/EIPS/eip-7975): eth/70 - partial block receipt lists
 - Support [EIP-8159](https://eips.ethereum.org/EIPS/eip-8159): eth/71 - block access list exchange
+- Support [EIP-8189](https://eips.ethereum.org/EIPS/eip-8189): snap/2 - block access list exchange
 - Limit pooled tx requests by size and remove pre-eth/68 transaction announcement support [#9990](https://github.com/besu-eth/besu/pull/9990)
 - Use cache locality to improve Shift opcodes [#9878](https://github.com/besu-eth/besu/pull/9878)
 - Add maxUsedGas field to eth_simulateV1 results [#10066](https://github.com/besu-eth/besu/pull/10066)
