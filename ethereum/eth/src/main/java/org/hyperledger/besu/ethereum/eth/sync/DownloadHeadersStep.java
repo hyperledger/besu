@@ -112,6 +112,7 @@ public class DownloadHeadersStep
                   return CompletableFuture.failedFuture(
                       new RuntimeException("Unable to download headers for range " + range));
                 }
+                LOG.info("Successfully found {} headers for {} to {}", taskResult.result().get().size(), range.getStart().getNumber(), range.getStart().getNumber() + headerRequestSize);
                 return CompletableFuture.completedFuture(taskResult.result().get());
               });
     }
