@@ -66,41 +66,27 @@ public class DebugTraceBlockStreamer {
     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
   };
 
-  private static final byte[] TX_OPEN =
-      "{\"txHash\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_OPEN = "{\"txHash\":\"".getBytes(StandardCharsets.US_ASCII);
   private static final byte[] TX_RESULT_STRUCT_OPEN =
       "\",\"result\":{\"structLogs\":[".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] TX_GAS_PREFIX =
-      "],\"gas\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_GAS_PREFIX = "],\"gas\":".getBytes(StandardCharsets.US_ASCII);
   private static final byte[] TX_FAILED_TRUE_RV =
       ",\"failed\":true,\"returnValue\":\"".getBytes(StandardCharsets.US_ASCII);
   private static final byte[] TX_FAILED_FALSE_RV =
       ",\"failed\":false,\"returnValue\":\"".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] TX_CLOSE =
-      "\"}}".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] TX_CLOSE = "\"}}".getBytes(StandardCharsets.US_ASCII);
 
-  private static final byte[] SL_PC =
-      "{\"pc\":".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_OP =
-      ",\"op\":\"".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_GAS =
-      "\",\"gas\":".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_GAS_COST =
-      ",\"gasCost\":".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_DEPTH =
-      ",\"depth\":".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_STACK =
-      ",\"stack\":[".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_MEMORY =
-      ",\"memory\":[".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_STORAGE =
-      ",\"storage\":{".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_REASON =
-      ",\"reason\":\"".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] SL_ERROR =
-      ",\"error\":[\"".getBytes(StandardCharsets.US_ASCII);
-  private static final byte[] QUOTE_BRACKET =
-      "\"]".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_PC = "{\"pc\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_OP = ",\"op\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_GAS = "\",\"gas\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_GAS_COST = ",\"gasCost\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_DEPTH = ",\"depth\":".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_STACK = ",\"stack\":[".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_MEMORY = ",\"memory\":[".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_STORAGE = ",\"storage\":{".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_REASON = ",\"reason\":\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] SL_ERROR = ",\"error\":[\"".getBytes(StandardCharsets.US_ASCII);
+  private static final byte[] QUOTE_BRACKET = "\"]".getBytes(StandardCharsets.US_ASCII);
 
   private static final byte COMMA = ',';
   private static final byte QUOTE = '"';
@@ -178,8 +164,7 @@ public class DebugTraceBlockStreamer {
           blockchainQueries,
           Optional.of(block.getHeader()),
           traceableState -> {
-            final ProtocolSpec protocolSpec =
-                protocolSchedule.getByBlockHeader(block.getHeader());
+            final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
             final MainnetTransactionProcessor transactionProcessor =
                 protocolSpec.getTransactionProcessor();
             final TraceBlock.ChainUpdater chainUpdater =
@@ -187,26 +172,20 @@ public class DebugTraceBlockStreamer {
 
             final BlockHeader header = block.getHeader();
             final Optional<BlockHeader> maybeParentHeader =
-                blockchainQueries
-                    .getBlockchain()
-                    .getBlockHeader(header.getParentHash());
+                blockchainQueries.getBlockchain().getBlockHeader(header.getParentHash());
             final Wei blobGasPrice =
                 protocolSpec
                     .getFeeMarket()
                     .blobGasPricePerGas(
                         maybeParentHeader
-                            .map(
-                                parent ->
-                                    calculateExcessBlobGasForParent(protocolSpec, parent))
+                            .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
                             .orElse(BlobGas.ZERO));
             final BlockHashLookup blockHashLookup =
                 protocolSpec
                     .getPreExecutionProcessor()
-                    .createBlockHashLookup(
-                        blockchainQueries.getBlockchain(), header);
+                    .createBlockHashLookup(blockchainQueries.getBlockchain(), header);
 
-            final boolean isOpcodeTracer =
-                traceOptions.tracerType() == TracerType.OPCODE_TRACER;
+            final boolean isOpcodeTracer = traceOptions.tracerType() == TracerType.OPCODE_TRACER;
 
             for (final Transaction transaction : block.getBody().getTransactions()) {
               if (isOpcodeTracer) {
@@ -257,8 +236,7 @@ public class DebugTraceBlockStreamer {
           final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
           final MainnetTransactionProcessor transactionProcessor =
               protocolSpec.getTransactionProcessor();
-          final TraceBlock.ChainUpdater chainUpdater =
-              new TraceBlock.ChainUpdater(traceableState);
+          final TraceBlock.ChainUpdater chainUpdater = new TraceBlock.ChainUpdater(traceableState);
 
           final BlockHeader header = block.getHeader();
           final Optional<BlockHeader> maybeParentHeader =
@@ -497,7 +475,9 @@ public class DebugTraceBlockStreamer {
     final int size = bytes.length;
     if (size == 0) {
       if (prefix) {
-        hexBuf[0] = '0'; hexBuf[1] = 'x'; hexBuf[2] = '0';
+        hexBuf[0] = '0';
+        hexBuf[1] = 'x';
+        hexBuf[2] = '0';
         return 3;
       } else {
         hexBuf[0] = '0';
@@ -530,7 +510,7 @@ public class DebugTraceBlockStreamer {
     return opcodeCache.computeIfAbsent(opcode, s -> s.getBytes(StandardCharsets.US_ASCII));
   }
 
-private void writeLong(final long value) throws IOException {
+  private void writeLong(final long value) throws IOException {
     if (value >= 0 && value <= 9) {
       writeByte('0' + (int) value);
       return;
@@ -550,7 +530,8 @@ private void writeLong(final long value) throws IOException {
       numBuf[--pos] = '-';
     }
     writeBytes(numBuf, pos, numBuf.length - pos);
-}
+  }
+
   private void writeInt(final int value) throws IOException {
     writeLong(value);
   }
