@@ -82,8 +82,8 @@ public class SyncStateTest {
   private final InSyncListener inSyncListenerExact = mock(InSyncListener.class);
   private final SyncStatusListener syncStatusListener = mock(SyncStatusListener.class);
 
-  private static final BlockDataGenerator gen = new BlockDataGenerator(1);
-  private static final Block genesisBlock =
+  private final BlockDataGenerator gen = new BlockDataGenerator(1);
+  private final Block genesisBlock =
       gen.genesisBlock(new BlockOptions().setDifficulty(Difficulty.ZERO));
   private final MutableBlockchain blockchain =
       InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisBlock);
