@@ -124,7 +124,9 @@ public class Log {
           in.readList(
               listIn ->
                   LogTopic.wrap(
-                      listIn.nextIsList() ? Bytes32.wrap(readTrimmedData(listIn)) : listIn.readBytes32()));
+                      listIn.nextIsList()
+                          ? Bytes32.wrap(readTrimmedData(listIn))
+                          : listIn.readBytes32()));
       data = in.nextIsList() ? readTrimmedData(in) : in.readBytes();
     } else {
       topics = in.readList(listIn -> LogTopic.wrap(listIn.readBytes32()));
