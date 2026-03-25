@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.ethereum.beacon.discovery.MutableDiscoverySystem;
 import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.ethereum.beacon.discovery.storage.NodeRecordListener;
@@ -458,13 +459,22 @@ public final class PeerDiscoveryAgentV5 implements PeerDiscoveryAgent {
       return Stream.empty();
     }
 
-    final Peer localNode = nodeRecordManager.getLocalNode().orElse(null);
+    final Optional<? extends DiscoveryPeer> maybeLocalNode = nodeRecordManager.getLocalNode();
+    final Peer localNode = maybeLocalNode.orElse(null);
+    final Bytes localNodeId =
+        maybeLocalNode
+            .flatMap(DiscoveryPeer::getNodeRecord)
+            .map(NodeRecord::getNodeId)
+            .orElse(Bytes.EMPTY);
 
     // Combine newly discovered peers with known peers and filter for suitability
     final Stream<NodeRecord> knownPeers = system.streamLiveNodes();
     final List<DiscoveryPeer> candidates =
         Stream.concat(newPeers.stream(), knownPeers)
             .distinct()
+            // Defensive: exclude the local node record that streamLiveNodes may include.
+            // The discovery library currently excludes it, but this is not an API guarantee.
+            .filter(nr -> !nr.getNodeId().equals(localNodeId))
             .map(nr -> DiscoveryPeerFactory.fromNodeRecord(nr, preferIpv6Outbound))
             // Use isListening() instead of isReadyForConnections() because
             // DiscoveryPeerV4.isReadyForConnections() requires DiscV4 bonding status,

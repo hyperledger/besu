@@ -81,10 +81,8 @@ public class PeerPermissionSubnet extends PeerPermissions {
       return true;
     }
     final InetAddress inetAddress = address.getAddress();
-    if (inetAddress == null) {
-      return false;
-    }
-    final String hostAddress = inetAddress.getHostAddress();
+    final String hostAddress =
+        inetAddress != null ? inetAddress.getHostAddress() : address.getHostString();
     final IPAddress remoteAddress = new IPAddressString(hostAddress).getAddress();
     return isAddressInSubnets(remoteAddress, hostAddress);
   }
