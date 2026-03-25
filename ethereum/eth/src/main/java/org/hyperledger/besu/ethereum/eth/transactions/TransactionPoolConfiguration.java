@@ -40,7 +40,7 @@ public interface TransactionPoolConfiguration {
   interface Unstable {
     Duration ETH65_TRX_ANNOUNCED_BUFFERING_PERIOD = Duration.ofMillis(500);
     int DEFAULT_TX_MSG_KEEP_ALIVE = 60;
-    int DEFAULT_MAX_TRACKED_SEEN_TXS = 400_000;
+    int DEFAULT_MAX_TRACKED_SEEN_TXS = 300_000;
     int DEFAULT_MAX_SEND_QUEUE_SIZE_PER_PEER = 100_000;
     boolean DEFAULT_PEER_TRACKER_FORGET_EVICTED_TXS = false;
     Duration DEFAULT_SAVE_RESTORE_TIMEOUT = Duration.ofMinutes(1);
