@@ -166,7 +166,7 @@ public class SnapProtocolManager implements ProtocolManager {
                         .map(
                             responseData ->
                                 responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
-              } catch (final RLPException e) {
+              } catch (final FramingException | RLPException e) {
                 LOG.debug(
                     "Received malformed snap message code={} (BREACH_OF_PROTOCOL), disconnecting: {}",
                     code,
