@@ -204,6 +204,10 @@ public class MessageFrame {
   private int pc;
   private final Memory memory = new Memory();
   private final OperandStack stack;
+  // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
+  // significant)
+  private final long[] stackV2;
+  private int stackV2Top; // -1 = empty
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -271,6 +275,8 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
+    this.stackV2 = txValues.enableEvmV2() ? new long[txValues.maxStackSize() * 4] : null;
+    this.stackV2Top = -1;
     this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -469,6 +475,92 @@ public class MessageFrame {
    */
   public int stackSize() {
     return stack.size();
+  }
+
+  // --- EVM v2 long[] stack operations ---
+
+  /**
+   * Push a 256-bit value onto the v2 stack as four longs (index 0 = most significant word).
+   *
+   * @param v0 most significant 64 bits
+   * @param v1 second 64 bits
+   * @param v2 third 64 bits
+   * @param v3 least significant 64 bits
+   */
+  public void pushStackLongs(final long v0, final long v1, final long v2, final long v3) {
+    final int nextTop = stackV2Top + 1;
+    if (nextTop >= txValues.maxStackSize()) {
+      throw new org.hyperledger.besu.evm.internal.OverflowException();
+    }
+    final int base = nextTop * 4;
+    stackV2[base] = v0;
+    stackV2[base + 1] = v1;
+    stackV2[base + 2] = v2;
+    stackV2[base + 3] = v3;
+    stackV2Top = nextTop;
+  }
+
+  /**
+   * Pop a 256-bit value from the v2 stack into a caller-supplied 4-element array.
+   *
+   * @param dest destination array of length >= 4; populated as [most-sig, ..., least-sig]
+   */
+  public void popStackLongs(final long[] dest) {
+    if (stackV2Top < 0) {
+      throw new org.hyperledger.besu.evm.internal.UnderflowException();
+    }
+    final int base = stackV2Top * 4;
+    dest[0] = stackV2[base];
+    dest[1] = stackV2[base + 1];
+    dest[2] = stackV2[base + 2];
+    dest[3] = stackV2[base + 3];
+    stackV2Top--;
+  }
+
+  /**
+   * Read a specific long within a stack word without popping (v2 stack).
+   *
+   * @param wordOffset 0 = top of stack
+   * @param longIndex 0 = most significant long within the word
+   * @return the long value
+   */
+  public long getStackV2Long(final int wordOffset, final int longIndex) {
+    final int idx = stackV2Top - wordOffset;
+    if (idx < 0) {
+      throw new org.hyperledger.besu.evm.internal.UnderflowException();
+    }
+    return stackV2[idx * 4 + longIndex];
+  }
+
+  /**
+   * Overwrite a stack word in place (v2 stack).
+   *
+   * @param wordOffset 0 = top of stack
+   * @param v0 most significant 64 bits
+   * @param v1 second 64 bits
+   * @param v2 third 64 bits
+   * @param v3 least significant 64 bits
+   */
+  public void setStackLongs(
+      final int wordOffset, final long v0, final long v1, final long v2, final long v3) {
+    final int idx = stackV2Top - wordOffset;
+    if (idx < 0) {
+      throw new org.hyperledger.besu.evm.internal.UnderflowException();
+    }
+    final int base = idx * 4;
+    stackV2[base] = v0;
+    stackV2[base + 1] = v1;
+    stackV2[base + 2] = v2;
+    stackV2[base + 3] = v3;
+  }
+
+  /**
+   * Return the current v2 stack depth.
+   *
+   * @return number of words on the v2 stack
+   */
+  public int stackV2Size() {
+    return stackV2Top + 1;
   }
 
   /**
@@ -1424,6 +1516,8 @@ public class MessageFrame {
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
+    private boolean enableEvmV2 = false;
+
     /** Instantiates a new Builder. */
     public Builder() {
       // constructor added to deal with JavaDoc linting rules.
@@ -1717,6 +1811,17 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets whether the experimental EVM v2 (long[] stack) is enabled.
+     *
+     * @param enableEvmV2 true to enable EVM v2
+     * @return the builder
+     */
+    public Builder enableEvmV2(final boolean enableEvmV2) {
+      this.enableEvmV2 = enableEvmV2;
+      return this;
+    }
+
     private void validate() {
       if (parentMessageFrame == null) {
         checkState(worldUpdater != null, "Missing message frame world updater");
@@ -1758,6 +1863,7 @@ public class MessageFrame {
             TxValues.forTransaction(
                 blockHashLookup,
                 maxStackSize,
+                enableEvmV2,
                 UndoSet.of(warmedUpAddresses),
                 originator,
                 gasPrice,

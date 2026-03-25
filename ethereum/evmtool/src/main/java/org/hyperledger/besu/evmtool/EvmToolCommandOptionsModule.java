@@ -142,11 +142,20 @@ public class EvmToolCommandOptionsModule {
       arity = "1")
   private boolean enableOptimizedOpcodes = true;
 
+  @CommandLine.Option(
+      names = {"--Xevm-go-fast"},
+      description = "Enable experimental EVM v2 with long[] stack representation (default: false)",
+      fallbackValue = "false",
+      defaultValue = "false",
+      hidden = true,
+      arity = "1")
+  private boolean enableEvmV2 = false;
+
   @Provides
   @Singleton
   EvmConfiguration provideEvmConfiguration() {
     return new EvmConfiguration(
-        jumpDestCacheWeightKilobytes, worldstateUpdateMode, enableOptimizedOpcodes);
+        jumpDestCacheWeightKilobytes, worldstateUpdateMode, enableOptimizedOpcodes, enableEvmV2);
   }
 
   /** Default constructor for the EvmToolCommandOptionsModule class. */
