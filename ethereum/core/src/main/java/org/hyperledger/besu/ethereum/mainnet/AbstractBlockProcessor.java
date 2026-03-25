@@ -362,15 +362,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         cumulativeStateGasUsed += transactionProcessingResult.getStateGasUsed();
 
         // EIP-8037: Post-processing check — verify gas metered doesn't exceed block gas limit.
-        // The pre-processing hasBlockCapacity check is intentionally permissive (it sums
-        // remaining capacity across both dimensions), so we must verify the actual split here.
-        // This mirrors BlockSizeTransactionSelector.evaluateTransactionPostProcessing().
         final long gasMeteredSoFar =
             protocolSpec
                 .getBlockGasAccountingStrategy()
                 .effectiveGasUsed(cumulativeRegularGasUsed, cumulativeStateGasUsed);
         if (gasMeteredSoFar > blockHeader.getGasLimit()) {
-          return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
+          return new BlockProcessingResult(Optional.empty(), "gas metered exceeds block gas limit");
         }
 
         final var optionalVersionedHashes = transaction.getVersionedHashes();

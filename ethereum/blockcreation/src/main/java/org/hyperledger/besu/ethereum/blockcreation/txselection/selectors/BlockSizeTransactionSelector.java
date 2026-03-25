@@ -109,8 +109,8 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
 
   /**
    * Checks if the transaction is too large for the block using the gas accounting strategy. For 1D
-   * gas, this checks regular gas only. For 2D gas (EIP-8037), this considers the sum of remaining
-   * capacity in both dimensions.
+   * gas, this checks regular gas only. For 2D gas (EIP-8037), the tx gas limit must fit within the
+   * remaining capacity of each dimension independently.
    *
    * <p>The post-processing check verifies that gas metered (max of regular, state) stays within the
    * block gas limit after processing reveals the actual regular/state gas split.
