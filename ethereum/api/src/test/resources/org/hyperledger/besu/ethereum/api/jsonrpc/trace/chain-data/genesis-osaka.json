@@ -55,6 +55,11 @@
       "code": "0x60003560010160005260206000F3",
       "balance": "0x0"
     },
+    "0032000000000000000000000000000000000000": {
+      "comment": "Copies calldata to memory then REVERTs with it — used by revert-reason tests.",
+      "code": "0x366000600037366000fd",
+      "balance": "0x0"
+    },
     "0x00A3ca265EBcb825B45F985A16CEFB49958cE017": {
       "comment": "Withdrawal Request Smart Contract",
       "balance": "0",

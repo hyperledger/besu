@@ -48,6 +48,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
   }
 
   private final FrameWriter frameWriter;
+  private boolean hasEmittedFrame = false;
 
   /**
    * Creates a streaming operation tracer.
@@ -92,6 +93,25 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         haltReason,
         revertReason);
 
+    hasEmittedFrame = true;
     frame.reset();
+  }
+
+  @Override
+  public void tracePrecompileCall(
+      final MessageFrame frame, final long gasRequirement, final Bytes output) {
+    if (!hasEmittedFrame) {
+      frameWriter.writeFrame(
+          frame.getPC(),
+          "",
+          frame.getRemainingGas(),
+          gasRequirement,
+          frame.getDepth(),
+          null,
+          frame,
+          null,
+          frame.getRevertReason().orElse(null));
+      hasEmittedFrame = true;
+    }
   }
 }

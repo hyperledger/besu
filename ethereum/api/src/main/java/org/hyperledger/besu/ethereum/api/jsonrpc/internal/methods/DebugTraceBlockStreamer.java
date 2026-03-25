@@ -99,7 +99,7 @@ public class DebugTraceBlockStreamer {
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
 
-  private final byte[] hexBuf = new byte[130];
+  private byte[] hexBuf = new byte[130];
   private final byte[] numBuf = new byte[20];
   private final byte[] writeBuf = new byte[BUF_SIZE];
   private final TreeMap<UInt256, UInt256> sortedStorage = new TreeMap<>();
@@ -451,7 +451,7 @@ public class DebugTraceBlockStreamer {
 
       if (revertReason != null) {
         writeBytes(SL_REASON);
-        final int len = compactHexBytes(revertReason, true);
+        final int len = compactHexBytes(revertReason.toArrayUnsafe(), true, false);
         writeBytes(hexBuf, 0, len);
         writeByte(QUOTE);
       }
@@ -501,6 +501,54 @@ public class DebugTraceBlockStreamer {
       if (!leadingZero || lo != 0 || i == size - 1) {
         hexBuf[pos++] = HEX[lo];
         leadingZero = false;
+      }
+    }
+    return pos;
+  }
+
+  private int compactHexBytes(
+      final byte[] bytes, final boolean prefix, final boolean stripLeading) {
+    final int needed = (prefix ? 2 : 0) + bytes.length * 2;
+    if (needed > hexBuf.length) {
+      hexBuf = new byte[needed];
+    }
+    final int size = bytes.length;
+    if (size == 0) {
+      if (prefix) {
+        hexBuf[0] = '0';
+        hexBuf[1] = 'x';
+        hexBuf[2] = '0';
+        return 3;
+      } else {
+        hexBuf[0] = '0';
+        return 1;
+      }
+    }
+    int pos = 0;
+    if (prefix) {
+      hexBuf[pos++] = '0';
+      hexBuf[pos++] = 'x';
+    }
+    if (stripLeading) {
+      boolean leadingZero = true;
+      for (int i = 0; i < size; i++) {
+        final byte b = bytes[i];
+        final int hi = (b >> 4) & 0xF;
+        if (!leadingZero || hi != 0) {
+          hexBuf[pos++] = HEX[hi];
+          leadingZero = false;
+        }
+        final int lo = b & 0xF;
+        if (!leadingZero || lo != 0 || i == size - 1) {
+          hexBuf[pos++] = HEX[lo];
+          leadingZero = false;
+        }
+      }
+    } else {
+      for (int i = 0; i < size; i++) {
+        final byte b = bytes[i];
+        hexBuf[pos++] = HEX[(b >> 4) & 0xF];
+        hexBuf[pos++] = HEX[b & 0xF];
       }
     }
     return pos;
