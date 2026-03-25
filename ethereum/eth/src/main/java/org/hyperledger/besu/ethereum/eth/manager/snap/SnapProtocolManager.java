@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
+import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV2;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -141,7 +143,7 @@ public class SnapProtocolManager implements ProtocolManager {
     ethPeers.dispatchMessage(ethPeer, decodedEthMessage, getSupportedProtocol());
 
     // GET_* requests are handled off the Netty event loop to avoid blocking ETH protocol traffic.
-    if (SnapV1.REQUEST_CODES.contains(code)) {
+    if (SnapV1.REQUEST_CODES.contains(code) || SnapV2.REQUEST_CODES.contains(code)) {
       scheduleSnapRequest(ethPeer, decodedEthMessage, cap, code);
     }
   }
@@ -151,28 +153,41 @@ public class SnapProtocolManager implements ProtocolManager {
       final EthMessage decodedEthMessage,
       final Capability cap,
       final int code) {
-    ethScheduler.scheduleServiceTask(
-        () -> {
-          Optional<MessageData> maybeResponseData = Optional.empty();
-          try {
-            final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
-                decodedEthMessage.getData().unwrapMessageData();
-            maybeResponseData =
-                snapMessages
-                    .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
-                    .map(
-                        responseData ->
-                            responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
-          } catch (final RLPException e) {
-            LOG.debug(
-                "Received malformed snap message code={} (BREACH_OF_PROTOCOL), disconnecting: {}",
-                code,
-                ethPeer,
-                e);
-            ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
-          }
-          maybeResponseData.ifPresent(responseData -> sendSnapResponse(ethPeer, responseData));
-        });
+    ethScheduler
+        .scheduleServiceTask(
+            () -> {
+              Optional<MessageData> maybeResponseData = Optional.empty();
+              try {
+                final Map.Entry<BigInteger, MessageData> requestIdAndEthMessage =
+                    decodedEthMessage.getData().unwrapMessageData();
+                maybeResponseData =
+                    snapMessages
+                        .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()), cap)
+                        .map(
+                            responseData ->
+                                responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
+              } catch (final RLPException e) {
+                LOG.debug(
+                    "Received malformed snap message code={} (BREACH_OF_PROTOCOL), disconnecting: {}",
+                    code,
+                    ethPeer,
+                    e);
+                ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+              }
+              maybeResponseData.ifPresent(responseData -> sendSnapResponse(ethPeer, responseData));
+            })
+        .exceptionally(
+            e -> {
+              if (!(e instanceof CancellationException)) {
+                LOG.atWarn()
+                    .setMessage("Unexpected error handling snap request code={} from peer {}")
+                    .addArgument(code)
+                    .addArgument(ethPeer::getLoggableId)
+                    .setCause(e)
+                    .log();
+              }
+              return null;
+            });
   }
 
   private void sendSnapResponse(final EthPeer ethPeer, final MessageData responseData) {
