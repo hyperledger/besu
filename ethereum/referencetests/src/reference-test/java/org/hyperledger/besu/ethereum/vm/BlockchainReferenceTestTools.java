@@ -19,12 +19,11 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.ReferenceTestMergeBlockCreator;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
-import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -43,6 +42,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -176,48 +176,11 @@ public class BlockchainReferenceTestTools {
                             "NoProof".equalsIgnoreCase(spec.getSealEngine())
                                     ? HeaderValidationMode.LIGHT
                                     : HeaderValidationMode.FULL;
-                    final BlockValidator blockValidator = protocolSpec.getBlockValidator();
-                    final BlockProcessingResult result =
-                            blockValidator.validateAndProcessBlock(
-                                    protocolContext, block, validationMode, validationMode,
-                                    candidateBlock.getBlockAccessList(), false);
+                    final BlockImporter blockImporter = protocolSpec.getBlockImporter();
+                    final BlockImportResult importResult =
+                            blockImporter.importBlock(protocolContext, block, validationMode, validationMode, candidateBlock.getBlockAccessList());
 
-                    if (result.isSuccessful()) {
-                        result.getYield().ifPresent(processingOutputs -> {
-                            protocolContext.getBlockchain().appendBlock(
-                                    block,
-                                    processingOutputs.getReceipts(),
-                                    processingOutputs.getBlockAccessList());
-                            protocolContext.getWorldStateArchive().getWorldState(
-                                    WorldStateQueryParams.newBuilder()
-                                            .withBlockHeader(block.getHeader())
-                                            .withShouldWorldStateUpdateHead(true)
-                                            .build());
-                        });
-                    }
-
-                    assertThat(result.isSuccessful())
-                            .describedAs("Block import expected=%s but got=%s (error: %s)",
-                                    candidateBlock.isValid() ? "valid" : "invalid",
-                                    result.isSuccessful() ? "valid" : "invalid",
-                                    result.errorMessage.orElse("none"))
-                            .isEqualTo(candidateBlock.isValid());
-
-                    // Verify blocks fail for the expected reason, not a different one
-                    if (!candidateBlock.isValid() && candidateBlock.getExpectException().isPresent()) {
-                        final String expectedException = candidateBlock.getExpectException().get();
-                        final String actualError = result.errorMessage.orElse("");
-                        assertThat(actualError)
-                                .describedAs(
-                                        "Block rejected for wrong reason. Expected exception: %s, but got: %s",
-                                        expectedException, actualError)
-                                .satisfies(error -> assertThat(
-                                        BlockExceptionMatcher.matches(expectedException, error))
-                                        .describedAs(
-                                                "Expected exception '%s' does not match actual error '%s'",
-                                                expectedException, error)
-                                        .isTrue());
-                    }
+                    assertThat(importResult.isImported()).isEqualTo(candidateBlock.isValid());
                 } catch (final RLPException e) {
                     assertThat(candidateBlock.isValid()).isFalse();
                 }
