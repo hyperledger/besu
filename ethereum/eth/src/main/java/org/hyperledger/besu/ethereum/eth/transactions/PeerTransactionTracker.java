@@ -266,7 +266,7 @@ public class PeerTransactionTracker
     if (!freshAnnouncements.isEmpty()) {
       final LRUMap<Hash, TransactionAnnouncement> announcementsByHashForPeer =
           announcementsToRequestByHash.computeIfAbsent(
-              peer, key -> new LRUMap<>(maxSendQueueSizePerPeer, incomingAnnouncements.size()));
+              peer, key -> new LRUMap<>(maxSendQueueSizePerPeer, freshAnnouncements.size()));
       freshAnnouncements.forEach(ann -> announcementsByHashForPeer.put(ann.hash(), ann));
     }
 
@@ -322,8 +322,9 @@ public class PeerTransactionTracker
   }
 
   private <T> SequencedSet<T> createBoundedSet(final int initialCapacity, final int maxSize) {
+    final int cappedInitialCapacity = Math.min(initialCapacity, maxSize);
     return Collections.newSequencedSetFromMap(
-        new LinkedHashMap<>((int) Math.ceil(initialCapacity / 0.75f), 0.75f, true) {
+        new LinkedHashMap<>((int) Math.ceil(cappedInitialCapacity / 0.75f), 0.75f, true) {
           @Override
           protected boolean removeEldestEntry(final Map.Entry<T, Boolean> eldest) {
             return size() > maxSize;
@@ -391,7 +392,6 @@ public class PeerTransactionTracker
     // clear seen status for new peer index, just in case it was reused
     long start = System.nanoTime();
     peersSeenStateByHash.values().stream()
-        .parallel()
         .forEach(peersSeenState -> peersSeenState.clear(firstFreeIndex));
 
     LOG.atTrace()

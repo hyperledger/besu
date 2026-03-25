@@ -45,7 +45,8 @@ class NewPooledTransactionHashesMessageSender {
     final List<Transaction> txBatch = new ArrayList<>(MAX_TRANSACTIONS_HASHES);
     Transaction announcementToSend;
     while ((announcementToSend = transactionTracker.claimAnnouncementToSendToPeer(peer)) != null) {
-      if (!transactionTracker.hasPeerSeenTransaction(peer, announcementToSend)) {
+      if (!transactionTracker.hasPeerSeenTransactionOrAnnouncement(
+          peer, announcementToSend.getHash())) {
         txBatch.add(announcementToSend);
       }
 
