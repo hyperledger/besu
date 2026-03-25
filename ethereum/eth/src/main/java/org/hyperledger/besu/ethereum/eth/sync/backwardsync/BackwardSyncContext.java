@@ -210,17 +210,18 @@ public class BackwardSyncContext {
     return false;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry() {
-    // futureHolder lets the handle compare against its own future, so a stall-restart
+    // futureRef lets the handle compare against its own future, so a stall-restart
     // that creates a new session won't be accidentally cleared by the old session's handle.
-    final CompletableFuture<Void>[] futureHolder = new CompletableFuture[1];
-    futureHolder[0] =
+    // Set after handle() returns; the lambda only runs on async completion, which is always
+    // after futureRef.set(), so futureRef.get() in the lambda is always non-null.
+    final AtomicReference<CompletableFuture<Void>> futureRef = new AtomicReference<>();
+    final CompletableFuture<Void> future =
         prepareBackwardSyncFutureWithRetry(maxRetries)
             .handle(
                 (unused, throwable) -> {
                   currentBackwardSyncStatus.updateAndGet(
-                      s -> s != null && s.currentFuture == futureHolder[0] ? null : s);
+                      s -> s != null && s.currentFuture == futureRef.get() ? null : s);
                   if (throwable != null) {
                     if (throwable instanceof CancellationException
                         || throwable.getCause() instanceof CancellationException) {
@@ -233,7 +234,8 @@ public class BackwardSyncContext {
                   }
                   return null;
                 });
-    return futureHolder[0];
+    futureRef.set(future);
+    return future;
   }
 
   private CompletableFuture<Void> prepareBackwardSyncFutureWithRetry(final int retries) {
