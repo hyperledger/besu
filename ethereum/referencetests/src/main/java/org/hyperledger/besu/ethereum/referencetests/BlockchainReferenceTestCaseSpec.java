@@ -250,6 +250,7 @@ public class BlockchainReferenceTestCaseSpec {
     "blocknumber",
     "chainname",
     "chainnetwork",
+    "expectException",
     "expectExceptionByzantium",
     "expectExceptionConstantinople",
     "expectExceptionConstantinopleFix",
@@ -268,7 +269,6 @@ public class BlockchainReferenceTestCaseSpec {
     private final Bytes rlp;
 
     private final Boolean valid;
-    private final String expectException;
     private final List<TransactionSequence> transactionSequence;
     private final BlockAccessList blockAccessList;
 
@@ -282,7 +282,6 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("depositRequests") final Object depositRequests,
         @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
         @JsonProperty("consolidationRequests") final Object consolidationRequests,
-        @JsonProperty("expectException") final String expectException,
         @JsonProperty("transactionSequence") final List<TransactionSequence> transactionSequence,
         @JsonDeserialize(using = BlockAccessListDeserializer.class)
             @JsonProperty("blockAccessList")
@@ -305,17 +304,12 @@ public class BlockchainReferenceTestCaseSpec {
       }
 
       this.valid = blockValid;
-      this.expectException = expectException;
       this.transactionSequence = transactionSequence;
       this.blockAccessList = blockAccessList;
     }
 
     public boolean isValid() {
       return valid;
-    }
-
-    public Optional<String> getExpectException() {
-      return Optional.ofNullable(expectException);
     }
 
     public boolean areAllTransactionsValid() {
