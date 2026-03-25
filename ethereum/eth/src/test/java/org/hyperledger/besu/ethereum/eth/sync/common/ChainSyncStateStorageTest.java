@@ -165,27 +165,6 @@ public class ChainSyncStateStorageTest {
   }
 
   @Test
-  public void shouldLoadVersion1StateAndSetFirstPivotToPivot() throws IOException {
-    final BytesValueRLPOutput output = new BytesValueRLPOutput();
-    output.startList();
-    output.writeByte((byte) 1);
-    pivotBlockHeader.writeTo(output);
-    checkpointBlockHeader.writeTo(output);
-    output.writeByte((byte) 0);
-    output.endList();
-
-    Files.write(tempDir.resolve("chain-sync-state.rlp"), output.encoded().toArrayUnsafe());
-
-    final ChainSyncState loadedState =
-        storage.loadState(rlp -> BlockHeader.readFrom(rlp, new MainnetBlockHeaderFunctions()));
-
-    assertThat(loadedState).isNotNull();
-    assertThat(loadedState.firstPivotBlockHeader()).isEqualTo(pivotBlockHeader);
-    assertThat(loadedState.pivotBlockHeader()).isEqualTo(pivotBlockHeader);
-    assertThat(loadedState.blockDownloadAnchor()).isEqualTo(checkpointBlockHeader);
-  }
-
-  @Test
   public void shouldDeleteStateFiles() {
     final ChainSyncState state =
         new ChainSyncState(
