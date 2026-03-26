@@ -206,8 +206,8 @@ public class MessageFrame {
   private final OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
-  private final long[] stackV2;
-  private int stackV2Top; // -1 = empty
+  private final long[] stackDataV2;
+  private int stackTopV2;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -275,8 +275,8 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.stackV2 = txValues.enableEvmV2() ? new long[txValues.maxStackSize() * 4] : null;
-    this.stackV2Top = -1;
+    this.stackDataV2 = txValues.enableEvmV2() ? new long[txValues.maxStackSize() * 4] : null;
+    this.stackTopV2 = 0;
     this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -477,91 +477,48 @@ public class MessageFrame {
     return stack.size();
   }
 
-  // --- EVM v2 long[] stack operations ---
+  // region --- EVM v2 long[] stack operations ---
+  // ---------------------------------------------------------------------------
 
   /**
-   * Push a 256-bit value onto the v2 stack as four longs (index 0 = most significant word).
+   * Returns the backing long[] array of the operand stack.
    *
-   * @param v0 most significant 64 bits
-   * @param v1 second 64 bits
-   * @param v2 third 64 bits
-   * @param v3 least significant 64 bits
+   * @return the raw data array
    */
-  public void pushStackLongs(final long v0, final long v1, final long v2, final long v3) {
-    final int nextTop = stackV2Top + 1;
-    if (nextTop >= txValues.maxStackSize()) {
-      throw new org.hyperledger.besu.evm.internal.OverflowException();
-    }
-    final int base = nextTop * 4;
-    stackV2[base] = v0;
-    stackV2[base + 1] = v1;
-    stackV2[base + 2] = v2;
-    stackV2[base + 3] = v3;
-    stackV2Top = nextTop;
+  public long[] stackDataV2() {
+    return stackDataV2;
   }
 
   /**
-   * Pop a 256-bit value from the v2 stack into a caller-supplied 4-element array.
+   * Returns the current stack top (item count, 0 = empty).
    *
-   * @param dest destination array of length >= 4; populated as [most-sig, ..., least-sig]
+   * @return the item count
    */
-  public void popStackLongs(final long[] dest) {
-    if (stackV2Top < 0) {
-      throw new org.hyperledger.besu.evm.internal.UnderflowException();
-    }
-    final int base = stackV2Top * 4;
-    dest[0] = stackV2[base];
-    dest[1] = stackV2[base + 1];
-    dest[2] = stackV2[base + 2];
-    dest[3] = stackV2[base + 3];
-    stackV2Top--;
+  public int stackTopV2() {
+    return stackTopV2;
   }
 
   /**
-   * Read a specific long within a stack word without popping (v2 stack).
+   * Sets the stack top (item count). Used after StackMath operations.
    *
-   * @param wordOffset 0 = top of stack
-   * @param longIndex 0 = most significant long within the word
-   * @return the long value
+   * @param newTop the new item count
    */
-  public long getStackV2Long(final int wordOffset, final int longIndex) {
-    final int idx = stackV2Top - wordOffset;
-    if (idx < 0) {
-      throw new org.hyperledger.besu.evm.internal.UnderflowException();
-    }
-    return stackV2[idx * 4 + longIndex];
+  public void setTopV2(final int newTop) {
+    this.stackTopV2 = newTop;
   }
 
   /**
-   * Overwrite a stack word in place (v2 stack).
+   * Returns true if the stack has at least {@code n} items.
    *
-   * @param wordOffset 0 = top of stack
-   * @param v0 most significant 64 bits
-   * @param v1 second 64 bits
-   * @param v2 third 64 bits
-   * @param v3 least significant 64 bits
+   * @param n the number of items required
+   * @return true if the stack contains at least n items
    */
-  public void setStackLongs(
-      final int wordOffset, final long v0, final long v1, final long v2, final long v3) {
-    final int idx = stackV2Top - wordOffset;
-    if (idx < 0) {
-      throw new org.hyperledger.besu.evm.internal.UnderflowException();
-    }
-    final int base = idx * 4;
-    stackV2[base] = v0;
-    stackV2[base + 1] = v1;
-    stackV2[base + 2] = v2;
-    stackV2[base + 3] = v3;
+  public boolean stackHasItems(final int n) {
+    return stackTopV2 >= n;
   }
 
-  /**
-   * Return the current v2 stack depth.
-   *
-   * @return number of words on the v2 stack
-   */
-  public int stackV2Size() {
-    return stackV2Top + 1;
-  }
+  // ---------------------------------------------------------------------------
+  // endregion
 
   /**
    * Returns whether the message frame is static or not.
@@ -1814,7 +1771,7 @@ public class MessageFrame {
     /**
      * Sets whether the experimental EVM v2 (long[] stack) is enabled.
      *
-     * @param enableEvmV2 true to enable EVM v2
+     * @param `enableEvmV2` true to enable EVM v2
      * @return the builder
      */
     public Builder enableEvmV2(final boolean enableEvmV2) {

@@ -76,7 +76,7 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   private boolean enableOptimizedOpcodes = true;
 
   @CommandLine.Option(
-      names = {EVM_GO_FAST},
+      names = {EVM_GO_FAST, "--Xevm-v2"},
       description = "Enable experimental EVM v2 with long[] stack representation (default: false)",
       fallbackValue = "false",
       hidden = true,
