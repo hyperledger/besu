@@ -489,10 +489,10 @@ public class AdminNodeInfoTest {
     final Map<String, Object> result =
         (Map<String, Object>) ((JsonRpcSuccessResponse) response).getResult();
 
-    // InetAddress.getHostAddress() returns the full expanded form
+    // InetAddress.getHostAddress() may return compressed or expanded IPv6 representation
     assertThat(result.get("listenAddr").toString()).matches("\\[.+]:30303");
-    assertThat(result.get("listenAddr").toString()).startsWith("[");
     assertThat(result.get("ip").toString()).contains("2001:db8");
+    assertThat(result.get("enode").toString()).matches("enode://.*@\\[.+]:30303");
   }
 
   private JsonRpcRequestContext adminNodeInfo() {
