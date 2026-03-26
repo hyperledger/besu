@@ -383,9 +383,11 @@ public class AdminNodeInfoTest {
   public void shouldReturnIPv6FieldsWhenDualStack() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
-    when(p2pNetwork.getIPv6Address()).thenReturn(Optional.of("2001:db8::1"));
-    when(p2pNetwork.getIPv6ListeningPort()).thenReturn(Optional.of(30304));
-    when(p2pNetwork.getIPv6DiscoveryPort()).thenReturn(Optional.of(30305));
+    when(p2pNetwork.getIPv6AddressInfo())
+        .thenReturn(
+            Optional.of(
+                new P2PNetwork.IPv6AddressInfo(
+                    "2001:db8::1", Optional.of(30304), Optional.of(30305))));
 
     final JsonRpcResponse response = method.response(adminNodeInfo());
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -424,7 +426,10 @@ public class AdminNodeInfoTest {
   public void shouldReturnIPv6AddressWithoutPortsWhenNoIPv6Ports() {
     when(p2pNetwork.isP2pEnabled()).thenReturn(true);
     when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
-    when(p2pNetwork.getIPv6Address()).thenReturn(Optional.of("2001:db8::1"));
+    when(p2pNetwork.getIPv6AddressInfo())
+        .thenReturn(
+            Optional.of(
+                new P2PNetwork.IPv6AddressInfo("2001:db8::1", Optional.empty(), Optional.empty())));
 
     final JsonRpcResponse response = method.response(adminNodeInfo());
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);

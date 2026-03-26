@@ -518,24 +518,21 @@ public class DefaultP2PNetwork implements P2PNetwork {
   }
 
   @Override
-  public Optional<String> getIPv6Address() {
-    return getEthereumNodeRecord()
-        .flatMap(enr -> enr.getIpV6Address().map(InetAddress::getHostAddress));
-  }
-
-  @Override
-  public Optional<Integer> getIPv6ListeningPort() {
-    return getEthereumNodeRecord().flatMap(EthereumNodeRecord::getIpV6TcpListeningPort);
-  }
-
-  @Override
-  public Optional<Integer> getIPv6DiscoveryPort() {
-    return getEthereumNodeRecord().flatMap(EthereumNodeRecord::getIpV6UdpDiscoveryPort);
-  }
-
-  private Optional<EthereumNodeRecord> getEthereumNodeRecord() {
+  public Optional<IPv6AddressInfo> getIPv6AddressInfo() {
     try {
-      return peerDiscoveryAgent.getLocalNodeRecord().map(EthereumNodeRecord::fromNodeRecord);
+      return peerDiscoveryAgent
+          .getLocalNodeRecord()
+          .map(EthereumNodeRecord::fromNodeRecord)
+          .flatMap(
+              enr ->
+                  enr.getIpV6Address()
+                      .map(InetAddress::getHostAddress)
+                      .map(
+                          addr ->
+                              new IPv6AddressInfo(
+                                  addr,
+                                  enr.getIpV6TcpListeningPort(),
+                                  enr.getIpV6UdpDiscoveryPort())));
     } catch (final IllegalArgumentException e) {
       LOG.debug("Failed to parse local Ethereum Node Record; IPv6 fields will be unavailable", e);
       return Optional.empty();
