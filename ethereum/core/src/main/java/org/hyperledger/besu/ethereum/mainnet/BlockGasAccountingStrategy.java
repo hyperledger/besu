@@ -99,10 +99,18 @@ public interface BlockGasAccountingStrategy {
             final long cumulativeRegularGas,
             final long cumulativeStateGas,
             final long blockGasLimit) {
-          final long headroom =
-              Math.max(0, blockGasLimit - cumulativeRegularGas)
-                  + Math.max(0, blockGasLimit - cumulativeStateGas);
-          return txGasLimit <= headroom;
+          // EIP-8037: check each gas dimension independently per the spec's
+          // check_transaction:
+          //   min(TX_MAX_GAS_LIMIT, tx.gas) <= block_gas_limit − Σ regular
+          //   tx.gas <= block_gas_limit − Σ state
+          // The regular dimension uses min(TX_MAX_GAS_LIMIT, tx.gas) because
+          // EIP-8037 allows tx.gas > TX_MAX_GAS_LIMIT (overflow goes to the
+          // state gas reservoir), while regular gas is capped.
+          // TX_MAX_GAS_LIMIT = 2^24 = 16,777,216 (EIP-7825)
+          final long regularRemaining = Math.max(0, blockGasLimit - cumulativeRegularGas);
+          final long stateRemaining = Math.max(0, blockGasLimit - cumulativeStateGas);
+          return regularRemaining >= Math.min(txGasLimit, 16_777_216L)
+              && stateRemaining >= txGasLimit;
         }
 
         @Override
