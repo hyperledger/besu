@@ -12,24 +12,30 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.messages;
+package org.hyperledger.besu.ethereum.eth.messages.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
+import org.hyperledger.besu.ethereum.eth.messages.GetBlockAccessListsMessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public final class GetBlockAccessListsMessage extends AbstractMessageData {
+public final class GetBlockAccessListsMessage extends AbstractSnapMessageData {
+
+  public GetBlockAccessListsMessage(final Bytes data) {
+    super(data);
+  }
 
   public static GetBlockAccessListsMessage readFrom(final MessageData message) {
     if (message instanceof GetBlockAccessListsMessage) {
       return (GetBlockAccessListsMessage) message;
     }
     final int code = message.getCode();
-    if (code != EthProtocolMessages.GET_BLOCK_ACCESS_LISTS) {
+    if (code != SnapV2.GET_BLOCK_ACCESS_LISTS) {
       throw new IllegalArgumentException(
           String.format("Message has code %d and thus is not a GetBlockAccessListsMessage.", code));
     }
@@ -37,20 +43,26 @@ public final class GetBlockAccessListsMessage extends AbstractMessageData {
   }
 
   public static GetBlockAccessListsMessage create(final Iterable<Hash> blockHashes) {
-    return new GetBlockAccessListsMessage(
-        GetBlockAccessListsMessageData.encode(Optional.empty(), blockHashes));
+    return create(Optional.empty(), blockHashes);
   }
 
-  private GetBlockAccessListsMessage(final Bytes data) {
-    super(data);
+  public static GetBlockAccessListsMessage create(
+      final Optional<BigInteger> requestId, final Iterable<Hash> blockHashes) {
+    return new GetBlockAccessListsMessage(
+        GetBlockAccessListsMessageData.encode(requestId, blockHashes));
+  }
+
+  @Override
+  protected Bytes wrap(final BigInteger requestId) {
+    return create(Optional.of(requestId), blockHashes(false)).getData();
   }
 
   @Override
   public int getCode() {
-    return EthProtocolMessages.GET_BLOCK_ACCESS_LISTS;
+    return SnapV2.GET_BLOCK_ACCESS_LISTS;
   }
 
-  public Iterable<Hash> blockHashes() {
-    return GetBlockAccessListsMessageData.decode(data, false);
+  public Iterable<Hash> blockHashes(final boolean withRequestId) {
+    return GetBlockAccessListsMessageData.decode(data, withRequestId);
   }
 }
