@@ -107,15 +107,16 @@ public class AdminNodeInfo implements JsonRpcMethod {
     response.put("id", nodeId.toUnprefixedHexString());
     response.put("name", clientVersion);
 
-    peerNetwork
-        .getIPv6Address()
-        .ifPresent(
-            ipv6 -> {
-              response.put("ipv6", ipv6);
-              peerNetwork
-                  .getIPv6ListeningPort()
-                  .ifPresent(tcpV6 -> response.put("listenAddrV6", formatHostPort(ipv6, tcpV6)));
-            });
+    final Optional<String> maybeIpv6 = peerNetwork.getIPv6Address();
+    final Optional<Integer> maybeIpv6ListeningPort = peerNetwork.getIPv6ListeningPort();
+    final Optional<Integer> maybeIpv6DiscoveryPort = peerNetwork.getIPv6DiscoveryPort();
+
+    maybeIpv6.ifPresent(
+        ipv6 -> {
+          response.put("ipv6", ipv6);
+          maybeIpv6ListeningPort.ifPresent(
+              tcpV6 -> response.put("listenAddrV6", formatHostPort(ipv6, tcpV6)));
+        });
 
     if (enode.isRunningDiscovery()) {
       ports.put("discovery", discoveryPort);
@@ -123,8 +124,10 @@ public class AdminNodeInfo implements JsonRpcMethod {
     if (enode.isListening()) {
       ports.put("listener", listeningPort);
     }
-    peerNetwork.getIPv6DiscoveryPort().ifPresent(udpV6 -> ports.put("discoveryV6", udpV6));
-    peerNetwork.getIPv6ListeningPort().ifPresent(tcpV6 -> ports.put("listenerV6", tcpV6));
+    if (maybeIpv6.isPresent()) {
+      maybeIpv6DiscoveryPort.ifPresent(udpV6 -> ports.put("discoveryV6", udpV6));
+      maybeIpv6ListeningPort.ifPresent(tcpV6 -> ports.put("listenerV6", tcpV6));
+    }
     response.put("ports", ports);
 
     final ChainHead chainHead = blockchainQueries.getBlockchain().getChainHead();
