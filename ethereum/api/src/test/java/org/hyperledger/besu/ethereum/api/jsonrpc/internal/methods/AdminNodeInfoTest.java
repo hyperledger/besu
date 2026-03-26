@@ -446,6 +446,30 @@ public class AdminNodeInfoTest {
 
   @Test
   @SuppressWarnings("unchecked")
+  public void shouldReturnOnlyListenerV6WhenDiscoveryV6Absent() {
+    when(p2pNetwork.isP2pEnabled()).thenReturn(true);
+    when(p2pNetwork.getLocalEnode()).thenReturn(Optional.of(defaultPeer.getEnodeURL()));
+    when(p2pNetwork.getIPv6AddressInfo())
+        .thenReturn(
+            Optional.of(
+                new P2PNetwork.IPv6AddressInfo(
+                    "2001:db8::1", Optional.of(30304), Optional.empty())));
+
+    final JsonRpcResponse response = method.response(adminNodeInfo());
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    final Map<String, Object> result =
+        (Map<String, Object>) ((JsonRpcSuccessResponse) response).getResult();
+
+    assertThat(result).containsEntry("ipv6", "2001:db8::1");
+    assertThat(result).containsEntry("listenAddrV6", "[2001:db8::1]:30304");
+
+    final Map<String, Integer> ports = (Map<String, Integer>) result.get("ports");
+    assertThat(ports).containsEntry("listenerV6", 30304);
+    assertThat(ports).doesNotContainKey("discoveryV6");
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   public void shouldBracketIPv6InListenAddr() {
     final EnodeURLImpl ipv6Enode =
         EnodeURLImpl.builder()
