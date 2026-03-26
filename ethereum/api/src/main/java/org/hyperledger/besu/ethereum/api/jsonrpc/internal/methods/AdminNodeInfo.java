@@ -159,7 +159,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
   private String getNodeAsString(
       final EnodeURL enodeURL, final String ip, final int listeningPort, final int discoveryPort) {
-    final String host = ip.contains(":") ? "[" + ip + "]" : ip;
+    final String host = bracketIpv6(ip);
     final String uri =
         String.format(
             "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedHexString(), host, listeningPort);
@@ -189,9 +189,13 @@ public class AdminNodeInfo implements JsonRpcMethod {
   }
 
   private static String formatHostPort(final String host, final int port) {
-    if (host.contains(":")) {
-      return String.format("[%s]:%d", host, port);
+    return String.format("%s:%d", bracketIpv6(host), port);
+  }
+
+  private static String bracketIpv6(final String host) {
+    if (host.startsWith("[")) {
+      return host;
     }
-    return String.format("%s:%d", host, port);
+    return host.contains(":") ? "[" + host + "]" : host;
   }
 }
