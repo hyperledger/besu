@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
 import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.EthereumNodeRecord;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.MaintainedPeers;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.nat.upnp.UpnpNatManager;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.net.InetAddress;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,7 +77,6 @@ import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
-import org.ethereum.beacon.discovery.schema.NodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -512,7 +513,31 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @Override
   public Optional<String> getLocalEnr() {
-    return peerDiscoveryAgent.getLocalNodeRecord().map(NodeRecord::asEnr);
+    return getEthereumNodeRecord().map(enr -> enr.nodeRecord().asEnr());
+  }
+
+  @Override
+  public Optional<String> getIPv6Address() {
+    return getEthereumNodeRecord()
+        .flatMap(enr -> enr.getIpV6Address().map(InetAddress::getHostAddress));
+  }
+
+  @Override
+  public Optional<Integer> getIPv6ListeningPort() {
+    return getEthereumNodeRecord().flatMap(EthereumNodeRecord::getIpV6TcpListeningPort);
+  }
+
+  @Override
+  public Optional<Integer> getIPv6DiscoveryPort() {
+    return getEthereumNodeRecord().flatMap(EthereumNodeRecord::getIpV6UdpDiscoveryPort);
+  }
+
+  private Optional<EthereumNodeRecord> getEthereumNodeRecord() {
+    try {
+      return peerDiscoveryAgent.getLocalNodeRecord().map(EthereumNodeRecord::fromNodeRecord);
+    } catch (final IllegalArgumentException e) {
+      return Optional.empty();
+    }
   }
 
   @Override

@@ -102,10 +102,20 @@ public class AdminNodeInfo implements JsonRpcMethod {
     response.put("ip", ip);
 
     if (enode.isListening()) {
-      response.put("listenAddr", String.format("%s:%d", ip, listeningPort));
+      response.put("listenAddr", formatHostPort(ip, listeningPort));
     }
     response.put("id", nodeId.toUnprefixedHexString());
     response.put("name", clientVersion);
+
+    peerNetwork
+        .getIPv6Address()
+        .ifPresent(
+            ipv6 -> {
+              response.put("ipv6", ipv6);
+              peerNetwork
+                  .getIPv6ListeningPort()
+                  .ifPresent(tcpV6 -> response.put("listenAddrV6", formatHostPort(ipv6, tcpV6)));
+            });
 
     if (enode.isRunningDiscovery()) {
       ports.put("discovery", discoveryPort);
@@ -113,6 +123,8 @@ public class AdminNodeInfo implements JsonRpcMethod {
     if (enode.isListening()) {
       ports.put("listener", listeningPort);
     }
+    peerNetwork.getIPv6DiscoveryPort().ifPresent(udpV6 -> ports.put("discoveryV6", udpV6));
+    peerNetwork.getIPv6ListeningPort().ifPresent(tcpV6 -> ports.put("listenerV6", tcpV6));
     response.put("ports", ports);
 
     final ChainHead chainHead = blockchainQueries.getBlockchain().getChainHead();
@@ -144,9 +156,10 @@ public class AdminNodeInfo implements JsonRpcMethod {
 
   private String getNodeAsString(
       final EnodeURL enodeURL, final String ip, final int listeningPort, final int discoveryPort) {
+    final String host = ip.contains(":") ? "[" + ip + "]" : ip;
     final String uri =
         String.format(
-            "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedHexString(), ip, listeningPort);
+            "enode://%s@%s:%d", enodeURL.getNodeId().toUnprefixedHexString(), host, listeningPort);
     if (listeningPort != discoveryPort) {
       return URI.create(uri + String.format("?discport=%d", discoveryPort)).toString();
     } else {
@@ -170,5 +183,12 @@ public class AdminNodeInfo implements JsonRpcMethod {
         .getPortMapping(NatServiceType.RLPX, NetworkProtocol.TCP)
         .map(NatPortMapping::getExternalPort)
         .orElseGet(enode::getListeningPortOrZero);
+  }
+
+  private static String formatHostPort(final String host, final int port) {
+    if (host.contains(":")) {
+      return String.format("[%s]:%d", host, port);
+    }
+    return String.format("%s:%d", host, port);
   }
 }

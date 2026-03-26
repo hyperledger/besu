@@ -170,5 +170,32 @@ public interface P2PNetwork extends Closeable {
     return Optional.empty();
   }
 
+  /**
+   * Returns the IPv6 address from the local ENR, if available.
+   *
+   * @return an Optional containing the IPv6 address string, or empty if not configured.
+   */
+  default Optional<String> getIPv6Address() {
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the IPv6 TCP listening port from the local ENR, if available.
+   *
+   * @return an Optional containing the IPv6 TCP port, or empty if not configured.
+   */
+  default Optional<Integer> getIPv6ListeningPort() {
+    return Optional.empty();
+  }
+
+  /**
+   * Returns the IPv6 UDP discovery port from the local ENR, if available.
+   *
+   * @return an Optional containing the IPv6 UDP port, or empty if not configured.
+   */
+  default Optional<Integer> getIPv6DiscoveryPort() {
+    return Optional.empty();
+  }
+
   Optional<RlpxAgent> getRlpxAgent();
 }
