@@ -59,6 +59,7 @@ are provided with different values, using input as per the execution-apis spec i
 - Fix addMod case with 256bit moduluses [#10001](https://github.com/besu-eth/besu/pull/10001)
 - Performance improvements on MOD variant instructions while converting from byte[] to longs [#9976](https://github.com/besu-eth/besu/pull/9976) 
 - Implement DIV and SDIV with long limbs [#9923](https://github.com/besu-eth/besu/pull/9923)
+- Improve MULMOD worst cases [#10088](https://github.com/besu-eth/besu/pull/10088)
 
 ## 26.2.0
 
