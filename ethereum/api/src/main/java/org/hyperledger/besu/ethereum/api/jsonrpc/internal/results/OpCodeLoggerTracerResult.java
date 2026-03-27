@@ -34,7 +34,7 @@ public class OpCodeLoggerTracerResult {
 
   public OpCodeLoggerTracerResult(final TransactionTrace transactionTrace) {
     gas = transactionTrace.getGas();
-    returnValue = transactionTrace.getResult().getOutput().toString().substring(2);
+    returnValue = transactionTrace.getResult().getOutput().toHexString();
     structLogs = new ArrayList<>(transactionTrace.getTraceFrames().size());
     transactionTrace.getTraceFrames().parallelStream()
         .map(OpCodeLoggerTracerResult::createStructLog)
