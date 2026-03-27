@@ -281,7 +281,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   }
 
   /*
-   * Puts the account data for the given account hash and block context.
+   * Puts the account data for the given account hash.
    */
   @Override
   public void putFlatAccount(
@@ -293,6 +293,14 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         getStateArchiveContextForWrite(storage).get(), transaction, accountHash, accountValue);
   }
 
+  /**
+   * Puts the account data for the given account hash and block context.
+   *
+   * @param context the block context supplying the block number suffix for the archive key
+   * @param transaction the transaction to write into
+   * @param accountHash the hash of the account address
+   * @param accountValue the RLP-encoded account value
+   */
   public void putFlatAccount(
       final BonsaiContext context,
       final SegmentedKeyValueStorageTransaction transaction,
@@ -311,6 +319,13 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     removeFlatAccount(getStateArchiveContextForWrite(storage).get(), transaction, accountHash);
   }
 
+  /**
+   * Removes account data for the given account hash and block context.
+   *
+   * @param context the block context supplying the block number suffix for the archive key
+   * @param transaction the transaction to write into
+   * @param accountHash the hash of the account address
+   */
   public void removeFlatAccount(
       final BonsaiContext context,
       final SegmentedKeyValueStorageTransaction transaction,
@@ -406,15 +421,26 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         storageValue);
   }
 
+  /**
+   * Puts the storage value for the given account hash and storage slot key for a given context.
+   *
+   * @param context the block context supplying the block number suffix for the archive key
+   * @param transaction the transaction to write into
+   * @param accountHash the hash of the account address
+   * @param slotHash the hash of the storage slot key
+   * @param storageValue the storage value
+   */
   public void putFlatAccountStorageValueByStorageSlotHash(
       final BonsaiContext context,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash,
       final Bytes storageValue) {
+    // get natural key from account hash and slot key
     byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
-    byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(context, naturalKey);
-    transaction.put(ACCOUNT_STORAGE_ARCHIVE, keySuffixed, storageValue.toArrayUnsafe());
+    // keyNearest, use MIN_BLOCK_SUFFIX in the absence of a block context:
+    byte[] keyNearest = calculateArchiveKeyWithMinSuffix(context, naturalKey);
+    transaction.put(ACCOUNT_STORAGE_ARCHIVE, keyNearest, storageValue.toArrayUnsafe());
   }
 
   /*
@@ -430,12 +456,22 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
         getStateArchiveContextForWrite(storage).get(), transaction, accountHash, slotHash);
   }
 
+  /**
+   * Removes the storage value for the given account hash and storage slot key for a given context.
+   *
+   * @param context the block context supplying the block number suffix for the archive key
+   * @param transaction the transaction to write into
+   * @param accountHash the hash of the account address
+   * @param slotHash the hash of the storage slot key
+   */
   public void removeFlatAccountStorageValueByStorageSlotHash(
       final BonsaiContext context,
       final SegmentedKeyValueStorageTransaction transaction,
       final Hash accountHash,
       final Hash slotHash) {
+    // get natural key from account hash and slot key
     byte[] naturalKey = calculateNaturalSlotKey(accountHash, slotHash);
+    // insert a key suffixed with block context, with 'deleted account' value
     byte[] keySuffixed = calculateArchiveKeyWithMinSuffix(context, naturalKey);
     transaction.put(ACCOUNT_STORAGE_ARCHIVE, keySuffixed, DELETED_STORAGE_VALUE);
   }
