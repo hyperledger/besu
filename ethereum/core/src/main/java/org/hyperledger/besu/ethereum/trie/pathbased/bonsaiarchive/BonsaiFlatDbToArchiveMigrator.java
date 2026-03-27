@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.util.log.LogUtil;
@@ -35,7 +34,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -53,12 +52,9 @@ import org.slf4j.LoggerFactory;
  * current chain head, writing archive-keyed entries into the archive column families. Progress is
  * persisted atomically with each block's data so the migration can safely resume after a restart.
  *
- * <p>The chain head target is updated in real time as new blocks arrive, so the migrator chases
- * the head until it converges. Once all blocks are processed, the flat DB mode is atomically
- * switched to {@link org.hyperledger.besu.ethereum.worldstate.FlatDbMode#ARCHIVE}.
- *
- * <p>Migration runs on a dedicated executor and uses low-priority transactions to reduce I/O
- * contention with normal block processing.
+ * <p>The chain head target is updated in real time as new blocks arrive, so the migrator chases the
+ * head until it converges. Once all blocks are processed, the flat DB mode is atomically switched
+ * to {@link org.hyperledger.besu.ethereum.worldstate.FlatDbMode#ARCHIVE}.
  */
 public class BonsaiFlatDbToArchiveMigrator implements Closeable {
 
@@ -71,7 +67,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final TrieLogManager trieLogManager;
   private final Blockchain blockchain;
-  private final ScheduledExecutorService executorService;
+  private final ExecutorService executorService;
   private final BonsaiArchiveFlatDbStrategy archiveStrategy;
   private final AtomicLong migratedBlockNumber = new AtomicLong(0);
   private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
@@ -91,7 +87,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final TrieLogManager trieLogManager,
       final Blockchain blockchain,
-      final ScheduledExecutorService executorService,
+      final ExecutorService executorService,
       final MetricsSystem metricsSystem,
       final BonsaiArchiveFlatDbStrategy archiveStrategy) {
     this.worldStateStorage = worldStateStorage;
@@ -121,15 +117,13 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     final long lastProcessedBlock = getMigrationProgress().orElse(-1L);
     final long startBlock = lastProcessedBlock + 1;
     migratedBlockNumber.set(Math.max(0, lastProcessedBlock));
-    LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
-    final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
 
     final AtomicLong target = new AtomicLong(blockchain.getChainHeadBlockNumber());
     final long blockObserverId =
         blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
 
-    return CompletableFuture.runAsync(
-            () -> migrateBlocks(storage, startBlock, target), executorService)
+    LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
+    return CompletableFuture.runAsync(() -> migrateBlocks(startBlock, target), executorService)
         .whenComplete(
             (result, ex) -> {
               blockchain.removeObserver(blockObserverId);
@@ -145,16 +139,14 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
             });
   }
 
-  private void migrateBlocks(
-      final SegmentedKeyValueStorage storage,
-      final long startBlock,
-      final AtomicLong target) {
+  private void migrateBlocks(final long startBlock, final AtomicLong target) {
     for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
       final Optional<TrieLog> maybeTrieLog =
           blockchain
               .getBlockHeader(blockNumber)
               .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
-      final SegmentedKeyValueStorageTransaction tx = storage.startLowPriorityTransaction();
+      final SegmentedKeyValueStorageTransaction tx =
+          worldStateStorage.getComposedWorldStateStorage().startLowPriorityTransaction();
       if (maybeTrieLog.isPresent()) {
         processBlock(maybeTrieLog.get(), blockNumber, tx);
         migratedBlockNumber.incrementAndGet();
@@ -260,10 +252,10 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   @VisibleForTesting
   protected Optional<Long> getMigrationProgress() {
     return worldStateStorage
-            .getComposedWorldStateStorage()
-            .get(ACCOUNT_INFO_STATE_FREEZER, MIGRATION_PROGRESS_KEY)
-            .map(Bytes::wrap)
-            .map(Bytes::toLong);
+        .getComposedWorldStateStorage()
+        .get(ACCOUNT_INFO_STATE_FREEZER, MIGRATION_PROGRESS_KEY)
+        .map(Bytes::wrap)
+        .map(Bytes::toLong);
   }
 
   private void saveProgress(final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
