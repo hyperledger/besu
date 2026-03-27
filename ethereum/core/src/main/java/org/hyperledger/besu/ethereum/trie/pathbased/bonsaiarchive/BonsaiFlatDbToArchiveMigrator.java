@@ -117,50 +117,29 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private void migrateBlocks(final AtomicLong target) {
     try {
       final Instant migrationStartTime = Instant.now();
-
       final long lastProcessedBlock = getMigrationProgress().orElse(-1L);
       final long startBlock = lastProcessedBlock + 1;
-      final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
-      // Seed the gauge with already-processed blocks so it reflects total progress across restarts.
-      // Block 0 has no trie log so the effective migrated count is max(0, lastProcessedBlock).
       migratedBlockNumber.set(Math.max(0, lastProcessedBlock));
       LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
+      final SegmentedKeyValueStorage storage = worldStateStorage.getComposedWorldStateStorage();
       for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
-
         final Optional<TrieLog> maybeTrieLog =
             blockchain
                 .getBlockHeader(blockNumber)
                 .flatMap(header -> trieLogManager.getTrieLogLayer(header.getHash()));
-
         final SegmentedKeyValueStorageTransaction tx = storage.startLowPriorityTransaction();
-        try {
-          if (maybeTrieLog.isPresent()) {
-            processBlock(maybeTrieLog.get(), blockNumber, tx);
-            migratedBlockNumber.incrementAndGet();
-          } else if (blockNumber > 0) {
-            throw new IllegalStateException("No trie log found for block " + blockNumber);
-          }
-          // Always save progress, even for blocks with no trie log
-          saveProgress(blockNumber, tx);
-          tx.commit();
-        } catch (final Exception e) {
-          LOG.error("Failed to process block {}, rolling back transaction", blockNumber, e);
-          try {
-            tx.rollback();
-          } catch (final Exception rollbackException) {
-            LOG.error(
-                "Failed to rollback transaction for block {}", blockNumber, rollbackException);
-          }
-          throw new IllegalStateException(
-              "Migration failed at block " + blockNumber + ": " + e.getMessage(), e);
+        if (maybeTrieLog.isPresent()) {
+          processBlock(maybeTrieLog.get(), blockNumber, tx);
+          migratedBlockNumber.incrementAndGet();
+        } else if (blockNumber > 0) {
+          throw new IllegalStateException("No trie log found for block " + blockNumber);
         }
-
+        saveProgress(blockNumber, tx);
+        tx.commit();
         logProgress(blockNumber, startBlock, target.get());
       }
-
       worldStateStorage.upgradeToArchiveFlatDbMode();
       logCompletion(startBlock, target.get(), migrationStartTime);
-
     } catch (final Exception e) {
       LOG.error("Bonsai to Bonsai archive migration failed", e);
       throw new RuntimeException(e);
@@ -179,15 +158,6 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-  }
-
-  @VisibleForTesting
-  protected Optional<Long> getMigrationProgress() {
-    return worldStateStorage
-        .getComposedWorldStateStorage()
-        .get(ACCOUNT_INFO_STATE_FREEZER, MIGRATION_PROGRESS_KEY)
-        .map(Bytes::wrap)
-        .map(Bytes::toLong);
   }
 
   private void logProgress(final long blockNumber, final long startBlock, final long endBlock) {
@@ -213,19 +183,10 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     final Duration migrationDuration = Duration.between(migrationStartTime, Instant.now());
     final String formattedDuration =
         DurationFormatUtils.formatDurationWords(migrationDuration.toMillis(), true, true);
-    if (startBlock > 0) {
-      LOG.info(
-          "Bonsai Archive migration completed. Processed blocks {}-{} ({} blocks) in {}.",
-          startBlock,
-          endBlock,
-          endBlock - startBlock + 1,
-          formattedDuration);
-    } else {
-      LOG.info(
-          "Bonsai Archive migration completed. Processed {} blocks in {}.",
-          endBlock - startBlock + 1,
-          formattedDuration);
-    }
+    LOG.info(
+        "Bonsai Archive migration completed. Processed {} blocks in {}.",
+        endBlock - startBlock + 1,
+        formattedDuration);
   }
 
   private void processBlock(
@@ -277,7 +238,19 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
                     }));
   }
 
+  @VisibleForTesting
+  protected Optional<Long> getMigrationProgress() {
+    return worldStateStorage
+            .getComposedWorldStateStorage()
+            .get(ACCOUNT_INFO_STATE_FREEZER, MIGRATION_PROGRESS_KEY)
+            .map(Bytes::wrap)
+            .map(Bytes::toLong);
+  }
+
   private void saveProgress(final long blockNumber, final SegmentedKeyValueStorageTransaction tx) {
-    tx.put(ACCOUNT_INFO_STATE_FREEZER, MIGRATION_PROGRESS_KEY, Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
+    tx.put(
+        ACCOUNT_INFO_STATE_FREEZER,
+        MIGRATION_PROGRESS_KEY,
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
   }
 }
