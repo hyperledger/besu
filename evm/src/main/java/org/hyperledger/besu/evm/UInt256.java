@@ -25,10 +25,10 @@ import java.util.Arrays;
  *
  * <p>This class is an optimised version of BigInteger for fixed width 256-bits integers.
  *
- * @param u3 4th digit
+ * @param u3 4th digit = most significant limb
  * @param u2 3rd digit
  * @param u1 2nd digit
- * @param u0 1st digit
+ * @param u0 1st digit = least significant limb
  */
 public record UInt256(long u3, long u2, long u1, long u0) {
 
@@ -1366,7 +1366,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     }
 
     UInt256 mul(final UInt256 a, final UInt256 b) {
-      // multiply-reduce
+      // smaller allocation path: multiply-reduce with UInt256 prod
       if (a.isUInt128() && b.isUInt128()) {
         UInt256 prod = a.mul128(b);
         int cmp = compareTo(prod);
@@ -1374,7 +1374,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
         if (cmp > 0) return prod;
         return modReduce(prod);
       }
-      // At least one exceeds 128 bits: full multiply then single reduce.
+      // At least one exceeds 128 bits: full multiply then single reduce with UInt512 prod
       UInt512 prod = a.mul256(b);
       int shift = Long.numberOfLeadingZeros(u1);
       UInt128 m = shiftLeft(shift);
@@ -1615,7 +1615,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
     }
 
     UInt256 mul(final UInt256 a, final UInt256 b) {
-      // multiply-reduce
+      // smaller allocation path: multiply-reduce with UInt448 prod
       if (a.isUInt192() && b.isUInt192()) {
         UInt448 prod = a.mul192(b);
         int cmp = compareTo(prod);
@@ -1623,7 +1623,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
         if (cmp > 0) return prod.UInt256Value();
         return modReduce(prod);
       }
-      // At least one exceeds 192 bits: full multiply then single reduce.
+      // At least one exceeds 192 bits: full multiply then single reduce with UInt512 prod
       UInt512 prod = a.mul256(b);
       int shift = Long.numberOfLeadingZeros(u2);
       UInt192 m = shiftLeft(shift);
