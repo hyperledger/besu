@@ -2,6 +2,9 @@
 
 ## Upcoming Release
 
+### Breaking Changes
+- `debug_traceTransaction` and `debug_traceBlockByNumber`: the `error` field in `StructLog` entries is now serialized as a plain string (e.g. `"INVALID_JUMP_DESTINATION"`) instead of an array of strings, aligning with the execution-apis opcode tracer spec. [#10117](https://github.com/besu-eth/besu/pull/10117)
+
 ### Bug fixes
 - Upgrade besu-native libraries version to 1.5.0. This fixes the issue of besu-native/secp256r1 exporting OpenSSL
   symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
