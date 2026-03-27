@@ -1374,7 +1374,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
         if (cmp > 0) return prod;
         return modReduce(prod);
       }
-      // At least one exceeds 128 bits: full multiply then single reduce with UInt512 prod
+      // At least one input exceeds 128 bits: full multiply then single reduce with UInt512 prod
       UInt512 prod = a.mul256(b);
       int shift = Long.numberOfLeadingZeros(u1);
       UInt128 m = shiftLeft(shift);
@@ -1486,6 +1486,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 modReduceNormalised(final UInt512 that, final int shift, final long inv) {
       UInt576 v = that.shiftLeftWide(shift);
+      // No fast-path guard: benchmarks show the slow path dispatch is equivalent for or better M-R products
       return modReduceNormalisedSlowPath(v, shift, inv);
     }
 
@@ -1623,7 +1624,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
         if (cmp > 0) return prod.UInt256Value();
         return modReduce(prod);
       }
-      // At least one exceeds 192 bits: full multiply then single reduce with UInt512 prod
+      // At least one input exceeds 192 bits: full multiply then single reduce with UInt512 prod
       UInt512 prod = a.mul256(b);
       int shift = Long.numberOfLeadingZeros(u2);
       UInt192 m = shiftLeft(shift);
@@ -1787,6 +1788,7 @@ public record UInt256(long u3, long u2, long u1, long u0) {
 
     private UInt256 modReduceNormalised(final UInt512 that, final int shift, final long inv) {
       UInt576 v = that.shiftLeftWide(shift);
+      // No fast-path guard: benchmarks show the slow path dispatch is equivalent for or better M-R products
       return modReduceNormalisedSlowPath(v, shift, inv);
     }
 
