@@ -20,8 +20,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -61,7 +61,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class StorageFlatDatabaseHealingRangeRequestTest {
 
   @Mock private SnapWorldDownloadState downloadState;
-  @Mock private SnapSyncProcessState snapSyncState;
+  @Mock private PivotSyncState snapSyncState;
 
   final List<Address> accounts =
       List.of(

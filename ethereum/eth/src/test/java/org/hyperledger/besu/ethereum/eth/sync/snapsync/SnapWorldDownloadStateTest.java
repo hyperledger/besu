@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
@@ -87,7 +88,7 @@ public class SnapWorldDownloadStateTest {
       new InMemoryTasksPriorityQueues<>();
   private final WorldStateDownloadProcess worldStateDownloadProcess =
       mock(WorldStateDownloadProcess.class);
-  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final PivotSyncState snapSyncState = mock(PivotSyncState.class);
   private final SnapSyncStatePersistenceManager snapContext =
       mock(SnapSyncStatePersistenceManager.class);
   private final SnapSyncMetricsManager metricsManager = mock(SnapSyncMetricsManager.class);

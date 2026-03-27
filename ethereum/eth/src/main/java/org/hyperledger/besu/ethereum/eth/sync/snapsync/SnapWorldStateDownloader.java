@@ -142,7 +142,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         return failed;
       }
 
-      final SnapSyncProcessState snapSyncState = (SnapSyncProcessState) fastSyncState;
+      final PivotSyncState snapSyncState = fastSyncState;
       final BlockHeader header = fastSyncState.getPivotBlockHeader().get();
       final Hash stateRoot = header.getStateRoot();
       LOG.info(

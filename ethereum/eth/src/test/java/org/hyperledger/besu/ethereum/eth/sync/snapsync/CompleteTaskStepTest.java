@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
@@ -41,7 +42,7 @@ public class CompleteTaskStepTest {
 
   private static final Hash HASH = Hash.hash(Bytes.of(1, 2, 3));
 
-  private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
+  private final PivotSyncState snapSyncState = mock(PivotSyncState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
 
   private final BlockHeader blockHeader =

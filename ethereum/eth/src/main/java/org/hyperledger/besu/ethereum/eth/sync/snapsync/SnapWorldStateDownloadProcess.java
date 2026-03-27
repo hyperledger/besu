@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.DynamicPivotBlockS
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.TaskQueueIterator;
@@ -156,7 +157,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private MetricsSystem metricsSystem;
     private LoadLocalDataStep loadLocalDataStep;
     private RequestDataStep requestDataStep;
-    private SnapSyncProcessState snapSyncState;
+    private PivotSyncState snapSyncState;
     private PersistDataStep persistDataStep;
     private CompleteTaskStep completeTaskStep;
     private DynamicPivotBlockSelector pivotBlockManager;
@@ -202,7 +203,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
       return this;
     }
 
-    public Builder fastSyncState(final SnapSyncProcessState fastSyncState) {
+    public Builder fastSyncState(final PivotSyncState fastSyncState) {
       this.snapSyncState = fastSyncState;
       return this;
     }
@@ -463,7 +464,7 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
   }
 
   private static void reloadHealWhenNeeded(
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapWorldDownloadState downloadState,
       final boolean newBlockFound) {
     if (snapSyncState.isHealTrieInProgress() && newBlockFound) {

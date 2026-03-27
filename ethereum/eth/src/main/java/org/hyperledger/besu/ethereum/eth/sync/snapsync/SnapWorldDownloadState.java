@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.common.WorldStateHealFinishedListener;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
@@ -86,7 +87,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private WorldStateHealFinishedListener worldStateHealFinishedListener;
 
   private final SnapSyncStatePersistenceManager snapContext;
-  private final SnapSyncProcessState snapSyncState;
+  private final PivotSyncState snapSyncState;
 
   // blockchain
   private final Blockchain blockchain;
@@ -103,7 +104,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncStatePersistenceManager snapContext,
       final Blockchain blockchain,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,

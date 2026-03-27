@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -35,14 +36,14 @@ import org.slf4j.LoggerFactory;
 public class PersistDataStep {
   private static final Logger LOG = LoggerFactory.getLogger(PersistDataStep.class);
 
-  private final SnapSyncProcessState snapSyncState;
+  private final PivotSyncState snapSyncState;
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final SnapWorldDownloadState downloadState;
 
   private final SnapSyncConfiguration snapSyncConfiguration;
 
   public PersistDataStep(
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration) {

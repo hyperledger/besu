@@ -22,8 +22,8 @@ import static org.hyperledger.besu.ethereum.trie.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
@@ -90,7 +90,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     // search incomplete nodes in the range
@@ -160,15 +160,15 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   }
 
   @Override
-  public boolean isExpired(final SnapSyncProcessState snapSyncState) {
-    return snapSyncState.isExpired(this);
+  public boolean isExpired(final PivotSyncState snapSyncState) {
+    return snapSyncState.isExpired(this.getRootHash());
   }
 
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SnapSyncProcessState snapSyncState) {
+      final PivotSyncState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
     if (!isProofValid.orElse(false)) {

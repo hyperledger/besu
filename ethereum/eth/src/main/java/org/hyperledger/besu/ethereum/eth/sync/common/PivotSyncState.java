@@ -16,12 +16,18 @@ package org.hyperledger.besu.ethereum.eth.sync.common;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class PivotSyncState {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PivotSyncState.class);
 
   public static final PivotSyncState EMPTY_SYNC_STATE = new PivotSyncState();
 
@@ -29,6 +35,11 @@ public class PivotSyncState {
   private Optional<Hash> pivotBlockHash;
   private Optional<BlockHeader> pivotBlockHeader;
   private boolean sourceIsTrusted = false;
+
+  // Snap sync process state fields
+  private boolean isHealTrieInProgress;
+  private boolean isHealFlatDatabaseInProgress;
+  private boolean isWaitingBlockchain;
 
   public PivotSyncState() {
     pivotBlockNumber = OptionalLong.empty();
@@ -98,6 +109,38 @@ public class PivotSyncState {
     pivotBlockNumber = OptionalLong.of(header.getNumber());
     pivotBlockHash = Optional.of(header.getHash());
     pivotBlockHeader = Optional.of(header);
+  }
+
+  public boolean isHealTrieInProgress() {
+    return isHealTrieInProgress;
+  }
+
+  public void setHealTrieStatus(final boolean healTrieStatus) {
+    isHealTrieInProgress = healTrieStatus;
+  }
+
+  public boolean isHealFlatDatabaseInProgress() {
+    return isHealFlatDatabaseInProgress;
+  }
+
+  public void setHealFlatDatabaseInProgress(final boolean healFlatDatabaseInProgress) {
+    isHealFlatDatabaseInProgress = healFlatDatabaseInProgress;
+  }
+
+  public boolean isWaitingBlockchain() {
+    return isWaitingBlockchain;
+  }
+
+  public void setWaitingBlockchain(final boolean waitingBlockchain) {
+    LOG.debug("Set waiting blockchain to {}", waitingBlockchain);
+    isWaitingBlockchain = waitingBlockchain;
+  }
+
+  public boolean isExpired(final Hash stateRoot) {
+    return getPivotBlockHeader()
+        .map(SealableBlockHeader::getStateRoot)
+        .filter(hash -> hash.equals(stateRoot))
+        .isEmpty();
   }
 
   @Override

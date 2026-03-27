@@ -60,6 +60,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   @Override
   public CompletableFuture<Void> prepareRetry() {
     final long estimatedPivotBlock = conservativelyEstimatedPivotBlock();
+    final int minPeerCount = syncConfig.getSyncMinimumPeerCount();
     final TrailingPeerLimiter trailingPeerLimiter =
         new TrailingPeerLimiter(
             ethContext.getEthPeers(),
@@ -70,7 +71,10 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
     return ethContext
         .getEthPeers()
-        .waitForPeer((peer) -> peer.estimatedChainHeight() >= estimatedPivotBlock)
+        .waitForPeer(
+            (peer) ->
+                peer.estimatedChainHeight() >= estimatedPivotBlock
+                    && countQualifyingPeers() >= minPeerCount)
         .thenRun(() -> {});
   }
 
@@ -113,6 +117,14 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
           .max(ethContext.getEthPeers().getBestPeerComparator())
           .map(EthPeerImmutableAttributes::ethPeer);
     }
+  }
+
+  private long countQualifyingPeers() {
+    return ethContext
+        .getEthPeers()
+        .streamAvailablePeers()
+        .filter(peer -> peer.hasEstimatedChainHeight() && peer.isFullyValidated())
+        .count();
   }
 
   private long conservativelyEstimatedPivotBlock() {

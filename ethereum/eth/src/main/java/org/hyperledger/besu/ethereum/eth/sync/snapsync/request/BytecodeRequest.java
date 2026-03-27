@@ -19,8 +19,8 @@ import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordina
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
@@ -55,7 +55,7 @@ public class BytecodeRequest extends SnapDataRequest {
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
-      final SnapSyncProcessState snapSyncState,
+      final PivotSyncState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     applyForStrategy(
@@ -89,7 +89,7 @@ public class BytecodeRequest extends SnapDataRequest {
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SnapSyncProcessState snapSyncState) {
+      final PivotSyncState snapSyncState) {
     return Stream.empty();
   }
 

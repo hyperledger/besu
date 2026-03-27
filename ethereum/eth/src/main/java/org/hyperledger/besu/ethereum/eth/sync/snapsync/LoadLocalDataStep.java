@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.can
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.errorCountAtThreshold;
 import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.getRetryableErrorCounter;
 
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -41,7 +42,7 @@ public class LoadLocalDataStep {
   private static final Logger LOG = LoggerFactory.getLogger(LoadLocalDataStep.class);
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final SnapWorldDownloadState downloadState;
-  private final SnapSyncProcessState snapSyncState;
+  private final PivotSyncState snapSyncState;
 
   private final SnapSyncConfiguration snapSyncConfiguration;
   private final Counter existingNodeCounter;
@@ -51,7 +52,7 @@ public class LoadLocalDataStep {
       final SnapWorldDownloadState downloadState,
       final SnapSyncConfiguration snapSyncConfiguration,
       final MetricsSystem metricsSystem,
-      final SnapSyncProcessState snapSyncState) {
+      final PivotSyncState snapSyncState) {
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.downloadState = downloadState;
     this.snapSyncConfiguration = snapSyncConfiguration;
