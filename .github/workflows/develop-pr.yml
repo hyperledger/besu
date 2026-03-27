@@ -27,7 +27,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: setup gradle
-        uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         with:
           cache-disabled: true
 
@@ -77,11 +77,11 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: setup gradle
-        uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         with:
           cache-disabled: true
       - name: build and test docker
-        uses: gradle/actions/setup-gradle@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
