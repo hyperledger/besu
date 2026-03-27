@@ -522,6 +522,21 @@ public class PeerTransactionTracker
     }
   }
 
+  /**
+   * An LRU map with a strictly fixed capacity. The parent {@link LRUMap} grows beyond its declared
+   * maximum when the internal hash table needs to be resized (because the number of buckets is
+   * calculated from {@code maxEntries * loadFactor}). This subclass prevents that by:
+   *
+   * <ul>
+   *   <li>Overriding {@link #calculateNewCapacity} to pre-size the backing array to exactly {@code
+   *       proposedCapacity / loadFactor} buckets so no rehash is ever triggered.
+   *   <li>Making {@link #checkCapacity} a no-op, because the map will never grow past {@code
+   *       maxEntries} entries and a capacity check would be misleading.
+   * </ul>
+   *
+   * <p>The {@link #DEFAULT_LOAD_FACTOR load factor} of {@code 0.8} keeps hash-collision probability
+   * low while limiting memory overhead to ~25 % over the theoretical minimum.
+   */
   private static class FixedCapacityLRUMap<K, V> extends LRUMap<K, V> {
     private static final float DEFAULT_LOAD_FACTOR = 0.8f;
 
@@ -536,7 +551,7 @@ public class PeerTransactionTracker
 
     @Override
     protected void checkCapacity() {
-      // no- op since the fixed map never needs to resize
+      // no-op since the fixed map never needs to resize
     }
   }
 }
