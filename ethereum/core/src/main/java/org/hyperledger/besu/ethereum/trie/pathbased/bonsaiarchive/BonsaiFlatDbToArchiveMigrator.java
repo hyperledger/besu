@@ -123,8 +123,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
         blockchain.observeBlockAdded(event -> target.set(event.getHeader().getNumber()));
 
     LOG.info("Starting Bonsai Archive migration from block {}", startBlock);
-    return CompletableFuture.runAsync(
-            () -> migrateBlocks(startBlock, lastProcessedBlock, target), executorService)
+    return CompletableFuture.runAsync(() -> migrateBlocks(startBlock, target), executorService)
         .whenComplete(
             (result, ex) -> {
               blockchain.removeObserver(blockObserverId);
@@ -140,8 +139,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
             });
   }
 
-  private void migrateBlocks(
-      final long startBlock, final long lastProcessedBlock, final AtomicLong target) {
+  private void migrateBlocks(final long startBlock, final AtomicLong target) {
     for (long blockNumber = startBlock; blockNumber <= target.get(); blockNumber++) {
       final Optional<TrieLog> maybeTrieLog =
           blockchain
@@ -157,7 +155,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
       }
       saveProgress(blockNumber, tx);
       tx.commit();
-      logProgress(blockNumber, lastProcessedBlock, target.get());
+      logProgress(blockNumber, target.get());
     }
   }
 
@@ -173,20 +171,13 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
     }
   }
 
-  private void logProgress(
-      final long blockNumber, final long lastProcessedBlock, final long endBlock) {
+  private void logProgress(final long blockNumber, final long endBlock) {
     LogUtil.throttledLog(
         () -> {
-          long progressPercent = endBlock > 0 ? (blockNumber * 100) / endBlock : 100;
-          if (lastProcessedBlock >= 0) {
-            LOG.info(
-                "Bonsai Archive migration progress: {}% (block {}/{}, resumed from block {})",
-                progressPercent, blockNumber, endBlock, lastProcessedBlock);
-          } else {
-            LOG.info(
-                "Bonsai Archive migration progress: {}% (block {}/{})",
-                progressPercent, blockNumber, endBlock);
-          }
+          long progressPercent = (blockNumber * 100) / endBlock;
+          LOG.info(
+              "Bonsai Archive migration progress: {}% (block {}/{})",
+              progressPercent, blockNumber, endBlock);
         },
         shouldLogProgress,
         LOG_INTERVAL_SECONDS);
