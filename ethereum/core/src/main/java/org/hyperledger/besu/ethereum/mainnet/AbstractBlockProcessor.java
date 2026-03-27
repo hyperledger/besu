@@ -239,10 +239,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     blockTracer.traceStartBlock(worldState, blockHeader, miningBeneficiary);
 
     final StateRootCommitter stateRootCommitter =
-        blockProcessingMetrics.wrapStateRootCommitter(
-            protocolSpec
-                .getStateRootCommitterFactory()
-                .forBlock(protocolContext, blockHeader, blockAccessList));
+        protocolSpec
+            .getStateRootCommitterFactory()
+            .forBlock(protocolContext, blockHeader, blockAccessList)
+            .timed(blockProcessingMetrics.stateRootCalculationTimer());
 
     final Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
@@ -360,6 +360,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 transaction, transactionProcessingResult);
         // EIP-8037: Accumulate state gas used
         cumulativeStateGasUsed += transactionProcessingResult.getStateGasUsed();
+
+        // EIP-8037: Post-processing check — verify gas metered doesn't exceed block gas limit.
+        final long gasMeteredSoFar =
+            protocolSpec
+                .getBlockGasAccountingStrategy()
+                .effectiveGasUsed(cumulativeRegularGasUsed, cumulativeStateGasUsed);
+        if (gasMeteredSoFar > blockHeader.getGasLimit()) {
+          return new BlockProcessingResult(Optional.empty(), "gas metered exceeds block gas limit");
+        }
+
         final var optionalVersionedHashes = transaction.getVersionedHashes();
         if (optionalVersionedHashes.isPresent()) {
           final var versionedHashes = optionalVersionedHashes.get();

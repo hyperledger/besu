@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
  * block and determines the selection result accordingly.
  *
  * <p>For EIP-8037 multidimensional gas, this selector tracks both regular and state gas dimensions.
- * A transaction fits if its gasLimit does not exceed the sum of remaining capacity in both
- * dimensions. Post-processing verifies the actual gas split.
+ * A transaction fits if its gasLimit does not exceed the remaining capacity of each dimension
+ * independently. Post-processing verifies the actual gas metered stays within limits.
  */
 public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSelector<GasState> {
   private static final Logger LOG = LoggerFactory.getLogger(BlockSizeTransactionSelector.class);
@@ -65,10 +65,7 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
           .setMessage("Transaction {} too large to select for block creation")
           .addArgument(evaluationContext.getPendingTransaction()::toTraceLog)
           .log();
-      if (blockOccupancyAboveThreshold(state)) {
-        LOG.trace("Block occupancy above threshold, completing operation");
-        return TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
-      } else if (blockFull(state)) {
+      if (blockFull(state)) {
         LOG.trace("Block full, completing operation");
         return TransactionSelectionResult.BLOCK_FULL;
       } else {
@@ -112,11 +109,11 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
 
   /**
    * Checks if the transaction is too large for the block using the gas accounting strategy. For 1D
-   * gas, this checks regular gas only. For 2D gas (EIP-8037), this considers the sum of remaining
-   * capacity in both dimensions.
+   * gas, this checks regular gas only. For 2D gas (EIP-8037), the tx gas limit must fit within the
+   * remaining capacity of each dimension independently.
    *
-   * <p>This is a permissive heuristic: it may allow a transaction through pre-processing that later
-   * exceeds the limit in post-processing, where the actual regular/state split is known.
+   * <p>The post-processing check verifies that gas metered (max of regular, state) stays within the
+   * block gas limit after processing reveals the actual regular/state gas split.
    *
    * @param transaction The transaction to be checked.
    * @param state The current gas state with regular and state gas.
@@ -125,29 +122,6 @@ public class BlockSizeTransactionSelector extends AbstractStatefulTransactionSel
   private boolean transactionTooLargeForBlock(final Transaction transaction, final GasState state) {
     return !gasAccountingStrategy.hasBlockCapacity(
         transaction.getGasLimit(), state.regularGas(), state.stateGas(), blockGasLimit);
-  }
-
-  /**
-   * Checks if the block occupancy is above the threshold.
-   *
-   * @param state The current gas state.
-   * @return True if the block occupancy is above the threshold, false otherwise.
-   */
-  private boolean blockOccupancyAboveThreshold(final GasState state) {
-    final long gasUsed =
-        gasAccountingStrategy.effectiveGasUsed(state.regularGas(), state.stateGas());
-    final long gasRemaining = blockGasLimit - gasUsed;
-    final double occupancyRatio = (double) gasUsed / (double) blockGasLimit;
-
-    LOG.trace(
-        "Min block occupancy ratio {}, gas used {}, available {}, remaining {}, used/available {}",
-        context.miningConfiguration().getMinBlockOccupancyRatio(),
-        gasUsed,
-        blockGasLimit,
-        gasRemaining,
-        occupancyRatio);
-
-    return occupancyRatio >= context.miningConfiguration().getMinBlockOccupancyRatio();
   }
 
   /**
