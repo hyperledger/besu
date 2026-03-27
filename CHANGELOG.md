@@ -7,6 +7,7 @@
   symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
 
 ### Additions and Improvements
+- Dispatch snap server request processing (GET_ACCOUNT_RANGE, GET_STORAGE_RANGE, GET_BYTECODES, GET_TRIE_NODES, GET_BLOCK_ACCESS_LISTS) off the Netty event loop to prevent heavy trie/DB work from blocking ETH protocol message handling [#10083](https://github.com/besu-eth/besu/pull/10083)
 - Add DiscV5 discovery metrics (`discv5_live_nodes_current`, `discv5_total_nodes_current`) to track node counts in the routing table [#9692](https://github.com/besu-eth/besu/issues/9692)
 
 ## 26.3.0
