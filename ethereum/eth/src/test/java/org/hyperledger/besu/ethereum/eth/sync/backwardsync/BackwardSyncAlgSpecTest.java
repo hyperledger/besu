@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.plugin.services.BesuEvents;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.validation.constraints.NotNull;
@@ -213,6 +215,28 @@ public class BackwardSyncAlgSpecTest {
     doReturn(true).when(context).isReady();
     algorithm.pickNextStep();
     verify(algorithm).executeSyncStep(hash);
+  }
+
+  @Test
+  public void shouldCompleteExceptionallyWhenExecuteSyncStepThrowsSynchronously() {
+    final BackwardChain backwardChain = createBackwardChain(LOCAL_HEIGHT, LOCAL_HEIGHT + 10);
+    doReturn(backwardChain).when(context).getBackwardChain();
+    doReturn(true).when(context).isReady();
+    backwardChain.addNewHash(hash);
+
+    // Simulate executeSyncStep throwing synchronously instead of returning a failed future.
+    // Without the try-catch fix, syncStep would leak as permanently PENDING.
+    doThrow(new RuntimeException("simulated sync executor failure"))
+        .when(algorithm)
+        .executeSyncStep(hash);
+
+    final CompletableFuture<Void> future = algorithm.pickNextStep();
+
+    // After the fix: future should be done (completed exceptionally), not stuck pending
+    assertThatThrownBy(() -> future.get())
+        .isInstanceOf(ExecutionException.class)
+        .hasCauseInstanceOf(RuntimeException.class)
+        .hasMessageContaining("simulated sync executor failure");
   }
 
   @Test
