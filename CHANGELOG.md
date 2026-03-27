@@ -7,6 +7,7 @@
   symbols in JVM space. [besu-native #308](https://github.com/besu-eth/besu-native/pull/308)
 
 ### Additions and Improvements
+- Dispatch snap server request processing (GET_ACCOUNT_RANGE, GET_STORAGE_RANGE, GET_BYTECODES, GET_TRIE_NODES, GET_BLOCK_ACCESS_LISTS) off the Netty event loop to prevent heavy trie/DB work from blocking ETH protocol message handling [#10083](https://github.com/besu-eth/besu/pull/10083)
 - Add DiscV5 discovery metrics (`discv5_live_nodes_current`, `discv5_total_nodes_current`) to track node counts in the routing table [#9692](https://github.com/besu-eth/besu/issues/9692)
 
 ## 26.3.0
@@ -44,6 +45,7 @@
 are provided with different values, using input as per the execution-apis spec instead of returning an error.
 - Fix eth_simulateV1 returning wrong error code when transaction gas exceeds block gas limit: now correctly returns -38015 (BLOCK_GAS_LIMIT_EXCEEDED) instead of -38014 or succeeding [#10073](https://github.com/besu-eth/besu/pull/10073)
 - Wait for peers before starting chain download. Prevents an OutOfMemory (OOM) error when the node has zero peers [#9979](https://github.com/hyperledger/besu/pull/9979)
+- Detect stall in backward sync progress and restart session if stalled for 5 min [#10045](https://github.com/besu-eth/besu/pull/10045)
 
 ### Additions and Improvements
 - Defer Snappy decompression of inbound P2P messages from the Netty I/O thread to the worker thread, reducing memory held in the transaction worker queue to compressed size [#10048](https://github.com/besu-eth/besu/pull/10048)
