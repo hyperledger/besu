@@ -93,7 +93,7 @@ public class BlockSimulator {
       TransactionValidationParams.blockSimulatorStrict();
 
   private static final TransactionValidationParams SIMULATION_PARAMS =
-      TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce();
+      TransactionValidationParams.blockSimulatorNonStrict();
 
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
