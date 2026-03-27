@@ -858,6 +858,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             worldStateStorageCoordinator,
             ethPeers,
             snapMessages,
+            scheduler,
             synchronizer);
 
     final MiningCoordinator miningCoordinator =
@@ -1322,6 +1323,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
+      final EthScheduler ethScheduler,
       final Synchronizer synchronizer) {
     return Optional.of(
         new SnapProtocolManager(
@@ -1329,6 +1331,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             syncConfig.getSnapSyncConfiguration(),
             ethPeers,
             snapMessages,
+            ethScheduler,
             protocolSchedule,
             protocolContext,
             synchronizer));
