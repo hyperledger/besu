@@ -97,7 +97,8 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final SegmentedKeyValueStorageTransaction tx = store.startLowPriorityTransaction();
     tx.commit();
 
-    assertThatThrownBy(() -> tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF")))
+    assertThatThrownBy(
+            () -> tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF")))
         .isInstanceOf(IllegalStateException.class);
     store.close();
   }
@@ -439,8 +440,9 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     final SegmentedKeyValueStorageTransaction tx = store.startLowPriorityTransaction();
     tx.commit();
 
-    assertThatThrownBy(() -> tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF")))
-            .isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(
+            () -> tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF")))
+        .isInstanceOf(IllegalStateException.class);
     store.close();
   }
 
