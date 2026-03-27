@@ -41,7 +41,7 @@ jobs:
 
       # Perform a tag checkout to ensure tag is available
       - name: Verify tag Exist
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ steps.validate_release_version.outputs.release_version }}
           fetch-depth: 1
@@ -59,7 +59,7 @@ jobs:
       zipSha: ${{steps.hashes.outputs.zipSha}}
     steps:
       - name: Checkout tag
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -175,7 +175,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}  # Use the output from the pre_process_release job
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -207,7 +207,7 @@ jobs:
           fi
 
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -253,7 +253,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -299,7 +299,7 @@ jobs:
             runner: besu-arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           sparse-checkout: '.github/workflows/BesuContainerVerify.sh'
 
@@ -328,7 +328,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -371,7 +371,7 @@ jobs:
       RELEASE_VERSION: ${{ needs.validate.outputs.release_version }}
     steps:
       - name: checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
@@ -397,7 +397,7 @@ jobs:
     needs: [artifactory, validate, test-linux, test-windows]
     steps:
       - name: checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ env.RELEASE_VERSION }}
 
