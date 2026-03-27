@@ -234,12 +234,9 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
 
       - name: build and test docker
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        with:
-          cache-disabled: true
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_VERSION}} -Prelease.releaseVersion=${{ env.RELEASE_VERSION }}
+        run: ./gradlew --no-daemon testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{env.RELEASE_VERSION}} -Prelease.releaseVersion=${{ env.RELEASE_VERSION }}
 
       - name: publish
         env:
