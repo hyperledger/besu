@@ -174,7 +174,7 @@ public class BonsaiFlatDbToArchiveMigrator implements Closeable {
   private void logProgress(final long blockNumber, final long endBlock) {
     LogUtil.throttledLog(
         () -> {
-          long progressPercent = (blockNumber * 100) / endBlock;
+          long progressPercent = endBlock > 0 ? (blockNumber * 100) / endBlock : 0;
           LOG.info(
               "Bonsai Archive migration progress: {}% (block {}/{})",
               progressPercent, blockNumber, endBlock);
