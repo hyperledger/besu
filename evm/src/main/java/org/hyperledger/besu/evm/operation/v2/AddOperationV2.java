@@ -51,11 +51,12 @@ public class AddOperationV2 extends AbstractFixedCostOperationV2 {
    * Execute the ADD opcode on the v2 long[] stack.
    *
    * @param frame the message frame
+   * @param stackData the stack operands as a long[] array
    * @return the operation result
    */
   @SuppressWarnings("DoNotCallSuggester")
   public static Operation.OperationResult staticOperation(
-      final MessageFrame frame, final long[] s) {
+      final MessageFrame frame, final long[] stackData) {
     throw new UnsupportedOperationException("ADD operation not yet implemented for evm v2");
   }
 }

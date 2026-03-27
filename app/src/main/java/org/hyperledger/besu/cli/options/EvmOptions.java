@@ -32,8 +32,8 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   /** The constant OPTIMIZED_OP_CODES. */
   public static final String OPTIMIZED_OP_CODES = "--Xevm-optimized-opcodes";
 
-  /** The constant EVM_GO_FAST. */
-  public static final String EVM_GO_FAST = "--Xevm-go-fast";
+  /** The constant EVM_V2. */
+  public static final String EVM_V2 = "--Xevm-v2";
 
   /** Default constructor. */
   EvmOptions() {}
@@ -76,7 +76,7 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
   private boolean enableOptimizedOpcodes = true;
 
   @CommandLine.Option(
-      names = {EVM_GO_FAST, "--Xevm-v2"},
+      names = {EVM_V2, "--Xevm-go-fast"},
       description = "Enable experimental EVM v2 with long[] stack representation (default: false)",
       fallbackValue = "false",
       hidden = true,

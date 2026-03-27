@@ -1771,7 +1771,7 @@ public class MessageFrame {
     /**
      * Sets whether the experimental EVM v2 (long[] stack) is enabled.
      *
-     * @param `enableEvmV2` true to enable EVM v2
+     * @param enableEvmV2 true to enable EVM v2
      * @return the builder
      */
     public Builder enableEvmV2(final boolean enableEvmV2) {
