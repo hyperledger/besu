@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
 import java.util.List;
 
@@ -85,6 +86,10 @@ public class TransactionPendingResult implements TransactionResult {
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final List<String> versionedHashes;
+
+  public TransactionPendingResult(final PendingTransaction pendingTransaction) {
+    this(pendingTransaction.getTransaction());
+  }
 
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
