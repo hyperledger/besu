@@ -1033,12 +1033,12 @@ public class BonsaiWorldStateKeyValueStorageTest {
   }
 
   @Test
-  void upgradeToFullFlatDbModeNotifiesSubscribersToClearCache() {
+  void upgradeToArchiveFlatDbModeNotifiesSubscribersToClearCache() {
     final BonsaiWorldStateKeyValueStorage archiveStorage = emptyArchiveStorage();
     final StorageSubscriber subscriber = mock(StorageSubscriber.class);
     archiveStorage.subscribe(subscriber);
 
-    archiveStorage.upgradeToFullFlatDbMode();
+    archiveStorage.upgradeToArchiveFlatDbMode();
 
     verify(subscriber).onClearFlatDatabaseStorage();
   }
