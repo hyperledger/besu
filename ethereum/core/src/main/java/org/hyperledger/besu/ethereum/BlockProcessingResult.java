@@ -28,9 +28,24 @@ public class BlockProcessingResult extends BlockValidationResult {
   private final boolean isPartial;
   private Optional<Integer> nbParallelizedTransactions = Optional.empty();
   private final Optional<BlockAccessList> maybeGeneratedBlockAccessList;
+  private boolean worldStateUnavailable = false;
 
   /** A result indicating that processing failed. */
   public static final BlockProcessingResult FAILED = new BlockProcessingResult("processing failed");
+
+  /**
+   * Creates a result indicating that the parent world state was not available when attempting to
+   * process the block. This is distinct from a bad block — the block itself may be valid; the node
+   * simply lacks the required world state to validate it.
+   *
+   * @param errorMessage the error message
+   * @return a result with {@link #isWorldStateUnavailable()} returning {@code true}
+   */
+  public static BlockProcessingResult worldStateUnavailable(final String errorMessage) {
+    final BlockProcessingResult result = new BlockProcessingResult(errorMessage);
+    result.worldStateUnavailable = true;
+    return result;
+  }
 
   /**
    * A result indicating that processing was successful but incomplete.
@@ -190,5 +205,16 @@ public class BlockProcessingResult extends BlockValidationResult {
    */
   public Optional<BlockAccessList> getGeneratedBlockAccessList() {
     return maybeGeneratedBlockAccessList;
+  }
+
+  /**
+   * Returns {@code true} if processing failed because the parent world state was not available.
+   * Such failures should not be treated as bad blocks — the block may be valid once the world state
+   * is repaired (e.g. via {@code debug_resyncWorldState}).
+   *
+   * @return {@code true} if the parent world state was unavailable
+   */
+  public boolean isWorldStateUnavailable() {
+    return worldStateUnavailable;
   }
 }
