@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetAccountRangeFromPeerTask;
@@ -119,7 +120,7 @@ public class RequestDataStep {
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestStorage(
       final List<Task<SnapDataRequest>> requestTasks) {
-    final List<Bytes32> accountHashes =
+    final List<Hash> accountHashes =
         requestTasks.stream()
             .map(Task::getData)
             .map(StorageRangeDataRequest.class::cast)
@@ -134,9 +135,13 @@ public class RequestDataStep {
         requestTasks.size() == 1
             ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getEndKeyHash()
             : RangeManager.MAX_RANGE;
+    final List<Bytes32> accountHashesAsBytes32 =
+        accountHashes.stream()
+            .map(hash -> Bytes32.wrap(hash.getBytes()))
+            .collect(Collectors.toList());
     final EthTask<StorageRangeMessage.SlotRangeData> getStorageRangeTask =
         RetryingGetStorageRangeFromPeerTask.forStorageRange(
-            ethContext, accountHashes, minRange, maxRange, blockHeader, metricsSystem);
+            ethContext, accountHashesAsBytes32, minRange, maxRange, blockHeader, metricsSystem);
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
@@ -349,12 +354,12 @@ public class RequestDataStep {
       proofs.addAll(
           worldStateProofProvider.getStorageProofRelatedNodes(
               storageDataRequest.getStorageRoot(),
-              storageDataRequest.getAccountHash(),
+              Bytes32.wrap(storageDataRequest.getAccountHash().getBytes()),
               slots.firstKey()));
       proofs.addAll(
           worldStateProofProvider.getStorageProofRelatedNodes(
               storageDataRequest.getStorageRoot(),
-              storageDataRequest.getAccountHash(),
+              Bytes32.wrap(storageDataRequest.getAccountHash().getBytes()),
               slots.lastKey()));
     }
     storageDataRequest.addLocalData(worldStateProofProvider, slots, new ArrayDeque<>(proofs));

@@ -64,8 +64,6 @@ import com.google.common.io.Resources;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -78,35 +76,11 @@ public abstract class JsonBlockImporterTest {
 
   protected String consensusEngine;
   protected GenesisConfig genesisConfig;
-  protected boolean isEthash;
 
   protected void setup(final String consensusEngine) throws IOException {
     this.consensusEngine = consensusEngine;
     final String genesisData = getFileContents("genesis.json");
     this.genesisConfig = GenesisConfig.fromConfig(genesisData);
-    this.isEthash = genesisConfig.getConfigOptions().isEthHash();
-  }
-
-  public static class SingletonTests extends JsonBlockImporterTest {
-
-    @BeforeEach
-    public void setup() throws IOException {
-      super.setup("unsupported");
-    }
-
-    @Test
-    public void importChain_unsupportedConsensusAlgorithm() throws IOException {
-      final BesuController controller = createController();
-      final JsonBlockImporter importer = new JsonBlockImporter(controller);
-
-      final String jsonData = getFileContents("clique", "blocks-import-valid.json");
-
-      assertThatThrownBy(() -> importer.importChain(jsonData))
-          .isInstanceOf(IllegalArgumentException.class)
-          .hasMessage(
-              "Unable to create block using current consensus engine: "
-                  + genesisConfig.getConfigOptions().getConsensusEngine());
-    }
   }
 
   public static class ParameterizedTests extends JsonBlockImporterTest {
@@ -117,7 +91,7 @@ public abstract class JsonBlockImporterTest {
     }
 
     public static Stream<Arguments> getParameters() {
-      return Stream.of(Arguments.of("ethash"), Arguments.of("clique"));
+      return Stream.of(Arguments.of("mainnet"));
     }
 
     @ParameterizedTest(name = "{index}: {0}")
@@ -144,10 +118,6 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 1
       Block block = blocks.get(0);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.EMPTY);
-        assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(2);
       // Check first tx
       Transaction tx = block.getBody().getTransactions().get(0);
@@ -172,10 +142,6 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 2
       block = blocks.get(1);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.fromHexString("0x1234"));
-        assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0x02"));
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
       // Check first tx
       tx = block.getBody().getTransactions().get(0);
@@ -190,19 +156,10 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 3
       block = blocks.get(2);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.fromHexString("0x3456"));
-        assertThat(block.getHeader().getCoinbase())
-            .isEqualTo(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(0);
 
       // Check block 4
       block = blocks.get(3);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.EMPTY);
-        assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
       // Check first tx
       tx = block.getBody().getTransactions().get(0);
@@ -239,10 +196,6 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 1
       Block block = blocks.get(0);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.EMPTY);
-        assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(2);
       // Check first tx
       Transaction tx = block.getBody().getTransactions().get(0);
@@ -267,10 +220,6 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 2
       block = blocks.get(1);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.fromHexString("0x1234"));
-        assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0x02"));
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
       // Check first tx
       tx = block.getBody().getTransactions().get(0);
@@ -285,19 +234,10 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 3
       block = blocks.get(2);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.fromHexString("0x3456"));
-        assertThat(block.getHeader().getCoinbase())
-            .isEqualTo(Address.fromHexString("f17f52151EbEF6C7334FAD080c5704D77216b732"));
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(0);
 
       // Check block 4
       block = blocks.get(3);
-      if (isEthash) {
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.EMPTY);
-        assertThat(block.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
-      }
       assertThat(block.getBody().getTransactions().size()).isEqualTo(1);
       // Check first tx
       tx = block.getBody().getTransactions().get(0);
@@ -348,10 +288,6 @@ public abstract class JsonBlockImporterTest {
 
       // Check block 1
       assertThat(newBlock.getHeader().getParentHash()).isEqualTo(parentBlock.getHash());
-      if (isEthash) {
-        assertThat(newBlock.getHeader().getExtraData()).isEqualTo(Bytes.EMPTY);
-        assertThat(newBlock.getHeader().getCoinbase()).isEqualTo(Address.ZERO);
-      }
       assertThat(newBlock.getBody().getTransactions().size()).isEqualTo(1);
       // Check first tx
       final Transaction tx = newBlock.getBody().getTransactions().get(0);
@@ -406,20 +342,11 @@ public abstract class JsonBlockImporterTest {
 
       final String jsonData = getFileContents("blocks-import-special-fields.json");
 
-      if (isEthash) {
-        importer.importChain(jsonData);
-        final Blockchain blockchain = controller.getProtocolContext().getBlockchain();
-        final Block block = getBlockAt(blockchain, 1);
-        assertThat(block.getHeader().getExtraData()).isEqualTo(Bytes.fromHexString("0x0123"));
-        assertThat(block.getHeader().getCoinbase())
-            .isEqualTo(Address.fromHexString("627306090abaB3A6e1400e9345bC60c78a8BEf57"));
-      } else {
-        assertThatThrownBy(() -> importer.importChain(jsonData))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage(
-                "Some fields (coinbase, extraData) are unsupported by the current consensus engine: "
-                    + genesisConfig.getConfigOptions().getConsensusEngine());
-      }
+      // PoW-specific fields (coinbase, extraData) are no longer supported for any consensus engine
+      assertThatThrownBy(() -> importer.importChain(jsonData))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage(
+              "Some fields (coinbase, extraData) are no longer supported for block import since PoW consensus has been removed");
     }
 
     @Test
@@ -452,9 +379,9 @@ public abstract class JsonBlockImporterTest {
 
   protected BesuController createController(final GenesisConfig genesisConfig) {
     return new BesuController.Builder()
-        .fromGenesisFile(genesisConfig, SyncMode.FAST)
+        .fromGenesisFile(genesisConfig, SyncMode.SNAP)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .storageProvider(new InMemoryKeyValueStorageProvider())
         .networkId(BigInteger.valueOf(10))
         .miningParameters(
@@ -471,7 +398,7 @@ public abstract class JsonBlockImporterTest {
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .besuComponent(DaggerJsonBlockImporterTest_JsonBlockImportComponent.builder().build())
         .apiConfiguration(ImmutableApiConfiguration.builder().build())
         .build();

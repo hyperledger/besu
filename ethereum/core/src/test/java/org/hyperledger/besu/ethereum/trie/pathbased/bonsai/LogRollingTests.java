@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,14 +94,15 @@ class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO,
+          Bytes32.wrap(Hash.ZERO.getBytes()),
           0,
           Hash.EMPTY_LIST_HASH,
-          null, // blobGasUSed
+          null, // blobGasUsed
           null,
           null,
           null,
           null,
+          null, // slotNumber
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -118,7 +120,7 @@ class LogRollingTests {
           0,
           Bytes.EMPTY,
           Wei.ZERO,
-          Hash.ZERO,
+          Bytes32.wrap(Hash.ZERO.getBytes()),
           0,
           null,
           null, // blobGasUsed
@@ -126,6 +128,7 @@ class LogRollingTests {
           null,
           null,
           null,
+          null, // slotNumber
           new MainnetBlockHeaderFunctions());
 
   @BeforeEach
@@ -190,7 +193,8 @@ class LogRollingTests {
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
 
-    final Optional<byte[]> value = trieLogStorage.get(headerOne.getHash().toArrayUnsafe());
+    final Optional<byte[]> value =
+        trieLogStorage.get(headerOne.getHash().getBytes().toArrayUnsafe());
 
     final TrieLogLayer layer =
         TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(value.get()), false));
@@ -337,9 +341,9 @@ class LogRollingTests {
     assertThat(secondWorldState.rootHash()).isEqualByComparingTo(worldState.rootHash());
   }
 
-  private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Bytes key) {
+  private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Hash key) {
     return storage
-        .get(key.toArrayUnsafe())
+        .get(key.getBytes().toArrayUnsafe())
         .map(bytes -> TrieLogFactoryImpl.readFrom(new BytesValueRLPInput(Bytes.wrap(bytes), false)))
         .get();
   }

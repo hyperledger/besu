@@ -23,12 +23,13 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredException;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
+import org.hyperledger.besu.ethereum.eth.sync.common.NoSyncRequiredException;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromPeers;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -85,7 +86,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
   }
 
   @Override
-  public Optional<FastSyncState> selectNewPivotBlock() {
+  public CompletableFuture<PivotSyncState> selectNewPivotBlock() {
 
     final BftContext bftContext = protocolContext.getConsensusContext(BftContext.class);
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
@@ -102,7 +103,11 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
         throw new NoSyncRequiredException();
       }
 
-      return bestPeer.flatMap(this::fromBestPeer);
+      return bestPeer
+          .map(this::fromPeer)
+          .orElse(
+              CompletableFuture.failedFuture(
+                  new RuntimeException("No peers with sufficient height")));
     } else {
       // Treat us being the only validator as a special case. We are the only node that can produce
       // blocks so we won't wait to sync with a non-validator node that may or may not exist
@@ -154,6 +159,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
       }
     }
 
-    return Optional.empty();
+    return CompletableFuture.failedFuture(
+        new RuntimeException("Not enough peers to select pivot block"));
   }
 }

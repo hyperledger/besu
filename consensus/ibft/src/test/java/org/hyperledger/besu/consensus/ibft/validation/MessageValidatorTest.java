@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +106,7 @@ public class MessageValidatorTest {
 
     when(protocolSpec.getBlockValidator()).thenReturn(blockValidator);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any(), eq(false)))
+    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any(), any(), eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     when(roundChangeCertificateValidator.validateProposalMessageMatchesLatestPrepareCertificate(
@@ -133,7 +134,9 @@ public class MessageValidatorTest {
 
     final Commit commit =
         messageFactory.createCommit(
-            roundIdentifier, block.getHash(), nodeKey.sign(block.getHash()));
+            roundIdentifier,
+            block.getHash(),
+            nodeKey.sign(Bytes32.wrap(block.getHash().getBytes())));
 
     assertThat(messageValidator.validateProposal(proposal)).isTrue();
     verify(signedDataValidator, times(1)).validateProposal(proposal.getSignedPayload());
@@ -160,7 +163,7 @@ public class MessageValidatorTest {
 
   @Test
   public void blockValidationFailureFailsValidation() {
-    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any(), eq(false)))
+    when(blockValidator.validateAndProcessBlock(any(), any(), any(), any(), any(), eq(false)))
         .thenReturn(new BlockProcessingResult("Failed"));
 
     final Proposal proposalMsg =

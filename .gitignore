@@ -5,7 +5,9 @@
 *.iml
 *.launch
 *.log
+*.orig
 .classpath
+.claude
 .DS_Store
 .externalToolBuilders/
 .gradle/
@@ -19,6 +21,7 @@
 .settings
 .springBeans
 .vertx
+.profileconfig.json
 bin/
 local.properties
 target/
@@ -32,4 +35,4 @@ site/
 jitpack.yml
 /ethereum/eth/src/test/resources/tx.csv.gz
 **/**/.factorypath
-.jqwik-database
+**/**/.jqwik-database

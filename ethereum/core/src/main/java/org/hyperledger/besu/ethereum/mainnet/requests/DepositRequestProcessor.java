@@ -15,24 +15,25 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositLogDecoder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.List;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class DepositRequestProcessor implements RequestProcessor {
   private static final LogTopic DEPOSIT_EVENT_TOPIC =
       LogTopic.wrap(
-          Bytes.fromHexString(
+          Bytes32.fromHexString(
               "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5"));
 
   private final Optional<Address> depositContractAddress;

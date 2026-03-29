@@ -34,12 +34,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 // ignore `signer` field used in execution-spec-tests
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   public static final Bytes MAGIC = Bytes.fromHexString("05");
 
@@ -93,12 +94,10 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
         chainId,
         address,
         Bytes.fromHexStringLenient(nonce).toLong(),
-        SIGNATURE_ALGORITHM
-            .get()
-            .createCodeDelegationSignature(
-                Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
-                Bytes.fromHexStringLenient(v).get(0)));
+        SIGNATURE_ALGORITHM.createCodeDelegationSignature(
+            Bytes.fromHexStringLenient(r).toUnsignedBigInteger(),
+            Bytes.fromHexStringLenient(s).toUnsignedBigInteger(),
+            Bytes.fromHexStringLenient(v).get(0)));
   }
 
   @JsonProperty("chainId")
@@ -163,8 +162,7 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
     try {
       authorityAddress =
           SIGNATURE_ALGORITHM
-              .get()
-              .recoverPublicKeyFromSignature(hash, signature)
+              .recoverPublicKeyFromSignature(Bytes32.wrap(hash.getBytes()), signature)
               .map(Address::extract);
     } catch (final IllegalArgumentException e) {
       authorityAddress = Optional.empty();
@@ -246,14 +244,14 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
       output.startList();
       output.writeBigIntegerScalar(chainId);
-      output.writeBytes(address);
+      output.writeBytes(address.getBytes());
       output.writeLongScalar(nonce);
       output.endList();
 
       signature(
-          SIGNATURE_ALGORITHM
-              .get()
-              .sign(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())), keyPair));
+          SIGNATURE_ALGORITHM.sign(
+              Bytes32.wrap(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())).getBytes()),
+              keyPair));
       return build();
     }
 

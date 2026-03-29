@@ -40,15 +40,13 @@ public class GraphQlOptions {
   @CommandLine.Option(
       names = {"--graphql-http-host"},
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
-      description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Host for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})")
   private String graphQLHttpHost;
 
   @CommandLine.Option(
       names = {"--graphql-http-port"},
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
-      description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})",
-      arity = "1")
+      description = "Port for GraphQL HTTP to listen on (default: ${DEFAULT-VALUE})")
   private final Integer graphQLHttpPort = DEFAULT_GRAPHQL_HTTP_PORT;
 
   @CommandLine.Option(

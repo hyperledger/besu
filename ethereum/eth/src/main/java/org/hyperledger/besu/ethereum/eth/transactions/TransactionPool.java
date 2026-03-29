@@ -53,6 +53,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
@@ -290,7 +291,9 @@ public class TransactionPool implements BlockAddedObserver {
 
   private Stream<Transaction> sortedBySenderAndNonce(final Collection<Transaction> transactions) {
     return transactions.stream()
-        .sorted(Comparator.comparing(Transaction::getSender).thenComparing(Transaction::getNonce));
+        .sorted(
+            Comparator.comparing((Transaction tx) -> tx.getSender().getBytes())
+                .thenComparing(Transaction::getNonce));
   }
 
   private boolean isPriorityTransaction(final Transaction transaction, final boolean isLocal) {
@@ -321,8 +324,8 @@ public class TransactionPool implements BlockAddedObserver {
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     if (isPoolEnabled.get()) {
-      if (event.getEventType().equals(BlockAddedEvent.EventType.HEAD_ADVANCED)
-          || event.getEventType().equals(BlockAddedEvent.EventType.CHAIN_REORG)) {
+      if (event.getEventType().equals(EventType.HEAD_ADVANCED)
+          || event.getEventType().equals(EventType.CHAIN_REORG)) {
 
         blockAddedEventOrderedProcessor.submit(event);
       }
@@ -552,6 +555,16 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.getPendingTransactions();
   }
 
+  /**
+   * Returns all pending transactions for the given sender, sorted by nonce in ascending order.
+   *
+   * @param sender the sender address
+   * @return transactions for the sender sorted by nonce ascending, or an empty list if none exist
+   */
+  public SenderPendingTransactionsData getPendingTransactionsFor(final Address sender) {
+    return pendingTransactions.getPendingTransactionsFor(sender);
+  }
+
   public OptionalLong getNextNonceForSender(final Address address) {
     return pendingTransactions.getNextNonceForSender(address);
   }
@@ -565,7 +578,7 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public void selectTransactions(
-      final PendingTransactions.TransactionSelector transactionSelector) {
+      final PendingTransactions.PendingTransactionsSelector transactionSelector) {
     pendingTransactions.selectTransactions(transactionSelector);
   }
 
@@ -573,9 +586,18 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.logStats();
   }
 
+  public PendingTransactions.Status getStatus() {
+    return pendingTransactions.getStatus();
+  }
+
   @VisibleForTesting
   Class<? extends PendingTransactions> pendingTransactionsImplementation() {
     return pendingTransactions.getClass();
+  }
+
+  @VisibleForTesting
+  SaveRestoreManager getSaveRestoreManager() {
+    return saveRestoreManager;
   }
 
   public interface TransactionBatchAddedListener {
@@ -753,6 +775,11 @@ public class TransactionPool implements BlockAddedObserver {
         new AtomicReference<>(CompletableFuture.completedFuture(null));
     private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
+    @VisibleForTesting
+    Semaphore getDiskAccessLock() {
+      return diskAccessLock;
+    }
+
     CompletableFuture<Void> saveToDisk(final PendingTransactions pendingTransactionsToSave) {
       cancelInProgressReadOperation();
       return serializeAndDedupOperation(
@@ -787,7 +814,9 @@ public class TransactionPool implements BlockAddedObserver {
         final AtomicReference<CompletableFuture<Void>> operationInProgress) {
       if (configuration.getEnableSaveRestore()) {
         try {
-          if (diskAccessLock.tryAcquire(1, TimeUnit.MINUTES)) {
+          if (diskAccessLock.tryAcquire(
+              configuration.getUnstable().getSaveRestoreTimeout().toMillis(),
+              TimeUnit.MILLISECONDS)) {
 
             isCancelled.set(false);
             operationInProgress.set(
@@ -795,7 +824,7 @@ public class TransactionPool implements BlockAddedObserver {
                     .whenComplete((res, err) -> diskAccessLock.release()));
             return operationInProgress.get();
           } else {
-            CompletableFuture.failedFuture(
+            return CompletableFuture.failedFuture(
                 new TimeoutException("Timeout waiting for disk access lock"));
           }
         } catch (InterruptedException ie) {
@@ -932,12 +961,13 @@ public class TransactionPool implements BlockAddedObserver {
 
       LOG.debug("Removing processed lines from save file");
 
-      final var tmp = File.createTempFile(saveFile.getName(), ".tmp");
+      // Create temporary file with default secure permissions
+      final var tmp =
+          Files.createTempFile(saveFile.getParentFile().toPath(), saveFile.getName(), ".tmp");
 
       try (final BufferedReader reader =
               Files.newBufferedReader(saveFile.toPath(), StandardCharsets.US_ASCII);
-          final BufferedWriter writer =
-              Files.newBufferedWriter(tmp.toPath(), StandardCharsets.US_ASCII)) {
+          final BufferedWriter writer = Files.newBufferedWriter(tmp, StandardCharsets.US_ASCII)) {
         reader
             .lines()
             .skip(processedLines)
@@ -953,7 +983,7 @@ public class TransactionPool implements BlockAddedObserver {
       }
 
       saveFile.delete();
-      Files.move(tmp.toPath(), saveFile.toPath());
+      Files.move(tmp, saveFile.toPath());
     }
   }
 }

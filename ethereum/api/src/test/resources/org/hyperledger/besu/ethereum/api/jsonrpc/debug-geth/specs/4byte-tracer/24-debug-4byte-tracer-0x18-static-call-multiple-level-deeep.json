@@ -1,0 +1,28 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x18",
+      {
+        "tracer": "4byteTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x8bd03c6e6d85ffb2c3433547947cc35123e902388cd5682e8d5c4bef2602a5ee",
+        "result": {
+          "0x00000000-144": 1,
+          "0x00000000-176": 1,
+          "0x00000000-208": 1
+        }
+      }
+    ]
+  },
+  "statusCode": 200
+}

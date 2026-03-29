@@ -28,6 +28,8 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -37,6 +39,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
+
+  private static final ExecutorService VIRTUAL_POOL = Executors.newVirtualThreadPerTaskExecutor();
 
   private static final int ACCOUNT_CACHE_SIZE = 100_000;
   private static final int STORAGE_CACHE_SIZE = 200_000;
@@ -55,7 +59,8 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final Hash worldStateRootHash,
       final Address account) {
     CompletableFuture.runAsync(
-        () -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account));
+        () -> cacheAccountNodes(worldStateKeyValueStorage, worldStateRootHash, account),
+        VIRTUAL_POOL);
   }
 
   @VisibleForTesting
@@ -70,13 +75,13 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
               (location, hash) -> {
                 Optional<Bytes> node =
                     getAccountStateTrieNode(worldStateKeyValueStorage, location, hash);
-                node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes), bytes));
+                node.ifPresent(bytes -> accountNodes.put(Hash.hash(bytes).getBytes(), bytes));
                 return node;
               },
-              worldStateRootHash,
+              Bytes32.wrap(worldStateRootHash.getBytes()),
               Function.identity(),
               Function.identity());
-      accountTrie.get(account.addressHash());
+      accountTrie.get(account.addressHash().getBytes());
     } catch (MerkleTrieException e) {
       // ignore exception for the cache
     } finally {
@@ -89,7 +94,7 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
       final Address account,
       final StorageSlotKey slotKey) {
     CompletableFuture.runAsync(
-        () -> cacheStorageNodes(worldStateKeyValueStorage, account, slotKey));
+        () -> cacheStorageNodes(worldStateKeyValueStorage, account, slotKey), VIRTUAL_POOL);
   }
 
   @VisibleForTesting
@@ -101,23 +106,24 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     final long storageSubscriberId = worldStateKeyValueStorage.subscribe(this);
     try {
       worldStateKeyValueStorage
-          .getStateTrieNode(Bytes.concatenate(accountHash, Bytes.EMPTY))
+          .getStateTrieNode(Bytes.concatenate(accountHash.getBytes(), Bytes.EMPTY))
           .ifPresent(
               storageRoot -> {
                 try {
                   final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
-                      new StoredMerklePatriciaTrie<>(
+                      new StoredMerklePatriciaTrie<Bytes, Bytes>(
                           (location, hash) -> {
                             Optional<Bytes> node =
                                 getAccountStorageTrieNode(
                                     worldStateKeyValueStorage, accountHash, location, hash);
-                            node.ifPresent(bytes -> storageNodes.put(Hash.hash(bytes), bytes));
+                            node.ifPresent(
+                                bytes -> storageNodes.put(Hash.hash(bytes).getBytes(), bytes));
                             return node;
                           },
-                          Hash.hash(storageRoot),
+                          Bytes32.wrap(Hash.hash(storageRoot).getBytes()),
                           Function.identity(),
                           Function.identity());
-                  storageTrie.get(slotKey.getSlotHash());
+                  storageTrie.get(slotKey.getSlotHash().getBytes());
                 } catch (MerkleTrieException e) {
                   // ignore exception for the cache
                 }

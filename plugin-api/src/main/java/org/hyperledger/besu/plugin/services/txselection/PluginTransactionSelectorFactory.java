@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.plugin.services.txselection;
 
+import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+
+import java.util.List;
 
 /**
  * Interface for a factory that creates transaction selector and propose pending transaction for
@@ -29,9 +32,26 @@ public interface PluginTransactionSelectorFactory {
    *
    * @param selectorsStateManager the selectors state manager
    * @return the transaction selector
+   * @deprecated use {@link PluginTransactionSelectorFactory#create(ProcessableBlockHeader,
+   *     SelectorsStateManager)} instead
    */
+  @Deprecated(forRemoval = true)
   default PluginTransactionSelector create(final SelectorsStateManager selectorsStateManager) {
     return PluginTransactionSelector.ACCEPT_ALL;
+  }
+
+  /**
+   * Create a plugin transaction selector, that can be used during block creation to apply custom
+   * filters to proposed pending transactions
+   *
+   * @param pendingBlockHeader the header of the block being created
+   * @param selectorsStateManager the selectors state manager
+   * @return the transaction selector
+   */
+  default PluginTransactionSelector create(
+      final ProcessableBlockHeader pendingBlockHeader,
+      final SelectorsStateManager selectorsStateManager) {
+    return create(selectorsStateManager);
   }
 
   /**
@@ -41,8 +61,11 @@ public interface PluginTransactionSelectorFactory {
    * @param blockTransactionSelectionService the service used by the plugin to evaluate pending
    *     transactions and commit or rollback changes
    * @param pendingBlockHeader the header of the block being created
+   * @param candidatePendingTransactions the unmodifiable list of candidate pending transactions
+   *     from the public pool, in the order they will be evaluated
    */
   default void selectPendingTransactions(
       final BlockTransactionSelectionService blockTransactionSelectionService,
-      final ProcessableBlockHeader pendingBlockHeader) {}
+      final ProcessableBlockHeader pendingBlockHeader,
+      final List<? extends PendingTransaction> candidatePendingTransactions) {}
 }

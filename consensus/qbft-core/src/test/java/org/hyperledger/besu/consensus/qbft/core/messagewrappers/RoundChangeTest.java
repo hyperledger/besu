@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -60,17 +61,21 @@ public class RoundChangeTest {
             Optional.of(new PreparedRoundMetadata(BLOCK.getHash(), 0)));
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
-        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
+        SignedData.create(
+            payload, nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes())));
 
     final PreparePayload preparePayload =
         new PreparePayload(new ConsensusRoundIdentifier(1, 0), BLOCK.getHash());
     final SignedData<PreparePayload> signedPreparePayload =
-        SignedData.create(preparePayload, nodeKey.sign(preparePayload.hashForSignature()));
+        SignedData.create(
+            preparePayload,
+            nodeKey.sign(Bytes32.wrap(preparePayload.hashForSignature().getBytes())));
 
     final RoundChange roundChange =
         new RoundChange(
             signedRoundChangePayload,
             Optional.of(BLOCK),
+            Optional.empty(),
             blockEncoder,
             List.of(signedPreparePayload));
 
@@ -96,11 +101,16 @@ public class RoundChangeTest {
         new RoundChangePayload(new ConsensusRoundIdentifier(1, 1), Optional.empty());
 
     final SignedData<RoundChangePayload> signedRoundChangePayload =
-        SignedData.create(payload, nodeKey.sign(payload.hashForSignature()));
+        SignedData.create(
+            payload, nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes())));
 
     final RoundChange roundChange =
         new RoundChange(
-            signedRoundChangePayload, Optional.empty(), blockEncoder, Collections.emptyList());
+            signedRoundChangePayload,
+            Optional.empty(),
+            Optional.empty(),
+            blockEncoder,
+            Collections.emptyList());
 
     final RoundChange decodedRoundChange = RoundChange.decode(roundChange.encode(), blockEncoder);
 

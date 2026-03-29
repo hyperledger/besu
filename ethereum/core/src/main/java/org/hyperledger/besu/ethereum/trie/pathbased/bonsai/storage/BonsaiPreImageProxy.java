@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
+import org.hyperledger.besu.plugin.services.storage.WorldStatePreimageStorage;
 
 import java.util.Optional;
 
@@ -41,11 +41,14 @@ public interface BonsaiPreImageProxy extends WorldStatePreimageStorage {
    * BiMap.
    */
   class BonsaiReferenceTestPreImageProxy implements BonsaiPreImageProxy {
-    BiMap<Hash, Bytes> preImageCache = HashBiMap.create();
+    private final BiMap<Bytes32, Bytes> preImageCache = HashBiMap.create();
 
     @Override
     public synchronized Hash hashAndSavePreImage(final Bytes value) {
-      return preImageCache.inverse().computeIfAbsent(value, Hash::hash);
+      return Hash.wrap(
+          preImageCache
+              .inverse()
+              .computeIfAbsent(value, v -> Bytes32.wrap(Hash.hash(v).getBytes())));
     }
 
     @Override

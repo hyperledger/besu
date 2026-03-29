@@ -35,6 +35,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder;
 import org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -42,6 +43,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
 import org.hyperledger.besu.ethereum.eth.transactions.NewPooledTransactionHashesMessageProcessor.FetcherCreatorTask;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
@@ -100,7 +102,8 @@ class NewPooledTransactionHashesMessageProcessorTest {
             transactionPool,
             transactionPoolConfiguration,
             ethContext,
-            new TransactionPoolMetrics(metricsSystem));
+            new TransactionPoolMetrics(metricsSystem),
+            EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
   }
 
@@ -109,7 +112,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
@@ -127,7 +130,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
@@ -142,7 +145,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now(),
         ofMinutes(1));
     verify(transactionPool, times(3)).getTransactionByHash(any());
@@ -152,7 +155,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
   void shouldNotMarkReceivedExpiredTransactionsAsSeen() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionTracker);
@@ -167,7 +170,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
   void shouldNotAddReceivedTransactionsToTransactionPoolIfExpired() {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66),
+        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.LATEST),
         now().minus(ofMinutes(1)),
         ofMillis(1));
     verifyNoInteractions(transactionPool);
@@ -187,7 +190,7 @@ class NewPooledTransactionHashesMessageProcessorTest {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(
-            List.of(transaction1, transaction2), EthProtocol.ETH66),
+            List.of(transaction1, transaction2), EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
@@ -202,46 +205,20 @@ class NewPooledTransactionHashesMessageProcessorTest {
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(
-            Collections.singletonList(transaction1), EthProtocol.ETH66),
+            Collections.singletonList(transaction1), EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
     messageHandler.processNewPooledTransactionHashesMessage(
         peer1,
         NewPooledTransactionHashesMessage.create(
-            Collections.singletonList(transaction2), EthProtocol.ETH66),
+            Collections.singletonList(transaction2), EthProtocol.LATEST),
         now(),
         ofMinutes(1));
 
     verify(ethScheduler, times(1))
         .scheduleFutureTaskWithFixedDelay(
             any(FetcherCreatorTask.class), any(Duration.class), any(Duration.class));
-  }
-
-  @Test
-  void shouldCreateAndDecodeForEth66() {
-
-    final List<TransactionAnnouncement> expectedAnnouncementList =
-        transactionList.stream().map(TransactionAnnouncement::new).toList();
-
-    final NewPooledTransactionHashesMessage message =
-        NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH66);
-
-    // for eth/66 the message should not contain size or type
-    message
-        .pendingTransactions()
-        .forEach(
-            t -> {
-              assertThat(t.getSize()).isEmpty();
-              assertThat(t.getType()).isEmpty();
-            });
-
-    // assert all transaction hashes are the same as announcement message
-    assertThat(message.pendingTransactionHashes())
-        .containsExactlyElementsOf(
-            expectedAnnouncementList.stream()
-                .map(TransactionAnnouncement::getHash)
-                .collect(Collectors.toList()));
   }
 
   @Test
@@ -252,26 +229,9 @@ class NewPooledTransactionHashesMessageProcessorTest {
     final NewPooledTransactionHashesMessage message =
         NewPooledTransactionHashesMessage.create(transactionList, EthProtocol.ETH68);
 
-    final List<TransactionAnnouncement> announcementList = message.pendingTransactions();
+    final List<TransactionAnnouncement> announcementList =
+        message.pendingTransactionAnnouncements();
     assertThat(announcementList).containsExactlyElementsOf(expectedTransactions);
-  }
-
-  @Test
-  void shouldThrowRLPExceptionIfIncorrectVersion() {
-
-    // message for Eth/68 with 66 data should throw RLPException
-    final NewPooledTransactionHashesMessage message66 =
-        new NewPooledTransactionHashesMessage(
-            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
-    // assert RLPException
-    assertThatThrownBy(message66::pendingTransactions).isInstanceOf(RLPException.class);
-
-    // message for Eth/66 with 68 data should throw RLPException
-    final NewPooledTransactionHashesMessage message68 =
-        new NewPooledTransactionHashesMessage(
-            getEncoder(EthProtocol.ETH68).encode(transactionList), EthProtocol.ETH66);
-    // assert RLPException
-    assertThatThrownBy(message68::pendingTransactions).isInstanceOf(RLPException.class);
   }
 
   @Test
@@ -315,91 +275,28 @@ class NewPooledTransactionHashesMessageProcessorTest {
         getDecoder(EthProtocol.ETH68).decode(RLP.input(bytes));
 
     final TransactionAnnouncement frontier = announcementList.get(0);
-    assertThat(frontier.getHash())
+    assertThat(frontier.hash())
         .isEqualTo(
             Hash.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000001"));
-    assertThat(frontier.getType()).hasValue(TransactionType.FRONTIER);
-    assertThat(frontier.getSize()).hasValue(1L);
+    assertThat(frontier.type()).isEqualTo(TransactionType.FRONTIER);
+    assertThat(frontier.size()).isEqualTo(1L);
 
     final TransactionAnnouncement accessList = announcementList.get(1);
-    assertThat(accessList.getHash())
+    assertThat(accessList.hash())
         .isEqualTo(
             Hash.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000002"));
-    assertThat(accessList.getType()).hasValue(TransactionType.ACCESS_LIST);
-    assertThat(accessList.getSize()).hasValue(2L);
+    assertThat(accessList.type()).isEqualTo(TransactionType.ACCESS_LIST);
+    assertThat(accessList.size()).isEqualTo(2L);
 
     final TransactionAnnouncement eip1559 = announcementList.get(2);
-    assertThat(eip1559.getHash())
+    assertThat(eip1559.hash())
         .isEqualTo(
             Hash.fromHexString(
                 "0x0000000000000000000000000000000000000000000000000000000000000003"));
-    assertThat(eip1559.getType()).hasValue(TransactionType.EIP1559);
-    assertThat(eip1559.getSize()).hasValue(3L);
-  }
-
-  @Test
-  void shouldDecodeBytesCorrectly_PreviousImplementations_Eth68() {
-    /*
-     * [
-     * "0x0000102"]
-     * ["0x00000001","0x00000002","0x00000003"],
-     * ["0x0000000000000000000000000000000000000000000000000000000000000001",
-     *  "0x0000000000000000000000000000000000000000000000000000000000000002",
-     *  "0x0000000000000000000000000000000000000000000000000000000000000003"]
-     * ]
-     */
-
-    final Bytes bytes =
-        Bytes.fromHexString(
-            "0xf87983000102cf840000000184000000028400000003f863a00000000000000000000000000000000000000000000000000000000000000001a00000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000003");
-
-    final List<TransactionAnnouncement> announcementList =
-        getDecoder(EthProtocol.ETH68).decode(RLP.input(bytes));
-
-    final TransactionAnnouncement frontier = announcementList.get(0);
-    assertThat(frontier.getHash())
-        .isEqualTo(
-            Hash.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000001"));
-    assertThat(frontier.getType()).hasValue(TransactionType.FRONTIER);
-    assertThat(frontier.getSize()).hasValue(1L);
-
-    final TransactionAnnouncement accessList = announcementList.get(1);
-    assertThat(accessList.getHash())
-        .isEqualTo(
-            Hash.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000002"));
-    assertThat(accessList.getType()).hasValue(TransactionType.ACCESS_LIST);
-    assertThat(accessList.getSize()).hasValue(2L);
-
-    final TransactionAnnouncement eip1559 = announcementList.get(2);
-    assertThat(eip1559.getHash())
-        .isEqualTo(
-            Hash.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000000000000000003"));
-    assertThat(eip1559.getType()).hasValue(TransactionType.EIP1559);
-    assertThat(eip1559.getSize()).hasValue(3L);
-  }
-
-  @Test
-  void shouldEncodeAndDecodeTransactionAnnouncement_Eth66() {
-    final Transaction t1 = generator.transaction(TransactionType.FRONTIER);
-    final Transaction t2 = generator.transaction(TransactionType.ACCESS_LIST);
-    final Transaction t3 = generator.transaction(TransactionType.EIP1559);
-    final List<Transaction> list = List.of(t1, t2, t3);
-    final Bytes bytes = getEncoder(EthProtocol.ETH66).encode(list);
-
-    final List<TransactionAnnouncement> announcementList =
-        getDecoder(EthProtocol.ETH66).decode(RLP.input(bytes));
-
-    for (int i = 0; i < announcementList.size(); i++) {
-      final TransactionAnnouncement announcement = announcementList.get(i);
-      assertThat(announcement.getHash()).isEqualTo(list.get(i).getHash());
-      assertThat(announcement.getType()).isEmpty();
-      assertThat(announcement.getType()).isEmpty();
-    }
+    assertThat(eip1559.type()).isEqualTo(TransactionType.EIP1559);
+    assertThat(eip1559.size()).isEqualTo(3L);
   }
 
   @Test
@@ -418,9 +315,9 @@ class NewPooledTransactionHashesMessageProcessorTest {
 
     for (final Transaction transaction : list) {
       final TransactionAnnouncement announcement = announcementList.get(list.indexOf(transaction));
-      assertThat(announcement.getHash()).isEqualTo(transaction.getHash());
-      assertThat(announcement.getType()).hasValue(transaction.getType());
-      assertThat(announcement.getSize()).hasValue((long) transaction.getSizeForAnnouncement());
+      assertThat(announcement.hash()).isEqualTo(transaction.getHash());
+      assertThat(announcement.type()).isEqualTo(transaction.getType());
+      assertThat(announcement.size()).isEqualTo(transaction.getSizeForAnnouncement());
     }
   }
 
@@ -470,8 +367,8 @@ class NewPooledTransactionHashesMessageProcessorTest {
             () ->
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Unsupported transaction type");
+        .isInstanceOf(RLPException.class)
+        .hasMessageContaining("Invalid transaction type 0x07");
   }
 
   @Test
@@ -486,15 +383,13 @@ class NewPooledTransactionHashesMessageProcessorTest {
                 TransactionAnnouncementDecoder.getDecoder(EthProtocol.ETH68)
                     .decode(RLP.input(invalidMessageBytes)))
         .isInstanceOf(RLPException.class)
-        .hasMessageContaining("Expected max 4 bytes for unsigned int, but got 5 bytes");
+        .hasMessageContaining(
+            "Cannot read a unsigned int scalar, expecting a maximum of 4 bytes but current element is 5 bytes long");
   }
 
   @Test
   void shouldThrowNullPointerIfArgumentsAreNull() {
     final Hash hash = Hash.hash(Bytes.random(32));
-    assertThatThrownBy(() -> new TransactionAnnouncement((Hash) null))
-        .isInstanceOf(NullPointerException.class)
-        .hasMessage("Hash cannot be null");
 
     assertThatThrownBy(() -> new TransactionAnnouncement(null, TransactionType.EIP1559, 0L))
         .isInstanceOf(NullPointerException.class)
@@ -508,8 +403,23 @@ class NewPooledTransactionHashesMessageProcessorTest {
         .isInstanceOf(NullPointerException.class)
         .hasMessage("Size cannot be null");
 
-    assertThatThrownBy(() -> new TransactionAnnouncement((Transaction) null))
+    assertThatThrownBy(() -> new TransactionAnnouncement(null))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("Transaction cannot be null");
+  }
+
+  @Test
+  void shouldDisconnectPeerWhenInvalidTransactionType() {
+    final Bytes invalidMessageBytes =
+        Bytes.fromHexString(
+            // ["0x07",["0x00000002"],["0x881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351"]]
+            "0xe907c58400000002e1a0881699519a25b0e32db9b1ba9981f3fbec93fbc0726c3e096af89e5ada2b1351");
+
+    final NewPooledTransactionHashesMessage message =
+        new NewPooledTransactionHashesMessage(invalidMessageBytes, EthProtocol.ETH68);
+
+    messageHandler.processNewPooledTransactionHashesMessage(peer1, message, now(), ofMinutes(1));
+
+    verify(peer1).disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
   }
 }

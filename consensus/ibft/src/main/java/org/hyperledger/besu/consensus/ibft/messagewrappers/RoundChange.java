@@ -23,6 +23,8 @@ import org.hyperledger.besu.consensus.ibft.payload.PayloadDeserializers;
 import org.hyperledger.besu.consensus.ibft.payload.PreparedCertificate;
 import org.hyperledger.besu.consensus.ibft.payload.RoundChangePayload;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -36,17 +38,22 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
 
   private static final IbftExtraDataCodec BFT_EXTRA_DATA_ENCODER = new IbftExtraDataCodec();
   private final Optional<Block> proposedBlock;
+  private final Optional<BlockAccessList> blockAccessList;
 
   /**
    * Instantiates a new Round change.
    *
    * @param payload the payload
    * @param proposedBlock the proposed block
+   * @param blockAccessList the block access list
    */
   public RoundChange(
-      final SignedData<RoundChangePayload> payload, final Optional<Block> proposedBlock) {
+      final SignedData<RoundChangePayload> payload,
+      final Optional<Block> proposedBlock,
+      final Optional<BlockAccessList> blockAccessList) {
     super(payload);
     this.proposedBlock = proposedBlock;
+    this.blockAccessList = blockAccessList;
   }
 
   /**
@@ -56,6 +63,15 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
    */
   public Optional<Block> getProposedBlock() {
     return proposedBlock;
+  }
+
+  /**
+   * Gets block access list.
+   *
+   * @return the block access list
+   */
+  public Optional<BlockAccessList> getBlockAccessList() {
+    return blockAccessList;
   }
 
   /**
@@ -87,6 +103,7 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     } else {
       rlpOut.writeNull();
     }
+    blockAccessList.ifPresentOrElse((bal) -> bal.writeTo(rlpOut), rlpOut::writeNull);
     rlpOut.endList();
     return rlpOut.encoded();
   }
@@ -112,8 +129,17 @@ public class RoundChange extends BftMessage<RoundChangePayload> {
     } else {
       rlpIn.skipNext();
     }
+    final Optional<BlockAccessList> blockAccessList = readBlockAccessList(rlpIn);
     rlpIn.leaveList();
 
-    return new RoundChange(payload, block);
+    return new RoundChange(payload, block, blockAccessList);
+  }
+
+  private static Optional<BlockAccessList> readBlockAccessList(final RLPInput rlpIn) {
+    if (!rlpIn.nextIsNull()) {
+      return Optional.of(BlockAccessListDecoder.decode(rlpIn));
+    }
+    rlpIn.skipNext();
+    return Optional.empty();
   }
 }

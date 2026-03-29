@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorl
 import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -39,6 +38,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.List;
 import java.util.NavigableMap;
@@ -108,7 +108,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       return composedWorldStateStorage
           .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .filter(b -> Hash.hash(b).getBytes().equals(nodeHash));
     }
   }
 
@@ -118,9 +118,11 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else {
       return composedWorldStateStorage
-          .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(accountHash, location).toArrayUnsafe())
+          .get(
+              TRIE_BRANCH_STORAGE,
+              Bytes.concatenate(accountHash.getBytes(), location).toArrayUnsafe())
           .map(Bytes::wrap)
-          .filter(b -> Hash.hash(b).equals(nodeHash));
+          .filter(b -> Hash.hash(b).getBytes().equals(nodeHash));
     }
   }
 
@@ -284,7 +286,7 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
       }
       composedWorldStateTransaction.put(
           TRIE_BRANCH_STORAGE,
-          Bytes.concatenate(accountHash, location).toArrayUnsafe(),
+          Bytes.concatenate(accountHash.getBytes(), location).toArrayUnsafe(),
           node.toArrayUnsafe());
       return this;
     }
@@ -322,11 +324,13 @@ public class BonsaiWorldStateKeyValueStorage extends PathBasedWorldStateKeyValue
     @Override
     public void commitTrieLogOnly() {
       trieLogStorageTransaction.commit();
+      composedWorldStateTransaction.close();
     }
 
     @Override
     public void commitComposedOnly() {
       composedWorldStateTransaction.commit();
+      trieLogStorageTransaction.close();
     }
 
     @Override

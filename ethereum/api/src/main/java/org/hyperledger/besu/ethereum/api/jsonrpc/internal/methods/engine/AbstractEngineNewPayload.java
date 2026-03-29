@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.ACCEPTED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
@@ -90,6 +91,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private final EthPeers ethPeers;
   private long lastExecutionTimeInNs = 0L;
 
+  protected final Optional<Long> amsterdamMilestone;
+
   public AbstractEngineNewPayload(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -106,6 +109,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         "execution_time_head",
         "The execution time of the last block (head)",
         this::getLastExecutionTime);
+
+    this.amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
   }
 
   @Override
@@ -290,6 +295,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsHash).orElse(null),
             maybeBlockAccessList.map(BodyValidation::balHash).orElse(null),
+            blockParam.getSlotNumber(),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -351,9 +357,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final var block =
         new Block(
-            newBlockHeader,
-            new BlockBody(
-                transactions, Collections.emptyList(), maybeWithdrawals, maybeBlockAccessList));
+            newBlockHeader, new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -372,7 +376,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     // execute block and return result response
     final long startTimeNs = System.nanoTime();
-    final BlockProcessingResult executionResult = mergeCoordinator.rememberBlock(block);
+    final BlockProcessingResult executionResult =
+        mergeCoordinator.rememberBlock(block, maybeBlockAccessList);
     if (executionResult.isSuccessful()) {
       lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(
@@ -409,7 +414,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         transaction -> {
           mergeCoordinator
               .getEthScheduler()
-              .scheduleTxWorkerTask(
+              .scheduleComputationTask(
                   () -> {
                     final var sender = transaction.getSender();
                     LOG.atTrace()
@@ -417,6 +422,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                         .addArgument(transaction::getHash)
                         .addArgument(sender)
                         .log();
+                    return sender;
                   });
           if (transaction.getType().supportsDelegateCode()) {
             precomputeAuthorities(transaction);
@@ -431,7 +437,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       final var constIndex = index++;
       mergeCoordinator
           .getEthScheduler()
-          .scheduleTxWorkerTask(
+          .scheduleComputationTask(
               () -> {
                 final var authority = codeDelegation.authorizer();
                 LOG.atTrace()
@@ -441,6 +447,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     .addArgument(transaction::getHash)
                     .addArgument(authority)
                     .log();
+                return authority;
               });
     }
   }
@@ -460,7 +467,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
         .addArgument(param::getBlockNumber)
         .addArgument(param::getBlockHash)
         .addArgument(param::getParentHash)
-        .addArgument(() -> latestValidHash == null ? null : latestValidHash.toHexString())
+        .addArgument(
+            () -> latestValidHash == null ? null : latestValidHash.getBytes().toHexString())
         .addArgument(status::name)
         .log();
     return new JsonRpcSuccessResponse(
@@ -486,7 +494,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             param.getBlockNumber(),
             param.getBlockHash(),
             param.getParentHash(),
-            latestValidHash == null ? null : latestValidHash.toHexString(),
+            latestValidHash == null ? null : latestValidHash.getBytes().toHexString(),
             invalidStatus.name(),
             validationError);
     // always log invalid at DEBUG

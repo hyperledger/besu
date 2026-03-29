@@ -34,15 +34,13 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
   @CommandLine.Option(
       names = {ETHSTATS},
       paramLabel = "<[ws://|wss://]nodename:secret@host:[port]>",
-      description = "Reporting URL of a ethstats server. Scheme and port can be omitted.",
-      arity = "1")
+      description = "Reporting URL of a ethstats server. Scheme and port can be omitted.")
   private String ethstatsUrl = "";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @CommandLine.Option(
       names = {ETHSTATS_CONTACT},
-      description = "Contact address to send to ethstats server",
-      arity = "1")
+      description = "Contact address to send to ethstats server")
   private String ethstatsContact = "";
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
@@ -57,8 +55,7 @@ public class EthstatsOptions implements CLIOptions<EthStatsConnectOptions> {
   @CommandLine.Option(
       names = {ETHSTATS_REPORT_INTERVAL},
       paramLabel = "<SECONDS>",
-      description = "Interval in seconds between ethstats reports.",
-      arity = "1")
+      description = "Interval in seconds between ethstats reports.")
   private Integer ethstatsReportInterval = 5;
 
   private EthstatsOptions() {}

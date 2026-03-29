@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.eth.manager.peertask;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -125,7 +128,8 @@ public class PeerTaskExecutor {
               inflightRequestGauge.labels(inflightRequests::get, taskClassName);
               return inflightRequests;
             });
-    MessageData requestMessageData = peerTask.getRequestMessage();
+    final Set<Capability> agreedCapabilities = peer.getAgreedCapabilities();
+    MessageData requestMessageData = peerTask.getRequestMessage(agreedCapabilities);
     SubProtocol peerTaskSubProtocol = peerTask.getSubProtocol();
     PeerTaskExecutorResult<T> executorResult;
     int retriesRemaining = peerTask.getRetriesWithSamePeer();
@@ -140,10 +144,10 @@ public class PeerTaskExecutor {
               requestSender.sendRequest(peerTaskSubProtocol, requestMessageData, peer);
 
           if (responseMessageData == null) {
-            throw new InvalidPeerTaskResponseException();
+            throw new InvalidPeerTaskResponseException("Null response");
           }
 
-          result = peerTask.processResponse(responseMessageData);
+          result = peerTask.processResponse(responseMessageData, agreedCapabilities);
         } finally {
           inflightRequestCountForThisTaskClass.decrementAndGet();
         }
@@ -157,7 +161,13 @@ public class PeerTaskExecutor {
           peerTask.postProcessResult(executorResult);
         } else {
           LOG.debug(
-              "Invalid response found for {} from peer {}", taskClassName, peer.getLoggableId());
+              "Invalid response {} found for {} from peer {}",
+              validationResponse,
+              taskClassName,
+              peer.getLoggableId());
+          if (validationResponse.recordUselessResponse()) {
+            peer.recordUselessResponse(taskClassName);
+          }
           validationResponse.getDisconnectReason().ifPresent(peer::disconnect);
           executorResult =
               new PeerTaskExecutorResult<>(
@@ -187,6 +197,18 @@ public class PeerTaskExecutor {
             new PeerTaskExecutorResult<>(
                 Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, List.of(peer));
 
+      } catch (MalformedRlpFromPeerException e) {
+        // Peer sent us malformed data - disconnect
+        LOG.debug(
+            "Disconnecting with BREACH_OF_PROTOCOL due to malformed message: {}",
+            peer.getLoggableId(),
+            e);
+        LOG.trace("Peer {} Malformed message data: {}", peer, e.getMessageData());
+        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
+        executorResult =
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.INVALID_RESPONSE, List.of(peer));
+
       } catch (Exception e) {
         internalExceptionCounter.labels(taskClassName).inc();
         LOG.error("Server error found for {} from peer {}", taskClassName, peer.getLoggableId(), e);
@@ -196,6 +218,13 @@ public class PeerTaskExecutor {
                 PeerTaskExecutorResponseCode.INTERNAL_SERVER_ERROR,
                 List.of(peer));
       }
+      LOG.atDebug()
+          .setMessage("Executed peer task {} against {}, response code {}, retries remaining {}")
+          .addArgument(taskClassName)
+          .addArgument(peer::getLoggableId)
+          .addArgument(executorResult::responseCode)
+          .addArgument(retriesRemaining)
+          .log();
     } while (retriesRemaining-- > 0
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.SUCCESS
         && executorResult.responseCode() != PeerTaskExecutorResponseCode.PEER_DISCONNECTED

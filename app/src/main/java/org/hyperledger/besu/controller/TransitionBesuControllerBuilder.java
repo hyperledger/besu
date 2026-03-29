@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -110,8 +111,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
 
     // PoA consensus mines by default, get consensus-specific mining parameters for
     // TransitionCoordinator:
-    MiningConfiguration transitionMiningConfiguration =
-        preMergeBesuControllerBuilder.getMiningParameterOverrides(miningConfiguration);
+    preMergeBesuControllerBuilder.overrideMiningConfiguration(miningConfiguration);
 
     // construct a transition backward sync context
     BackwardSyncContext transitionBackwardsSyncContext =
@@ -130,6 +130,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule.getPreMergeSchedule(),
                 protocolContext,
                 transactionPool,
+                // special case: we need to disable mining during transition
                 ImmutableMiningConfiguration.builder()
                     .from(miningConfiguration)
                     .mutableInitValues(
@@ -143,7 +144,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 transitionProtocolSchedule,
                 protocolContext,
                 transactionPool,
-                transitionMiningConfiguration,
+                miningConfiguration,
                 syncState,
                 transitionBackwardsSyncContext,
                 ethProtocolManager.ethContext().getScheduler()),
@@ -386,9 +387,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
-    super.isBlockAccessListEnabled(isBlockAccessListEnabled);
-    return propagateConfig(z -> z.isBlockAccessListEnabled(isBlockAccessListEnabled));
+  public BesuControllerBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    super.balConfiguration(balConfiguration);
+    return propagateConfig(z -> z.balConfiguration(balConfiguration));
   }
 
   @Override

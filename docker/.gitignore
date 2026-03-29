@@ -2,3 +2,7 @@ besu-*.tar.gz
 besu/*
 besu-*
 reports/*
+
+# Goss test binaries (downloaded by Gradle)
+tests/goss-linux-*
+tests/dgoss

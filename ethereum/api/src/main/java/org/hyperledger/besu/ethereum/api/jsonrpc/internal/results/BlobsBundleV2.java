@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.kzg.BlobsWithCommitments;
 import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
 import org.hyperledger.besu.ethereum.core.kzg.KZGCommitment;
 import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
+import org.hyperledger.besu.util.HexUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,24 +51,24 @@ public class BlobsBundleV2 {
             .toList();
 
     this.commitments =
-        blobsWithCommitments.stream()
+        blobsWithCommitments.parallelStream()
             .flatMap(b -> b.getKzgCommitments().stream())
             .map(KZGCommitment::getData)
-            .map(Bytes::toString)
+            .map(b -> HexUtils.toFastHex(b, true))
             .collect(Collectors.toList());
 
     this.cellProfs =
-        blobsWithCommitments.stream()
+        blobsWithCommitments.parallelStream()
             .flatMap(b -> b.getKzgProofs().stream())
             .map(KZGProof::getData)
-            .map(Bytes::toString)
+            .map(b -> HexUtils.toFastHex(b, true))
             .collect(Collectors.toList());
 
     this.blobs =
-        blobsWithCommitments.stream()
+        blobsWithCommitments.parallelStream()
             .flatMap(b -> b.getBlobs().stream())
             .map(Blob::getData)
-            .map(Bytes::toString)
+            .map(b -> HexUtils.toFastHex(b, true))
             .collect(Collectors.toList());
 
     LOG.debug(

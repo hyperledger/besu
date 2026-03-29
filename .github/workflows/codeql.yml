@@ -21,7 +21,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
@@ -32,7 +32,7 @@ jobs:
         language: ['java']  # Add other languages as needed: 'javascript', 'python', etc.
     steps:
     - name: Checkout repository
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
     - name: Set up Java
       uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00
       with:

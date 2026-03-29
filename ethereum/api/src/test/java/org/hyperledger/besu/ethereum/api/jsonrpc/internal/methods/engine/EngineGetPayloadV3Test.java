@@ -38,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -115,7 +116,12 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 shanghaiHeader, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
             emptyList());
     PayloadWrapper payloadShanghai =
-        new PayloadWrapper(shanghaiPid, shanghaiBlock, Optional.empty());
+        new PayloadWrapper(
+            shanghaiPid,
+            shanghaiBlock,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(shanghaiPid)).thenReturn(Optional.of(payloadShanghai));
 
@@ -150,7 +156,12 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                 pragueHeader, new BlockBody(emptyList(), emptyList(), Optional.of(emptyList()))),
             emptyList());
     PayloadWrapper payloadPostCancun =
-        new PayloadWrapper(postCancunPid, pragueBlock, Optional.empty());
+        new PayloadWrapper(
+            postCancunPid,
+            pragueBlock,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(postCancunPid))
         .thenReturn(Optional.of(payloadPostCancun));
@@ -206,7 +217,12 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
     PayloadWrapper payloadPostCancun =
-        new PayloadWrapper(postCancunPid, postCancunBlock, Optional.empty());
+        new PayloadWrapper(
+            postCancunPid,
+            postCancunBlock,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(postCancunPid))
         .thenReturn(Optional.of(payloadPostCancun));

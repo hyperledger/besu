@@ -190,9 +190,10 @@ public class BlockSimulationParameter {
         var stateOverrideMap = call.getStateOverrideMap().get();
         for (Address stateOverride : stateOverrideMap.keySet()) {
           final StateOverride override = stateOverrideMap.get(stateOverride);
-          if (override.getMovePrecompileToAddress().isPresent()
-              && !validPrecompileAddresses.contains(stateOverride)) {
-            return Optional.of(INVALID_PRECOMPILE_ADDRESS);
+          if (override.getMovePrecompileToAddress().isPresent()) {
+            if (!validPrecompileAddresses.contains(stateOverride)) {
+              return Optional.of(INVALID_PRECOMPILE_ADDRESS);
+            }
           }
         }
       }

@@ -62,6 +62,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.layered.EndLayer;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.GasPricePrioritizedTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.SenderBalanceChecker;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -71,11 +72,12 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.BonsaiCachedMer
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
@@ -110,7 +112,7 @@ public abstract class AbstractIsolationTests {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   protected final GenesisState genesisState =
       GenesisState.fromConfig(
@@ -172,7 +174,7 @@ public abstract class AbstractIsolationTests {
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
-            Optional.of(16L),
+            ImmutablePathBasedExtraStorageConfiguration.builder().maxLayersToLoad(16L).build(),
             new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
             null,
             EvmConfiguration.DEFAULT,
@@ -317,7 +319,6 @@ public abstract class AbstractIsolationTests {
                       .extraData(Bytes.fromHexString("deadbeef"))
                       .targetGasLimit(30_000_000L)
                       .minTransactionGasPrice(Wei.ONE)
-                      .minBlockOccupancyRatio(0d)
                       .coinbase(Address.ZERO)
                       .build())
               .build();
@@ -346,7 +347,9 @@ public abstract class AbstractIsolationTests {
 
   protected Transaction burnTransaction(final KeyPair sender, final Long nonce, final Address to) {
     return new TransactionTestFixture()
-        .sender(Address.extract(Hash.hash(sender.getPublicKey().getEncodedBytes())))
+        .sender(
+            Address.extract(
+                Bytes32.wrap(Hash.hash(sender.getPublicKey().getEncodedBytes()).getBytes())))
         .to(Optional.of(to))
         .value(Wei.of(1_000_000_000_000_000_000L))
         .gasLimit(21_000L)

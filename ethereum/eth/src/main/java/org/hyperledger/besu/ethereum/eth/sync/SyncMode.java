@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
-import java.util.EnumSet;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,18 +21,10 @@ import org.apache.commons.lang3.StringUtils;
 public enum SyncMode {
   // Fully validate all blocks as they sync
   FULL,
-  // Perform light validation on older blocks, and switch to full validation for more recent blocks
-  FAST,
   // Perform snapsync
-  SNAP,
-  // Perform snapsync but starting from a checkpoint instead of starting from genesis
-  CHECKPOINT;
+  SNAP;
 
   public String normalize() {
     return StringUtils.capitalize(this.toString().toLowerCase(Locale.ROOT));
-  }
-
-  public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(SyncMode.FAST, SyncMode.SNAP, SyncMode.CHECKPOINT).contains(syncMode);
   }
 }

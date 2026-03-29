@@ -26,9 +26,11 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,11 +90,12 @@ public class RoundChangeMessageValidator {
     return msg.getPreparedRoundMetadata().isEmpty();
   }
 
-  private boolean validateBlock(final QbftBlock block) {
+  private boolean validateBlock(
+      final QbftBlock block, final Optional<BlockAccessList> blockAccessList) {
 
     final QbftBlockValidator blockValidator = protocolSchedule.getBlockValidator(block.getHeader());
 
-    final var validationResult = blockValidator.validateBlock(block);
+    final var validationResult = blockValidator.validateBlock(block, blockAccessList);
 
     if (!validationResult.success()) {
       LOG.info(
@@ -108,7 +111,7 @@ public class RoundChangeMessageValidator {
   private boolean validateWithBlock(final RoundChange msg) {
     final QbftBlock block = msg.getProposedBlock().get();
 
-    if (!validateBlock(block)) {
+    if (!validateBlock(block, msg.getBlockAccessList())) {
       return false;
     }
 

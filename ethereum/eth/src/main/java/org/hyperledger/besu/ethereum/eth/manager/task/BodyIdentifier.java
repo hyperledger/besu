@@ -13,6 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */ package org.hyperledger.besu.ethereum.eth.manager.task;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
@@ -43,16 +44,20 @@ public class BodyIdentifier {
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> withdrawals) {
     this(
-        BodyValidation.transactionsRoot(transactions),
-        BodyValidation.ommersHash(ommers),
-        withdrawals.map(BodyValidation::withdrawalsRoot).orElse(null));
+        Bytes32.wrap(BodyValidation.transactionsRoot(transactions).getBytes()),
+        Bytes32.wrap(BodyValidation.ommersHash(ommers).getBytes()),
+        withdrawals
+            .map(w -> Bytes32.wrap(BodyValidation.withdrawalsRoot(w).getBytes()))
+            .orElse(null));
   }
 
   public BodyIdentifier(final BlockHeader header) {
     this(
-        header.getTransactionsRoot(),
-        header.getOmmersHash(),
-        header.getWithdrawalsRoot().orElse(null));
+        header.getTransactionsRoot() == null
+            ? null
+            : Bytes32.wrap(header.getTransactionsRoot().getBytes()),
+        header.getOmmersHash() == null ? null : Bytes32.wrap(header.getOmmersHash().getBytes()),
+        header.getWithdrawalsRoot().map(Hash::getBytes).map(Bytes32::wrap).orElse(null));
   }
 
   public BodyIdentifier(final BlockBody body) {
@@ -60,7 +65,14 @@ public class BodyIdentifier {
   }
 
   public BodyIdentifier(final SyncBlockBody syncBody) {
-    this(syncBody.getTransactionsRoot(), syncBody.getOmmersHash(), syncBody.getWithdrawalsRoot());
+    this(
+        syncBody.getTransactionsRoot() == null
+            ? null
+            : Bytes32.wrap(syncBody.getTransactionsRoot().getBytes()),
+        syncBody.getOmmersHash() == null ? null : Bytes32.wrap(syncBody.getOmmersHash().getBytes()),
+        syncBody.getWithdrawalsRoot() == null
+            ? null
+            : Bytes32.wrap(syncBody.getWithdrawalsRoot().getBytes()));
   }
 
   @Override

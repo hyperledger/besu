@@ -17,8 +17,9 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncActions;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncActions;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotUpdateListener;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -46,9 +47,10 @@ public class DynamicPivotBlockSelector {
   private final AtomicBoolean isTimeToCheckAgain = new AtomicBoolean(true);
 
   private final EthContext ethContext;
-  private final FastSyncActions syncActions;
+  private final PivotSyncActions syncActions;
 
   private final SnapSyncProcessState syncState;
+  private final PivotUpdateListener pivotUpdateListener;
   private final int pivotBlockWindowValidity;
   private final int pivotBlockDistanceBeforeCaching;
 
@@ -56,13 +58,15 @@ public class DynamicPivotBlockSelector {
 
   public DynamicPivotBlockSelector(
       final EthContext ethContext,
-      final FastSyncActions fastSyncActions,
+      final PivotSyncActions fastSyncActions,
       final SnapSyncProcessState fastSyncState,
+      final PivotUpdateListener pivotUpdateListener,
       final int pivotBlockWindowValidity,
       final int pivotBlockDistanceBeforeCaching) {
     this.ethContext = ethContext;
     this.syncActions = fastSyncActions;
     this.syncState = fastSyncState;
+    this.pivotUpdateListener = pivotUpdateListener;
     this.pivotBlockWindowValidity = pivotBlockWindowValidity;
     this.pivotBlockDistanceBeforeCaching = pivotBlockDistanceBeforeCaching;
     this.lastPivotBlockFound = Optional.empty();
@@ -96,7 +100,7 @@ public class DynamicPivotBlockSelector {
                       .log();
 
                   searchForNewPivot =
-                      CompletableFuture.completedFuture(FastSyncState.EMPTY_SYNC_STATE)
+                      CompletableFuture.completedFuture(PivotSyncState.EMPTY_SYNC_STATE)
                           .thenCompose(syncActions::selectPivotBlock)
                           .thenCompose(
                               fss -> {
@@ -150,7 +154,7 @@ public class DynamicPivotBlockSelector {
     }
   }
 
-  private CompletableFuture<Void> downloadNewPivotBlock(final FastSyncState fss) {
+  private CompletableFuture<Void> downloadNewPivotBlock(final PivotSyncState fss) {
     return syncActions
         .downloadPivotBlockHeader(fss)
         .thenAccept(
@@ -164,7 +168,7 @@ public class DynamicPivotBlockSelector {
         .orTimeout(20, TimeUnit.SECONDS);
   }
 
-  private boolean isSamePivotBlock(final FastSyncState fss) {
+  private boolean isSamePivotBlock(final PivotSyncState fss) {
     return lastPivotBlockFound.isPresent()
         && fss.hasPivotBlockHash()
         && lastPivotBlockFound.get().getHash().equals(fss.getPivotBlockHash().get());
@@ -195,6 +199,13 @@ public class DynamicPivotBlockSelector {
                 .addArgument(blockHeader.getStateRoot())
                 .log();
             syncState.setCurrentHeader(blockHeader);
+
+            // Notify chain downloader of pivot update
+            if (pivotUpdateListener != null) {
+              pivotUpdateListener.onPivotUpdated(blockHeader);
+              LOG.trace("Notified chain downloader of pivot update: {}", blockHeader.getNumber());
+            }
+
             lastPivotBlockFound = Optional.empty();
           }
           onSwitchDone.accept(blockHeader, true);
@@ -203,10 +214,7 @@ public class DynamicPivotBlockSelector {
   }
 
   public boolean isBlockchainBehind() {
-    return syncState
-        .getPivotBlockHeader()
-        .map(pivot -> syncActions.isBlockchainBehind(pivot.getNumber()))
-        .orElse(false);
+    return syncActions.isBlockchainBehind(syncState.getPivotBlockNumber().orElse(0L));
   }
 
   private String logLastPivotBlockFound() {

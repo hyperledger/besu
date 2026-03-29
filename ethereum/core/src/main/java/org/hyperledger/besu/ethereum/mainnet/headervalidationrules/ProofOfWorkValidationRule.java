@@ -71,7 +71,7 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     final Hash headerHash = hashHeader(header);
     PoWSolution solution =
-        hasher.hash(header.getNonce(), header.getNumber(), epochCalculator, headerHash);
+        hasher.hash(header.getNonce(), header.getNumber(), epochCalculator, headerHash.getBytes());
 
     if (header.getDifficulty().isZero()) {
       LOG.info("Invalid block header: difficulty is 0");
@@ -112,13 +112,13 @@ public final class ProofOfWorkValidationRule implements DetachedBlockHeaderValid
 
     // Encode header without nonce and mixhash
     out.startList();
-    out.writeBytes(header.getParentHash());
-    out.writeBytes(header.getOmmersHash());
-    out.writeBytes(header.getCoinbase());
-    out.writeBytes(header.getStateRoot());
-    out.writeBytes(header.getTransactionsRoot());
-    out.writeBytes(header.getReceiptsRoot());
-    out.writeBytes(header.getLogsBloom());
+    out.writeBytes(header.getParentHash().getBytes());
+    out.writeBytes(header.getOmmersHash().getBytes());
+    out.writeBytes(header.getCoinbase().getBytes());
+    out.writeBytes(header.getStateRoot().getBytes());
+    out.writeBytes(header.getTransactionsRoot().getBytes());
+    out.writeBytes(header.getReceiptsRoot().getBytes());
+    out.writeBytes(header.getLogsBloom().getBytes());
     out.writeUInt256Scalar(header.getDifficulty());
     out.writeLongScalar(header.getNumber());
     out.writeLongScalar(header.getGasLimit());

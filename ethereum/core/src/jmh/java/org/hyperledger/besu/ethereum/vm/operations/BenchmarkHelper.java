@@ -19,12 +19,13 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.code.CodeV0;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -34,6 +35,13 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class BenchmarkHelper {
+  /**
+   * Creates a minimal {@link MessageFrame} suitable for opcode benchmarks.
+   *
+   * <p>The frame is configured with mocked dependencies and deterministic zero/default values.
+   *
+   * @return a message-call frame ready to use in benchmark setup
+   */
   public static MessageFrame createMessageCallFrame() {
     return MessageFrame.builder()
         .worldUpdater(mock(WorldUpdater.class))
@@ -51,11 +59,17 @@ public class BenchmarkHelper {
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .apparentValue(Wei.ZERO)
-        .code(CodeV0.EMPTY_CODE)
+        .code(Code.EMPTY_CODE)
         .completer(__ -> {})
         .build();
   }
 
+  /**
+   * Creates a minimal {@link MessageFrame} with custom call data for benchmarks.
+   *
+   * @param callData the input data to attach to the frame
+   * @return a message-call frame initialized with {@code callData}
+   */
   public static MessageFrame createMessageCallFrameWithCallData(final Bytes callData) {
     return MessageFrame.builder()
         .worldUpdater(mock(WorldUpdater.class))
@@ -73,7 +87,7 @@ public class BenchmarkHelper {
         .sender(Address.ZERO)
         .value(Wei.ZERO)
         .apparentValue(Wei.ZERO)
-        .code(CodeV0.EMPTY_CODE)
+        .code(Code.EMPTY_CODE)
         .completer(__ -> {})
         .build();
   }
@@ -164,6 +178,13 @@ public class BenchmarkHelper {
     }
   }
 
+  /**
+   * Creates call data payload for benchmarks.
+   *
+   * @param size size of the payload in bytes
+   * @param nonZero whether to fill payload with deterministic non-zero bytes
+   * @return call data payload
+   */
   static Bytes createCallData(final int size, final boolean nonZero) {
     byte[] data = new byte[size];
     if (nonZero) {
@@ -174,6 +195,15 @@ public class BenchmarkHelper {
     return Bytes.wrap(data);
   }
 
+  /**
+   * Fills COPY-like benchmark pools for call-data operations.
+   *
+   * @param sizePool destination pool for copy sizes
+   * @param destOffsetPool destination pool for destination offsets
+   * @param srcOffsetPool destination pool for source offsets
+   * @param dataSize call-data size used to populate the size/source ranges
+   * @param fixedSrcDst whether to use fixed zero source/destination offsets
+   */
   static void fillPoolsForCallData(
       final Bytes[] sizePool,
       final Bytes[] destOffsetPool,
@@ -191,5 +221,43 @@ public class BenchmarkHelper {
         srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize)));
       }
     }
+  }
+
+  /**
+   * Generates a random 32-byte value.
+   *
+   * @param random thread-local random source
+   * @return random 32-byte value
+   */
+  static Bytes randomValue(final ThreadLocalRandom random) {
+    final byte[] value = new byte[32];
+    random.nextBytes(value);
+    return Bytes.wrap(value);
+  }
+
+  /**
+   * Generates a random positive signed 256-bit value (sign bit cleared).
+   *
+   * @param random thread-local random source
+   * @return random positive 32-byte value
+   */
+  static Bytes randomPositiveValue(final ThreadLocalRandom random) {
+    final byte[] value = new byte[32];
+    random.nextBytes(value);
+    value[0] = (byte) (value[0] & 0x7F);
+    return Bytes.wrap(value);
+  }
+
+  /**
+   * Generates a random negative signed 256-bit value (sign bit set).
+   *
+   * @param random thread-local random source
+   * @return random negative 32-byte value
+   */
+  static Bytes randomNegativeValue(final ThreadLocalRandom random) {
+    final byte[] value = new byte[32];
+    random.nextBytes(value);
+    value[0] = (byte) (value[0] | 0x80);
+    return Bytes.wrap(value);
   }
 }

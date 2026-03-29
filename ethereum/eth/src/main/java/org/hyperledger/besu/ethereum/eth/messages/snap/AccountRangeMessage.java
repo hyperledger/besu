@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 
@@ -71,7 +72,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
         (entry, rlpOutput) -> {
           rlpOutput.startList();
           rlpOutput.writeBytes(entry.getKey());
-          rlpOutput.writeRLPBytes(entry.getValue());
+          rlpOutput.writeRLPBytes(toSlimAccount(RLP.input(entry.getValue())));
           rlpOutput.endList();
         });
     tmp.writeList(proof, (bytes, rlpOutput) -> rlpOutput.writeBytes(bytes));
@@ -127,8 +128,8 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     rlpOutput.startList();
     rlpOutput.writeLongScalar(accountValue.getNonce()); // nonce
     rlpOutput.writeUInt256Scalar(accountValue.getBalance()); // balance
-    rlpOutput.writeBytes(accountValue.getStorageRoot());
-    rlpOutput.writeBytes(accountValue.getCodeHash());
+    rlpOutput.writeBytes(accountValue.getStorageRoot().getBytes());
+    rlpOutput.writeBytes(accountValue.getCodeHash().getBytes());
     rlpOutput.endList();
 
     return rlpOutput.encoded();
@@ -143,12 +144,12 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
     if (accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
       rlpOutput.writeNull();
     } else {
-      rlpOutput.writeBytes(accountValue.getStorageRoot());
+      rlpOutput.writeBytes(accountValue.getStorageRoot().getBytes());
     }
     if (accountValue.getCodeHash().equals(Hash.EMPTY)) {
       rlpOutput.writeNull();
     } else {
-      rlpOutput.writeBytes(accountValue.getCodeHash());
+      rlpOutput.writeBytes(accountValue.getCodeHash().getBytes());
     }
     rlpOutput.endList();
     return rlpOutput.encoded();

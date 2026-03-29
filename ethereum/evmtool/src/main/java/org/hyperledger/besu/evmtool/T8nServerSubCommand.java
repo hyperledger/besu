@@ -37,6 +37,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,7 +202,9 @@ public class T8nServerSubCommand implements Runnable {
                       new FileOutputStream(
                           outDir
                               .resolve(
-                                  String.format("trace-%d-%s.jsonl", txIndex, txHash.toHexString()))
+                                  String.format(
+                                      "trace-%d-%s.jsonl",
+                                      txIndex, txHash.getBytes().toHexString()))
                               .toFile());
 
                   var jsonTracer =
@@ -212,6 +215,7 @@ public class T8nServerSubCommand implements Runnable {
                               .traceStack(!parentCommand.hideStack)
                               .traceReturnData(parentCommand.showReturnData)
                               .traceStorage(parentCommand.showStorage)
+                              .traceOpcodes(Collections.emptySet())
                               .eip3155Strict(parentCommand.eip3155strict)
                               .build());
                   outputStreams.put(jsonTracer, traceDest);

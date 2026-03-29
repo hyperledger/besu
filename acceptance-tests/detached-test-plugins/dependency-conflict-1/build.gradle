@@ -1,0 +1,34 @@
+plugins {
+    id 'net.consensys.besu-plugin-distribution' version '0.1.5'
+}
+
+group = 'org.hyperledger.besu.tests'
+version = besuVersion
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+dependencies {
+    // this is just to force that dependency to be present in the plugin distribution
+    // so we can create an ad-hoc conflict with the other plugin
+    runtimeOnly 'org.junit.jupiter:junit-jupiter-api:5.14.2'
+}
+
+jar {
+    archiveFileName = 'dependencyConflict1.jar'
+    manifest {
+        attributes(
+                'Specification-Title': archiveBaseName,
+                'Specification-Version': project.version,
+                'Implementation-Title': archiveBaseName,
+                'Implementation-Version': project.version
+        )
+    }
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    archiveVersion = ''
+    archiveBaseName = 'dependencyConflictPlugin2'
+}

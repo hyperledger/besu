@@ -29,6 +29,7 @@ public class BlockProcessingOutputs {
   private final List<TransactionReceipt> receipts;
   private final Optional<List<Request>> maybeRequests;
   private final Optional<BlockAccessList> maybeBlockAccessList;
+  private final long cumulativeBlockGasUsed;
 
   /**
    * Creates a new instance.
@@ -52,10 +53,7 @@ public class BlockProcessingOutputs {
       final MutableWorldState worldState,
       final List<TransactionReceipt> receipts,
       final Optional<List<Request>> maybeRequests) {
-    this.worldState = worldState;
-    this.receipts = receipts;
-    this.maybeRequests = maybeRequests;
-    this.maybeBlockAccessList = Optional.empty();
+    this(worldState, receipts, maybeRequests, Optional.empty(), 0);
   }
 
   /**
@@ -71,10 +69,29 @@ public class BlockProcessingOutputs {
       final List<TransactionReceipt> receipts,
       final Optional<List<Request>> maybeRequests,
       final Optional<BlockAccessList> blockAccessList) {
+    this(worldState, receipts, maybeRequests, blockAccessList, 0);
+  }
+
+  /**
+   * Creates a new instance.
+   *
+   * @param worldState the world state after processing the block
+   * @param receipts the receipts produced by processing the block
+   * @param maybeRequests the requests produced by processing the block
+   * @param blockAccessList the block-level access list produced by processing the block
+   * @param cumulativeBlockGasUsed the cumulative block gas used (pre-refund for EIP-7778)
+   */
+  public BlockProcessingOutputs(
+      final MutableWorldState worldState,
+      final List<TransactionReceipt> receipts,
+      final Optional<List<Request>> maybeRequests,
+      final Optional<BlockAccessList> blockAccessList,
+      final long cumulativeBlockGasUsed) {
     this.worldState = worldState;
     this.receipts = receipts;
     this.maybeRequests = maybeRequests;
     this.maybeBlockAccessList = blockAccessList;
+    this.cumulativeBlockGasUsed = cumulativeBlockGasUsed;
   }
 
   /**
@@ -111,5 +128,16 @@ public class BlockProcessingOutputs {
    */
   public Optional<BlockAccessList> getBlockAccessList() {
     return maybeBlockAccessList;
+  }
+
+  /**
+   * Returns the cumulative block gas used. For EIP-7778 (Amsterdam+), this is the pre-refund gas
+   * used for block gas limit enforcement. For earlier forks, this equals the receipt's
+   * cumulativeGasUsed.
+   *
+   * @return the cumulative block gas used
+   */
+  public long getCumulativeBlockGasUsed() {
+    return cumulativeBlockGasUsed;
   }
 }

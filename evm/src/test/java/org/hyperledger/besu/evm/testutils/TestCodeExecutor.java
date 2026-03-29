@@ -55,7 +55,7 @@ public class TestCodeExecutor {
     final MessageCallProcessor messageCallProcessor =
         new MessageCallProcessor(evm, new PrecompileContractRegistry());
     final Bytes codeBytes = Bytes.fromHexString(codeHexString.replaceAll("\\s", ""));
-    final Code code = evm.wrapCode(codeBytes);
+    final Code code = new Code(codeBytes);
 
     final MessageFrame initialFrame =
         new TestMessageFrameBuilder()

@@ -28,6 +28,8 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
@@ -81,7 +83,7 @@ public class SimulationTransactionProcessorFactoryTest {
     originalRegistry = new PrecompileContractRegistry();
     originalRegistry.put(ORIGINAL_ADDRESS_1, originalPrecompiledContract);
     originalRegistry.put(ORIGINAL_ADDRESS_2, originalPrecompiledContract);
-    originalProcessor = new MessageCallProcessor(null, originalRegistry, null);
+    originalProcessor = new MessageCallProcessor(null, originalRegistry);
   }
 
   @Test
@@ -166,48 +168,46 @@ public class SimulationTransactionProcessorFactoryTest {
     Map<Address, Address> precompileOverrides = new HashMap<>();
     precompileOverrides.put(NON_EXISTENT_ADDRESS, OVERRIDE_ADDRESS);
 
-    Exception exception =
+    BlockStateCallException exception =
         assertThrows(
-            IllegalArgumentException.class,
+            BlockStateCallException.class,
             () ->
                 new SimulationMessageCallProcessor(
                     originalProcessor, createSupplier(precompileOverrides)));
 
+    assertThat(exception.getError()).isEqualTo(BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
     Assertions.assertThat(exception.getMessage())
         .contains("Address " + NON_EXISTENT_ADDRESS + " is not a precompile.");
   }
 
   @Test
-  void shouldThrowWhenDuplicateNewAddressIsProvided() {
+  void shouldAllowDuplicateNewAddressWithLastOverrideWinning() {
+    PrecompiledContract precompiledContract2 = mock(PrecompiledContract.class);
+    originalRegistry.put(ORIGINAL_ADDRESS_2, precompiledContract2);
+
     Map<Address, Address> precompileOverrides = new HashMap<>();
     precompileOverrides.put(ORIGINAL_ADDRESS_1, OVERRIDE_ADDRESS);
-    precompileOverrides.put(ORIGINAL_ADDRESS_2, OVERRIDE_ADDRESS); // Duplicate new address
+    precompileOverrides.put(ORIGINAL_ADDRESS_2, OVERRIDE_ADDRESS); // Duplicate target allowed
 
-    Exception exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () ->
-                new SimulationMessageCallProcessor(
-                    originalProcessor, createSupplier(precompileOverrides)));
+    SimulationMessageCallProcessor processor =
+        new SimulationMessageCallProcessor(originalProcessor, createSupplier(precompileOverrides));
 
-    Assertions.assertThat(exception.getMessage())
-        .contains("Duplicate precompile address: " + OVERRIDE_ADDRESS);
+    assertNotNull(processor);
+    Assertions.assertThat(processor.getPrecompiles().getPrecompileAddresses())
+        .contains(OVERRIDE_ADDRESS);
   }
 
   @Test
-  void shouldThrowWhenOriginalAddressIsReusedAsNewAddress() {
+  void shouldAllowOriginalAddressReusedAsNewAddress() {
     Map<Address, Address> precompileOverrides = new HashMap<>();
     precompileOverrides.put(ORIGINAL_ADDRESS_1, ORIGINAL_ADDRESS_2);
 
-    Exception exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () ->
-                new SimulationMessageCallProcessor(
-                    originalProcessor, createSupplier(precompileOverrides)));
+    SimulationMessageCallProcessor processor =
+        new SimulationMessageCallProcessor(originalProcessor, createSupplier(precompileOverrides));
 
-    Assertions.assertThat(exception.getMessage())
-        .contains("Duplicate precompile address: " + ORIGINAL_ADDRESS_2);
+    assertNotNull(processor);
+    Assertions.assertThat(processor.getPrecompiles().getPrecompileAddresses())
+        .contains(ORIGINAL_ADDRESS_2);
   }
 
   private Function<PrecompileContractRegistry, PrecompileContractRegistry> createSupplier(

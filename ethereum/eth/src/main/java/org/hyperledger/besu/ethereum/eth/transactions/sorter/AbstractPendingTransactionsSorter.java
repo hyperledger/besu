@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
+import org.hyperledger.besu.ethereum.eth.transactions.SenderPendingTransactionsData;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -50,13 +51,11 @@ import java.time.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
@@ -238,9 +237,9 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   // This seems like it would be very rare but worth it to document that we don't handle that case
   // right now.
   @Override
-  public void selectTransactions(final TransactionSelector selector) {
+  public void selectTransactions(final PendingTransactionsSelector selector) {
+    final List<PendingTransaction> candidateTxs = new ArrayList<>();
     synchronized (lock) {
-      final Set<Transaction> transactionsToRemove = new HashSet<>();
       final Map<Address, AccountTransactionOrder> accountTransactions = new HashMap<>();
       final Iterator<PendingTransaction> prioritizedTransactions = prioritizedTransactions();
       while (prioritizedTransactions.hasNext()) {
@@ -251,21 +250,24 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
         for (final PendingTransaction transactionToProcess :
             accountTransactionOrder.transactionsToProcess(highestPriorityPendingTransaction)) {
-          final TransactionSelectionResult result =
-              selector.evaluateTransaction(transactionToProcess);
 
-          if (result.discard()) {
-            transactionsToRemove.add(transactionToProcess.getTransaction());
-            logDiscardedTransaction(transactionToProcess, result);
-          }
-
-          if (result.stop()) {
-            transactionsToRemove.forEach(tx -> removeTransaction(tx, INVALID));
-            return;
-          }
+          candidateTxs.add(transactionToProcess);
         }
       }
-      transactionsToRemove.forEach(tx -> removeTransaction(tx, INVALID));
+    }
+
+    final var selectionResults = selector.evaluatePendingTransactions(candidateTxs);
+
+    for (final var selectionResult : selectionResults.entrySet()) {
+      final var pendingTransaction = selectionResult.getKey();
+      final var result = selectionResult.getValue();
+
+      if (result.discard()) {
+        synchronized (lock) {
+          removeTransaction(pendingTransaction.getTransaction(), INVALID);
+        }
+        logDiscardedTransaction(pendingTransaction, result);
+      }
     }
   }
 
@@ -391,6 +393,20 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   }
 
   @Override
+  public SenderPendingTransactionsData getPendingTransactionsFor(final Address sender) {
+    final PendingTransactionsForSender pendingTransactionsForSender =
+        transactionsBySender.get(sender);
+    if (pendingTransactionsForSender == null) {
+      return SenderPendingTransactionsData.empty(sender);
+    }
+
+    return new SenderPendingTransactionsData(
+        sender,
+        pendingTransactionsForSender.maybeCurrentNonce().orElse(0),
+        pendingTransactionsForSender.getPendingTransactions());
+  }
+
+  @Override
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
     return pendingTransactionSubscribers.subscribe(listener);
   }
@@ -504,6 +520,20 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   @Override
   public String logStats() {
     return "Pending " + pendingTransactions.size();
+  }
+
+  @Override
+  public Status getStatus() {
+    long pendingCount = 0;
+    long queuedCount = 0;
+    synchronized (lock) {
+      for (final PendingTransactionsForSender pendingTxsForSender : transactionsBySender.values()) {
+        final Status accountStatus = pendingTxsForSender.getStatus();
+        pendingCount += accountStatus.pendingCount();
+        queuedCount += accountStatus.queuedCount();
+      }
+    }
+    return new Status(pendingCount, queuedCount);
   }
 
   @Override

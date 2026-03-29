@@ -30,7 +30,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
   public SpuriousDragonGasCalculator() {}
 
   @Override
-  public long callOperationGasCost(
+  public long callOperationStaticGasCost(
       final MessageFrame frame,
       final long stipend,
       final long inputDataOffset,
@@ -49,20 +49,34 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
 
     long cost = clampedAdd(callOperationBaseGasCost(), memoryExpansionCost);
 
-    final boolean isTransferValueZero = transferValue.isZero();
-
-    if (!isTransferValueZero) {
+    if (!transferValue.isZero()) {
       cost = clampedAdd(cost, callValueTransferGasCost());
+    }
 
-      final Account recipient = frame.getWorldUpdater().get(recipientAddress);
-      if (recipient == null || recipient.isEmpty()) {
-        cost = clampedAdd(cost, newAccountGasCost());
-      }
+    return cost;
+  }
 
-      // If recipient.isEmpty() must be evaluated above
-      if (recipient != null) {
-        frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipientAddress));
-      }
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long staticCallCost,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Address recipientAddress,
+      final boolean accountIsWarm) {
+    if (transferValue.isZero()) {
+      return staticCallCost;
+    }
+
+    long cost = staticCallCost;
+    final Account recipient = frame.getWorldUpdater().get(recipientAddress);
+    frame.getEip7928AccessList().ifPresent(t -> t.addTouchedAccount(recipientAddress));
+    if (recipient == null || recipient.isEmpty()) {
+      cost = clampedAdd(cost, newAccountGasCost());
     }
 
     return cost;
@@ -73,16 +87,12 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
     return EXP_OPERATION_BYTE_GAS_COST;
   }
 
-  private static final long SELFDESTRUCT_OPERATION_GAS_COST = 5_000L;
-
-  private static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
-
   @Override
   public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
     if ((recipient == null || recipient.isEmpty()) && !inheritance.isZero()) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
-      return SELFDESTRUCT_OPERATION_GAS_COST;
+      return selfDestructOperationStaticGasCost();
     }
   }
 }

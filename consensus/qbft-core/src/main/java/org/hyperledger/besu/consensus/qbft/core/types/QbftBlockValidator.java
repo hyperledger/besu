@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.qbft.core.types;
 
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+
 import java.util.Optional;
 
 /** Validates a block. */
@@ -23,9 +25,10 @@ public interface QbftBlockValidator {
    * Validates a block.
    *
    * @param block the block to validate
+   * @param blockAccessList the block access list
    * @return the validation result
    */
-  ValidationResult validateBlock(QbftBlock block);
+  ValidationResult validateBlock(QbftBlock block, Optional<BlockAccessList> blockAccessList);
 
   /**
    * The result of a block validation.

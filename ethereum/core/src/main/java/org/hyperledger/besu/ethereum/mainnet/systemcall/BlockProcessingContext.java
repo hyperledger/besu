@@ -37,20 +37,6 @@ public class BlockProcessingContext {
       final MutableWorldState worldState,
       final ProtocolSpec protocolSpec,
       final BlockHashLookup blockHashLookup,
-      final OperationTracer operationTracer) {
-    this.blockHeader = blockHeader;
-    this.worldState = worldState;
-    this.protocolSpec = protocolSpec;
-    this.blockHashLookup = blockHashLookup;
-    this.operationTracer = operationTracer;
-    this.blockAccessListBuilder = Optional.empty();
-  }
-
-  public BlockProcessingContext(
-      final ProcessableBlockHeader blockHeader,
-      final MutableWorldState worldState,
-      final ProtocolSpec protocolSpec,
-      final BlockHashLookup blockHashLookup,
       final OperationTracer operationTracer,
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
     this.blockHeader = blockHeader;

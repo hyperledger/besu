@@ -23,12 +23,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.IncompatiblePeerException;
@@ -40,18 +37,16 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MockSubProtocol;
-import org.hyperledger.besu.ethereum.p2p.rlpx.wire.ShouldConnectCallback;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerConnectionGatekeeper;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -66,12 +61,13 @@ public class P2PPlainNetworkTest {
   // See ethereum/p2p/src/test/resources/keys/README.md for certificates setup.
   private final Vertx vertx = Vertx.vertx();
   private final NetworkingConfiguration config =
-      NetworkingConfiguration.create()
-          .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
-          .setRlpx(
+      ImmutableNetworkingConfiguration.builder()
+          .discoveryConfiguration(DiscoveryConfiguration.create().setEnabled(false))
+          .rlpxConfiguration(
               RlpxConfiguration.create()
                   .setBindPort(0)
-                  .setSupportedProtocols(MockSubProtocol.create()));
+                  .setSupportedProtocols(MockSubProtocol.create()))
+          .build();
 
   @AfterEach
   public void closeVertx() {
@@ -81,10 +77,10 @@ public class P2PPlainNetworkTest {
   @Test
   public void handshaking() throws Exception {
     final NodeKey nodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder().nodeKey(nodeKey).build();
-        final P2PNetwork connector = builder().build()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+    try (final P2PNetwork listener = createP2PNetwork(nodeKey);
+        final P2PNetwork connector = createP2PNetwork()) {
+      listener.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      connector.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
 
       listener.start();
       connector.start();
@@ -105,10 +101,10 @@ public class P2PPlainNetworkTest {
   @Test
   public void preventMultipleConnections() throws Exception {
     final NodeKey listenNodeKey = NodeKeyUtils.generate();
-    try (final P2PNetwork listener = builder().nodeKey(listenNodeKey).build();
-        final P2PNetwork connector = builder().build()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+    try (final P2PNetwork listener = createP2PNetwork(listenNodeKey);
+        final P2PNetwork connector = createP2PNetwork()) {
+      listener.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      connector.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
 
       listener.start();
       connector.start();
@@ -141,18 +137,24 @@ public class P2PPlainNetworkTest {
   public void limitMaxPeers() throws Exception {
     final NodeKey nodeKey = NodeKeyUtils.generate();
     final NetworkingConfiguration listenerConfig =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setEnabled(false))
-            .setRlpx(
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setEnabled(false))
+            .rlpxConfiguration(
                 RlpxConfiguration.create()
                     .setBindPort(0)
-                    .setSupportedProtocols(MockSubProtocol.create()));
-    try (final P2PNetwork listener = builder().nodeKey(nodeKey).config(listenerConfig).build();
-        final P2PNetwork connector1 = builder().build();
-        final P2PNetwork connector2 = builder().build()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector1.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector2.getRlpxAgent().subscribeConnectRequest((p, d) -> false);
+                    .setSupportedProtocols(MockSubProtocol.create()))
+            .build();
+    try (final P2PNetwork listener = createP2PNetwork(listenerConfig, nodeKey);
+        final P2PNetwork connector1 = createP2PNetwork();
+        final P2PNetwork connector2 = createP2PNetwork()) {
+      listener.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      connector1.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      connector2
+          .getRlpxAgent()
+          .ifPresent(
+              agent ->
+                  agent.setPeerConnectionGatekeeper(
+                      (p, d) -> Optional.of(DisconnectReason.TOO_MANY_PEERS)));
 
       // Setup listener and first connection
       listener.start();
@@ -192,12 +194,10 @@ public class P2PPlainNetworkTest {
     final Capability cap1 = Capability.create(subprotocol1.getName(), 68);
     final SubProtocol subprotocol2 = MockSubProtocol.create("oth");
     final Capability cap2 = Capability.create(subprotocol2.getName(), 68);
-    try (final P2PNetwork listener =
-            builder().nodeKey(listenerNodeKey).supportedCapabilities(cap1).build();
-        final P2PNetwork connector =
-            builder().nodeKey(connectorNodeKey).supportedCapabilities(cap2).build()) {
-      listener.getRlpxAgent().subscribeConnectRequest(testCallback);
-      connector.getRlpxAgent().subscribeConnectRequest(testCallback);
+    try (final P2PNetwork listener = createP2PNetwork(listenerNodeKey, List.of(cap1));
+        final P2PNetwork connector = createP2PNetwork(connectorNodeKey, List.of(cap2))) {
+      listener.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      connector.getRlpxAgent().ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
 
       listener.start();
       connector.start();
@@ -215,10 +215,14 @@ public class P2PPlainNetworkTest {
   public void rejectIncomingConnectionFromDenylistedPeer() throws Exception {
     final PeerPermissionsDenylist localDenylist = PeerPermissionsDenylist.create();
 
-    try (final P2PNetwork localNetwork = builder().peerPermissions(localDenylist).build();
-        final P2PNetwork remoteNetwork = builder().build()) {
-      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
-      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+    try (final P2PNetwork localNetwork = createP2PNetwork(localDenylist);
+        final P2PNetwork remoteNetwork = createP2PNetwork()) {
+      localNetwork
+          .getRlpxAgent()
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      remoteNetwork
+          .getRlpxAgent()
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
 
       localNetwork.start();
       remoteNetwork.start();
@@ -264,15 +268,19 @@ public class P2PPlainNetworkTest {
     final PeerPermissions peerPermissions = mock(PeerPermissions.class);
     when(peerPermissions.isPermitted(any(), any(), any())).thenReturn(true);
 
-    try (final P2PNetwork localNetwork = builder().peerPermissions(peerPermissions).build();
-        final P2PNetwork remoteNetwork = builder().build()) {
-      localNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
-      remoteNetwork.getRlpxAgent().subscribeConnectRequest(testCallback);
+    try (final P2PNetwork localNetwork = createP2PNetwork(peerPermissions);
+        final P2PNetwork remoteNetwork = createP2PNetwork()) {
+      localNetwork
+          .getRlpxAgent()
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
+      remoteNetwork
+          .getRlpxAgent()
+          .ifPresent(agent -> agent.setPeerConnectionGatekeeper(testCallback));
 
       localNetwork.start();
       remoteNetwork.start();
 
-      final EnodeURL localEnode = localNetwork.getLocalEnode().get();
+      final EnodeURLImpl localEnode = localNetwork.getLocalEnode().get();
       final Peer localPeer = DefaultPeer.fromEnodeURL(localEnode);
       final Peer remotePeer = DefaultPeer.fromEnodeURL(remoteNetwork.getLocalEnode().get());
 
@@ -306,7 +314,7 @@ public class P2PPlainNetworkTest {
     }
   }
 
-  private final ShouldConnectCallback testCallback = (p, d) -> true;
+  private final PeerConnectionGatekeeper testCallback = (p, d) -> Optional.empty();
 
   private Peer createPeer(final Bytes nodeId, final int listenPort) {
     return DefaultPeer.fromEnodeURL(
@@ -317,22 +325,32 @@ public class P2PPlainNetworkTest {
             .build());
   }
 
-  private DefaultP2PNetwork.Builder builder() {
-    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
-    final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO);
-    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
-    return DefaultP2PNetwork.builder()
-        .vertx(vertx)
-        .config(config)
-        .nodeKey(NodeKeyUtils.generate())
-        .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(EthProtocolHelper.LATEST))
-        .storageProvider(new InMemoryKeyValueStorageProvider())
-        .blockNumberForks(Collections.emptyList())
-        .timestampForks(Collections.emptyList())
-        .blockchain(blockchainMock)
-        .allConnectionsSupplier(Stream::empty)
-        .allActiveConnectionsSupplier(Stream::empty);
+  private P2PNetwork createP2PNetwork() {
+    return DefaultP2PNetworkTestBuilder.builder(config, vertx, NodeKeyUtils.generate()).build();
+  }
+
+  private P2PNetwork createP2PNetwork(final NetworkingConfiguration config, final NodeKey nodeKey) {
+    return DefaultP2PNetworkTestBuilder.builder(config, vertx, nodeKey).build();
+  }
+
+  private P2PNetwork createP2PNetwork(final NodeKey nodeKey) {
+    return DefaultP2PNetworkTestBuilder.builder(config, vertx, nodeKey).build();
+  }
+
+  private P2PNetwork createP2PNetwork(
+      final NodeKey nodeKey, final List<Capability> supportedCapabilities) {
+    return DefaultP2PNetworkTestBuilder.builder(
+            config, vertx, nodeKey, PeerPermissions.noop(), supportedCapabilities)
+        .build();
+  }
+
+  private P2PNetwork createP2PNetwork(final PeerPermissions peerPermissions) {
+    return DefaultP2PNetworkTestBuilder.builder(
+            config,
+            vertx,
+            NodeKeyUtils.generate(),
+            peerPermissions,
+            List.of(EthProtocolHelper.LATEST))
+        .build();
   }
 }

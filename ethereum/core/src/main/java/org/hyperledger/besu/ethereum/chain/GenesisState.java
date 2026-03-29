@@ -15,15 +15,14 @@
 package org.hyperledger.besu.ethereum.chain;
 
 import static java.util.Collections.emptyList;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,14 +32,10 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.net.URL;
 import java.util.List;
@@ -158,37 +153,11 @@ public final class GenesisState {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
-    final Optional<BlockAccessList> blockAccessList =
-        isAmsterdamAtGenesis(config)
-            ? Optional.of(BlockAccessList.builder().build())
-            : Optional.empty();
-
-    return new BlockBody(emptyList(), emptyList(), withdrawals, blockAccessList);
+    return new BlockBody(emptyList(), emptyList(), withdrawals);
   }
 
   public Block getBlock() {
     return block;
-  }
-
-  private static void ensureGenesisArchiveContext(final MutableWorldState genesisState) {
-    if (genesisState instanceof PathBasedWorldState) {
-      if (((PathBasedWorldState) genesisState)
-          .getWorldStateStorage()
-          .getWorldStateBlockNumber()
-          .isEmpty()) {
-        // Bonsai archive nodes need the block number for the current state in order to persist flat
-        // DB keys. For every other block this is automatically set to the previous block number +
-        // 1. Since this is not possible for the genesis block we manually set it.
-        SegmentedKeyValueStorageTransaction genesisStateTX =
-            ((PathBasedWorldState) genesisState)
-                .getWorldStateStorage()
-                .getComposedWorldStateStorage()
-                .startTransaction();
-        genesisStateTX.put(
-            TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(0).toArrayUnsafe());
-        genesisStateTX.commit();
-      }
-    }
   }
 
   /**
@@ -205,7 +174,6 @@ public final class GenesisState {
       final Stream<GenesisAccount> genesisAccounts,
       final BlockHeader rootHeader) {
     final WorldUpdater updater = target.updater();
-    ensureGenesisArchiveContext(target);
     genesisAccounts.forEach(
         genesisAccount -> {
           final MutableAccount account = updater.createAccount(genesisAccount.address());
@@ -260,6 +228,7 @@ public final class GenesisState {
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
         .requestsHash(isPragueAtGenesis(genesis) ? Hash.EMPTY_REQUESTS_HASH : null)
         .balHash(isAmsterdamAtGenesis(genesis) ? Hash.EMPTY_BAL_HASH : null)
+        .slotNumber(isAmsterdamAtGenesis(genesis) ? parseSlotNumber(genesis) : null)
         .buildBlockHeader();
   }
 
@@ -322,6 +291,11 @@ public final class GenesisState {
         "parentBeaconBlockRoot", genesis.getParentBeaconBlockRoot(), Bytes32::fromHexString);
   }
 
+  private static long parseSlotNumber(final GenesisConfig genesis) {
+    return withNiceErrorMessage(
+        "slotNumber", genesis.getSlotNumber(), GenesisState::parseUnsignedLong);
+  }
+
   private static long parseUnsignedLong(final String value) {
     String v = value.toLowerCase(Locale.US);
     if (v.startsWith("0x")) {
@@ -343,15 +317,7 @@ public final class GenesisState {
     if (cancunTimestamp.isPresent()) {
       return genesis.getTimestamp() >= cancunTimestamp.getAsLong();
     }
-    return isPragueAtGenesis(genesis) || isCancunEOFAtGenesis(genesis);
-  }
-
-  private static boolean isCancunEOFAtGenesis(final GenesisConfig genesis) {
-    final OptionalLong cancunEOFTimestamp = genesis.getConfigOptions().getCancunEOFTime();
-    if (cancunEOFTimestamp.isPresent()) {
-      return genesis.getTimestamp() >= cancunEOFTimestamp.getAsLong();
-    }
-    return false;
+    return isPragueAtGenesis(genesis);
   }
 
   private static boolean isPragueAtGenesis(final GenesisConfig genesis) {

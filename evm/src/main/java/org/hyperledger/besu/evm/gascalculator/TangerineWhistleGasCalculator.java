@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 
 /** The Tangerine whistle gas calculator. */
 public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
@@ -33,7 +34,8 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
 
   private static final long SELFDESTRUCT_OPERATION_GAS_COST = 5_000L;
 
-  private static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
+  /** Cost for {@link SelfDestructOperation} which creates a new account. */
+  protected static final long SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT = 30_000L;
 
   private static final long SLOAD_OPERATION_GAS_COST = 200L;
 
@@ -56,7 +58,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   }
 
   @Override
-  public long callOperationGasCost(
+  public long callOperationStaticGasCost(
       final MessageFrame frame,
       final long stipend,
       final long inputDataOffset,
@@ -78,6 +80,23 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
     if (!transferValue.isZero()) {
       cost = clampedAdd(cost, callValueTransferGasCost());
     }
+
+    return cost;
+  }
+
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long staticCallCost,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Address recipientAddress,
+      final boolean accountIsWarm) {
+    long cost = staticCallCost;
 
     final Account recipient = frame.getWorldUpdater().get(recipientAddress);
     if (recipient == null) {
@@ -122,8 +141,13 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
     if (recipient == null) {
       return SELFDESTRUCT_OPERATION_CREATES_NEW_ACCOUNT;
     } else {
-      return SELFDESTRUCT_OPERATION_GAS_COST;
+      return selfDestructOperationStaticGasCost();
     }
+  }
+
+  @Override
+  public long selfDestructOperationStaticGasCost() {
+    return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
   @Override

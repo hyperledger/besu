@@ -58,11 +58,11 @@ import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.WorldStatePreimageStorage;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
 import java.math.BigInteger;
@@ -121,16 +121,15 @@ public class MergeBesuControllerBuilderTest {
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getParentHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     lenient().when(genesisConfig.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
-    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.toHexString());
+    lenient().when(genesisConfig.getMixHash()).thenReturn(Hash.ZERO.getBytes().toHexString());
     lenient().when(genesisConfig.getNonce()).thenReturn(Long.toHexString(1));
     lenient().when(genesisConfig.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
         .thenReturn((Optional.of(UInt256.valueOf(100L))));
-    when(genesisConfigOptions.getThanosBlockNumber()).thenReturn(OptionalLong.empty());
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     lenient().when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     lenient()
@@ -192,7 +191,7 @@ public class MergeBesuControllerBuilderTest {
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .networkConfiguration(NetworkingConfiguration.create())
+            .networkConfiguration(NetworkingConfiguration.DEFAULT)
             .besuComponent(mock(BesuComponent.class))
             .networkId(networkId)
             .apiConfiguration(ImmutableApiConfiguration.builder().build());

@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
@@ -47,16 +49,10 @@ public class Scalars {
   private Scalars() {}
 
   private static final Coercing<Address, String> ADDRESS_COERCING =
-      new Coercing<Address, String>() {
-        Address convertImpl(final Object input) {
+      new Coercing<>() {
+        private Address convertImpl(final Object input) {
           if (input instanceof Address address) {
             return address;
-          } else if (input instanceof Bytes bytes) {
-            if (((Bytes) input).size() <= 20) {
-              return Address.wrap(bytes);
-            } else {
-              return null;
-            }
           } else if (input instanceof StringValue stringValue) {
             return convertImpl(stringValue.getValue());
           } else if (input instanceof String string) {
@@ -76,7 +72,7 @@ public class Scalars {
             throws CoercingSerializeException {
           Address result = convertImpl(input);
           if (result != null) {
-            return result.toHexString();
+            return result.getBytes().toHexString();
           } else {
             throw new CoercingSerializeException("Unable to serialize " + input + " as an Address");
           }
@@ -111,10 +107,140 @@ public class Scalars {
         }
       };
 
-  private static final Coercing<String, String> BIG_INT_COERCING =
-      new Coercing<String, String>() {
+  private static final Coercing<LogTopic, String> LOG_TOPIC_COERCING =
+      new Coercing<>() {
 
-        String convertImpl(final Object input) {
+        private LogTopic convertImpl(final Object input) {
+          if (input instanceof LogTopic logTopic) {
+            return logTopic;
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof String string) {
+            if (!Quantity.isValid(string)) {
+              throw new CoercingParseLiteralException(
+                  "LogTopic value '" + input + "' is not prefixed with 0x");
+            } else {
+              try {
+                return LogTopic.wrap(Bytes32.fromHexStringLenient(string));
+              } catch (IllegalArgumentException iae) {
+                return null;
+              }
+            }
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as a LogTopic");
+          } else {
+            return result.getBytes().toHexString();
+          }
+        }
+
+        @Override
+        public LogTopic parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as a LogTopic");
+          } else {
+            return result;
+          }
+        }
+
+        @Override
+        public LogTopic parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseLiteralException("Value is not any LogTopic : '" + input + "'");
+          } else {
+            return result;
+          }
+        }
+      };
+
+  private static final Coercing<VersionedHash, String> VERSIONED_HASH_COERCING =
+      new Coercing<>() {
+        private VersionedHash convertImpl(final Object input) {
+          if (input instanceof VersionedHash versionedHash) {
+            return versionedHash;
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof String string) {
+            if (!Quantity.isValid(string)) {
+              throw new CoercingParseLiteralException(
+                  "VersionedHash value '" + input + "' is not prefixed with 0x");
+            } else {
+              try {
+                return new VersionedHash(Bytes32.fromHexStringLenient(string));
+              } catch (IllegalArgumentException iae) {
+                return null;
+              }
+            }
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingSerializeException(
+                "Unable to serialize " + input + " as a VersionedHash");
+          } else {
+            return result.getBytes().toHexString();
+          }
+        }
+
+        @Override
+        public VersionedHash parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as a VersionedHash");
+          } else {
+            return result;
+          }
+        }
+
+        @Override
+        public VersionedHash parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseLiteralException(
+                "Value is not any VersionedHash : '" + input + "'");
+          } else {
+            return result;
+          }
+        }
+      };
+
+  private static final Coercing<String, String> BIG_INT_COERCING =
+      new Coercing<>() {
+        private String convertImpl(final Object input) {
           if (input instanceof String string) {
             try {
               return Bytes.fromHexStringLenient(string).toShortHexString();
@@ -176,9 +302,8 @@ public class Scalars {
       };
 
   private static final Coercing<Bytes, String> BYTES_COERCING =
-      new Coercing<Bytes, String>() {
-
-        Bytes convertImpl(final Object input) {
+      new Coercing<>() {
+        private Bytes convertImpl(final Object input) {
           if (input instanceof Bytes bytes) {
             return bytes;
           } else if (input instanceof StringValue stringValue) {
@@ -239,10 +364,73 @@ public class Scalars {
         }
       };
 
-  private static final Coercing<Bytes32, String> BYTES32_COERCING =
-      new Coercing<Bytes32, String>() {
+  private static final Coercing<Hash, String> HASH_COERCING =
+      new Coercing<>() {
+        private Hash convertImpl(final Object input) {
+          if (input instanceof Hash hash) {
+            return hash;
+          } else if (input instanceof StringValue stringValue) {
+            return convertImpl(stringValue.getValue());
+          } else if (input instanceof String string) {
+            if (!Quantity.isValid(string)) {
+              throw new CoercingParseLiteralException(
+                  "Hash value '" + input + "' is not prefixed with 0x");
+            } else {
+              try {
+                return Hash.wrap(Bytes32.fromHexStringLenient(string));
+              } catch (IllegalArgumentException iae) {
+                return null;
+              }
+            }
+          } else {
+            return null;
+          }
+        }
 
-        Bytes32 convertImpl(final Object input) {
+        @Override
+        public String serialize(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingSerializeException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingSerializeException("Unable to serialize " + input + " as a Hash");
+          } else {
+            return result.getBytes().toHexString();
+          }
+        }
+
+        @Override
+        public Hash parseValue(
+            final Object input, final GraphQLContext graphQLContext, final Locale locale)
+            throws CoercingParseValueException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseValueException(
+                "Unable to parse variable value " + input + " as a Hash");
+          } else {
+            return result;
+          }
+        }
+
+        @Override
+        public Hash parseLiteral(
+            final Value<?> input,
+            final CoercedVariables variables,
+            final GraphQLContext graphQLContext,
+            final Locale locale)
+            throws CoercingParseLiteralException {
+          var result = convertImpl(input);
+          if (result == null) {
+            throw new CoercingParseLiteralException("Value is not any Hash : '" + input + "'");
+          } else {
+            return result;
+          }
+        }
+      };
+
+  private static final Coercing<Bytes32, String> BYTES32_COERCING =
+      new Coercing<>() {
+        private Bytes32 convertImpl(final Object input) {
           if (input instanceof Bytes32 bytes32) {
             return bytes32;
           } else if (input instanceof Bytes bytes) {
@@ -264,8 +452,6 @@ public class Scalars {
                 return null;
               }
             }
-          } else if (input instanceof VersionedHash versionedHash) {
-            return versionedHash.toBytes();
           } else {
             return null;
           }
@@ -450,6 +636,54 @@ public class Scalars {
         .name("Long")
         .description("A Long (UInt64) scalar")
         .coercing(LONG_COERCING)
+        .build();
+  }
+
+  /**
+   * Creates a new GraphQLScalarType object for a Hash.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the Hash
+   * type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for a Hash.
+   */
+  public static GraphQLScalarType hashScalar() {
+    return GraphQLScalarType.newScalar()
+        .name("Hash")
+        .description("A Hash (32 byte keccak256 hash) scalar")
+        .coercing(HASH_COERCING)
+        .build();
+  }
+
+  /**
+   * Creates a new GraphQLScalarType object for a LogTopic.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the
+   * LogTopic type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for a LogTopic.
+   */
+  public static GraphQLScalarType logTopicScalar() {
+    return GraphQLScalarType.newScalar()
+        .name("LogTopic")
+        .description("A LogTopic (32 byte log topic) scalar")
+        .coercing(LOG_TOPIC_COERCING)
+        .build();
+  }
+
+  /**
+   * Creates a new GraphQLScalarType object for a VersionedHash.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the
+   * VersionedHash type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for a VersionedHash.
+   */
+  public static GraphQLScalarType versionedHashScalar() {
+    return GraphQLScalarType.newScalar()
+        .name("VersionedHash")
+        .description("A VersionedHash (32 byte versioned hash) scalar")
+        .coercing(VERSIONED_HASH_COERCING)
         .build();
   }
 }

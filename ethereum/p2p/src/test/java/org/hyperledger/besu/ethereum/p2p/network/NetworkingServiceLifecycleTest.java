@@ -19,26 +19,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.p2p.NetworkingTestHelper.configWithRandomPorts;
 import static org.junit.jupiter.api.Assumptions.assumingThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
-import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
-import org.hyperledger.besu.ethereum.p2p.EthProtocolHelper;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryServiceException;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Stream;
 
 import io.vertx.core.Vertx;
 import jakarta.validation.constraints.NotNull;
@@ -60,42 +50,28 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork() throws IOException {
     final NetworkingConfiguration config = configWithRandomPorts();
-    final DefaultP2PNetwork.Builder builder = getP2PNetworkBuilder();
+    final DefaultP2PNetwork.Builder builder = getP2PNetworkBuilder(config);
     try (final P2PNetwork service = builder.build()) {
       service.start();
       final EnodeURL enode = service.getLocalEnode().get();
       final int udpPort = enode.getDiscoveryPortOrZero();
       final int tcpPort = enode.getListeningPortOrZero();
 
-      assertThat(enode.getIpAsString()).isEqualTo(config.getDiscovery().getAdvertisedHost());
+      assertThat(enode.getIpAsString())
+          .isEqualTo(config.discoveryConfiguration().getAdvertisedHost());
       assertThat(udpPort).isNotZero();
       assertThat(tcpPort).isNotZero();
       assertThat(service.streamDiscoveredPeers()).hasSize(0);
     }
   }
 
-  @NotNull
-  private DefaultP2PNetwork.Builder getP2PNetworkBuilder() {
-    final DefaultP2PNetwork.Builder builder = builder();
-    final MutableBlockchain blockchainMock = mock(MutableBlockchain.class);
-    final Block blockMock = mock(Block.class);
-    when(blockMock.getHash()).thenReturn(Hash.ZERO);
-    when(blockchainMock.getGenesisBlock()).thenReturn(blockMock);
-    builder
-        .blockchain(blockchainMock)
-        .blockNumberForks(Collections.emptyList())
-        .timestampForks(Collections.emptyList())
-        .allConnectionsSupplier(Stream::empty)
-        .allActiveConnectionsSupplier(Stream::empty);
-    return builder;
-  }
-
   @Test
   public void createP2PNetwork_NullHost() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setBindHost(null));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder().config(config);
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindHost(null))
+            .build();
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -108,9 +84,10 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_InvalidHost() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder().config(config);
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindHost("fake.fake.fake"))
+            .build();
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -123,9 +100,10 @@ public class NetworkingServiceLifecycleTest {
   @Test
   public void createP2PNetwork_InvalidPort() {
     final NetworkingConfiguration config =
-        NetworkingConfiguration.create()
-            .setDiscovery(DiscoveryConfiguration.create().setBindPort(-1));
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder().config(config);
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(DiscoveryConfiguration.create().setBindPort(-1))
+            .build();
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(
             () -> {
               try (final P2PNetwork ignored = p2pNetworkBuilder.build()) {
@@ -137,14 +115,14 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void createP2PNetwork_NullKeyPair() {
-    final DefaultP2PNetwork.Builder p2pNetworkBuilder = builder().config(config);
+    final DefaultP2PNetwork.Builder p2pNetworkBuilder = getP2PNetworkBuilder(config);
     assertThatThrownBy(() -> p2pNetworkBuilder.nodeKey(null))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
   public void startStopP2PNetwork() throws IOException {
-    try (final P2PNetwork service = getP2PNetworkBuilder().build()) {
+    try (final P2PNetwork service = getP2PNetworkBuilder(config).build()) {
       service.start();
       service.stop();
     }
@@ -152,8 +130,8 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void startDiscoveryAgentBackToBack() throws IOException {
-    try (final P2PNetwork service1 = getP2PNetworkBuilder().build();
-        final P2PNetwork service2 = getP2PNetworkBuilder().build()) {
+    try (final P2PNetwork service1 = getP2PNetworkBuilder(config).build();
+        final P2PNetwork service2 = getP2PNetworkBuilder(config).build()) {
       service1.start();
       service1.stop();
       service2.start();
@@ -166,13 +144,13 @@ public class NetworkingServiceLifecycleTest {
     assumingThat(
         System.getProperty("user.language").startsWith("en"),
         () -> {
-          try (final P2PNetwork service1 = getP2PNetworkBuilder().config(config).build()) {
+          try (final P2PNetwork service1 = getP2PNetworkBuilder(config).build()) {
             service1.start();
             final NetworkingConfiguration config = configWithRandomPorts();
             final int usedPort = service1.getLocalEnode().get().getDiscoveryPortOrZero();
             assertThat(usedPort).isNotZero();
-            config.getDiscovery().setBindPort(usedPort);
-            try (final P2PNetwork service2 = getP2PNetworkBuilder().config(config).build()) {
+            config.discoveryConfiguration().setBindPort(usedPort);
+            try (final P2PNetwork service2 = getP2PNetworkBuilder(config).build()) {
               try {
                 service2.start();
               } catch (final Exception e) {
@@ -193,19 +171,14 @@ public class NetworkingServiceLifecycleTest {
 
   @Test
   public void createP2PNetwork_NoActivePeers() throws IOException {
-    try (final P2PNetwork agent = getP2PNetworkBuilder().build()) {
+    try (final P2PNetwork agent = getP2PNetworkBuilder(config).build()) {
       assertThat(agent.streamDiscoveredPeers().collect(toList())).isEmpty();
       assertThat(agent.getPeers()).isEmpty();
     }
   }
 
-  private DefaultP2PNetwork.Builder builder() {
-    return DefaultP2PNetwork.builder()
-        .vertx(vertx)
-        .nodeKey(nodeKey)
-        .config(config)
-        .metricsSystem(new NoOpMetricsSystem())
-        .supportedCapabilities(Arrays.asList(EthProtocolHelper.LATEST))
-        .storageProvider(new InMemoryKeyValueStorageProvider());
+  @NotNull
+  private DefaultP2PNetwork.Builder getP2PNetworkBuilder(final NetworkingConfiguration config) {
+    return DefaultP2PNetworkTestBuilder.builder(config, vertx, nodeKey);
   }
 }

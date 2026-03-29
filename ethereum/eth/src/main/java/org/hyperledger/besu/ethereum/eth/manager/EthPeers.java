@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerClientName;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -423,7 +424,7 @@ public class EthPeers implements PeerSelector {
         .filter(c -> !c.isDisconnected());
   }
 
-  public boolean shouldTryToConnect(final Peer peer, final boolean inbound) {
+  public Optional<DisconnectReason> gatePeerConnection(final Peer peer, final boolean inbound) {
 
     if (peer.getForkId().isPresent()) {
       final ForkId forkId = peer.getForkId().get();
@@ -433,7 +434,7 @@ public class EthPeers implements PeerSelector {
             .addArgument(peer::getId)
             .log();
 
-        return false;
+        return Optional.of(DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
       }
     }
 
@@ -443,10 +444,14 @@ public class EthPeers implements PeerSelector {
           .setMessage("not connecting to peer {} - already connected")
           .addArgument(peer.getLoggableId())
           .log();
-      return false;
+      return Optional.of(DisconnectReason.ALREADY_CONNECTED);
     }
 
-    return peerCount() < getMaxPeers() || needMoreSnapServers() || canExceedPeerLimits(id);
+    if (peerCount() < getMaxPeers() || needMoreSnapServers() || canExceedPeerLimits(id)) {
+      return Optional.empty();
+    } else {
+      return Optional.of(DisconnectReason.TOO_MANY_PEERS);
+    }
   }
 
   private boolean alreadyConnectedOrConnecting(final boolean inbound, final Bytes id) {
@@ -501,7 +506,7 @@ public class EthPeers implements PeerSelector {
         .filter(filter)
         .filter(EthPeerImmutableAttributes::hasAvailableRequestCapacity)
         .filter(EthPeerImmutableAttributes::isFullyValidated)
-        .min(LEAST_TO_MOST_BUSY)
+        .max(getBestPeerComparator())
         .map(EthPeerImmutableAttributes::ethPeer);
   }
 
@@ -606,7 +611,7 @@ public class EthPeers implements PeerSelector {
 
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
-            if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
+            if (syncMode == SyncMode.SNAP) {
               // even if we have finished the snap sync, we still want to know if the peer is a snap
               // server
               isServingSnapFuture =

@@ -117,6 +117,14 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
       List<BalanceChange> balanceChanges,
       List<NonceChange> nonceChanges,
       List<CodeChange> codeChanges) {
+
+    public boolean hasAnyChange() {
+      return !balanceChanges.isEmpty()
+          || !nonceChanges.isEmpty()
+          || !codeChanges.isEmpty()
+          || !storageChanges.isEmpty();
+    }
+
     @Override
     public String toString() {
       return "AccountChanges{"
@@ -207,7 +215,7 @@ public record BlockAccessList(List<AccountChanges> accountChanges) {
       return new BlockAccessList(
           accountChangesBuilders.values().stream()
               .map(AccountBuilder::build)
-              .sorted(Comparator.comparing(ac -> ac.address().toUnprefixedHexString()))
+              .sorted(Comparator.comparing(ac -> ac.address().getBytes().toUnprefixedHexString()))
               .toList());
     }
 

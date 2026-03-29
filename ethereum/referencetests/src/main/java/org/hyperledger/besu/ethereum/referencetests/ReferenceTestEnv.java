@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 import java.util.Map;
@@ -123,7 +123,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
       @JsonProperty("parentUncleHash") final String _parentUncleHash,
-      @JsonProperty("isStateTest") final String isStateTest) {
+      @JsonProperty("isStateTest") final String isStateTest,
+      @JsonProperty("slotNumber") final String slotNumber) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
@@ -146,7 +147,8 @@ public class ReferenceTestEnv extends BlockHeader {
         currentExcessBlobGas == null ? null : BlobGas.of(Long.decode(currentExcessBlobGas)),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // requestsHash
-        null,
+        null, // block access list hash
+        slotNumber == null ? null : decodeUnsignedLong(slotNumber),
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
@@ -172,10 +174,10 @@ public class ReferenceTestEnv extends BlockHeader {
       if (currentBeaconRoot == null) {
         this.beaconRoot = null;
       } else {
-        this.beaconRoot = Hash.fromHexString(currentBeaconRoot);
+        this.beaconRoot = Bytes32.wrap(Hash.fromHexString(currentBeaconRoot).getBytes());
       }
     } else {
-      this.beaconRoot = Hash.fromHexString(beaconRoot);
+      this.beaconRoot = Bytes32.wrap(Hash.fromHexString(beaconRoot).getBytes());
     }
     this.isStateTest = Boolean.parseBoolean(isStateTest);
   }

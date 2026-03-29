@@ -105,7 +105,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
               createTransaction(
                   0,
                   Wei.of(DEFAULT_MIN_GAS_PRICE.multiply(2).toBigInteger().pow(i + 1)),
-                  SIGNATURE_ALGORITHM.get().generateKeyPair()));
+                  SIGNATURE_ALGORITHM.generateKeyPair()));
       remoteTxs.add(highValueRemoteTx);
       prioritizeResult = prioritizeTransaction(highValueRemoteTx);
       assertThat(prioritizeResult).isEqualTo(ADDED);
@@ -149,6 +149,14 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(DROPPED);
     assertEvicted(lowGasPriceTx);
     assertTransactionNotPrioritized(lowGasPriceTx);
+  }
+
+  @Test
+  public void txWithGasPriceEqualsToMineableMinGasPriceIsPrioritized() {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(createTransaction(0, DEFAULT_MIN_GAS_PRICE, KEYS1));
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(ADDED);
+    assertTransactionPrioritized(lowGasPriceTx);
   }
 
   @Test

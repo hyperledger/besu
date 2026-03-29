@@ -22,11 +22,14 @@ import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
+import static org.hyperledger.besu.ethereum.eth.core.Utils.serializeReceiptsList;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogTopic;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -39,8 +42,6 @@ import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEnc
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.evm.log.LogTopic;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -60,6 +61,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class MessageWrapperTest {
@@ -186,33 +188,34 @@ public class MessageWrapperTest {
     final var testJson = parseTestFile("ReceiptsPacket66.json");
     final Bytes expected = Bytes.fromHexString(testJson.get("rlp").asText());
     final ReceiptsMessage receiptsMessage =
-        ReceiptsMessage.create(
-            singletonList(
+        ReceiptsMessage.createUnsafe(
+            serializeReceiptsList(
                 singletonList(
-                    new TransactionReceipt(
-                        TransactionType.FRONTIER,
-                        0,
-                        1,
-                        singletonList(
-                            new LogWithMetadata(
-                                0,
-                                0,
-                                Hash.ZERO,
-                                0L,
-                                Hash.ZERO,
-                                0,
-                                Address.fromHexString("0x11"),
-                                Bytes.fromHexString("0x0100ff"),
-                                Stream.of(
-                                        "0x000000000000000000000000000000000000000000000000000000000000dead",
-                                        "0x000000000000000000000000000000000000000000000000000000000000beef")
-                                    .map(LogTopic::fromHexString)
-                                    .collect(toUnmodifiableList()),
-                                false)),
-                        LogsBloomFilter.fromHexString(
-                            "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
-                        Optional.empty()))),
-            TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION);
+                    singletonList(
+                        new TransactionReceipt(
+                            TransactionType.FRONTIER,
+                            0,
+                            1,
+                            singletonList(
+                                new LogWithMetadata(
+                                    0,
+                                    0,
+                                    Hash.ZERO,
+                                    0L,
+                                    Hash.ZERO,
+                                    0,
+                                    Address.fromHexString("0x11"),
+                                    Bytes.fromHexString("0x0100ff"),
+                                    Stream.of(
+                                            "0x000000000000000000000000000000000000000000000000000000000000dead",
+                                            "0x000000000000000000000000000000000000000000000000000000000000beef")
+                                        .map(LogTopic::fromHexString)
+                                        .collect(toUnmodifiableList()),
+                                    false)),
+                            LogsBloomFilter.fromHexString(
+                                "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+                            Optional.empty()))),
+                TransactionReceiptEncodingConfiguration.DEFAULT_NETWORK_CONFIGURATION));
     final Bytes actual = receiptsMessage.wrapMessageData(BigInteger.valueOf(1111)).getData();
     assertThat(actual).isEqualTo(expected);
   }
@@ -394,8 +397,9 @@ public class MessageWrapperTest {
           Long.decode(timestamp),
           Bytes.fromHexString(extraData),
           null,
-          Hash.fromHexString(mixHash),
+          Bytes32.wrap(Hash.fromHexString(mixHash).getBytes()),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          null,
           null,
           null,
           null,

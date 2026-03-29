@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -32,6 +33,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
@@ -43,6 +46,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.DefaultStateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
@@ -77,9 +81,12 @@ class BlockImportExceptionHandlingTest {
           Wei.ZERO,
           BlockHeader::getCoinbase,
           true,
-          protocolSchedule);
+          protocolSchedule,
+          BalConfiguration.DEFAULT);
   private final BlockHeaderValidator blockHeaderValidator = mock(BlockHeaderValidator.class);
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
+  private final BlockAccessListValidator blockAccessListValidator =
+      mock(BlockAccessListValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
   private final GasCalculator gasCalculator = mock(GasCalculator.class);
@@ -123,9 +130,12 @@ class BlockImportExceptionHandlingTest {
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
     when(protocolSpec.getGasLimitCalculator()).thenReturn(gasLimitCalculator);
     when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
+    when(blockAccessListValidator.validate(any(), any(), anyInt())).thenReturn(true);
+    when(protocolSpec.getStateRootCommitterFactory())
+        .thenReturn(new DefaultStateRootCommitterFactory());
     mainnetBlockValidator =
         MainnetBlockValidatorBuilder.frontier(
-            blockHeaderValidator, blockBodyValidator, blockProcessor);
+            blockHeaderValidator, blockBodyValidator, blockProcessor, blockAccessListValidator);
   }
 
   @Test
@@ -158,6 +168,7 @@ class BlockImportExceptionHandlingTest {
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY),
+            any(),
             any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -195,6 +206,7 @@ class BlockImportExceptionHandlingTest {
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY),
+            any(),
             any()))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -264,6 +276,7 @@ class BlockImportExceptionHandlingTest {
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY),
+            any(),
             any()))
         .thenThrow(new StorageException("database problem"));
     assertThat(badBlockManager.getBadBlocks()).isEmpty();

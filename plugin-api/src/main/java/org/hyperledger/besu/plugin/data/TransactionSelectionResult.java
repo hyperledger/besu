@@ -59,6 +59,7 @@ public class TransactionSelectionResult {
 
   private enum BaseStatus implements Status {
     SELECTED,
+    SELECTED_ROLLBACK(false, false, false),
     BLOCK_FULL(true, false, false),
     BLOBS_FULL(false, false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false, false),
@@ -116,6 +117,14 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult SELECTED =
       new TransactionSelectionResult(BaseStatus.SELECTED);
 
+  /**
+   * Relate to transactions that are evaluated in group (aka bundle), when a previously selected
+   * transaction decision is reverted due to the selection result of a following transaction in the
+   * same group
+   */
+  public static final TransactionSelectionResult SELECTED_ROLLBACK =
+      new TransactionSelectionResult(BaseStatus.SELECTED_ROLLBACK);
+
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
@@ -154,13 +163,6 @@ public class TransactionSelectionResult {
   /** Transaction took too much to evaluate, and it was invalid */
   public static final TransactionSelectionResult INVALID_TX_EVALUATION_TOO_LONG =
       new TransactionSelectionResult(BaseStatus.INVALID_TX_EVALUATION_TOO_LONG);
-
-  /**
-   * The transaction has not been selected since too large and the occupancy of the block is enough
-   * to stop the selection.
-   */
-  public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
-      new TransactionSelectionResult(BaseStatus.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
 
   /**
    * There was an unhandled exception during the evaluation of the transaction. If this occurs, it

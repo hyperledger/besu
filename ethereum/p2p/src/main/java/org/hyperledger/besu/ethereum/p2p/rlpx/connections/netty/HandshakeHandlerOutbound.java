@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.cryptoservices.NodeKey;
-import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.LocalNode;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnectionEventDispatcher;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerLookup;
 import org.hyperledger.besu.ethereum.p2p.rlpx.framing.FramerProvider;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.Handshaker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.handshake.HandshakerProvider;
@@ -52,7 +52,7 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
       final MetricsSystem metricsSystem,
       final HandshakerProvider handshakerProvider,
       final FramerProvider framerProvider,
-      final PeerTable peerTable) {
+      final PeerLookup peerLookup) {
     super(
         subProtocols,
         localNode,
@@ -63,7 +63,7 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
         handshakerProvider,
         framerProvider,
         false,
-        peerTable);
+        peerLookup);
     handshaker.prepareInitiator(
         nodeKey, SignatureAlgorithmFactory.getInstance().createPublicKey(peer.getId()));
     this.first = handshaker.firstMessage();

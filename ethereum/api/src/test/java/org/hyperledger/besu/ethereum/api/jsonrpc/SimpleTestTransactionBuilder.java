@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -70,7 +71,9 @@ public class SimpleTestTransactionBuilder {
     when(transaction.getR()).thenReturn(bigInteger(r));
     when(transaction.getS()).thenReturn(bigInteger(s));
     when(transaction.getTo()).thenReturn(Optional.ofNullable(address(toAddress)));
-    when(transaction.getType()).thenReturn(TransactionType.of(Integer.decode(type)));
+    when(transaction.getType())
+        .thenReturn(
+            TransactionType.fromOpaque(Bytes.fromHexString(type, 1).get(0)).orElse(FRONTIER));
     when(transaction.getSender()).thenReturn(address(fromAddress));
     when(transaction.getPayload()).thenReturn(Bytes.fromHexString(input));
     when(transaction.getValue()).thenReturn(wei(value));

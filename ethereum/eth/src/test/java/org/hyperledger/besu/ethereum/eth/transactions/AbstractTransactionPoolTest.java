@@ -496,19 +496,6 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   }
 
   @Test
-  public void shouldSendFullTransactionsIfPeerDoesNotSupportEth65() {
-    EthPeer peer = mock(EthPeer.class);
-    when(peer.hasSupportForMessage(EthProtocolMessages.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(false);
-
-    givenTransactionIsValid(transaction0);
-    transactionPool.addTransactionViaApi(transaction0);
-    transactionPool.handleConnect(peer);
-    syncTaskCapture.getValue().run();
-    verify(transactionsMessageSender).sendTransactionsToPeer(peer);
-  }
-
-  @Test
   public void shouldSendPooledTransactionHashesToNewlyConnectedPeer() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
@@ -517,6 +504,7 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
     transactionPool.addRemoteTransactions(Collections.singletonList(transaction1));
 
     RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager);
+    transactionPool.handleConnect(peer.getEthPeer());
 
     Set<Transaction> transactionsToSendToPeer =
         peerTransactionTracker.claimTransactionHashesToSendToPeer(peer.getEthPeer());

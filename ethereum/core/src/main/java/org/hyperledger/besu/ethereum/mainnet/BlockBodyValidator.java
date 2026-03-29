@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
+import java.util.OptionalLong;
 
 /** Validates block bodies. */
 public interface BlockBodyValidator {
@@ -36,13 +37,46 @@ public interface BlockBodyValidator {
    * @param bodyValidationMode The validation mode to use for the body
    * @return {@code true} if valid; otherwise {@code false}
    */
+  default boolean validateBody(
+      final ProtocolContext context,
+      final Block block,
+      final List<TransactionReceipt> receipts,
+      final Hash worldStateRootHash,
+      final HeaderValidationMode ommerValidationMode,
+      final BodyValidationMode bodyValidationMode) {
+    return validateBody(
+        context,
+        block,
+        receipts,
+        worldStateRootHash,
+        ommerValidationMode,
+        bodyValidationMode,
+        OptionalLong.empty());
+  }
+
+  /**
+   * Validates that the block body is valid.
+   *
+   * @param context The context to validate against
+   * @param block The block to validate
+   * @param receipts The receipts that correspond to the blocks transactions
+   * @param worldStateRootHash The rootHash defining the world state after processing this block and
+   *     all of its transactions.
+   * @param ommerValidationMode The validation mode to use for ommer headers
+   * @param bodyValidationMode The validation mode to use for the body
+   * @param cumulativeBlockGasUsed The cumulative block gas used from block processing (pre-refund
+   *     for EIP-7778). When provided, this value is used for gas validation instead of deriving
+   *     from receipts.
+   * @return {@code true} if valid; otherwise {@code false}
+   */
   boolean validateBody(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode,
-      final BodyValidationMode bodyValidationMode);
+      final BodyValidationMode bodyValidationMode,
+      final OptionalLong cumulativeBlockGasUsed);
 
   /**
    * Validates that the block body is valid, but skips state root validation.
@@ -51,11 +85,15 @@ public interface BlockBodyValidator {
    * @param block The block to validate
    * @param receipts The receipts that correspond to the blocks transactions
    * @param ommerValidationMode The validation mode to use for ommer headers
+   * @param cumulativeBlockGasUsed The cumulative block gas used from block processing (pre-refund
+   *     for EIP-7778). When provided, this value is used for gas validation instead of deriving
+   *     from receipts. Pass {@code OptionalLong.empty()} when not available (e.g., during sync).
    * @return {@code true} if valid; otherwise {@code false}
    */
   boolean validateBodyLight(
       ProtocolContext context,
       Block block,
       List<TransactionReceipt> receipts,
-      final HeaderValidationMode ommerValidationMode);
+      HeaderValidationMode ommerValidationMode,
+      OptionalLong cumulativeBlockGasUsed);
 }

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.ImmutableEnodeDnsConfiguration;
@@ -39,7 +40,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class NodeLocalConfigPermissioningControllerTest {
 
   @Mock private AllowlistPersistor allowlistPersistor;
-  private final List<EnodeURL> bootnodesList = new ArrayList<>();
+  private final List<NodeIdentifier> bootnodesList = new ArrayList<>();
   private NodeLocalConfigPermissioningController controller;
 
   private final String enode1 =
@@ -114,19 +114,25 @@ public class NodeLocalConfigPermissioningControllerTest {
     NodesAllowlistResult expected = new NodesAllowlistResult(AllowlistOperationResult.SUCCESS);
     NodesAllowlistResult actualResult = controller.addNodes(Lists.newArrayList(enode1));
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
     assertThat(controller.getNodesAllowlist()).containsExactly(enode1);
   }
 
   @Test
   public void whenAddNodesInputHasExistingNodeShouldReturnAddErrorExistingEntry() {
-    controller.addNodes(Arrays.asList(enode1));
+    controller.addNodes(List.of(enode1));
 
     NodesAllowlistResult expected =
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_EXISTING_ENTRY);
     NodesAllowlistResult actualResult = controller.addNodes(Lists.newArrayList(enode1, enode2));
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -136,7 +142,10 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     NodesAllowlistResult actualResult = controller.addNodes(Arrays.asList(enode1, enode1));
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -145,7 +154,10 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodesAllowlistResult actualResult = controller.removeNodes(new ArrayList<>());
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -154,7 +166,10 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodesAllowlistResult actualResult = controller.removeNodes(null);
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -163,7 +178,10 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_ABSENT_ENTRY);
     NodesAllowlistResult actualResult = controller.removeNodes(Lists.newArrayList(enode1, enode2));
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -172,7 +190,10 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_DUPLICATED_ENTRY);
     NodesAllowlistResult actualResult = controller.removeNodes(Lists.newArrayList(enode1, enode1));
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -181,7 +202,10 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodesAllowlistResult actualResult = controller.removeNodes(new ArrayList<>());
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -190,7 +214,10 @@ public class NodeLocalConfigPermissioningControllerTest {
         new NodesAllowlistResult(AllowlistOperationResult.ERROR_EMPTY_ENTRY);
     NodesAllowlistResult actualResult = controller.removeNodes(null);
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
   }
 
   @Test
@@ -198,9 +225,9 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peer1 =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
     String peer2 =
-        "enode://bbbb80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
+        "enode://bbbb80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.2:30303";
 
-    controller.addNodes(Arrays.asList(peer1));
+    controller.addNodes(List.of(peer1));
     assertThat(controller.isPermitted(peer2)).isFalse();
 
     verifyCountersUntouched();
@@ -220,7 +247,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peer2 =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.2:30303";
 
-    controller.addNodes(Arrays.asList(peer1));
+    controller.addNodes(List.of(peer1));
 
     assertThat(controller.isPermitted(peer2)).isFalse();
   }
@@ -232,7 +259,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peer2 =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30302";
 
-    controller.addNodes(Arrays.asList(peer1));
+    controller.addNodes(List.of(peer1));
 
     assertThat(controller.isPermitted(peer2)).isFalse();
   }
@@ -245,7 +272,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peerWithoutDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303";
 
-    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+    controller.addNodes(List.of(peerWithDiscoveryPortSet));
 
     assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
@@ -258,7 +285,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peerWithDifferentDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=10002";
 
-    controller.addNodes(Arrays.asList(peerWithDifferentDiscoveryPortSet));
+    controller.addNodes(List.of(peerWithDifferentDiscoveryPortSet));
 
     assertThat(controller.isPermitted(peerWithDiscoveryPortSet)).isTrue();
   }
@@ -271,7 +298,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peerWithoutDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
 
-    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+    controller.addNodes(List.of(peerWithDiscoveryPortSet));
 
     assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
@@ -284,7 +311,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peerWithoutDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=123";
 
-    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+    controller.addNodes(List.of(peerWithDiscoveryPortSet));
 
     assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
@@ -297,14 +324,14 @@ public class NodeLocalConfigPermissioningControllerTest {
     String peerWithoutDiscoveryPortSet =
         "enode://aaaa80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@127.0.0.1:30303?discport=0";
 
-    controller.addNodes(Arrays.asList(peerWithDiscoveryPortSet));
+    controller.addNodes(List.of(peerWithDiscoveryPortSet));
 
     assertThat(controller.isPermitted(peerWithoutDiscoveryPortSet)).isTrue();
   }
 
   @Test
   public void whenCheckingIfNodeIsPermittedOrderDoesNotMatter() {
-    controller.addNodes(Arrays.asList(enode1));
+    controller.addNodes(List.of(enode1));
 
     verifyCountersUntouched();
 
@@ -401,7 +428,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeAllowlist())
-        .thenReturn(Arrays.asList(EnodeURLImpl.fromString(expectedEnodeURL)));
+        .thenReturn(singletonList(EnodeURLImpl.fromString(expectedEnodeURL)));
     when(permissioningConfig.getEnodeDnsConfiguration())
         .thenReturn(EnodeDnsConfiguration.dnsDisabled());
 
@@ -424,7 +451,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     when(permissioningConfig.getNodePermissioningConfigFilePath()).thenReturn("foo");
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeAllowlist())
-        .thenReturn(Arrays.asList(EnodeURLImpl.fromString(expectedEnodeURI)));
+        .thenReturn(singletonList(EnodeURLImpl.fromString(expectedEnodeURI)));
     controller =
         new NodeLocalConfigPermissioningController(
             permissioningConfig, bootnodesList, selfEnode.getNodeId(), metricsSystem);
@@ -505,7 +532,10 @@ public class NodeLocalConfigPermissioningControllerTest {
 
     NodesAllowlistResult actualResult = controller.removeNodes(Lists.newArrayList(enode1));
 
-    assertThat(actualResult).isEqualToComparingOnlyGivenFields(expected, "result");
+    assertThat(actualResult)
+        .usingRecursiveComparison()
+        .comparingOnlyFields("result")
+        .isEqualTo(expected);
     assertThat(controller.getNodesAllowlist()).containsExactly(enode1, enode2);
   }
 
@@ -525,7 +555,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeAllowlist())
-        .thenReturn(Arrays.asList(EnodeURLImpl.fromString(enode1)));
+        .thenReturn(singletonList(EnodeURLImpl.fromString(enode1)));
     when(permissioningConfig.getEnodeDnsConfiguration())
         .thenReturn(EnodeDnsConfiguration.dnsDisabled());
 
@@ -552,7 +582,7 @@ public class NodeLocalConfigPermissioningControllerTest {
         .thenReturn(permissionsFile.toAbsolutePath().toString());
     when(permissioningConfig.isNodeAllowlistEnabled()).thenReturn(true);
     when(permissioningConfig.getNodeAllowlist())
-        .thenReturn(Arrays.asList(EnodeURLImpl.fromString(enode1)));
+        .thenReturn(singletonList(EnodeURLImpl.fromString(enode1)));
     when(permissioningConfig.getEnodeDnsConfiguration())
         .thenReturn(EnodeDnsConfiguration.dnsDisabled());
 
@@ -567,7 +597,6 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void getNodeAllowlistShouldWorkWhenOnlyDnsEnabled() throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enodeDns);
     final LocalPermissioningConfiguration permissioningConfig =
@@ -591,7 +620,6 @@ public class NodeLocalConfigPermissioningControllerTest {
   }
 
   @Test
-  @SuppressWarnings("unchecked")
   public void getNodeAllowlistShouldWorkWhenDnsAndUpdateEnabled() throws Exception {
     final Path permissionsFile = createPermissionsFileWithNode(enodeDns);
     final LocalPermissioningConfiguration permissioningConfig =
@@ -620,7 +648,7 @@ public class NodeLocalConfigPermissioningControllerTest {
     final String nodePermissionsFileContent = "nodes-allowlist=[\"" + node + "\"]";
     final Path permissionsFile = Files.createTempFile("node_permissions", "");
     permissionsFile.toFile().deleteOnExit();
-    Files.write(permissionsFile, nodePermissionsFileContent.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(permissionsFile, nodePermissionsFileContent);
     return permissionsFile;
   }
 

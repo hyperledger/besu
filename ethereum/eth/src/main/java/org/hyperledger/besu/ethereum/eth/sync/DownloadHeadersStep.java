@@ -91,7 +91,6 @@ public class DownloadHeadersStep
               protocolSchedule,
               protocolContext,
               ethContext,
-              synchronizerConfiguration,
               range.getEnd(),
               range.getSegmentLengthExclusive(),
               validationPolicy,
@@ -143,7 +142,7 @@ public class DownloadHeadersStep
       return new RangeHeaders(checkpointRange, headersToImport);
     } else {
       List<BlockHeader> headersToImport = headers;
-      if (!headers.isEmpty() && headers.get(0).equals(checkpointRange.getStart())) {
+      if (!headers.isEmpty() && headers.getFirst().equals(checkpointRange.getStart())) {
         headersToImport = headers.subList(1, headers.size());
       }
       return new RangeHeaders(checkpointRange, headersToImport);

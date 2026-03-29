@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.math.BigInteger;
@@ -92,7 +92,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(1L)));
+                "0", Hash.ZERO.getBytes().toHexString(), new UnsignedLongParameter(1L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
@@ -109,7 +109,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
+                "0", Hash.ZERO.getBytes().toHexString(), new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty()).isEqualTo(Difficulty.of(1337L));
@@ -123,7 +123,7 @@ public class EngineExchangeTransitionConfigurationTest {
     var response =
         resp(
             new EngineExchangeTransitionConfigurationParameter(
-                "0", Hash.ZERO.toHexString(), new UnsignedLongParameter(0L)));
+                "0", Hash.ZERO.getBytes().toHexString(), new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
     assertThat(result.getTerminalTotalDifficulty())
@@ -147,7 +147,7 @@ public class EngineExchangeTransitionConfigurationTest {
         resp(
             new EngineExchangeTransitionConfigurationParameter(
                 "1",
-                Hash.fromHexStringLenient("0xff").toHexString(),
+                Hash.fromHexStringLenient("0xff").getBytes().toHexString(),
                 new UnsignedLongParameter(0L)));
 
     var result = fromSuccessResp(response);
@@ -167,7 +167,7 @@ public class EngineExchangeTransitionConfigurationTest {
         resp(
             new EngineExchangeTransitionConfigurationParameter(
                 "24",
-                Hash.fromHexStringLenient("0x01").toHexString(),
+                Hash.fromHexStringLenient("0x01").getBytes().toHexString(),
                 new UnsignedLongParameter(0)));
 
     var result = fromSuccessResp(response);
@@ -185,7 +185,8 @@ public class EngineExchangeTransitionConfigurationTest {
 
     assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x0");
     assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo("0x0");
-    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
+    assertThat(mockResult.getTerminalBlockHashAsString())
+        .isEqualTo(Hash.ZERO.getBytes().toHexString());
 
     String json = mapper.writeValueAsString(mockResult);
     var res = mapper.readValue(json, Map.class);
@@ -203,7 +204,8 @@ public class EngineExchangeTransitionConfigurationTest {
 
     assertThat(mockResult.getTerminalBlockNumberAsString()).isEqualTo("0x64");
     assertThat(mockResult.getTerminalTotalDifficultyAsString()).isEqualTo("0x0");
-    assertThat(mockResult.getTerminalBlockHashAsString()).isEqualTo(Hash.ZERO.toHexString());
+    assertThat(mockResult.getTerminalBlockHashAsString())
+        .isEqualTo(Hash.ZERO.getBytes().toHexString());
 
     String json = mapper.writeValueAsString(mockResult);
     var res = mapper.readValue(json, Map.class);
@@ -255,6 +257,7 @@ public class EngineExchangeTransitionConfigurationTest {
         null,
         null,
         null,
+        null, // slotNumber
         new BlockHeaderFunctions() {
           @Override
           public Hash hash(final BlockHeader header) {

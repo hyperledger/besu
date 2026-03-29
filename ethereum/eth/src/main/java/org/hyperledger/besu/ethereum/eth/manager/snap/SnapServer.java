@@ -16,18 +16,24 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
+import org.hyperledger.besu.ethereum.core.encoding.BlockAccessListEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.BlockAccessListsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetAccountRangeMessage;
+import org.hyperledger.besu.ethereum.eth.messages.snap.GetBlockAccessListsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetByteCodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetStorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.GetTrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
+import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV2;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -148,7 +154,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       if (worldStateKeyValueStorage.getDataStorageFormat().isBonsaiFormat()
           && (worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
               || worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.ARCHIVE))) {
-        LOGGER.debug("Starting SnapServer with Bonsai full flat db");
+        LOGGER.info("Starting SnapServer with Bonsai full flat db");
         var bonsaiArchive =
             protocolContext
                 .map(ProtocolContext::getWorldStateArchive)
@@ -196,16 +202,68 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private void registerResponseConstructors() {
     snapMessages.registerResponseConstructor(
         SnapV1.GET_ACCOUNT_RANGE,
-        (messageData, capability) -> constructGetAccountRangeResponse(messageData));
+        (peer, messageData, capability) -> constructGetAccountRangeResponse(messageData));
     snapMessages.registerResponseConstructor(
         SnapV1.GET_STORAGE_RANGE,
-        (messageData, capability) -> constructGetStorageRangeResponse(messageData));
+        (peer, messageData, capability) -> constructGetStorageRangeResponse(messageData));
     snapMessages.registerResponseConstructor(
         SnapV1.GET_BYTECODES,
-        (messageData, capability) -> constructGetBytecodesResponse(messageData));
+        (peer, messageData, capability) -> constructGetBytecodesResponse(messageData));
     snapMessages.registerResponseConstructor(
         SnapV1.GET_TRIE_NODES,
-        (messageData, capability) -> constructGetTrieNodesResponse(messageData));
+        (peer, messageData, capability) -> constructGetTrieNodesResponse(messageData));
+    snapMessages.registerResponseConstructor(
+        SnapV2.GET_BLOCK_ACCESS_LISTS,
+        (peer, messageData, capability) -> constructGetBlockAccessListsResponse(messageData));
+  }
+
+  MessageData constructGetBlockAccessListsResponse(final MessageData message) {
+    if (!isStarted.get()) {
+      return BlockAccessListsMessage.create(List.of());
+    }
+
+    final GetBlockAccessListsMessage getBlockAccessLists =
+        GetBlockAccessListsMessage.readFrom(message);
+    final Iterable<Hash> blockHashes = getBlockAccessLists.blockHashes(true);
+
+    int responseSizeEstimate = RLP.MAX_PREFIX_SIZE;
+    final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+    rlp.startList();
+
+    final Optional<Blockchain> maybeBlockchain =
+        protocolContext.map(ProtocolContext::getBlockchain);
+
+    if (maybeBlockchain.isPresent()) {
+      final var blockchain = maybeBlockchain.get();
+      int count = 0;
+      for (final Hash blockHash : blockHashes) {
+        if (count >= MAX_ENTRIES_PER_REQUEST) {
+          break;
+        }
+        count++;
+
+        final Optional<BlockAccessList> maybeBlockAccessList =
+            blockchain.getBlockAccessList(blockHash);
+        final BytesValueRLPOutput balOutput = new BytesValueRLPOutput();
+        if (maybeBlockAccessList.isPresent()) {
+          BlockAccessListEncoder.encode(maybeBlockAccessList.get(), balOutput);
+        } else {
+          // Empty lists are returned for blocks where the BAL is unavailable.
+          balOutput.startList();
+          balOutput.endList();
+        }
+
+        final int encodedSize = balOutput.encodedSize();
+        if (responseSizeEstimate + encodedSize > MAX_RESPONSE_SIZE) {
+          break;
+        }
+        responseSizeEstimate += encodedSize;
+        rlp.writeRaw(balOutput.encoded());
+      }
+    }
+    rlp.endList();
+
+    return BlockAccessListsMessage.createUnsafe(rlp.encoded());
   }
 
   MessageData constructGetAccountRangeResponse(final MessageData message) {
@@ -221,9 +279,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     LOGGER
         .atTrace()
         .setMessage("Received getAccountRangeMessage for {} from {} to {}")
-        .addArgument(() -> asLogHash(range.worldStateRootHash()))
-        .addArgument(() -> asLogHash(range.startKeyHash()))
-        .addArgument(() -> asLogHash(range.endKeyHash()))
+        .addArgument(() -> asLogHash(Bytes32.wrap(range.worldStateRootHash().getBytes())))
+        .addArgument(() -> asLogHash(Bytes32.wrap(range.startKeyHash().getBytes())))
+        .addArgument(() -> asLogHash(Bytes32.wrap(range.endKeyHash().getBytes())))
         .log();
     try {
       if (range.worldStateRootHash().equals(Hash.EMPTY_TRIE_HASH)) {
@@ -242,16 +300,17 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                         (pair) -> {
                           Bytes bytes =
                               AccountRangeMessage.toSlimAccount(RLP.input(pair.getSecond()));
-                          return Hash.SIZE + bytes.size();
+                          return Bytes32.SIZE + bytes.size();
                         });
 
-                final Bytes32 endKeyBytes = range.endKeyHash();
+                final Bytes32 endKeyBytes = Bytes32.wrap(range.endKeyHash().getBytes());
                 var shouldContinuePredicate =
                     new ExceedingPredicate(
                         new EndKeyExceedsPredicate(endKeyBytes).and(responseSizePredicate));
 
                 NavigableMap<Bytes32, Bytes> accounts =
-                    storage.streamFlatAccounts(range.startKeyHash(), shouldContinuePredicate);
+                    storage.streamFlatAccounts(
+                        range.startKeyHash().getBytes(), shouldContinuePredicate);
 
                 if (accounts.isEmpty() && shouldContinuePredicate.shouldContinue.get()) {
                   var fromNextHash =
@@ -261,34 +320,35 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // fetch next account after range, if it exists
                   LOGGER.debug(
                       "found no accounts in range, taking first value starting from {}",
-                      asLogHash(fromNextHash));
-                  accounts = storage.streamFlatAccounts(fromNextHash, UInt256.MAX_VALUE, 1L);
+                      asLogHash(Bytes32.wrap(fromNextHash.getBytes())));
+                  accounts =
+                      storage.streamFlatAccounts(fromNextHash.getBytes(), UInt256.MAX_VALUE, 1L);
                 }
 
                 final var worldStateProof =
                     new WorldStateProofProvider(new WorldStateStorageCoordinator(storage));
                 final List<Bytes> proof =
                     worldStateProof.getAccountProofRelatedNodes(
-                        range.worldStateRootHash(), Hash.wrap(range.startKeyHash()));
+                        range.worldStateRootHash(), Bytes32.wrap(range.startKeyHash().getBytes()));
 
                 if (!accounts.isEmpty()) {
                   proof.addAll(
                       worldStateProof.getAccountProofRelatedNodes(
-                          range.worldStateRootHash(), Hash.wrap(accounts.lastKey())));
+                          range.worldStateRootHash(), accounts.lastKey()));
                 }
                 var resp = AccountRangeMessage.create(accounts, proof);
                 if (accounts.isEmpty()) {
                   LOGGER.debug(
                       "returned empty account range message for {} to  {}, proof count {}",
-                      asLogHash(range.startKeyHash()),
-                      asLogHash(range.endKeyHash()),
+                      asLogHash(Bytes32.wrap(range.startKeyHash().getBytes())),
+                      asLogHash(Bytes32.wrap(range.endKeyHash().getBytes())),
                       proof.size());
                 }
                 LOGGER.debug(
                     "returned in {} account range {} to {} with {} accounts and {} proofs, resp size {} of max {}",
                     stopWatch,
-                    asLogHash(range.startKeyHash()),
-                    asLogHash(range.endKeyHash()),
+                    asLogHash(Bytes32.wrap(range.startKeyHash().getBytes())),
+                    asLogHash(Bytes32.wrap(range.endKeyHash().getBytes())),
                     accounts.size(),
                     proof.size(),
                     resp.getSize(),
@@ -320,9 +380,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .atTrace()
         .setMessage("Receive get storage range message size {} from {} to {} for {}")
         .addArgument(message::getSize)
-        .addArgument(() -> asLogHash(range.startKeyHash()))
+        .addArgument(() -> asLogHash(Bytes32.wrap(range.startKeyHash().getBytes())))
         .addArgument(
-            () -> Optional.ofNullable(range.endKeyHash()).map(SnapServer::asLogHash).orElse("''"))
+            () ->
+                Optional.ofNullable(range.endKeyHash())
+                    .map(h -> asLogHash(Bytes32.wrap(h.getBytes())))
+                    .orElse("''"))
         .addArgument(
             () ->
                 range.hashes().stream()
@@ -355,12 +418,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 boolean isPartialRange = false;
                 if (range.hashes().size() > 1) {
                   startKeyBytes = Bytes32.ZERO;
-                  endKeyBytes = HASH_LAST;
+                  endKeyBytes = Bytes32.wrap(HASH_LAST.getBytes());
                 } else {
-                  startKeyBytes = range.startKeyHash();
-                  endKeyBytes = range.endKeyHash();
+                  startKeyBytes = Bytes32.wrap(range.startKeyHash().getBytes());
+                  endKeyBytes = Bytes32.wrap(range.endKeyHash().getBytes());
                   isPartialRange =
-                      !(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST));
+                      !(startKeyBytes.equals(Bytes32.wrap(Hash.ZERO.getBytes()))
+                          && endKeyBytes.equals(Bytes32.wrap(HASH_LAST.getBytes())));
                 }
 
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
@@ -381,10 +445,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // fetch next slot after range, if it exists
                     LOGGER.debug(
                         "found no slots in range, taking first value starting from {}",
-                        asLogHash(range.endKeyHash()));
+                        asLogHash(Bytes32.wrap(range.endKeyHash().getBytes())));
                     accountStorages =
                         storage.streamFlatStorages(
-                            Hash.wrap(forAccountHash), range.endKeyHash(), UInt256.MAX_VALUE, 1L);
+                            Hash.wrap(forAccountHash),
+                            Bytes32.wrap(range.endKeyHash().getBytes()),
+                            UInt256.MAX_VALUE,
+                            1L);
                   }
 
                   // don't send empty storage ranges
@@ -398,16 +465,17 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // send a proof for the left side range origin
                     proofNodes.addAll(
                         worldStateProof.getStorageProofRelatedNodes(
-                            getAccountStorageRoot(forAccountHash, storage),
+                            Bytes32.wrap(getAccountStorageRoot(forAccountHash, storage).getBytes()),
                             forAccountHash,
-                            Hash.wrap(startKeyBytes)));
+                            startKeyBytes));
                     if (!accountStorages.isEmpty()) {
                       // send a proof for the last key on the right
                       proofNodes.addAll(
                           worldStateProof.getStorageProofRelatedNodes(
-                              getAccountStorageRoot(forAccountHash, storage),
+                              Bytes32.wrap(
+                                  getAccountStorageRoot(forAccountHash, storage).getBytes()),
                               forAccountHash,
-                              Hash.wrap(accountStorages.lastKey())));
+                              accountStorages.lastKey()));
                     }
                   }
 
@@ -422,8 +490,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     stopWatch,
                     asLogHash(range.hashes().first()),
                     asLogHash(range.hashes().last()),
-                    asLogHash(range.startKeyHash()),
-                    asLogHash(range.endKeyHash()),
+                    asLogHash(Bytes32.wrap(range.startKeyHash().getBytes())),
+                    asLogHash(Bytes32.wrap(range.endKeyHash().getBytes())),
                     collectedStorages.size(),
                     proofNodes.size(),
                     resp.getSize(),
@@ -463,7 +531,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
               ? codeHashes.hashes()
               : codeHashes.hashes().subList(0, MAX_CODE_LOOKUPS_PER_REQUEST);
       for (Bytes32 codeHash : codeHashList) {
-        if (Hash.EMPTY.equals(codeHash)) {
+        if (Hash.EMPTY.getBytes().equals(codeHash)) {
           codeBytes.add(Bytes.EMPTY);
         } else {
           Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);

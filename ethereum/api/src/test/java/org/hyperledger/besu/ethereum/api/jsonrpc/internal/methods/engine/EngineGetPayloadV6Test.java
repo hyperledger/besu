@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -121,8 +122,7 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
                 new BlockBody(
                     List.of(new TransactionTestFixture().createTransaction(senderKeys)),
                     emptyList(),
-                    Optional.of(emptyList()),
-                    Optional.of(blockAccessList))),
+                    Optional.of(emptyList()))),
             List.of(mock(TransactionReceipt.class)));
 
     final PayloadIdentifier payloadIdentifier =
@@ -141,7 +141,12 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
             new Request(RequestType.CONSOLIDATION, Bytes.of(1)));
 
     final PayloadWrapper payload =
-        new PayloadWrapper(payloadIdentifier, blockWithReceipts, Optional.of(requests));
+        new PayloadWrapper(
+            payloadIdentifier,
+            blockWithReceipts,
+            Optional.of(blockAccessList),
+            Optional.of(requests),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
@@ -178,7 +183,12 @@ public class EngineGetPayloadV6Test extends AbstractEngineGetPayloadTest {
         new BlockWithReceipts(
             new Block(header, new BlockBody(emptyList(), emptyList())), emptyList());
     final PayloadWrapper payload =
-        new PayloadWrapper(payloadIdentifier, blockWithReceipts, Optional.empty());
+        new PayloadWrapper(
+            payloadIdentifier,
+            blockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 

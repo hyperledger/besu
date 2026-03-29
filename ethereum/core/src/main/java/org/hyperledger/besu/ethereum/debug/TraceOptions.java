@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.debug;
 
+import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
 import java.util.Map;
@@ -28,7 +29,8 @@ import java.util.Map;
 public record TraceOptions(
     TracerType tracerType,
     OpCodeTracerConfig opCodeTracerConfig,
-    Map<String, Object> tracerConfig) {
+    Map<String, Object> tracerConfig,
+    StateOverrideMap stateOverrides) {
   /**
    * Default tracer configuration. Used by trace_ and debug_ methods when no tracer type is
    * specified.
@@ -50,9 +52,29 @@ public record TraceOptions(
       final TracerType tracerType,
       final OpCodeTracerConfig opCodeTracerConfig,
       final Map<String, Object> tracerConfig) {
+    this(tracerType, opCodeTracerConfig, tracerConfig, null);
+  }
+
+  /**
+   * Constructor for TraceOptions. The default tracer (opcode) options are specified by
+   * OpcodeTracerConfig. All other tracer type options are specified by tracerConfig.
+   *
+   * @param tracerType the type of tracer to use. Defaults to OPCODE_TRACER if null.
+   * @param opCodeTracerConfig the default (opcode) tracer's configuration. Defaults to
+   *     OPCODE_TRACER_CONFIG if null.
+   * @param tracerConfig the tracer configuration options for non-default tracers. Empty map if
+   *     null.
+   * @param stateOverrides the state overrides to apply during tracing. Empty map if null.
+   */
+  public TraceOptions(
+      final TracerType tracerType,
+      final OpCodeTracerConfig opCodeTracerConfig,
+      final Map<String, Object> tracerConfig,
+      final StateOverrideMap stateOverrides) {
     this.tracerType = tracerType == null ? TracerType.OPCODE_TRACER : tracerType;
     this.opCodeTracerConfig =
         opCodeTracerConfig == null ? OpCodeTracerConfig.DEFAULT : opCodeTracerConfig;
     this.tracerConfig = tracerConfig == null ? Map.of() : tracerConfig;
+    this.stateOverrides = stateOverrides == null ? new StateOverrideMap() : stateOverrides;
   }
 }

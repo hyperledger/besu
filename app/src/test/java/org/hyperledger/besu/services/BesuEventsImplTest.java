@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -79,8 +80,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -92,9 +91,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class BesuEventsImplTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  private static final KeyPair KEY_PAIR1 = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  private static final KeyPair KEY_PAIR1 = SIGNATURE_ALGORITHM.generateKeyPair();
   private static final org.hyperledger.besu.ethereum.core.Transaction TX1 = createTransaction(0);
   private static final org.hyperledger.besu.ethereum.core.Transaction TX2 = createTransaction(1);
 
@@ -172,6 +171,7 @@ public class BesuEventsImplTest {
             new NoOpMetricsSystem(),
             syncState,
             txPoolConfig,
+            EthProtocolConfiguration.DEFAULT,
             new BlobCache(),
             MiningConfiguration.newDefault());
 
@@ -219,7 +219,7 @@ public class BesuEventsImplTest {
         mock(EthPeer.class),
         new org.hyperledger.besu.ethereum.core.BlockHeader(
             null, null, null, null, null, null, null, null, 1, 1, 1, 1, null, null, null, 1, null,
-            null, null, null, null, null, null));
+            null, null, null, null, null, null, null));
   }
 
   private void clearSyncTarget() {
@@ -284,6 +284,7 @@ public class BesuEventsImplTest {
     assertThat(result.get()).isNotNull();
     assertThat(result.get().getBlockHeader()).isEqualTo(block.getHeader());
     assertThat(result.get().getTransactionReceipts()).isEqualTo(transactionReceipts);
+    assertThat(result.get().getEventType()).isEqualTo(AddedBlockContext.EventType.HEAD_ADVANCED);
   }
 
   @Test

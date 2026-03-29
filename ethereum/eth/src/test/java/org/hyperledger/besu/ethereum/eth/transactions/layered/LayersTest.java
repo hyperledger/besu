@@ -1940,27 +1940,22 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     private void assertExpectedPrioritized(
         final AbstractPrioritizedTransactions prioLayer, final List<PendingTransaction> expected) {
-      final var flatOrder =
-          prioLayer.getByScore().values().stream()
-              .flatMap(List::stream)
-              .flatMap(spt -> spt.pendingTransactions().stream())
-              .toList();
-      assertThat(flatOrder).describedAs("Prioritized").containsExactlyElementsOf(expected);
+      assertThat(prioLayer.getByScore())
+          .describedAs("Prioritized")
+          .containsExactlyElementsOf(expected);
     }
 
     private void assertExpectedReady(
         final ReadyTransactions readyLayer, final List<PendingTransaction> expected) {
-      assertThat(readyLayer.getBySender())
+      assertThat(readyLayer.getBySender().stream().flatMap(List::stream).toList())
           .describedAs("Ready")
-          .flatExtracting(SenderPendingTransactions::pendingTransactions)
           .containsExactlyElementsOf(expected);
     }
 
     private void assertExpectedSparse(
         final SparseTransactions sparseLayer, final List<PendingTransaction> expected) {
-      assertThat(sparseLayer.getBySender())
+      assertThat(sparseLayer.getBySender().stream().flatMap(List::stream).toList())
           .describedAs("Sparse")
-          .flatExtracting(SenderPendingTransactions::pendingTransactions)
           .containsExactlyElementsOf(expected);
     }
 
@@ -2056,8 +2051,7 @@ public class LayersTest extends BaseTransactionPoolTest {
               expectedSelected.add(get(sender, nonce));
             }
 
-            assertThat(prio.getBySender())
-                .flatExtracting(SenderPendingTransactions::pendingTransactions)
+            assertThat(prio.getBySender().stream().flatMap(List::stream).toList())
                 .containsExactlyElementsOf(expectedSelected);
           });
       return this;
@@ -2100,7 +2094,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final boolean hasPriority;
 
     Sender(final boolean hasPriority, final int gasFeeMultiplier) {
-      this.key = SIGNATURE_ALGORITHM.get().generateKeyPair();
+      this.key = SIGNATURE_ALGORITHM.generateKeyPair();
       this.address = Util.publicKeyToAddress(key.getPublicKey());
       this.gasFeeMultiplier = gasFeeMultiplier;
       this.hasPriority = hasPriority;

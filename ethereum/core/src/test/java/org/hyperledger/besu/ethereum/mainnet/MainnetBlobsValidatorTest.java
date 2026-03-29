@@ -166,6 +166,30 @@ public class MainnetBlobsValidatorTest {
         "Blob transaction has too many blobs: 1");
   }
 
+  @Test
+  void shouldRejectUnsupportedBlobType() {
+    when(transaction.getType()).thenReturn(TransactionType.BLOB);
+    when(transaction.getTo())
+        .thenReturn(Optional.of(mock(org.hyperledger.besu.datatypes.Address.class)));
+    when(transaction.getBlobsWithCommitments()).thenReturn(Optional.of(blobsWithCommitments));
+    when(blobsWithCommitments.getBlobType()).thenReturn(BlobType.KZG_CELL_PROOFS);
+    when(blobsWithCommitments.getBlobs()).thenReturn(List.of(mock(Blob.class)));
+    when(blobsWithCommitments.getKzgCommitments()).thenReturn(List.of(mock(KZGCommitment.class)));
+    when(transaction.getVersionedHashes())
+        .thenReturn(Optional.of(List.of(VersionedHash.DEFAULT_VERSIONED_HASH)));
+
+    blobsValidator =
+        new MainnetBlobsValidator(
+            Set.of(BlobType.KZG_PROOF), // Only accept KZG_PROOF
+            mock(GasLimitCalculator.class),
+            mock(GasCalculator.class));
+    var result = blobsValidator.validate(transaction);
+    assertInvalidResult(
+        result,
+        TransactionInvalidReason.INVALID_BLOBS,
+        "Unsupported blob type: KZG_CELL_PROOFS. Supported types: [KZG_PROOF].");
+  }
+
   private void assertInvalidResult(
       final ValidationResult<TransactionInvalidReason> result,
       final TransactionInvalidReason expectedReason,

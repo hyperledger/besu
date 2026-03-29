@@ -15,28 +15,21 @@
 package org.hyperledger.besu.cli.options;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+import static org.hyperledger.besu.ethereum.core.MiningConfiguration.DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_EXTRA_DATA;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.MutableInitValues.DEFAULT_MIN_TRANSACTION_GAS_PRICE;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_MAX_OMMERS_DEPTH;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_MAX_TIME;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_BLOCK_FINALIZATION_TIMEOUT_MS;
 import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POS_SLOT_DURATION_SECS;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_POW_JOB_TTL;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_LIMIT;
-import static org.hyperledger.besu.ethereum.core.MiningConfiguration.Unstable.DEFAULT_REMOTE_SEALERS_TTL;
 
 import org.hyperledger.besu.cli.converter.PositiveNumberConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningConfiguration.MutableInitValues;
@@ -45,6 +38,7 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 import jakarta.validation.constraints.Positive;
 import org.apache.tuweni.bytes.Bytes;
@@ -60,47 +54,34 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       "Deprecated. PoW consensus is deprecated. See CHANGELOG for alternative options. ";
 
   @Option(
-      names = {"--miner-enabled"},
-      description =
-          DEPRECATION_PREFIX + "Set if node will perform mining (default: ${DEFAULT-VALUE})")
-  private Boolean isMiningEnabled = false;
-
-  @Option(
-      names = {"--miner-coinbase"},
-      description =
-          "Account to which mining rewards are paid. You must specify a valid coinbase if "
-              + "mining is enabled using --miner-enabled option",
-      arity = "1")
-  private Address coinbase = null;
-
-  @Option(
       names = {"--miner-extra-data"},
       description =
           "A hex string representing the (32) bytes to be included in the extra data "
-              + "field of a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "field of a mined block (default: ${DEFAULT-VALUE})")
   private Bytes extraData = DEFAULT_EXTRA_DATA;
 
   @Option(
       names = {"--min-block-occupancy-ratio"},
-      description = "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private Double minBlockOccupancyRatio = DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
+      hidden = true,
+      description =
+          DEPRECATION_PREFIX
+              + "Minimum occupancy ratio for a mined block (default: ${DEFAULT-VALUE})")
+  @SuppressWarnings("UnusedVariable")
+  @Deprecated
+  private Double minBlockOccupancyRatio = null;
 
   @Option(
       names = {"--min-gas-price"},
       description =
           "Minimum price (in Wei) offered by a transaction for it to be included in a mined "
-              + "block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "block (default: ${DEFAULT-VALUE})")
   private Wei minTransactionGasPrice = DEFAULT_MIN_TRANSACTION_GAS_PRICE;
 
   @Option(
       names = {"--min-priority-fee"},
       description =
           "Minimum priority fee per gas (in Wei) offered by a transaction for it to be included in a "
-              + "block (default: ${DEFAULT-VALUE})",
-      arity = "1")
+              + "block (default: ${DEFAULT-VALUE})")
   private Wei minPriorityFeePerGas = DEFAULT_MIN_PRIORITY_FEE_PER_GAS;
 
   @Option(
@@ -114,18 +95,16 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       names = {"--block-txs-selection-max-time"},
       converter = PositiveNumberConverter.class,
       description =
-          DEPRECATION_PREFIX
-              + "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block."
+          "Specifies the maximum time, in milliseconds, that could be spent selecting transactions to be included in the block on PoS networks."
               + " Not compatible with PoA networks, see poa-block-txs-selection-max-time. (default: ${DEFAULT-VALUE})")
-  private PositiveNumber nonPoaBlockTxsSelectionMaxTime =
-      DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
+  private PositiveNumber posBlockTxsSelectionMaxTime = DEFAULT_POS_BLOCK_TXS_SELECTION_MAX_TIME;
 
   @Option(
       names = {"--poa-block-txs-selection-max-time"},
       converter = PositiveNumberConverter.class,
       description =
           "Specifies the maximum time that could be spent selecting transactions to be included in the block, as a percentage of the fixed block time of the PoA network."
-              + " To be only used on PoA networks, for other networks see block-txs-selection-max-time."
+              + " To be only used on PoA networks, for PoS networks see block-txs-selection-max-time."
               + " (default: ${DEFAULT-VALUE})")
   private PositiveNumber poaBlockTxsSelectionMaxTime = DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
 
@@ -138,41 +117,26 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
   private PositiveNumber pluginBlockTxsSelectionMaxTime =
       DEFAULT_PLUGIN_BLOCK_TXS_SELECTION_MAX_TIME;
 
+  @Option(
+      names = {"--max-blobs-per-transaction"},
+      description =
+          "Maximum number of blobs allowed per transaction. "
+              + "Only applies from Osaka hardfork onwards. (default: 6)",
+      arity = "1")
+  private Integer maxBlobsPerTransaction = null;
+
+  @Option(
+      names = {"--max-blobs-per-block"},
+      description =
+          "Maximum number of blobs allowed per block when building blocks. "
+              + "Only applies from Osaka hardfork onwards. Values above the protocol maximum are clamped. (default: protocol maximum)",
+      arity = "1")
+  private Integer maxBlobsPerBlock = null;
+
   @CommandLine.ArgGroup(validate = false)
   private final Unstable unstableOptions = new Unstable();
 
   static class Unstable {
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xminer-remote-sealers-limit"},
-        description =
-            DEPRECATION_PREFIX
-                + "Limits the number of remote sealers that can submit their hashrates (default: ${DEFAULT-VALUE})")
-    private Integer remoteSealersLimit = DEFAULT_REMOTE_SEALERS_LIMIT;
-
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xminer-remote-sealers-hashrate-ttl"},
-        description =
-            DEPRECATION_PREFIX
-                + "Specifies the lifetime of each entry in the cache. An entry will be automatically deleted if no update has been received before the deadline (default: ${DEFAULT-VALUE} minutes)")
-    private Long remoteSealersTimeToLive = DEFAULT_REMOTE_SEALERS_TTL;
-
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xminer-pow-job-ttl"},
-        description =
-            DEPRECATION_PREFIX
-                + "Specifies the time PoW jobs are kept in cache and will accept a solution from miners (default: ${DEFAULT-VALUE} milliseconds)")
-    private Long powJobTimeToLive = DEFAULT_POW_JOB_TTL;
-
-    @CommandLine.Option(
-        hidden = true,
-        names = {"--Xmax-ommers-depth"},
-        description =
-            DEPRECATION_PREFIX
-                + "Specifies the depth of ommer blocks to accept when receiving solutions (default: ${DEFAULT-VALUE})")
-    private Integer maxOmmersDepth = DEFAULT_MAX_OMMERS_DEPTH;
 
     @CommandLine.Option(
         hidden = true,
@@ -193,8 +157,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     @CommandLine.Option(
         hidden = true,
         names = {"--Xpos-slot-duration"},
-        description = "The slot duration in PoS in seconds (default: ${DEFAULT-VALUE})",
-        arity = "1")
+        description = "The slot duration in PoS in seconds (default: ${DEFAULT-VALUE})")
     @Positive
     Integer posSlotDuration = DEFAULT_POS_SLOT_DURATION_SECS;
 
@@ -234,7 +197,7 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
    * options are valid for the selected implementation.
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param genesisConfigOptions is EthHash?
+   * @param genesisConfigOptions genesis config determines whether we are running PoA or PoS
    * @param isMergeEnabled is the Merge enabled?
    * @param logger the logger
    */
@@ -243,38 +206,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean isMergeEnabled,
       final Logger logger) {
-    if (Boolean.TRUE.equals(isMiningEnabled)) {
-      logger.warn("PoW consensus is deprecated. See CHANGELOG for alternative options.");
-    }
-    if (Boolean.TRUE.equals(isMiningEnabled) && coinbase == null) {
-      throw new ParameterException(
-          commandLine,
-          "Unable to mine without a valid coinbase. Either disable mining (remove --miner-enabled) "
-              + "or specify the beneficiary of mining (via --miner-coinbase <Address>)");
-    }
-
-    // Check that block producer options work
-    if (!isMergeEnabled && genesisConfigOptions.isEthHash()) {
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !isMiningEnabled,
-          asList(
-              "--miner-coinbase",
-              "--min-gas-price",
-              "--min-priority-fee",
-              "--min-block-occupancy-ratio",
-              "--miner-extra-data"));
-
-      // Check that mining options are able to work
-      CommandLineUtils.checkOptionDependencies(
-          logger,
-          commandLine,
-          "--miner-enabled",
-          !isMiningEnabled,
-          asList("--Xminer-remote-sealers-limit", "--Xminer-remote-sealers-hashrate-ttl"));
-    }
 
     if (unstableOptions.posBlockCreationMaxTime <= 0
         || unstableOptions.posBlockCreationMaxTime > DEFAULT_POS_BLOCK_CREATION_MAX_TIME) {
@@ -309,32 +240,46 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
             + " see --block-txs-selection-max-time instead",
         genesisConfigOptions.isPoa(),
         singletonList("--poa-block-txs-selection-max-time"));
+
+    if (maxBlobsPerTransaction != null && maxBlobsPerTransaction < 0) {
+      throw new ParameterException(
+          commandLine, "--max-blobs-per-transaction must be a non-negative value");
+    }
+
+    if (maxBlobsPerBlock != null && maxBlobsPerBlock < 0) {
+      throw new ParameterException(
+          commandLine, "--max-blobs-per-block must be a non-negative value");
+    }
+
+    if (maxBlobsPerBlock != null
+        && maxBlobsPerTransaction != null
+        && maxBlobsPerBlock < maxBlobsPerTransaction) {
+      logger.warn(
+          "--max-blobs-per-block ({}) is less than --max-blobs-per-transaction ({}). "
+              + "The block limit will be the binding constraint during block building.",
+          maxBlobsPerBlock,
+          maxBlobsPerTransaction);
+    }
   }
 
   static MiningOptions fromConfig(final MiningConfiguration miningConfiguration) {
     final MiningOptions miningOptions = MiningOptions.create();
     miningOptions.setTransactionSelectionService(
         miningConfiguration.getTransactionSelectionService());
-    miningOptions.isMiningEnabled = miningConfiguration.isMiningEnabled();
     miningOptions.extraData = miningConfiguration.getExtraData();
     miningOptions.minTransactionGasPrice = miningConfiguration.getMinTransactionGasPrice();
     miningOptions.minPriorityFeePerGas = miningConfiguration.getMinPriorityFeePerGas();
-    miningOptions.minBlockOccupancyRatio = miningConfiguration.getMinBlockOccupancyRatio();
-    miningOptions.nonPoaBlockTxsSelectionMaxTime =
-        miningConfiguration.getNonPoaBlockTxsSelectionMaxTime();
+    miningOptions.posBlockTxsSelectionMaxTime =
+        miningConfiguration.getPosBlockTxsSelectionMaxTime();
     miningOptions.poaBlockTxsSelectionMaxTime =
         miningConfiguration.getPoaBlockTxsSelectionMaxTime();
     miningOptions.pluginBlockTxsSelectionMaxTime =
         miningConfiguration.getPluginBlockTxsSelectionMaxTime();
+    miningConfiguration
+        .getMaxBlobsPerTransaction()
+        .ifPresent(v -> miningOptions.maxBlobsPerTransaction = v);
+    miningConfiguration.getMaxBlobsPerBlock().ifPresent(v -> miningOptions.maxBlobsPerBlock = v);
 
-    miningOptions.unstableOptions.remoteSealersLimit =
-        miningConfiguration.getUnstable().getRemoteSealersLimit();
-    miningOptions.unstableOptions.remoteSealersTimeToLive =
-        miningConfiguration.getUnstable().getRemoteSealersTimeToLive();
-    miningOptions.unstableOptions.powJobTimeToLive =
-        miningConfiguration.getUnstable().getPowJobTimeToLive();
-    miningOptions.unstableOptions.maxOmmersDepth =
-        miningConfiguration.getUnstable().getMaxOmmerDepth();
     miningOptions.unstableOptions.posBlockCreationMaxTime =
         miningConfiguration.getUnstable().getPosBlockCreationMaxTime();
     miningOptions.unstableOptions.posBlockCreationRepetitionMinDuration =
@@ -344,7 +289,6 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
     miningOptions.unstableOptions.posBlockFinalizationTimeoutMs =
         miningConfiguration.getUnstable().getPosBlockFinalizationTimeoutMs();
 
-    miningConfiguration.getCoinbase().ifPresent(coinbase -> miningOptions.coinbase = coinbase);
     miningConfiguration.getTargetGasLimit().ifPresent(tgl -> miningOptions.targetGasLimit = tgl);
     return miningOptions;
   }
@@ -357,31 +301,28 @@ public class MiningOptions implements CLIOptions<MiningConfiguration> {
 
     final var updatableInitValuesBuilder =
         MutableInitValues.builder()
-            .isMiningEnabled(isMiningEnabled)
             .extraData(extraData)
             .minTransactionGasPrice(minTransactionGasPrice)
-            .minPriorityFeePerGas(minPriorityFeePerGas)
-            .minBlockOccupancyRatio(minBlockOccupancyRatio);
+            .minPriorityFeePerGas(minPriorityFeePerGas);
+
+    if (maxBlobsPerTransaction != null) {
+      updatableInitValuesBuilder.maxBlobsPerTransaction(maxBlobsPerTransaction);
+    }
 
     if (targetGasLimit != null) {
       updatableInitValuesBuilder.targetGasLimit(targetGasLimit);
-    }
-    if (coinbase != null) {
-      updatableInitValuesBuilder.coinbase(coinbase);
     }
 
     return ImmutableMiningConfiguration.builder()
         .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
-        .nonPoaBlockTxsSelectionMaxTime(nonPoaBlockTxsSelectionMaxTime)
+        .maxBlobsPerBlock(
+            maxBlobsPerBlock != null ? OptionalInt.of(maxBlobsPerBlock) : OptionalInt.empty())
+        .posBlockTxsSelectionMaxTime(posBlockTxsSelectionMaxTime)
         .poaBlockTxsSelectionMaxTime(poaBlockTxsSelectionMaxTime)
         .pluginBlockTxsSelectionMaxTime(pluginBlockTxsSelectionMaxTime)
         .unstable(
             ImmutableMiningConfiguration.Unstable.builder()
-                .remoteSealersLimit(unstableOptions.remoteSealersLimit)
-                .remoteSealersTimeToLive(unstableOptions.remoteSealersTimeToLive)
-                .powJobTimeToLive(unstableOptions.powJobTimeToLive)
-                .maxOmmerDepth(unstableOptions.maxOmmersDepth)
                 .posBlockCreationMaxTime(unstableOptions.posBlockCreationMaxTime)
                 .posBlockCreationRepetitionMinDuration(
                     unstableOptions.posBlockCreationRepetitionMinDuration)

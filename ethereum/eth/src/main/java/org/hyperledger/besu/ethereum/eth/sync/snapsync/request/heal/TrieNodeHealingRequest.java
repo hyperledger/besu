@@ -24,8 +24,8 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   protected TrieNodeHealingRequest(final Hash nodeHash, final Hash rootHash, final Bytes location) {
     super(TRIE_NODE, rootHash);
-    this.nodeHash = nodeHash;
+    this.nodeHash = Bytes32.wrap(nodeHash.getBytes());
     this.location = location;
     this.data = Bytes.EMPTY;
   }
@@ -130,7 +130,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
 
   @Override
   public boolean isResponseReceived() {
-    return !data.isEmpty() && Hash.hash(data).equals(getNodeHash());
+    return !data.isEmpty() && Hash.hash(data).getBytes().equals(getNodeHash());
   }
 
   @Override

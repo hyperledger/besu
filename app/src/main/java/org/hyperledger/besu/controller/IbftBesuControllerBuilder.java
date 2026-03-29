@@ -250,7 +250,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
             o ->
                 miningConfiguration.setBlockPeriodSeconds(
                     forksSchedule
-                        .getFork(o.getHeader().getNumber() + 1)
+                        .getFork(o.getHeader().getNumber() + 1, o.getHeader().getTimestamp())
                         .getValue()
                         .getBlockPeriodSeconds()));
 
@@ -306,7 +306,7 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
+        balConfiguration,
         metricsSystem);
   }
 
@@ -366,6 +366,6 @@ public class IbftBesuControllerBuilder extends BesuControllerBuilder {
                 transactionPool.count(),
                 block.getHeader().getGasUsed(),
                 (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
-                block.getHash().toHexString()));
+                block.getHash().getBytes().toHexString()));
   }
 }

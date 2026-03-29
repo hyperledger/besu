@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.processing;
 
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.log.Log;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +48,10 @@ public class TransactionProcessingResult
 
   private final long gasRemaining;
 
+  private final long gasSpent;
+
+  private final long stateGasUsed;
+
   private final List<Log> logs;
 
   private final Bytes output;
@@ -68,6 +72,8 @@ public class TransactionProcessingResult
         List.of(),
         -1,
         -1,
+        -1,
+        0,
         Bytes.EMPTY,
         validationResult,
         Optional.empty(),
@@ -78,6 +84,8 @@ public class TransactionProcessingResult
   public static TransactionProcessingResult failed(
       final long gasUsedByTransaction,
       final long gasRemaining,
+      final long gasSpent,
+      final long stateGasUsed,
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
@@ -87,7 +95,31 @@ public class TransactionProcessingResult
         List.of(),
         gasUsedByTransaction,
         gasRemaining,
+        gasSpent,
+        stateGasUsed,
         Bytes.EMPTY,
+        validationResult,
+        revertReason,
+        exceptionalHaltReason,
+        partialBlockAccessView);
+  }
+
+  /**
+   * Factory method for failed transactions where gasSpent equals gasUsedByTransaction. This is the
+   * standard behavior for pre-Amsterdam forks where block gas accounting uses post-refund gas.
+   */
+  public static TransactionProcessingResult failed(
+      final long gasUsedByTransaction,
+      final long gasRemaining,
+      final ValidationResult<TransactionInvalidReason> validationResult,
+      final Optional<Bytes> revertReason,
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
+      final Optional<PartialBlockAccessView> partialBlockAccessView) {
+    return failed(
+        gasUsedByTransaction,
+        gasRemaining,
+        gasUsedByTransaction,
+        0,
         validationResult,
         revertReason,
         exceptionalHaltReason,
@@ -98,6 +130,8 @@ public class TransactionProcessingResult
       final List<Log> logs,
       final long gasUsedByTransaction,
       final long gasRemaining,
+      final long gasSpent,
+      final long stateGasUsed,
       final Bytes output,
       final Optional<PartialBlockAccessView> partialBlockAccessView,
       final ValidationResult<TransactionInvalidReason> validationResult) {
@@ -106,12 +140,40 @@ public class TransactionProcessingResult
         logs,
         gasUsedByTransaction,
         gasRemaining,
+        gasSpent,
+        stateGasUsed,
         output,
         validationResult,
         Optional.empty(),
         partialBlockAccessView);
   }
 
+  /**
+   * Factory method for successful transactions where gasSpent equals gasUsedByTransaction. This is
+   * the standard behavior for pre-Amsterdam forks where block gas accounting uses post-refund gas.
+   */
+  public static TransactionProcessingResult successful(
+      final List<Log> logs,
+      final long gasUsedByTransaction,
+      final long gasRemaining,
+      final Bytes output,
+      final Optional<PartialBlockAccessView> partialBlockAccessView,
+      final ValidationResult<TransactionInvalidReason> validationResult) {
+    return successful(
+        logs,
+        gasUsedByTransaction,
+        gasRemaining,
+        gasUsedByTransaction,
+        0,
+        output,
+        partialBlockAccessView,
+        validationResult);
+  }
+
+  /**
+   * Constructor without gasSpent (for pre-Amsterdam forks). Defaults gasSpent to
+   * estimateGasUsedByTransaction.
+   */
   public TransactionProcessingResult(
       final Status status,
       final List<Log> logs,
@@ -121,10 +183,37 @@ public class TransactionProcessingResult
       final ValidationResult<TransactionInvalidReason> validationResult,
       final Optional<Bytes> revertReason,
       final Optional<PartialBlockAccessView> partialBlockAccessView) {
+    this(
+        status,
+        logs,
+        estimateGasUsedByTransaction,
+        gasRemaining,
+        estimateGasUsedByTransaction,
+        0,
+        output,
+        validationResult,
+        revertReason,
+        partialBlockAccessView);
+  }
+
+  /** Constructor with gasSpent (for Amsterdam+ forks with EIP-7778). */
+  public TransactionProcessingResult(
+      final Status status,
+      final List<Log> logs,
+      final long estimateGasUsedByTransaction,
+      final long gasRemaining,
+      final long gasSpent,
+      final long stateGasUsed,
+      final Bytes output,
+      final ValidationResult<TransactionInvalidReason> validationResult,
+      final Optional<Bytes> revertReason,
+      final Optional<PartialBlockAccessView> partialBlockAccessView) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
     this.gasRemaining = gasRemaining;
+    this.gasSpent = gasSpent;
+    this.stateGasUsed = stateGasUsed;
     this.output = output;
     this.validationResult = validationResult;
     this.revertReason = revertReason;
@@ -132,6 +221,10 @@ public class TransactionProcessingResult
     this.partialBlockAccessView = partialBlockAccessView;
   }
 
+  /**
+   * Constructor without gasSpent (for pre-Amsterdam forks). Defaults gasSpent to
+   * estimateGasUsedByTransaction.
+   */
   public TransactionProcessingResult(
       final Status status,
       final List<Log> logs,
@@ -142,10 +235,39 @@ public class TransactionProcessingResult
       final Optional<Bytes> revertReason,
       final Optional<ExceptionalHaltReason> exceptionalHaltReason,
       final Optional<PartialBlockAccessView> partialBlockAccessView) {
+    this(
+        status,
+        logs,
+        estimateGasUsedByTransaction,
+        gasRemaining,
+        estimateGasUsedByTransaction,
+        0,
+        output,
+        validationResult,
+        revertReason,
+        exceptionalHaltReason,
+        partialBlockAccessView);
+  }
+
+  /** Constructor with gasSpent and stateGasUsed (for Amsterdam+ forks with EIP-7778/EIP-8037). */
+  public TransactionProcessingResult(
+      final Status status,
+      final List<Log> logs,
+      final long estimateGasUsedByTransaction,
+      final long gasRemaining,
+      final long gasSpent,
+      final long stateGasUsed,
+      final Bytes output,
+      final ValidationResult<TransactionInvalidReason> validationResult,
+      final Optional<Bytes> revertReason,
+      final Optional<ExceptionalHaltReason> exceptionalHaltReason,
+      final Optional<PartialBlockAccessView> partialBlockAccessView) {
     this.status = status;
     this.logs = logs;
     this.estimateGasUsedByTransaction = estimateGasUsedByTransaction;
     this.gasRemaining = gasRemaining;
+    this.gasSpent = gasSpent;
+    this.stateGasUsed = stateGasUsed;
     this.output = output;
     this.validationResult = validationResult;
     this.revertReason = revertReason;
@@ -178,14 +300,57 @@ public class TransactionProcessingResult
   }
 
   /**
-   * Returns the estimate gas used by the transaction Difference between the gas limit and the
-   * remaining gas
+   * Returns the estimated gas used by the transaction for block gas accounting purposes.
    *
-   * @return the estimate gas used
+   * <p>This value has different semantics depending on the protocol version:
+   *
+   * <ul>
+   *   <li><b>Pre-Prague:</b> Equals the execution gas (gasLimit - gasRemaining), same as what would
+   *       be charged to the user before refunds.
+   *   <li><b>Prague+ (EIP-7623):</b> {@code max(executionGas, floorCost)} where floorCost is
+   *       calculated based on calldata costs. This implements the "floor gas" mechanism that
+   *       prevents calldata-heavy transactions from paying less than their fair share of block
+   *       space.
+   *   <li><b>Amsterdam+ (EIP-7778):</b> This value is used for block gas limit accounting instead
+   *       of the post-refund gas, preventing block gas limit circumvention through refund credits.
+   * </ul>
+   *
+   * <p>Note: This value is set by {@link
+   * org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor} during transaction
+   * processing.
+   *
+   * @return the estimated gas used for block accounting purposes
    */
   @Override
   public long getEstimateGasUsedByTransaction() {
     return estimateGasUsedByTransaction;
+  }
+
+  /**
+   * Returns the gas spent by the transaction (post-refund). This is the amount the user actually
+   * pays for the transaction, after SSTORE refunds have been applied.
+   *
+   * <p>EIP-7778: This value is now tracked separately from the gas used for block accounting
+   * purposes. While block gas accounting uses pre-refund gas (estimateGasUsedByTransaction), the
+   * user still receives the benefit of refunds (gasSpent = gasLimit - refundedGas).
+   *
+   * @return the gas spent post-refund
+   */
+  public long getGasSpent() {
+    return gasSpent;
+  }
+
+  /**
+   * Returns the state gas used by the transaction (EIP-8037).
+   *
+   * <p>This represents the gas consumed by state-creation operations (CREATE, SSTORE 0→nonzero,
+   * CALL to new accounts, code deposits, EIP-7702 delegations). State gas is tracked separately
+   * from regular gas for multidimensional gas metering.
+   *
+   * @return the state gas used
+   */
+  public long getStateGasUsed() {
+    return stateGasUsed;
   }
 
   /**
@@ -299,6 +464,10 @@ public class TransactionProcessingResult
         + estimateGasUsedByTransaction
         + ", gasRemaining="
         + gasRemaining
+        + ", gasSpent="
+        + gasSpent
+        + ", stateGasUsed="
+        + stateGasUsed
         + ", logs="
         + logs
         + ", output="

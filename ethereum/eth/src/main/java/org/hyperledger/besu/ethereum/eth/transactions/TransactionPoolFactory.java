@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
@@ -55,15 +56,18 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
+      final EthProtocolConfiguration ethProtocolConfiguration,
       final BlobCache blobCache,
       final MiningConfiguration miningConfiguration) {
 
     final TransactionPoolMetrics metrics = new TransactionPoolMetrics(metricsSystem);
 
     final PeerTransactionTracker transactionTracker =
-        new PeerTransactionTracker(transactionPoolConfiguration, ethContext.getEthPeers());
+        new PeerTransactionTracker(
+            transactionPoolConfiguration, ethContext.getEthPeers(), ethContext.getScheduler());
     final TransactionsMessageSender transactionsMessageSender =
-        new TransactionsMessageSender(transactionTracker);
+        new TransactionsMessageSender(
+            transactionTracker, ethProtocolConfiguration.getMaxTransactionsMessageSize());
 
     final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender =
         new NewPooledTransactionHashesMessageSender(transactionTracker);
@@ -80,7 +84,8 @@ public class TransactionPoolFactory {
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
         blobCache,
-        miningConfiguration);
+        miningConfiguration,
+        ethProtocolConfiguration);
   }
 
   static TransactionPool createTransactionPool(
@@ -95,7 +100,8 @@ public class TransactionPoolFactory {
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
       final BlobCache blobCache,
-      final MiningConfiguration miningConfiguration) {
+      final MiningConfiguration miningConfiguration,
+      final EthProtocolConfiguration ethProtocolConfiguration) {
 
     final TransactionPool transactionPool =
         new TransactionPool(
@@ -135,7 +141,8 @@ public class TransactionPoolFactory {
                 transactionPool,
                 transactionPoolConfiguration,
                 ethContext,
-                metrics),
+                metrics,
+                ethProtocolConfiguration.getMaxTransactionsMessageSize()),
             transactionPoolConfiguration.getUnstable().getTxMessageKeepAliveSeconds());
 
     subscribeTransactionHandlers(

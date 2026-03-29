@@ -22,6 +22,9 @@ import org.hyperledger.besu.consensus.qbft.core.payload.ProposalPayload;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockValidator;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+
+import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -61,6 +64,28 @@ public class ProposalPayloadValidator {
    * @return the boolean
    */
   public boolean validate(final SignedData<ProposalPayload> signedPayload) {
+    return validate(signedPayload, true);
+  }
+
+  /**
+   * Validate without block validation.
+   *
+   * @param signedPayload the signed Proposal payload
+   * @return the boolean
+   */
+  public boolean validateWithoutBlockValidation(final SignedData<ProposalPayload> signedPayload) {
+    return validate(signedPayload, false);
+  }
+
+  /**
+   * Validate with optional block validation.
+   *
+   * @param signedPayload the signed Proposal payload
+   * @param validateBlock whether to validate the block
+   * @return the boolean
+   */
+  private boolean validate(
+      final SignedData<ProposalPayload> signedPayload, final boolean validateBlock) {
 
     if (!signedPayload.getAuthor().equals(expectedProposer)) {
       LOG.info("{}: proposal created by non-proposer", ERROR_PREFIX);
@@ -75,7 +100,7 @@ public class ProposalPayloadValidator {
     }
 
     final QbftBlock block = payload.getProposedBlock();
-    if (!validateBlock(block)) {
+    if (validateBlock && !validateBlock(block, payload.getBlockAccessList())) {
       return false;
     }
 
@@ -87,10 +112,11 @@ public class ProposalPayloadValidator {
     return true;
   }
 
-  private boolean validateBlock(final QbftBlock block) {
+  private boolean validateBlock(
+      final QbftBlock block, final Optional<BlockAccessList> blockAccessList) {
     checkState(blockValidator != null, "block validation not possible, no block validator.");
 
-    final var validationResult = blockValidator.validateBlock(block);
+    final var validationResult = blockValidator.validateBlock(block, blockAccessList);
 
     if (!validationResult.success()) {
       LOG.info(

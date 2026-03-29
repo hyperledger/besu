@@ -14,23 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.eth.messages;
 
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncodingConfiguration;
+import org.hyperledger.besu.ethereum.core.SyncTransactionReceipt;
+import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptDecoder;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 
-public final class ReceiptsMessage extends AbstractMessageData {
+public class ReceiptsMessage extends AbstractMessageData {
+  /**
+   * This default decoder instance is used for performance reasons to avoid creating a new decoder
+   * for every ReceiptsMessage
+   */
+  private static final SyncTransactionReceiptDecoder DEFAULT_SYNC_TRANSACTION_RECEIPT_DECODER =
+      new SyncTransactionReceiptDecoder();
+
+  private List<List<SyncTransactionReceipt>> syncReceiptsByBlock;
+
+  protected ReceiptsMessage(final Bytes data) {
+    super(data);
+  }
 
   public static ReceiptsMessage readFrom(final MessageData message) {
     if (message instanceof ReceiptsMessage) {
@@ -44,22 +52,6 @@ public final class ReceiptsMessage extends AbstractMessageData {
     return new ReceiptsMessage(message.getData());
   }
 
-  @VisibleForTesting
-  public static ReceiptsMessage create(
-      final List<List<TransactionReceipt>> receipts,
-      final TransactionReceiptEncodingConfiguration encodingConfiguration) {
-    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
-    tmp.startList();
-    receipts.forEach(
-        (receiptSet) -> {
-          tmp.startList();
-          receiptSet.forEach(r -> TransactionReceiptEncoder.writeTo(r, tmp, encodingConfiguration));
-          tmp.endList();
-        });
-    tmp.endList();
-    return new ReceiptsMessage(tmp.encoded());
-  }
-
   /**
    * Create a message with raw, already encoded data. No checks are performed to validate the
    * rlp-encoded data.
@@ -71,29 +63,37 @@ public final class ReceiptsMessage extends AbstractMessageData {
     return new ReceiptsMessage(data);
   }
 
-  private ReceiptsMessage(final Bytes data) {
-    super(data);
-  }
-
   @Override
   public int getCode() {
     return EthProtocolMessages.RECEIPTS;
   }
 
-  public List<List<TransactionReceipt>> receipts() {
+  public List<List<SyncTransactionReceipt>> syncReceipts() {
+    if (syncReceiptsByBlock == null) {
+      deserialize();
+    }
+    return syncReceiptsByBlock;
+  }
+
+  protected void deserialize() {
     final RLPInput input = new BytesValueRLPInput(data, false);
-    input.enterList();
-    final List<List<TransactionReceipt>> receipts = new ArrayList<>();
+    deserializeReceiptLists(input);
+  }
+
+  protected void deserializeReceiptLists(final RLPInput input) {
+    final List<List<SyncTransactionReceipt>> receiptsByBlock = new ArrayList<>(input.enterList());
     while (input.nextIsList()) {
       final int setSize = input.enterList();
-      final List<TransactionReceipt> receiptSet = new ArrayList<>(setSize);
+      final List<SyncTransactionReceipt> receiptSet = new ArrayList<>(setSize);
       for (int i = 0; i < setSize; i++) {
-        receiptSet.add(TransactionReceiptDecoder.readFrom(input, false));
+        receiptSet.add(
+            DEFAULT_SYNC_TRANSACTION_RECEIPT_DECODER.decode(
+                input.nextIsList() ? input.currentListAsBytes() : input.readBytes()));
       }
       input.leaveList();
-      receipts.add(receiptSet);
+      receiptsByBlock.add(receiptSet);
     }
     input.leaveList();
-    return receipts;
+    syncReceiptsByBlock = receiptsByBlock;
   }
 }

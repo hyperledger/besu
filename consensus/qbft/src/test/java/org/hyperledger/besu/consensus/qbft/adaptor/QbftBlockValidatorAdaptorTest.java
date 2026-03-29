@@ -46,13 +46,14 @@ class QbftBlockValidatorAdaptorTest {
             besuBlock,
             HeaderValidationMode.LIGHT,
             HeaderValidationMode.FULL,
+            Optional.empty(),
             false))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     QbftBlockValidatorAdaptor qbftBlockValidator =
         new QbftBlockValidatorAdaptor(blockValidator, protocolContext);
     QbftBlockValidator.ValidationResult validationResult =
-        qbftBlockValidator.validateBlock(qbftBlock);
+        qbftBlockValidator.validateBlock(qbftBlock, Optional.empty());
     assertThat(validationResult.success()).isTrue();
     assertThat(validationResult.errorMessage()).isEmpty();
   }
@@ -65,13 +66,14 @@ class QbftBlockValidatorAdaptorTest {
             besuBlock,
             HeaderValidationMode.LIGHT,
             HeaderValidationMode.FULL,
+            Optional.empty(),
             false))
         .thenReturn(new BlockProcessingResult("failed"));
 
     QbftBlockValidatorAdaptor qbftBlockValidator =
         new QbftBlockValidatorAdaptor(blockValidator, protocolContext);
     QbftBlockValidator.ValidationResult validationResult =
-        qbftBlockValidator.validateBlock(qbftBlock);
+        qbftBlockValidator.validateBlock(qbftBlock, Optional.empty());
     assertThat(validationResult.success()).isFalse();
     assertThat(validationResult.errorMessage()).contains("failed");
   }

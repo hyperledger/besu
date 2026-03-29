@@ -212,7 +212,7 @@ public class TransactionSmartContractPermissioningController
 
   // Address is the 20 bytes of value left padded by 12 bytes.
   private static Bytes encodeAddress(final Address address) {
-    return Bytes.concatenate(Bytes.wrap(new byte[12]), address);
+    return Bytes.concatenate(Bytes.wrap(new byte[12]), address.getBytes());
   }
 
   // long to uint256, 8 bytes big endian, so left padded by 24 bytes

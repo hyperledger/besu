@@ -155,7 +155,12 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     final BlockImporter importer =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockImporter();
     final BlockImportResult blockImportResult =
-        importer.importBlock(protocolContext, block, HeaderValidationMode.FULL);
+        importer.importBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            blockCreationResult.getBlockAccessList());
     timing.register("importingBlock");
     if (blockImportResult.isImported()) {
       notifyNewBlockListeners(block);

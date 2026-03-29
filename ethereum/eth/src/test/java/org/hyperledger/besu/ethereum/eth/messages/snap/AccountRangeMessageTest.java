@@ -41,7 +41,7 @@ public final class AccountRangeMessageTest {
     final Map<Bytes32, Bytes> keys = new HashMap<>();
     final PmtStateTrieAccountValue accountValue =
         new PmtStateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
-    keys.put(Hash.wrap(Bytes32.leftPad(Bytes.of(1))), RLP.encode(accountValue::writeTo));
+    keys.put(Bytes32.leftPad(Bytes.of(1)), RLP.encode(accountValue::writeTo));
 
     final List<Bytes> proofs = new ArrayList<>();
     proofs.add(Bytes32.random());
@@ -56,6 +56,44 @@ public final class AccountRangeMessageTest {
     final AccountRangeMessage.AccountRangeData range = message.accountData(false);
     assertThat(range.accounts()).isEqualTo(keys);
     assertThat(range.proofs()).isEqualTo(proofs);
+  }
+
+  @Test
+  public void createUsesSlimEncodingOnWire() {
+    // Create an account with empty storage and code (the common case)
+    final PmtStateTrieAccountValue emptyAccount =
+        new PmtStateTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    final Map<Bytes32, Bytes> accounts = new HashMap<>();
+    accounts.put(Bytes32.leftPad(Bytes.of(1)), RLP.encode(emptyAccount::writeTo));
+
+    final MessageData message = AccountRangeMessage.create(accounts, List.of());
+    final Bytes wireBytes = message.getData();
+
+    // The wire bytes should NOT contain the full 32-byte EMPTY_TRIE_HASH or EMPTY code hash.
+    // In slim encoding, these are replaced with 0x80 (RLP empty bytes).
+    assertThat(wireBytes.toHexString())
+        .doesNotContain(Hash.EMPTY_TRIE_HASH.toHexString().substring(2));
+    assertThat(wireBytes.toHexString()).doesNotContain(Hash.EMPTY.toHexString().substring(2));
+  }
+
+  @Test
+  public void createPreservesNonEmptyHashesOnWire() {
+    // Create an account with non-empty storage root and code hash
+    final Hash storageRoot = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("0xdeadbeef")));
+    final Hash codeHash = Hash.wrap(Bytes32.leftPad(Bytes.fromHexString("0xcafebabe")));
+    final PmtStateTrieAccountValue account =
+        new PmtStateTrieAccountValue(5L, Wei.of(100L), storageRoot, codeHash);
+    final Map<Bytes32, Bytes> accounts = new HashMap<>();
+    accounts.put(Bytes32.leftPad(Bytes.of(1)), RLP.encode(account::writeTo));
+
+    // Round-trip: create message, read it back
+    final MessageData message = AccountRangeMessage.create(accounts, List.of());
+    final AccountRangeMessage parsed =
+        AccountRangeMessage.readFrom(new RawMessage(SnapV1.ACCOUNT_RANGE, message.getData()));
+    final AccountRangeMessage.AccountRangeData range = parsed.accountData(false);
+
+    // Non-empty hashes should survive the round trip
+    assertThat(range.accounts()).isEqualTo(accounts);
   }
 
   @Test
@@ -125,8 +163,8 @@ public final class AccountRangeMessageTest {
     assertThat(expectedWei).isEqualTo(balance);
 
     // Verify the storageRoot and codeHash
-    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY_TRIE_HASH);
-    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY);
+    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY_TRIE_HASH.getBytes());
+    assertThat(in.readBytes32()).isEqualTo(Hash.EMPTY.getBytes());
 
     // Exit the list
     in.leaveList();

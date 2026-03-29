@@ -55,6 +55,28 @@ public class SignatureAlgorithmFactory {
   }
 
   /**
+   * Sets a custom SignatureAlgorithm instance directly.
+   *
+   * @param signatureAlgorithm the custom signature algorithm instance
+   * @throws IllegalStateException if instance is already set
+   */
+  public static void setInstance(final SignatureAlgorithm signatureAlgorithm)
+      throws IllegalStateException {
+    if (instance != null) {
+      throw new IllegalStateException(
+          "Instance of SignatureAlgorithmFactory can only be set once.");
+    }
+
+    instance = signatureAlgorithm;
+
+    if (!SignatureAlgorithmType.isDefault(instance)) {
+      LOG.info(
+          "The signature algorithm uses the elliptic curve {}. The usage of alternative elliptic curves is still experimental.",
+          instance.getCurveName());
+    }
+  }
+
+  /**
    * getInstance will always return a valid SignatureAlgorithm and never null. This is necessary in
    * the unit tests be able to use the factory without having to call setInstance first.
    *

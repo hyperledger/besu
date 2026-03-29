@@ -15,12 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -96,7 +97,7 @@ public abstract class TransactionReceiptResult {
             receiptWithMetadata.getTransactionIndex(),
             receiptWithMetadata.getLogIndexOffset());
     this.logsBloom = receipt.getBloomFilter().toString();
-    this.to = txn.getTo().map(Bytes::toHexString).orElse(null);
+    this.to = txn.getTo().map(BytesHolder::getBytes).map(Bytes::toHexString).orElse(null);
     this.transactionHash = txn.getHash().toString();
     this.transactionIndex = Quantity.create(receiptWithMetadata.getTransactionIndex());
     this.revertReason = receipt.getRevertReason().map(Bytes::toString).orElse(null);

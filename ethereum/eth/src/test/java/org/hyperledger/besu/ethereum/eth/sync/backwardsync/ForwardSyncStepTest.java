@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -89,7 +90,7 @@ public class ForwardSyncStepTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
   private MutableBlockchain localBlockchain;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
@@ -101,17 +102,19 @@ public class ForwardSyncStepTest {
   public void setup() {
     headersStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     blocksStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     chainStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+            hash -> hash.getBytes().toArrayUnsafe(),
+            new HashConvertor(),
+            new InMemoryKeyValueStorage());
     sessionDataStorage =
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),

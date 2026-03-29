@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.ethereum.worldstate.ImmutablePathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -96,19 +95,19 @@ class TrieLogHelperTest {
     var updater = inMemoryWorldState.updater();
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader1.getHash().toArrayUnsafe(), createTrieLog(blockHeader1));
+        .put(blockHeader1.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader1));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader2.getHash().toArrayUnsafe(), createTrieLog(blockHeader2));
+        .put(blockHeader2.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader2));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader3.getHash().toArrayUnsafe(), createTrieLog(blockHeader3));
+        .put(blockHeader3.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader3));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader4.getHash().toArrayUnsafe(), createTrieLog(blockHeader4));
+        .put(blockHeader4.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader4));
     updater
         .getTrieLogStorageTransaction()
-        .put(blockHeader5.getHash().toArrayUnsafe(), createTrieLog(blockHeader5));
+        .put(blockHeader5.getHash().getBytes().toArrayUnsafe(), createTrieLog(blockHeader5));
     updater.getTrieLogStorageTransaction().commit();
 
     nonValidatingTrieLogHelper = new NonValidatingTrieLogHelper();
@@ -126,6 +125,44 @@ class TrieLogHelperTest {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
     when(blockchain.getFinalized()).thenReturn(Optional.of(blockHeader3.getBlockHash()));
     when(blockchain.getBlockHeader(any(Hash.class))).thenReturn(Optional.of(blockHeader3));
+  }
+
+  @Test
+  public void pruneFailsWhenBatchFileContainsJavaSerialization(final @TempDir Path dataDir)
+      throws IOException {
+    Files.createDirectories(dataDir.resolve("database"));
+
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(BONSAI)
+            .pathBasedExtraStorageConfiguration(
+                ImmutablePathBasedExtraStorageConfiguration.builder()
+                    .maxLayersToLoad(3L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
+            .build();
+
+    mockBlockchainBase();
+    when(blockchain.getBlockHeader(5)).thenReturn(Optional.of(blockHeader5));
+    when(blockchain.getBlockHeader(4)).thenReturn(Optional.of(blockHeader4));
+    when(blockchain.getBlockHeader(3)).thenReturn(Optional.of(blockHeader3));
+
+    // Pre-place a Java-serialized file at the expected batch file path.
+    // saveTrieLogsAsRlpInFile's exists-check will skip overwriting it.
+    // readTrieLogsAsRlpFromFile will then fail to parse it as RLP during restore,
+    // confirming the code no longer silently deserializes Java-serialized objects.
+    Path batchFile = dataDir.resolve("database").resolve("trieLogsToRetain-1");
+    try (var oos =
+        new java.io.ObjectOutputStream(new java.io.FileOutputStream(batchFile.toFile()))) {
+      oos.writeObject("notrlp");
+    }
+
+    assertThatThrownBy(
+            () ->
+                nonValidatingTrieLogHelper.prune(
+                    dataStorageConfiguration, inMemoryWorldState, blockchain, dataDir))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessageContaining("RLP");
   }
 
   @Test
@@ -388,7 +425,7 @@ class TrieLogHelperTest {
                     blockchain,
                     dataDir.resolve("unknownPath")))
         .isInstanceOf(RuntimeException.class)
-        .hasCauseExactlyInstanceOf(FileNotFoundException.class);
+        .hasCauseInstanceOf(java.io.IOException.class);
 
     // assert all trie logs are still in the DB
     assertThat(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get())
@@ -418,7 +455,7 @@ class TrieLogHelperTest {
             .findFirst()
             .get();
 
-    assertThat(trieLog.getKey()).isEqualTo(blockHeader1.getHash().toArrayUnsafe());
+    assertThat(trieLog.getKey()).isEqualTo(blockHeader1.getHash().getBytes().toArrayUnsafe());
     assertThat(trieLog.getValue())
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
   }
@@ -437,11 +474,11 @@ class TrieLogHelperTest {
             .stream()
             .collect(Collectors.toMap(e -> Bytes.wrap(e.getKey()), Map.Entry::getValue));
 
-    assertThat(trieLogs.get(blockHeader1.getHash()))
+    assertThat(trieLogs.get(blockHeader1.getHash().getBytes()))
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader1.getHash()).get());
-    assertThat(trieLogs.get(blockHeader2.getHash()))
+    assertThat(trieLogs.get(blockHeader2.getHash().getBytes()))
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader2.getHash()).get());
-    assertThat(trieLogs.get(blockHeader3.getHash()))
+    assertThat(trieLogs.get(blockHeader3.getHash().getBytes()))
         .isEqualTo(inMemoryWorldState.getTrieLog(blockHeader3.getHash()).get());
   }
 

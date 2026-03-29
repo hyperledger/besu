@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.StateOverrideMap;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.SimulationMessageCallProcessor;
 
@@ -106,10 +108,9 @@ public class SimulationTransactionProcessorFactory {
     precompileOverrides.forEach(
         (oldAddress, newAddress) -> {
           if (!originalAddresses.contains(oldAddress)) {
-            throw new IllegalArgumentException("Address " + oldAddress + " is not a precompile.");
-          }
-          if (newRegistry.getPrecompileAddresses().contains(newAddress)) {
-            throw new IllegalArgumentException("Duplicate precompile address: " + newAddress);
+            throw new BlockStateCallException(
+                "Address " + oldAddress + " is not a precompile.",
+                BlockStateCallError.INVALID_PRECOMPILE_ADDRESS);
           }
           newRegistry.put(newAddress, originalRegistry.get(oldAddress));
         });
@@ -117,13 +118,8 @@ public class SimulationTransactionProcessorFactory {
     originalAddresses.stream()
         .filter(originalAddress -> !precompileOverrides.containsKey(originalAddress))
         .forEach(
-            originalAddress -> {
-              if (newRegistry.getPrecompileAddresses().contains(originalAddress)) {
-                throw new IllegalArgumentException(
-                    "Duplicate precompile address: " + originalAddress);
-              }
-              newRegistry.put(originalAddress, originalRegistry.get(originalAddress));
-            });
+            originalAddress ->
+                newRegistry.put(originalAddress, originalRegistry.get(originalAddress)));
 
     return newRegistry;
   }

@@ -14,10 +14,11 @@
  */
 package org.hyperledger.besu.cli.options;
 
+import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.ImmutableEthProtocolConfiguration;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
-import java.util.Arrays;
 import java.util.List;
 
 import picocli.CommandLine;
@@ -25,12 +26,13 @@ import picocli.CommandLine;
 /** The Eth protocol CLI options. */
 public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> {
   private static final String MAX_MESSAGE_SIZE_FLAG = "--Xeth-max-message-size";
+  private static final String MAX_TRANSACTIONS_MESSAGE_SIZE_FLAG =
+      "--Xeth-max-transactions-message-size";
   private static final String MAX_GET_HEADERS_FLAG = "--Xewp-max-get-headers";
   private static final String MAX_GET_BODIES_FLAG = "--Xewp-max-get-bodies";
   private static final String MAX_GET_RECEIPTS_FLAG = "--Xewp-max-get-receipts";
   private static final String MAX_GET_NODE_DATA_FLAG = "--Xewp-max-get-node-data";
   private static final String MAX_GET_POOLED_TRANSACTIONS = "--Xewp-max-get-pooled-transactions";
-
   private static final String MAX_CAPABILITY = "--Xeth-capability-max";
   private static final String MIN_CAPABILITY = "--Xeth-capability-min";
 
@@ -42,6 +44,15 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
           "Maximum message size (in bytes) for Ethereum Wire Protocol messages. (default: ${DEFAULT-VALUE})")
   private PositiveNumber maxMessageSize =
       PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE);
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {MAX_TRANSACTIONS_MESSAGE_SIZE_FLAG},
+      paramLabel = "<INTEGER>",
+      description =
+          "Maximum message size (in bytes) for P2P Transactions message. (default: ${DEFAULT-VALUE})")
+  private PositiveNumber maxTransactionsMessageSize =
+      PositiveNumber.fromInt(EthProtocolConfiguration.DEFAULT_MAX_TRANSACTIONS_MESSAGE_SIZE);
 
   @CommandLine.Option(
       hidden = true,
@@ -122,6 +133,8 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
   public static EthProtocolOptions fromConfig(final EthProtocolConfiguration config) {
     final EthProtocolOptions options = create();
     options.maxMessageSize = PositiveNumber.fromInt(config.getMaxMessageSize());
+    options.maxTransactionsMessageSize =
+        PositiveNumber.fromInt(config.getMaxTransactionsMessageSize());
     options.maxGetBlockHeaders = PositiveNumber.fromInt(config.getMaxGetBlockHeaders());
     options.maxGetBlockBodies = PositiveNumber.fromInt(config.getMaxGetBlockBodies());
     options.maxGetReceipts = PositiveNumber.fromInt(config.getMaxGetReceipts());
@@ -134,13 +147,14 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   @Override
   public EthProtocolConfiguration toDomainObject() {
-    return EthProtocolConfiguration.builder()
-        .maxMessageSize(maxMessageSize)
-        .maxGetBlockHeaders(maxGetBlockHeaders)
-        .maxGetBlockBodies(maxGetBlockBodies)
-        .maxGetReceipts(maxGetReceipts)
-        .maxGetNodeData(maxGetNodeData)
-        .maxGetPooledTransactions(maxGetPooledTransactions)
+    return ImmutableEthProtocolConfiguration.builder()
+        .maxMessageSize(maxMessageSize.getValue())
+        .maxTransactionsMessageSize(maxTransactionsMessageSize.getValue())
+        .maxGetBlockHeaders(maxGetBlockHeaders.getValue())
+        .maxGetBlockBodies(maxGetBlockBodies.getValue())
+        .maxGetReceipts(maxGetReceipts.getValue())
+        .maxGetNodeData(maxGetNodeData.getValue())
+        .maxGetPooledTransactions(maxGetPooledTransactions.getValue())
         .maxEthCapability(maxEthCapability)
         .minEthCapability(minEthCapability)
         .build();
@@ -148,18 +162,6 @@ public class EthProtocolOptions implements CLIOptions<EthProtocolConfiguration> 
 
   @Override
   public List<String> getCLIOptions() {
-    return Arrays.asList(
-        MAX_MESSAGE_SIZE_FLAG,
-        OptionParser.format(maxMessageSize.getValue()),
-        MAX_GET_HEADERS_FLAG,
-        OptionParser.format(maxGetBlockHeaders.getValue()),
-        MAX_GET_BODIES_FLAG,
-        OptionParser.format(maxGetBlockBodies.getValue()),
-        MAX_GET_RECEIPTS_FLAG,
-        OptionParser.format(maxGetReceipts.getValue()),
-        MAX_GET_NODE_DATA_FLAG,
-        OptionParser.format(maxGetNodeData.getValue()),
-        MAX_GET_POOLED_TRANSACTIONS,
-        OptionParser.format(maxGetPooledTransactions.getValue()));
+    return CommandLineUtils.getCLIOptions(this, new EthProtocolOptions());
   }
 }

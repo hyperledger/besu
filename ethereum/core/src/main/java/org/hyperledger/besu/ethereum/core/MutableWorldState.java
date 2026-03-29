@@ -14,12 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitter;
 import org.hyperledger.besu.evm.worldstate.MutableWorldView;
 import org.hyperledger.besu.evm.worldstate.WorldState;
-
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 
 public interface MutableWorldState extends WorldState, MutableWorldView {
 
@@ -29,11 +27,13 @@ public interface MutableWorldState extends WorldState, MutableWorldView {
    * @param blockHeader If persisting for an imported block, the block hash of the world state this
    *     represents. If this does not represent a forward transition from one block to the next
    *     `null` should be passed in.
+   * @param committer An implementation of {@link StateRootCommitter} responsible for recomputing
+   *     the state root and committing the state changes to storage.
    */
-  void persist(BlockHeader blockHeader, Optional<CompletableFuture<Hash>> maybeStateRootFuture);
+  void persist(BlockHeader blockHeader, StateRootCommitter committer);
 
   default void persist(final BlockHeader blockHeader) {
-    persist(blockHeader, Optional.empty());
+    persist(blockHeader, StateRootCommitter.SYNCHRONOUS);
   }
 
   default MutableWorldState freezeStorage() {

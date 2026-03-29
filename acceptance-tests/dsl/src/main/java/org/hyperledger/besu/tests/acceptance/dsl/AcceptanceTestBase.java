@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.account.Accounts;
 import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Blockchain;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.admin.AdminConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.bft.BftConditions;
-import org.hyperledger.besu.tests.acceptance.dsl.condition.clique.CliqueConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.eth.EthConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.login.LoginConditions;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.net.NetConditions;
@@ -37,13 +36,13 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.permissionin
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.AccountTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftTransactions;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.contract.ContractTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.debug.DebugTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.eth.EthTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.NetTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningTransactions;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.plugins.PluginsTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolTransactions;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.web3.Web3Transactions;
 
@@ -83,8 +82,6 @@ public class AcceptanceTestBase {
   protected final AdminConditions admin;
   protected final AdminTransactions adminTransactions;
   protected final Blockchain blockchain;
-  protected final CliqueConditions clique;
-  protected final CliqueTransactions cliqueTransactions;
   protected final Cluster cluster;
   protected final ContractVerifier contractVerifier;
   protected final ContractTransactions contractTransactions;
@@ -104,6 +101,7 @@ public class AcceptanceTestBase {
   protected final TxPoolTransactions txPoolTransactions;
   protected final ExitedWithCode exitedSuccessfully;
   protected final DebugTransactions debug;
+  protected final PluginsTransactions plugins;
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
 
@@ -111,14 +109,12 @@ public class AcceptanceTestBase {
     ethTransactions = new EthTransactions();
     accounts = new Accounts(ethTransactions);
     adminTransactions = new AdminTransactions();
-    cliqueTransactions = new CliqueTransactions();
     bftTransactions = new BftTransactions();
     accountTransactions = new AccountTransactions(accounts);
     permissioningTransactions = new PermissioningTransactions();
     contractTransactions = new ContractTransactions();
     minerTransactions = new MinerTransactions();
     blockchain = new Blockchain(ethTransactions);
-    clique = new CliqueConditions(ethTransactions, cliqueTransactions);
     eth = new EthConditions(ethTransactions);
     bft = new BftConditions(bftTransactions);
     login = new LoginConditions();
@@ -134,6 +130,7 @@ public class AcceptanceTestBase {
     permissionedNodeBuilder = new PermissionedNodeBuilder();
     exitedSuccessfully = new ExitedWithCode(0);
     debug = new DebugTransactions();
+    plugins = new PluginsTransactions();
   }
 
   @BeforeEach

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,8 +26,6 @@ import org.apache.tuweni.crypto.SECP256K1;
 import org.apache.tuweni.io.Base32;
 import org.apache.tuweni.io.Base64URLSafe;
 import org.bouncycastle.math.ec.ECPoint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Intermediate format to write DNS entries */
@@ -36,8 +33,6 @@ public interface DNSEntry {
 
   /** Represents a node in the ENR record. */
   class ENRNode implements DNSEntry {
-    private static final Logger LOG = LoggerFactory.getLogger(ENRNode.class);
-
     private final EthereumNodeRecord nodeRecord;
 
     private ENRNode(final EthereumNodeRecord nodeRecord) {
@@ -55,19 +50,9 @@ public interface DNSEntry {
         throw new IllegalArgumentException("ENRNode attributes cannot be null");
       }
       return Optional.ofNullable(attrs.get("enr"))
-          .map(ENRNode::decodeValue)
-          .map(EthereumNodeRecord::fromRLP)
+          .map(EthereumNodeRecord::fromEnr)
           .map(ENRNode::new)
           .orElse(null);
-    }
-
-    private static Bytes decodeValue(final String enrValue) {
-      try {
-        return Bytes.wrap(Base64.getUrlDecoder().decode(enrValue));
-      } catch (IllegalArgumentException iae) {
-        LOG.debug("enr value `{}` is not properly base64url encoded", enrValue);
-        return null;
-      }
     }
 
     /**

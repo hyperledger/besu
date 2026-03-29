@@ -45,12 +45,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.BlockGasAccountingStrategy;
+import org.hyperledger.besu.ethereum.mainnet.BlockGasUsedValidator;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.DefaultStateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
@@ -174,7 +177,10 @@ public class EthGetTransactionReceiptTest {
           Duration.ofSeconds(12),
           true,
           Optional.empty(),
-          Optional.empty());
+          Optional.empty(),
+          new DefaultStateRootCommitterFactory(),
+          BlockGasAccountingStrategy.FRONTIER,
+          BlockGasUsedValidator.FRONTIER);
   private final ProtocolSpec statusTransactionTypeSpec =
       new ProtocolSpec(
           TestHardforkId.STATUS,
@@ -207,7 +213,10 @@ public class EthGetTransactionReceiptTest {
           Duration.ofSeconds(12),
           true,
           Optional.empty(),
-          Optional.empty());
+          Optional.empty(),
+          new DefaultStateRootCommitterFactory(),
+          BlockGasAccountingStrategy.FRONTIER,
+          BlockGasUsedValidator.FRONTIER);
 
   @SuppressWarnings("unchecked")
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);

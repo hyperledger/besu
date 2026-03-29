@@ -54,6 +54,8 @@ public enum BesuMetricCategory implements MetricCategory {
   TRANSACTION_POOL("transaction_pool"),
   /** Block processing besu metric category. */
   BLOCK_PROCESSING("block_processing"),
+  /** Block access list besu metric category. */
+  BAL("bal"),
   /** Block processing besu metric category. */
   BONSAI_CACHE("bonsai_cache");
 

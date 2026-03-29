@@ -16,8 +16,60 @@ package org.hyperledger.besu.plugin.data;
 
 import java.util.List;
 
-/** The minimum set of data for an AddedBlockContext. */
+/**
+ * Provides context information about a block that has been added to the blockchain.
+ *
+ * <p>This interface extends {@link BlockContext} to include additional metadata about how and why
+ * the block was added to the chain. It is primarily used by plugins to receive notifications about
+ * block addition events and to understand the nature of these events.
+ *
+ * @see BlockContext
+ */
 public interface AddedBlockContext extends BlockContext {
+
+  /**
+   * Defines the different types of block addition events that can occur in the blockchain.
+   *
+   * <p>These event types help distinguish between normal chain progression and exceptional
+   * scenarios like forks and reorganizations.
+   */
+  enum EventType {
+    /**
+     * Indicates that the block was added to the main chain and advanced the chain head to this
+     * block. This is the normal case for sequential block addition.
+     */
+    HEAD_ADVANCED,
+
+    /**
+     * Indicates that the block was added as part of a fork, creating an alternative chain branch
+     * that does not become the main chain.
+     */
+    FORK,
+
+    /**
+     * Indicates that the block was added as part of a chain reorganization, where the canonical
+     * chain switched to a different fork that includes this block.
+     */
+    CHAIN_REORG,
+
+    /**
+     * Indicates that the block was stored but did not affect the canonical chain. This typically
+     * occurs when importing historical blocks or when a block is stored for reference without being
+     * part of the active chain progression.
+     */
+    STORED_ONLY
+  }
+
+  /**
+   * Returns the type of event that occurred when this block was added.
+   *
+   * <p>The event type provides important context about how the block relates to the blockchain
+   * state and whether it represents normal progression, a fork, a reorganization, or just storage.
+   *
+   * @return the {@link EventType} indicating how this block was added
+   */
+  EventType getEventType();
+
   /**
    * A list of transaction receipts for the added block.
    *

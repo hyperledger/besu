@@ -15,9 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -35,6 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
   "authorizationList",
   "blockHash",
   "blockNumber",
+  "blockTimestamp",
   "chainId",
   "from",
   "gas",
@@ -62,6 +63,9 @@ public class TransactionCompleteResult implements TransactionResult {
 
   private final String blockHash;
   private final String blockNumber;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final String blockTimestamp;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String chainId;
@@ -92,7 +96,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final String s;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<VersionedHash> versionedHashes;
+  private final List<String> versionedHashes;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final List<CodeDelegationResult> authorizationList;
@@ -104,6 +108,7 @@ public class TransactionCompleteResult implements TransactionResult {
         transaction.getAccessList().orElse(transactionType.supportsAccessList() ? List.of() : null);
     this.blockHash = tx.getBlockHash().get().toString();
     this.blockNumber = Quantity.create(tx.getBlockNumber().get());
+    this.blockTimestamp = tx.getBlockTimestamp().map(Quantity::create).orElse(null);
     this.chainId = transaction.getChainId().map(Quantity::create).orElse(null);
     this.from = transaction.getSender().toString();
     this.gas = Quantity.create(transaction.getGasLimit());
@@ -121,7 +126,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.hash = transaction.getHash().toString();
     this.input = transaction.getPayload().toString();
     this.nonce = Quantity.create(transaction.getNonce());
-    this.to = transaction.getTo().map(Bytes::toHexString).orElse(null);
+    this.to = transaction.getTo().map(a -> a.getBytes().toHexString()).orElse(null);
     this.transactionIndex = Quantity.create(tx.getTransactionIndex().get());
     if (transactionType == TransactionType.FRONTIER) {
       this.type = Quantity.create(0);
@@ -141,7 +146,13 @@ public class TransactionCompleteResult implements TransactionResult {
     this.value = Quantity.create(transaction.getValue());
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
-    this.versionedHashes = transaction.getVersionedHashes().orElse(null);
+    this.versionedHashes =
+        transaction
+            .getVersionedHashes()
+            .map(
+                hashes ->
+                    hashes.stream().map(BytesHolder::getBytes).map(Bytes::toHexString).toList())
+            .orElse(null);
     final Optional<List<CodeDelegation>> codeDelegationList = transaction.getCodeDelegationList();
     this.authorizationList =
         codeDelegationList
@@ -162,6 +173,11 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return blockNumber;
+  }
+
+  @JsonGetter(value = "blockTimestamp")
+  public String getBlockTimestamp() {
+    return blockTimestamp;
   }
 
   @JsonGetter(value = "chainId")
@@ -257,7 +273,7 @@ public class TransactionCompleteResult implements TransactionResult {
   }
 
   @JsonGetter(value = "blobVersionedHashes")
-  public List<VersionedHash> getVersionedHashes() {
+  public List<String> getVersionedHashes() {
     return versionedHashes;
   }
 

@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.List;
 import java.util.Optional;
@@ -103,6 +103,6 @@ public class StorageTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
   @Override
   public List<Bytes> getTrieNodePath() {
-    return List.of(accountHash, CompactEncoding.encode(getLocation()));
+    return List.of(accountHash.getBytes(), CompactEncoding.encode(getLocation()));
   }
 }

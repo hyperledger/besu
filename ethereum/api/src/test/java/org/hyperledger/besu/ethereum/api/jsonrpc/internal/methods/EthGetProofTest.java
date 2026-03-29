@@ -22,9 +22,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -121,10 +120,7 @@ class EthGetProofTest {
   }
 
   @Test
-  void errorWhenWorldStateUnavailable() {
-
-    final JsonRpcErrorResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.BLOCK_NOT_FOUND);
+  void shouldReturnNullWhenWorldStateUnavailable() {
 
     final JsonRpcRequestContext request =
         requestWithParams(
@@ -132,9 +128,10 @@ class EthGetProofTest {
             new String[] {storageKey.toString()},
             String.valueOf(501));
 
-    final JsonRpcErrorResponse response = (JsonRpcErrorResponse) method.response(request);
+    final JsonRpcResponse response = method.response(request);
 
-    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+    Assertions.assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    Assertions.assertThat(((JsonRpcSuccessResponse) response).getResult()).isNull();
   }
 
   @Test
@@ -153,7 +150,8 @@ class EthGetProofTest {
     final Map<Bytes32, Bytes> storage = new HashMap<>();
 
     // Calculate the state root hash from the Merkle Patricia trie proof
-    final Bytes32 stateroot = Hash.hash(Bytes.fromHexString(result.getAccountProof().get(0)));
+    final Bytes32 stateroot =
+        Bytes32.wrap(Hash.hash(Bytes.fromHexString(result.getAccountProof().get(0))).getBytes());
 
     // Decode the account proof nodes and store them in the `storage` map
     result
@@ -161,7 +159,7 @@ class EthGetProofTest {
         .forEach(
             proof -> {
               final Bytes node = Bytes.fromHexString(proof);
-              storage.put(Hash.hash(node), node);
+              storage.put(Bytes32.wrap(Hash.hash(node).getBytes()), node);
             });
     result
         .getStorageProof()
@@ -172,21 +170,21 @@ class EthGetProofTest {
                   .forEach(
                       proof -> {
                         final Bytes node = Bytes.fromHexString(proof);
-                        storage.put(Hash.hash(node), node);
+                        storage.put(Bytes32.wrap(Hash.hash(node).getBytes()), node);
                       });
             });
 
     // Create a Merkle Patricia Trie backed by the `proof`
     StoredMerklePatriciaTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> Optional.ofNullable(storage.get(hash)),
+            (Bytes location, Bytes32 hash) -> Optional.ofNullable(storage.get(hash)),
             stateroot,
             Function.identity(),
             Function.identity());
 
     // Retrieve the account from the trie and decode it if present
     Optional<PmtStateTrieAccountValue> accountInTrie =
-        trie.get(address.addressHash())
+        trie.get(Bytes32.wrap(address.addressHash().getBytes()))
             .map(
                 rlp -> {
                   return PmtStateTrieAccountValue.readFrom(RLP.input(rlp));
@@ -212,12 +210,12 @@ class EthGetProofTest {
     // Check the storage
     StoredMerklePatriciaTrie<Bytes, Bytes> trieStorage =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> Optional.ofNullable(storage.get(hash)),
-            storageRoot,
+            (Bytes location, Bytes32 hash) -> Optional.ofNullable(storage.get(hash)),
+            Bytes32.wrap(storageRoot.getBytes()),
             Function.identity(),
             Function.identity());
     // Retrieve the slot from the trie and decode it if present
-    Optional<Bytes> slotInTrie = trieStorage.get(Hash.hash(storageKey));
+    Optional<Bytes> slotInTrie = trieStorage.get(Bytes32.wrap(Hash.hash(storageKey).getBytes()));
     assertThat(slotInTrie).isPresent();
     assertThat(slotInTrie).contains(Bytes.fromHexString("0x01"));
   }
@@ -237,7 +235,8 @@ class EthGetProofTest {
     final Map<Bytes32, Bytes> storage = new HashMap<>();
 
     // Calculate the state root hash from the Merkle Patricia trie proof
-    final Bytes32 stateroot = Hash.hash(Bytes.fromHexString(result.getAccountProof().get(0)));
+    final Bytes32 stateroot =
+        Bytes32.wrap(Hash.hash(Bytes.fromHexString(result.getAccountProof().get(0))).getBytes());
 
     // Decode the account proof nodes and store them in the `storage` map
     result
@@ -245,20 +244,20 @@ class EthGetProofTest {
         .forEach(
             proof -> {
               final Bytes node = Bytes.fromHexString(proof);
-              storage.put(Hash.hash(node), node);
+              storage.put(Bytes32.wrap(Hash.hash(node).getBytes()), node);
             });
 
     // Create a Merkle Patricia Trie backed by the `proof`
     StoredMerklePatriciaTrie<Bytes, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> Optional.ofNullable(storage.get(hash)),
+            (Bytes location, Bytes32 hash) -> Optional.ofNullable(storage.get(hash)),
             stateroot,
             Function.identity(),
             Function.identity());
 
     // Retrieve the account from the trie and decode it if present
     Optional<PmtStateTrieAccountValue> accountInTrie =
-        trie.get(address.addressHash())
+        trie.get(Bytes32.wrap(address.addressHash().getBytes()))
             .map(
                 rlp -> {
                   return PmtStateTrieAccountValue.readFrom(RLP.input(rlp));

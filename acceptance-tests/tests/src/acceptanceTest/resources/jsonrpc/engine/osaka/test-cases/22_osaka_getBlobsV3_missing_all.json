@@ -1,0 +1,22 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_getBlobsV3",
+    "params": [
+      [
+        "0x01c4cb8adb8a6f2830dc923dfe047de2abf7b666cc731d2a8d602a850422dd9b",
+        "0x01c4cb8adb8a6f2830dc923dfe047de2abf7b666cc731d2a8d602a850422dd9c"
+      ]
+    ],
+    "id": 69
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 69,
+    "result": [
+      null,
+      null
+    ]
+  },
+  "statusCode": 200
+}

@@ -17,37 +17,30 @@ package org.hyperledger.besu.evm.frame;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
-import org.hyperledger.besu.collections.trie.BytesTrieSet;
-import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
-import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
-import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
-import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -209,10 +202,8 @@ public class MessageFrame {
   // Machine state fields.
   private long gasRemaining;
   private int pc;
-  private int section = 0;
   private final Memory memory = new Memory();
   private final OperandStack stack;
-  private final Supplier<ReturnStack> returnStack;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -246,7 +237,7 @@ public class MessageFrame {
   private Optional<Eip7928AccessList> eip7928AccessList = Optional.empty();
 
   /** The mark of the undoable collections at the creation of this message frame */
-  private final long undoMark;
+  private long undoMark;
 
   /**
    * Builder builder.
@@ -280,8 +271,7 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.returnStack = Suppliers.memoize(ReturnStack::new);
-    this.pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
+    this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
     this.inputData = inputData;
@@ -313,24 +303,6 @@ public class MessageFrame {
    */
   public void setPC(final int pc) {
     this.pc = pc;
-  }
-
-  /**
-   * Set the code section index.
-   *
-   * @param section the code section index
-   */
-  public void setSection(final int section) {
-    this.section = section;
-  }
-
-  /**
-   * Return the current code section. Always zero for legacy code.
-   *
-   * @return the current code section
-   */
-  public int getSection() {
-    return section;
   }
 
   /** Deducts the remaining gas. */
@@ -497,33 +469,6 @@ public class MessageFrame {
    */
   public int stackSize() {
     return stack.size();
-  }
-
-  /**
-   * Return the current return stack size.
-   *
-   * @return The current return stack size
-   */
-  public int returnStackSize() {
-    return returnStack.get().size();
-  }
-
-  /**
-   * The top item of the return stack
-   *
-   * @return The top item of the return stack, or null if the stack is empty
-   */
-  public ReturnStack.ReturnStackItem peekReturnStack() {
-    return returnStack.get().peek();
-  }
-
-  /**
-   * Pushes a new return stack item onto the return stack
-   *
-   * @param returnStackItem item to be pushed
-   */
-  public void pushReturnStackItem(final ReturnStack.ReturnStackItem returnStackItem) {
-    returnStack.get().push(returnStackItem);
   }
 
   /**
@@ -860,6 +805,121 @@ public class MessageFrame {
   }
 
   /**
+   * Increment the state gas used (EIP-8037). This is NOT undone on revert since consumed gas is
+   * consumed regardless of execution outcome.
+   *
+   * @param amount The amount of state gas to add
+   */
+  public void incrementStateGasUsed(final long amount) {
+    txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+  }
+
+  /**
+   * Return the accumulated state gas used (EIP-8037).
+   *
+   * @return accumulated state gas used
+   */
+  public long getStateGasUsed() {
+    return txValues.stateGasUsed().get();
+  }
+
+  /**
+   * Gets the state gas reservoir (EIP-8037).
+   *
+   * @return the state gas reservoir amount
+   */
+  public long getStateGasReservoir() {
+    return txValues.stateGasReservoir().get();
+  }
+
+  /**
+   * Sets the state gas reservoir (EIP-8037).
+   *
+   * @param amount the amount to set the reservoir to
+   */
+  public void setStateGasReservoir(final long amount) {
+    txValues.stateGasReservoir().set(amount);
+  }
+
+  /**
+   * Increments the state gas reservoir (EIP-8037). Used for state gas refunds.
+   *
+   * @param amount the amount to add to the reservoir
+   */
+  public void incrementStateGasReservoir(final long amount) {
+    txValues.stateGasReservoir().set(txValues.stateGasReservoir().get() + amount);
+  }
+
+  /**
+   * Consumes state gas: draws from the reservoir first, then from gasRemaining. Also increments
+   * stateGasUsed. Returns false if insufficient total gas (reservoir + gasRemaining).
+   *
+   * @param amount the amount of state gas to consume
+   * @return true if the gas was successfully consumed, false if insufficient gas
+   */
+  public boolean consumeStateGas(final long amount) {
+    final long reservoir = txValues.stateGasReservoir().get();
+    if (reservoir >= amount) {
+      txValues.stateGasReservoir().set(reservoir - amount);
+    } else {
+      // Overflow goes to gasRemaining
+      final long overflow = amount - reservoir;
+      if (gasRemaining < overflow) {
+        return false;
+      }
+      txValues.stateGasReservoir().set(0L);
+      gasRemaining -= overflow;
+    }
+    txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+    return true;
+  }
+
+  /**
+   * Consumes state gas, draining all available gas even when the full amount cannot be covered.
+   * Always increments stateGasUsed by the full amount regardless of gas availability. Used when a
+   * transaction-level (depth-0) contract creation fails after state gas has been partially
+   * committed: we must record the charge for block accounting even though execution fails.
+   *
+   * @param amount the amount of state gas to consume
+   * @return true if sufficient gas was available, false if gas was insufficient (but drained
+   *     anyway)
+   */
+  public boolean consumeStateGasForced(final long amount) {
+    final long reservoir = txValues.stateGasReservoir().get();
+    if (reservoir >= amount) {
+      txValues.stateGasReservoir().set(reservoir - amount);
+      txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+      return true;
+    } else {
+      final long overflow = amount - reservoir;
+      txValues.stateGasReservoir().set(0L);
+      final boolean sufficient = gasRemaining >= overflow;
+      gasRemaining = Math.max(0L, gasRemaining - overflow);
+      txValues.stateGasUsed().set(txValues.stateGasUsed().get() + amount);
+      return sufficient;
+    }
+  }
+
+  /**
+   * Accumulates state gas that spilled into gasRemaining in a reverted child frame (EIP-8037). This
+   * counter is NOT undone on revert — it tracks permanently burned spill gas for block accounting.
+   *
+   * @param amount the spill amount to accumulate
+   */
+  public void accumulateStateGasSpillBurned(final long amount) {
+    txValues.stateGasSpillBurned()[0] += amount;
+  }
+
+  /**
+   * Returns the total state gas spill burned by reverted child frames (EIP-8037).
+   *
+   * @return accumulated spill burned
+   */
+  public long getStateGasSpillBurned() {
+    return txValues.stateGasSpillBurned()[0];
+  }
+
+  /**
    * Add recipient to the self-destruct set if not already present.
    *
    * @param address The recipient to self-destruct
@@ -1145,15 +1205,6 @@ public class MessageFrame {
   }
 
   /**
-   * The return stack used for EOF code sections.
-   *
-   * @return the return stack
-   */
-  public ReturnStack getReturnStack() {
-    return returnStack.get();
-  }
-
-  /**
    * Sets exceptional halt reason.
    *
    * @param exceptionalHaltReason the exceptional halt reason
@@ -1306,6 +1357,16 @@ public class MessageFrame {
   /** Undo all the changes done by this message frame, such as when a revert is called for. */
   public void rollback() {
     txValues.undoChanges(undoMark);
+  }
+
+  /**
+   * Advances the undo mark to the current point, so that subsequent rollback() calls will not undo
+   * changes made before this point. Used by the transaction processor to protect intrinsic state
+   * gas charges (EIP-8037 auth delegation and contract creation) from being rolled back when the
+   * initial frame's execution reverts.
+   */
+  public void advanceUndoMark() {
+    this.undoMark = txValues.transientStorage().mark();
   }
 
   /**
@@ -1691,23 +1752,19 @@ public class MessageFrame {
       TxValues newTxValues;
 
       if (parentMessageFrame == null) {
+        HashSet<Address> warmedUpAddresses = new HashSet<>();
+        warmedUpAddresses.add(contract);
         newTxValues =
-            new TxValues(
+            TxValues.forTransaction(
                 blockHashLookup,
                 maxStackSize,
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoTable.of(HashBasedTable.create()),
+                UndoSet.of(warmedUpAddresses),
                 originator,
                 gasPrice,
                 blobGasPrice,
                 blockValues,
-                new ArrayDeque<>(),
                 miningBeneficiary,
-                versionedHashes,
-                UndoTable.of(HashBasedTable.create()),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                new UndoScalar<>(0L));
+                versionedHashes);
         updater = worldUpdater;
         newStatic = isStatic;
       } else {
@@ -1737,7 +1794,6 @@ public class MessageFrame {
               eip7928AccessList);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
-      messageFrame.warmUpAddress(contract);
       for (Address a : eip2930AccessListWarmAddresses) {
         messageFrame.warmUpAddress(a);
       }

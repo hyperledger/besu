@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -201,27 +200,33 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void putPayloadById(final PayloadWrapper newPayload) {
-    final var newBlockWithReceipts = newPayload.blockWithReceipts();
-    final var newBlockValue = newPayload.blockValue();
-
     synchronized (blocksInProgress) {
       final Optional<PayloadWrapper> maybeCurrBestPayload =
           retrievePayloadById(newPayload.payloadIdentifier());
 
       maybeCurrBestPayload.ifPresent(
           currBestPayload -> {
-            if (newBlockValue.greaterThan(currBestPayload.blockValue())) {
+            if (newPayload.compareTo(currBestPayload) > 0) {
               LOG.atInfo()
                   .setMessage(
                       "New proposal for payloadId {} {} is better than the previous one by {}")
                   .addArgument(newPayload.payloadIdentifier())
                   .addArgument(
-                      () -> logBlockProposal(newBlockWithReceipts.getBlock(), newBlockValue))
-                  .addArgument(
                       () ->
-                          newBlockValue
-                              .subtract(currBestPayload.blockValue())
-                              .toHumanReadableString())
+                          logBlockProposal(
+                              newPayload.blockWithReceipts().getBlock(), newPayload.blockValue()))
+                  .addArgument(
+                      () -> {
+                        final var valueDiff =
+                            newPayload.blockValue().subtract(currBestPayload.blockValue());
+                        if (valueDiff.greaterThan(Wei.ZERO)) {
+                          return valueDiff.toHumanReadableString();
+                        } else {
+                          return (newPayload.transactionCount()
+                                  - currBestPayload.transactionCount())
+                              + " txs";
+                        }
+                      })
                   .log();
 
               blocksInProgress.removeAll(
@@ -253,7 +258,7 @@ public class PostMergeContext implements MergeContext {
   @Override
   public Optional<PayloadWrapper> retrievePayloadById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
-      return streamPayloadsById(payloadId).max(Comparator.comparing(PayloadWrapper::blockValue));
+      return streamPayloadsById(payloadId).max(PayloadWrapper::compareTo);
     }
   }
 

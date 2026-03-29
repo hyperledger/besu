@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.InternalProfileName;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -277,5 +278,71 @@ class ConfigurationOverviewBuilderTest {
     final String targetGasLimitValue = ConfigurationOverviewBuilder.normalizeGas(targetGasLimit);
     assertThat(targetGasLimitSelected)
         .contains(String.format("%s: %s", "Target Gas Limit", targetGasLimitValue));
+  }
+
+  @Test
+  void setMaxBlobsPerTransaction() {
+    final String noMaxBlobsSet = builder.build();
+    assertThat(noMaxBlobsSet).doesNotContain("Max Blobs Per Transaction");
+
+    builder.setMaxBlobsPerTransaction(6);
+    final String maxBlobsSet = builder.build();
+    assertThat(maxBlobsSet).contains("Max Blobs Per Transaction: 6");
+  }
+
+  @Test
+  void setDiscoveryDisabled() {
+    final String discoveryEnabledByDefault = builder.build();
+    assertThat(discoveryEnabledByDefault).doesNotContain("Discovery: disabled");
+
+    builder.setDiscoveryEnabled(false);
+    final String discoveryDisabled = builder.build();
+    assertThat(discoveryDisabled).contains("Discovery: disabled");
+  }
+
+  @Test
+  void setDiscoveryEnabled() {
+    builder.setDiscoveryEnabled(true);
+    final String discoveryEnabled = builder.build();
+    assertThat(discoveryEnabled).doesNotContain("Discovery: disabled");
+  }
+
+  @Test
+  void setChainPruningDisabled() {
+    final String noChainPruningSet = builder.build();
+    assertThat(noChainPruningSet).doesNotContain("Chain pruning enabled");
+  }
+
+  @Test
+  void setChainPruningEnabledNoneMode() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.NONE, 113_152L, 113_152L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet).doesNotContain("Chain pruning enabled");
+  }
+
+  @Test
+  void setChainPruningEnabledAllMode() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.ALL, 113_152L, 113_152L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet)
+        .contains("Chain and BAL pruning enabled (retained BALs: 113152; Blocks: 113152)");
+  }
+
+  @Test
+  void setChainPruningEnabledAllModeWithDifferentRetentionValues() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.ALL, 150_000L, 113_152L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet)
+        .contains("Chain and BAL pruning enabled (retained BALs: 113152; Blocks: 150000)");
+  }
+
+  @Test
+  void setChainPruningEnabledBalModeOnly() {
+    builder.setChainPruningEnabled(ChainPruningStrategy.BAL, null, 50_000L);
+    final String chainPruningSet = builder.build();
+    assertThat(chainPruningSet)
+        .contains("BAL pruning enabled (retained BALs: 50000)")
+        .doesNotContain("blocks:")
+        .doesNotContain(";");
   }
 }

@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.List;
 
@@ -45,6 +45,7 @@ public class EnginePayloadParameter {
   private final Long blobGasUsed;
   private final String excessBlobGas;
   private final String blockAccessList;
+  private final Long slotNumber;
 
   /**
    * Creates an instance of EnginePayloadParameter.
@@ -66,6 +67,8 @@ public class EnginePayloadParameter {
    * @param withdrawals Array of Withdrawal
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
+   * @param blockAccessList DATA, access list
+   * @param slotNumber QUANTITY, 64 Bits
    */
   @JsonCreator
   public EnginePayloadParameter(
@@ -86,7 +89,8 @@ public class EnginePayloadParameter {
       @JsonProperty("withdrawals") final List<WithdrawalParameter> withdrawals,
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
       @JsonProperty("excessBlobGas") final String excessBlobGas,
-      @JsonProperty("blockAccessList") final String blockAccessList) {
+      @JsonProperty("blockAccessList") final String blockAccessList,
+      @JsonProperty("slotNumber") final UnsignedLongParameter slotNumber) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -105,6 +109,7 @@ public class EnginePayloadParameter {
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
     this.blockAccessList = blockAccessList;
+    this.slotNumber = slotNumber == null ? null : slotNumber.getValue();
   }
 
   public Hash getBlockHash() {
@@ -177,5 +182,9 @@ public class EnginePayloadParameter {
 
   public String getBlockAccessList() {
     return blockAccessList;
+  }
+
+  public Long getSlotNumber() {
+    return slotNumber;
   }
 }

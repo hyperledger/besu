@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.clique;
 
-import org.hyperledger.besu.consensus.clique.blockcreation.CliqueProposerSelector;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -154,7 +153,8 @@ public class CliqueHelpers {
             // assignment.
             .thenComparing((BlockHeader header) -> -distanceFromInTurn(header, cliqueContext))
             // 4. Then choose the block with the lowest hash.
-            .thenComparing(Comparator.comparing(BlockHeader::getHash).reversed()));
+            .thenComparing(
+                Comparator.comparing((BlockHeader h) -> h.getHash().getBytes()).reversed()));
   }
 
   /**

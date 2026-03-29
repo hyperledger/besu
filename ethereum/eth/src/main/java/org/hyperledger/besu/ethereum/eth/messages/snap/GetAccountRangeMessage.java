@@ -60,7 +60,7 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
       final BigInteger sizeRequest) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
-    tmp.writeBytes(worldStateRootHash);
+    tmp.writeBytes(worldStateRootHash.getBytes());
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
     tmp.writeBigIntegerScalar(sizeRequest);
@@ -74,9 +74,9 @@ public final class GetAccountRangeMessage extends AbstractSnapMessageData {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     tmp.writeBigIntegerScalar(requestId);
-    tmp.writeBytes(range.worldStateRootHash());
-    tmp.writeBytes(range.startKeyHash());
-    tmp.writeBytes(range.endKeyHash());
+    tmp.writeBytes(range.worldStateRootHash().getBytes());
+    tmp.writeBytes(range.startKeyHash().getBytes());
+    tmp.writeBytes(range.endKeyHash().getBytes());
     tmp.writeBigIntegerScalar(range.responseBytes());
     tmp.endList();
     return tmp.encoded();

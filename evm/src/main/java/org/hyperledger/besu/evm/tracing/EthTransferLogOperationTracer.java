@@ -17,19 +17,21 @@ package org.hyperledger.besu.evm.tracing;
 import static org.apache.tuweni.bytes.Bytes32.leftPad;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogTopic;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogTopic;
 import org.hyperledger.besu.evm.operation.Operation;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Tracer that emits logs for all transfers that occur during the execution of a transaction.
@@ -41,19 +43,23 @@ public class EthTransferLogOperationTracer implements OperationTracer {
   /** The list of logs emitted by this tracer */
   private final List<Log> traceTransfers = new ArrayList<>();
 
+  /** Snapshot stack tracking traceTransfers size at each frame entry */
+  private final Deque<Integer> logSnapshots = new ArrayDeque<>();
+
   /** The constant address for transfer logs */
   public static final Address SIMULATION_TRANSFER_ADDRESS =
       Address.fromHexString("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
 
   /** The constant topic for transfer logs */
-  public static final Bytes SIMULATION_TRANSFER_TOPIC =
-      Bytes.fromHexString("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+  public static final Bytes32 SIMULATION_TRANSFER_TOPIC =
+      Bytes32.fromHexString("ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
 
   /** Default constructor. */
   public EthTransferLogOperationTracer() {}
 
   @Override
   public void traceContextEnter(final MessageFrame frame) {
+    logSnapshots.push(traceTransfers.size());
     if (frame.getValue().compareTo(Wei.ZERO) > 0
         && !frame.getRecipientAddress().equals(frame.getSenderAddress())) {
       emitTransferLogs(frame.getSenderAddress(), frame.getRecipientAddress(), frame.getValue());
@@ -76,8 +82,12 @@ public class EthTransferLogOperationTracer implements OperationTracer {
 
   @Override
   public void traceContextExit(final MessageFrame frame) {
+    final int snapshot = logSnapshots.pop();
     if (frame.getState() == MessageFrame.State.COMPLETED_FAILED) {
-      traceTransfers.clear();
+      // Remove only logs added during this frame (and its children)
+      while (traceTransfers.size() > snapshot) {
+        traceTransfers.removeLast();
+      }
     }
   }
 
@@ -92,10 +102,9 @@ public class EthTransferLogOperationTracer implements OperationTracer {
   private void emitTransferLogs(final Address sender, final Address recipient, final Wei value) {
     final ImmutableList.Builder<LogTopic> builder = ImmutableList.builderWithExpectedSize(3);
     builder.add(LogTopic.create(SIMULATION_TRANSFER_TOPIC));
-    builder.add(LogTopic.create(leftPad(sender)));
-    builder.add(LogTopic.create(leftPad(recipient)));
-    traceTransfers.add(
-        new org.hyperledger.besu.evm.log.Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
+    builder.add(LogTopic.create(leftPad(sender.getBytes())));
+    builder.add(LogTopic.create(leftPad(recipient.getBytes())));
+    traceTransfers.add(new Log(SIMULATION_TRANSFER_ADDRESS, value, builder.build()));
   }
 
   /**

@@ -52,7 +52,7 @@ public class DisabledPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  public void selectTransactions(final TransactionSelector selector) {}
+  public void selectTransactions(final PendingTransactionsSelector selector) {}
 
   @Override
   public long maxSize() {
@@ -77,6 +77,11 @@ public class DisabledPendingTransactions implements PendingTransactions {
   @Override
   public Collection<PendingTransaction> getPendingTransactions() {
     return List.of();
+  }
+
+  @Override
+  public SenderPendingTransactionsData getPendingTransactionsFor(final Address sender) {
+    return SenderPendingTransactionsData.empty(sender);
   }
 
   @Override
@@ -115,6 +120,11 @@ public class DisabledPendingTransactions implements PendingTransactions {
   @Override
   public String logStats() {
     return "Disabled";
+  }
+
+  @Override
+  public Status getStatus() {
+    return new Status(0, 0);
   }
 
   @Override

@@ -49,10 +49,12 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTra
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
+import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallError;
 import org.hyperledger.besu.ethereum.transaction.exceptions.BlockStateCallException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.PathBasedWorldState;
@@ -91,7 +93,7 @@ public class BlockSimulator {
       TransactionValidationParams.blockSimulatorStrict();
 
   private static final TransactionValidationParams SIMULATION_PARAMS =
-      TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce();
+      TransactionValidationParams.blockSimulatorNonStrict();
 
   private final TransactionSimulator transactionSimulator;
   private final WorldStateArchive worldStateArchive;
@@ -124,8 +126,23 @@ public class BlockSimulator {
    */
   public List<BlockSimulationResult> process(
       final BlockHeader header, final BlockSimulationParameter blockSimulationParameter) {
+    return process(header, blockSimulationParameter, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param header The block header for all simulations.
+   * @param blockSimulationParameter The BlockSimulationParameter containing the block state calls.
+   * @param operationTracer The operation tracer to use during simulation.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
+  public List<BlockSimulationResult> process(
+      final BlockHeader header,
+      final BlockSimulationParameter blockSimulationParameter,
+      final OperationTracer operationTracer) {
     try (final MutableWorldState ws = getWorldState(header)) {
-      return process(header, blockSimulationParameter, ws);
+      return process(header, blockSimulationParameter, ws, operationTracer);
     } catch (IllegalArgumentException | BlockStateCallException e) {
       throw e;
     } catch (final Exception e) {
@@ -145,6 +162,23 @@ public class BlockSimulator {
       final BlockHeader blockHeader,
       final BlockSimulationParameter simulationParameter,
       final MutableWorldState worldState) {
+    return process(blockHeader, simulationParameter, worldState, OperationTracer.NO_TRACING);
+  }
+
+  /**
+   * Processes a list of BlockStateCalls sequentially, collecting the results.
+   *
+   * @param blockHeader The block header for all simulations.
+   * @param simulationParameter The BlockSimulationParameter containing the block state calls.
+   * @param worldState The initial MutableWorldState to start with.
+   * @param operationTracer The operation tracer to use during simulation.
+   * @return A list of BlockSimulationResult objects from processing each BlockStateCall.
+   */
+  public List<BlockSimulationResult> process(
+      final BlockHeader blockHeader,
+      final BlockSimulationParameter simulationParameter,
+      final MutableWorldState worldState,
+      final OperationTracer operationTracer) {
     int countStateCalls = simulationParameter.getBlockStateCalls().size();
     List<BlockSimulationResult> results = new ArrayList<>(countStateCalls);
 
@@ -169,7 +203,8 @@ public class BlockSimulator {
               simulationParameter.isReturnTrieLog(),
               simulationParameter::getFakeSignature,
               blockHashCache,
-              simulationCumulativeGasUsed);
+              simulationCumulativeGasUsed,
+              operationTracer);
       results.add(result);
       BlockHeader resultBlockHeader = result.getBlock().getHeader();
       blockHashCache.put(resultBlockHeader.getNumber(), resultBlockHeader.getHash());
@@ -185,6 +220,7 @@ public class BlockSimulator {
    * @param baseBlockHeader The block header for the simulation.
    * @param blockStateCall The BlockStateCall to process.
    * @param ws The MutableWorldState to use for the simulation.
+   * @param operationTracer The operation tracer to use
    * @return A BlockSimulationResult from processing the BlockStateCall.
    */
   private BlockSimulationResult processBlockStateCall(
@@ -196,7 +232,8 @@ public class BlockSimulator {
       final boolean returnTrieLog,
       final Supplier<SECPSignature> signatureSupplier,
       final Map<Long, Hash> blockHashCache,
-      final long simulationCumulativeGasUsed) {
+      final long simulationCumulativeGasUsed,
+      final OperationTracer operationTracer) {
 
     BlockOverrides blockOverrides = blockStateCall.getBlockOverrides();
     ProtocolSpec protocolSpec =
@@ -223,7 +260,6 @@ public class BlockSimulator {
     Optional<BlockAccessListBuilder> blockAccessListBuilder =
         protocolSpec
             .getBlockAccessListFactory()
-            .filter(BlockAccessListFactory::isEnabled)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
@@ -236,7 +272,8 @@ public class BlockSimulator {
             ws,
             protocolSpec,
             blockHashLookup,
-            OperationTracer.NO_TRACING);
+            OperationTracer.NO_TRACING,
+            Optional.empty());
 
     protocolSpec
         .getPreExecutionProcessor()
@@ -254,7 +291,8 @@ public class BlockSimulator {
             blockHashLookup,
             signatureSupplier,
             simulationCumulativeGasUsed,
-            blockAccessListBuilder);
+            blockAccessListBuilder,
+            operationTracer);
 
     Optional<AccessLocationTracker> postExecutionAccessLocationTracker =
         blockAccessListBuilder.map(
@@ -302,7 +340,8 @@ public class BlockSimulator {
       final BlockHashLookup blockHashLookup,
       final Supplier<SECPSignature> signatureSupplier,
       final long simulationCumulativeGasUsed,
-      final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final OperationTracer operationTracer) {
 
     TransactionValidationParams transactionValidationParams =
         shouldValidate ? STRICT_VALIDATION_PARAMS : SIMULATION_PARAMS;
@@ -324,8 +363,27 @@ public class BlockSimulator {
         transactionLocation++) {
       final WorldUpdater transactionUpdater = blockUpdater.updater();
       final CallParameter callParameter = blockStateCall.getCalls().get(transactionLocation);
-      OperationTracer operationTracer =
-          isTraceTransfers ? new EthTransferLogOperationTracer() : OperationTracer.NO_TRACING;
+
+      // Custom tracer and EthTraceTransfers are mutually exclusive
+      OperationTracer finalOperationTracer = operationTracer;
+      if (isTraceTransfers) {
+        if (finalOperationTracer == OperationTracer.NO_TRACING) {
+          finalOperationTracer = new EthTransferLogOperationTracer();
+        } else {
+          // this shouldn't happen, and isTraceTransfers will go away with Glamsterdam
+          throw new IllegalArgumentException(
+              "A custom tracer and traceTransfers cannot be used together."
+                  + " Disable traceTransfers or omit the custom tracer.");
+        }
+      }
+
+      if (callParameter.getGas().isPresent()
+          && callParameter.getGas().getAsLong()
+              > blockStateCallSimulationResult.getRemainingGas()) {
+        throw new BlockStateCallException(
+            BlockStateCallError.BLOCK_GAS_LIMIT_EXCEEDED.getMessage(),
+            BlockStateCallError.BLOCK_GAS_LIMIT_EXCEEDED);
+      }
 
       long gasLimit =
           transactionSimulator.calculateSimulationGasCap(
@@ -344,7 +402,7 @@ public class BlockSimulator {
               callParameter,
               Optional.empty(), // We have already applied state overrides on block level
               transactionValidationParams,
-              operationTracer,
+              finalOperationTracer,
               blockHeader,
               transactionUpdater,
               miningBeneficiaryCalculator.calculateBeneficiary(blockHeader),
@@ -357,11 +415,15 @@ public class BlockSimulator {
 
       TransactionSimulatorResult transactionSimulationResult =
           transactionSimulatorResult.orElseThrow(
-              () -> new BlockStateCallException("Transaction simulator result is empty"));
+              () ->
+                  new BlockStateCallException(
+                      "Transaction simulation returned no result",
+                      BlockStateCallError.EMPTY_SIMULATION_RESULT));
 
       if (transactionSimulationResult.isInvalid()) {
         throw new BlockStateCallException(
-            "Transaction simulator result is invalid", transactionSimulationResult);
+            transactionSimulationResult.getValidationResult().getErrorMessage(),
+            transactionSimulationResult.getValidationResult().getInvalidReason());
       }
 
       transactionSimulationResult
@@ -372,11 +434,51 @@ public class BlockSimulator {
       transactionUpdater.commit();
       blockUpdater.commit();
 
-      blockStateCallSimulationResult.add(transactionSimulationResult, ws, operationTracer);
+      // Restore the original gas pricing from CallParameter into the Transaction.
+      // TransactionSimulator zeroes gas prices when isAllowExceedingBalance is true to avoid
+      // upfront cost failures, but for eth_simulateV1 results we need the caller-provided values
+      // so that gasPrice, maxFeePerGas, maxPriorityFeePerGas, transactionHash, and
+      // transactionsRoot are correct in the response.
+      if (transactionValidationParams.isAllowExceedingBalance()) {
+        transactionSimulationResult = restoreGasPricing(transactionSimulationResult, callParameter);
+      }
+
+      blockStateCallSimulationResult.add(transactionSimulationResult, ws, finalOperationTracer);
     }
 
     blockAccessListBuilder.ifPresent(b -> blockStateCallSimulationResult.set(b.build()));
     return blockStateCallSimulationResult;
+  }
+
+  /**
+   * Restores the original gas pricing from the CallParameter into the processed Transaction. During
+   * simulation, TransactionSimulator zeroes gas prices when isAllowExceedingBalance is true to
+   * avoid upfront cost failures. This method rebuilds the Transaction with the caller's original
+   * gas pricing so that the result fields (gasPrice, maxFeePerGas, etc.) and derived values
+   * (transactionHash, transactionsRoot) are correct.
+   */
+  private TransactionSimulatorResult restoreGasPricing(
+      final TransactionSimulatorResult result, final CallParameter callParameter) {
+    final Transaction original = result.transaction();
+    final boolean hasGasPrice = callParameter.getGasPrice().isPresent();
+    final boolean hasMaxFeePerGas = callParameter.getMaxFeePerGas().isPresent();
+    final boolean hasMaxPriorityFeePerGas = callParameter.getMaxPriorityFeePerGas().isPresent();
+    final boolean hasMaxFeePerBlobGas =
+        original.getType().supportsBlob() && callParameter.getMaxFeePerBlobGas().isPresent();
+
+    if (!hasGasPrice && !hasMaxFeePerGas && !hasMaxPriorityFeePerGas && !hasMaxFeePerBlobGas) {
+      return result;
+    }
+
+    final Transaction.Builder builder = Transaction.builder().copiedFrom(original);
+    callParameter.getGasPrice().ifPresent(builder::gasPrice);
+    callParameter.getMaxFeePerGas().ifPresent(builder::maxFeePerGas);
+    callParameter.getMaxPriorityFeePerGas().ifPresent(builder::maxPriorityFeePerGas);
+    if (original.getType().supportsBlob()) {
+      callParameter.getMaxFeePerBlobGas().ifPresent(builder::maxFeePerBlobGas);
+    }
+
+    return new TransactionSimulatorResult(builder.build(), result.result());
   }
 
   private Optional<AccessLocationTracker> createTransactionAccessLocationTracker(
@@ -406,6 +508,7 @@ public class BlockSimulator {
             .receiptsRoot(BodyValidation.receiptsRoot(receipts))
             .logsBloom(BodyValidation.logsBloom(receipts))
             .gasUsed(simResult.getCumulativeGasUsed())
+            .blobGasUsed(simResult.getCumulativeBlobGasUsed())
             .withdrawalsRoot(BodyValidation.withdrawalsRoot(List.of()))
             .requestsHash(maybeRequests.map(BodyValidation::requestsHash).orElse(null))
             .balHash(simResult.getBlockAccessList().map(BodyValidation::balHash).orElse(null))
@@ -414,10 +517,7 @@ public class BlockSimulator {
             .buildBlockHeader();
 
     Block block =
-        new Block(
-            finalBlockHeader,
-            new BlockBody(
-                transactions, List.of(), Optional.of(List.of()), simResult.getBlockAccessList()));
+        new Block(finalBlockHeader, new BlockBody(transactions, List.of(), Optional.of(List.of())));
 
     if (returnTrieLog && ws instanceof PathBasedWorldState) {
       // if requested and path-based worldstate, return result with trielog and serializer:
@@ -445,10 +545,20 @@ public class BlockSimulator {
     var updater = ws.updater();
     for (Address accountToOverride : stateOverrideMap.keySet()) {
       final StateOverride override = stateOverrideMap.get(accountToOverride);
-      MutableAccount account = updater.getOrCreate(accountToOverride);
-      TransactionSimulator.applyOverrides(account, override);
+      if (hasAccountStateOverrides(override)) {
+        MutableAccount account = updater.getOrCreate(accountToOverride);
+        TransactionSimulator.applyOverrides(account, override);
+      }
     }
     updater.commit();
+  }
+
+  private boolean hasAccountStateOverrides(final StateOverride override) {
+    return override.getNonce().isPresent()
+        || override.getBalance().isPresent()
+        || override.getCode().isPresent()
+        || override.getState().isPresent()
+        || override.getStateDiff().isPresent();
   }
 
   /**
@@ -468,19 +578,16 @@ public class BlockSimulator {
     long timestamp = blockOverrides.getTimestamp().orElseThrow();
     long blockNumber = blockOverrides.getBlockNumber().orElseThrow();
 
-    // For PoS, coinbase is always configured, but for PoA it is not configured,
-    // rather generated for each block via MiningBeneficiaryCalculator.
-    // For simulation, if not configured, we use a dummy address 0x00.
-    // We don't throw an exception if coinbase is not configured.
+    // The fee recipient is stored in the header coinbase field. Precedence:
+    // (1) an explicit feeRecipient in blockOverrides, otherwise
+    // (2) the parent header's coinbase — this allows a feeRecipient set in an earlier simulated
+    // block to persist across subsequent blocks without needing to repeat it in every override.
     BlockHeaderBuilder builder =
         BlockHeaderBuilder.createDefault()
             .parentHash(header.getHash())
             .timestamp(timestamp)
             .number(blockNumber)
-            .coinbase(
-                blockOverrides
-                    .getFeeRecipient()
-                    .orElseGet(() -> miningConfiguration.getCoinbase().orElse(Address.ZERO)))
+            .coinbase(blockOverrides.getFeeRecipient().orElse(header.getCoinbase()))
             .difficulty(
                 blockOverrides.getDifficulty().map(Difficulty::of).orElseGet(header::getDifficulty))
             .gasLimit(
@@ -496,8 +603,10 @@ public class BlockSimulator {
                                 ? getNextBaseFee(newProtocolSpec, header, blockNumber)
                                 : Wei.ZERO))
             .extraData(blockOverrides.getExtraData().orElse(Bytes.EMPTY))
-            .parentBeaconBlockRoot(Bytes32.ZERO)
-            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO));
+            .parentBeaconBlockRoot(blockOverrides.getParentBeaconBlockRoot().orElse(Bytes32.ZERO))
+            .prevRandao(blockOverrides.getMixHashOrPrevRandao().orElse(Bytes32.ZERO))
+            .excessBlobGas(
+                ExcessBlobGasCalculator.calculateExcessBlobGasForParent(newProtocolSpec, header));
 
     return builder
         .blockHeaderFunctions(new BlockStateCallBlockHeaderFunctions(blockOverrides))
@@ -603,11 +712,21 @@ public class BlockSimulator {
                     newProtocolSpec
                         .getPreExecutionProcessor()
                         .createBlockHashLookup(blockchain, blockHeader));
+    // Fallback lookup using the real chain head, for when the primary lookup can't
+    // walk back past simulated blocks to reach real chain blocks.
+    var chainHeadFallback =
+        newProtocolSpec
+            .getPreExecutionProcessor()
+            .createBlockHashLookup(blockchain, blockchain.getChainHeadHeader());
     return (frame, blockNumber) -> {
       if (blockHashCache.containsKey(blockNumber)) {
         return blockHashCache.get(blockNumber);
       }
-      return blockCallBlockHashLookup.apply(frame, blockNumber);
+      Hash result = blockCallBlockHashLookup.apply(frame, blockNumber);
+      if (!result.equals(Hash.ZERO)) {
+        return result;
+      }
+      return chainHeadFallback.apply(frame, blockNumber);
     };
   }
 

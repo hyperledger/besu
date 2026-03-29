@@ -144,6 +144,24 @@ public final class PartialBlockAccessView {
     public List<SlotChange> getStorageChanges() {
       return storageChanges;
     }
+
+    @Override
+    public String toString() {
+      return "AccountChanges{"
+          + "address="
+          + address
+          + ", storageChanges="
+          + storageChanges
+          + ", storageReads="
+          + storageReads
+          + ", postBalance="
+          + postBalance
+          + ", postBalance="
+          + postBalance
+          + ", newCode="
+          + newCode
+          + '}';
+    }
   }
 
   /** Builder for PartialBlockAccessView. */
@@ -164,7 +182,8 @@ public final class PartialBlockAccessView {
       List<AccountChanges> accountChanges =
           accountBuilders.values().stream()
               .map(AccountChangesBuilder::build)
-              .sorted(Comparator.comparing(ac -> ac.getAddress().toUnprefixedHexString()))
+              .sorted(
+                  Comparator.comparing(ac -> ac.getAddress().getBytes().toUnprefixedHexString()))
               .toList();
       return new PartialBlockAccessView(accountChanges, txIndex);
     }

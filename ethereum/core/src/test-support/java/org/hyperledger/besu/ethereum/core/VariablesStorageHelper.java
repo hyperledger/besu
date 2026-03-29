@@ -44,15 +44,16 @@ public class VariablesStorageHelper {
   public static final Hash FORK1 = Hash.fromHexStringLenient("0xf1357");
   public static final Hash FORK2 = Hash.fromHexStringLenient("0xf2468");
   public static final Bytes SAMPLE_FORK_HEADS =
-      RLP.encode(o -> o.writeList(List.of(FORK1, FORK2), (val, out) -> out.writeBytes(val)));
+      RLP.encode(
+          o -> o.writeList(List.of(FORK1, FORK2), (val, out) -> out.writeBytes(val.getBytes())));
   public static final Bytes SAMPLE_ERN_SEQNO = Bytes.fromHexStringLenient("0xabc123");
   public static final EnumSet<Keys> NOT_PREFIXED_KEYS = EnumSet.of(SEQ_NO_STORE);
 
   public static Map<Keys, Bytes> getSampleVariableValues() {
     final var variableValues = new EnumMap<Keys, Bytes>(Keys.class);
-    variableValues.put(CHAIN_HEAD_HASH, SAMPLE_CHAIN_HEAD);
-    variableValues.put(FINALIZED_BLOCK_HASH, SAMPLE_FINALIZED);
-    variableValues.put(SAFE_BLOCK_HASH, SAMPLE_SAFE);
+    variableValues.put(CHAIN_HEAD_HASH, SAMPLE_CHAIN_HEAD.getBytes());
+    variableValues.put(FINALIZED_BLOCK_HASH, SAMPLE_FINALIZED.getBytes());
+    variableValues.put(SAFE_BLOCK_HASH, SAMPLE_SAFE.getBytes());
     variableValues.put(FORK_HEADS, SAMPLE_FORK_HEADS);
     variableValues.put(SEQ_NO_STORE, SAMPLE_ERN_SEQNO);
     return variableValues;

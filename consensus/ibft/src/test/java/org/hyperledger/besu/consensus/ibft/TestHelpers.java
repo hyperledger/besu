@@ -21,27 +21,36 @@ import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.ibft.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.ibft.payload.MessageFactory;
+import org.hyperledger.besu.consensus.ibft.statemachine.PreparedRoundArtifacts;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Optional;
 
 public class TestHelpers {
 
   public static Proposal createSignedProposalPayload(final NodeKey signerNodeKey) {
-    return createSignedProposalPayloadWithRound(signerNodeKey, 0xFEDCBA98);
+    return createSignedProposalPayloadWithRound(signerNodeKey, 0xFEDCBA98, Optional.empty());
+  }
+
+  public static Proposal createSignedProposalPayload(
+      final NodeKey signerNodeKey, final Optional<BlockAccessList> blockAccessList) {
+    return createSignedProposalPayloadWithRound(signerNodeKey, 0xFEDCBA98, blockAccessList);
   }
 
   public static Proposal createSignedProposalPayloadWithRound(
-      final NodeKey signerNodeKey, final int round) {
+      final NodeKey signerNodeKey,
+      final int round,
+      final Optional<BlockAccessList> blockAccessList) {
     final MessageFactory messageFactory = new MessageFactory(signerNodeKey);
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, round);
     final Block block =
         ProposedBlockHelpers.createProposalBlock(
             singletonList(AddressHelpers.ofValue(1)), roundIdentifier);
-    return messageFactory.createProposal(roundIdentifier, block, Optional.empty());
+    return messageFactory.createProposal(roundIdentifier, block, blockAccessList, Optional.empty());
   }
 
   public static RoundChange createSignedRoundChangePayload(final NodeKey signerKeys) {
@@ -49,5 +58,13 @@ public class TestHelpers {
     final ConsensusRoundIdentifier roundIdentifier =
         new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
     return messageFactory.createRoundChange(roundIdentifier, Optional.empty());
+  }
+
+  public static RoundChange createSignedRoundChangePayload(
+      final NodeKey signerKeys, final Optional<PreparedRoundArtifacts> preparedRoundArtifacts) {
+    final MessageFactory messageFactory = new MessageFactory(signerKeys);
+    final ConsensusRoundIdentifier roundIdentifier =
+        new ConsensusRoundIdentifier(0x1234567890ABCDEFL, 0xFEDCBA98);
+    return messageFactory.createRoundChange(roundIdentifier, preparedRoundArtifacts);
   }
 }

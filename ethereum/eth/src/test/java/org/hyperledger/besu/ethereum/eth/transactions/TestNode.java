@@ -29,6 +29,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -51,24 +52,30 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.ImmutableNetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultPeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.DefaultRlpxAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgentFactory;
+import org.hyperledger.besu.ethereum.p2p.discovery.RlpxAgentFactory;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.NetworkRunner;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
-import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.testutil.TestClock;
@@ -79,6 +86,7 @@ import java.math.BigInteger;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -112,12 +120,13 @@ public class TestNode implements Closeable {
     this.nodeKey = kp != null ? NodeKeyUtils.createFrom(kp) : NodeKeyUtils.generate();
 
     final NetworkingConfiguration networkingConfiguration =
-        NetworkingConfiguration.create()
-            .setDiscovery(discoveryCfg)
-            .setRlpx(
+        ImmutableNetworkingConfiguration.builder()
+            .discoveryConfiguration(discoveryCfg)
+            .rlpxConfiguration(
                 RlpxConfiguration.create()
                     .setBindPort(listenPort)
-                    .setSupportedProtocols(EthProtocol.get()));
+                    .setSupportedProtocols(EthProtocol.get()))
+            .build();
 
     final GenesisConfig genesisConfig = GenesisConfig.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
@@ -128,7 +137,7 @@ public class TestNode implements Closeable {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     final GenesisState genesisState =
@@ -152,13 +161,7 @@ public class TestNode implements Closeable {
     when(syncState.isInitialSyncPhaseDone()).thenReturn(true);
 
     final EthMessages ethMessages = new EthMessages();
-    final NodeMessagePermissioningProvider nmpp =
-        new NodeMessagePermissioningProvider() {
-          @Override
-          public boolean isMessagePermitted(final EnodeURL destinationEnode, final int code) {
-            return true;
-          }
-        };
+    final NodeMessagePermissioningProvider nmpp = (destinationEnode, code) -> true;
     final EthPeers ethPeers =
         new EthPeers(
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -184,6 +187,7 @@ public class TestNode implements Closeable {
             scheduler,
             new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem));
 
+    final EthProtocolConfiguration ethProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
     transactionPool =
         TransactionPoolFactory.createTransactionPool(
             protocolSchedule,
@@ -193,6 +197,7 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
+            ethProtocolConfiguration,
             new BlobCache(),
             MiningConfiguration.newDefault());
 
@@ -202,7 +207,7 @@ public class TestNode implements Closeable {
             BigInteger.ONE,
             worldStateArchive,
             transactionPool,
-            EthProtocolConfiguration.defaultConfig(),
+            ethProtocolConfiguration,
             ethPeers,
             ethMessages,
             ethContext,
@@ -215,33 +220,67 @@ public class TestNode implements Closeable {
         NetworkRunner.builder()
             .subProtocols(EthProtocol.get())
             .protocolManagers(singletonList(ethProtocolManager))
-            .ethPeersShouldConnect((p, d) -> true)
+            .peerConnectionGatekeeper((p, d) -> Optional.empty())
             .network(
                 capabilities ->
-                    DefaultP2PNetwork.builder()
-                        .vertx(vertx)
-                        .nodeKey(nodeKey)
-                        .config(networkingConfiguration)
-                        .metricsSystem(new NoOpMetricsSystem())
-                        .supportedCapabilities(capabilities)
-                        .storageProvider(new InMemoryKeyValueStorageProvider())
-                        .blockchain(blockchain)
-                        .blockNumberForks(Collections.emptyList())
-                        .timestampForks(Collections.emptyList())
-                        .allConnectionsSupplier(ethPeers::streamAllConnections)
-                        .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
-                        .build())
+                    createP2PNetwork(
+                        networkingConfiguration,
+                        vertx,
+                        nodeKey,
+                        blockchain,
+                        capabilities,
+                        ethPeers))
             .metricsSystem(new NoOpMetricsSystem())
             .build();
     network = networkRunner.getNetwork();
-    final RlpxAgent rlpxAgent = network.getRlpxAgent();
-    rlpxAgent.subscribeConnectRequest((p, d) -> true);
-    ethPeers.setRlpxAgent(rlpxAgent);
+    network.getRlpxAgent().ifPresent(ethPeers::setRlpxAgent);
     network.subscribeDisconnect(
         (connection, reason, initiatedByPeer) -> disconnections.put(connection, reason));
 
     networkRunner.start();
     selfPeer = DefaultPeer.fromEnodeURL(network.getLocalEnode().get());
+  }
+
+  private P2PNetwork createP2PNetwork(
+      final NetworkingConfiguration networkingConfiguration,
+      final Vertx vertx,
+      final NodeKey nodeKey,
+      final Blockchain blockchain,
+      final List<Capability> capabilities,
+      final EthPeers ethPeers) {
+    final PeerDiscoveryAgentFactory peerDiscoveryAgentFactory =
+        DefaultPeerDiscoveryAgentFactory.builder()
+            .vertx(vertx)
+            .nodeKey(nodeKey)
+            .config(networkingConfiguration)
+            .peerPermissions(PeerPermissions.noop())
+            .metricsSystem(new NoOpMetricsSystem())
+            .storageProvider(new InMemoryKeyValueStorageProvider())
+            .blockchain(blockchain)
+            .blockNumberForks(Collections.emptyList())
+            .timestampForks(Collections.emptyList())
+            .build();
+
+    final RlpxAgentFactory defaultRlpxFactory =
+        DefaultRlpxAgentFactory.builder()
+            .nodeKey(nodeKey)
+            .config(networkingConfiguration)
+            .peerPermissions(PeerPermissions.noop())
+            .metricsSystem(new NoOpMetricsSystem())
+            .allConnectionsSupplier(ethPeers::streamAllConnections)
+            .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
+            .maxPeers(ethPeers.getMaxPeers())
+            .build();
+
+    return DefaultP2PNetwork.builder()
+        .vertx(vertx)
+        .nodeKey(nodeKey)
+        .config(networkingConfiguration)
+        .metricsSystem(new NoOpMetricsSystem())
+        .supportedCapabilities(capabilities)
+        .rlpxAgentFactory(defaultRlpxFactory)
+        .peerDiscoveryAgentFactory(peerDiscoveryAgentFactory)
+        .build();
   }
 
   private static ChainHeadTracker getChainHeadTracker() {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.permissioning;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import org.apache.tuweni.toml.Toml;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.slf4j.Logger;
@@ -73,11 +73,14 @@ public class AllowlistPersistor {
 
     if (!existingValues.containsAll(checkLists)) {
       LOG.atDebug()
-          .setMessage("\n LISTS DO NOT MATCH configFile::")
+          .setMessage("\n LISTS DO NOT MATCH {} configFile::{}")
           .addArgument(existingValues)
           .addArgument(configurationFilePath)
           .log();
-      LOG.atDebug().setMessage("\nLISTS DO NOT MATCH in-memory ::").addArgument(checkLists).log();
+      LOG.atDebug()
+          .setMessage("\nLISTS DO NOT MATCH in-memory :: {}")
+          .addArgument(checkLists)
+          .log();
       throw new AllowlistFileSyncException();
     }
     return true;
@@ -108,7 +111,7 @@ public class AllowlistPersistor {
                     allowlist_type, parsedToml.getArrayOrEmpty(allowlist_type.getTomlKey())))
         .collect(
             Collectors.toMap(
-                o -> o.getKey(),
+                AbstractMap.SimpleImmutableEntry::getKey,
                 o ->
                     o.getValue().toList().parallelStream()
                         .map(Object::toString)
@@ -138,9 +141,10 @@ public class AllowlistPersistor {
       throws IOException {
     String newConfigItem = valueListToTomlArray(allowlistType, allowlistValues);
 
-    Files.write(
+    Files.writeString(
         configFilePath,
-        newConfigItem.getBytes(Charsets.UTF_8),
+        newConfigItem,
+        StandardCharsets.UTF_8,
         StandardOpenOption.WRITE,
         StandardOpenOption.APPEND);
   }

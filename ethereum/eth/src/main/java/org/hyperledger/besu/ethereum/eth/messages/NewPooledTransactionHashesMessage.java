@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.messages;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementDecoder.getDecoder;
 import static org.hyperledger.besu.ethereum.eth.encoding.TransactionAnnouncementEncoder.getEncoder;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAnnouncement;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractMessageData;
@@ -26,7 +25,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -68,16 +66,10 @@ public class NewPooledTransactionHashesMessage extends AbstractMessageData {
     return new NewPooledTransactionHashesMessage(message.getData(), capability);
   }
 
-  public List<TransactionAnnouncement> pendingTransactions() {
+  public List<TransactionAnnouncement> pendingTransactionAnnouncements() {
     if (pendingTransactions == null) {
       pendingTransactions = getDecoder(capability).decode(RLP.input(data));
     }
     return pendingTransactions;
-  }
-
-  public List<Hash> pendingTransactionHashes() {
-    return pendingTransactions().stream()
-        .map(TransactionAnnouncement::getHash)
-        .collect(Collectors.toUnmodifiableList());
   }
 }

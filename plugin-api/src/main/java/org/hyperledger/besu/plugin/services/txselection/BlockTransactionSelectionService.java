@@ -18,6 +18,8 @@ import org.hyperledger.besu.datatypes.PendingTransaction;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
+import java.util.List;
+
 /**
  * A service that can be used by plugins to include their pending transactions during block
  * creation. Proposed pending transactions need to be first evaluated and based on the result of the
@@ -26,7 +28,7 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
  *
  * <p>The process of including plugin proposed pending transactions starts when {@link
  * PluginTransactionSelectorFactory#selectPendingTransactions(BlockTransactionSelectionService,
- * ProcessableBlockHeader)} is called.
+ * ProcessableBlockHeader, List)} is called.
  */
 public interface BlockTransactionSelectionService {
 

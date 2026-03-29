@@ -17,10 +17,10 @@ package org.hyperledger.besu.ethereum.core;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -69,6 +69,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final Hash balHash,
+      final Long slotNumber,
       final BlockHeaderFunctions blockHeaderFunctions) {
     this(
         parentHash,
@@ -93,6 +94,7 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         blockHeaderFunctions,
         Optional.empty());
   }
@@ -120,6 +122,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final Hash balHash,
+      final Long slotNumber,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<Bytes> rawRlp) {
     super(
@@ -143,7 +146,8 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        balHash);
+        balHash,
+        slotNumber);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -173,6 +177,7 @@ public class BlockHeader extends SealableBlockHeader
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsHash,
       final Hash balHash,
+      final Long slotNumber,
       final Hash blockHeaderHash,
       final BlockHeaderFunctions blockHeaderFunctions,
       final Optional<Bytes> rawRlp) {
@@ -197,7 +202,8 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         requestsHash,
-        balHash);
+        balHash,
+        slotNumber);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderHash);
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -271,13 +277,13 @@ public class BlockHeader extends SealableBlockHeader
         () -> {
           out.startList();
 
-          out.writeBytes(parentHash);
-          out.writeBytes(ommersHash);
-          out.writeBytes(coinbase);
-          out.writeBytes(stateRoot);
-          out.writeBytes(transactionsRoot);
-          out.writeBytes(receiptsRoot);
-          out.writeBytes(logsBloom);
+          out.writeBytes(parentHash.getBytes());
+          out.writeBytes(ommersHash.getBytes());
+          out.writeBytes(coinbase.getBytes());
+          out.writeBytes(stateRoot.getBytes());
+          out.writeBytes(transactionsRoot.getBytes());
+          out.writeBytes(receiptsRoot.getBytes());
+          out.writeBytes(logsBloom.getBytes());
           out.writeUInt256Scalar(difficulty);
           out.writeLongScalar(number);
           out.writeLongScalar(gasLimit);
@@ -291,7 +297,7 @@ public class BlockHeader extends SealableBlockHeader
             out.writeUInt256Scalar(baseFee);
 
             if (withdrawalsRoot == null) break;
-            out.writeBytes(withdrawalsRoot);
+            out.writeBytes(withdrawalsRoot.getBytes());
 
             if (excessBlobGas == null || blobGasUsed == null) break;
             out.writeLongScalar(blobGasUsed);
@@ -301,10 +307,13 @@ public class BlockHeader extends SealableBlockHeader
             out.writeBytes(parentBeaconBlockRoot);
 
             if (requestsHash == null) break;
-            out.writeBytes(requestsHash);
+            out.writeBytes(requestsHash.getBytes());
 
             if (blockAccessListHash == null) break;
-            out.writeBytes(blockAccessListHash);
+            out.writeBytes(blockAccessListHash.getBytes());
+
+            if (slotNumber == null) break;
+            out.writeLongScalar(slotNumber);
           } while (false);
           out.endList();
         });
@@ -347,6 +356,7 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
     final Hash balHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Long slotNumber = !headerRlp.isEndOfCurrentList() ? headerRlp.readLongScalar() : null;
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -371,6 +381,7 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         blockHeaderFunctions,
         Optional.of(headerRlp.raw()));
   }
@@ -412,6 +423,7 @@ public class BlockHeader extends SealableBlockHeader
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
     final Hash balHash =
         !headerRlp.isEndOfCurrentList() ? Hash.wrap(headerRlp.readBytes32()) : null;
+    final Long slotNumber = !headerRlp.isEndOfCurrentList() ? headerRlp.readLongScalar() : null;
     headerRlp.leaveList();
     return new BlockHeader(
         parentHash,
@@ -436,6 +448,7 @@ public class BlockHeader extends SealableBlockHeader
         parentBeaconBlockRoot,
         requestsHash,
         balHash,
+        slotNumber,
         knownHash,
         blockHeaderFunctions,
         Optional.of(headerRlp.raw()));
@@ -492,7 +505,10 @@ public class BlockHeader extends SealableBlockHeader
       sb.append("requestsHash=").append(requestsHash).append(", ");
     }
     if (blockAccessListHash != null) {
-      sb.append("blockAccessListHash=").append(blockAccessListHash);
+      sb.append("blockAccessListHash=").append(blockAccessListHash).append(", ");
+    }
+    if (slotNumber != null) {
+      sb.append("slotNumber=").append(slotNumber);
     }
     return sb.append("}").toString();
   }
@@ -501,13 +517,13 @@ public class BlockHeader extends SealableBlockHeader
       final org.hyperledger.besu.plugin.data.BlockHeader pluginBlockHeader,
       final BlockHeaderFunctions blockHeaderFunctions) {
     return new org.hyperledger.besu.ethereum.core.BlockHeader(
-        Hash.fromHexString(pluginBlockHeader.getParentHash().toHexString()),
-        Hash.fromHexString(pluginBlockHeader.getOmmersHash().toHexString()),
-        Address.fromHexString(pluginBlockHeader.getCoinbase().toHexString()),
-        Hash.fromHexString(pluginBlockHeader.getStateRoot().toHexString()),
-        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().toHexString()),
-        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().toHexString()),
-        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getParentHash().getBytes().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getOmmersHash().getBytes().toHexString()),
+        Address.fromHexString(pluginBlockHeader.getCoinbase().getBytes().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getStateRoot().getBytes().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getTransactionsRoot().getBytes().toHexString()),
+        Hash.fromHexString(pluginBlockHeader.getReceiptsRoot().getBytes().toHexString()),
+        LogsBloomFilter.fromHexString(pluginBlockHeader.getLogsBloom().getBytes().toHexString()),
         Difficulty.fromHexString(pluginBlockHeader.getDifficulty().toHexString()),
         pluginBlockHeader.getNumber(),
         pluginBlockHeader.getGasLimit(),
@@ -519,16 +535,20 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getNonce(),
         pluginBlockHeader
             .getWithdrawalsRoot()
-            .map(h -> Hash.fromHexString(h.toHexString()))
+            .map(h -> Hash.fromHexString(h.getBytes().toHexString()))
             .orElse(null),
         pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
         pluginBlockHeader.getExcessBlobGas().map(BlobGas.class::cast).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getRequestsHash()
-            .map(h -> Hash.fromHexString(h.toHexString()))
+            .map(h -> Hash.fromHexString(h.getBytes().toHexString()))
             .orElse(null),
-        pluginBlockHeader.getBalHash().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
+        pluginBlockHeader
+            .getBalHash()
+            .map(h -> Hash.fromHexString(h.getBytes().toHexString()))
+            .orElse(null),
+        pluginBlockHeader.getOptionalSlotNumber().orElse(null),
         blockHeaderFunctions);
   }
 

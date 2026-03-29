@@ -98,8 +98,11 @@ public class DNSDaemon extends AbstractVerticle {
     LOG.debug("Refreshing DNS records");
     final long startTime = System.nanoTime();
     final List<EthereumNodeRecord> ethereumNodeRecords = dnsResolver.collectAll();
-    final long endTime = System.nanoTime();
-    LOG.debug("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
+    final long durationMs = (System.nanoTime() - startTime) / 1_000_000;
+    LOG.debug(
+        "Refreshed ENR DNS records: collected {} record(s) in {} ms",
+        ethereumNodeRecords.size(),
+        durationMs);
     listener.ifPresent(it -> it.newRecords(dnsResolver.sequence(), ethereumNodeRecords));
   }
 }

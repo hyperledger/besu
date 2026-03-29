@@ -28,8 +28,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemo
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_FULL;
-import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_OCCUPANCY_ABOVE_THRESHOLD;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -48,6 +46,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.RemovalReason;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -64,12 +63,11 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.SequencedMap;
 import java.util.function.BiFunction;
-import java.util.stream.Stream;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 
 public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
@@ -249,7 +247,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
               i,
               DEFAULT_BASE_FEE.add(i),
               (int) smallPoolConfig.getPendingTransactionsLayerMaxCapacityBytes() + 1,
-              SIGNATURE_ALGORITHM.get().generateKeyPair());
+              SIGNATURE_ALGORITHM.generateKeyPair());
       smallPendingTransactions.addTransaction(
           createRemotePendingTransaction(tx), Optional.of(sender));
       firstTxs.add(tx);
@@ -263,7 +261,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             0,
             DEFAULT_MIN_GAS_PRICE.multiply(1000),
             (int) smallPoolConfig.getPendingTransactionsLayerMaxCapacityBytes(),
-            SIGNATURE_ALGORITHM.get().generateKeyPair());
+            SIGNATURE_ALGORITHM.generateKeyPair());
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(0L);
     smallPendingTransactions.addTransaction(
@@ -297,8 +295,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
       final Account sender = mock(Account.class);
       when(sender.getNonce()).thenReturn((long) i);
       final var tx =
-          createTransaction(
-              i, DEFAULT_BASE_FEE.add(i), SIGNATURE_ALGORITHM.get().generateKeyPair());
+          createTransaction(i, DEFAULT_BASE_FEE.add(i), SIGNATURE_ALGORITHM.generateKeyPair());
       pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.of(sender));
       txs.add(tx);
       assertTransactionPending(pendingTransactions, tx);
@@ -395,127 +392,6 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     verifyNoMoreInteractions(listener);
   }
 
-  @ParameterizedTest
-  @MethodSource
-  public void selectTransactionsUntilSelectorRequestsNoMore(
-      final TransactionSelectionResult selectionResult) {
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction0), Optional.empty());
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction1), Optional.empty());
-
-    final List<Transaction> parsedTransactions = new ArrayList<>();
-    pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
-          return selectionResult;
-        });
-
-    assertThat(parsedTransactions.size()).isEqualTo(1);
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction0);
-  }
-
-  static Stream<TransactionSelectionResult> selectTransactionsUntilSelectorRequestsNoMore() {
-    return Stream.of(BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_OCCUPANCY_ABOVE_THRESHOLD, BLOCK_FULL);
-  }
-
-  @Test
-  public void selectTransactionsStopsOnBlockFull() {
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction0), Optional.empty());
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction1), Optional.empty());
-
-    final List<Transaction> parsedTransactions = new ArrayList<>();
-    pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
-          return BLOCK_FULL;
-        });
-
-    assertThat(parsedTransactions.size()).isEqualTo(1);
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction0);
-    // Verify both transactions are still in the pool
-    assertThat(pendingTransactions.size()).isEqualTo(2);
-  }
-
-  @Test
-  public void blockFullStopsSelectionImmediately() {
-    // Add multiple transactions
-    for (int i = 0; i < 5; i++) {
-      final Transaction tx = createTransaction(i, SIGNATURE_ALGORITHM.get().generateKeyPair());
-      pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.empty());
-    }
-
-    final List<Transaction> parsedTransactions = new ArrayList<>();
-
-    pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
-          // BLOCK_FULL stops selection immediately after the first transaction
-          return BLOCK_FULL;
-        });
-
-    // Should have processed exactly 1 transaction before stopping
-    assertThat(parsedTransactions.size()).isEqualTo(1);
-
-    // All 5 transactions should still be in the pool since no transactions are discarded
-    assertThat(pendingTransactions.size()).isEqualTo(5);
-  }
-
-  @Test
-  public void finalizationRequestedMidSelection() {
-    // Create transactions from same sender to test nonce ordering
-    final Transaction tx0 = createTransaction(0, KEYS1);
-    final Transaction tx1 = createTransaction(1, KEYS1);
-    final Transaction tx2 = createTransaction(2, KEYS1);
-    final Transaction tx3 = createTransaction(3, KEYS1);
-
-    pendingTransactions.addTransaction(createRemotePendingTransaction(tx0), Optional.empty());
-    pendingTransactions.addTransaction(createRemotePendingTransaction(tx1), Optional.empty());
-    pendingTransactions.addTransaction(createRemotePendingTransaction(tx2), Optional.empty());
-    pendingTransactions.addTransaction(createRemotePendingTransaction(tx3), Optional.empty());
-
-    final List<Transaction> selectedTransactions = new ArrayList<>();
-    pendingTransactions.selectTransactions(
-        pendingTx -> {
-          selectedTransactions.add(pendingTx.getTransaction());
-
-          // Select first two transactions, then request finalization
-          if (selectedTransactions.size() >= 2) {
-            return BLOCK_FULL;
-          }
-          return SELECTED;
-        });
-
-    // Should have selected exactly 2 transactions in nonce order
-    assertThat(selectedTransactions).hasSize(2);
-    assertThat(selectedTransactions.get(0)).isEqualTo(tx0);
-    assertThat(selectedTransactions.get(1)).isEqualTo(tx1);
-
-    // All transactions should remain in pool
-    assertThat(pendingTransactions.size()).isEqualTo(4);
-  }
-
-  @Test
-  public void selectTransactionsUntilPendingIsEmpty() {
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction0), Optional.empty());
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(transaction1), Optional.empty());
-
-    final List<Transaction> parsedTransactions = new ArrayList<>();
-    pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
-          return SELECTED;
-        });
-
-    assertThat(parsedTransactions.size()).isEqualTo(2);
-    assertThat(parsedTransactions.get(0)).isEqualTo(transaction0);
-    assertThat(parsedTransactions.get(1)).isEqualTo(transaction1);
-  }
-
   @Test
   public void notSelectReplacedTransaction() {
     final Transaction transaction1 = createTransaction(0, KEYS1);
@@ -526,14 +402,13 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addTransaction(
         createRemotePendingTransaction(transaction1b), Optional.empty());
 
-    final List<Transaction> parsedTransactions = new ArrayList<>();
     pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx.getTransaction());
-          return SELECTED;
+        pendingTxs -> {
+          assertThat(pendingTxs)
+              .map(PendingTransaction::getTransaction)
+              .containsExactly(transaction1b);
+          return Map.of(pendingTxs.get(0), SELECTED);
         });
-
-    assertThat(parsedTransactions).containsExactly(transaction1b);
   }
 
   @Test
@@ -550,14 +425,13 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addTransaction(
         createLocalPendingTransaction(transaction0), Optional.empty());
 
-    final List<Transaction> iterationOrder = new ArrayList<>(3);
     pendingTransactions.selectTransactions(
-        pendingTx -> {
-          iterationOrder.add(pendingTx.getTransaction());
-          return SELECTED;
+        pendingTxs -> {
+          assertThat(pendingTxs)
+              .map(PendingTransaction::getTransaction)
+              .containsExactly(transaction0, transaction1, transaction2);
+          return pendingTxs.stream().collect(Collectors.toMap(Function.identity(), pt -> SELECTED));
         });
-
-    assertThat(iterationOrder).containsExactly(transaction0, transaction1, transaction2);
   }
 
   @Test
@@ -575,14 +449,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addTransaction(
         createLocalPendingTransaction(transactionSender2), Optional.of(sender2));
 
-    final List<Transaction> iterationOrder = new ArrayList<>(2);
     pendingTransactions.selectTransactions(
-        pendingTx -> {
-          iterationOrder.add(pendingTx.getTransaction());
-          return SELECTED;
-        });
+        pendingTxs -> {
+          assertThat(pendingTxs)
+              .map(PendingTransaction::getTransaction)
+              .containsExactly(transactionSender2, transactionSender1);
 
-    assertThat(iterationOrder).containsExactly(transactionSender2, transactionSender1);
+          return pendingTxs.stream().collect(Collectors.toMap(Function.identity(), pt -> SELECTED));
+        });
   }
 
   @Test
@@ -593,17 +467,16 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final var droppedTxCollector = new DroppedTransactionCollector();
     pendingTransactions.subscribeDroppedTransactions(droppedTxCollector);
 
-    final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx);
-          return TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name());
+        pendingTxs -> {
+          assertThat(pendingTxs).containsExactly(pendingTx0);
+          return Map.of(
+              pendingTx0, TransactionSelectionResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE.name()));
         });
 
     // assert that first tx is removed from the pool
     assertThat(droppedTxCollector.droppedTransactions)
         .containsExactly(entry(transaction0, INVALIDATED));
-    assertThat(parsedTransactions).containsExactly(pendingTx0);
     assertThat(pendingTransactions.getPendingTransactions()).isEmpty();
   }
 
@@ -612,15 +485,14 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final var pendingTx0 = createRemotePendingTransaction(transaction0);
     pendingTransactions.addTransaction(pendingTx0, Optional.empty());
 
-    final List<PendingTransaction> parsedTransactions = new ArrayList<>(1);
     pendingTransactions.selectTransactions(
-        pendingTx -> {
-          parsedTransactions.add(pendingTx);
-          return TransactionSelectionResult.invalidPenalized(
-              GAS_PRICE_BELOW_CURRENT_BASE_FEE.name());
+        pendingTxs -> {
+          assertThat(pendingTxs).containsExactly(pendingTx0);
+          return Map.of(
+              pendingTx0,
+              TransactionSelectionResult.invalidPenalized(GAS_PRICE_BELOW_CURRENT_BASE_FEE.name()));
         });
 
-    assertThat(parsedTransactions).containsExactly(pendingTx0);
     assertThat(pendingTransactions.getPendingTransactions())
         .map(PendingTransaction::getTransaction)
         .containsExactly(transaction0);
@@ -948,6 +820,78 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     assertThat(pendingTransactions.getNextNonceForSender(addedTxs[0].transaction.getSender()))
         .isPresent()
         .hasValue(1);
+  }
+
+  @Test
+  public void shouldReturnZeroStatusWhenPoolIsEmpty() {
+    final PendingTransactions.Status status = pendingTransactions.getStatus();
+    assertThat(status.pendingCount()).isZero();
+    assertThat(status.queuedCount()).isZero();
+  }
+
+  @Test
+  public void shouldCountAllTransactionsAsPendingWhenNoncesAreSequential() {
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS1)), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(1, KEYS1)), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(2, KEYS1)), Optional.empty());
+
+    final PendingTransactions.Status status = pendingTransactions.getStatus();
+    assertThat(status.pendingCount()).isEqualTo(3);
+    assertThat(status.queuedCount()).isZero();
+  }
+
+  @Test
+  public void shouldCountTransactionsBeyondNonceGapAsQueued() {
+    // nonce 0 lands in prioritized/ready (pending), nonce 2 lands in sparse with gap=1 (queued)
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS1)), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(2, KEYS1)), Optional.empty());
+
+    final PendingTransactions.Status status = pendingTransactions.getStatus();
+    assertThat(status.pendingCount()).isEqualTo(1);
+    assertThat(status.queuedCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldAggregatePendingAndQueuedAcrossMultipleSenders() {
+    // SENDER1: nonces 0, 1 — sequential, all pending
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS1)), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(1, KEYS1)), Optional.empty());
+    // SENDER2: nonces 0, 2 — gap at 1: 1 pending, 1 queued
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS2)), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(2, KEYS2)), Optional.empty());
+
+    final PendingTransactions.Status status = pendingTransactions.getStatus();
+    assertThat(status.pendingCount()).isEqualTo(3);
+    assertThat(status.queuedCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldMoveTxFromQueuedToPendingWhenGapIsFilled() {
+    // start with a gap: nonce 0 pending, nonce 2 queued
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(0, KEYS1)), Optional.empty());
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(2, KEYS1)), Optional.empty());
+
+    assertThat(pendingTransactions.getStatus().pendingCount()).isEqualTo(1);
+    assertThat(pendingTransactions.getStatus().queuedCount()).isEqualTo(1);
+
+    // fill the gap: nonce 1 arrives, nonce 2 is promoted from sparse to ready/prioritized
+    pendingTransactions.addTransaction(
+        createRemotePendingTransaction(createTransaction(1, KEYS1)), Optional.empty());
+
+    final PendingTransactions.Status status = pendingTransactions.getStatus();
+    assertThat(status.pendingCount()).isEqualTo(3);
+    assertThat(status.queuedCount()).isZero();
   }
 
   private TransactionAndAccount[] populateCache(final int numTxs, final long startingNonce) {

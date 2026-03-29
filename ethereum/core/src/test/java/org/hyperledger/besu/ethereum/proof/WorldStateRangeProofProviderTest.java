@@ -38,8 +38,10 @@ import org.junit.jupiter.api.Test;
 
 public class WorldStateRangeProofProviderTest {
 
-  private static final Hash MAX_RANGE =
-      Hash.fromHexString("0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+  private static final Bytes32 MAX_RANGE =
+      Bytes32.wrap(
+          Hash.fromHexString("0x0fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
+              .getBytes());
   private static final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
       new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
@@ -58,18 +60,19 @@ public class WorldStateRangeProofProviderTest {
         TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Bytes32.wrap(Hash.ZERO.getBytes()), MAX_RANGE, 10, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
     // generate the proof
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.wrap(Hash.ZERO.getBytes()));
     proofs.addAll(
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
@@ -87,19 +90,20 @@ public class WorldStateRangeProofProviderTest {
         TrieGenerator.generateTrie(worldStateStorageCoordinator, 15);
     // collect accounts in range
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 10, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Bytes32.wrap(Hash.ZERO.getBytes()), MAX_RANGE, 10, Integer.MAX_VALUE);
     final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
         (TreeMap<Bytes32, Bytes>)
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, visitor, root, Hash.ZERO));
+                        collector, visitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
 
     // generate the proof
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.wrap(Hash.ZERO.getBytes()));
     proofs.addAll(
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
@@ -126,7 +130,8 @@ public class WorldStateRangeProofProviderTest {
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 12, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Bytes32.wrap(Hash.ZERO.getBytes()), MAX_RANGE, 12, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
         RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -134,17 +139,17 @@ public class WorldStateRangeProofProviderTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, invalidVisitor, root, Hash.ZERO));
+                        collector, invalidVisitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
     final List<Bytes> proofs =
         worldStateProofProvider.getAccountProofRelatedNodes(
-            Hash.wrap(accountStateTrie.getRootHash()), Hash.ZERO);
+            Hash.wrap(accountStateTrie.getRootHash()), Bytes32.wrap(Hash.ZERO.getBytes()));
     proofs.addAll(
         worldStateProofProvider.getAccountProofRelatedNodes(
             Hash.wrap(accountStateTrie.getRootHash()), accounts.lastKey()));
 
-    accounts.remove(Hash.ZERO);
+    accounts.remove(Bytes32.wrap(Hash.ZERO.getBytes()));
 
-    accounts.putIfAbsent(Hash.ZERO, Bytes.EMPTY);
+    accounts.putIfAbsent(Bytes32.wrap(Hash.ZERO.getBytes()), Bytes.EMPTY);
     // validate the range proof
     boolean isValidRangeProof =
         worldStateProofProvider.isValidRangeProof(
@@ -163,7 +168,8 @@ public class WorldStateRangeProofProviderTest {
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 15, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Bytes32.wrap(Hash.ZERO.getBytes()), MAX_RANGE, 15, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
         RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -171,7 +177,7 @@ public class WorldStateRangeProofProviderTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, invalidVisitor, root, Hash.ZERO));
+                        collector, invalidVisitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
 
     // validate the range proof
     boolean isValidRangeProof =
@@ -191,7 +197,8 @@ public class WorldStateRangeProofProviderTest {
 
     // generate the invalid proof
     final RangeStorageEntriesCollector collector =
-        RangeStorageEntriesCollector.createCollector(Hash.ZERO, MAX_RANGE, 9, Integer.MAX_VALUE);
+        RangeStorageEntriesCollector.createCollector(
+            Bytes32.wrap(Hash.ZERO.getBytes()), MAX_RANGE, 9, Integer.MAX_VALUE);
     final TrieIterator<Bytes> invalidVisitor =
         RangeStorageEntriesCollector.createVisitor(collector);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -199,7 +206,7 @@ public class WorldStateRangeProofProviderTest {
             accountStateTrie.entriesFrom(
                 root ->
                     RangeStorageEntriesCollector.collectEntries(
-                        collector, invalidVisitor, root, Hash.ZERO));
+                        collector, invalidVisitor, root, Bytes32.wrap(Hash.ZERO.getBytes())));
 
     // validate the range proof
     boolean isValidRangeProof =

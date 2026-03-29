@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredTransactionPoolBaseFeeTest;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.SenderBalanceChecker;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.LegacyTransactionPoolBaseFeeTest;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -129,13 +130,15 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
 
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
-  protected final Transaction transactionWithBlobs = createBlobTransaction(2);
-  protected final Transaction transactionWithBlobsReplacement =
-      createReplacementTransactionWithBlobs(2);
-  protected final Transaction transactionWithSameBlobs =
-      createBlobTransactionWithSameBlobs(3, transactionWithBlobs.getBlobsWithCommitments().get());
-  protected final Transaction transactionWithSameBlobsReplacement =
-      createReplacementTransactionWithBlobs(3);
+  private static final BlobTestFixture BLOB_TEST_FIXTURE = new BlobTestFixture();
+  protected static final Transaction transactionWithBlobs = createStaticBlobTransaction(2);
+  protected static final Transaction transactionWithBlobsReplacement =
+      createStaticReplacementTransactionWithBlobs(2);
+  protected static final Transaction transactionWithSameBlobs =
+      createStaticBlobTransactionWithSameBlobs(
+          3, transactionWithBlobs.getBlobsWithCommitments().get());
+  protected static final Transaction transactionWithSameBlobsReplacement =
+      createStaticReplacementTransactionWithBlobs(3);
 
   protected final Transaction transactionOtherSender = createTransaction(1, KEY_PAIR2);
   private ExecutionContextTestFixture executionContext;
@@ -147,7 +150,6 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
   protected ArgumentCaptor<Runnable> syncTaskCapture;
   protected PeerTransactionTracker peerTransactionTracker;
   protected SenderBalanceChecker senderBalanceChecker = new SenderBalanceChecker.NoOpChecker();
-  private BlobTestFixture blobTestFixture;
 
   protected abstract PendingTransactions createPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -186,7 +188,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
                 MiningConfiguration.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                false,
+                BalConfiguration.DEFAULT,
                 new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
@@ -239,7 +241,10 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
     doReturn(ethScheduler).when(ethContext).getScheduler();
 
     peerTransactionTracker =
-        new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethContext.getEthPeers());
+        new PeerTransactionTracker(
+            TransactionPoolConfiguration.DEFAULT,
+            ethContext.getEthPeers(),
+            ethContext.getScheduler());
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(
@@ -479,10 +484,45 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         .createTransaction(KEY_PAIR1);
   }
 
+  private static Transaction createStaticBlobTransaction(final int nonce) {
+    return new TransactionTestFixture()
+        .nonce(nonce)
+        .gasLimit(0L)
+        .gasPrice(null)
+        .maxFeePerGas(Optional.of(Wei.of(5000L)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
+        .type(TransactionType.BLOB)
+        .blobsWithCommitments(Optional.of(BLOB_TEST_FIXTURE.createBlobsWithCommitments(6)))
+        .createTransaction(KEY_PAIR1);
+  }
+
+  private static Transaction createStaticBlobTransactionWithSameBlobs(
+      final int nonce, final BlobsWithCommitments blobsWithCommitments) {
+    return new TransactionTestFixture()
+        .nonce(nonce)
+        .gasLimit(0L)
+        .gasPrice(null)
+        .maxFeePerGas(Optional.of(Wei.of(5000L)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
+        .type(TransactionType.BLOB)
+        .blobsWithCommitments(Optional.of(blobsWithCommitments))
+        .createTransaction(KEY_PAIR1);
+  }
+
+  private static Transaction createStaticReplacementTransactionWithBlobs(final int nonce) {
+    return new TransactionTestFixture()
+        .nonce(nonce)
+        .gasLimit(0L)
+        .gasPrice(null)
+        .maxFeePerGas(Optional.of(Wei.of(5000L * 10)))
+        .maxPriorityFeePerGas(Optional.of(Wei.of(1000L * 10)))
+        .maxFeePerBlobGas(Optional.of(Wei.of(5000L)))
+        .type(TransactionType.BLOB)
+        .blobsWithCommitments(Optional.of(BLOB_TEST_FIXTURE.createBlobsWithCommitments(6)))
+        .createTransaction(KEY_PAIR1);
+  }
+
   protected Transaction createBlobTransaction(final int nonce) {
-    if (blobTestFixture == null) {
-      blobTestFixture = new BlobTestFixture();
-    }
     return new TransactionTestFixture()
         .nonce(nonce)
         .gasLimit(blockGasLimit)
@@ -490,7 +530,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         .maxFeePerGas(Optional.of(Wei.of(5000L)))
         .maxPriorityFeePerGas(Optional.of(Wei.of(1000L)))
         .type(TransactionType.BLOB)
-        .blobsWithCommitments(Optional.of(blobTestFixture.createBlobsWithCommitments(6)))
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(6)))
         .createTransaction(KEY_PAIR1);
   }
 
@@ -508,9 +548,6 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
   }
 
   protected Transaction createReplacementTransactionWithBlobs(final int nonce) {
-    if (blobTestFixture == null) {
-      blobTestFixture = new BlobTestFixture();
-    }
     return new TransactionTestFixture()
         .nonce(nonce)
         .gasLimit(blockGasLimit)
@@ -519,7 +556,7 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
         .maxPriorityFeePerGas(Optional.of(Wei.of(1000L * 10)))
         .maxFeePerBlobGas(Optional.of(Wei.of(5000L)))
         .type(TransactionType.BLOB)
-        .blobsWithCommitments(Optional.of(blobTestFixture.createBlobsWithCommitments(6)))
+        .blobsWithCommitments(Optional.of(new BlobTestFixture().createBlobsWithCommitments(6)))
         .createTransaction(KEY_PAIR1);
   }
 

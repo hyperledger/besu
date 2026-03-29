@@ -29,8 +29,8 @@ import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -91,7 +91,11 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
               (key, value) -> {
                 final StorageFlatDatabaseHealingRangeRequest storageRangeDataRequest =
                     createStorageFlatHealingRangeRequest(
-                        getRootHash(), accountHash, storageRoot, key, value);
+                        getRootHash(),
+                        Bytes32.wrap(accountHash.getBytes()),
+                        storageRoot,
+                        key,
+                        value);
                 childRequests.add(storageRangeDataRequest);
               });
     }

@@ -118,7 +118,9 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION,
+            method.getName(),
+            new Object[] {transaction.getHash().getBytes().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =
@@ -135,7 +137,7 @@ class EthGetTransactionByHashTest {
         org.hyperledger.besu.ethereum.core.Transaction.readFrom(
             Bytes.fromHexString(VALID_TRANSACTION));
     final TransactionWithMetadata transactionWithMetadata =
-        new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0);
+        new TransactionWithMetadata(transaction, 1, Optional.empty(), Hash.ZERO, 0, 0L);
 
     when(transactionPool.getTransactionByHash(transaction.getHash())).thenReturn(Optional.empty());
     verifyNoMoreInteractions(transactionPool);
@@ -144,7 +146,9 @@ class EthGetTransactionByHashTest {
 
     final JsonRpcRequest request =
         new JsonRpcRequest(
-            JSON_RPC_VERSION, method.getName(), new Object[] {transaction.getHash().toHexString()});
+            JSON_RPC_VERSION,
+            method.getName(),
+            new Object[] {transaction.getHash().getBytes().toHexString()});
     final JsonRpcRequestContext context = new JsonRpcRequestContext(request);
 
     final JsonRpcSuccessResponse expectedResponse =

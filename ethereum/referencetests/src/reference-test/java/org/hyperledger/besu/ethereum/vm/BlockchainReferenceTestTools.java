@@ -19,11 +19,12 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.ReferenceTestMergeBlockCreator;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -42,14 +43,15 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
-import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.BlockchainReferenceTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.BlockExceptionMatcher;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
@@ -70,126 +72,166 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 public class BlockchainReferenceTestTools {
 
-  private static final List<String> NETWORKS_TO_RUN;
-  private static final ReferenceTestProtocolSchedules PROTOCOL_SCHEDULES;
+    private static final List<String> NETWORKS_TO_RUN;
+    private static final ReferenceTestProtocolSchedules PROTOCOL_SCHEDULES;
 
-  static {
-    final String networks =
-        System.getProperty(
-            "test.ethereum.blockchain.eips",
-            "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k,"
-                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
-    NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
-    PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
-  }
-
-  private static final JsonTestParameters<?, ?> params =
-      JsonTestParameters.create(BlockchainReferenceTestCaseSpec.class)
-          .generator(
-              (testName, fullPath, spec, collector) -> {
-                final String eip = spec.getNetwork();
-                collector.add(
-                    testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
-              });
-
-  static {
-    if (NETWORKS_TO_RUN.isEmpty()) {
-      params.ignoreAll();
+    static {
+        final String networks =
+                System.getProperty(
+                        "test.ethereum.blockchain.eips",
+                        "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k,"
+                                + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
+                                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
+        NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
+        PROTOCOL_SCHEDULES = ReferenceTestProtocolSchedules.create();
     }
 
-    // Consumes a huge amount of memory
-    params.ignore("static_Call1MB1024Calldepth");
-    params.ignore("ShanghaiLove_");
+    private static final JsonTestParameters<?, ?> params =
+            JsonTestParameters.create(BlockchainReferenceTestCaseSpec.class)
+                    .generator(
+                            (testName, fullPath, spec, collector) -> {
+                                final String eip = spec.getNetwork();
+                                collector.add(
+                                        testName + "[" + eip + "]", fullPath, spec, NETWORKS_TO_RUN.contains(eip));
+                            });
 
-    // Absurd amount of gas, doesn't run in parallel
-    params.ignore("randomStatetest94_\\w+");
-
-    // Don't do time-consuming tests
-    params.ignore("CALLBlake2f_MaxRounds");
-    params.ignore("loopMul_");
-
-    // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
-    // chain head.
-    // Perfectly valid test pre-merge.
-    params.ignore(
-        "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
-
-    // EOF tests don't have Prague stuff like deposits right now
-    params.ignore("/stEOF/");
-
-    // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
-    params.ignore("/stEIP2537/");
-  }
-
-  private BlockchainReferenceTestTools() {
-    // utility class
-  }
-
-  public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
-    return params.generate(filePath);
-  }
-
-  @SuppressWarnings("java:S5960") // this is actually test code
-  public static void executeTest(final String name, final BlockchainReferenceTestCaseSpec spec) {
-    final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
-    final MutableWorldState worldState =
-        spec.getWorldStateArchive()
-            .getWorldState(WorldStateQueryParams.withStateRootAndBlockHashAndUpdateNodeHead(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash()))
-            .orElseThrow();
-
-    final ProtocolSchedule schedule = PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
-
-    final MutableBlockchain blockchain = spec.getBlockchain();
-    final ProtocolContext context = spec.getProtocolContext();
-
-    try (BlockCreationFixture blockCreation =
-        BlockCreationFixture.create(schedule, context, blockchain)) {
-      for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
-          spec.getCandidateBlocks()) {
-        if (!candidateBlock.isExecutable()) {
-          return;
+    static {
+        if (NETWORKS_TO_RUN.isEmpty()) {
+            params.ignoreAll();
         }
 
-        try {
-          final Block blockFromReference = candidateBlock.getBlock();
+        // Consumes a huge amount of memory
+        params.ignore("static_Call1MB1024Calldepth");
+        params.ignore("ShanghaiLove_");
 
-          final ProtocolSpec protocolSpec = schedule.getByBlockHeader(blockFromReference.getHeader());
+        // Absurd amount of gas, doesn't run in parallel
+        params.ignore("randomStatetest94_\\w+");
 
-          verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
+        // Don't do time-consuming tests
+        params.ignore("CALLBlake2f_MaxRounds");
+        params.ignore("loopMul_");
 
-          final boolean supportsBlockBuilding =
-              ReferenceTestProtocolSchedules.supportsBlockBuilding(spec.getNetwork());
-          final boolean shouldBuildBlock = supportsBlockBuilding && candidateBlock.isValid() && !name.contains("eip7934");
-          final Block block =
-              shouldBuildBlock
-                  ? buildBlock(
-                      schedule,
-                      context,
-                      blockchain,
-                      blockCreation.transactionPool(),
-                      blockCreation.ethScheduler(),
-                      blockFromReference)
-                  : blockFromReference;
+        // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
+        // chain head.
+        // Perfectly valid test pre-merge.
+        params.ignore(
+                "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
 
-          assertThat(block).isEqualTo(blockFromReference);
-
-          final HeaderValidationMode validationMode =
-              "NoProof".equalsIgnoreCase(spec.getSealEngine())
-                  ? HeaderValidationMode.LIGHT
-                  : HeaderValidationMode.FULL;
-          final BlockImporter blockImporter = protocolSpec.getBlockImporter();
-          final BlockImportResult importResult =
-              blockImporter.importBlock(context, block, validationMode, validationMode);
-
-          assertThat(importResult.isImported()).isEqualTo(candidateBlock.isValid());
-        } catch (final RLPException e) {
-          assertThat(candidateBlock.isValid()).isFalse();
-        }
-      }
+        // These are for the older reference tests but EIP-2537 is covered by eip2537_bls_12_381_precompiles in the execution-spec-tests
+        params.ignore("/stEIP2537/");
     }
 
-    Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
+    private BlockchainReferenceTestTools() {
+        // utility class
+    }
+
+    public static Collection<Object[]> generateTestParametersForConfig(final String[] filePath) {
+        return params.generate(filePath);
+    }
+
+    @SuppressWarnings("java:S5960") // this is actually test code
+    public static void executeTest(final String name, final BlockchainReferenceTestCaseSpec spec) {
+      final MutableBlockchain blockchain = spec.buildBlockchain();
+      final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
+        final ProtocolContext protocolContext = spec.buildProtocolContext(blockchain);
+        final WorldStateArchive worldStateArchive = protocolContext.getWorldStateArchive();
+        final MutableWorldState worldState =
+                worldStateArchive
+                        .getWorldState(WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(genesisBlockHeader))
+                        .orElseThrow();
+
+        final ProtocolSchedule schedule = PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
+
+        try (BlockCreationFixture blockCreation =
+                     BlockCreationFixture.create(schedule, protocolContext, blockchain)) {
+            for (final BlockchainReferenceTestCaseSpec.CandidateBlock candidateBlock :
+                    spec.getCandidateBlocks()) {
+                if (!candidateBlock.isExecutable()) {
+                    return;
+                }
+
+                try {
+                    final Block blockFromReference = candidateBlock.getBlock();
+
+                    final ProtocolSpec protocolSpec = schedule.getByBlockHeader(blockFromReference.getHeader());
+
+                    verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
+
+                    final boolean supportsBlockBuilding =
+                            ReferenceTestProtocolSchedules.supportsBlockBuilding(spec.getNetwork());
+                    final boolean shouldBuildBlock = supportsBlockBuilding && candidateBlock.isValid() && !name.contains("eip7934");
+                    final Block block =
+                            shouldBuildBlock
+                                    ? buildBlock(
+                                    schedule,
+                                    protocolContext,
+                                    blockchain,
+                                    blockCreation.transactionPool(),
+                                    blockCreation.ethScheduler(),
+                                    blockFromReference)
+                                    : blockFromReference;
+
+                    assertThat(block).isEqualTo(blockFromReference);
+
+                    final HeaderValidationMode validationMode =
+                            "NoProof".equalsIgnoreCase(spec.getSealEngine())
+                                    ? HeaderValidationMode.LIGHT
+                                    : HeaderValidationMode.FULL;
+
+                    // Use validateAndProcessBlock directly so we can access the error message and
+                    // verify it matches the expected exception from the fixture.
+                    final BlockValidator blockValidator = protocolSpec.getBlockValidator();
+                    final BlockProcessingResult processingResult =
+                            blockValidator.validateAndProcessBlock(
+                                    protocolContext,
+                                    block,
+                                    validationMode,
+                                    validationMode,
+                                    candidateBlock.getBlockAccessList(),
+                                    false);
+
+                    final boolean imported = processingResult.isSuccessful();
+                    if (imported) {
+                        // Block was accepted: persist and append it just like MainnetBlockImporter.
+                        processingResult.getYield().ifPresent(outputs -> {
+                            protocolContext.getBlockchain().appendBlock(block, outputs.getReceipts(), outputs.getBlockAccessList());
+                            protocolContext.getWorldStateArchive().getWorldState(
+                                    WorldStateQueryParams.newBuilder()
+                                            .withBlockHeader(block.getHeader())
+                                            .withShouldWorldStateUpdateHead(true)
+                                            .build());
+                        });
+                    }
+
+                    assertThat(imported)
+                            .as("Block import status for block %s", block.getHash())
+                            .isEqualTo(candidateBlock.isValid());
+
+                    // When the block is expected to be invalid, verify the rejection reason matches
+                    // the expected exception from the fixture.
+                    if (!candidateBlock.isValid()) {
+                        candidateBlock.getExpectedException().ifPresent(expectedExceptionKey -> {
+                            final String actualError = processingResult.errorMessage.orElse("");
+                            assertThat(BlockExceptionMatcher.matches(expectedExceptionKey, actualError))
+                                    .as(
+                                            "Block rejected for wrong reason.\n"
+                                                    + "  Expected exception : %s (%s)\n"
+                                                    + "  Actual error       : %s",
+                                            expectedExceptionKey,
+                                            BlockExceptionMatcher.describeExpected(expectedExceptionKey).orElse("unknown key"),
+                                            actualError)
+                                    .isTrue();
+                        });
+                    }
+
+                } catch (final RLPException e) {
+                    assertThat(candidateBlock.isValid()).isFalse();
+                }
+            }
+        }
+
+        Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
+
   }
 
   private static Block buildBlock(
@@ -228,7 +270,8 @@ public class BlockchainReferenceTestTools {
         blockFromReference.getHeader().getMixHashOrPrevRandao(),
         blockFromReference.getHeader().getTimestamp(),
         withdrawals,
-        blockFromReference.getHeader().getParentBeaconBlockRoot());
+        blockFromReference.getHeader().getParentBeaconBlockRoot(),
+        blockFromReference.getHeader().getOptionalSlotNumber());
   }
 
   static void verifyJournaledEVMAccountCompatability(
@@ -293,6 +336,7 @@ public class BlockchainReferenceTestTools {
               metricsSystem,
               syncState,
               TransactionPoolConfiguration.DEFAULT,
+              EthProtocolConfiguration.DEFAULT,
               new BlobCache(),
               MiningConfiguration.newDefault());
 

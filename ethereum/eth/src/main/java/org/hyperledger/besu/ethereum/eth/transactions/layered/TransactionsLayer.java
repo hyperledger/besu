@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
+import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredRemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -86,6 +87,13 @@ public interface TransactionsLayer {
 
   List<PendingTransaction> getAll();
 
+  /**
+   * Returns all pending transactions for the given sender across all layers, sorted by nonce in
+   * ascending order.
+   *
+   * @param sender the sender address
+   * @return transactions for the sender sorted by nonce ascending, or an empty list if none exist
+   */
   List<PendingTransaction> getAllFor(Address sender);
 
   List<Transaction> getAllLocal();
@@ -126,6 +134,8 @@ public interface TransactionsLayer {
   long getCumulativeUsedSpace();
 
   String logStats();
+
+  PendingTransactions.Status getStatus();
 
   String logSender(Address sender);
 }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSortedMap;
+import org.apache.tuweni.bytes.Bytes;
 
 /** Processes various types of requests based on their RequestType. */
 public class RequestProcessorCoordinator {
@@ -46,6 +47,10 @@ public class RequestProcessorCoordinator {
     return processors.values().stream()
         .map(requestProcessor -> requestProcessor.process(context, accessLocationTracker))
         .toList();
+  }
+
+  public static RequestProcessorCoordinator noOp() {
+    return new RequestProcessorCoordinator(ImmutableSortedMap.of());
   }
 
   public static class Builder {
@@ -75,7 +80,11 @@ public class RequestProcessorCoordinator {
             processor ->
                 Map.entry(
                     processor.getContractName().orElse(""),
-                    processor.getContractAddress().map(Address::toHexString).orElse("")))
+                    processor
+                        .getContractAddress()
+                        .map(BytesHolder::getBytes)
+                        .map(Bytes::toHexString)
+                        .orElse("")))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }

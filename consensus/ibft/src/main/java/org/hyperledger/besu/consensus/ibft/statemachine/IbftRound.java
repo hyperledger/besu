@@ -41,11 +41,13 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,13 +125,15 @@ public class IbftRound {
    * @param headerTimeStampSeconds the header time stamp seconds
    */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
-    final Block block =
-        blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader).getBlock();
+    final BlockCreator.BlockCreationResult blockCreationResult =
+        blockCreator.createBlock(headerTimeStampSeconds, this.parentHeader);
+    final Block block = blockCreationResult.getBlock();
+    final Optional<BlockAccessList> blockAccessList = blockCreationResult.getBlockAccessList();
     final BftExtraData extraData = bftExtraDataCodec.decode(block.getHeader());
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
     LOG.trace(
         "Creating proposed block with extraData={} blockHeader={}", extraData, block.getHeader());
-    updateStateWithProposalAndTransmit(block, Optional.empty());
+    updateStateWithProposalAndTransmit(block, blockAccessList, Optional.empty());
   }
 
   /**
@@ -141,13 +145,17 @@ public class IbftRound {
   public void startRoundWith(
       final RoundChangeArtifacts roundChangeArtifacts, final long headerTimestamp) {
     final Optional<Block> bestBlockFromRoundChange = roundChangeArtifacts.getBlock();
+    Optional<BlockAccessList> blockAccessList = roundChangeArtifacts.getBlockAccessList();
 
     final RoundChangeCertificate roundChangeCertificate =
         roundChangeArtifacts.getRoundChangeCertificate();
     final Block blockToPublish;
     if (!bestBlockFromRoundChange.isPresent()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp, this.parentHeader).getBlock();
+      final BlockCreator.BlockCreationResult blockCreationResult =
+          blockCreator.createBlock(headerTimestamp, this.parentHeader);
+      blockToPublish = blockCreationResult.getBlock();
+      blockAccessList = blockCreationResult.getBlockAccessList();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
@@ -161,21 +169,29 @@ public class IbftRound {
               BftBlockHeaderFunctions.forCommittedSeal(bftExtraDataCodec));
     }
 
-    updateStateWithProposalAndTransmit(blockToPublish, Optional.of(roundChangeCertificate));
+    updateStateWithProposalAndTransmit(
+        blockToPublish, blockAccessList, Optional.of(roundChangeCertificate));
   }
 
   private void updateStateWithProposalAndTransmit(
-      final Block block, final Optional<RoundChangeCertificate> roundChangeCertificate) {
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final Optional<RoundChangeCertificate> roundChangeCertificate) {
     final Proposal proposal;
     try {
-      proposal = messageFactory.createProposal(getRoundIdentifier(), block, roundChangeCertificate);
+      proposal =
+          messageFactory.createProposal(
+              getRoundIdentifier(), block, blockAccessList, roundChangeCertificate);
     } catch (final SecurityModuleException e) {
       LOG.warn("Failed to create a signed Proposal, waiting for next round.", e);
       return;
     }
 
     transmitter.multicastProposal(
-        proposal.getRoundIdentifier(), proposal.getBlock(), proposal.getRoundChangeCertificate());
+        proposal.getRoundIdentifier(),
+        proposal.getBlock(),
+        proposal.getBlockAccessList(),
+        proposal.getRoundChangeCertificate());
     updateStateWithProposedBlock(proposal);
   }
 
@@ -324,7 +340,12 @@ public class IbftRound {
     final BlockImporter blockImporter =
         protocolSchedule.getByBlockHeader(blockToImport.getHeader()).getBlockImporter();
     final BlockImportResult result =
-        blockImporter.importBlock(protocolContext, blockToImport, HeaderValidationMode.FULL);
+        blockImporter.importBlock(
+            protocolContext,
+            blockToImport,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            roundState.getProposedBlockAccessList());
     if (!result.isImported()) {
       LOG.error(
           "Failed to import block to chain. block={} extraData={} blockHeader={}",
@@ -342,7 +363,7 @@ public class IbftRound {
     final Hash commitHash =
         new BftBlockHashing(bftExtraDataCodec)
             .calculateDataHashForCommittedSeal(proposedHeader, extraData);
-    return nodeKey.sign(commitHash);
+    return nodeKey.sign(Bytes32.wrap(commitHash.getBytes()));
   }
 
   private void notifyNewBlockListeners(final Block block) {

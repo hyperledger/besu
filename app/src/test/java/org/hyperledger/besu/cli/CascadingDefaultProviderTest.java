@@ -17,19 +17,17 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.config.NetworkName.DEV;
-import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.config.NetworkDefinition.DEV;
+import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ETH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.WEB3;
-import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
-import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfig;
-import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
@@ -38,7 +36,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.File;
 import java.io.IOException;
@@ -121,25 +118,26 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(metricsConfiguration));
     verify(mockRunnerBuilder).build();
 
-    final List<EnodeURL> nodes =
+    final List<EnodeURLImpl> nodes =
         asList(
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEqualTo(nodes);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().enodeBootNodes()).isEqualTo(nodes);
 
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
             .setGenesisConfig(GenesisConfig.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
-            .setBootNodes(nodes)
+            .setEnodeBootNodes(nodes)
+            .setEnrBootNodes(Collections.emptyList())
             .setDnsDiscoveryUrl(null)
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any());
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
-    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
+    assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.SNAP);
     assertThat(syncConfigurationCaptor.getValue().getSyncMinimumPeerCount()).isEqualTo(13);
   }
 
@@ -166,13 +164,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
 
     verify(mockRunnerBuilder).discoveryEnabled(eq(true));
-    verify(mockRunnerBuilder)
-        .ethNetworkConfig(
-            new EthNetworkConfig(
-                GenesisConfig.fromResource(MAINNET.getGenesisFile()),
-                MAINNET.getNetworkId(),
-                MAINNET_BOOTSTRAP_NODES,
-                MAINNET_DISCOVERY_URL));
+    verify(mockRunnerBuilder).ethNetworkConfig(EthNetworkConfig.getNetworkConfig(MAINNET));
     verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
     verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
@@ -196,8 +188,8 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
   @Test
   public void envVariableOverridesValueFromConfigFile() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000004";
-    setEnvironmentVariable("BESU_MINER_COINBASE", expectedCoinbase);
+    final int expectedMinTxGasPrice = 1337;
+    setEnvironmentVariable("BESU_MIN_GAS_PRICE", String.valueOf(expectedMinTxGasPrice));
     parseCommand("--config-file", configFile);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -206,21 +198,22 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
-    assertThat(captMiningParameters.getValue().getCoinbase())
-        .contains(Address.fromHexString(expectedCoinbase));
+    assertThat(captMiningParameters.getValue().getMinTransactionGasPrice())
+        .isEqualTo(Wei.of(expectedMinTxGasPrice));
   }
 
   /**
    * Test if the command line option overrides the environment variable and configuration. The test
-   * checks if the value of the miner's coinbase address set through a command line option correctly
-   * overrides the value specified in the environment variable and the configuration file.
+   * checks if the value of the data path set through a command line option correctly overrides the
+   * value specified in the environment variable and the configuration file.
    */
   @Test
   public void cliOptionOverridesEnvVariableAndConfig() {
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
-    final String expectedCoinbase = "0x0000000000000000000000000000000000000006";
-    setEnvironmentVariable("BESU_MINER_COINBASE", "0x0000000000000000000000000000000000000004");
-    parseCommand("--config-file", configFile, "--miner-coinbase", expectedCoinbase);
+    final int expectedMinTxGasPrice = 1337;
+    setEnvironmentVariable("BESU_MIN_TRANSACTION_GAS_PRICE", "9774");
+    parseCommand(
+        "--config-file", configFile, "--min-gas-price", String.valueOf(expectedMinTxGasPrice));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -228,8 +221,8 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final var captMiningParameters = ArgumentCaptor.forClass(MiningConfiguration.class);
     verify(mockControllerBuilder).miningParameters(captMiningParameters.capture());
 
-    assertThat(captMiningParameters.getValue().getCoinbase())
-        .contains(Address.fromHexString(expectedCoinbase));
+    assertThat(captMiningParameters.getValue().getMinTransactionGasPrice())
+        .isEqualTo(Wei.of(expectedMinTxGasPrice));
   }
 
   /**

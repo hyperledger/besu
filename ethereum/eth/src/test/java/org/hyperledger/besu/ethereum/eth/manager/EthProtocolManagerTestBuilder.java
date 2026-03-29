@@ -190,7 +190,7 @@ public class EthProtocolManagerTestBuilder {
       transactionPool = mock(TransactionPool.class);
     }
     if (ethereumWireProtocolConfiguration == null) {
-      ethereumWireProtocolConfiguration = EthProtocolConfiguration.defaultConfig();
+      ethereumWireProtocolConfiguration = EthProtocolConfiguration.DEFAULT;
     }
     if (forkIdManager == null) {
       forkIdManager =
@@ -208,7 +208,7 @@ public class EthProtocolManagerTestBuilder {
               25,
               25,
               false,
-              SyncMode.FAST,
+              SyncMode.SNAP,
               forkIdManager);
     }
     ethPeers.setChainHeadTracker(EthProtocolManagerTestUtil.getChainHeadTrackerMock());

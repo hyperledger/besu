@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli;
 
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
@@ -59,6 +60,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
+  private boolean isDiscoveryEnabled = true;
   private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
@@ -67,8 +69,15 @@ public class ConfigurationOverviewBuilder {
   private BesuPluginContextImpl besuPluginContext;
   private boolean isHistoryExpiryPruneEnabled = false;
   private boolean isParallelTxProcessingEnabled = false;
+  private ChainPruningStrategy chainPruningStrategy = ChainPruningStrategy.NONE;
+  private Long chainPruningBlocksRetained;
+  private Long chainPruningBalsRetained;
+
   private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
+  private Integer maxBlobsPerTransaction;
+  private Integer maxBlobsPerBlock;
+  private static final String SNAP_SYNC_MODE = "SNAP";
 
   /**
    * Create a new ConfigurationOverviewBuilder.
@@ -243,6 +252,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets discovery enabled/disabled
+   *
+   * @param discoveryEnabled bool to indicate if discovery is enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setDiscoveryEnabled(final boolean discoveryEnabled) {
+    isDiscoveryEnabled = discoveryEnabled;
+    return this;
+  }
+
+  /**
    * Sets snap server enabled/disabled
    *
    * @param snapServerEnabled bool to indicate if snap server is enabled
@@ -382,6 +402,47 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the max blobs per transaction.
+   *
+   * @param maxBlobsPerTransaction the max blobs per transaction
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setMaxBlobsPerTransaction(
+      final Integer maxBlobsPerTransaction) {
+    this.maxBlobsPerTransaction = maxBlobsPerTransaction;
+    return this;
+  }
+
+  /**
+   * Sets the max blobs per block for block building.
+   *
+   * @param maxBlobsPerBlock the max blobs per block
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setMaxBlobsPerBlock(final Integer maxBlobsPerBlock) {
+    this.maxBlobsPerBlock = maxBlobsPerBlock;
+    return this;
+  }
+
+  /**
+   * Sets the chain pruning configuration.
+   *
+   * @param pruningStrategy the chain pruning strategy
+   * @param blocksRetained the number of blocks to retain
+   * @param balsRetained the number of BALs to retain
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setChainPruningEnabled(
+      final ChainPruningStrategy pruningStrategy,
+      final Long blocksRetained,
+      final Long balsRetained) {
+    this.chainPruningStrategy = pruningStrategy;
+    this.chainPruningBlocksRetained = blocksRetained;
+    this.chainPruningBalsRetained = balsRetained;
+    return this;
+  }
+
+  /**
    * Build configuration overview.
    *
    * @return the string representing configuration overview
@@ -416,12 +477,19 @@ public class ConfigurationOverviewBuilder {
     }
 
     if (syncMode != null) {
-      lines.add(
-          "Sync mode: " + syncMode + (syncMode.equalsIgnoreCase("FAST") ? " (Deprecated)" : ""));
+      lines.add("Sync mode: " + syncMode);
+      if (syncMode.equalsIgnoreCase(SNAP_SYNC_MODE)) {
+        final String snapServerStatus = isSnapServerEnabled ? "enabled" : "disabled";
+        lines.add("  SNAP Sync server " + snapServerStatus);
+      }
     }
 
     if (syncMinPeers != null) {
       lines.add("Sync min peers: " + syncMinPeers);
+    }
+
+    if (!isDiscoveryEnabled) {
+      lines.add("P2P Discovery: disabled");
     }
 
     if (rpcHttpApis != null) {
@@ -464,8 +532,25 @@ public class ConfigurationOverviewBuilder {
       lines.add(trieLogPruningString.toString());
     }
 
-    if (isSnapServerEnabled) {
-      lines.add("Snap Sync server enabled");
+    if (!chainPruningStrategy.equals(ChainPruningStrategy.NONE)) {
+      final StringBuilder chainPruningString = new StringBuilder();
+
+      if (chainPruningStrategy.equals(ChainPruningStrategy.ALL)) {
+        chainPruningString
+            .append("Chain and BAL pruning enabled (retained ")
+            .append("BALs: ")
+            .append(chainPruningBalsRetained)
+            .append("; Blocks: ")
+            .append(chainPruningBlocksRetained);
+        ;
+
+      } else if (chainPruningStrategy.equals(ChainPruningStrategy.BAL)) {
+        chainPruningString
+            .append("BAL pruning enabled (retained BALs: ")
+            .append(chainPruningBalsRetained);
+      }
+      chainPruningString.append(")");
+      lines.add(chainPruningString.toString());
     }
 
     if (isHighSpec) {
@@ -498,6 +583,14 @@ public class ConfigurationOverviewBuilder {
 
     if (targetGasLimit != null) {
       lines.add("Target Gas Limit: " + normalizeGas(targetGasLimit));
+    }
+
+    if (maxBlobsPerTransaction != null) {
+      lines.add("Max Blobs Per Transaction: " + maxBlobsPerTransaction);
+    }
+
+    if (maxBlobsPerBlock != null) {
+      lines.add("Max Blobs Per Block (builder): " + maxBlobsPerBlock);
     }
 
     lines.add("");

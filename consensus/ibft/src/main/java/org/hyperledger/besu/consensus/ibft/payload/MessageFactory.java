@@ -26,8 +26,11 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Message factory. */
 public class MessageFactory {
@@ -48,6 +51,27 @@ public class MessageFactory {
    *
    * @param roundIdentifier the round identifier
    * @param block the block
+   * @param blockAccessList the block access list
+   * @param roundChangeCertificate the round change certificate
+   * @return the proposal
+   */
+  public Proposal createProposal(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final Block block,
+      final Optional<BlockAccessList> blockAccessList,
+      final Optional<RoundChangeCertificate> roundChangeCertificate) {
+
+    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block.getHash());
+
+    return new Proposal(
+        createSignedMessage(payload), block, blockAccessList, roundChangeCertificate);
+  }
+
+  /**
+   * Create proposal.
+   *
+   * @param roundIdentifier the round identifier
+   * @param block the block
    * @param roundChangeCertificate the round change certificate
    * @return the proposal
    */
@@ -55,10 +79,7 @@ public class MessageFactory {
       final ConsensusRoundIdentifier roundIdentifier,
       final Block block,
       final Optional<RoundChangeCertificate> roundChangeCertificate) {
-
-    final ProposalPayload payload = new ProposalPayload(roundIdentifier, block.getHash());
-
-    return new Proposal(createSignedMessage(payload), block, roundChangeCertificate);
+    return createProposal(roundIdentifier, block, Optional.empty(), roundChangeCertificate);
   }
 
   /**
@@ -109,11 +130,14 @@ public class MessageFactory {
             roundIdentifier,
             preparedRoundArtifacts.map(PreparedRoundArtifacts::getPreparedCertificate));
     return new RoundChange(
-        createSignedMessage(payload), preparedRoundArtifacts.map(PreparedRoundArtifacts::getBlock));
+        createSignedMessage(payload),
+        preparedRoundArtifacts.map(PreparedRoundArtifacts::getBlock),
+        preparedRoundArtifacts.flatMap(PreparedRoundArtifacts::getBlockAccessList));
   }
 
   private <M extends Payload> SignedData<M> createSignedMessage(final M payload) {
-    final SECPSignature signature = nodeKey.sign(payload.hashForSignature());
+    final SECPSignature signature =
+        nodeKey.sign(Bytes32.wrap(payload.hashForSignature().getBytes()));
     return SignedData.create(payload, signature);
   }
 }

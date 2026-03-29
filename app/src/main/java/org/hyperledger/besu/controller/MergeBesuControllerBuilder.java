@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBestPeerComparator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
@@ -160,17 +159,13 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
 
     this.syncState.set(syncState);
 
-    final Optional<Address> depositContractAddress =
-        genesisConfigOptions.getDepositContractAddress();
-
     return new MergeCoordinator(
         protocolContext,
         protocolSchedule,
         ethScheduler,
         transactionPool,
         miningConfiguration,
-        backwardSyncContext,
-        depositContractAddress);
+        backwardSyncContext);
   }
 
   @Override
@@ -181,7 +176,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         miningConfiguration,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        isBlockAccessListEnabled,
+        balConfiguration,
         metricsSystem,
         evmConfiguration);
   }
@@ -249,8 +244,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               powTerminalBlockNumber.getAsLong(),
               powTerminalBlockHash.get(),
               0));

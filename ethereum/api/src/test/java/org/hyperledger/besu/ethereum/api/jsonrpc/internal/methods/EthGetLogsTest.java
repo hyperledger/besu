@@ -87,6 +87,7 @@ public class EthGetLogsTest {
 
     when(blockchainQueries.finalizedBlockHeader()).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getNumber()).thenReturn(blockNumber);
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -94,7 +95,7 @@ public class EthGetLogsTest {
     assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
 
     verify(blockchainQueries).matchingLogs(eq(blockNumber), eq(blockNumber), any(), any());
-    verify(blockchainQueries, never()).headBlockNumber();
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -125,6 +126,7 @@ public class EthGetLogsTest {
 
     when(blockchainQueries.safeBlockHeader()).thenReturn(Optional.of(blockHeader));
     when(blockHeader.getNumber()).thenReturn(blockNumber);
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -133,7 +135,7 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries).matchingLogs(eq(blockNumber), eq(blockNumber), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
+    verify(blockchainQueries, times(1)).headBlockNumber();
   }
 
   @Test
@@ -142,6 +144,7 @@ public class EthGetLogsTest {
     final long toBlock = 10L;
     final JsonRpcRequestContext request = buildRequest(fromBlock, toBlock);
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -151,7 +154,7 @@ public class EthGetLogsTest {
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
 
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -161,6 +164,7 @@ public class EthGetLogsTest {
     final long latestBlock = 50L;
     final JsonRpcRequestContext request = buildRequest("earliest", latestBlock);
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -179,6 +183,7 @@ public class EthGetLogsTest {
     final JsonRpcRequestContext request =
         buildRequest(String.valueOf(fromBlock), String.valueOf(toBlock));
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(150L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -187,7 +192,7 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -197,6 +202,7 @@ public class EthGetLogsTest {
     final long toBlock = 100L;
     final JsonRpcRequestContext request = buildRequest(String.valueOf(fromBlock), toBlock);
 
+    when(blockchainQueries.headBlockNumber()).thenReturn(150L);
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -205,7 +211,7 @@ public class EthGetLogsTest {
 
     verify(blockchainQueries).matchingLogs(eq(fromBlock), eq(toBlock), any(), any());
     verify(blockchainQueries, never()).finalizedBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
+    verify(blockchainQueries, times(1)).headBlockNumber();
     verify(blockchainQueries, never()).safeBlockHeader();
   }
 
@@ -240,6 +246,8 @@ public class EthGetLogsTest {
     when(blockchainQueries.safeBlockHeader()).thenReturn(Optional.of(safeBlockHeader));
     when(finalizedBlockHeader.getNumber()).thenReturn(finalizedBlockNumber);
     when(safeBlockHeader.getNumber()).thenReturn(safeBlockNumber);
+    when(blockchainQueries.headBlockNumber())
+        .thenReturn(100L); // Latest block higher than finalized
     when(blockchainQueries.matchingLogs(anyLong(), anyLong(), any(), any()))
         .thenReturn(new ArrayList<>());
 
@@ -250,7 +258,7 @@ public class EthGetLogsTest {
         .matchingLogs(eq(safeBlockNumber), eq(finalizedBlockNumber), any(), any());
     verify(blockchainQueries, times(1)).finalizedBlockHeader();
     verify(blockchainQueries, times(1)).safeBlockHeader();
-    verify(blockchainQueries, never()).headBlockNumber();
+    verify(blockchainQueries, times(1)).headBlockNumber();
   }
 
   @Test
@@ -278,10 +286,33 @@ public class EthGetLogsTest {
     final JsonRpcRequestContext request = buildRequest(0, 50);
     maxLogRange = 20L;
     method = new EthGetLogs(blockchainQueries, maxLogRange);
+    when(blockchainQueries.headBlockNumber()).thenReturn(100L);
     final JsonRpcResponse response = method.response(request);
     assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+  }
+
+  @Test
+  public void shouldFailIfFromBlockGreaterThanToBlock() {
+    final JsonRpcRequestContext request = buildRequest(10, 9);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.INVALID_PARAMS);
+  }
+
+  @Test
+  public void shouldFailIfToBlockGreaterThanLatestBlock() {
+    final long latestBlockNumber = 100L;
+    final long toBlock = 150L; // Greater than latest
+    when(blockchainQueries.headBlockNumber()).thenReturn(latestBlockNumber);
+
+    final JsonRpcRequestContext request = buildRequest(50, toBlock);
+    final JsonRpcResponse response = method.response(request);
+    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+    final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
+    assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.INVALID_PARAMS);
   }
 
   private JsonRpcRequestContext buildRequest(final long fromBlock, final long toBlock) {

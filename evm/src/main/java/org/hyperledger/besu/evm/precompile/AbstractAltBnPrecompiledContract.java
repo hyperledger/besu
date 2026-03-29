@@ -23,7 +23,6 @@ import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.util.Optional;
 
-import com.sun.jna.ptr.IntByReference;
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -73,6 +72,7 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
 
   private final byte operationId;
   private final int inputLimit;
+  private final int outputLength;
 
   /**
    * Instantiates a new Abstract alt bn precompiled contract.
@@ -81,15 +81,18 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
    * @param gasCalculator the gas calculator
    * @param operationId the operation id
    * @param inputLen the input len
+   * @param outputLen the output len
    */
   AbstractAltBnPrecompiledContract(
       final String name,
       final GasCalculator gasCalculator,
       final byte operationId,
-      final int inputLen) {
+      final int inputLen,
+      final int outputLen) {
     super(name, gasCalculator);
     this.operationId = operationId;
     this.inputLimit = inputLen + 1;
+    this.outputLength = outputLen;
 
     if (!LibGnarkEIP196.ENABLED) {
       LOG.info("Native alt bn128 not available");
@@ -107,29 +110,17 @@ public abstract class AbstractAltBnPrecompiledContract extends AbstractPrecompil
   public PrecompileContractResult computeNative(
       final @NotNull Bytes input, final MessageFrame messageFrame) {
     final byte[] result = new byte[LibGnarkEIP196.EIP196_PREALLOCATE_FOR_RESULT_BYTES];
-    final byte[] error = new byte[LibGnarkEIP196.EIP196_PREALLOCATE_FOR_ERROR_BYTES];
 
-    final IntByReference o_len =
-        new IntByReference(LibGnarkEIP196.EIP196_PREALLOCATE_FOR_RESULT_BYTES);
-    final IntByReference err_len =
-        new IntByReference(LibGnarkEIP196.EIP196_PREALLOCATE_FOR_ERROR_BYTES);
     final int inputSize = Math.min(inputLimit, input.size());
     final int errorNo =
         LibGnarkEIP196.eip196_perform_operation(
-            operationId,
-            input.slice(0, inputSize).toArrayUnsafe(),
-            inputSize,
-            result,
-            o_len,
-            error,
-            err_len);
+            operationId, input.slice(0, inputSize).toArrayUnsafe(), inputSize, result);
 
-    if (errorNo == 0) {
-      return PrecompileContractResult.success(Bytes.wrap(result, 0, o_len.getValue()));
+    if (errorNo == LibGnarkEIP196.EIP196_ERR_CODE_SUCCESS) {
+      return PrecompileContractResult.success(Bytes.wrap(result, 0, outputLength));
     } else {
-      final String errorString = new String(error, 0, err_len.getValue(), UTF_8);
-      messageFrame.setRevertReason(Bytes.wrap(error, 0, err_len.getValue()));
-      LOG.trace("Error executing precompiled contract {}: '{}'", getName(), errorString);
+      messageFrame.setRevertReason(Bytes.wrap("error".getBytes(UTF_8)));
+      LOG.debug("Error executing precompiled contract {}: '{}'", getName(), errorNo);
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
     }

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -43,9 +44,7 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
 import java.util.Collections;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,9 +58,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.generateKeyPair();
 
   @FunctionalInterface
   interface MethodFactory {
@@ -101,7 +100,12 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
   protected static final BlockWithReceipts mockBlockWithReceipts =
       new BlockWithReceipts(mockBlock, Collections.emptyList());
   protected static final PayloadWrapper mockPayload =
-      new PayloadWrapper(mockPid, mockBlockWithReceipts, Optional.empty());
+      new PayloadWrapper(
+          mockPid,
+          mockBlockWithReceipts,
+          Optional.empty(),
+          Optional.empty(),
+          BlockCreationTiming.EMPTY);
   private static final Block mockBlockWithWithdrawals =
       new Block(
           mockHeader,
@@ -116,12 +120,22 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
   protected static final BlockWithReceipts mockBlockWithReceiptsAndWithdrawals =
       new BlockWithReceipts(mockBlockWithWithdrawals, Collections.emptyList());
   protected static final PayloadWrapper mockPayloadWithWithdrawals =
-      new PayloadWrapper(mockPid, mockBlockWithReceiptsAndWithdrawals, Optional.empty());
+      new PayloadWrapper(
+          mockPid,
+          mockBlockWithReceiptsAndWithdrawals,
+          Optional.empty(),
+          Optional.empty(),
+          BlockCreationTiming.EMPTY);
 
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDepositRequests =
       new BlockWithReceipts(mockBlockWithDepositRequests, Collections.emptyList());
   protected static final PayloadWrapper mockPayloadWithDepositRequests =
-      new PayloadWrapper(mockPid, mockBlockWithReceiptsAndDepositRequests, Optional.empty());
+      new PayloadWrapper(
+          mockPid,
+          mockBlockWithReceiptsAndDepositRequests,
+          Optional.empty(),
+          Optional.empty(),
+          BlockCreationTiming.EMPTY);
 
   @Mock protected ProtocolContext protocolContext;
 
@@ -195,7 +209,12 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     BlockWithReceipts mockBlockWithReceipts =
         new BlockWithReceipts(mockBlock, Collections.emptyList());
     final PayloadWrapper mockPayload =
-        new PayloadWrapper(payloadIdentifier, mockBlockWithReceipts, Optional.empty());
+        new PayloadWrapper(
+            payloadIdentifier,
+            mockBlockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
     when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(mockPayload));
     return payloadIdentifier;
   }
@@ -228,7 +247,12 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     final BlockWithReceipts testBlockWithReceipts =
         new BlockWithReceipts(testBlock, Collections.emptyList());
     final PayloadWrapper testPayload =
-        new PayloadWrapper(testPid, testBlockWithReceipts, Optional.empty());
+        new PayloadWrapper(
+            testPid,
+            testBlockWithReceipts,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     final Block testBlockWithWithdrawals =
         new Block(
@@ -240,7 +264,12 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
     final BlockWithReceipts testBlockWithReceiptsAndWithdrawals =
         new BlockWithReceipts(testBlockWithWithdrawals, Collections.emptyList());
     final PayloadWrapper testPayloadWithWithdrawals =
-        new PayloadWrapper(testPid, testBlockWithReceiptsAndWithdrawals, Optional.empty());
+        new PayloadWrapper(
+            testPid,
+            testBlockWithReceiptsAndWithdrawals,
+            Optional.empty(),
+            Optional.empty(),
+            BlockCreationTiming.EMPTY);
 
     // Mock: First call returns the empty payload,
     // second call returns a different payload (simulating block building completion)

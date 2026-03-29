@@ -17,7 +17,7 @@
     "id": 3,
     "error": {
       "code": -32001,
-      "message": "Nonce too low (transaction nonce 2 below sender account nonce 34)"
+      "message": "Nonce too low (transaction nonce 2 below sender account nonce 34 for sender 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b)"
     }
   },
   "statusCode": 200

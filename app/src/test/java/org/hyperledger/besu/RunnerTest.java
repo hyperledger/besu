@@ -16,8 +16,8 @@ package org.hyperledger.besu;
 
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.config.NetworkName.DEV;
-import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.config.NetworkDefinition.DEV;
+import static org.hyperledger.besu.config.NetworkDefinition.MAINNET;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_ENABLE_READ_CACHE_FOR_SNAPSHOTS;
@@ -56,6 +56,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -65,7 +66,6 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
@@ -132,17 +132,18 @@ public final class RunnerTest {
 
   @Test
   public void getFixedNodes() {
-    final EnodeURL staticNode =
+    final EnodeURLImpl staticNode =
         EnodeURLImpl.fromString(
             "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30301");
-    final EnodeURL bootnode =
+    final EnodeURLImpl bootnode =
         EnodeURLImpl.fromString(
             "enode://8f4b88336cc40ef2516d8b27df812e007fb2384a61e93635f1899051311344f3dcdbb49a4fe49a79f66d2f589a9f282e8cc4f1d7381e8ef7e4fcc6b0db578c77@127.0.0.1:30302");
-    final List<EnodeURL> bootnodes = new ArrayList<>();
+    final List<EnodeURLImpl> bootnodes = new ArrayList<>();
     bootnodes.add(bootnode);
-    final Collection<EnodeURL> staticNodes = new ArrayList<>();
+    final Collection<EnodeURLImpl> staticNodes = new ArrayList<>();
     staticNodes.add(staticNode);
-    final Collection<EnodeURL> fixedNodes = RunnerBuilder.getFixedNodes(bootnodes, staticNodes);
+    final Collection<NodeIdentifier> fixedNodes =
+        RunnerBuilder.getFixedNodes(bootnodes, staticNodes);
     assertThat(fixedNodes).containsExactlyInAnyOrder(staticNode, bootnode);
     // bootnodes should be unchanged
     assertThat(bootnodes).containsExactly(bootnode);
@@ -250,13 +251,14 @@ public final class RunnerTest {
               noOpMetricsSystem,
               miningParameters);
 
-      final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
+      final EnodeURLImpl aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
               GenesisConfig.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
-              null);
+              Collections.emptyList(),
+              "");
 
       runnerBehind =
           runnerBuilder
@@ -476,7 +478,7 @@ public final class RunnerTest {
     return new MainnetBesuControllerBuilder()
         .genesisConfig(genesisConfig)
         .synchronizerConfiguration(syncConfig)
-        .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+        .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
         .miningParameters(miningConfiguration)
@@ -487,7 +489,7 @@ public final class RunnerTest {
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
         .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .networkConfiguration(NetworkingConfiguration.create())
+        .networkConfiguration(NetworkingConfiguration.DEFAULT)
         .randomPeerPriority(Boolean.FALSE)
         .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)

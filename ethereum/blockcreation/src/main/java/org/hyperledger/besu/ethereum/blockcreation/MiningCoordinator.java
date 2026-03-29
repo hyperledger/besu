@@ -20,8 +20,6 @@ import org.hyperledger.besu.ethereum.chain.PoWObserver;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolution;
-import org.hyperledger.besu.ethereum.mainnet.PoWSolverInputs;
 
 import java.util.List;
 import java.util.Optional;
@@ -66,31 +64,6 @@ public interface MiningCoordinator {
   }
 
   Optional<Address> getCoinbase();
-
-  default Optional<Long> hashesPerSecond() {
-    return Optional.empty();
-  }
-
-  default Optional<PoWSolverInputs> getWorkDefinition() {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents querying work definition.");
-  }
-
-  default boolean submitWork(final PoWSolution solution) {
-    throw new UnsupportedOperationException(
-        "Current consensus mechanism prevents submission of work solutions.");
-  }
-
-  /**
-   * Allows to submit the hashrate of a sealer with a specific id
-   *
-   * @param id of the sealer
-   * @param hashrate of the sealer
-   * @return true if the hashrate has been added otherwise false
-   */
-  default boolean submitHashRate(final String id, final Long hashrate) {
-    return false;
-  }
 
   /**
    * Creates a block if possible, otherwise return an empty result

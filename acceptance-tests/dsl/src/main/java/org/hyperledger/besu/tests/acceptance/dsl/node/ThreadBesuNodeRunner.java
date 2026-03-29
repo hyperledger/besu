@@ -28,9 +28,9 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
+import org.hyperledger.besu.config.NetworkDefinition;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.encoding.BlockBodyEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.BlockHeaderEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.TransactionReceiptEncoder;
-import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
+import org.hyperledger.besu.ethereum.core.plugins.ImmutablePluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -68,7 +68,6 @@ import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BlockchainService;
@@ -164,11 +163,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     GlobalOpenTelemetry.resetForTest();
     final ObservableMetricsSystem metricsSystem =
         (ObservableMetricsSystem) component.getMetricsSystem();
-    final List<EnodeURL> bootnodes =
+    final List<EnodeURLImpl> bootnodes =
         node.getConfiguration().getBootnodes().stream().map(EnodeURLImpl::fromURI).toList();
 
     final EthNetworkConfig.Builder networkConfigBuilder = component.ethNetworkConfigBuilder();
-    networkConfigBuilder.setBootNodes(bootnodes);
+    networkConfigBuilder.setEnodeBootNodes(bootnodes);
     node.getConfiguration()
         .getGenesisConfig()
         .map(GenesisConfig::fromConfig)
@@ -482,7 +481,11 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   public static class BesuControllerModule {
     @Provides
     @Singleton
-    public SynchronizerConfiguration provideSynchronizationConfiguration() {
+    public SynchronizerConfiguration provideSynchronizationConfiguration(final BesuNode node) {
+      // Use the synchronizer configuration set on the node, otherwise use default
+      if (node.getSynchronizerConfiguration() != null) {
+        return node.getSynchronizerConfiguration();
+      }
       final SynchronizerConfiguration synchronizerConfiguration =
           SynchronizerConfiguration.builder().build();
       return synchronizerConfiguration;
@@ -534,7 +537,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .synchronizerConfiguration(synchronizerConfiguration)
           .metricsSystem((ObservableMetricsSystem) metricsSystem)
           .dataStorageConfiguration(dataStorageConfiguration)
-          .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+          .ethProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
           .clock(Clock.systemUTC())
           .storageProvider(storageProvider)
           .evmConfiguration(EvmConfiguration.DEFAULT)
@@ -575,7 +578,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Singleton
     public EthNetworkConfig.Builder provideEthNetworkConfigBuilder() {
       final EthNetworkConfig.Builder networkConfigBuilder =
-          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkName.DEV));
+          new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(NetworkDefinition.DEV));
       return networkConfigBuilder;
     }
 
@@ -646,9 +649,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       besuPluginContext.addService(PermissioningService.class, permissioningService);
 
       besuPluginContext.initialize(
-          new PluginConfiguration.Builder()
+          ImmutablePluginConfiguration.builder()
               .pluginsDir(pluginsPath)
-              .requestedPlugins(requestedPlugins.stream().map(PluginInfo::new).toList())
+              .requestedPluginsInfo(requestedPlugins.stream().map(PluginInfo::new).toList())
               .build());
       besuPluginContext.registerPlugins();
       commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));

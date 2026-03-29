@@ -49,23 +49,24 @@ import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -76,9 +77,9 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExtension {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
-  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.get().generateKeyPair();
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
+  protected static final KeyPair senderKeys = SIGNATURE_ALGORITHM.generateKeyPair();
 
   private static final TransactionValidationParams transactionProcessingParams =
       processingBlockParams;
@@ -252,13 +253,52 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   }
 
   @Test
+  public void shouldRejectTransactionWithMaxNonceWhenFutureNonceNotAllowed() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .nonce(Account.MAX_NONCE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+
+    assertThat(
+            validator.validate(
+                transaction, Optional.empty(), Optional.empty(), processingBlockParams))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_OVERFLOW));
+  }
+
+  @Test
+  public void shouldAcceptTransactionWithMaxNonceWhenFutureNonceIsAllowed() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .nonce(Account.MAX_NONCE)
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+
+    assertThat(
+            validator.validate(
+                transaction,
+                Optional.empty(),
+                Optional.empty(),
+                TransactionValidationParams.transactionSimulatorAllowFutureNonce()))
+        .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
   public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
 
     final TransactionTestFixture builder = new TransactionTestFixture();
-    final KeyPair senderKeyPair = SIGNATURE_ALGORITHM.get().generateKeyPair();
+    final KeyPair senderKeyPair = SIGNATURE_ALGORITHM.generateKeyPair();
     final Address arbitrarySender = Address.fromHexString("1");
     builder.gasPrice(Wei.ZERO).nonce(0).sender(arbitrarySender).value(Wei.ZERO);
 
@@ -284,8 +324,17 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
         .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED));
   }
 
-  @Test
-  public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
+  static List<Arguments> transactionWithMaxFeeTimesGasLimitGreaterThanBalanceArguments =
+      List.of(
+          Arguments.of(
+              transactionSimulationParams, ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE)),
+          Arguments.of(transactionPoolParams, ValidationResult.valid()));
+
+  @ParameterizedTest
+  @FieldSource("transactionWithMaxFeeTimesGasLimitGreaterThanBalanceArguments")
+  public void transactionWithMaxFeeTimesGasLimitGreaterThanBalance(
+      final TransactionValidationParams txValidationParams,
+      final ValidationResult<TransactionInvalidReason> validationResult) {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
@@ -304,8 +353,8 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
                     .chainId(BigInteger.ONE)
                     .signAndBuild(new SECP256K1().generateKeyPair()),
                 account(Wei.of(100), 0),
-                transactionPoolParams))
-        .isEqualTo(ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE));
+                txValidationParams))
+        .isEqualTo(validationResult);
   }
 
   @Test
@@ -570,6 +619,58 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   }
 
   @Test
+  public void shouldAcceptInitcodeAtAmsterdamLimit() {
+    final int maxInitcodeSize = EvmSpecVersion.AMSTERDAM.getMaxInitcodeSize();
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            maxInitcodeSize);
+
+    var transaction =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(maxInitcodeSize)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(
+            transaction, Optional.empty(), Optional.empty(), transactionProcessingParams);
+
+    assertThat(validationResult.isValid()).isTrue();
+  }
+
+  @Test
+  public void shouldRejectInitcodeAboveAmsterdamLimit() {
+    final int maxInitcodeSize = EvmSpecVersion.AMSTERDAM.getMaxInitcodeSize();
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            maxInitcodeSize);
+
+    var transaction =
+        new TransactionTestFixture()
+            .payload(Bytes.fromHexString("0x" + "00".repeat(maxInitcodeSize + 1)))
+            .chainId(Optional.of(BigInteger.ONE))
+            .createTransaction(senderKeys);
+    var validationResult =
+        validator.validate(
+            transaction, Optional.empty(), Optional.empty(), transactionProcessingParams);
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INITCODE_TOO_LARGE);
+  }
+
+  @Test
   public void shouldRejectContractCreateWithBlob() {
     /*
     https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#blob-transaction
@@ -661,13 +762,12 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
       final ValidationParamsVariant validationParamsVariant,
       final long txGasLimit,
       final boolean valid) {
-    final long gasLimitCap = 16_777_216L;
     final var feeMarket = FeeMarket.london(0L);
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
             new OsakaTargetingGasLimitCalculator(
-                0L, feeMarket, gasCalculator, 6, 3, 6, gasLimitCap),
+                0L, feeMarket, gasCalculator, 6, 3, OptionalInt.of(6), OptionalInt.empty()),
             feeMarket,
             false,
             Optional.of(BigInteger.ONE),

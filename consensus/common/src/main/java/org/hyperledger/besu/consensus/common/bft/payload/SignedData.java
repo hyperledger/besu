@@ -15,12 +15,14 @@
 package org.hyperledger.besu.consensus.common.bft.payload;
 
 import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.math.BigInteger;
 import java.util.Objects;
 import java.util.StringJoiner;
 
@@ -33,6 +35,9 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class SignedData<M extends Payload> implements Authored {
 
+  private static final BigInteger HALF_CURVE_ORDER =
+      SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+
   private final Address sender;
   private final SECPSignature signature;
   private final M unsignedPayload;
@@ -44,6 +49,7 @@ public class SignedData<M extends Payload> implements Authored {
    * @param payload the payload
    * @param signature the signature
    * @return the signed data
+   * @throws IllegalArgumentException if the signature is invalid
    */
   public static <T extends Payload> SignedData<T> create(
       final T payload, final SECPSignature signature) {
@@ -52,6 +58,9 @@ public class SignedData<M extends Payload> implements Authored {
   }
 
   private SignedData(final M unsignedPayload, final Address sender, final SECPSignature signature) {
+    if (!(signature.getS().compareTo(HALF_CURVE_ORDER) <= 0)) {
+      throw new IllegalArgumentException("Signature is invalid");
+    }
     this.unsignedPayload = unsignedPayload;
     this.sender = sender;
     this.signature = signature;

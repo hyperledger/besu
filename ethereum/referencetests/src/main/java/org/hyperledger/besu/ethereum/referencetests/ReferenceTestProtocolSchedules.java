@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -146,9 +147,6 @@ public class ReferenceTestProtocolSchedules {
                 Map.entry(
                     "Cancun", createSchedule(genesisStub.clone().cancunTime(0), evmConfiguration)),
                 Map.entry(
-                    "CancunEOF",
-                    createSchedule(genesisStub.clone().cancunEOFTime(0), evmConfiguration)),
-                Map.entry(
                     "CancunToPragueAtTime15k",
                     createSchedule(
                         genesisStub.clone().cancunTime(0).pragueTime(15000), evmConfiguration)),
@@ -158,7 +156,7 @@ public class ReferenceTestProtocolSchedules {
                     "Osaka", createSchedule(genesisStub.clone().osakaTime(0), evmConfiguration)),
                 Map.entry(
                     "Amsterdam",
-                    createSchedule(genesisStub.clone().futureEipsTime(0), evmConfiguration)),
+                    createSchedule(genesisStub.clone().amsterdamTime(0), evmConfiguration)),
                 Map.entry(
                     "Bogota",
                     createSchedule(genesisStub.clone().futureEipsTime(0), evmConfiguration)),
@@ -211,7 +209,7 @@ public class ReferenceTestProtocolSchedules {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem())
         .createProtocolSchedule();
   }

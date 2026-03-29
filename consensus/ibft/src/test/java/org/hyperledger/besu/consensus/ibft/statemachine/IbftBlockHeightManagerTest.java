@@ -72,6 +72,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -161,7 +162,10 @@ public class IbftBlockHeightManagerTest {
         .when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
-                createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
+                createdBlock,
+                new TransactionSelectionResults(),
+                new BlockCreationTiming(),
+                Optional.empty()));
 
     lenient()
         .when(futureRoundProposalMessageValidator.validateProposalMessage(any()))
@@ -188,7 +192,7 @@ public class IbftBlockHeightManagerTest {
             MiningConfiguration.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            false,
+            BalConfiguration.DEFAULT,
             new NoOpMetricsSystem());
 
     ProtocolSchedule protocolSchedule =
@@ -265,7 +269,8 @@ public class IbftBlockHeightManagerTest {
             messageFactory);
 
     manager.handleBlockTimerExpiry(roundIdentifier);
-    verify(messageTransmitter, times(1)).multicastProposal(eq(roundIdentifier), any(), any());
+    verify(messageTransmitter, times(1))
+        .multicastProposal(eq(roundIdentifier), any(), any(), any());
     verify(messageTransmitter, never()).multicastPrepare(any(), any());
     verify(messageTransmitter, never()).multicastPrepare(any(), any());
   }
@@ -340,7 +345,8 @@ public class IbftBlockHeightManagerTest {
     manager.handleRoundChangePayload(roundChange);
 
     verify(messageTransmitter, times(1))
-        .multicastProposal(eq(futureRoundIdentifier), any(), eq(Optional.of(roundChangCert)));
+        .multicastProposal(
+            eq(futureRoundIdentifier), any(), any(), eq(Optional.of(roundChangCert)));
   }
 
   @Test

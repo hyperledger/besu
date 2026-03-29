@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,7 +92,7 @@ public class ProposalValidatorTest {
   public void setup() {
     validators = QbftNodeList.createNodes(VALIDATOR_COUNT, blockEncoder);
     // typically tests require the blockValidation to be successful
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(true, Optional.empty()));
 
     when(protocolSchedule.getBlockValidator(any())).thenReturn(blockValidator);
@@ -131,7 +132,8 @@ public class ProposalValidatorTest {
       final List<SignedData<PreparePayload>> prepares) {
     return validators
         .getMessageFactory(0)
-        .createProposal(roundItem.roundIdentifier, roundItem.block, roundChanges, prepares);
+        .createProposal(
+            roundItem.roundIdentifier, roundItem.block, Optional.empty(), roundChanges, prepares);
   }
 
   @Test
@@ -148,7 +150,7 @@ public class ProposalValidatorTest {
 
     reset(blockValidator);
 
-    when(blockValidator.validateBlock(any()))
+    when(blockValidator.validateBlock(any(), any()))
         .thenReturn(new QbftBlockValidator.ValidationResult(false, Optional.of("Failed")));
 
     assertThat(roundItem.messageValidator.validate(proposal)).isFalse();
@@ -257,7 +259,10 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             preparedRoundChangePayload,
-            validators.getNode(2).getNodeKey().sign(preparedRoundChangePayload.hashForSignature()));
+            validators
+                .getNode(2)
+                .getNodeKey()
+                .sign(Bytes32.wrap(preparedRoundChangePayload.hashForSignature().getBytes())));
 
     roundChanges.add(preparedRoundChange);
 
@@ -393,7 +398,10 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             illegalPayload,
-            validators.getNode(2).getNodeKey().sign(illegalPayload.hashForSignature()));
+            validators
+                .getNode(2)
+                .getNodeKey()
+                .sign(Bytes32.wrap(illegalPayload.hashForSignature().getBytes())));
 
     roundChanges.add(preparedRoundChange);
 
@@ -587,7 +595,8 @@ public class ProposalValidatorTest {
             validators
                 .getNode(3)
                 .getNodeKey()
-                .sign(illegalPreparedRoundChangePayload.hashForSignature()));
+                .sign(
+                    Bytes32.wrap(illegalPreparedRoundChangePayload.hashForSignature().getBytes())));
 
     roundChanges.add(preparedRoundChange);
 
@@ -625,7 +634,10 @@ public class ProposalValidatorTest {
     final SignedData<RoundChangePayload> preparedRoundChange =
         SignedData.create(
             preparedRoundChangePayload,
-            validators.getNode(2).getNodeKey().sign(preparedRoundChangePayload.hashForSignature()));
+            validators
+                .getNode(2)
+                .getNodeKey()
+                .sign(Bytes32.wrap(preparedRoundChangePayload.hashForSignature().getBytes())));
 
     roundChanges.add(preparedRoundChange);
 

@@ -21,10 +21,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.DelegatingBytes;
 
 /** A BLS public key. */
-public class BLSPublicKey extends DelegatingBytes implements PublicKey {
+public class BLSPublicKey extends BytesHolder {
 
   /** The constant SIZE. */
   public static final int SIZE = 48;

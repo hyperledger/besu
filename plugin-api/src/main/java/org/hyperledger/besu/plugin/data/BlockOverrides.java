@@ -40,6 +40,7 @@ public class BlockOverrides {
   private final Optional<Bytes> extraData;
   private final Optional<Bytes32> mixHashOrPrevRandao;
   private final Optional<Function<Long, Hash>> blockHashLookup;
+  private final Optional<Bytes32> parentBeaconBlockRoot;
 
   /**
    * Constructs a new BlockOverrides instance.
@@ -55,6 +56,7 @@ public class BlockOverrides {
    * @param difficulty the optional difficulty
    * @param extraData the optional extra data
    * @param mixHashOrPrevRandao the optional mix hash or previous Randao
+   * @param parentBeaconBlockRoot the optional parent beacon block root
    */
   public BlockOverrides(
       final Optional<UnsignedLongParameter> timestamp,
@@ -67,7 +69,8 @@ public class BlockOverrides {
       final Optional<Hash> stateRoot,
       final Optional<BigInteger> difficulty,
       final Optional<Bytes> extraData,
-      final Optional<String> mixHashOrPrevRandao) {
+      final Optional<String> mixHashOrPrevRandao,
+      final Optional<String> parentBeaconBlockRoot) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
     this.blockHash = blockHash;
@@ -80,6 +83,7 @@ public class BlockOverrides {
     this.extraData = extraData;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao.map(Bytes32::fromHexString);
     this.blockHashLookup = Optional.empty();
+    this.parentBeaconBlockRoot = parentBeaconBlockRoot.map(Bytes32::fromHexString);
   }
 
   /**
@@ -100,6 +104,7 @@ public class BlockOverrides {
     this.extraData = Optional.ofNullable(builder.extraData);
     this.mixHashOrPrevRandao = Optional.ofNullable(builder.mixHashOrPrevRandao);
     this.blockHashLookup = Optional.ofNullable(builder.blockHashLookup);
+    this.parentBeaconBlockRoot = Optional.ofNullable(builder.parentBeaconBlockRoot);
   }
 
   /**
@@ -229,6 +234,15 @@ public class BlockOverrides {
   }
 
   /**
+   * Gets the parent beacon block root.
+   *
+   * @return the optional parent beacon block root
+   */
+  public Optional<Bytes32> getParentBeaconBlockRoot() {
+    return parentBeaconBlockRoot;
+  }
+
+  /**
    * Creates a new Builder instance.
    *
    * @return a new Builder
@@ -249,8 +263,9 @@ public class BlockOverrides {
     private Hash stateRoot;
     private BigInteger difficulty;
     private Bytes extraData;
-    private Hash mixHashOrPrevRandao;
+    private Bytes32 mixHashOrPrevRandao;
     private Function<Long, Hash> blockHashLookup;
+    private Bytes32 parentBeaconBlockRoot;
 
     /** Constructs a new Builder instance. */
     public Builder() {}
@@ -371,7 +386,7 @@ public class BlockOverrides {
      * @param mixHashOrPrevRandao the mix hash
      * @return the builder instance
      */
-    public Builder mixHashOrPrevRandao(final Hash mixHashOrPrevRandao) {
+    public Builder mixHashOrPrevRandao(final Bytes32 mixHashOrPrevRandao) {
       this.mixHashOrPrevRandao = mixHashOrPrevRandao;
       return this;
     }
@@ -384,6 +399,17 @@ public class BlockOverrides {
      */
     public Builder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
+      return this;
+    }
+
+    /**
+     * Sets the parent beacon block root.
+     *
+     * @param parentBeaconBlockRoot the parent beacon block root to set
+     * @return the builder instance
+     */
+    public Builder parentBeaconBlockRoot(final Bytes32 parentBeaconBlockRoot) {
+      this.parentBeaconBlockRoot = parentBeaconBlockRoot;
       return this;
     }
 

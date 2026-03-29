@@ -85,6 +85,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
     return transactionSimulator
         .process(
             callParameter,
+            maybeStateOverrides,
             simulationParameters2TransactionValidationParams(simulationParameters),
             operationTracer,
             maybeBlockHeader.get())
@@ -151,6 +152,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
         false,
         false,
         true,
-        true);
+        true,
+        false);
   }
 }

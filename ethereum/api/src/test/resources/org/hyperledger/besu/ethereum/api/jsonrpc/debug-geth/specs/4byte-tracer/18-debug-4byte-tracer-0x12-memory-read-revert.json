@@ -1,0 +1,28 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "debug_traceBlockByNumber",
+    "params": [
+      "0x12",
+      {
+        "tracer": "4byteTracer"
+      }
+    ],
+    "id": 1
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "result": [
+      {
+        "txHash": "0x9fe9e841f8f2450168f9daf25e79a0d23a0297d257f57cbf4f5a1293ab4ed7b2",
+        "result": {}
+      },
+      {
+        "txHash": "0xd7077263a86965efdf3073ac0d48b4fabe4d0728e7a20fb54aac54601d336805",
+        "result": {}
+      }
+    ]
+  },
+  "statusCode": 200
+}

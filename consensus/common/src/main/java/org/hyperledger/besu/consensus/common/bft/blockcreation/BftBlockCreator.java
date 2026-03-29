@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -68,7 +67,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final EthScheduler ethScheduler) {
     super(
         miningConfiguration.setCoinbase(localAddress),
-        miningBeneficiaryCalculator(localAddress, protocolSchedule),
+        miningBeneficiaryCalculator(protocolSchedule),
         extraDataCalculator,
         transactionPool,
         protocolContext,
@@ -83,15 +82,21 @@ public class BftBlockCreator extends AbstractBlockCreator {
         ((BftProtocolSchedule) protocolSchedule)
             .getByBlockNumberOrTimestamp(parentHeader.getNumber() + 1, timestamp);
 
-    if (protocolSpec.getWithdrawalsValidator() instanceof WithdrawalsValidator.AllowedWithdrawals) {
+    if (protocolSpec.getWithdrawalsProcessor().isPresent()) {
       return createEmptyWithdrawalsBlock(timestamp, parentHeader);
     } else {
       return createBlock(Optional.empty(), Optional.empty(), timestamp, parentHeader);
     }
   }
 
-  private static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
-      final Address localAddress, final ProtocolSchedule protocolSchedule) {
+  /**
+   * Construct a mining beneficiary calculator using the given protocolSchedule
+   *
+   * @param protocolSchedule protocol schedule
+   * @return mining beneficiary calculator
+   */
+  public static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
+      final ProtocolSchedule protocolSchedule) {
     return (blockTimestamp, pendingHeader) -> {
       BlockHeader newBlockHeader =
           BlockHeaderBuilder.createDefault()
@@ -100,9 +105,7 @@ public class BftBlockCreator extends AbstractBlockCreator {
       ProtocolSpec protocolSpec =
           ((BftProtocolSchedule) protocolSchedule)
               .getByBlockNumberOrTimestamp(pendingHeader.getNumber(), blockTimestamp);
-      Address beneficiaryAddress =
-          protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
-      return !beneficiaryAddress.isZero() ? beneficiaryAddress : localAddress;
+      return protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(newBlockHeader);
     };
   }
 

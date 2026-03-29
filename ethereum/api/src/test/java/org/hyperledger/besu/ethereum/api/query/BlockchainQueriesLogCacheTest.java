@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.Log;
+import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -33,8 +35,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,9 +91,9 @@ public class BlockchainQueriesLogCacheTest {
 
   private static void writeThreeEntries(final LogsBloomFilter filter, final RandomAccessFile file)
       throws IOException {
-    file.write(filter.toArray());
-    file.write(filter.toArray());
-    file.write(filter.toArray());
+    file.write(filter.getBytes().toArray());
+    file.write(filter.getBytes().toArray());
+    file.write(filter.getBytes().toArray());
   }
 
   @BeforeEach
@@ -113,7 +114,7 @@ public class BlockchainQueriesLogCacheTest {
             0,
             Bytes.EMPTY,
             null,
-            Hash.EMPTY,
+            Bytes32.wrap(Hash.EMPTY.getBytes()),
             0,
             null,
             null,
@@ -121,6 +122,7 @@ public class BlockchainQueriesLogCacheTest {
             null,
             null,
             null,
+            null, // slotNumber
             new MainnetBlockHeaderFunctions());
     testHash = fakeHeader.getHash();
     final BlockBody fakeBody = new BlockBody(Collections.emptyList(), Collections.emptyList());

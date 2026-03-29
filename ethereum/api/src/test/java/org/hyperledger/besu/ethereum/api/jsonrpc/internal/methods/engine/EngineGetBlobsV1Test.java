@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineTestSupport.fromErrorResp;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -50,9 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -68,16 +68,14 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
   private static final SECPPrivateKey PRIVATE_KEY1 =
-      SIGNATURE_ALGORITHM
-          .get()
-          .createPrivateKey(
-              Bytes32.fromHexString(
-                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
+      SIGNATURE_ALGORITHM.createPrivateKey(
+          Bytes32.fromHexString(
+              "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
   private static final KeyPair KEYS1 =
-      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.createPublicKey(PRIVATE_KEY1));
   public static final VersionedHash VERSIONED_HASH_ZERO = new VersionedHash((byte) 1, Hash.ZERO);
 
   @Mock private ProtocolContext protocolContext;
@@ -85,6 +83,7 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
   @Mock private MutableBlockchain blockchain;
   @Mock private TransactionPool transactionPool;
   @Mock private BlockHeader blockHeader;
+  @Mock private MergeContext mergeContext;
 
   private EngineGetBlobsV1 method;
 
@@ -92,6 +91,9 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
 
   @BeforeEach
   public void beforeEach() {
+    when(mergeContext.isSyncing()).thenReturn(false);
+    when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.ofNullable(mergeContext));
+
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(blockHeader.getTimestamp()).thenReturn(cancunHardfork.milestone());
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
@@ -253,6 +255,16 @@ public class EngineGetBlobsV1Test extends AbstractScheduledApiTest {
     var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
     assertThat(fromErrorResp(response).getCode())
         .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+  }
+
+  @Test
+  public void shouldReturnNullWhenSyncing() {
+    when(mergeContext.isSyncing()).thenReturn(true);
+    var response = resp(new VersionedHash[] {VERSIONED_HASH_ZERO});
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
+    final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(response);
+    assertThat(blobAndProofV1s).hasSize(1);
+    assertThat(blobAndProofV1s.getFirst()).isNull();
   }
 
   Transaction createBlobTransaction() {

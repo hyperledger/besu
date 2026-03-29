@@ -114,7 +114,8 @@ public class RocksDBTransaction implements SegmentedKeyValueStorageTransaction {
     }
   }
 
-  private void close() {
+  @Override
+  public void close() {
     innerTx.close();
     options.close();
   }

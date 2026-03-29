@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.chainimport.BlockHeadersCachePreload;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -35,6 +34,8 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner.PruningMode;
 import org.hyperledger.besu.ethereum.chain.ChainDataPrunerStorage;
 import org.hyperledger.besu.ethereum.chain.ChainPrunerConfiguration;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -58,8 +59,6 @@ import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskRequestSender;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
-import org.hyperledger.besu.ethereum.eth.peervalidation.CheckpointBlocksPeerValidator;
-import org.hyperledger.besu.ethereum.eth.peervalidation.ClassicForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.DaoForkPeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
@@ -67,10 +66,11 @@ import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromPeers;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.PivotSelectorFromSafeBlock;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromPeers;
+import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromSafeBlock;
+import org.hyperledger.besu.ethereum.eth.sync.common.SingleBlockHeaderDownloader;
+import org.hyperledger.besu.ethereum.eth.sync.common.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.common.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -99,15 +100,14 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive.WorldStateHealer;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.ServiceManager;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.WorldStatePreimageStorage;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 import java.io.Closeable;
@@ -129,7 +129,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** The Besu controller builder that builds Besu Controller. */
-public abstract class BesuControllerBuilder implements MiningParameterOverrides {
+public abstract class BesuControllerBuilder implements MiningConfigurationOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
   /** The genesis file */
@@ -215,8 +215,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
-  /** whether block access list functionality was enabled via CLI feature flag */
-  protected boolean isBlockAccessListEnabled;
+  /** Configuration flags related to block access lists. */
+  protected BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
 
   /** The API configuration */
   protected ApiConfiguration apiConfiguration;
@@ -567,15 +567,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Sets whether functionality related to testing block-level access list implementation should be
-   * enabled. This includes caching of block-level access lists produced during block processing and
-   * enabling an RPC endpoint serving those cached BALs.
+   * Sets configuration for functionality related to block-level access lists.
    *
-   * @param isBlockAccessListEnabled true to enable block-level access list testing functionality
+   * @param balConfiguration configuration related to block access lists
    * @return the besu controller
    */
-  public BesuControllerBuilder isBlockAccessListEnabled(final boolean isBlockAccessListEnabled) {
-    this.isBlockAccessListEnabled = isBlockAccessListEnabled;
+  public BesuControllerBuilder balConfiguration(final BalConfiguration balConfiguration) {
+    this.balConfiguration = balConfiguration;
     return this;
   }
 
@@ -741,14 +739,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final PeerTaskExecutor peerTaskExecutor =
-        new PeerTaskExecutor(ethPeers, new PeerTaskRequestSender(), metricsSystem);
+        new PeerTaskExecutor(
+            ethPeers,
+            new PeerTaskRequestSender(networkingConfiguration.p2pPeerTaskTimeout()),
+            metricsSystem);
     final EthContext ethContext =
         new EthContext(ethPeers, ethMessages, snapMessages, scheduler, peerTaskExecutor);
-    final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
+    final boolean fullSyncDisabled = syncConfig.getSyncMode() != SyncMode.FULL;
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
-    if (chainPrunerConfiguration.chainPruningEnabled()
-        || dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+    final ChainPruningStrategy pruningMode = chainPrunerConfiguration.pruningMode();
+    final boolean preMergeEnabled = dataStorageConfiguration.getHistoryExpiryPruneEnabled();
+
+    if (pruningMode != ChainPruningStrategy.NONE || preMergeEnabled) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
       final ChainDataPruner chainDataPruner =
@@ -757,18 +760,33 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               () -> blockchain.removeObserver(chainDataPrunerObserverId.get()),
               syncState);
       chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
-      if (chainPrunerConfiguration.chainPruningEnabled()) {
+
+      if (pruningMode == ChainPruningStrategy.ALL) {
         LOG.info(
-            "Chain data pruning enabled with recent blocks retained to be: "
-                + chainPrunerConfiguration.chainPruningBlocksRetained()
-                + " and frequency to be: "
-                + chainPrunerConfiguration.blocksFrequency());
-      } else if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+            "Chain and BAL pruning enabled | Blocks retained: {} | BALs retained: {} | Frequency: {}{}",
+            chainPrunerConfiguration.chainPruningBlocksRetained(),
+            chainPrunerConfiguration.chainPruningBalsRetained(),
+            chainPrunerConfiguration.chainPruningFrequency(),
+            preMergeEnabled
+                ? " | Pre-merge pruning: enabled (quantity="
+                    + chainPrunerConfiguration.preMergePruningBlocksQuantity()
+                    + ")"
+                : "");
+      } else if (pruningMode == ChainPruningStrategy.BAL) {
         LOG.info(
-            "Pre-merge block pruning enabled with frequency: "
-                + chainPrunerConfiguration.blocksFrequency()
-                + " and quantity: "
-                + chainPrunerConfiguration.preMergePruningBlocksQuantity());
+            "BAL pruning enabled | BALs retained: {} | Frequency: {}{}",
+            chainPrunerConfiguration.chainPruningBalsRetained(),
+            chainPrunerConfiguration.chainPruningFrequency(),
+            preMergeEnabled
+                ? " | Pre-merge pruning: enabled (quantity="
+                    + chainPrunerConfiguration.preMergePruningBlocksQuantity()
+                    + ")"
+                : "");
+      } else if (preMergeEnabled) {
+        LOG.info(
+            "Chain pruning enabled - Mode: PRE_MERGE_ONLY | Frequency: {} | Quantity: {}",
+            chainPrunerConfiguration.chainPruningFrequency(),
+            chainPrunerConfiguration.preMergePruningBlocksQuantity());
       }
     }
 
@@ -781,6 +799,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
+            ethereumWireProtocolConfiguration,
             besuComponent.map(BesuComponent::getBlobCache).orElse(new BlobCache()),
             miningConfiguration);
 
@@ -802,8 +821,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
-        createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
+        createPivotSelector(protocolSchedule, protocolContext, ethContext, syncState, blockchain);
 
     final DefaultSynchronizer synchronizer =
         createSynchronizer(
@@ -820,8 +838,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
-    if (syncConfig.getSyncMode() == SyncMode.SNAP
-        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP) {
       synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
       ethPeers.snapServerPeersNeeded(true);
     } else {
@@ -830,7 +847,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(
-            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages, synchronizer);
+            protocolSchedule,
+            protocolContext,
+            worldStateStorageCoordinator,
+            ethPeers,
+            snapMessages,
+            scheduler,
+            synchronizer);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -1033,7 +1056,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem,
       final Blockchain blockchain) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
@@ -1062,15 +1084,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             LOG.info("Initial sync done, unsubscribe forkchoice supplier");
           };
 
+      final SingleBlockHeaderDownloader headerDownloader =
+          new SingleBlockHeaderDownloader(ethContext, protocolSchedule);
+
       return new PivotSelectorFromSafeBlock(
           protocolContext,
           protocolSchedule,
           ethContext,
-          metricsSystem,
           genesisConfigOptions,
-          syncConfig,
           unverifiedForkchoiceSupplier,
-          unsubscribeForkchoiceListener);
+          unsubscribeForkchoiceListener,
+          headerDownloader);
     } else {
       LOG.info("TTD difficulty is not present, creating initial sync phase for PoW");
       return new PivotSelectorFromPeers(ethContext, syncConfig, syncState);
@@ -1240,10 +1264,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
+      final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
+      final EthScheduler ethScheduler,
       final Synchronizer synchronizer) {
     return Optional.of(
         new SnapProtocolManager(
@@ -1251,6 +1277,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncConfig.getSnapSyncConfiguration(),
             ethPeers,
             snapMessages,
+            ethScheduler,
+            protocolSchedule,
             protocolContext,
             synchronizer));
   }
@@ -1268,10 +1296,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getPathBasedExtraStorageConfiguration()
-                    .getMaxLayersToLoad()),
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
@@ -1285,10 +1310,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new BonsaiArchiveWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            Optional.of(
-                dataStorageConfiguration
-                    .getPathBasedExtraStorageConfiguration()
-                    .getMaxLayersToLoad()),
+            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
@@ -1311,6 +1333,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final BlockchainStorage blockchainStorage,
       final Runnable unsubscribeRunnable,
       final SyncState syncState) {
+
+    final PruningMode mode = determineChainPrunerMode();
+
     return new ChainDataPruner(
         blockchainStorage,
         unsubscribeRunnable,
@@ -1318,20 +1343,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             storageProvider.getStorageBySegmentIdentifier(
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
         syncState.getCheckpoint().map(Checkpoint::blockNumber).orElse(0L),
-        chainPrunerConfiguration.chainPruningEnabled()
-            ? ChainDataPruner.Mode.CHAIN_PRUNING
-            : (dataStorageConfiguration.getHistoryExpiryPruneEnabled()
-                ? ChainDataPruner.Mode.PRE_MERGE_PRUNING
-                : null),
-        chainPrunerConfiguration.chainPruningBlocksRetained(),
-        chainPrunerConfiguration.blocksFrequency(),
-        chainPrunerConfiguration.preMergePruningBlocksQuantity(),
+        mode,
+        chainPrunerConfiguration,
         MonitoredExecutors.newBoundedThreadPool(
             EthScheduler.class.getSimpleName() + "-ChainDataPruner",
             1,
-            1,
             ChainDataPruner.MAX_PRUNING_THREAD_QUEUE_SIZE,
             metricsSystem));
+  }
+
+  private PruningMode determineChainPrunerMode() {
+    if (chainPrunerConfiguration.isBlockPruningEnabled()
+        || chainPrunerConfiguration.isBalPruningEnabled()) {
+      return PruningMode.CHAIN_PRUNING;
+    }
+    if (dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
+      return PruningMode.PRE_MERGE_PRUNING;
+    }
+    throw new IllegalStateException("Chain pruner created without any pruning mode enabled");
   }
 
   /**
@@ -1349,20 +1378,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
-          new DaoForkPeerValidator(
-              protocolSchedule, peerTaskExecutor, syncConfig, metricsSystem, daoBlock.getAsLong()));
-    }
-
-    final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
-    // setup classic validator
-    if (classicBlock.isPresent()) {
-      validators.add(
-          new ClassicForkPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              classicBlock.getAsLong()));
+          new DaoForkPeerValidator(protocolSchedule, peerTaskExecutor, daoBlock.getAsLong()));
     }
 
     for (final Map.Entry<Long, Hash> requiredBlock : requiredBlocks.entrySet()) {
@@ -1370,24 +1386,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           new RequiredBlocksPeerValidator(
               protocolSchedule,
               peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
               requiredBlock.getKey(),
               requiredBlock.getValue()));
     }
 
-    final CheckpointConfigOptions checkpointConfigOptions =
-        genesisConfigOptions.getCheckpointOptions();
-    if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT && checkpointConfigOptions.isValid()) {
-      validators.add(
-          new CheckpointBlocksPeerValidator(
-              protocolSchedule,
-              peerTaskExecutor,
-              syncConfig,
-              metricsSystem,
-              checkpointConfigOptions.getNumber().orElseThrow(),
-              checkpointConfigOptions.getHash().map(Hash::fromHexString).orElseThrow()));
-    }
     return validators;
   }
 

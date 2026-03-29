@@ -20,6 +20,7 @@ import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -42,7 +43,7 @@ public class ProtocolScheduleFixture {
           MiningConfiguration.newDefault(),
           new BadBlockManager(),
           false,
-          false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
 
   // A pointer to a specific network. Used widely in tests.

@@ -120,7 +120,8 @@ public class IbftRoundIntegrationTest {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
 
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(true));
+    when(blockImporter.importBlock(any(), any(), any(), any(), any()))
+        .thenReturn(new BlockImportResult(true));
 
     protocolContext =
         new ProtocolContext.Builder()
@@ -202,6 +203,6 @@ public class IbftRoundIntegrationTest {
     assertThat(roundState.isCommitted()).isTrue();
     verifyNoInteractions(multicaster);
 
-    verify(blockImporter).importBlock(any(), any(), any());
+    verify(blockImporter).importBlock(any(), any(), any(), any(), any());
   }
 }

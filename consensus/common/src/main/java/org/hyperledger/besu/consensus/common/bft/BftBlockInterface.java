@@ -51,7 +51,7 @@ public class BftBlockInterface implements BlockInterface {
 
   @Override
   public Address getProposerOfBlock(final org.hyperledger.besu.plugin.data.BlockHeader header) {
-    return Address.fromHexString(header.getCoinbase().toHexString());
+    return Address.fromHexString(header.getCoinbase().getBytes().toHexString());
   }
 
   @Override

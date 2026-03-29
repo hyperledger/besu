@@ -129,20 +129,6 @@ public class TransactionSimulator {
 
   public Optional<TransactionSimulatorResult> process(
       final CallParameter callParams,
-      final TransactionValidationParams transactionValidationParams,
-      final OperationTracer operationTracer,
-      final BlockHeader blockHeader) {
-    return process(
-        callParams,
-        Optional.empty(),
-        transactionValidationParams,
-        operationTracer,
-        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        blockHeader);
-  }
-
-  public Optional<TransactionSimulatorResult> process(
-      final CallParameter callParams,
       final Optional<StateOverrideMap> maybeStateOverrides,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
@@ -205,6 +191,7 @@ public class TransactionSimulator {
                 chainHeadHeader,
                 miningConfiguration,
                 timestamp,
+                Optional.empty(),
                 Optional.empty(),
                 Optional.empty())
             .buildProcessableBlockHeader();
@@ -382,7 +369,8 @@ public class TransactionSimulator {
 
     BiFunction<ProtocolSpec, Optional<BlockHeader>, Wei> blobGasPricePerGasSupplier =
         (protocolSpec, maybeParentHeader) -> {
-          if (transactionValidationParams.isAllowExceedingBalance()) {
+          if (transactionValidationParams.isAllowExceedingBalance()
+              && !transactionValidationParams.isPreserveCallerGasPricing()) {
             return Wei.ZERO;
           }
           return protocolSpec
@@ -435,6 +423,7 @@ public class TransactionSimulator {
 
     final ProcessableBlockHeader blockHeaderToProcess;
     if (transactionValidationParams.isAllowExceedingBalance()
+        && !transactionValidationParams.isPreserveCallerGasPricing()
         && processableHeader.getBaseFee().isPresent()) {
       blockHeaderToProcess =
           new BlockHeaderBuilder()
@@ -600,14 +589,22 @@ public class TransactionSimulator {
     final Wei maxFeePerGas;
     final Wei maxPriorityFeePerGas;
     final Wei maxFeePerBlobGas;
-    if (transactionValidationParams.isAllowExceedingBalance()) {
+    if (transactionValidationParams.isPreserveCallerGasPricing()) {
+      // eth_simulateV1: use caller-provided gas pricing so fees are charged from sender's balance,
+      // producing the correct stateRoot and block hash.
+      gasPrice = callParams.getGasPrice().orElse(Wei.ZERO);
+      maxFeePerGas = callParams.getMaxFeePerGas().orElse(Wei.ZERO);
+      maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(Wei.ZERO);
+      maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(Wei.ZERO);
+    } else if (transactionValidationParams.isAllowExceedingBalance()) {
+      // eth_call: zero gas prices so callers don't need sufficient balance for gas.
       gasPrice = Wei.ZERO;
       maxFeePerGas = Wei.ZERO;
       maxPriorityFeePerGas = Wei.ZERO;
       maxFeePerBlobGas = Wei.ZERO;
     } else {
-      if (noPricingParametersPresent && !transactionValidationParams.allowUnderpriced()) {
-        // in case there are gas price parameters and underpriced txs are not allowed,
+      if (noPricingParametersPresent) {
+        // in case there are no gas price parameters,
         // then set the gas price to the min necessary to process the tx.
         gasPrice = processableHeader.getBaseFee().orElse(Wei.ZERO);
       } else {

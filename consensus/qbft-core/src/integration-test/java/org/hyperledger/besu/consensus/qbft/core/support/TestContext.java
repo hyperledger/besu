@@ -155,7 +155,11 @@ public class TestContext {
       final Address proposer,
       final int roundNumber) {
     final QbftBlock block =
-        finalState.getBlockCreatorFactory().create(roundNumber).createBlock(timestamp, parent);
+        finalState
+            .getBlockCreatorFactory()
+            .create(roundNumber)
+            .createBlock(timestamp, parent)
+            .block();
 
     final BlockHeaderBuilder headerBuilder =
         BlockHeaderBuilder.fromHeader(AdaptorUtil.toBesuBlockHeader(block.getHeader()));
@@ -187,7 +191,7 @@ public class TestContext {
   public RoundSpecificPeers roundSpecificPeers(final ConsensusRoundIdentifier roundId) {
     // This will return NULL if the LOCAL node is the proposer for the specified round
     final Address proposerAddress = proposerSelector.selectProposerForRound(roundId);
-    final ValidatorPeer proposer = remotePeers.getOrDefault(proposerAddress, null);
+    final ValidatorPeer proposer = remotePeers.get(proposerAddress);
 
     final List<ValidatorPeer> nonProposers = new ArrayList<>(remotePeers.values());
     nonProposers.remove(proposer);

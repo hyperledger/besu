@@ -81,7 +81,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   /** Instantiates a new Berlin gas calculator. */
   public BerlinGasCalculator() {
-    this(BLAKE2B_F_COMPRESSION.toArrayUnsafe()[19]);
+    this(BLAKE2B_F_COMPRESSION.getBytes().toArrayUnsafe()[19]);
   }
 
   @Override
@@ -91,7 +91,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   @Override
   public boolean isPrecompile(final Address address) {
-    final byte[] addressBytes = address.toArrayUnsafe();
+    final byte[] addressBytes = address.getBytes().toArrayUnsafe();
     for (int i = 0; i < 19; i++) {
       if (addressBytes[i] != 0) {
         return false;
@@ -145,7 +145,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Redefined costs from EIP-2929
   @Override
-  public long callOperationGasCost(
+  public long callOperationStaticGasCost(
       final MessageFrame frame,
       final long stipend,
       final long inputDataOffset,
@@ -156,7 +156,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final Address recipientAddress,
       final boolean accountIsWarm) {
     final long baseCost =
-        super.callOperationGasCost(
+        super.callOperationStaticGasCost(
             frame,
             stipend,
             inputDataOffset,

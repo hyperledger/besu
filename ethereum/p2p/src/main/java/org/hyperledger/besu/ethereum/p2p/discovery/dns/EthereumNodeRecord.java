@@ -16,62 +16,79 @@
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmType;
+import org.hyperledger.besu.ethereum.p2p.discovery.NodeIdentifier;
 
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
+import org.ethereum.beacon.discovery.schema.NodeRecord;
+import org.ethereum.beacon.discovery.schema.NodeRecordFactory;
 
 /**
  * A modified implementation of Ethereum Node Record (ENR) that is used by DNSResolver. See <a
  * href="https://eips.ethereum.org/EIPS/eip-778">EIP-778</a>
  */
 public record EthereumNodeRecord(
-    Bytes rlp, Bytes publicKey, InetAddress ip, Optional<Integer> tcp, Optional<Integer> udp) {
+    Bytes publicKey,
+    Optional<InetAddress> ip,
+    Optional<Integer> tcp,
+    Optional<Integer> udp,
+    Optional<InetAddress> ipV6,
+    Optional<Integer> tcpV6,
+    Optional<Integer> udpV6,
+    NodeRecord nodeRecord)
+    implements NodeIdentifier {
+
+  // ENR identity scheme v4 always uses secp256k1, independent of the node's signature algorithm
+  private static final SignatureAlgorithm SECP256K1 =
+      SignatureAlgorithmType.create("secp256k1").getInstance();
+
+  @SuppressWarnings(
+      "MethodInputParametersMustBeFinal") // needed since record constructors are not yet supported
+  public EthereumNodeRecord {
+    if (ip.isEmpty() && ipV6.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Unable to create EthereumNodeRecord with no IPv4 or IPv6 address");
+    }
+  }
 
   /**
-   * Creates an ENR from its serialized form as a RLP list
+   * Creates an EthereumNodeRecord from an ENR string
    *
-   * @param rlp the serialized form of the ENR
-   * @return the ENR
-   * @throws IllegalArgumentException if the rlp bytes length is longer than 300 bytes
+   * @param enr the ENR string
+   * @return the EthereumNodeRecord
    */
-  public static EthereumNodeRecord fromRLP(final Bytes rlp) {
-    if (rlp.size() > 300) {
-      throw new IllegalArgumentException("Record too long");
-    }
-    var data = new HashMap<String, Bytes>();
+  public static EthereumNodeRecord fromEnr(final String enr) {
+    NodeRecord nodeRecord = NodeRecordFactory.DEFAULT.fromEnr(enr);
+    return fromNodeRecord(nodeRecord);
+  }
 
-    // rlp: sig, sequence, k1,v1, k2,v2, k3, [v3, vn]...
-    var input = new BytesValueRLPInput(rlp, false);
-    input.enterList();
-
-    input.skipNext(); // skip signature
-    input.skipNext(); // skip sequence
-
-    // go through rest of the list
-    while (!input.isEndOfCurrentList()) {
-      var key = new String(input.readBytes().toArrayUnsafe(), StandardCharsets.UTF_8);
-      if (input.nextIsList()) {
-        // skip list as we currently don't need any of these complex structures
-        input.skipNext();
-      } else {
-        data.put(key, input.readBytes());
-      }
-    }
-
-    input.leaveList();
-
-    var publicKey = initPublicKeyBytes(data);
-
-    return new EthereumNodeRecord(rlp, publicKey, initIPAddr(data), initTCP(data), initUDP(data));
+  /**
+   * Creates an EthereumNodeRecord from a NodeRecord
+   *
+   * @param nodeRecord the NodeRecord
+   * @return the EthereumNodeRecord
+   */
+  public static EthereumNodeRecord fromNodeRecord(final NodeRecord nodeRecord) {
+    final Map<String, Object> fields = new HashMap<>();
+    nodeRecord.forEachField(fields::put);
+    return new EthereumNodeRecord(
+        initPublicKeyBytes(fields),
+        initIPAddr(fields),
+        initTCP(fields),
+        initUDP(fields),
+        initIPv6Addr(fields),
+        initTCPV6(fields),
+        initUDPV6(fields),
+        nodeRecord);
   }
 
   /**
@@ -79,14 +96,14 @@ public record EthereumNodeRecord(
    *
    * @return the public key of the ENR
    */
-  static Bytes initPublicKeyBytes(final Map<String, Bytes> data) {
-    var keyBytes = data.get("secp256k1");
-    if (keyBytes == null) {
+  static Bytes initPublicKeyBytes(final Map<String, Object> fields) {
+    final Object value = fields.get("secp256k1");
+    if (!(value instanceof Bytes keyBytes)) {
       throw new IllegalArgumentException("Missing secp256k1 entry in ENR");
     }
     // convert 33 bytes compressed public key to uncompressed using Bouncy Castle
-    var curve = SignatureAlgorithmFactory.getInstance().getCurve();
-    var ecPoint = curve.getCurve().decodePoint(keyBytes.toArrayUnsafe());
+    // ENR identity scheme v4 always uses secp256k1 for the public key
+    var ecPoint = SECP256K1.getCurve().getCurve().decodePoint(keyBytes.toArrayUnsafe());
     // uncompressed public key is 65 bytes, first byte is 0x04.
     var encodedPubKey = ecPoint.getEncoded(false);
     return Bytes.of(Arrays.copyOfRange(encodedPubKey, 1, encodedPubKey.length));
@@ -97,16 +114,16 @@ public record EthereumNodeRecord(
    *
    * @return The IP address of the ENR
    */
-  static InetAddress initIPAddr(final Map<String, Bytes> data) {
-    var ipBytes = data.get("ip");
-    if (ipBytes != null) {
+  static Optional<InetAddress> initIPAddr(final Map<String, Object> fields) {
+    final Object value = fields.get("ip");
+    if (value instanceof Bytes ipBytes) {
       try {
-        return InetAddress.getByAddress(ipBytes.toArrayUnsafe());
+        return Optional.of(InetAddress.getByAddress(ipBytes.toArrayUnsafe()));
       } catch (final Exception e) {
-        throw new RuntimeException(e);
+        return Optional.empty();
       }
     }
-    return InetAddress.getLoopbackAddress();
+    return Optional.empty();
   }
 
   /**
@@ -114,9 +131,8 @@ public record EthereumNodeRecord(
    *
    * @return the TCP port associated with this ENR
    */
-  static Optional<Integer> initTCP(final Map<String, Bytes> data) {
-    var tcpBytes = data.get("tcp");
-    return tcpBytes != null ? Optional.of(tcpBytes.toInt()) : Optional.empty();
+  static Optional<Integer> initTCP(final Map<String, Object> fields) {
+    return extractInt(fields, "tcp");
   }
 
   /**
@@ -124,9 +140,36 @@ public record EthereumNodeRecord(
    *
    * @return the UDP port associated with this ENR
    */
-  static Optional<Integer> initUDP(final Map<String, Bytes> data) {
-    var udpBytes = data.get("udp");
-    return udpBytes != null ? Optional.of(udpBytes.toInt()) : initTCP(data);
+  static Optional<Integer> initUDP(final Map<String, Object> fields) {
+    return extractInt(fields, "udp").or(() -> initTCP(fields));
+  }
+
+  static Optional<InetAddress> initIPv6Addr(final Map<String, Object> fields) {
+    final Object value = fields.get("ip6");
+    if (value instanceof Bytes ipBytes) {
+      try {
+        return Optional.of(InetAddress.getByAddress(ipBytes.toArrayUnsafe()));
+      } catch (final Exception e) {
+        return Optional.empty();
+      }
+    }
+    return Optional.empty();
+  }
+
+  static Optional<Integer> initTCPV6(final Map<String, Object> fields) {
+    return extractInt(fields, "tcp6");
+  }
+
+  static Optional<Integer> initUDPV6(final Map<String, Object> fields) {
+    return extractInt(fields, "udp6").or(() -> initTCPV6(fields));
+  }
+
+  private static Optional<Integer> extractInt(final Map<String, Object> fields, final String key) {
+    final Object value = fields.get(key);
+    if (value instanceof Integer integer) {
+      return Optional.of(integer);
+    }
+    return Optional.empty();
   }
 
   /**
@@ -134,21 +177,68 @@ public record EthereumNodeRecord(
    */
   @Override
   public String toString() {
-    return "enr:" + ip() + ":" + tcp() + "?udp=" + udp();
+    return MoreObjects.toStringHelper(this)
+        .add("publicKey", publicKey)
+        .add("ip", ip)
+        .add("tcp", tcp)
+        .add("udp", udp)
+        .add("ipv6", ipV6)
+        .add("tcpV6", tcpV6)
+        .add("udpV6", udpV6)
+        .toString();
   }
 
-  /** Override equals method to compare the RLP bytes */
-  @Override
-  public boolean equals(final Object o) {
-    if (!(o instanceof EthereumNodeRecord that)) {
-      return false;
-    }
-    return Objects.equals(rlp, that.rlp);
-  }
-
-  /** Override hashCode method to use hashCode of the RLP bytes */
   @Override
   public int hashCode() {
-    return Objects.hashCode(rlp);
+    return Objects.hash(publicKey, ip, tcp, udp, ipV6, tcpV6, udpV6, nodeRecord);
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    final EthereumNodeRecord other = (EthereumNodeRecord) obj;
+    return Objects.equals(this.publicKey, other.publicKey)
+        && Objects.equals(this.ip, other.ip)
+        && Objects.equals(this.tcp, other.tcp)
+        && Objects.equals(this.udp, other.udp)
+        && Objects.equals(this.ipV6, other.ipV6)
+        && Objects.equals(this.tcpV6, other.tcpV6)
+        && Objects.equals(this.udpV6, other.udpV6)
+        && Objects.equals(this.nodeRecord, other.nodeRecord);
+  }
+
+  @Override
+  public Optional<InetAddress> getIpV4Address() {
+    return ip;
+  }
+
+  @Override
+  public Optional<Integer> getTcpListeningPort() {
+    return tcp;
+  }
+
+  @Override
+  public Optional<Integer> getUdpDiscoveryPort() {
+    return udp;
+  }
+
+  @Override
+  public Optional<InetAddress> getIpV6Address() {
+    return ipV6;
+  }
+
+  @Override
+  public Optional<Integer> getIpV6TcpListeningPort() {
+    return tcpV6;
+  }
+
+  @Override
+  public Optional<Integer> getIpV6UdpDiscoveryPort() {
+    return udpV6;
   }
 }

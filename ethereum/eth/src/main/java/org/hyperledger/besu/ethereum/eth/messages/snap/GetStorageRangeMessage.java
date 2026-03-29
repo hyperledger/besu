@@ -24,12 +24,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.immutables.value.Value;
+import org.jspecify.annotations.Nullable;
 
 public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
@@ -66,7 +66,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
     requestId.ifPresent(tmp::writeBigIntegerScalar);
-    tmp.writeBytes(worldStateRootHash);
+    tmp.writeBytes(worldStateRootHash.getBytes());
     tmp.writeList(accountHashes, (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
     tmp.writeBytes(startKeyHash);
     tmp.writeBytes(endKeyHash);
@@ -82,8 +82,8 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
             Optional.of(requestId),
             range.worldStateRootHash(),
             range.hashes(),
-            range.startKeyHash(),
-            range.endKeyHash())
+            Bytes32.wrap(range.startKeyHash().getBytes()),
+            range.endKeyHash() != null ? Bytes32.wrap(range.endKeyHash().getBytes()) : null)
         .getData();
   }
 
@@ -134,8 +134,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
 
     Hash startKeyHash();
 
-    @Nullable
-    Hash endKeyHash();
+    @Nullable Hash endKeyHash();
 
     BigInteger responseBytes();
   }

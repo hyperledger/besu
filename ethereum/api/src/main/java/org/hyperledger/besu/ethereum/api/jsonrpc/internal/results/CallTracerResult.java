@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * Represents the result format for Ethereum's callTracer as specified in the Geth documentation.
@@ -414,10 +417,26 @@ public class CallTracerResult {
     /**
      * Sets the revert reason if the call was reverted.
      *
-     * @param revertReason the revert reason
+     * @param revertReason the revert reason as raw bytes (will be decoded)
      * @return this builder instance for method chaining
      */
-    public Builder revertReason(final String revertReason) {
+    public Builder revertReason(final Bytes revertReason) {
+      this.revertReason =
+          JsonRpcErrorResponse.decodeRevertReason(revertReason).orElse(revertReason.toHexString());
+      return this;
+    }
+
+    /**
+     * Sets the revert reason directly from a decoded string.
+     *
+     * <p>This method should be used when you have already decoded the revert reason and want to set
+     * it directly without any fallback to hex encoding. This is useful for Geth compatibility where
+     * revertReason should only be set if it's a valid decoded Error(string).
+     *
+     * @param revertReason the decoded revert reason string
+     * @return this builder instance for method chaining
+     */
+    public Builder revertReasonDecoded(final String revertReason) {
       this.revertReason = revertReason;
       return this;
     }
@@ -500,6 +519,23 @@ public class CallTracerResult {
      */
     public BigInteger getGasUsed() {
       return this.gasUsed;
+    }
+
+    /**
+     * To address
+     *
+     * @return the To address
+     */
+    public String getTo() {
+      return this.to;
+    }
+
+    public String getFrom() {
+      return this.from;
+    }
+
+    public String getValue() {
+      return this.value;
     }
   }
 }

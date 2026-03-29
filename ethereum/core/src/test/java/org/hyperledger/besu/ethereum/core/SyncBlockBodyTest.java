@@ -23,12 +23,15 @@ import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.BlockGasAccountingStrategy;
+import org.hyperledger.besu.ethereum.mainnet.BlockGasUsedValidator;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.DefaultStateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -220,6 +223,9 @@ public class SyncBlockBodyTest {
         Duration.ofSeconds(12),
         true,
         Optional.empty(),
-        Optional.empty());
+        Optional.empty(),
+        new DefaultStateRootCommitterFactory(),
+        BlockGasAccountingStrategy.FRONTIER,
+        BlockGasUsedValidator.FRONTIER);
   }
 }

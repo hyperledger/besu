@@ -16,8 +16,8 @@ package org.hyperledger.besu.evmtool.benchmarks;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
-import org.hyperledger.besu.evm.gascalculator.EOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
@@ -80,7 +79,7 @@ public abstract class BenchmarkExecutor {
           .sender(Address.ZERO)
           .value(Wei.ZERO)
           .apparentValue(Wei.ZERO)
-          .code(CodeV0.EMPTY_CODE)
+          .code(Code.EMPTY_CODE)
           .completer(__ -> {})
           .address(Address.ZERO)
           .blockHashLookup((__, ___) -> null)
@@ -340,8 +339,8 @@ public abstract class BenchmarkExecutor {
       case SHANGHAI -> new ShanghaiGasCalculator();
       case CANCUN -> new CancunGasCalculator();
       case PRAGUE -> new PragueGasCalculator();
-      case OSAKA, AMSTERDAM, BOGOTA, POLIS, BANGKOK, EXPERIMENTAL_EIPS -> new OsakaGasCalculator();
-      case CANCUN_EOF, FUTURE_EIPS -> new EOFGasCalculator();
+      case OSAKA, AMSTERDAM, BOGOTA, POLIS, BANGKOK, FUTURE_EIPS, EXPERIMENTAL_EIPS ->
+          new OsakaGasCalculator();
     };
   }
 

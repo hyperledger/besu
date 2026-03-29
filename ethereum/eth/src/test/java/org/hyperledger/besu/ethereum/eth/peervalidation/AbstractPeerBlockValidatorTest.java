@@ -24,22 +24,36 @@ import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResponseCode;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutorResult;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public abstract class AbstractPeerBlockValidatorTest {
+  protected PeerTaskExecutor peerTaskExecutor;
 
-  abstract AbstractPeerBlockValidator createValidator(long blockNumber, long buffer);
+  @BeforeEach
+  public void beforeTest() {
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+  }
+
+  abstract AbstractPeerBlockValidator createValidator(
+      PeerTaskExecutor peerTaskExecutor, long blockNumber, long buffer);
 
   @Test
   public void validatePeer_unresponsivePeer() {
@@ -50,14 +64,20 @@ public abstract class AbstractPeerBlockValidatorTest {
                     DeterministicEthScheduler.TimeoutPolicy.ALWAYS_TIMEOUT))
             .build();
     final long blockNumber = 500;
+    final PeerValidator validator = createValidator(peerTaskExecutor, blockNumber, 0);
 
-    final PeerValidator validator = createValidator(blockNumber, 0);
+    final EthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber).getEthPeer();
 
-    final RespondingEthPeer peer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(peer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.empty(), PeerTaskExecutorResponseCode.TIMEOUT, List.of(peer)));
 
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+        validator.validatePeer(ethProtocolManager.ethContext(), peer);
 
     // Request should timeout immediately
     assertThat(result).isDone();
@@ -65,37 +85,47 @@ public abstract class AbstractPeerBlockValidatorTest {
   }
 
   @Test
-  public void validatePeer_requestBlockFromPeerBeingTested() {
+  public void validatePeer_requestBlockFromPeerBeingTested()
+      throws ExecutionException, InterruptedException {
     final EthProtocolManager ethProtocolManager = EthProtocolManagerTestBuilder.builder().build();
     final BlockDataGenerator gen = new BlockDataGenerator(1);
     final long blockNumber = 500;
     final Block block = gen.block(BlockOptions.create().setBlockNumber(blockNumber));
 
-    final PeerValidator validator = createValidator(blockNumber, 0);
+    final PeerValidator validator = createValidator(peerTaskExecutor, blockNumber, 0);
 
     final int peerCount = 24;
-    final List<RespondingEthPeer> otherPeers =
+    final List<EthPeer> otherPeers =
         Stream.generate(
-                () -> EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber))
+                () ->
+                    EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber)
+                        .getEthPeer())
             .limit(peerCount)
-            .collect(Collectors.toList());
-    final RespondingEthPeer targetPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber);
+            .toList();
+    final EthPeer targetPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, blockNumber).getEthPeer();
 
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer)))
+        .thenReturn(
+            new PeerTaskExecutorResult<>(
+                Optional.of(List.of(block.getHeader())),
+                PeerTaskExecutorResponseCode.SUCCESS,
+                List.of(targetPeer)));
+    otherPeers.forEach(
+        (p) ->
+            Mockito.when(
+                    peerTaskExecutor.executeAgainstPeer(
+                        Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(p)))
+                .thenThrow(new RuntimeException("Test failed: wrong peer validated")));
     final CompletableFuture<Boolean> result =
-        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer.getEthPeer());
+        validator.validatePeer(ethProtocolManager.ethContext(), targetPeer);
 
-    assertThat(result).isNotDone();
-
-    // Other peers should not receive request for target block
-    for (final RespondingEthPeer otherPeer : otherPeers) {
-      final AtomicBoolean blockRequestedForOtherPeer = respondToBlockRequest(otherPeer, block);
-      assertThat(blockRequestedForOtherPeer).isFalse();
-    }
-
-    // Target peer should receive request for target block
-    final AtomicBoolean blockRequested = respondToBlockRequest(targetPeer, block);
-    assertThat(blockRequested).isTrue();
+    Mockito.verify(peerTaskExecutor)
+        .executeAgainstPeer(Mockito.any(GetHeadersFromPeerTask.class), Mockito.eq(targetPeer));
+    Mockito.verifyNoMoreInteractions(peerTaskExecutor);
+    assertThat(result).isDone();
   }
 
   @Test
@@ -110,7 +140,7 @@ public abstract class AbstractPeerBlockValidatorTest {
     final long blockNumber = 500;
     final long buffer = 10;
 
-    final PeerValidator validator = createValidator(blockNumber, buffer);
+    final PeerValidator validator = createValidator(peerTaskExecutor, blockNumber, buffer);
     final EthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0).getEthPeer();
 
     peer.chainState().update(gen.hash(), blockNumber - 10);
@@ -134,7 +164,7 @@ public abstract class AbstractPeerBlockValidatorTest {
 
     final RespondingEthPeer.Responder responder =
         RespondingEthPeer.targetedResponder(
-            (cap, msg) -> {
+            (cap, p, msg) -> {
               if (msg.getCode() != EthProtocolMessages.GET_BLOCK_HEADERS) {
                 return false;
               }
@@ -147,7 +177,7 @@ public abstract class AbstractPeerBlockValidatorTest {
               }
               return isTargetedBlockRequest;
             },
-            (cap, msg) -> BlockHeadersMessage.create(block.getHeader()));
+            (cap, p, msg) -> BlockHeadersMessage.create(block.getHeader()));
 
     // Respond
     peer.respond(responder);

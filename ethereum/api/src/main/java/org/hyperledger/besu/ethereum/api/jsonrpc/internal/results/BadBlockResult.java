@@ -29,7 +29,7 @@ import org.immutables.value.Value;
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableBadBlockResult.class)
 @JsonDeserialize(as = ImmutableBadBlockResult.class)
-@JsonPropertyOrder({"block", "hash", "rlp", "generatedBlockAccessList"})
+@JsonPropertyOrder({"block", "hash", "rlp", "blockAccessList", "generatedBlockAccessList"})
 public interface BadBlockResult {
 
   @JsonProperty("block")
@@ -41,17 +41,22 @@ public interface BadBlockResult {
   @JsonProperty("rlp")
   String getRlp();
 
+  @JsonProperty("blockAccessList")
+  Optional<BlockAccessListResult> getBlockAccessList();
+
   @JsonProperty("generatedBlockAccessList")
   Optional<BlockAccessListResult> getGeneratedBlockAccessList();
 
   static BadBlockResult from(
       final BlockResult blockResult,
       final Block block,
+      final Optional<BlockAccessList> blockAccessList,
       final Optional<BlockAccessList> generatedBlockAccessList) {
     return ImmutableBadBlockResult.of(
         blockResult,
-        block.getHash().toHexString(),
+        block.getHash().getBytes().toHexString(),
         block.toRlp().toHexString(),
+        blockAccessList.map(BlockAccessListResult::fromBlockAccessList),
         generatedBlockAccessList.map(BlockAccessListResult::fromBlockAccessList));
   }
 }

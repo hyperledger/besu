@@ -35,17 +35,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class QbftExtraDataCodecTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   private final String RAW_HEX_ENCODING_STRING =
       "0xf8f0a00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20ea940000000000000000"
@@ -66,8 +64,8 @@ public class QbftExtraDataCodecTest {
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals =
         Arrays.asList(
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -91,10 +89,10 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     encoder.startList();
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -132,9 +130,9 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
 
     // This is to verify that the decoding throws an exception when the round number is encoded in
@@ -162,7 +160,7 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encode an empty vote
     encoder.writeEmptyList();
@@ -216,11 +214,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(vote.get().getRecipient());
+    encoder.writeBytes(vote.get().getRecipient().getBytes());
     encoder.writeNull();
     encoder.endList();
 
@@ -265,8 +263,8 @@ public class QbftExtraDataCodecTest {
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals =
         Arrays.asList(
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create randomised vanity data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -276,11 +274,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList(); // This is required to create a "root node" for all RLP'd data
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -308,8 +306,8 @@ public class QbftExtraDataCodecTest {
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals =
         Arrays.asList(
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -349,8 +347,8 @@ public class QbftExtraDataCodecTest {
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals =
         Arrays.asList(
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -359,11 +357,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -390,8 +388,8 @@ public class QbftExtraDataCodecTest {
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals =
         Arrays.asList(
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = createNonEmptyVanityData();
@@ -400,11 +398,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -435,11 +433,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encoded vote
     encoder.startList();
-    encoder.writeBytes(Address.fromHexString("1"));
+    encoder.writeBytes(Address.fromHexString("1").getBytes());
     encoder.writeByte(Vote.ADD_BYTE_VALUE);
     encoder.endList();
 
@@ -463,8 +461,8 @@ public class QbftExtraDataCodecTest {
     final int round = 0x00FEDCBA;
     final List<SECPSignature> committerSeals =
         Arrays.asList(
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
-            SIGNATURE_ALGORITHM.get().createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 0),
+            SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.ONE, (byte) 0));
 
     // Create a byte buffer with no data.
     final byte[] vanity_bytes = new byte[32];
@@ -473,11 +471,11 @@ public class QbftExtraDataCodecTest {
     final BytesValueRLPOutput encoder = new BytesValueRLPOutput();
     encoder.startList();
     encoder.writeBytes(vanity_data);
-    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator));
+    encoder.writeList(validators, (validator, rlp) -> rlp.writeBytes(validator.getBytes()));
 
     // encode vote
     encoder.startList();
-    encoder.writeBytes(voteRecipient);
+    encoder.writeBytes(voteRecipient.getBytes());
     encoder.writeByte(voteType);
     encoder.endList();
 

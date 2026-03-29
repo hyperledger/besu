@@ -24,7 +24,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
+import org.hyperledger.besu.ethereum.eth.sync.common.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadStatus;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -166,6 +166,14 @@ public class SyncState {
   public void setSyncTarget(final EthPeer peer, final BlockHeader commonAncestor) {
     final SyncTarget syncTarget = new SyncTarget(peer, commonAncestor);
     replaceSyncTarget(Optional.of(syncTarget));
+  }
+
+  public void setSyncProgress(
+      final long startingBlock, final long currentBlock, final long highestBlock) {
+    final SyncStatus status =
+        new DefaultSyncStatus(
+            startingBlock, currentBlock, highestBlock, Optional.empty(), Optional.empty());
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(Optional.of(status)));
   }
 
   public void setWorldStateDownloadStatus(final WorldStateDownloadStatus worldStateDownloadStatus) {

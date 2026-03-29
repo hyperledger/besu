@@ -26,8 +26,10 @@ import org.hyperledger.besu.ethereum.eth.manager.ChainState;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.PeerReputation;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -37,6 +39,7 @@ import org.junit.jupiter.api.Test;
 
 public class PeerTransactionTrackerTest {
   private final EthPeers ethPeers = mock(EthPeers.class);
+  private final EthScheduler ethScheduler = new DeterministicEthScheduler();
   private final EthPeer ethPeer1 = mockPeer();
   private final EthPeer ethPeer2 = mockPeer();
   private final BlockDataGenerator generator = new BlockDataGenerator();
@@ -44,7 +47,7 @@ public class PeerTransactionTrackerTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
   private final PeerTransactionTracker tracker =
-      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers);
+      new PeerTransactionTracker(TransactionPoolConfiguration.DEFAULT, ethPeers, ethScheduler);
   private final PeerTransactionTracker forgetfulTracker =
       new PeerTransactionTracker(
           ImmutableTransactionPoolConfiguration.builder()
@@ -53,7 +56,8 @@ public class PeerTransactionTrackerTest {
                       .peerTrackerForgetEvictedTxs(true)
                       .build())
               .build(),
-          ethPeers);
+          ethPeers,
+          ethScheduler);
   private final PeerTransactionTracker shortMemoryTracker =
       new PeerTransactionTracker(
           ImmutableTransactionPoolConfiguration.builder()
@@ -62,7 +66,8 @@ public class PeerTransactionTrackerTest {
                       .maxTrackedSeenTxsPerPeer(2)
                       .build())
               .build(),
-          ethPeers);
+          ethPeers,
+          ethScheduler);
 
   @Test
   public void shouldTrackTransactionsToSendToPeer() {

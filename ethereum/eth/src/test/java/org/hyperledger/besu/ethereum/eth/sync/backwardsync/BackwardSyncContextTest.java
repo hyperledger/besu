@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -51,6 +53,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -60,12 +63,14 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.tuweni.bytes.Bytes;
@@ -106,7 +111,7 @@ public class BackwardSyncContextTest {
           MiningConfiguration.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          false,
+          BalConfiguration.DEFAULT,
           new NoOpMetricsSystem());
 
   @Spy
@@ -228,17 +233,19 @@ public class BackwardSyncContextTest {
   public static BackwardChain inMemoryBackwardChain() {
     final GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksHeadersConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     final GenericKeyValueStorageFacade<Hash, Block> blocksStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe,
+            hash -> hash.getBytes().toArrayUnsafe(),
             new BlocksConvertor(new MainnetBlockHeaderFunctions()),
             new InMemoryKeyValueStorage());
     final GenericKeyValueStorageFacade<Hash, Hash> chainStorage =
         new GenericKeyValueStorageFacade<>(
-            Hash::toArrayUnsafe, new HashConvertor(), new InMemoryKeyValueStorage());
+            hash -> hash.getBytes().toArrayUnsafe(),
+            new HashConvertor(),
+            new InMemoryKeyValueStorage());
     final GenericKeyValueStorageFacade<String, BlockHeader> sessionDataStorage =
         new GenericKeyValueStorageFacade<>(
             key -> key.getBytes(StandardCharsets.UTF_8),
@@ -291,7 +298,15 @@ public class BackwardSyncContextTest {
     final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
     final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
 
-    respondUntilFutureIsDone(future);
+    // Use Awaitility with timeout like stable tests do
+    await()
+        .atMost(30, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> {
+              respondUntilFutureIsDone(future);
+              assertThat(future).isDone();
+            });
 
     future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
@@ -317,7 +332,15 @@ public class BackwardSyncContextTest {
     final CompletableFuture<Void> future =
         context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
 
-    respondUntilFutureIsDone(future);
+    // Use Awaitility with timeout like stable tests do
+    await()
+        .atMost(30, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> {
+              respondUntilFutureIsDone(future);
+              assertThat(future).isDone();
+            });
 
     future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
@@ -326,17 +349,29 @@ public class BackwardSyncContextTest {
   @Test
   public void shouldAddExpectedBlock() throws Exception {
 
-    final CompletableFuture<Void> future =
-        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT - 1));
+    // Append the higher block to the backward chain before starting sync,
+    // so both targets are available when the sync session begins.
+    // This avoids a race where the first sync session completes before the
+    // second syncBackwardsUntil call can update the target height.
+    final Block lowerBlock = getRemoteBlockByNumber(REMOTE_HEIGHT - 1);
+    final Block higherBlock = getRemoteBlockByNumber(REMOTE_HEIGHT);
 
-    final CompletableFuture<Void> secondFuture =
-        context.syncBackwardsUntil(getRemoteBlockByNumber(REMOTE_HEIGHT));
+    final CompletableFuture<Void> future = context.syncBackwardsUntil(lowerBlock);
+    final CompletableFuture<Void> secondFuture = context.syncBackwardsUntil(higherBlock);
 
     assertThat(future).isSameAs(secondFuture);
 
-    respondUntilFutureIsDone(future);
+    // Use Awaitility with timeout like stable tests do
+    await()
+        .atMost(30, TimeUnit.SECONDS)
+        .pollInterval(100, TimeUnit.MILLISECONDS)
+        .untilAsserted(
+            () -> {
+              respondUntilFutureIsDone(future);
+              assertThat(future).isDone();
+            });
 
-    secondFuture.get();
+    future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
   }
 
@@ -520,6 +555,34 @@ public class BackwardSyncContextTest {
             .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
       }
     }
+  }
+
+  @Test
+  public void shouldCancelStalledSessionAndStartNewOneOnNextSyncRequest() throws Exception {
+    // Make every sync attempt return a future that never completes, so the session stays alive
+    // but makes no block import progress (recordProgress() is never called).
+    doAnswer(inv -> new CompletableFuture<Void>()).when(context).prepareBackwardSyncFuture();
+
+    final Hash hash = getRemoteBlockByNumber(REMOTE_HEIGHT).getHash();
+
+    // Start the first session
+    final CompletableFuture<Void> firstFuture = context.syncBackwardsUntil(hash);
+    final BackwardSyncContext.Status firstStatus = context.getStatus();
+    assertThat(firstStatus).isNotNull();
+    assertThat(firstFuture).isNotDone();
+
+    // Simulate a stall by backdating lastProgressMs to 6 minutes ago via reflection
+    final Field lastProgressField =
+        BackwardSyncContext.Status.class.getDeclaredField("lastProgressMs");
+    lastProgressField.setAccessible(true);
+    lastProgressField.setLong(firstStatus, System.currentTimeMillis() - (6 * 60_000L));
+
+    // A new sync request should detect the stall, cancel the old session, and start fresh
+    final CompletableFuture<Void> secondFuture = context.syncBackwardsUntil(hash);
+
+    assertThat(firstFuture).isCancelled();
+    assertThat(secondFuture).isNotSameAs(firstFuture);
+    assertThat(context.getStatus()).isNotSameAs(firstStatus);
   }
 
   @Test

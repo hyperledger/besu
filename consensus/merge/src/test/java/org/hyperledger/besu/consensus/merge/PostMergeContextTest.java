@@ -15,6 +15,7 @@
 package org.hyperledger.besu.consensus.merge;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
@@ -148,7 +150,7 @@ public class PostMergeContextTest {
   }
 
   @Test
-  public void puttingTwoBlocksWithTheSamePayloadIdWeRetrieveTheBest() {
+  public void puttingTwoBlocksWithTheSamePayloadIdWeRetrieveTheBestByValue() {
     BlockWithReceipts zeroTxBlockWithReceipts = createBlockWithReceipts(1, 0, 0);
     BlockWithReceipts betterBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
 
@@ -163,6 +165,60 @@ public class PostMergeContextTest {
     assertThat(postMergeContext.retrievePayloadById(payloadId))
         .map(PayloadWrapper::blockWithReceipts)
         .contains(betterBlockWithReceipts);
+  }
+
+  @Test
+  public void puttingTwoBlocksWithTheSamePayloadIdAndSameValueWeRetrieveTheBestByTxsCount() {
+    BlockWithReceipts zeroTxBlockWithReceipts = createBlockWithReceipts(1, 0, 0);
+    BlockWithReceipts betterBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
+
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+    final var zeroTxPayloadWrapper =
+        createPayloadWrapper(payloadId, zeroTxBlockWithReceipts, Wei.ZERO);
+    final var betterPayloadWrapper =
+        createPayloadWrapper(payloadId, betterBlockWithReceipts, Wei.ZERO);
+    postMergeContext.putPayloadById(zeroTxPayloadWrapper);
+    postMergeContext.putPayloadById(betterPayloadWrapper);
+
+    assertThat(postMergeContext.retrievePayloadById(payloadId))
+        .map(PayloadWrapper::blockWithReceipts)
+        .contains(betterBlockWithReceipts);
+  }
+
+  @Test
+  public void higherPayloadValueIsAlwaysPreferredToTxCount() {
+    BlockWithReceipts highValueBlockWithReceipts = createBlockWithReceipts(1, 0, 1);
+    BlockWithReceipts moreTxsBlockWithReceipts = createBlockWithReceipts(2, 11, 2);
+
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+    final var zeroTxPayloadWrapper =
+        createPayloadWrapper(payloadId, highValueBlockWithReceipts, Wei.ONE);
+    final var betterPayloadWrapper =
+        createPayloadWrapper(payloadId, moreTxsBlockWithReceipts, Wei.ZERO);
+    postMergeContext.putPayloadById(zeroTxPayloadWrapper);
+    postMergeContext.putPayloadById(betterPayloadWrapper);
+
+    assertThat(postMergeContext.retrievePayloadById(payloadId))
+        .map(PayloadWrapper::blockWithReceipts)
+        .contains(highValueBlockWithReceipts);
+  }
+
+  @Test
+  public void whenSameValueAndTxCountThenEarlierBlockIsPreferred() {
+    BlockWithReceipts firstBlockWithReceipts = createBlockWithReceipts(1, 11, 1);
+    BlockWithReceipts secondBlockWithReceipts = createBlockWithReceipts(2, 11, 1);
+
+    PayloadIdentifier payloadId = new PayloadIdentifier(1L);
+    final var firstTxPayloadWrapper =
+        createPayloadWrapper(payloadId, firstBlockWithReceipts, Wei.ONE);
+    final var betterPayloadWrapper =
+        createPayloadWrapper(payloadId, secondBlockWithReceipts, Wei.ONE);
+    postMergeContext.putPayloadById(firstTxPayloadWrapper);
+    postMergeContext.putPayloadById(betterPayloadWrapper);
+
+    assertThat(postMergeContext.retrievePayloadById(payloadId))
+        .map(PayloadWrapper::blockWithReceipts)
+        .contains(firstBlockWithReceipts);
   }
 
   @Test
@@ -233,8 +289,15 @@ public class PostMergeContextTest {
       final Wei blockValue) {
     final var payloadWrapper = mock(PayloadWrapper.class);
     when(payloadWrapper.payloadIdentifier()).thenReturn(firstPayloadId);
-    when(payloadWrapper.blockWithReceipts()).thenReturn(mockBlockWithReceipts);
-    when(payloadWrapper.blockValue()).thenReturn(blockValue);
+    lenient().when(payloadWrapper.getBlockCreationTimings()).thenReturn(new BlockCreationTiming());
+    lenient().when(payloadWrapper.blockWithReceipts()).thenReturn(mockBlockWithReceipts);
+    lenient().when(payloadWrapper.blockValue()).thenReturn(blockValue);
+    lenient()
+        .doReturn(mockBlockWithReceipts.getBlock().getBody().getTransactions().size())
+        .when(payloadWrapper)
+        .transactionCount();
+    lenient().when(payloadWrapper.compareTo(any(PayloadWrapper.class))).thenCallRealMethod();
+
     return payloadWrapper;
   }
 

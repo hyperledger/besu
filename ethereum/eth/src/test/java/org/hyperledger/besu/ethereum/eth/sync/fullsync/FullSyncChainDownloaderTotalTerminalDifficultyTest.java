@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.fullsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -24,12 +23,17 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetBodiesFromPeerTaskExecutorAnswer;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTaskExecutorAnswer;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
@@ -49,6 +53,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.mockito.Mockito;
 
 public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
 
@@ -63,6 +68,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
   private BlockchainSetupUtil otherBlockchainSetup;
   protected Blockchain otherBlockchain;
   private final MetricsSystem metricsSystem = new NoOpMetricsSystem();
+  private PeerTaskExecutor peerTaskExecutor;
   private static final Difficulty TARGET_TERMINAL_DIFFICULTY = Difficulty.of(1_000_000L);
 
   static class FullSyncChainDownloaderTotalTerminalDifficultyTestArguments
@@ -80,6 +86,8 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
     otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
 
+    peerTaskExecutor = Mockito.mock(PeerTaskExecutor.class);
+
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
     ethProtocolManager =
@@ -89,10 +97,24 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
             .setEthScheduler(new EthScheduler(1, 1, 1, 1, new NoOpMetricsSystem()))
             .setWorldStateArchive(localBlockchainSetup.getWorldArchive())
             .setTransactionPool(localBlockchainSetup.getTransactionPool())
-            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+            .setEthereumWireProtocolConfiguration(EthProtocolConfiguration.DEFAULT)
+            .setPeerTaskExecutor(peerTaskExecutor)
             .build();
     ethContext = ethProtocolManager.ethContext();
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
+
+    GetHeadersFromPeerTaskExecutorAnswer headersAnswer =
+        new GetHeadersFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers());
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetHeadersFromPeerTask.class)))
+        .thenAnswer(headersAnswer);
+    Mockito.when(
+            peerTaskExecutor.executeAgainstPeer(
+                Mockito.any(GetHeadersFromPeerTask.class), Mockito.any(EthPeer.class)))
+        .thenAnswer(headersAnswer);
+
+    Mockito.when(peerTaskExecutor.execute(Mockito.any(GetBodiesFromPeerTask.class)))
+        .thenAnswer(
+            new GetBodiesFromPeerTaskExecutorAnswer(otherBlockchain, ethContext.getEthPeers()));
   }
 
   @AfterEach
@@ -114,7 +136,7 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
         metricsSystem,
         terminalCondition,
         SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS,
-        mock(PeerTaskExecutor.class));
+        peerTaskExecutor);
   }
 
   private SynchronizerConfiguration.Builder syncConfigBuilder() {

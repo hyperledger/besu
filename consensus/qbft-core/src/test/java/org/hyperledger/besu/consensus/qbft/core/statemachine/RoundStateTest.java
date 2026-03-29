@@ -44,8 +44,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,8 +54,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class RoundStateTest {
 
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   private final List<MessageFactory> validatorMessageFactories = Lists.newArrayList();
   private final ConsensusRoundIdentifier roundIdentifier = new ConsensusRoundIdentifier(1, 1);
@@ -124,9 +122,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 blockHash,
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
+                SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1));
 
     roundState.addCommitMessage(commit);
     assertThat(roundState.isPrepared()).isFalse();
@@ -178,22 +174,22 @@ public class RoundStateTest {
 
   @Test
   public void invalidPriorPrepareMessagesAreDiscardedUponSubsequentProposal() {
-    final Prepare firstPrepare =
+    final Prepare validPrepare =
         validatorMessageFactories.get(1).createPrepare(roundIdentifier, blockHash);
-
-    final Prepare secondPrepare =
+    final Prepare invalidPrepare =
         validatorMessageFactories.get(2).createPrepare(roundIdentifier, blockHash);
+    final Prepare validPrepare2 =
+        validatorMessageFactories.get(0).createPrepare(roundIdentifier, blockHash);
 
-    // RoundState has a quorum size of 3, meaning 1 proposal and 2 prepare are required to be
-    // 'prepared'.
-    final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
+    final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
 
     when(messageValidator.validateProposal(any())).thenReturn(true);
-    when(messageValidator.validatePrepare(firstPrepare)).thenReturn(true);
-    when(messageValidator.validatePrepare(secondPrepare)).thenReturn(false);
+    when(messageValidator.validatePrepare(validPrepare)).thenReturn(true);
+    when(messageValidator.validatePrepare(invalidPrepare)).thenReturn(false);
+    when(messageValidator.validatePrepare(validPrepare2)).thenReturn(true);
 
-    roundState.addPrepareMessage(firstPrepare);
-    roundState.addPrepareMessage(secondPrepare);
+    roundState.addPrepareMessage(invalidPrepare);
+    roundState.addPrepareMessage(validPrepare);
     verify(messageValidator, never()).validatePrepare(any());
 
     final Proposal proposal =
@@ -206,6 +202,61 @@ public class RoundStateTest {
     assertThat(roundState.isPrepared()).isFalse();
     assertThat(roundState.isCommitted()).isFalse();
     assertThat(roundState.constructPreparedCertificate()).isEmpty();
+
+    roundState.addPrepareMessage(validPrepare2);
+    assertThat(roundState.isPrepared()).isTrue();
+
+    final Optional<PreparedCertificate> preparedCertificate =
+        roundState.constructPreparedCertificate();
+    assertThat(preparedCertificate).isNotEmpty();
+
+    final List<SignedData<PreparePayload>> expectedPrepares =
+        Stream.of(validPrepare, validPrepare2)
+            .map(BftMessage::getSignedPayload)
+            .collect(Collectors.toList());
+    assertThat(preparedCertificate.get().getPrepares()).isEqualTo(expectedPrepares);
+  }
+
+  @Test
+  public void invalidPriorCommitMessagesAreDiscardedUponSubsequentProposal() {
+    final Commit validCommit =
+        validatorMessageFactories
+            .get(1)
+            .createCommit(
+                roundIdentifier,
+                blockHash,
+                SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
+
+    final Commit invalidCommit =
+        validatorMessageFactories
+            .get(2)
+            .createCommit(
+                roundIdentifier,
+                blockHash,
+                SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
+
+    // RoundState has a quorum size of 3, meaning 1 proposal and 2 commits are required to be
+    // 'committed'.
+    final RoundState roundState = new RoundState(roundIdentifier, 3, messageValidator);
+
+    when(messageValidator.validateProposal(any())).thenReturn(true);
+    when(messageValidator.validateCommit(validCommit)).thenReturn(true);
+    when(messageValidator.validateCommit(invalidCommit)).thenReturn(false);
+
+    roundState.addCommitMessage(validCommit);
+    roundState.addCommitMessage(invalidCommit);
+    verify(messageValidator, never()).validateCommit(any());
+
+    final Proposal proposal =
+        validatorMessageFactories
+            .getFirst()
+            .createProposal(
+                roundIdentifier, block, Collections.emptyList(), Collections.emptyList());
+
+    assertThat(roundState.setProposedBlock(proposal)).isTrue();
+    assertThat(roundState.isPrepared()).isFalse();
+    assertThat(roundState.isCommitted()).isFalse();
+    assertThat(roundState.getCommitSeals()).containsOnly(validCommit.getCommitSeal());
   }
 
   @Test
@@ -258,9 +309,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 blockHash,
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
+                SIGNATURE_ALGORITHM.createSignature(BigInteger.ONE, BigInteger.TEN, (byte) 1));
 
     final Commit secondCommit =
         validatorMessageFactories
@@ -268,9 +317,7 @@ public class RoundStateTest {
             .createCommit(
                 roundIdentifier,
                 blockHash,
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
+                SIGNATURE_ALGORITHM.createSignature(BigInteger.TEN, BigInteger.TEN, (byte) 1));
 
     final Proposal proposal =
         validatorMessageFactories

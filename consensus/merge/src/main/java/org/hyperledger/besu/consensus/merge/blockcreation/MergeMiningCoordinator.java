@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,7 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param feeRecipient the fee recipient
    * @param withdrawals the optional list of withdrawals
    * @param parentBeaconBlockRoot optional root hash of the parent beacon block
+   * @param slotNumber optional slot number (EIP-7843)
    * @return the payload identifier
    */
   PayloadIdentifier preparePayload(
@@ -51,7 +53,8 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
       final Bytes32 prevRandao,
       final Address feeRecipient,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot);
+      final Optional<Bytes32> parentBeaconBlockRoot,
+      final Optional<Long> slotNumber);
 
   @Override
   default boolean isCompatibleWithEngineApi() {
@@ -65,6 +68,16 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @return the block processing result
    */
   BlockProcessingResult rememberBlock(final Block block);
+
+  /**
+   * Remember block with optional block access list.
+   *
+   * @param block the block
+   * @param blockAccessList optional block access list
+   * @return the block processing result
+   */
+  BlockProcessingResult rememberBlock(
+      final Block block, final Optional<BlockAccessList> blockAccessList);
 
   /**
    * Validate block.

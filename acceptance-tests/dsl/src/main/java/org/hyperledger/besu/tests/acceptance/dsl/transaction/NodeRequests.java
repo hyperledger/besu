@@ -16,12 +16,12 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction;
 
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.admin.AdminRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.bft.BftRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.clique.CliqueRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.debug.DebugRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.plugins.PluginsRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.util.Optional;
@@ -33,7 +33,6 @@ import org.web3j.protocol.websocket.WebSocketService;
 public class NodeRequests {
   private final Web3jService web3jService;
   private final Web3j netEth;
-  private final CliqueRequestFactory clique;
   private final BftRequestFactory bft;
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminRequestFactory admin;
@@ -43,11 +42,11 @@ public class NodeRequests {
   private final MinerRequestFactory miner;
   private final TxPoolRequestFactory txPool;
   private final DebugRequestFactory debug;
+  private final PluginsRequestFactory plugins;
 
   public NodeRequests(
       final Web3jService web3jService,
       final Web3j netEth,
-      final CliqueRequestFactory clique,
       final BftRequestFactory bft,
       final PermissioningJsonRpcRequestFactory perm,
       final AdminRequestFactory admin,
@@ -56,10 +55,10 @@ public class NodeRequests {
       final TxPoolRequestFactory txPool,
       final DebugRequestFactory debug,
       final Optional<WebSocketService> websocketService,
-      final LoginRequestFactory login) {
+      final LoginRequestFactory login,
+      final PluginsRequestFactory plugins) {
     this.web3jService = web3jService;
     this.netEth = netEth;
-    this.clique = clique;
     this.bft = bft;
     this.perm = perm;
     this.admin = admin;
@@ -69,6 +68,7 @@ public class NodeRequests {
     this.debug = debug;
     this.websocketService = websocketService;
     this.login = login;
+    this.plugins = plugins;
   }
 
   public Web3j eth() {
@@ -77,10 +77,6 @@ public class NodeRequests {
 
   public Web3j net() {
     return netEth;
-  }
-
-  public CliqueRequestFactory clique() {
-    return clique;
   }
 
   public BftRequestFactory bft() {
@@ -113,6 +109,10 @@ public class NodeRequests {
 
   public DebugRequestFactory debug() {
     return debug;
+  }
+
+  public PluginsRequestFactory plugins() {
+    return plugins;
   }
 
   public void shutdown() {

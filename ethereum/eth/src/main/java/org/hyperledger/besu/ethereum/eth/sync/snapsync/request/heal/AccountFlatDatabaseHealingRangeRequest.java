@@ -34,8 +34,8 @@ import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -110,7 +110,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
                     createStorageFlatHealingRangeRequest(
                         getRootHash(),
                         account.getKey(),
-                        accountValue.getStorageRoot(),
+                        Bytes32.wrap(accountValue.getStorageRoot().getBytes()),
                         MIN_RANGE,
                         MAX_RANGE));
               }
@@ -139,7 +139,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       // very proof in order to check if the local flat database is valid or not
       isProofValid =
           worldStateProofProvider.isValidRangeProof(
-              startKeyHash, endKeyHash, getRootHash(), proofs, accounts);
+              startKeyHash, endKeyHash, Bytes32.wrap(getRootHash().getBytes()), proofs, accounts);
       this.existingAccounts = accounts;
     }
   }
@@ -160,7 +160,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
       final MerkleTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
               worldStateStorageCoordinator::getAccountStateTrieNode,
-              getRootHash(),
+              Bytes32.wrap(getRootHash().getBytes()),
               Function.identity(),
               Function.identity());
 
@@ -196,7 +196,8 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
             if (!value.equals(flatDbEntry)) {
               Hash accountHash = Hash.wrap(key);
               // Add the account to the list of accounts to be repaired
-              downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+              downloadState.addAccountToHealingList(
+                  CompactEncoding.bytesToPath(accountHash.getBytes()));
               // Update the account info state
               bonsaiUpdater.putAccountInfoState(accountHash, value);
             }
@@ -209,7 +210,8 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
           .forEach(
               key -> {
                 Hash accountHash = Hash.wrap(key);
-                downloadState.addAccountToHealingList(CompactEncoding.bytesToPath(accountHash));
+                downloadState.addAccountToHealingList(
+                    CompactEncoding.bytesToPath(accountHash.getBytes()));
                 bonsaiUpdater.removeAccountInfoState(accountHash);
               });
     }

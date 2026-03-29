@@ -24,24 +24,25 @@ jobs:
     container: ghcr.io/todogroup/repolinter:v0.11.2
     steps:
     - name: Checkout Code
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       with:
         ref: ${{ github.event.pull_request.head.sha || github.ref }}
     - name: Lint Repo
       run: bundle exec /app/bin/repolinter.js --rulesetUrl https://raw.githubusercontent.com/hyperledger-labs/hyperledger-community-management-tools/main/repo_structure/repolint.json --format markdown
   gradle-wrapper:
     name: "Gradle Wrapper Validation"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
-      - uses: gradle/actions/wrapper-validation@94baf225fe0a508e581a564467443d0e2379123b
-  spotless:
-    runs-on: ubuntu-22.04
+      - uses: gradle/actions/wrapper-validation@da187c8e6ffbd3802e00f2477aa5a822b25f2dda # v4.4.4
+  spotless-checkLicense:
+    name: "Spotless & Check License"
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Set up Java
@@ -55,13 +56,20 @@ jobs:
           cache-disabled: true
       - name: run spotless
         run: ./gradlew spotlessCheck
+      - name: run checkLicense
+        run: ./gradlew --no-parallel checkLicense # no-parallel due to https://github.com/jk1/Gradle-License-Report/issues/337
+      - name: upload license report
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: checkLicense
+          path: build/reports/dependency-license
   compile:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [spotless, gradle-wrapper, repolint]
+    needs: [spotless-checkLicense, gradle-wrapper, repolint]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Set up Java
@@ -78,8 +86,8 @@ jobs:
   unitTests:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
-    runs-on: ubuntu-22.04
-    needs: [spotless, gradle-wrapper, repolint]
+    runs-on: ubuntu-latest
+    needs: [spotless-checkLicense, gradle-wrapper, repolint]
     permissions:
       checks: write
       statuses: write
@@ -89,7 +97,7 @@ jobs:
         runner_index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Set up Java
@@ -103,10 +111,11 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
+          add-job-summary: on-failure
       - name: List unit tests
         run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
-        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/testcase[1]/@classname' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
       - name: Get unit test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
@@ -152,7 +161,7 @@ jobs:
           path: '**/build/reports/tests/test/**'
   unittests-passed:
     name: "unittests-passed"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs: [compile, unitTests]
     permissions:
       checks: write
@@ -169,3 +178,17 @@ jobs:
             || contains(needs.*.result, 'cancelled')
             || contains(needs.*.result, 'skipped')
           }}
+      - name: Checkout Repo
+        if: always()
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+      - name: Download all unit test results
+        if: always()
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
+        with:
+          pattern: unit-*-test-results
+          merge-multiple: true
+      - name: Report 10 slowest tests
+        if: always()
+        run: python3 .github/workflows/reportSlowestTests.sh 10

@@ -10,10 +10,107 @@ To run the Ethereum reference tests included in the Besu codebase, use the follo
 ./gradlew referenceTests
 ```
 
-This will execute the available test suites (such as GeneralStateTests) and validate Besu's EVM behavior.
+This will execute the available test suites (such as GeneralStateTests and execution-spec-tests) and validate Besu's EVM behavior.
 
 > **Note:**
 > - Out-of-memory (OOM) errors are common due to the size and number of tests. You may need to increase the heap size using `-Xmx` (e.g., `./gradlew referenceTests -Dorg.gradle.jvmargs="-Xmx8g"`)
+
+## Filtering Execution Spec Tests by Hardfork or EIP
+
+Execution-spec-tests are generated with class names that reflect their hardfork and EIP directory structure. This allows targeted test execution using standard Gradle `--tests` filters.
+
+### By hardfork
+
+```bash
+# Run all Prague execution spec tests (blockchain + state)
+./gradlew referenceTests --tests "*ExecutionSpec*_prague_*"
+
+# Run only Amsterdam state tests
+./gradlew referenceTests --tests "*ExecutionSpecStateTest_amsterdam_*"
+
+# Run all Cancun blockchain tests
+./gradlew referenceTests --tests "*ExecutionSpecBlockchainTest_cancun_*"
+```
+
+### By EIP
+
+```bash
+# Run only EIP-7702 tests
+./gradlew referenceTests --tests "*eip7702*"
+
+# Run only EIP-4844 blob tests
+./gradlew referenceTests --tests "*eip4844*"
+```
+
+### By hardfork + EIP
+
+```bash
+# Run Prague EIP-2537 BLS precompile tests specifically
+./gradlew referenceTests --tests "*_prague_eip2537_*"
+```
+
+### Static (legacy) tests
+
+```bash
+# Run all static legacy tests
+./gradlew referenceTests --tests "*ExecutionSpec*_static_*"
+
+# Run a specific static test category
+./gradlew referenceTests --tests "*_static_stCreate2_*"
+```
+
+### Generated class name format
+
+Test classes follow the pattern:
+```
+ExecutionSpec{Blockchain,State}Test_{hardfork}_{eip_or_topic}_{batch_index}
+```
+
+For example:
+- `ExecutionSpecBlockchainTest_prague_eip7702_set_code_tx_0`
+- `ExecutionSpecStateTest_cancun_eip4844_blobs_2`
+- `ExecutionSpecBlockchainTest_static_stCreate2_1`
+- `ExecutionSpecBlockchainTest_frontier_opcodes_0`
+
+> **Note:** These hardfork/EIP filters apply only to execution-spec-tests. The legacy `GeneralStateReferenceTest` and `BlockchainReferenceTest` classes still use sequential numbering. For those, use the runtime system properties `test.ethereum.state.eips` and `test.ethereum.include` instead.
+
+## Devnet / Pre-release Execution Spec Tests
+
+In addition to the stable execution-spec-tests fixtures, Besu supports a second set of **pre-release (devnet) fixtures** from upstream. These contain tests for upcoming hardforks (e.g., Amsterdam).
+
+### Running devnet tests
+
+```bash
+# Run all devnet/pre-release reference tests
+./gradlew referenceTestsDevnet
+
+# Run only Amsterdam devnet tests
+./gradlew referenceTestsDevnet --tests "*_amsterdam_*"
+
+# Run both stable + devnet
+./gradlew referenceTests referenceTestsDevnet
+```
+
+The default `referenceTests` task excludes devnet tests, so CI is unaffected.
+
+### Generated class name format
+
+Devnet test classes follow the same pattern as stable ones, but with an `ExecutionSpecDevnet` prefix:
+
+```
+ExecutionSpecDevnet{Blockchain,State}Test_{hardfork}_{eip_or_topic}_{batch_index}
+```
+
+### Bumping the pre-release version
+
+1. Update the `version` in the `devnetTarConfig` dependency in `ethereum/referencetests/build.gradle`
+2. Make any required infrastructure changes (new header fields, etc.)
+3. Run `./gradlew --write-verification-metadata sha256` to update checksums
+4. Commit all changes together
+
+### Configuration
+
+The devnet fixtures are resolved from the same GitHub Ivy repository as stable fixtures. The dependency is declared separately via the `devnetTarConfig` configuration in `ethereum/referencetests/build.gradle`.
 
 ## Enabling JSON Tracing
 

@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.nat.NatMethod;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -81,7 +80,6 @@ public class NatOptionsTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  @Disabled("flaky test see https://github.com/hyperledger/besu/issues/8775")
   @Test
   public void natMethodFallbackEnabledPropertyIsCorrectlyUpdatedWithUpnp() {
 

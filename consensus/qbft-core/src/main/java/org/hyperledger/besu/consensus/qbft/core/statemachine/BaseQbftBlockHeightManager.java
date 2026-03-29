@@ -22,6 +22,8 @@ import org.hyperledger.besu.consensus.qbft.core.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.core.messagewrappers.RoundChange;
 import org.hyperledger.besu.consensus.qbft.core.types.QbftBlockHeader;
 
+import java.util.Optional;
+
 /** The interface Base qbft block height manager. */
 public interface BaseQbftBlockHeightManager {
   /**
@@ -79,4 +81,18 @@ public interface BaseQbftBlockHeightManager {
    * @param roundChange the round change payload
    */
   void handleRoundChangePayload(RoundChange roundChange);
+
+  /**
+   * Gets the current round.
+   *
+   * @return the current round, or empty if no round is active
+   */
+  Optional<QbftRound> getCurrentRound();
+
+  /**
+   * Gets the round change manager.
+   *
+   * @return the round change manager, or empty if not available
+   */
+  Optional<RoundChangeManager> getRoundChangeManager();
 }

@@ -70,6 +70,8 @@ public class PeerTaskRequestSenderTest {
     RequestManager.ResponseCallback responseCallback = responseCallbackArgumentCaptor.getValue();
     responseCallback.exec(false, responseMessageData, peer);
 
+    Mockito.verify(responseStream).close();
+
     Assertions.assertSame(responseMessageData, actualResponseMessageDataFuture.get());
   }
 }

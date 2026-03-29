@@ -48,7 +48,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
-import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -80,6 +79,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.cache.CodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -97,7 +97,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
@@ -120,18 +119,16 @@ import org.slf4j.LoggerFactory;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
-  private static final com.google.common.base.Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SignatureAlgorithm SIGNATURE_ALGORITHM =
+      SignatureAlgorithmFactory.getInstance();
 
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinatorTest.class);
   private static final SECPPrivateKey PRIVATE_KEY1 =
-      SIGNATURE_ALGORITHM
-          .get()
-          .createPrivateKey(
-              Bytes32.fromHexString(
-                  "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
+      SIGNATURE_ALGORITHM.createPrivateKey(
+          Bytes32.fromHexString(
+              "ae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f"));
   private static final KeyPair KEYS1 =
-      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.createPublicKey(PRIVATE_KEY1));
 
   private static final long REPETITION_MIN_DURATION = 100;
 
@@ -248,8 +245,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethScheduler,
             transactionPool,
             miningConfiguration,
-            backwardSyncContext,
-            Optional.empty());
+            backwardSyncContext);
   }
 
   @Test
@@ -269,6 +265,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -311,6 +308,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
                   anyLong(),
                   eq(Optional.empty()),
                   eq(Optional.empty()),
+                  eq(Optional.empty()),
                   any());
           return beingSpiedOn;
         };
@@ -348,6 +346,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.random(),
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -387,6 +386,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         Bytes32.ZERO,
         suggestedFeeRecipient,
         Optional.empty(),
+        Optional.empty(),
         Optional.empty());
 
     verify(badBlockManager, never()).addBadBlock(any(), any());
@@ -419,6 +419,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -478,6 +479,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient,
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     blockCreationTask.get();
@@ -528,6 +530,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -582,6 +585,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient,
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     try {
@@ -627,6 +631,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             System.currentTimeMillis() / 1000,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -684,6 +689,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient,
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     final CompletableFuture<Void> task1 = blockCreationTask;
@@ -694,6 +700,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -736,6 +743,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Bytes32.ZERO,
             suggestedFeeRecipient,
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
 
     assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isFalse();
@@ -746,6 +754,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             timestamp + 1,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -770,8 +779,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethScheduler,
             transactionPool,
             miningConfiguration,
-            backwardSyncContext,
-            Optional.empty());
+            backwardSyncContext);
 
     final PayloadIdentifier payloadId =
         this.coordinator.preparePayload(
@@ -779,6 +787,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             1L,
             Bytes32.ZERO,
             suggestedFeeRecipient,
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
 
@@ -1011,8 +1020,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             ethScheduler,
             transactionPool,
             mockMiningConfiguration,
-            backwardSyncContext,
-            Optional.empty());
+            backwardSyncContext);
 
     assertThat(testTargetGasLimitCoordinator).isNotNull();
     verify(mockMiningConfiguration).setTargetGasLimit(expectedTargetGasLimit);
@@ -1021,14 +1029,14 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   @Test
   public void shouldReturnExpectedTargetGasLimitForMainnet() {
     final long targetGasLimitMainnet =
-        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_MAINNET));
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_MAINNET)).orElseThrow();
     assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT);
   }
 
   @Test
   public void shouldReturnExpectedTargetGasLimitForTestnet() {
     final long targetGasLimitMainnet =
-        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_HOODI));
+        MergeCoordinator.getDefaultGasLimitByChainId(Optional.of(CHAIN_ID_HOODI)).orElseThrow();
     assertThat(targetGasLimitMainnet).isEqualTo(DEFAULT_TARGET_GAS_LIMIT_TESTNET);
   }
 
