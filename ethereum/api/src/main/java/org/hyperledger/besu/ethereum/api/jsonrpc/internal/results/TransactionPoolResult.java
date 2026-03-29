@@ -16,23 +16,23 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
-public class TransactionPoolStatusResult {
+public class TransactionPoolResult<T> {
 
-  private final long pending;
-  private final long queued;
+  private final T pending;
+  private final T queued;
 
-  public TransactionPoolStatusResult(final long pending, final long queued) {
+  public TransactionPoolResult(final T pending, final T queued) {
     this.pending = pending;
     this.queued = queued;
   }
 
-  @JsonGetter
-  public String getPending() {
-    return Quantity.create(pending);
+  @JsonGetter(value = "pending")
+  public T getPending() {
+    return pending;
   }
 
-  @JsonGetter
-  public String getQueued() {
-    return Quantity.create(queued);
+  @JsonGetter(value = "queued")
+  public T getQueued() {
+    return queued;
   }
 }
