@@ -582,8 +582,7 @@ public class SnapServerTest {
     assertThat(trieNodeRequest).isNotNull();
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
-    // TODO: adjust this assertion after sorting out the request fudge factor
-    assertThat(trieNodes.size()).isEqualTo(accountNodeLimit * 90 / 100);
+    assertThat(trieNodes.size()).isEqualTo(accountNodeLimit);
   }
 
   @ParameterizedTest
@@ -723,7 +722,7 @@ public class SnapServerTest {
     assertThat(trieNodeRequest).isNotNull();
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
-    assertThat(trieNodes.size()).isEqualTo(3);
+    assertThat(trieNodes.size()).isEqualTo(4);
   }
 
   @ParameterizedTest
@@ -799,8 +798,7 @@ public class SnapServerTest {
     assertThat(codeRequest).isNotNull();
     ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
     assertThat(codes).isNotNull();
-    // TODO adjust this assertion after sorting out the request fudge factor
-    assertThat(codes.codes().size()).isEqualTo(codeLimit * 90 / 100);
+    assertThat(codes.codes().size()).isEqualTo(codeLimit);
   }
 
   @ParameterizedTest
