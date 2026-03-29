@@ -107,7 +107,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -128,7 +127,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -152,7 +150,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final SyncTargetRange checkpointRange =
@@ -173,7 +170,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(false).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
@@ -196,7 +192,6 @@ public class DownloadHeadersStepTest {
             protocolContext,
             ethProtocolManager.ethContext(),
             () -> HeaderValidationMode.DETACHED_ONLY,
-            SynchronizerConfiguration.builder().isPeerTaskSystemEnabled(true).build(),
             HEADER_REQUEST_SIZE,
             new NoOpMetricsSystem());
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
