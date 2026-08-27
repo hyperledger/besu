@@ -180,6 +180,7 @@ opportunity to upgrade.
 - `--rpc-tx-feecap` will treat a value of 0 as limiting fees to 0. Today it treats 0 as "do not cap fees". To achieve similar behaviour set it to a suitably large value to effectively prevent any fee capping.
 
 ### Bug fixes
+- `eth_createAccessList` now includes accounts accessed via `BALANCE`, `EXTCODESIZE`, `EXTCODECOPY`, `EXTCODEHASH`, `SELFDESTRUCT` and call targets, matching other clients; previously accounts without storage accesses were omitted. [#11134](https://github.com/besu-eth/besu/issues/11134)
 - GraphQL `logs(filter: ...)` no longer fails when the filter's `topics` field is omitted or explicitly null, on both the top-level `logs` query and the block-scoped one. The schema declares `topics` nullable and documents "[] or nil matches any topic list", but the field was dereferenced unguarded, so a documented-valid query returned a `DataFetchingException` and `data: null`. [#11188](https://github.com/besu-eth/besu/pull/11188)
 - `engine_newPayloadV5` now returns `{status: INVALID}` instead of a `-32602` JSON-RPC error when a present `blockAccessList` cannot be decoded; a missing `blockAccessList` still returns `-32602`. [#11177](https://github.com/besu-eth/besu/pull/11177)
 - `debug_getRawReceipts` now accepts a block hash as well as a block number or tag. [#11156](https://github.com/besu-eth/besu/pull/11156)
