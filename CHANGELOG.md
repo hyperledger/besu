@@ -84,6 +84,7 @@
 - `evmtool t8n` now reports a failure while processing execution layer requests, such as a malformed deposit event, as `blockException` in its result, like block import rejects the block. It previously failed the whole transition, so `t8n-server` answered with HTTP 500. [#11570](https://github.com/besu-eth/besu/pull/11570)
 - `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
 - `--ethstats` no longer retains a few KB of heap per reconnect attempt while the ethstats server is unreachable. [#11614](https://github.com/besu-eth/besu/pull/11614)
+- Backward sync progress is now measured against the chain height estimated from peers instead of the head last supplied by the consensus client, so the percentage no longer goes backwards and the remaining distance to the chain tip is reported.
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
