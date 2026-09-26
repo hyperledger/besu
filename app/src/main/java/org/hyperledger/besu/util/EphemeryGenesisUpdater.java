@@ -32,6 +32,8 @@ import java.util.Optional;
 public class EphemeryGenesisUpdater {
   private static final int PERIOD_IN_DAYS = 28;
   private static final long PERIOD_IN_SECONDS = (PERIOD_IN_DAYS * 24 * 60 * 60);
+  static final long BPO1_OFFSET_SECONDS = 787032L;
+  static final long BPO2_OFFSET_SECONDS = 1573464L;
 
   /**
    * Constructor for EphemeryGenesisUpdater. Initializes the genesis updater for the Ephemery
@@ -71,6 +73,8 @@ public class EphemeryGenesisUpdater {
       if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
         overrides.put("chainId", String.valueOf(updatedChainId));
         overrides.put("timestamp", String.valueOf(updatedTimestamp));
+        overrides.put("bpo1Time", String.valueOf(updatedTimestamp + BPO1_OFFSET_SECONDS));
+        overrides.put("bpo2Time", String.valueOf(updatedTimestamp + BPO2_OFFSET_SECONDS));
       }
       return genesisConfig.withOverrides(overrides);
     } catch (IOException e) {
