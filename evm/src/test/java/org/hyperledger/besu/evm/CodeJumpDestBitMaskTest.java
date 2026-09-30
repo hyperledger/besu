@@ -86,7 +86,7 @@ class CodeJumpDestBitMaskTest {
 
   @ParameterizedTest(name = "seed {0}")
   @MethodSource("seeds")
-  void matchesReferenceWalkOnChunksWithAndWithoutPush(final int seed) {
+  void matchesReferenceWalkOnChunksWithFewAndManyPushes(final int seed) {
     final Random random = new Random(seed);
     final int[] withoutPush = {0x00, 0x01, JUMPDEST, 0x5f, 0x80, 0xff};
     for (int i = 0; i < 50; i++) {
@@ -96,8 +96,9 @@ class CodeJumpDestBitMaskTest {
         for (int j = chunkStart; j < chunkEnd; j++) {
           bytes[j] = (byte) withoutPush[random.nextInt(withoutPush.length)];
         }
-        if (random.nextBoolean()) {
-          // A PUSH whose data may run into the next chunk
+        // Up to 20 PUSHes, around the number that decides how a chunk is analysed, whose data may
+        // run into the next chunk
+        for (int pushes = random.nextInt(21); pushes > 0; pushes--) {
           bytes[chunkStart + random.nextInt(chunkEnd - chunkStart)] =
               (byte) (PUSH1 + random.nextInt(32));
         }
@@ -124,6 +125,24 @@ class CodeJumpDestBitMaskTest {
         final byte[] bytes = filled(130, JUMPDEST);
         bytes[offset] = (byte) push;
         shapes.add(Arguments.of(String.format("PUSH%d at %d", push - PUSH1 + 1, offset), bytes));
+      }
+    }
+    // 11 to 13 PUSH1 per chunk, entered with and without PUSH data carried in
+    for (int pushes = 11; pushes <= 13; pushes++) {
+      for (final int carried : new int[] {0, 1, 32}) {
+        final byte[] bytes = filled(64 * 4, JUMPDEST);
+        if (carried > 0) {
+          // A PUSH32 whose last `carried` data bytes are in the next chunk
+          bytes[31 + carried] = (byte) PUSH32;
+        }
+        for (int chunkStart = 64; chunkStart < bytes.length; chunkStart += 64) {
+          for (int i = 0; i < pushes; i++) {
+            bytes[chunkStart + 40 - 2 * i] = (byte) PUSH1;
+          }
+        }
+        shapes.add(
+            Arguments.of(
+                String.format("%d PUSH1 per chunk, %d bytes carried in", pushes, carried), bytes));
       }
     }
     // Lengths around the entry boundaries, ending in a truncated PUSH
