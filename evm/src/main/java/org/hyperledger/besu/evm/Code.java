@@ -20,6 +20,9 @@ import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import com.google.common.base.MoreObjects;
@@ -53,6 +56,27 @@ public class Code {
    * thread could see the array before its contents and reject a valid jump destination.
    */
   private volatile long[] jumpDestBitMask = null;
+
+  private static final VarHandle LITTLE_ENDIAN_LONG =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
+
+  private static final long HIGH_BITS = 0x8080808080808080L;
+  private static final long LOW_BITS = 0x7f7f7f7f7f7f7f7fL;
+  private static final long JUMPDEST_BYTES = 0x5b5b5b5b5b5b5b5bL;
+  private static final long GATHER_HIGH_BITS = 0x0002040810204081L;
+
+  /** Length of each opcode including its immediate data: 2 to 33 for PUSH1-PUSH32, 1 otherwise. */
+  private static final int[] INSTRUCTION_LENGTH = new int[256];
+
+  /** 1 for JUMPDEST, 0 for every other opcode. */
+  private static final int[] IS_JUMPDEST = new int[256];
+
+  static {
+    for (int opcode = 0; opcode < 256; opcode++) {
+      INSTRUCTION_LENGTH[opcode] = opcode >= 0x60 && opcode <= 0x7f ? opcode - 0x5e : 1;
+      IS_JUMPDEST[opcode] = opcode == JumpDestOperation.OPCODE ? 1 : 0;
+    }
+  }
 
   /**
    * Public constructor.
@@ -225,188 +249,89 @@ public class Code {
    * bytecode. The bitmap is organized in 64-byte chunks, each represented as a `long` (64 bits).
    * This is used for efficiently validating dynamic jumps (`JUMP`, `JUMPI`) at runtime.
    *
+   * <p>No step branches on an individual opcode. A branch per opcode mispredicts on every byte of
+   * code that mixes opcodes at random, several times the cost of the analysis itself, and the code
+   * is chosen by whoever deploys it. Instead each 64-byte chunk takes one of two paths:
+   *
+   * <ul>
+   *   <li>A chunk that starts at an instruction and holds no PUSH opcode consists of instructions
+   *       only, so its JUMPDESTs are read straight off its bytes, eight at a time.
+   *   <li>Every other chunk is walked byte by byte by {@link #walkChunk}, at a cost that does not
+   *       depend on the bytes.
+   * </ul>
+   *
    * <p>A change to the bitmask this returns for any code needs a new {@link
    * #JUMP_DEST_ANALYSIS_VERSION}.
+   *
+   * @return the jump destination bitmask
    */
   long[] calculateJumpDestBitMask() {
-    // Total number of bytes in the bytecode
-    final int size = getSize();
-
-    // Allocate enough longs to cover all bytes, one long (64 bits) per 64-byte chunk
-    final long[] bitmap = new long[(size >> 6) + 1];
-
-    // Get the raw EVM bytecode as a byte array (no copying)
     final byte[] rawCode = getBytes().toArrayUnsafe();
     final int length = rawCode.length;
-
-    // Iterate through the bytecode
-    for (int i = 0; i < length; ) {
-      // One 64-bit entry corresponds to 64 bytecode positions
-      long thisEntry = 0L;
-
-      // Compute which bitmap entry we are in (i / 64)
-      final int entryPos = i >> 6;
-
-      // Compute the number of bytes we can safely examine in this 64-byte window
-      final int max = Math.min(64, length - (entryPos << 6));
-
-      // j is the position within this 64-byte window
-      int j = i & 0x3F;
-
-      // Scan through this 64-byte chunk of the bytecode
-      for (; j < max; i++, j++) {
-        final byte operationNum = rawCode[i];
-
-        // Skip all opcodes below 0x5b (JUMPDEST), since only PUSH1–PUSH32 and JUMPDEST matter
-        if (operationNum >= JumpDestOperation.OPCODE) {
-          switch (operationNum) {
-            // JUMPDEST opcode (0x5b): mark as a valid jump destination
-            case JumpDestOperation.OPCODE:
-              thisEntry |= 1L << j; // Set the bit at position j
-              break;
-            // PUSH1–PUSH32 opcodes (0x60–0x7f): these consume 1-32 bytes of data that should be
-            // skipped
-            case 0x60:
-              i += 1;
-              j += 1;
-              break;
-            case 0x61:
-              i += 2;
-              j += 2;
-              break;
-            case 0x62:
-              i += 3;
-              j += 3;
-              break;
-            case 0x63:
-              i += 4;
-              j += 4;
-              break;
-            case 0x64:
-              i += 5;
-              j += 5;
-              break;
-            case 0x65:
-              i += 6;
-              j += 6;
-              break;
-            case 0x66:
-              i += 7;
-              j += 7;
-              break;
-            case 0x67:
-              i += 8;
-              j += 8;
-              break;
-            case 0x68:
-              i += 9;
-              j += 9;
-              break;
-            case 0x69:
-              i += 10;
-              j += 10;
-              break;
-            case 0x6a:
-              i += 11;
-              j += 11;
-              break;
-            case 0x6b:
-              i += 12;
-              j += 12;
-              break;
-            case 0x6c:
-              i += 13;
-              j += 13;
-              break;
-            case 0x6d:
-              i += 14;
-              j += 14;
-              break;
-            case 0x6e:
-              i += 15;
-              j += 15;
-              break;
-            case 0x6f:
-              i += 16;
-              j += 16;
-              break;
-            case 0x70:
-              i += 17;
-              j += 17;
-              break;
-            case 0x71:
-              i += 18;
-              j += 18;
-              break;
-            case 0x72:
-              i += 19;
-              j += 19;
-              break;
-            case 0x73:
-              i += 20;
-              j += 20;
-              break;
-            case 0x74:
-              i += 21;
-              j += 21;
-              break;
-            case 0x75:
-              i += 22;
-              j += 22;
-              break;
-            case 0x76:
-              i += 23;
-              j += 23;
-              break;
-            case 0x77:
-              i += 24;
-              j += 24;
-              break;
-            case 0x78:
-              i += 25;
-              j += 25;
-              break;
-            case 0x79:
-              i += 26;
-              j += 26;
-              break;
-            case 0x7a:
-              i += 27;
-              j += 27;
-              break;
-            case 0x7b:
-              i += 28;
-              j += 28;
-              break;
-            case 0x7c:
-              i += 29;
-              j += 29;
-              break;
-            case 0x7d:
-              i += 30;
-              j += 30;
-              break;
-            case 0x7e:
-              i += 31;
-              j += 31;
-              break;
-            case 0x7f:
-              i += 32;
-              j += 32;
-              break;
-            default:
-              // No default case needed: any unhandled opcode >= 0x5b but not PUSH or JUMPDEST is
-              // skipped
-          }
-        }
+    final long[] bitmap = new long[(length >> 6) + 1];
+    final int fullChunks = length >> 6;
+    int pushDataRemaining = 0;
+    for (int chunk = 0; chunk < fullChunks; chunk++) {
+      final int chunkStart = chunk << 6;
+      if (pushDataRemaining == 0 && !chunkContainsPush(rawCode, chunkStart)) {
+        bitmap[chunk] = chunkJumpDests(rawCode, chunkStart);
+      } else {
+        pushDataRemaining = walkChunk(rawCode, bitmap, chunk, pushDataRemaining);
       }
-
-      // Store the computed bitmask for this 64-byte chunk
-      bitmap[entryPos] = thisEntry;
     }
-
-    // Return the full jump destination bitmask
+    if (fullChunks << 6 < length) {
+      walkChunk(rawCode, bitmap, fullChunks, pushDataRemaining);
+    }
     return bitmap;
+  }
+
+  /**
+   * Marks the JUMPDESTs of one chunk, visiting every byte and carrying the number of PUSH data
+   * bytes still to come. {@code remaining - 1} is negative exactly at an instruction, and its sign
+   * both selects the JUMPDEST bit and picks the new count, so no step branches on the opcode.
+   *
+   * @return the number of PUSH data bytes that continue into the next chunk
+   */
+  private static int walkChunk(
+      final byte[] code, final long[] bitmap, final int chunk, final int pushDataRemaining) {
+    final int chunkStart = chunk << 6;
+    final int chunkEnd = Math.min(chunkStart + 64, code.length);
+    int remaining = pushDataRemaining;
+    long jumpDests = 0L;
+    for (int i = chunkStart; i < chunkEnd; i++) {
+      final int opcode = code[i] & 0xff;
+      final int next = remaining - 1;
+      final int isInstruction = next >> 31;
+      jumpDests |= (long) (IS_JUMPDEST[opcode] & isInstruction) << i;
+      remaining = next + (isInstruction & INSTRUCTION_LENGTH[opcode]);
+    }
+    bitmap[chunk] = jumpDests;
+    return remaining;
+  }
+
+  /** Whether any of the 64 bytes from {@code chunkStart} is a PUSH1-PUSH32 opcode (0x60-0x7f). */
+  private static boolean chunkContainsPush(final byte[] code, final int chunkStart) {
+    for (int word = chunkStart; word < chunkStart + 64; word += 8) {
+      final long bytes = (long) LITTLE_ENDIAN_LONG.get(code, word);
+      if ((~bytes & (bytes << 1) & (bytes << 2) & HIGH_BITS) != 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** The JUMPDEST bytes among the 64 from {@code chunkStart}, one bit per byte. */
+  private static long chunkJumpDests(final byte[] code, final int chunkStart) {
+    long jumpDests = 0L;
+    for (int word = 0; word < 8; word++) {
+      final long candidates =
+          (long) LITTLE_ENDIAN_LONG.get(code, chunkStart + (word << 3)) ^ JUMPDEST_BYTES;
+      // The high bit of each byte that is zero, i.e. of each byte that was JUMPDEST
+      final long matches = ~(candidates | ((candidates & LOW_BITS) + LOW_BITS)) & HIGH_BITS;
+      // Gathers the eight high bits into the top byte, lowest byte first
+      jumpDests |= ((matches * GATHER_HIGH_BITS) >>> 56) << (word << 3);
+    }
+    return jumpDests;
   }
 
   /**
