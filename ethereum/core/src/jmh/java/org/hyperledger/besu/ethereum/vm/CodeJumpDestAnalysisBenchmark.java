@@ -86,6 +86,9 @@ public class CodeJumpDestAnalysisBenchmark {
    * decision for an analysis that branches on the opcode. STOP_JUMPDEST_PUSH1 and JUMPDEST_PUSH1
    * are the bodies of the jump destination analysis benchmarks in ethereum/execution-specs#3631.
    *
+   * <p>RANDOM_TWELVE_PUSH1_PER_CHUNK: RANDOM_STOP_JUMPDEST with twelve PUSH1 in every 64 bytes, at
+   * random positions.
+   *
    * <p>SOLIDITY_13K: a real compiled Solidity contract from a devnet, 13,199 bytes with 2,378 PUSH
    * and 465 JUMPDEST instructions. The same bytes are analysed on every invocation, so an analysis
    * that branches on the opcode runs with a branch predictor trained on this very contract.
@@ -106,6 +109,7 @@ public class CodeJumpDestAnalysisBenchmark {
     "RANDOM_JUMPDEST_PUSH1",
     "RANDOM_ADD_JUMPDEST_PUSH1_TO_PUSH4",
     "RANDOM_BYTES",
+    "RANDOM_TWELVE_PUSH1_PER_CHUNK",
     "SOLIDITY_13K",
     "SOLIDITY_OPCODE_MIX",
     "SMALL"
@@ -140,6 +144,7 @@ public class CodeJumpDestAnalysisBenchmark {
       "RANDOM_JUMPDEST_PUSH1",
       "RANDOM_ADD_JUMPDEST_PUSH1_TO_PUSH4",
       "RANDOM_BYTES",
+      "RANDOM_TWELVE_PUSH1_PER_CHUNK",
       "SOLIDITY_13K",
       "SOLIDITY_OPCODE_MIX",
       "SMALL"
@@ -176,6 +181,7 @@ public class CodeJumpDestAnalysisBenchmark {
         random.nextBytes(code);
         yield code;
       }
+      case "RANDOM_TWELVE_PUSH1_PER_CHUNK" -> pushesPerChunk(random, 12);
       case "SOLIDITY_13K" -> solidityContract();
       case "SOLIDITY_OPCODE_MIX" -> opcodeMix(random, solidityContract());
       case "SMALL" -> mixed(256);
@@ -250,6 +256,29 @@ public class CodeJumpDestAnalysisBenchmark {
     final byte[] code = new byte[size];
     for (int i = 0; i < size; i++) {
       code[i] = (i % 32 == 31) ? (byte) JUMPDEST : pattern[i % pattern.length];
+    }
+    return code;
+  }
+
+  /**
+   * Random STOP and JUMPDEST, with the given number of PUSH1 per 64 bytes at random even offsets.
+   */
+  private static byte[] pushesPerChunk(final Random random, final int pushes) {
+    final byte[] code = randomOf(random, STOP, JUMPDEST);
+    final int[] offsets = new int[32];
+    for (int chunkStart = 0; chunkStart + 64 <= code.length; chunkStart += 64) {
+      for (int i = 0; i < offsets.length; i++) {
+        offsets[i] = 2 * i;
+      }
+      for (int i = offsets.length - 1; i > 0; i--) {
+        final int j = random.nextInt(i + 1);
+        final int swap = offsets[i];
+        offsets[i] = offsets[j];
+        offsets[j] = swap;
+      }
+      for (int i = 0; i < pushes; i++) {
+        code[chunkStart + offsets[i]] = (byte) PUSH1;
+      }
     }
     return code;
   }
