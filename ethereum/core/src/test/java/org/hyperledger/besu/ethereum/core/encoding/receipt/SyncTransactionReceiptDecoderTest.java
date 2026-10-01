@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class SyncTransactionReceiptDecoderTest {
@@ -207,9 +208,12 @@ public class SyncTransactionReceiptDecoderTest {
 
   /** Every type byte that {@link TransactionType} defines must still decode. */
   @ParameterizedTest(name = "type byte {0}")
-  @ValueSource(ints = {0x01, 0x02, 0x03, 0x04})
-  public void typedReceiptWithDefinedTypeByteIsAccepted(final int typeByte) {
-    final Bytes encodedReceipt = typedReceiptWithTypeByte(typeByte);
+  @EnumSource(
+      value = TransactionType.class,
+      names = {"FRONTIER"},
+      mode = EnumSource.Mode.EXCLUDE)
+  public void typedReceiptWithDefinedTypeByteIsAccepted(final TransactionType txType) {
+    final Bytes encodedReceipt = typedReceiptWithTypeByte(txType.getSerializedType());
 
     final SyncTransactionReceipt decoded = syncTransactionReceiptDecoder.decode(encodedReceipt);
 
@@ -275,12 +279,13 @@ public class SyncTransactionReceiptDecoderTest {
    * and it means the same thing as the empty field, so it is tolerated rather than rejected.
    */
   @ParameterizedTest(name = "eth/69 type field {0}")
-  @ValueSource(ints = {0x00, 0x01, 0x02, 0x03, 0x04})
-  public void eth69ReceiptWithDefinedTypeFieldIsAccepted(final int typeByte) {
-    final Bytes encodedReceipt = eth69ReceiptWithTypeField(Bytes.of((byte) typeByte));
+  @EnumSource(TransactionType.class)
+  public void eth69ReceiptWithDefinedTypeFieldIsAccepted(final TransactionType txType) {
+    final Bytes encodedReceipt = eth69ReceiptWithTypeField(Bytes.of(txType.getEthSerializedType()));
 
     final SyncTransactionReceipt decoded = syncTransactionReceiptDecoder.decode(encodedReceipt);
 
-    Assertions.assertEquals(Bytes.of((byte) typeByte), decoded.getTransactionTypeCode());
+    Assertions.assertEquals(
+        Bytes.of(txType.getEthSerializedType()), decoded.getTransactionTypeCode());
   }
 }
