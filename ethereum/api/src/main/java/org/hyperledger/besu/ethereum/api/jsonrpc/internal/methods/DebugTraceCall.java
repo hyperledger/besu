@@ -28,12 +28,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
@@ -118,13 +115,5 @@ public class DebugTraceCall extends AbstractTraceCall {
                   return step.buildResult(transactionTrace).getResult();
                 });
     return new TraceExecution(step.getOperationTracer(), handler);
-  }
-
-  @Override
-  protected TransactionValidationParams buildTransactionValidationParams(
-      final BlockHeader header, final CallParameter callParams) {
-    return CallParameterUtil.isAllowExceedingBalance(header, callParams)
-        ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
-        : TransactionValidationParams.transactionSimulatorAllowFutureNonce();
   }
 }

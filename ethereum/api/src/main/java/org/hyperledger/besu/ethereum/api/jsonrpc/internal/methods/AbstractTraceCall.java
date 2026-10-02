@@ -127,7 +127,7 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
 
   protected TransactionValidationParams buildTransactionValidationParams(
       final BlockHeader header, final CallParameter callParams) {
-    return buildTransactionValidationParams();
+    return CallParameterUtil.getTransactionValidationParams(header, callParams);
   }
 
   protected abstract TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext);
