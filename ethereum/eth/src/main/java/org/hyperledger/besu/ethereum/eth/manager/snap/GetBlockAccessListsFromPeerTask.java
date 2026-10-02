@@ -132,7 +132,7 @@ public class GetBlockAccessListsFromPeerTask
                         new ProtocolViolationException(
                             "Missing expected block access list hash at index %d for block %s"
                                 .formatted(currentIndex, blockHeader.getHash())));
-        final Hash actual = BodyValidation.balHash(syncBlockAccessList);
+        final Hash actual = BodyValidation.balHashOfEncoded(syncBlockAccessList.getRlp());
         if (!actual.equals(expected)) {
           throw new ProtocolViolationException(
               "Received block access list with invalid hash at index %d: expected %s, got %s"

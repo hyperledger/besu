@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -75,6 +76,9 @@ class BlockAccessListDecoderTest {
           out.startList(); // storage reads
           if ("storage_read".equals(nonMinimalField)) {
             writeNonMinimal(out, READ);
+          } else if ("storage_read_long_form".equals(nonMinimalField)) {
+            // A single byte below 0x80 must be encoded as itself, not as a one-byte string.
+            out.writeRaw(Bytes.of(0x81, READ.toBytes().get(31)));
           } else {
             out.writeUInt256Scalar(READ);
           }
@@ -92,8 +96,16 @@ class BlockAccessListDecoderTest {
           out.endList();
 
           out.startList(); // nonce changes
+          out.startList();
+          out.writeUnsignedInt(1);
+          out.writeLongScalar(7);
+          out.endList();
           out.endList();
           out.startList(); // code changes
+          out.startList();
+          out.writeUnsignedInt(1);
+          out.writeBytes(Bytes.fromHexString("0x6001600055"));
+          out.endList();
           out.endList();
 
           out.endList();
@@ -125,5 +137,42 @@ class BlockAccessListDecoderTest {
     assertThatThrownBy(() -> decode(encodeBlockAccessList(field)))
         .isInstanceOf(RLPException.class)
         .hasMessageContaining("leading zero");
+  }
+
+  @Test
+  void canonicalEncodingRoundTripsByteForByte() {
+    final Bytes encoded = encodeBlockAccessList(null);
+    final BlockAccessList bal = decode(encoded);
+
+    assertThat(RLP.encode(bal::writeTo)).isEqualTo(encoded);
+  }
+
+  @Test
+  void balHashOfDecodedListMatchesBalHashOfEncodedBytes() {
+    // BodyValidation exposes two balHash definitions: one hashes the canonical re-encoding, the
+    // other hashes bytes as received. They must agree for every input the decoder accepts.
+    final Bytes encoded = encodeBlockAccessList(null);
+
+    assertThat(BodyValidation.balHash(decode(encoded)))
+        .isEqualTo(BodyValidation.balHashOfEncoded(encoded));
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "storage_slot",
+        "storage_value",
+        "storage_read",
+        "storage_read_long_form",
+        "balance"
+      })
+  void nonCanonicalEncodingNeverYieldsABlockAccessList(final String field) {
+    // If any of these decoded, balHash(decode(x)) would be the canonical hash while
+    // balHashOfEncoded(x) would not, so the result would depend on which overload a caller used.
+    final Bytes nonCanonical = encodeBlockAccessList(field);
+
+    assertThat(BodyValidation.balHashOfEncoded(nonCanonical))
+        .isNotEqualTo(BodyValidation.balHashOfEncoded(encodeBlockAccessList(null)));
+    assertThatThrownBy(() -> decode(nonCanonical)).isInstanceOf(RLPException.class);
   }
 }
