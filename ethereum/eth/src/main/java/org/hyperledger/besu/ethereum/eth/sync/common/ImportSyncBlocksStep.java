@@ -18,12 +18,16 @@ import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -31,6 +35,17 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Stores the bodies and receipts of the batches of blocks a sync has downloaded and moves the chain
+ * head over them.
+ *
+ * <p>The batches are downloaded side by side and are handed over in the order their downloads
+ * complete, which is not the order of their blocks. Each one is stored when it arrives, so that a
+ * slow download holds up neither the ones behind it nor their memory. The chain head only moves
+ * over blocks that have every block before them stored: a batch that arrives ahead of an earlier
+ * one stays off the chain until that one is there. A sync that is interrupted continues from the
+ * chain head and downloads such batches again.
+ */
 public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(ImportSyncBlocksStep.class);
   private static final int PRINT_DELAY_SECONDS = 30;
@@ -43,6 +58,10 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
   private final Optional<ChainDataPruner> chainDataPruner;
   private final AtomicBoolean isTimeToUpdate = new AtomicBoolean(true);
   private final long pivotHeaderNumber;
+  // the headers of the batches that are stored but follow a batch that is not, by first block
+  private final NavigableMap<Long, List<BlockHeader>> storedAhead = new TreeMap<>();
+  // the block the chain head moves to next
+  private long nextBlockNumber;
 
   public ImportSyncBlocksStep(
       final ProtocolContext protocolContext,
@@ -59,19 +78,34 @@ public class ImportSyncBlocksStep implements Consumer<List<SyncBlockWithReceipts
     this.pivotHeaderNumber = pivotHeaderNumber;
     this.transactionIndexingEnabled = transactionIndexingEnabled;
     this.chainDataPruner = chainDataPruner;
+    this.nextBlockNumber = startBlock + 1;
   }
 
   @Override
   public void accept(final List<SyncBlockWithReceipts> blocksWithReceipts) {
-    protocolContext
-        .getBlockchain()
-        .unsafeImportSyncBodiesAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
-    final long lastBlock = blocksWithReceipts.getLast().getNumber();
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+    blockchain.unsafeStoreSyncBodiesAndReceipts(blocksWithReceipts, transactionIndexingEnabled);
+    final long firstBlock = blocksWithReceipts.getFirst().getNumber();
+    if (firstBlock >= nextBlockNumber) {
+      storedAhead.put(
+          firstBlock, blocksWithReceipts.stream().map(SyncBlockWithReceipts::getHeader).toList());
+    }
+
+    while (!storedAhead.isEmpty() && storedAhead.firstKey() == nextBlockNumber) {
+      final List<BlockHeader> headers = storedAhead.pollFirstEntry().getValue();
+      blockchain.unsafeAdvanceSyncChainHead(headers);
+      final BlockHeader lastHeader = headers.getLast();
+      nextBlockNumber = lastHeader.getNumber() + 1;
+      onChainHeadAdvanced(lastHeader);
+    }
+  }
+
+  private void onChainHeadAdvanced(final BlockHeader chainHead) {
+    final long lastBlock = chainHead.getNumber();
 
     // The unsafe snap-sync import path bypasses BlockAddedEvent observers, so drive catch-up
     // chain/BAL pruning explicitly after each batch commits.
-    chainDataPruner.ifPresent(
-        pruner -> pruner.pruneForSyncedHead(blocksWithReceipts.getLast().getBlock().getHeader()));
+    chainDataPruner.ifPresent(pruner -> pruner.pruneForSyncedHead(chainHead));
 
     syncState.setSyncProgress(startBlock, lastBlock, pivotHeaderNumber);
 

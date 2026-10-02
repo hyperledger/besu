@@ -104,6 +104,27 @@ public interface MutableBlockchain extends Blockchain {
   void unsafeImportSyncBodiesAndReceipts(
       List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
 
+  /**
+   * Stores the bodies and receipts of blocks whose headers are already stored, without updating the
+   * chain state. Unlike {@link #unsafeImportSyncBodiesAndReceipts} this does not need the blocks
+   * before them to be stored: what a sync downloads side by side can be stored as it arrives. The
+   * blocks only become part of the chain with {@link #unsafeAdvanceSyncChainHead}.
+   *
+   * @param blocksAndReceipts The blocks and receipts to store
+   * @param indexTransactions Boolean whether to index transactions
+   */
+  void unsafeStoreSyncBodiesAndReceipts(
+      List<SyncBlockWithReceipts> blocksAndReceipts, boolean indexTransactions);
+
+  /**
+   * Moves the chain head forward over blocks whose bodies and receipts were stored with {@link
+   * #unsafeStoreSyncBodiesAndReceipts}. This method is NOT THREAD SAFE. It has to be called from a
+   * single thread, with the headers in order and starting right after the chain head.
+   *
+   * @param blockHeaders The headers of the blocks, the last one becomes the chain head
+   */
+  void unsafeAdvanceSyncChainHead(List<BlockHeader> blockHeaders);
+
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
   /**

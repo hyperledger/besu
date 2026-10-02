@@ -28,15 +28,18 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,6 +77,43 @@ public class BlockHeaderSourceTest {
     assertThat(batches).hasSize(10);
     assertThat(batches.get(0).get(0).getNumber()).isEqualTo(100);
     assertThat(batches.get(9).get(0).getNumber()).isEqualTo(1000);
+  }
+
+  @Test
+  public void shouldNotRunFurtherAheadOfTheChainHeadThanAllowed() throws Exception {
+    final AtomicLong chainHead = new AtomicLong(99);
+    when(blockchain.getChainHeadBlockNumber()).thenAnswer(invocation -> chainHead.get());
+    when(blockchain.getBlockHeaders(anyLong(), anyInt()))
+        .thenAnswer(
+            invocation -> createMockHeaders(invocation.getArgument(0), invocation.getArgument(1)));
+    final BlockHeaderSource source = new BlockHeaderSource(blockchain, 99, 1000, 100, 150);
+
+    // the batches from 100 and 200 start within 150 blocks of the chain head
+    assertThat(source.next().get(0).getNumber()).isEqualTo(100);
+    assertThat(source.next().get(0).getNumber()).isEqualTo(200);
+
+    // the one from 300 does not
+    final CompletableFuture<List<BlockHeader>> third = CompletableFuture.supplyAsync(source::next);
+    Thread.sleep(200);
+    assertThat(third).isNotDone();
+
+    chainHead.set(199);
+
+    assertThat(third).succeedsWithin(Duration.ofSeconds(10));
+    assertThat(third.get().get(0).getNumber()).isEqualTo(300);
+  }
+
+  @Test
+  public void shouldMeasureTheDistanceFromTheAnchorWhileTheChainHeadIsBelowIt() {
+    // nothing is on the chain yet: its head is the genesis block
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(0L);
+    when(blockchain.getBlockHeaders(anyLong(), anyInt()))
+        .thenAnswer(
+            invocation -> createMockHeaders(invocation.getArgument(0), invocation.getArgument(1)));
+    final BlockHeaderSource source = new BlockHeaderSource(blockchain, 5_000, 6_000, 100, 150);
+
+    assertThat(source.next().get(0).getNumber()).isEqualTo(5_001);
+    assertThat(source.next().get(0).getNumber()).isEqualTo(5_101);
   }
 
   @Test

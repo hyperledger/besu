@@ -750,6 +750,41 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public void unsafeStoreSyncBodiesAndReceipts(
+      final List<SyncBlockWithReceipts> blocksAndReceipts, final boolean indexTransactions) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
+      final Hash blockHash = blockAndReceipts.getHash();
+      final SyncBlockBody body = blockAndReceipts.getBlock().getBody();
+      updater.putSyncBlockBody(blockHash, body);
+      updater.putSyncTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
+      if (indexTransactions) {
+        final List<Hash> listOfTxHashes =
+            body.getEncodedTransactions().stream().map(Hash::hash).toList();
+        indexTransactionHashesForBlock(updater, blockHash, listOfTxHashes);
+      }
+    }
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeAdvanceSyncChainHead(final List<BlockHeader> blockHeaders) {
+    if (blockHeaders.isEmpty()) {
+      return;
+    }
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final BlockHeader header : blockHeaders) {
+      final Hash blockHash = header.getHash();
+      updater.putBlockHash(header.getNumber(), blockHash);
+      this.totalDifficulty = calculateTotalDifficultyForSyncing(header);
+      updater.putTotalDifficulty(blockHash, totalDifficulty);
+      this.chainHeader = header;
+    }
+    updater.setChainHead(chainHeader.getBlockHash());
+    updater.commit();
+  }
+
+  @Override
   public synchronized void unsafeSetChainHead(
       final BlockHeader blockHeader, final Difficulty totalDifficulty) {
     final BlockchainStorage.Updater updater = blockchainStorage.updater();

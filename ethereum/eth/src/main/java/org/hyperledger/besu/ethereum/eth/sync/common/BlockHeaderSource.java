@@ -33,9 +33,13 @@ import org.slf4j.LoggerFactory;
 public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(BlockHeaderSource.class);
 
+  private static final long CHAIN_HEAD_POLL_MILLIS = 20;
+
   private final Blockchain blockchain;
   private final long pivotBlockNumber;
   private final int batchSize;
+  private final long anchorBlockNumber;
+  private final long maxBlocksAheadOfChainHead;
 
   private final AtomicLong currentBlockNumber;
 
@@ -52,9 +56,33 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
       final long anchorBlockNumber,
       final long pivotBlockNumber,
       final int batchSize) {
+    this(blockchain, anchorBlockNumber, pivotBlockNumber, batchSize, Long.MAX_VALUE);
+  }
+
+  /**
+   * Creates a new BlockHeaderSource that does not run further ahead of the chain head than the
+   * given number of blocks. Where the blocks are stored as their downloads complete and the chain
+   * head follows behind, this bounds how much is stored ahead of a block that keeps failing to
+   * download.
+   *
+   * @param blockchain the blockchain to read headers from
+   * @param anchorBlockNumber the block number before the block to start with
+   * @param pivotBlockNumber the block number to stop at (inclusive)
+   * @param batchSize the number of headers to return per batch
+   * @param maxBlocksAheadOfChainHead how far the first block of a batch may be ahead of the chain
+   *     head when the batch is handed out
+   */
+  public BlockHeaderSource(
+      final Blockchain blockchain,
+      final long anchorBlockNumber,
+      final long pivotBlockNumber,
+      final int batchSize,
+      final long maxBlocksAheadOfChainHead) {
     this.blockchain = blockchain;
     this.pivotBlockNumber = pivotBlockNumber;
     this.batchSize = batchSize;
+    this.anchorBlockNumber = anchorBlockNumber;
+    this.maxBlocksAheadOfChainHead = maxBlocksAheadOfChainHead;
     this.currentBlockNumber = new AtomicLong(anchorBlockNumber + 1);
 
     LOG.debug(
@@ -79,10 +107,28 @@ public class BlockHeaderSource implements Iterator<List<BlockHeader>> {
 
     long start = currentBlockNumber.getAndAdd(batchSize);
     final int actualLength = (int) Math.min(batchSize, pivotBlockNumber - start + 1);
+    waitForChainHead(start);
 
     LOG.trace(
         "BlockHeaderSource reading batch: {} blocks from block number {}", actualLength, start);
 
     return blockchain.getBlockHeaders(start, actualLength);
+  }
+
+  /** Waits until the chain head is close enough for the batch starting at the given block. */
+  private void waitForChainHead(final long firstBlockOfBatch) {
+    if (maxBlocksAheadOfChainHead == Long.MAX_VALUE) {
+      return;
+    }
+    try {
+      // the chain head can be below the anchor until the first batch is on the chain
+      while (firstBlockOfBatch - Math.max(anchorBlockNumber, blockchain.getChainHeadBlockNumber())
+          > maxBlocksAheadOfChainHead) {
+        Thread.sleep(CHAIN_HEAD_POLL_MILLIS);
+      }
+    } catch (final InterruptedException e) {
+      // the pipeline is shutting down, what is handed out now is not processed any more
+      Thread.currentThread().interrupt();
+    }
   }
 }

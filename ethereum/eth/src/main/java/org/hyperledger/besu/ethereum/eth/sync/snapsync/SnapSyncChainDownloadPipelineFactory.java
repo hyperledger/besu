@@ -51,6 +51,12 @@ public class SnapSyncChainDownloadPipelineFactory {
   private static final Logger LOG =
       LoggerFactory.getLogger(SnapSyncChainDownloadPipelineFactory.class);
 
+  /**
+   * How many batches of bodies and receipts may be stored ahead of the chain head, which waits for
+   * the batch right behind it. Beyond this the download pauses until that batch is there.
+   */
+  private static final int MAX_BATCHES_AHEAD_OF_CHAIN_HEAD = 256;
+
   protected final SynchronizerConfiguration syncConfig;
   protected final ProtocolSchedule protocolSchedule;
   protected final ProtocolContext protocolContext;
@@ -169,7 +175,12 @@ public class SnapSyncChainDownloadPipelineFactory {
         bodiesRequestSize);
 
     final BlockHeaderSource headerSource =
-        new BlockHeaderSource(blockchain, anchorBlock, pivotHeaderNumber, bodiesRequestSize);
+        new BlockHeaderSource(
+            blockchain,
+            anchorBlock,
+            pivotHeaderNumber,
+            bodiesRequestSize,
+            (long) MAX_BATCHES_AHEAD_OF_CHAIN_HEAD * bodiesRequestSize);
 
     final DownloadSyncBodiesStep downloadBodiesStep =
         new DownloadSyncBodiesStep(
@@ -206,8 +217,11 @@ public class SnapSyncChainDownloadPipelineFactory {
                 "action"),
             true,
             "forwardBodiesReceipts")
-        .thenProcessAsyncOrdered("downloadBodies", downloadBodiesStep, downloaderParallelism)
-        .thenProcessAsyncOrdered("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        // The batches leave the download steps as they complete. Kept in order, every batch would
+        // wait for the slowest request before it, with its bodies and receipts in memory and its
+        // slot taken, although nothing about storing them depends on the blocks before them.
+        .thenProcessAsync("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcessAsync("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
         .andFinishWith("importBlocks", importBlocksStep);
   }
 
