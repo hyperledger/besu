@@ -84,6 +84,7 @@
 - `evmtool t8n` now reports a failure while processing execution layer requests, such as a malformed deposit event, as `blockException` in its result, like block import rejects the block. It previously failed the whole transition, so `t8n-server` answered with HTTP 500. [#11570](https://github.com/besu-eth/besu/pull/11570)
 - `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
 - `--ethstats` no longer retains a few KB of heap per reconnect attempt while the ethstats server is unreachable. [#11614](https://github.com/besu-eth/besu/pull/11614)
+- A peer that answers a header, body or sync block body request with malformed RLP is now disconnected for breach of protocol, as it already was for pooled transactions, receipts and block access lists. Previously the decoding failure was logged at ERROR as a server error and the peer stayed connected. [#11451](https://github.com/besu-eth/besu/pull/11451)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
