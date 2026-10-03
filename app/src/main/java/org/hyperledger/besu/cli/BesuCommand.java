@@ -361,8 +361,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   protected final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
 
+  /**
+   * The mining parameters, built from the parsed options. For the node run, the same instance is
+   * shared by the configuration view, the controller, the transaction pool and the metrics, so it
+   * holds the runtime values; the blocks import and export subcommands build their own.
+   */
   private final Supplier<MiningConfiguration> miningParametersSupplier =
-      Suppliers.memoize(this::getMiningParameters);
+      Suppliers.memoize(this::createMiningParameters);
+
+  /**
+   * The mining parameters with the parts that need the genesis file and the metrics system applied,
+   * once: the block period of an IBFT2 or QBFT network and the gauges observing the parameters.
+   */
+  private final Supplier<MiningConfiguration> initialisedMiningParametersSupplier =
+      Suppliers.memoize(this::initialiseMiningParameters);
+
   private final Supplier<ApiConfiguration> apiConfigurationSupplier =
       Suppliers.memoize(this::getApiConfiguration);
 
@@ -976,19 +989,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.resetState();
     initPluginCommonConfiguration();
     besuPluginContext.beginRegistration();
-    besuPluginContext.registerPlugins();
-    besuPluginContext.endRegistration();
+    try {
+      besuPluginContext.registerPlugins();
+    } finally {
+      // a failure here is logged by the restart thread and the process stays up, so the window
+      // must close or registration-tier services would keep accepting late registrations
+      besuPluginContext.endRegistration();
+    }
   }
 
   /**
-   * Fills the plugin configuration views from the parsed options. Mining parameters are set later,
-   * in {@link #setupControllerBuilder()}: building them creates the metrics system, which must
-   * already know the metric categories plugins register.
+   * Fills the plugin configuration views from the parsed options, before plugins register. The
+   * mining parameters are the shared instance that {@link #setupControllerBuilder()} later
+   * completes with the genesis block period and the metrics gauges, so the view reports the runtime
+   * values from registration onwards.
    */
   private void initPluginCommonConfiguration() {
     pluginCommonConfiguration
         .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
-        .withJsonRpcHttpOptions(jsonRpcHttpOptions, unstableRPCOptions.getHttpTimeoutSec());
+        .withJsonRpcHttpOptions(jsonRpcHttpOptions, unstableRPCOptions.getHttpTimeoutSec())
+        .withMiningParameters(miningParametersSupplier.get());
   }
 
   @SuppressWarnings("BannedMethod")
@@ -1158,7 +1178,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     runner.startEthereumMainLoop();
 
     BesuPluginServiceRegistrar.registerRunningServices(besuPluginContext, besuController, runner);
-    besuPluginContext.afterMainLoop();
+    // the built-in readiness check goes first, so a slow afterMainLoop() of a third-party plugin
+    // cannot hold /readiness at DOWN while the node is running
     if (readinessCheckPlugin != null) {
       try {
         readinessCheckPlugin.afterMainLoop(
@@ -1167,6 +1188,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         logger.warn("Failed to run readinessCheckPlugin after the main loop", e);
       }
     }
+    besuPluginContext.afterMainLoop();
   }
 
   private void configurePrecompileCaching() {
@@ -2204,7 +2226,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public BesuControllerBuilder setupControllerBuilder() {
     initPluginCommonConfiguration();
-    pluginCommonConfiguration.withMiningParameters(miningParametersSupplier.get());
+    final MiningConfiguration miningParameters = initialisedMiningParametersSupplier.get();
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     final ApiConfiguration apiConfiguration = apiConfigurationSupplier.get();
     final BalConfiguration balConfiguration = balConfigurationOptions.toDomainObject();
@@ -2218,7 +2240,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .networkConfiguration(unstableNetworkingOptions.toDomainObject())
             .dataDirectory(dataDir())
             .dataStorageConfiguration(getDataStorageConfiguration())
-            .miningParameters(miningParametersSupplier.get())
+            .miningParameters(miningParameters)
             .transactionPoolConfiguration(buildTransactionPoolConfiguration())
             .nodeKey(new NodeKey(securityModule()))
             .metricsSystem((ObservableMetricsSystem) besuComponent.getMetricsSystem())
@@ -2422,13 +2444,22 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return txPoolConfBuilder.build();
   }
 
-  private MiningConfiguration getMiningParameters() {
+  private MiningConfiguration createMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
-    final var miningParameters = miningOptions.toDomainObject();
+    return miningOptions.toDomainObject();
+  }
+
+  /**
+   * Completes the shared mining parameters with what needs the genesis file and the metrics system:
+   * the block period of an IBFT2 or QBFT network, read by the block producer once the controller is
+   * built, and the gauges, which only observe the parameters. Both are applied once, to the same
+   * instance the configuration view and every other reader hold.
+   */
+  private MiningConfiguration initialiseMiningParameters() {
+    final var miningParameters = miningParametersSupplier.get();
     getBlockPeriodSeconds(readGenesisConfigOptions())
         .ifPresent(miningParameters::setBlockPeriodSeconds);
     initMiningParametersMetrics(miningParameters);
-
     return miningParameters;
   }
 

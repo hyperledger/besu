@@ -59,17 +59,17 @@ public interface BesuPlugin {
    * its configuration: throwing from this method rejects the configuration before the database is
    * touched, unless the operator chose to continue on plugin errors.
    *
-   * <p>This is the only phase in which registrations count: Besu reads them once, after the last
-   * plugin has returned from this method. The context only offers the services that work here
-   * ({@link RegistrationService} types) and is valid only while this method runs; a {@link
-   * RegistrationService} kept in a field and used later rejects the call with a {@link
-   * RegistrationClosedException}. Services that work in later phases are obtained from the context
-   * of that phase, so there is nothing to keep from this one.
+   * <p>This is the only phase in which registrations are accepted: Besu wires them into the node
+   * after every plugin, including Besu's built-in ones, has returned from this method. The context
+   * only offers the services that work here ({@link RegistrationService} types) and is valid only
+   * during registration; a registration made later through a {@link RegistrationService} kept in a
+   * field is rejected with a {@link RegistrationClosedException}. Services that work in later
+   * phases are obtained from the context of that phase, so there is nothing to keep from this one.
    *
    * <p>The configuration views provide the data path, the storage path, the data storage
-   * configuration and the RPC HTTP host, port and timeout here; the min gas price is available from
-   * {@link #start(StartContext)}. On Ephemery the per-cycle data subdirectory is chosen when the
-   * node is built, so the final data path is only visible from {@link #start(StartContext)}.
+   * configuration, the RPC HTTP host, port and timeout and the min gas price here. On Ephemery the
+   * per-cycle data subdirectory is chosen when the node is built, so the final data path and
+   * storage path are only visible from {@link #start(StartContext)}.
    *
    * @param context the registration-phase context
    */
@@ -89,10 +89,11 @@ public interface BesuPlugin {
   void start(StartContext context);
 
   /**
-   * Called once the main loop is running: the peer-to-peer network, the synchronizer and the mining
-   * coordinator have started. This is the first point at which the {@link RunningService} types
-   * ({@code P2PService}, {@code SynchronizationService}, {@code MiningService}) return meaningful
-   * answers, so work that needs them belongs here rather than in {@link #start(StartContext)}.
+   * Called once the main loop is running: the mining coordinator has started and, unless
+   * peer-to-peer networking is disabled, so have the network and the synchronizer. This is the
+   * first point at which the {@link RunningService} types ({@code P2PService}, {@code
+   * SynchronizationService}, {@code MiningService}) return meaningful answers, so work that needs
+   * them belongs here rather than in {@link #start(StartContext)}.
    *
    * @param context the running-phase context, whose lookup also accepts every {@link StartService}
    */
