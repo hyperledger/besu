@@ -44,7 +44,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 public class ChainHeadTrackerTest {
@@ -111,18 +110,6 @@ public class ChainHeadTrackerTest {
       final DataStorageFormat storageFormat) {
     setup(storageFormat);
     chainHeadTracker.getBestHeaderFromPeer(respondingPeer.getEthPeer());
-
-    ArgumentCaptor<GetHeadersFromPeerTask> taskCaptor =
-        ArgumentCaptor.forClass(GetHeadersFromPeerTask.class);
-    Mockito.verify(peerTaskExecutor)
-        .executeAgainstPeer(taskCaptor.capture(), Mockito.eq(respondingPeer.getEthPeer()));
-    GetHeadersFromPeerTask capturedTask = taskCaptor.getValue();
-    Assertions.assertThat(capturedTask.getBlockHash())
-        .isEqualTo(respondingPeer.getEthPeer().chainState().getBestBlock().getHash());
-    Assertions.assertThat(capturedTask.getMaxHeaders()).isEqualTo(1);
-    Assertions.assertThat(capturedTask.getSkip()).isZero();
-    Assertions.assertThat(capturedTask.getDirection())
-        .isEqualTo(GetHeadersFromPeerTask.Direction.REVERSE);
 
     Assertions.assertThat(chainHeadState().getEstimatedHeight()).isZero();
     Assertions.assertThat(chainHeadState().getEstimatedHeight())

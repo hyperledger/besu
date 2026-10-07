@@ -69,9 +69,10 @@ public class ChainHeadTracker {
               GetHeadersFromPeerTask task =
                   new GetHeadersFromPeerTask(
                       peer.chainState().getBestBlock().getHash(),
+                      0,
                       1,
                       0,
-                      Direction.REVERSE,
+                      Direction.FORWARD,
                       protocolSchedule);
               PeerTaskExecutorResult<List<BlockHeader>> taskResult =
                   ethContext.getPeerTaskExecutor().executeAgainstPeer(task, peer);
