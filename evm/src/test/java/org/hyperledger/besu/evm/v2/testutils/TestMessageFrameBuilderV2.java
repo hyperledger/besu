@@ -187,6 +187,9 @@ public class TestMessageFrameBuilderV2 {
     stackItems.forEach(
         item -> {
           final UInt256 val = UInt256.fromBytesBE(item.toArrayUnsafe());
+          if (!frame.stackHasSpaceV2(1)) {
+            throw new IllegalStateException("More stack items than the stack can hold");
+          }
           final long[] s = frame.stackDataV2();
           final int dst = frame.stackTopV2() << 2;
           s[dst] = val.u3();

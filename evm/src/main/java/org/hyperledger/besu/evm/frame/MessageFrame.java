@@ -34,6 +34,7 @@ import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -199,6 +200,9 @@ public class MessageFrame {
   /** The constant DEFAULT_MAX_STACK_SIZE. */
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
+  // Most frames stay far below the maximum, and a frame allocates its stack on every call.
+  private static final int INITIAL_STACK_CAPACITY_V2 = 32;
+
   // Global data fields.
   private final WorldUpdater worldUpdater;
 
@@ -215,6 +219,7 @@ public class MessageFrame {
   // significant)
   private long[] stackDataV2;
   private int stackTopV2;
+  private int stackCapacityV2;
   private final int stackMaxSizeV2;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
@@ -288,9 +293,12 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.stackDataV2 = enableEvmV2 ? new long[txValues.maxStackSize() * 4] : null;
     this.stackTopV2 = 0;
     this.stackMaxSizeV2 = txValues.maxStackSize();
+    if (enableEvmV2) {
+      this.stackCapacityV2 = Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2);
+      this.stackDataV2 = new long[stackCapacityV2 << 2];
+    }
     this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -517,7 +525,8 @@ public class MessageFrame {
    */
   public void ensureStackV2() {
     if (stackDataV2 == null) {
-      stackDataV2 = new long[stackMaxSizeV2 * 4];
+      stackCapacityV2 = Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2);
+      stackDataV2 = new long[stackCapacityV2 << 2];
     }
   }
 
@@ -559,13 +568,25 @@ public class MessageFrame {
   }
 
   /**
-   * Returns true if the stack has space for {@code n} more items.
+   * Returns true if the stack has space for {@code n} more items, growing the backing array when
+   * the items fit the maximum stack size but not the array. A caller that pushes reads {@link
+   * #stackDataV2()} after this check.
    *
    * @param n the number of additional items
    * @return true if the stack can accommodate n more items
    */
   public boolean stackHasSpaceV2(final int n) {
-    return stackTopV2 + n <= stackMaxSizeV2;
+    final int needed = stackTopV2 + n;
+    return needed <= stackCapacityV2 || growStackV2(needed);
+  }
+
+  private boolean growStackV2(final int needed) {
+    if (needed > stackMaxSizeV2) {
+      return false;
+    }
+    stackCapacityV2 = Math.min(stackMaxSizeV2, Math.max(needed, stackCapacityV2 << 1));
+    stackDataV2 = Arrays.copyOf(stackDataV2, stackCapacityV2 << 2);
+    return true;
   }
 
   // ---------------------------------------------------------------------------

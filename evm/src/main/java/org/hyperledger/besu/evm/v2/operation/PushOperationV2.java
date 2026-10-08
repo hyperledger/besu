@@ -50,32 +50,30 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   }
 
   private static void pushUInt256ToStack(final MessageFrame frame, final UInt256 pushValue) {
+    if (!frame.stackHasSpaceV2(1)) {
+      throw new OverflowException();
+    }
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int offset = top << 2;
-    try {
-      stack[offset] = pushValue.u3();
-      stack[offset + 1] = pushValue.u2();
-      stack[offset + 2] = pushValue.u1();
-      stack[offset + 3] = pushValue.u0();
-    } catch (ArrayIndexOutOfBoundsException aiobe) {
-      throw new OverflowException();
-    }
+    stack[offset] = pushValue.u3();
+    stack[offset + 1] = pushValue.u2();
+    stack[offset + 2] = pushValue.u1();
+    stack[offset + 3] = pushValue.u0();
     frame.setTopV2(top + 1);
   }
 
   private static void pushLongToStack(final MessageFrame frame, final long u0) {
+    if (!frame.stackHasSpaceV2(1)) {
+      throw new OverflowException();
+    }
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int offset = top << 2;
-    try {
-      stack[offset] = 0;
-      stack[offset + 1] = 0;
-      stack[offset + 2] = 0;
-      stack[offset + 3] = u0;
-    } catch (ArrayIndexOutOfBoundsException aiobe) {
-      throw new OverflowException();
-    }
+    stack[offset] = 0;
+    stack[offset + 1] = 0;
+    stack[offset + 2] = 0;
+    stack[offset + 3] = u0;
     frame.setTopV2(top + 1);
   }
 
