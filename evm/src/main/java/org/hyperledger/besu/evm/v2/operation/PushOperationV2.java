@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.fromBytesBE;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.getLongBE;
+
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -151,7 +154,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
       final int start = pc + 1;
       final int end = start + pushSize;
-      long u0 = UInt256.getLongBE(code, start, Math.min(end, code.length));
+      long u0 = getLongBE(code, start, Math.min(end, code.length));
 
       // Slow-path - when push is truncated and zeros need to be appended
       if (end > code.length) {
@@ -202,7 +205,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
       final int start = pc + 1;
       final int end = start + pushSize;
       final int remainingSize = Math.min(end, code.length) - start;
-      UInt256 pushValue = UInt256.fromBytesBE(code, start, remainingSize);
+      UInt256 pushValue = fromBytesBE(code, start, remainingSize);
 
       // Slow-path - when push is truncated and zeros need to be appended
       if (end > code.length) {

@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.v2.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.UInt256;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -346,5 +347,82 @@ final class StackUtil {
     stack[bOffset + 1] = a1;
     stack[bOffset + 2] = a2;
     stack[bOffset + 3] = a3;
+  }
+
+  /**
+   * Convert {@code length} bytes starting at {@code offset} (inclusive) to a UInt256 value. If
+   * {@code length} is less than 32, the most significant bytes of the UInt256 are set to 0. If
+   * {@code length} is greater than 32, the most significant bytes are truncated (the low-order 32
+   * bytes are kept).
+   *
+   * @param bytes raw bytes in BigEndian order.
+   * @param offset start index of the bytes array to convert, inclusive
+   * @param length amount of bytes to take for conversion, caller must ensure >= 0 - unguarded
+   * @return Big-endian UInt256 represented by the bytes.
+   */
+  static UInt256 fromBytesBE(final byte[] bytes, final int offset, final int length) {
+    long u0 = 0, u1 = 0, u2 = 0, u3 = 0;
+    int end = offset + length;
+    if (bytes.length >= 8) {
+      int i0 = Math.max(offset, end - 8);
+      int i1 = Math.max(offset, end - 16);
+      int i2 = Math.max(offset, end - 24);
+      int i3 = Math.max(offset, end - 32);
+      u0 = getLongUnsafe(bytes, i0, end);
+      u1 = getLongUnsafe(bytes, i1, i0);
+      u2 = getLongUnsafe(bytes, i2, i1);
+      u3 = getLongUnsafe(bytes, i3, i2);
+      return new UInt256(u3, u2, u1, u0);
+    } else if (bytes.length != 0) {
+      u0 = getLongSlow(bytes, offset, end);
+    }
+    return new UInt256(u3, u2, u1, u0);
+  }
+
+  /**
+   * Convert a sequence of bytes starting at {@code from} (inclusive) to {@code to} (exclusive) to a
+   * long value. If {@code to - from < 8}, the most significant bytes are set to 0. This method
+   * cannot be used when {@code to - from > 8} or {@code to > bytes.length} as it will give
+   * incorrect results, or it may crash.
+   *
+   * @param bytes raw bytes in BigEndian order
+   * @param from start index of the bytes array to convert, inclusive
+   * @param to end index of the bytes array, exclusive
+   * @return Big-endian long value
+   */
+  static long getLongBE(final byte[] bytes, final int from, final int to) {
+    long value = 0;
+    if (bytes.length >= 8) {
+      value = getLongUnsafe(bytes, from, to);
+    } else if (bytes.length != 0) {
+      value = getLongSlow(bytes, from, to);
+    }
+    return value;
+  }
+
+  private static long getLongUnsafe(final byte[] bytes, final int from, final int to) {
+    assert to <= bytes.length && to - from <= 8
+        : "to=" + to + " from=" + from + " indices out of bounds";
+
+    if (from >= to) return 0L;
+    int start = Math.max(0, to - 8);
+    long value = (long) LONG_BE.get(bytes, start);
+    // shift value to trim off any suffix of bits
+    int shift = (Long.BYTES - (to - start)) * 8;
+    value >>>= shift;
+    // mask out value to trim off any prefix of bits
+    shift = (Long.BYTES - (to - from)) * 8;
+    return value & (-1L >>> shift);
+  }
+
+  private static long getLongSlow(final byte[] bytes, final int from, final int to) {
+    assert to <= bytes.length && to - from <= 8
+        : "to=" + to + " from=" + from + " indices out of bounds";
+
+    long value = 0;
+    for (int i = to - 1, shift = 0; i >= from; i--, shift += 8) {
+      value |= ((bytes[i] & 0xFFL) << shift);
+    }
+    return value;
   }
 }
