@@ -213,7 +213,7 @@ public class MessageFrame {
   private final OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
-  private final long[] stackDataV2;
+  private long[] stackDataV2;
   private int stackTopV2;
   private final int stackMaxSizeV2;
   private Bytes output = Bytes.EMPTY;
@@ -509,6 +509,16 @@ public class MessageFrame {
     int index = (stackTopV2 - offset - 1) << 2;
     return new org.hyperledger.besu.evm.UInt256(
         stackDataV2[index], stackDataV2[index + 1], stackDataV2[index + 2], stackDataV2[index + 3]);
+  }
+
+  /**
+   * Allocates the v2 operand stack if the frame was built without one. Frames are built in places
+   * that do not know which interpreter will run them, so the v2 interpreter calls this first.
+   */
+  public void ensureStackV2() {
+    if (stackDataV2 == null) {
+      stackDataV2 = new long[stackMaxSizeV2 * 4];
+    }
   }
 
   /**

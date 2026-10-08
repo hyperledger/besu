@@ -89,21 +89,36 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.v2.operation.AddModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.AddOperationV2;
 import org.hyperledger.besu.evm.v2.operation.AndOperationV2;
+import org.hyperledger.besu.evm.v2.operation.ByteOperationV2;
+import org.hyperledger.besu.evm.v2.operation.CountLeadingZerosOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DivOperationV2;
+import org.hyperledger.besu.evm.v2.operation.DupNOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DupOperationV2;
+import org.hyperledger.besu.evm.v2.operation.ExchangeOperationV2;
+import org.hyperledger.besu.evm.v2.operation.ExpOperationV2;
+import org.hyperledger.besu.evm.v2.operation.GtOperationV2;
+import org.hyperledger.besu.evm.v2.operation.IsZeroOperationV2;
+import org.hyperledger.besu.evm.v2.operation.JumpOperationV2;
+import org.hyperledger.besu.evm.v2.operation.JumpiOperationV2;
+import org.hyperledger.besu.evm.v2.operation.LtOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.MulModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.MulOperationV2;
 import org.hyperledger.besu.evm.v2.operation.NotOperationV2;
+import org.hyperledger.besu.evm.v2.operation.OperationsV2;
 import org.hyperledger.besu.evm.v2.operation.OrOperationV2;
 import org.hyperledger.besu.evm.v2.operation.PopOperationV2;
 import org.hyperledger.besu.evm.v2.operation.PushOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SDivOperationV2;
+import org.hyperledger.besu.evm.v2.operation.SGtOperationV2;
+import org.hyperledger.besu.evm.v2.operation.SLtOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SarOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ShlOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ShrOperationV2;
+import org.hyperledger.besu.evm.v2.operation.SignExtendOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SubOperationV2;
+import org.hyperledger.besu.evm.v2.operation.SwapNOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SwapOperationV2;
 import org.hyperledger.besu.evm.v2.operation.XorOperationV2;
 
@@ -141,6 +156,8 @@ public class EVM {
 
   private final JumpDestOnlyCodeCache jumpDestOnlyCodeCache;
 
+  private final Operation[] operationsV2;
+
   /**
    * Instantiates a new Evm.
    *
@@ -165,6 +182,11 @@ public class EVM {
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
     enableAmsterdam = EvmSpecVersion.AMSTERDAM.ordinal() <= evmSpecVersion.ordinal();
     enableOsaka = EvmSpecVersion.OSAKA.ordinal() <= evmSpecVersion.ordinal();
+
+    operationsV2 =
+        evmConfiguration.enableEvmV2()
+            ? OperationsV2.of(operations, gasCalculator, evmSpecVersion)
+            : null;
   }
 
   /**
@@ -479,13 +501,13 @@ public class EVM {
   }
 
   /**
-   * EVM v2 execution loop using long[] stack representation. Only opcodes explicitly listed in the
-   * switch are handled via the v2 path; all others fall through to the v1 operation registry. This
-   * skeleton stub establishes the dispatch structure for incremental v2 operation rollout.
+   * EVM v2 execution loop using long[] stack representation. The opcodes listed in the switch are
+   * executed directly; all others by the v2 versions of the fork's registered operations.
    */
   // Note: like runToHalt, this is performance-critical code. Benchmark before refactoring.
   private void runToHaltV2(final MessageFrame frame, final OperationTracer operationTracer) {
     evmSpecVersion.maybeWarnVersion();
+    frame.ensureStackV2();
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
@@ -507,6 +529,7 @@ public class EVM {
       try {
         result =
             switch (opcode) {
+              case 0x00 -> StopOperation.staticOperation(frame);
               case 0x01 -> AddOperationV2.staticOperation(frame);
               case 0x02 -> MulOperationV2.staticOperation(frame);
               case 0x03 -> SubOperationV2.staticOperation(frame);
@@ -516,10 +539,19 @@ public class EVM {
               case 0x07 -> SModOperationV2.staticOperation(frame);
               case 0x08 -> AddModOperationV2.staticOperation(frame);
               case 0x09 -> MulModOperationV2.staticOperation(frame);
+              case 0x0a -> ExpOperationV2.staticOperation(frame, gasCalculator);
+              case 0x0b -> SignExtendOperationV2.staticOperation(frame);
+              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
+              case 0x10 -> LtOperationV2.staticOperation(frame);
+              case 0x11 -> GtOperationV2.staticOperation(frame);
+              case 0x12 -> SLtOperationV2.staticOperation(frame);
+              case 0x13 -> SGtOperationV2.staticOperation(frame);
+              case 0x15 -> IsZeroOperationV2.staticOperation(frame);
               case 0x16 -> AndOperationV2.staticOperation(frame);
               case 0x17 -> OrOperationV2.staticOperation(frame);
               case 0x18 -> XorOperationV2.staticOperation(frame);
               case 0x19 -> NotOperationV2.staticOperation(frame);
+              case 0x1a -> ByteOperationV2.staticOperation(frame);
               case 0x1b ->
                   enableConstantinople
                       ? ShlOperationV2.staticOperation(frame)
@@ -532,7 +564,14 @@ public class EVM {
                   enableConstantinople
                       ? SarOperationV2.staticOperation(frame)
                       : InvalidOperation.invalidOperationResult(opcode);
+              case 0x1e ->
+                  enableOsaka
+                      ? CountLeadingZerosOperationV2.staticOperation(frame)
+                      : InvalidOperation.invalidOperationResult(opcode);
               case 0x50 -> PopOperationV2.staticOperation(frame);
+              case 0x56 -> JumpOperationV2.staticOperation(frame);
+              case 0x57 -> JumpiOperationV2.staticOperation(frame);
+              case 0x5b -> JumpDestOperation.JUMPDEST_SUCCESS;
               case 0x5F -> // PUSH0
                   enableShanghai
                       ? PushOperationV2.SingleByte.staticOperation(frame, code, pc, 0)
@@ -606,11 +645,19 @@ public class EVM {
                   0x9e,
                   0x9f ->
                   SwapOperationV2.staticOperation(frame, opcode - SwapOperationV2.SWAP_BASE);
-              // TODO EVMv2: implement remaining opcodes in v2; until then fall through to v1
-              default -> {
-                frame.setCurrentOperation(currentOperation);
-                yield currentOperation.execute(frame, this);
-              }
+              case 0xe6 -> // DUPN (EIP-8024)
+                  enableAmsterdam
+                      ? DupNOperationV2.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0xe7 -> // SWAPN (EIP-8024)
+                  enableAmsterdam
+                      ? SwapNOperationV2.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              case 0xe8 -> // EXCHANGE (EIP-8024)
+                  enableAmsterdam
+                      ? ExchangeOperationV2.staticOperation(frame, code, pc)
+                      : InvalidOperation.invalidOperationResult(opcode);
+              default -> operationsV2[opcode].execute(frame, this);
             };
       } catch (final OverflowException oe) {
         result = OVERFLOW_RESPONSE;
