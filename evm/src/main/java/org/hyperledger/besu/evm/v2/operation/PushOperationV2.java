@@ -29,6 +29,9 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   /** The Push operation success result. */
   private static final OperationResult pushSuccess = new OperationResult(3, null);
 
+  /** The PUSH0 operation success result, at the base tier cost. */
+  private static final OperationResult push0Success = new OperationResult(2, null);
+
   /**
    * Instantiates a new Push operation.
    *
@@ -114,7 +117,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
 
       pushLongToStack(frame, u0);
       frame.setPC(pc + pushSize);
-      return pushSuccess;
+      return pushSize == 0 ? push0Success : pushSuccess;
     }
   }
 
