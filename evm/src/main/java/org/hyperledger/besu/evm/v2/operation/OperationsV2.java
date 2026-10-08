@@ -84,7 +84,6 @@ import org.hyperledger.besu.evm.operation.NotOperation;
 import org.hyperledger.besu.evm.operation.NotOperationOptimized;
 import org.hyperledger.besu.evm.operation.NumberOperation;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.OrOperationOptimized;
 import org.hyperledger.besu.evm.operation.OriginOperation;
@@ -131,34 +130,34 @@ import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * The EVM v2 operations standing in for the operations of a fork's operation registry.
+ * The EVM v2 operations standing in for the operations a fork registers.
  *
- * <p>Building them from the registry keeps v2 on the opcodes a fork enables and on the parameters
- * it configures them with, such as the chain id or the SSTORE minimum gas.
+ * <p>Building them from the fork's operations keeps v2 on the opcodes the fork enables and on the
+ * parameters it configures them with, such as the chain id or the SSTORE minimum gas.
  */
 public final class OperationsV2 {
 
   private OperationsV2() {}
 
   /**
-   * Creates the v2 operation for every opcode of the registry.
+   * Creates the v2 operation for every opcode of a fork.
    *
-   * @param registry the operations of the fork
+   * @param operations the operations the fork registers, indexed by opcode
    * @param gasCalculator the gas calculator of the fork
    * @param evmSpecVersion the fork
    * @return the v2 operations, indexed by opcode; null where the interpreter loop executes the
-   *     opcode itself, or where the registry holds no operation
-   * @throws IllegalArgumentException if the registry holds an operation without a v2 version
+   *     opcode itself, or where the fork registers no operation
+   * @throws IllegalArgumentException if the fork registers an operation without a v2 version
    */
   public static Operation[] of(
-      final OperationRegistry registry,
+      final Operation[] operations,
       final GasCalculator gasCalculator,
       final EvmSpecVersion evmSpecVersion) {
-    final Operation[] operations = new Operation[256];
-    for (int opcode = 0; opcode < operations.length; opcode++) {
-      operations[opcode] = v2Version(registry.get(opcode), gasCalculator, evmSpecVersion);
+    final Operation[] operationsV2 = new Operation[256];
+    for (int opcode = 0; opcode < operationsV2.length; opcode++) {
+      operationsV2[opcode] = v2Version(operations[opcode], gasCalculator, evmSpecVersion);
     }
-    return operations;
+    return operationsV2;
   }
 
   private static Operation v2Version(
