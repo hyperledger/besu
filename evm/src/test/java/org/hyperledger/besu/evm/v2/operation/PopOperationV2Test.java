@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2.getV2StackItem;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -77,7 +78,7 @@ public class PopOperationV2Test {
     PopOperationV2.staticOperation(frame);
 
     assertThat(frame.stackTopV2()).isEqualTo(2);
-    assertThat(frame.getStackItemV2(0)).isEqualTo(UInt256.fromInt(0x02));
-    assertThat(frame.getStackItemV2(1)).isEqualTo(UInt256.fromInt(0x01));
+    assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.fromInt(0x02));
+    assertThat(getV2StackItem(frame, 1)).isEqualTo(UInt256.fromInt(0x01));
   }
 }

@@ -44,7 +44,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -219,7 +218,6 @@ public class MessageFrame {
   // significant)
   private long[] stackDataV2;
   private int stackTopV2;
-  private int stackCapacityV2;
   private final int stackMaxSizeV2;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
@@ -293,12 +291,9 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
+    this.stackDataV2 = enableEvmV2 ? new long[txValues.maxStackSize() * 4] : null;
     this.stackTopV2 = 0;
     this.stackMaxSizeV2 = txValues.maxStackSize();
-    if (enableEvmV2) {
-      this.stackCapacityV2 = Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2);
-      this.stackDataV2 = new long[stackCapacityV2 << 2];
-    }
     this.pc = 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -503,30 +498,12 @@ public class MessageFrame {
   // ---------------------------------------------------------------------------
 
   /**
-   * Gets a UInt256 value from the stack.
-   *
-   * <p>This function is unguarded (e.g. can throw {@link ArrayIndexOutOfBoundsException}) as it
-   * should only be used in test code. Using it in production might introduce performance
-   * regressions.
-   *
-   * @param offset index from the stack counting from top to bottom, to take a UInt256 value
-   * @return UInt256 value at the respective stack height
-   */
-  @VisibleForTesting
-  public org.hyperledger.besu.evm.UInt256 getStackItemV2(final int offset) {
-    int index = (stackTopV2 - offset - 1) << 2;
-    return new org.hyperledger.besu.evm.UInt256(
-        stackDataV2[index], stackDataV2[index + 1], stackDataV2[index + 2], stackDataV2[index + 3]);
-  }
-
-  /**
    * Allocates the v2 operand stack if the frame was built without one. Frames are built in places
    * that do not know which interpreter will run them, so the v2 interpreter calls this first.
    */
   public void ensureStackV2() {
     if (stackDataV2 == null) {
-      stackCapacityV2 = Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2);
-      stackDataV2 = new long[stackCapacityV2 << 2];
+      stackDataV2 = new long[Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2) << 2];
     }
   }
 
@@ -577,15 +554,15 @@ public class MessageFrame {
    */
   public boolean stackHasSpaceV2(final int n) {
     final int needed = stackTopV2 + n;
-    return needed <= stackCapacityV2 || growStackV2(needed);
+    return needed <= stackDataV2.length >> 2 || growStackV2(needed);
   }
 
   private boolean growStackV2(final int needed) {
     if (needed > stackMaxSizeV2) {
       return false;
     }
-    stackCapacityV2 = Math.min(stackMaxSizeV2, Math.max(needed, stackCapacityV2 << 1));
-    stackDataV2 = Arrays.copyOf(stackDataV2, stackCapacityV2 << 2);
+    final int capacity = Math.min(stackMaxSizeV2, Math.max(needed, (stackDataV2.length >> 2) * 2));
+    stackDataV2 = Arrays.copyOf(stackDataV2, capacity << 2);
     return true;
   }
 
