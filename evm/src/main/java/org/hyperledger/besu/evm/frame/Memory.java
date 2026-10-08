@@ -413,6 +413,33 @@ public class Memory {
   }
 
   /**
+   * The backing array. Its contents change with every write and it is replaced when the memory
+   * grows, so callers must not hold on to it beyond the current operation.
+   *
+   * @return the backing array
+   */
+  byte[] bytes() {
+    return memBytes;
+  }
+
+  /**
+   * Expands the memory to cover a range and returns where the range starts in the backing array.
+   *
+   * @param location the first byte of the range
+   * @param numBytes the length of the range
+   * @return the index of the first byte in the backing array, or 0 if the range is empty
+   */
+  int ensureRange(final long location, final long numBytes) {
+    final int length = asByteLength(numBytes);
+    if (length == 0) {
+      return 0;
+    }
+    final int start = asByteIndex(location);
+    ensureCapacityForBytes(start, length);
+    return start;
+  }
+
+  /**
    * Returns a copy of the 32-bytes word that begins at the specified memory location.
    *
    * @param location The memory location the 256-bit word begins at.

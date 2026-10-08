@@ -33,6 +33,9 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -202,6 +205,9 @@ public class MessageFrame {
 
   // Most frames stay far below the maximum, and a frame allocates its stack on every call.
   private static final int INITIAL_STACK_CAPACITY_V2 = 32;
+
+  private static final VarHandle LONG_BE =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
 
   // Global data fields.
   private final WorldUpdater worldUpdater;
@@ -528,6 +534,38 @@ public class MessageFrame {
       stackCapacityV2 = Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2);
       stackDataV2 = new long[stackCapacityV2 << 2];
     }
+  }
+
+  /**
+   * Reads the 32-byte word at a memory location into a v2 stack slot, expanding memory as needed.
+   *
+   * @param location the first byte of the word
+   * @param slot the stack slot to write, counted from the bottom of the stack
+   */
+  public void readMemoryWordV2(final long location, final int slot) {
+    final int start = memory.ensureRange(location, Bytes32.SIZE);
+    final byte[] bytes = memory.bytes();
+    final int offset = slot << 2;
+    stackDataV2[offset] = (long) LONG_BE.get(bytes, start);
+    stackDataV2[offset + 1] = (long) LONG_BE.get(bytes, start + 8);
+    stackDataV2[offset + 2] = (long) LONG_BE.get(bytes, start + 16);
+    stackDataV2[offset + 3] = (long) LONG_BE.get(bytes, start + 24);
+  }
+
+  /**
+   * Writes a v2 stack slot as the 32-byte word at a memory location, expanding memory as needed.
+   *
+   * @param location the first byte of the word
+   * @param slot the stack slot to read, counted from the bottom of the stack
+   */
+  public void writeMemoryWordV2(final long location, final int slot) {
+    final int start = memory.ensureRange(location, Bytes32.SIZE);
+    final byte[] bytes = memory.bytes();
+    final int offset = slot << 2;
+    LONG_BE.set(bytes, start, stackDataV2[offset]);
+    LONG_BE.set(bytes, start + 8, stackDataV2[offset + 1]);
+    LONG_BE.set(bytes, start + 16, stackDataV2[offset + 2]);
+    LONG_BE.set(bytes, start + 24, stackDataV2[offset + 3]);
   }
 
   /**
