@@ -232,7 +232,6 @@ final class ProgramRun {
     // as the transaction calling the contract has done, so that an operation touching the contract
     // before it fails on the stack makes no difference, just as in a block access list
     accesses.addTouchedAccount(CONTRACT);
-    final StackCapture tracer = new StackCapture();
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
@@ -261,7 +260,8 @@ final class ProgramRun {
     final Deque<MessageFrame> frames = frame.getMessageFrameStack();
     while (!frames.isEmpty()) {
       final MessageFrame next = frames.peekFirst();
-      (next.getType() == MessageFrame.Type.CONTRACT_CREATION ? create : call).process(next, tracer);
+      (next.getType() == MessageFrame.Type.CONTRACT_CREATION ? create : call)
+          .process(next, OperationTracer.NO_TRACING);
     }
     final boolean halted = frame.getExceptionalHaltReason().isPresent();
     final Outcome outcome =
@@ -272,7 +272,7 @@ final class ProgramRun {
             frame.getGasRefund(),
             frame.getStateGasUsed(),
             // a frame that halted exceptionally is discarded, its stack and memory with it
-            halted ? List.of() : tracer.stack,
+            halted ? List.of() : stack(frame),
             halted ? "" : frame.shadowReadMemory(0, frame.memoryByteSize()).toHexString(),
             frame.getOutputData().toHexString(),
             frame.getReturnData().toHexString(),
@@ -352,30 +352,22 @@ final class ProgramRun {
     }
   }
 
-  /** Records the stack of the outermost frame when it completes. */
-  private static final class StackCapture implements OperationTracer {
-    private List<String> stack = List.of();
-
-    @Override
-    public void traceContextExit(final MessageFrame frame) {
-      if (frame.getDepth() != 0) {
-        return;
+  /** The frame's stack, top first, from whichever interpreter ran it. */
+  private static List<String> stack(final MessageFrame frame) {
+    final List<String> items = new ArrayList<>();
+    final long[] s = frame.stackDataV2();
+    if (s != null) {
+      for (int i = frame.stackTopV2() - 1; i >= 0; i--) {
+        items.add(
+            String.format(
+                "%016x%016x%016x%016x",
+                s[i << 2], s[(i << 2) + 1], s[(i << 2) + 2], s[(i << 2) + 3]));
       }
-      final List<String> items = new ArrayList<>();
-      final long[] s = frame.stackDataV2();
-      if (s != null) {
-        for (int i = frame.stackTopV2() - 1; i >= 0; i--) {
-          items.add(
-              String.format(
-                  "%016x%016x%016x%016x",
-                  s[i << 2], s[(i << 2) + 1], s[(i << 2) + 2], s[(i << 2) + 3]));
-        }
-      } else {
-        for (int i = 0; i < frame.stackSize(); i++) {
-          items.add(Bytes32.leftPad(frame.getStackItem(i)).toUnprefixedHexString());
-        }
+    } else {
+      for (int i = 0; i < frame.stackSize(); i++) {
+        items.add(Bytes32.leftPad(frame.getStackItem(i)).toUnprefixedHexString());
       }
-      stack = items;
     }
+    return items;
   }
 }

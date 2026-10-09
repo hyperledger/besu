@@ -265,8 +265,10 @@ public class EVM {
     // optimization purposes
     assert operationTracer.isEnabled() || operationTracer == OperationTracer.NO_TRACING;
 
-    if (evmConfiguration.enableEvmV2()) {
-      runToHaltV2(frame, operationTracer);
+    // tracers read the v1 stack, so traced execution stays on v1; the tracer is the same for every
+    // frame of a transaction, so a transaction never mixes the two
+    if (evmConfiguration.enableEvmV2() && !operationTracer.isEnabled()) {
+      runToHaltV2(frame);
       return;
     }
     evmSpecVersion.maybeWarnVersion();
@@ -501,25 +503,19 @@ public class EVM {
   }
 
   /**
-   * EVM v2 execution loop using long[] stack representation. The opcodes listed in the switch are
-   * executed directly; all others by the v2 versions of the fork's registered operations.
+   * EVM v2 execution loop using long[] stack representation, for untraced execution only. The
+   * opcodes listed in the switch are executed directly; all others by the v2 versions of the fork's
+   * registered operations.
    */
   // Note: like runToHalt, this is performance-critical code. Benchmark before refactoring.
-  private void runToHaltV2(final MessageFrame frame, final OperationTracer operationTracer) {
+  private void runToHaltV2(final MessageFrame frame) {
     evmSpecVersion.maybeWarnVersion();
     frame.ensureStackV2();
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    Operation[] operationArray = operations.getOperations();
-    // only tracers read the current operation, so untraced execution skips setting it
-    final boolean tracing = operationTracer.isEnabled();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       int pc = frame.getPC();
       final int opcode = pc < code.length ? code[pc] & 0xff : 0;
-      if (tracing) {
-        frame.setCurrentOperation(pc < code.length ? operationArray[opcode] : endOfScriptStop);
-        operationTracer.tracePreExecution(frame);
-      }
 
       OperationResult result;
       try {
@@ -673,9 +669,6 @@ public class EVM {
         final int currentPC = frame.getPC();
         final int opSize = result.getPcIncrement();
         frame.setPC(currentPC + opSize);
-      }
-      if (tracing) {
-        operationTracer.tracePostExecution(frame, result);
       }
     }
   }
