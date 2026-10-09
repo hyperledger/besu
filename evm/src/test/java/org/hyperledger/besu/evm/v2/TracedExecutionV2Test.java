@@ -15,12 +15,14 @@
 package org.hyperledger.besu.evm.v2;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -33,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
-/** Tracers read the v1 stack, so EVM v2 copies its stack there before every tracer call. */
+/** Tracers read the stack through the frame, which shows them the v2 stack on EVM v2. */
 class TracedExecutionV2Test {
 
   private final EVM evm =
@@ -76,7 +78,7 @@ class TracedExecutionV2Test {
   }
 
   @Test
-  void tracerSeesTheV2StackAfterEveryOperation() {
+  void frameStackAccessorsMatchTheV2StackAfterEveryOperation() {
     final StringBuilder code = new StringBuilder("0x");
     for (int i = 1; i <= 17; i++) {
       code.append(String.format("60%02x", i)); // PUSH1 i
@@ -109,12 +111,12 @@ class TracedExecutionV2Test {
                               Bytes.ofUnsignedLong(s[(i << 2) + 3])))
                       .toShortHexString());
             }
-            final List<String> v1 = new ArrayList<>();
+            final List<String> seen = new ArrayList<>();
             for (int i = 0; i < frame.stackSize(); i++) {
-              v1.add(Bytes32.leftPad(frame.getStackItem(i)).toShortHexString());
+              seen.add(Bytes32.leftPad(frame.getStackItem(i)).toShortHexString());
             }
-            if (!v1.equals(v2)) {
-              mismatches.add(frame.getCurrentOperation().getName() + ": " + v1 + " vs " + v2);
+            if (!seen.equals(v2)) {
+              mismatches.add(frame.getCurrentOperation().getName() + ": " + seen + " vs " + v2);
             }
           }
         };
@@ -127,7 +129,7 @@ class TracedExecutionV2Test {
   }
 
   @Test
-  void tracerWithoutOperationHooksGetsNoStackCopy() {
+  void tracerWithoutOperationHooksGetsNoOperationCalls() {
     // like the parallel block processor's tracer, which only implements a reward hook
     final OperationTracer tracer =
         new OperationTracer() {
@@ -139,21 +141,20 @@ class TracedExecutionV2Test {
 
     evm.runToHalt(frame, tracer);
 
-    assertThat(frame.stackSize()).isZero();
     assertThat(frame.getCurrentOperation()).isNull();
     assertThat(frame.stackTopV2()).isEqualTo(1);
   }
 
   @Test
-  void untracedExecutionLeavesTheV1StackEmpty() {
+  void readingBelowTheV2StackUnderflowsAsOnV1() {
     // PUSH1 1 PUSH1 2 ADD STOP
     final MessageFrame frame = start(Bytes.fromHexString("0x600160020100"));
 
     evm.runToHalt(frame, OperationTracer.NO_TRACING);
 
-    assertThat(frame.stackSize()).isZero();
-    assertThat(frame.stackTopV2()).isEqualTo(1);
-    assertThat(frame.stackDataV2()[3]).isEqualTo(3L);
+    assertThat(frame.stackSize()).isEqualTo(1);
+    assertThat(frame.getStackItem(0)).isEqualTo(Bytes32.leftPad(Bytes.of(3)));
+    assertThatThrownBy(() -> frame.getStackItem(1)).isInstanceOf(UnderflowException.class);
   }
 
   private static String stack(final MessageFrame frame) {

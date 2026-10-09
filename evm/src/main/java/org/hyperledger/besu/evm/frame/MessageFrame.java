@@ -439,13 +439,17 @@ public class MessageFrame {
   }
 
   /**
-   * Returns the item at the specified offset in the stack.
+   * Returns the item at the specified offset in the stack, from the v2 stack when EVM v2 runs the
+   * frame, so that tracers see the same stack on both interpreters.
    *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
    */
   public Bytes getStackItem(final int offset) {
+    if (stackDataV2 != null) {
+      return stackItemV2(offset);
+    }
     return stack.get(offset);
   }
 
@@ -489,11 +493,14 @@ public class MessageFrame {
   }
 
   /**
-   * Return the current stack size.
+   * Return the current stack size, of the v2 stack when EVM v2 runs the frame.
    *
    * @return The current stack size
    */
   public int stackSize() {
+    if (stackDataV2 != null) {
+      return stackTopV2;
+    }
     return stack.size();
   }
 
@@ -508,6 +515,21 @@ public class MessageFrame {
     if (stackDataV2 == null) {
       stackDataV2 = new long[Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2) << 2];
     }
+  }
+
+  private Bytes stackItemV2(final int offset) {
+    if (offset < 0 || offset >= stackTopV2) {
+      throw new UnderflowException();
+    }
+    final int index = (stackTopV2 - 1 - offset) << 2;
+    final byte[] bytes = new byte[32];
+    for (int limb = 0; limb < 4; limb++) {
+      final long value = stackDataV2[index + limb];
+      for (int b = 0; b < 8; b++) {
+        bytes[(limb << 3) + b] = (byte) (value >>> (56 - (b << 3)));
+      }
+    }
+    return Bytes32.wrap(bytes);
   }
 
   /**

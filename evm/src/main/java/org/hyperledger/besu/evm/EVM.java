@@ -120,7 +120,6 @@ import org.hyperledger.besu.evm.v2.operation.SignExtendOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SubOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SwapNOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SwapOperationV2;
-import org.hyperledger.besu.evm.v2.operation.TracerStackV2;
 import org.hyperledger.besu.evm.v2.operation.XorOperationV2;
 
 import java.util.Optional;
@@ -503,8 +502,8 @@ public class EVM {
 
   /**
    * Whether a tracer class implements tracePreExecution or tracePostExecution. Tracers that only
-   * implement other hooks, like the parallel block processor's reward tracer, would get no-op calls
-   * and a stack copy for every operation, which costs more than the operation itself.
+   * implement other hooks, like the parallel block processor's reward tracer, would otherwise get
+   * no-op calls and a current-operation store for every operation.
    */
   private static final ClassValue<Boolean> HAS_OPERATION_HOOKS =
       new ClassValue<>() {
@@ -533,8 +532,8 @@ public class EVM {
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
-    // only tracers with operation hooks read the current operation and the v1 stack per operation,
-    // so execution without them skips both
+    // only tracers with operation hooks read the current operation, so execution without them
+    // skips setting it
     final boolean tracing =
         operationTracer.isEnabled() && HAS_OPERATION_HOOKS.get(operationTracer.getClass());
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
@@ -542,7 +541,6 @@ public class EVM {
       final int opcode = pc < code.length ? code[pc] & 0xff : 0;
       if (tracing) {
         frame.setCurrentOperation(pc < code.length ? operationArray[opcode] : endOfScriptStop);
-        TracerStackV2.copyToV1Stack(frame);
         operationTracer.tracePreExecution(frame);
       }
 
@@ -700,7 +698,6 @@ public class EVM {
         frame.setPC(currentPC + opSize);
       }
       if (tracing) {
-        TracerStackV2.copyToV1Stack(frame);
         operationTracer.tracePostExecution(frame, result);
       }
     }
