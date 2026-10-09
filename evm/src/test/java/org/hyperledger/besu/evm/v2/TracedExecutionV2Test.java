@@ -129,6 +129,39 @@ class TracedExecutionV2Test {
   }
 
   @Test
+  void tracerSnapshotsShareUnchangedStackItems() {
+    final List<Bytes[]> snapshots = new ArrayList<>();
+    final OperationTracer tracer =
+        new OperationTracer() {
+          @Override
+          public void tracePreExecution(final MessageFrame frame) {
+            final Bytes[] items = new Bytes[frame.stackSize()];
+            for (int i = 0; i < items.length; i++) {
+              items[i] = frame.getStackItem(items.length - i - 1);
+            }
+            snapshots.add(items);
+          }
+        };
+    // PUSH1 7 DUP1 PUSH1 2 ADD STOP
+    final MessageFrame frame = start(Bytes.fromHexString("0x60078060020100"));
+
+    evm.runToHalt(frame, tracer);
+
+    // pre PUSH1, pre DUP1, pre PUSH1, pre ADD, pre STOP
+    assertThat(snapshots).hasSize(5);
+    final Bytes seven = snapshots.get(1)[0];
+    assertThat(seven).isEqualTo(Bytes32.leftPad(Bytes.of(7)));
+    // the bottom slot never changes, so every snapshot holds the same object, as on v1
+    for (int step = 2; step < 5; step++) {
+      assertThat(snapshots.get(step)[0]).isSameAs(seven);
+    }
+    assertThat(snapshots.get(3)[1]).isSameAs(snapshots.get(2)[1]);
+    // ADD overwrote the second slot: the snapshot shows the new value, not the cached one
+    assertThat(snapshots.get(3)[1]).isEqualTo(Bytes32.leftPad(Bytes.of(7)));
+    assertThat(snapshots.get(4)[1]).isEqualTo(Bytes32.leftPad(Bytes.of(9)));
+  }
+
+  @Test
   void tracerWithoutOperationHooksGetsNoOperationCalls() {
     // like the parallel block processor's tracer, which only implements a reward hook
     final OperationTracer tracer =

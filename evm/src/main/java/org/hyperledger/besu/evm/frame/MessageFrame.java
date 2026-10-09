@@ -219,6 +219,12 @@ public class MessageFrame {
   private long[] stackDataV2;
   private int stackTopV2;
   private final int stackMaxSizeV2;
+  // Tracer view of the v2 stack: the item last materialized for each slot and the limbs it was
+  // built from. Tracers snapshot the whole stack on every step; handing out the same immutable
+  // object while a slot is unchanged keeps those snapshots as cheap as v1's, whose stack holds
+  // shared objects. Allocated on first use, so untraced execution never pays for it.
+  private Bytes[] stackViewV2;
+  private long[] stackViewLimbsV2;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -521,15 +527,55 @@ public class MessageFrame {
     if (offset < 0 || offset >= stackTopV2) {
       throw new UnderflowException();
     }
-    final int index = (stackTopV2 - 1 - offset) << 2;
-    final byte[] bytes = new byte[32];
-    for (int limb = 0; limb < 4; limb++) {
-      final long value = stackDataV2[index + limb];
-      for (int b = 0; b < 8; b++) {
-        bytes[(limb << 3) + b] = (byte) (value >>> (56 - (b << 3)));
-      }
+    final int slot = stackTopV2 - 1 - offset;
+    final int index = slot << 2;
+    final long l0 = stackDataV2[index];
+    final long l1 = stackDataV2[index + 1];
+    final long l2 = stackDataV2[index + 2];
+    final long l3 = stackDataV2[index + 3];
+    if (stackViewV2 == null || slot >= stackViewV2.length) {
+      growStackViewV2(slot + 1);
     }
-    return Bytes32.wrap(bytes);
+    final Bytes cached = stackViewV2[slot];
+    if (cached != null
+        && stackViewLimbsV2[index] == l0
+        && stackViewLimbsV2[index + 1] == l1
+        && stackViewLimbsV2[index + 2] == l2
+        && stackViewLimbsV2[index + 3] == l3) {
+      return cached;
+    }
+    final byte[] bytes = new byte[32];
+    putLimb(bytes, 0, l0);
+    putLimb(bytes, 8, l1);
+    putLimb(bytes, 16, l2);
+    putLimb(bytes, 24, l3);
+    final Bytes item = Bytes32.wrap(bytes);
+    stackViewV2[slot] = item;
+    stackViewLimbsV2[index] = l0;
+    stackViewLimbsV2[index + 1] = l1;
+    stackViewLimbsV2[index + 2] = l2;
+    stackViewLimbsV2[index + 3] = l3;
+    return item;
+  }
+
+  private static void putLimb(final byte[] bytes, final int offset, final long value) {
+    for (int b = 0; b < 8; b++) {
+      bytes[offset + b] = (byte) (value >>> (56 - (b << 3)));
+    }
+  }
+
+  private void growStackViewV2(final int needed) {
+    final int current = stackViewV2 == null ? 0 : stackViewV2.length;
+    final int capacity =
+        Math.min(
+            stackMaxSizeV2, Math.max(needed, Math.max(INITIAL_STACK_CAPACITY_V2, current * 2)));
+    if (stackViewV2 == null) {
+      stackViewV2 = new Bytes[capacity];
+      stackViewLimbsV2 = new long[capacity << 2];
+    } else {
+      stackViewV2 = Arrays.copyOf(stackViewV2, capacity);
+      stackViewLimbsV2 = Arrays.copyOf(stackViewLimbsV2, capacity << 2);
+    }
   }
 
   /**
