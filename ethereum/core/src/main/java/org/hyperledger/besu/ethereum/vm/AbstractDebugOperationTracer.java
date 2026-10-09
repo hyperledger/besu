@@ -84,18 +84,32 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
     if (!traceOpcode) {
       return;
     }
-    preExecutionStack = captureStack(frame);
     gasRemaining = frame.getRemainingGas();
     pc = frame.getPC();
     depth = frame.getDepth();
     capturePreExecutionState(frame);
+    // Past the step limit a transaction can still run for millions of steps; snapshotting a stack
+    // that is never recorded made limited traces as slow as unlimited ones.
+    preExecutionStack = recordsCurrentStep() ? captureStack(frame) : Optional.empty();
   }
 
   /**
    * Hook for subclasses to capture additional pre-execution state. Called only when {@link
-   * #traceOpcode} is {@code true}, after the common fields have been populated.
+   * #traceOpcode} is {@code true}, after the gas, program counter and depth have been populated and
+   * before the stack is captured.
    */
   protected void capturePreExecutionState(final MessageFrame frame) {}
+
+  /**
+   * Whether the operation being traced is recorded, as decided by {@link #tracePreExecution}
+   * (opcode filter) and {@link #capturePreExecutionState} (step limit). Snapshots are only taken
+   * for recorded operations.
+   *
+   * @return {@code true} if the current operation will be recorded
+   */
+  protected boolean recordsCurrentStep() {
+    return traceOpcode;
+  }
 
   /**
    * Computes the effective gas cost for the operation, optionally including child-call gas.

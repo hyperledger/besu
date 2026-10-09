@@ -89,15 +89,17 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
   }
 
   @Override
+  protected boolean recordsCurrentStep() {
+    return traceOpcode && !limitReached;
+  }
+
+  @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
-    final Optional<Bytes[]> memory = captureMemory(frame);
-    final Optional<Bytes> returnData = captureReturnData(frame);
-    final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
     if (!traceFrames.isEmpty()) {
       final TraceFrame lastTraceFrame = traceFrames.removeLast();
@@ -105,9 +107,12 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
           TraceFrame.from(lastTraceFrame).setGasRemainingPostExecution(gasRemaining).build();
       traceFrames.add(updatedLast);
     }
-    if (limitReached || !traceOpcode) {
+    if (!recordsCurrentStep()) {
       return;
     }
+    final Optional<Bytes[]> memory = captureMemory(frame);
+    final Optional<Bytes> returnData = captureReturnData(frame);
+    final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
     final Optional<Map<UInt256, UInt256>> storage =
         captureStorage(frame, currentOperation, operationResult);
