@@ -199,6 +199,16 @@ public class StructLog {
 
     byte[] bytes = abytes.toArrayUnsafe();
     final int size = bytes.length;
+    // Zero is by far the most common stack value. Return the shared constant rather than building a
+    // new string for every occurrence: EVM v2 hands tracers 32-byte zero words where v1 often holds
+    // empty bytes, and a deep stack of zeros traced over many steps adds up to millions of strings.
+    int firstNonZero = 0;
+    while (firstNonZero < size && bytes[firstNonZero] == 0) {
+      firstNonZero++;
+    }
+    if (firstNonZero == size) {
+      return prefix ? "0x0" : "0";
+    }
     final StringBuilder result = new StringBuilder(prefix ? (size * 2) + 2 : size * 2);
 
     if (prefix) {
