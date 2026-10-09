@@ -41,6 +41,15 @@ public class CKZG4844Helper {
   public static final int CELLS_PER_EXT_BLOB = CKZG4844JNI.CELLS_PER_EXT_BLOB;
 
   /**
+   * How many cells of a blob are enough to recover the rest of them, and with them the blob itself.
+   * The extension doubles the data, so any half of it suffices.
+   */
+  public static final int CELLS_TO_RECOVER_BLOB = CELLS_PER_EXT_BLOB / 2;
+
+  /** A blob is exactly the un-extended half of its cells. */
+  private static final int BLOB_SIZE = CELLS_TO_RECOVER_BLOB * Cell.SIZE;
+
+  /**
    * Converts the given BlobsWithCommitments to version 1.
    *
    * @param blobsWithCommitments the BlobsWithCommitments to convert.
@@ -113,6 +122,57 @@ public class CKZG4844Helper {
   public static List<KZGProof> computeBlobKzgProofs(final Blob blob) {
     CellsAndProofs cellProofs = CKZG4844JNI.computeCellsAndKzgProofs(blob.getData().toArray());
     return extractKZGProofs(cellProofs.getProofs());
+  }
+
+  /**
+   * Recovers the blobs of a sidecar that holds at least {@link #CELLS_TO_RECOVER_BLOB} cells of
+   * each of them, which is what a node ends up with after sampling a transaction over eth/72.
+   *
+   * <p>This does not verify the cells it is given: a recovery from corrupt cells produces a corrupt
+   * blob, so callers must have established that the cells open their commitments. {@code
+   * TransactionsLimbo} does so as each peer answers, which is also the only point at which a peer
+   * answering with bad cells can still be identified.
+   *
+   * @param sparse a sidecar holding cells and no blobs
+   * @return the same commitments, proofs and versioned hashes, with the blobs recovered
+   */
+  public static BlobsWithCommitments recoverBlobs(final BlobsWithCommitments sparse) {
+    final List<BlobProofBundle> bundles = sparse.getBlobProofBundles();
+    return BlobsWithCommitments.createFromBlobsType1(
+        sparse.getKzgCommitments(),
+        bundles.stream().map(CKZG4844Helper::recoverBlob).toList(),
+        // the proofs the sender committed to, which recovery would only recompute
+        bundles.stream().map(BlobProofBundle::getKzgProof).toList(),
+        sparse.getVersionedHashes());
+  }
+
+  /**
+   * Recovers the blob of a bundle holding enough of its cells.
+   *
+   * @param bundle the bundle to recover the blob of
+   * @return the recovered blob
+   */
+  private static Blob recoverBlob(final BlobProofBundle bundle) {
+    final CellsWithMask cellsWithMask =
+        bundle
+            .getCellsWithMask()
+            .orElseThrow(
+                () -> new IllegalArgumentException("Bundle holds no cells to recover from"));
+    final CellMask heldCells = cellsWithMask.getCellMask();
+    checkArgument(
+        heldCells.cardinality() >= CELLS_TO_RECOVER_BLOB,
+        "Recovering a blob needs at least %s of its cells, got %s",
+        CELLS_TO_RECOVER_BLOB,
+        heldCells.cardinality());
+
+    final CellsAndProofs recovered =
+        CKZG4844JNI.recoverCellsAndKzgProofs(
+            heldCells.streamIndexes().asLongStream().toArray(),
+            bundle.getBlobCellsBytes().orElseThrow().toArrayUnsafe());
+
+    // The extension is systematic: it doubles the data, leaving the blob itself as the first half
+    // of the extended cells.
+    return new Blob(Bytes.wrap(recovered.getCells()).slice(0, BLOB_SIZE));
   }
 
   /**
