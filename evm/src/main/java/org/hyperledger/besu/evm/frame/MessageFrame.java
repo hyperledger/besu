@@ -291,7 +291,10 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.stackDataV2 = enableEvmV2 ? new long[txValues.maxStackSize() * 4] : null;
+    this.stackDataV2 =
+        enableEvmV2
+            ? new long[Math.min(INITIAL_STACK_CAPACITY_V2, txValues.maxStackSize()) << 2]
+            : null;
     this.stackTopV2 = 0;
     this.stackMaxSizeV2 = txValues.maxStackSize();
     this.pc = 0;
