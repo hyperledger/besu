@@ -124,6 +124,13 @@ class EveryOpcodeV1V2DifferentialTest {
   private static final List<Bytes32> SLOTS =
       IntStream.rangeClosed(0, 17).mapToObj(i -> Bytes32.leftPad(Bytes.of(i))).toList();
 
+  /**
+   * The gas left for an opcode that halts: none, and one less than the base, very low, low, mid,
+   * high, BLOCKHASH, warm and cold access costs, and more than any of them.
+   */
+  private static final List<Long> GAS_FOR_THE_OPCODE =
+      List.of(0L, 1L, 2L, 4L, 7L, 9L, 19L, 99L, 2_599L, 30_000L);
+
   @ParameterizedTest(name = "{0}")
   @FieldSource("FORKS")
   void everyOpcodeEndsInTheSameStateOnV1AndV2(final Fork fork) {
@@ -176,9 +183,19 @@ class EveryOpcodeV1V2DifferentialTest {
       // an opcode the fork does not define halts whatever the gas
       return;
     }
-    // with exactly the gas the program needs, and with one less
-    final long used = 1_000_000L - withPlentyOfGas.remainingGas();
-    for (final long gas : List.of(used, Math.max(0, used - 1))) {
+    final List<Long> gasLimits;
+    if (!withPlentyOfGas.haltReason().isEmpty()) {
+      // a halt consumes all the gas, so try the opcode with too little gas for it and with
+      // enough, as whether it halts for gas or for the stack depends on which it checks first
+      final long beforeOpcode =
+          1_000_000L - run(v1, code.slice(0, code.size() - 3), 1_000_000L, isStatic).remainingGas();
+      gasLimits = GAS_FOR_THE_OPCODE.stream().map(gas -> beforeOpcode + gas).toList();
+    } else {
+      // with exactly the gas the program needs, and with one less
+      final long used = 1_000_000L - withPlentyOfGas.remainingGas();
+      gasLimits = List.of(used, Math.max(0, used - 1));
+    }
+    for (final long gas : gasLimits) {
       compare(v2, code, gas, isStatic, run(v1, code, gas, isStatic), program, differences);
     }
   }
