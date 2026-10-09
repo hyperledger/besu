@@ -19,15 +19,16 @@ import static org.hyperledger.besu.evm.v2.operation.StackUtil.getLongBE;
 
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
-/** The Push operation. */
-public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
+/**
+ * The PUSH0-32 operations. The interpreter runs them inline, so they exist only as static methods
+ * and the fork's operation table has no instance of them.
+ */
+public final class PushOperationV2 {
   /** The constant PUSH_BASE. */
   public static final int PUSH_BASE = 0x5F;
-
-  private final int length;
 
   /** The Push operation success result. */
   private static final OperationResult pushSuccess = new OperationResult(3, null);
@@ -35,22 +36,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   /** The PUSH0 operation success result, at the base tier cost. */
   private static final OperationResult push0Success = new OperationResult(2, null);
 
-  /**
-   * Instantiates a new Push operation.
-   *
-   * @param length the length
-   * @param gasCalculator the gas calculator
-   */
-  public PushOperationV2(final int length, final GasCalculator gasCalculator) {
-    super(
-        PUSH_BASE + length,
-        "PUSH" + length,
-        0,
-        1,
-        gasCalculator,
-        gasCalculator.getVeryLowTierGasCost());
-    this.length = length;
-  }
+  private PushOperationV2() {}
 
   private static void pushUInt256ToStack(final MessageFrame frame, final UInt256 pushValue) {
     if (!frame.stackHasSpaceV2(1)) {
@@ -81,23 +67,9 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   }
 
   /** Optimized version of PUSH opcode for PUSH0 and PUSH1 only. */
-  public class SingleByte extends PushOperationV2 {
+  public static final class SingleByte {
 
-    /**
-     * Instantiates a new Push operation.
-     *
-     * @param length the length
-     * @param gasCalculator the gas calculator
-     */
-    public SingleByte(final int length, final GasCalculator gasCalculator) {
-      super(length, gasCalculator);
-    }
-
-    @Override
-    public OperationResult executeFixedCostOperation(final MessageFrame frame) {
-      final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-      return staticOperation(frame, code, frame.getPC(), length);
-    }
+    private SingleByte() {}
 
     /**
      * Performs Push operation statically.
@@ -123,23 +95,9 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   }
 
   /** Optimized version for PUSH opcode for PUSH2 to PUSH8. */
-  public class SingleLimb extends PushOperationV2 {
+  public static final class SingleLimb {
 
-    /**
-     * Instantiates a new Push operation.
-     *
-     * @param length the length
-     * @param gasCalculator the gas calculator
-     */
-    public SingleLimb(final int length, final GasCalculator gasCalculator) {
-      super(length, gasCalculator);
-    }
-
-    @Override
-    public OperationResult executeFixedCostOperation(final MessageFrame frame) {
-      final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-      return staticOperation(frame, code, frame.getPC(), length);
-    }
+    private SingleLimb() {}
 
     /**
      * Performs Push operation statically.
@@ -173,23 +131,9 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
    * Generic multi limb version of PUSH opcode, can execute PUSH0-32, but it should only be used for
    * multiple long limbs because of performance.
    */
-  public class MultiLimb extends PushOperationV2 {
+  public static final class MultiLimb {
 
-    /**
-     * Instantiates a new Push operation.
-     *
-     * @param length the length
-     * @param gasCalculator the gas calculator
-     */
-    public MultiLimb(final int length, final GasCalculator gasCalculator) {
-      super(length, gasCalculator);
-    }
-
-    @Override
-    public OperationResult executeFixedCostOperation(final MessageFrame frame) {
-      final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-      return staticOperation(frame, code, frame.getPC(), length);
-    }
+    private MultiLimb() {}
 
     /**
      * Performs Push operation statically.
