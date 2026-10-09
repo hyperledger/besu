@@ -33,11 +33,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
-/** Tracers read the v1 stack, so an EVM configured for v2 runs traced execution on v1. */
+/** Tracers read the v1 stack, so EVM v2 copies its stack there before every tracer call. */
 class TracedExecutionV2Test {
-
-  /** PUSH1 1 PUSH1 2 ADD STOP */
-  private static final Code ONE_PLUS_TWO = new Code(Bytes.fromHexString("0x600160020100"));
 
   private final EVM evm =
       MainnetEVMs.osaka(
@@ -45,27 +42,94 @@ class TracedExecutionV2Test {
           new EvmConfiguration(32_000L, EvmConfiguration.WorldUpdaterMode.STACKED, true, true));
 
   @Test
-  void tracedExecutionRunsOnTheV1Stack() {
+  void tracerSeesTheOperationAndTheStackBeforeAndAfterIt() {
     final List<String> traced = new ArrayList<>();
     final OperationTracer tracer =
         new OperationTracer() {
           @Override
+          public void tracePreExecution(final MessageFrame frame) {
+            traced.add("pre " + frame.getCurrentOperation().getName() + " " + stack(frame));
+          }
+
+          @Override
           public void tracePostExecution(final MessageFrame frame, final OperationResult result) {
-            traced.add(frame.getCurrentOperation().getName() + " " + frame.stackSize());
+            traced.add("post " + frame.getCurrentOperation().getName() + " " + stack(frame));
           }
         };
-    final MessageFrame frame = start();
+    // PUSH1 1 PUSH1 2 ADD STOP
+    final MessageFrame frame = start(Bytes.fromHexString("0x600160020100"));
 
     evm.runToHalt(frame, tracer);
 
-    assertThat(traced).containsExactly("PUSH1 1", "PUSH1 2", "ADD 1", "STOP 1");
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes32.leftPad(Bytes.of(3)));
-    assertThat(frame.stackDataV2()).isNull();
+    assertThat(traced)
+        .containsExactly(
+            "pre PUSH1 []",
+            "post PUSH1 [1]",
+            "pre PUSH1 [1]",
+            "post PUSH1 [2, 1]",
+            "pre ADD [2, 1]",
+            "post ADD [3]",
+            "pre STOP [3]",
+            "post STOP [3]");
+    assertThat(frame.stackTopV2()).isEqualTo(1);
+    assertThat(frame.stackDataV2()[3]).isEqualTo(3L);
   }
 
   @Test
-  void untracedExecutionRunsOnTheV2Stack() {
-    final MessageFrame frame = start();
+  void tracerSeesTheV2StackAfterEveryOperation() {
+    final StringBuilder code = new StringBuilder("0x");
+    for (int i = 1; i <= 17; i++) {
+      code.append(String.format("60%02x", i)); // PUSH1 i
+    }
+    // DUP16 SWAP16 SWAP1 POP DUP1 ADD SWAP16 POP MUL SWAP2 POP STOP
+    code.append("8f9f905080019f50029150" + "00");
+    final List<String> mismatches = new ArrayList<>();
+    final OperationTracer tracer =
+        new OperationTracer() {
+          @Override
+          public void tracePreExecution(final MessageFrame frame) {
+            check(frame);
+          }
+
+          @Override
+          public void tracePostExecution(final MessageFrame frame, final OperationResult result) {
+            check(frame);
+          }
+
+          private void check(final MessageFrame frame) {
+            final List<String> v2 = new ArrayList<>();
+            final long[] s = frame.stackDataV2();
+            for (int i = frame.stackTopV2() - 1; i >= 0; i--) {
+              v2.add(
+                  Bytes32.wrap(
+                          Bytes.concatenate(
+                              Bytes.ofUnsignedLong(s[i << 2]),
+                              Bytes.ofUnsignedLong(s[(i << 2) + 1]),
+                              Bytes.ofUnsignedLong(s[(i << 2) + 2]),
+                              Bytes.ofUnsignedLong(s[(i << 2) + 3])))
+                      .toShortHexString());
+            }
+            final List<String> v1 = new ArrayList<>();
+            for (int i = 0; i < frame.stackSize(); i++) {
+              v1.add(Bytes32.leftPad(frame.getStackItem(i)).toShortHexString());
+            }
+            if (!v1.equals(v2)) {
+              mismatches.add(frame.getCurrentOperation().getName() + ": " + v1 + " vs " + v2);
+            }
+          }
+        };
+    final MessageFrame frame = start(Bytes.fromHexString(code.toString()));
+
+    evm.runToHalt(frame, tracer);
+
+    assertThat(frame.getState()).isEqualTo(MessageFrame.State.CODE_SUCCESS);
+    assertThat(mismatches).isEmpty();
+  }
+
+  @Test
+  void untracedExecutionLeavesTheV1StackEmpty() {
+    // PUSH1 1 PUSH1 2 ADD STOP
+    final MessageFrame frame = start(Bytes.fromHexString("0x600160020100"));
 
     evm.runToHalt(frame, OperationTracer.NO_TRACING);
 
@@ -74,8 +138,16 @@ class TracedExecutionV2Test {
     assertThat(frame.stackDataV2()[3]).isEqualTo(3L);
   }
 
-  private static MessageFrame start() {
-    final MessageFrame frame = new TestMessageFrameBuilder().code(ONE_PLUS_TWO).build();
+  private static String stack(final MessageFrame frame) {
+    final List<String> items = new ArrayList<>();
+    for (int i = 0; i < frame.stackSize(); i++) {
+      items.add(Bytes32.leftPad(frame.getStackItem(i)).toBigInteger().toString());
+    }
+    return items.toString();
+  }
+
+  private static MessageFrame start(final Bytes code) {
+    final MessageFrame frame = new TestMessageFrameBuilder().code(new Code(code)).build();
     frame.setState(MessageFrame.State.CODE_EXECUTING);
     return frame;
   }
