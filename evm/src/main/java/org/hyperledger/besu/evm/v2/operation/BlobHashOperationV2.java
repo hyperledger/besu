@@ -19,7 +19,6 @@ import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -32,7 +31,6 @@ public class BlobHashOperationV2 extends AbstractOperationV2 {
   public static final int OPCODE = 0x49;
 
   private final OperationResult successResponse;
-  private final OperationResult outOfGasResponse;
 
   /**
    * Instantiates a new Blob hash operation.
@@ -42,16 +40,12 @@ public class BlobHashOperationV2 extends AbstractOperationV2 {
   public BlobHashOperationV2(final GasCalculator gasCalculator) {
     super(OPCODE, "BLOBHASH", 1, 1, gasCalculator);
     successResponse = new OperationResult(gasCalculator.getVeryLowTierGasCost(), null);
-    outOfGasResponse =
-        new OperationResult(
-            gasCalculator.getVeryLowTierGasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    // stack before gas, as in v1, so that both halt for the same reason
+    // like v1, it leaves the gas check to the interpreter loop, after the operation has run
     if (!frame.stackHasItemsV2(1)) return UNDERFLOW_RESPONSE;
-    if (frame.getRemainingGas() < successResponse.getGasCost()) return outOfGasResponse;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int offset = (top - 1) << 2;

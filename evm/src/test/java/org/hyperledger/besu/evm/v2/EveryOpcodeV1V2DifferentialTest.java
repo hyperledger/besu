@@ -76,6 +76,7 @@ class EveryOpcodeV1V2DifferentialTest {
 
   static {
     STACKS.put("empty", List.of());
+    STACKS.put("one item", List.of(Bytes.of(1)));
     STACKS.put("small numbers", IntStream.rangeClosed(1, 18).mapToObj(Bytes::of).toList());
     STACKS.put("call", call(Bytes.of(0)));
     STACKS.put("call with value", call(Bytes.of(1)));
@@ -179,6 +180,15 @@ class EveryOpcodeV1V2DifferentialTest {
       final List<String> differences) {
     final Outcome withPlentyOfGas = run(v1, code, 1_000_000L, isStatic);
     compare(v2, code, 1_000_000L, isStatic, withPlentyOfGas, program, differences);
+    // untraced, as blocks are imported; the other runs are traced, to compare what tracers see
+    final Outcome untracedOnV1 =
+        ProgramRun.run(v1, code, CALLEE_CODE, Bytes.EMPTY, 1_000_000L, isStatic, SLOTS);
+    final Outcome untracedOnV2 =
+        ProgramRun.run(v2, code, CALLEE_CODE, Bytes.EMPTY, 1_000_000L, isStatic, SLOTS);
+    if (!untracedOnV2.equals(untracedOnV1)) {
+      differences.add(
+          String.format("%s untraced:%n  v1 %s%n  v2 %s", program, untracedOnV1, untracedOnV2));
+    }
     if (!isDefined) {
       // an opcode the fork does not define halts whatever the gas
       return;
@@ -216,7 +226,7 @@ class EveryOpcodeV1V2DifferentialTest {
 
   private static Outcome run(
       final EVM evm, final Bytes code, final long gas, final boolean isStatic) {
-    return ProgramRun.run(evm, code, CALLEE_CODE, Bytes.EMPTY, gas, isStatic, SLOTS);
+    return ProgramRun.runTraced(evm, code, CALLEE_CODE, Bytes.EMPTY, gas, isStatic, SLOTS);
   }
 
   /**

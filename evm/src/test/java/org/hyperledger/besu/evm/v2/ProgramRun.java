@@ -29,6 +29,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.AmsterdamGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -168,7 +169,8 @@ final class ProgramRun {
       Map<Address, Wei> refunds,
       Set<String> accounts,
       Set<String> transientStorage,
-      Set<String> accesses) {}
+      Set<String> accesses,
+      List<String> steps) {}
 
   /** The outermost frame and the world it ran against, after a run, with its outcome. */
   record Execution(MessageFrame frame, WorldUpdater worldUpdater, Outcome outcome) {}
@@ -195,7 +197,31 @@ final class ProgramRun {
       final long gas,
       final boolean isStatic,
       final List<Bytes32> slots) {
-    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots).outcome();
+    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, false).outcome();
+  }
+
+  /**
+   * As {@link #run}, with a tracer that records what it sees before and after every operation: the
+   * operation, pc, depth, gas, refund, memory size, stack, gas cost and halt reason.
+   *
+   * @param evm the EVM to run it on
+   * @param code the contract's code
+   * @param calleeCode the code of CALLEE
+   * @param secondCalleeCode the code of SECOND_CALLEE
+   * @param gas the gas the contract is called with
+   * @param isStatic whether the contract is called in a static frame
+   * @param slots the storage and transient storage slots to compare
+   * @return the outcome, with the recorded steps
+   */
+  static Outcome runTraced(
+      final EVM evm,
+      final Bytes code,
+      final Bytes calleeCode,
+      final Bytes secondCalleeCode,
+      final long gas,
+      final boolean isStatic,
+      final List<Bytes32> slots) {
+    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, true).outcome();
   }
 
   /**
@@ -218,6 +244,20 @@ final class ProgramRun {
       final long gas,
       final boolean isStatic,
       final List<Bytes32> slots) {
+    return execute(evm, code, calleeCode, secondCalleeCode, gas, isStatic, slots, false);
+  }
+
+  private static Execution execute(
+      final EVM evm,
+      final Bytes code,
+      final Bytes calleeCode,
+      final Bytes secondCalleeCode,
+      final long gas,
+      final boolean isStatic,
+      final List<Bytes32> slots,
+      final boolean traced) {
+    final StepRecorder recorder = new StepRecorder();
+    final OperationTracer tracer = traced ? recorder : OperationTracer.NO_TRACING;
     final ToyWorld world = new ToyWorld();
     final WorldUpdater setup = world.updater();
     setup.getOrCreate(SENDER).setBalance(Wei.of(1_000_000));
@@ -260,8 +300,7 @@ final class ProgramRun {
     final Deque<MessageFrame> frames = frame.getMessageFrameStack();
     while (!frames.isEmpty()) {
       final MessageFrame next = frames.peekFirst();
-      (next.getType() == MessageFrame.Type.CONTRACT_CREATION ? create : call)
-          .process(next, OperationTracer.NO_TRACING);
+      (next.getType() == MessageFrame.Type.CONTRACT_CREATION ? create : call).process(next, tracer);
     }
     final boolean halted = frame.getExceptionalHaltReason().isPresent();
     final Outcome outcome =
@@ -283,7 +322,8 @@ final class ProgramRun {
             new TreeMap<>(frame.getRefunds()),
             accounts(updater, slots),
             transientStorage(frame, slots),
-            accesses.accesses);
+            accesses.accesses,
+            recorder.steps);
     return new Execution(frame, updater, outcome);
   }
 
@@ -369,5 +409,46 @@ final class ProgramRun {
       }
     }
     return items;
+  }
+
+  /** Records what a tracer sees of each operation, through the frame's accessors. */
+  private static final class StepRecorder implements OperationTracer {
+    private final List<String> steps = new ArrayList<>();
+    private String before = "";
+
+    @Override
+    public void tracePreExecution(final MessageFrame frame) {
+      before =
+          String.format(
+              "depth %d pc %d %s gas %d refund %d memory %d stack %s",
+              frame.getDepth(),
+              frame.getPC(),
+              frame.getCurrentOperation().getName(),
+              frame.getRemainingGas(),
+              frame.getGasRefund(),
+              frame.memoryByteSize(),
+              tracedStack(frame));
+    }
+
+    @Override
+    public void tracePostExecution(
+        final MessageFrame frame, final Operation.OperationResult result) {
+      steps.add(
+          String.format(
+              "%s -> cost %d halt %s gas %d stack %s",
+              before,
+              result.getGasCost(),
+              result.getHaltReason(),
+              frame.getRemainingGas(),
+              tracedStack(frame)));
+    }
+
+    private static List<String> tracedStack(final MessageFrame frame) {
+      final List<String> items = new ArrayList<>();
+      for (int i = 0; i < frame.stackSize(); i++) {
+        items.add(Bytes.wrap(Bytes32.leftPad(frame.getStackItem(i)).toArray()).toShortHexString());
+      }
+      return items;
+    }
   }
 }

@@ -38,7 +38,7 @@ public class CallDataLoadOperationV2 extends AbstractFixedCostOperationV2 {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame) {
-    if (!frame.stackHasItemsV2(1)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(1)) return underflowResponse;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int offset = (top - 1) << 2;

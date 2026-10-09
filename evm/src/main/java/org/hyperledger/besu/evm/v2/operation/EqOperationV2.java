@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -28,6 +29,10 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 public class EqOperationV2 extends AbstractFixedCostOperationV2 {
 
   private static final OperationResult EQ_SUCCESS = new OperationResult(3, null);
+
+  // charges the fixed cost on an underflow, as v1 does
+  private static final OperationResult EQ_UNDERFLOW =
+      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
   /**
    * Instantiates a new Eq operation.
@@ -52,7 +57,7 @@ public class EqOperationV2 extends AbstractFixedCostOperationV2 {
    * @return the operation result
    */
   public static OperationResult staticOperation(final MessageFrame frame) {
-    if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(2)) return EQ_UNDERFLOW;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int aOffset = (top - 1) << 2;

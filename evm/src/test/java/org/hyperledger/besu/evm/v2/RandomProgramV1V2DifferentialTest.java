@@ -115,7 +115,11 @@ class RandomProgramV1V2DifferentialTest {
       final boolean isStatic = random.nextInt(8) == 0;
       final Outcome onV1 = ProgramRun.run(v1, contract, callee, secondCallee, GAS, isStatic, SLOTS);
       final Outcome onV2 = ProgramRun.run(v2, contract, callee, secondCallee, GAS, isStatic, SLOTS);
-      if (!onV2.equals(onV1)) {
+      final Outcome tracedOnV1 =
+          ProgramRun.runTraced(v1, contract, callee, secondCallee, GAS, isStatic, SLOTS);
+      final Outcome tracedOnV2 =
+          ProgramRun.runTraced(v2, contract, callee, secondCallee, GAS, isStatic, SLOTS);
+      if (!onV2.equals(onV1) || !tracedOnV2.equals(tracedOnV1)) {
         differences.add(
             String.format(
                 "program %d%s%n  contract %s%n  callee %s%n  second callee %s%n  v1 %s%n  v2 %s",
@@ -124,8 +128,8 @@ class RandomProgramV1V2DifferentialTest {
                 contract.toHexString(),
                 callee.toHexString(),
                 secondCallee.toHexString(),
-                onV1,
-                onV2));
+                tracedOnV1,
+                tracedOnV2));
       }
     }
     assertThat(differences).isEmpty();
