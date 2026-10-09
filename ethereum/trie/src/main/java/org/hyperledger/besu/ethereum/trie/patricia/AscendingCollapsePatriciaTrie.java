@@ -15,9 +15,11 @@
 package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
+import static org.hyperledger.besu.ethereum.trie.Nibbles.commonPrefixLength;
 
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.Nibbles;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.NullNode;
@@ -79,19 +81,20 @@ public final class AscendingCollapsePatriciaTrie {
       if (depth == 0) {
         return top;
       }
-      if (depth > top.getPath().size()
+      final byte[] topPath = top.path();
+      if (depth > topPath.length
           || top instanceof BranchNode
-          || (top instanceof LeafNode && depth == top.getPath().size())) {
+          || (top instanceof LeafNode && depth == topPath.length)) {
         throw new IllegalArgumentException("prepared keys do not form a complete subtree");
       }
-      return top.replacePath(top.getPath().slice(depth));
+      return top.replacePath(Nibbles.slice(topPath, depth));
     }
   }
 
   private final DefaultNodeFactory<Bytes> nodeFactory =
       new DefaultNodeFactory<>(Function.identity()) {
         @Override
-        public Optional<Node<Bytes>> retrieve(final Bytes location, final Bytes32 hash) {
+        public Optional<Node<Bytes>> retrieve(final byte[] location, final byte[] hash) {
           // only a key the prepared keys should have held reaches a collapsed subtree
           throw new IllegalArgumentException("prepared keys do not form a complete subtree");
         }
@@ -99,7 +102,7 @@ public final class AscendingCollapsePatriciaTrie {
   private final NodeUpdater sink;
   private Node<Bytes> root = NullNode.instance();
   private Bytes lastKey;
-  private Bytes lastPath;
+  private byte[] lastPath;
   private long insertCount;
   private boolean sealed;
 
@@ -135,9 +138,10 @@ public final class AscendingCollapsePatriciaTrie {
     if (lastKey != null && key.compareTo(lastKey) <= 0) {
       throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
     }
-    final Bytes path = bytesToPath(key);
-    final Bytes finished = finished(lastPath, path);
-    root = root.accept(new AscendingCollapsePutVisitor(nodeFactory, value, finished, sink), path);
+    final byte[] path = bytesToPath(key.toArrayUnsafe());
+    final byte[] finished = finished(lastPath, path);
+    root =
+        root.accept(new AscendingCollapsePutVisitor(nodeFactory, value, finished, sink), path, 0);
     lastKey = key;
     lastPath = path;
     insertCount++;
@@ -159,7 +163,7 @@ public final class AscendingCollapsePatriciaTrie {
     }
     Node<Bytes> top = NullNode.instance();
     Bytes previous = null;
-    Bytes previousPath = null;
+    byte[] previousPath = null;
     for (int i = 0; i < keys.size(); i++) {
       final Bytes key = keys.get(i);
       final Bytes value = values.get(i);
@@ -169,35 +173,33 @@ public final class AscendingCollapsePatriciaTrie {
       if (previous != null && key.compareTo(previous) <= 0) {
         throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
       }
-      final Bytes path = bytesToPath(key);
+      final byte[] path = bytesToPath(key.toArrayUnsafe());
       top =
           top.accept(
               new AscendingCollapsePutVisitor(
                   nodeFactory, value, finished(previousPath, path), sink),
-              path);
+              path,
+              0);
       previous = key;
       previousPath = path;
     }
     return new Subtree(
-        keys.getFirst(), values.getFirst(), previous, keys.size(), collapsed(top, Bytes.EMPTY));
+        keys.getFirst(), values.getFirst(), previous, keys.size(), collapsed(top, Nibbles.EMPTY));
   }
 
   /** {@code top} with the children of its branch handed to the sink and replaced by stubs. */
-  private Node<Bytes> collapsed(final Node<Bytes> top, final Bytes location) {
+  private Node<Bytes> collapsed(final Node<Bytes> top, final byte[] location) {
     if (top instanceof ExtensionNode<Bytes> extension) {
       return nodeFactory.createExtension(
-          extension.getPath(),
-          collapsed(extension.getChild(), Bytes.concatenate(location, extension.getPath())));
+          extension.path(),
+          collapsed(extension.getChild(), Nibbles.concat(location, extension.path())));
     }
     if (top instanceof BranchNode<Bytes> branch) {
       final List<Node<Bytes>> children = new ArrayList<>(branch.maxChild());
       for (int i = 0; i < branch.maxChild(); i++) {
         children.add(
             AscendingCollapsePutVisitor.collapse(
-                nodeFactory,
-                sink,
-                branch.child((byte) i),
-                Bytes.concatenate(location, Bytes.of(i))));
+                nodeFactory, sink, branch.child((byte) i), Nibbles.append(location, i)));
       }
       return nodeFactory.createBranch(children, branch.getValue());
     }
@@ -219,19 +221,20 @@ public final class AscendingCollapsePatriciaTrie {
     if (lastKey != null && subtree.firstKey.compareTo(lastKey) <= 0) {
       throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
     }
-    final Bytes path = bytesToPath(subtree.firstKey);
-    final Bytes finished = finished(lastPath, path);
+    final byte[] path = bytesToPath(subtree.firstKey.toArrayUnsafe());
+    final byte[] finished = finished(lastPath, path);
     root =
         root.accept(
             new AscendingCollapsePutVisitor(
                 nodeFactory,
                 subtree.firstValue,
-                Optional.of(below -> subtree.at(path.size() - below.size())),
+                Optional.of(below -> subtree.at(path.length - below.length)),
                 finished,
                 sink),
-            path);
+            path,
+            0);
     lastKey = subtree.lastKey;
-    lastPath = bytesToPath(subtree.lastKey);
+    lastPath = bytesToPath(subtree.lastKey.toArrayUnsafe());
     insertCount += subtree.size;
   }
 
@@ -275,17 +278,17 @@ public final class AscendingCollapsePatriciaTrie {
    */
   public Bytes32 rootHash() {
     if (!sealed && !(root instanceof NullNode || root instanceof StoredNode)) {
-      AscendingCollapsePutVisitor.commit(sink, root, Bytes.EMPTY);
+      AscendingCollapsePutVisitor.commit(sink, root, Nibbles.EMPTY);
     }
     sealed = true;
     return root instanceof NullNode ? MerkleTrie.EMPTY_TRIE_NODE_HASH : root.getHash();
   }
 
   // where the subtree holding the previous key starts, one nibble below where the paths split
-  private static Bytes finished(final Bytes previousPath, final Bytes path) {
+  private static byte[] finished(final byte[] previousPath, final byte[] path) {
     return previousPath == null
         ? null
-        : previousPath.slice(0, previousPath.commonPrefixLength(path) + 1);
+        : Nibbles.slice(previousPath, 0, commonPrefixLength(previousPath, path, 0) + 1);
   }
 
   // the lowest or the highest key under a location

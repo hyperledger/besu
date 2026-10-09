@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
+import org.hyperledger.besu.ethereum.trie.Nibbles;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeFactory;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /**
  * Ascending-key Patricia {@link PutVisitor} that collapses finished subtrees to {@link StoredNode}
@@ -40,8 +42,8 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public final class AscendingCollapsePutVisitor extends PutVisitor<Bytes> {
 
-  private final Optional<Function<Bytes, Node<Bytes>>> prebuilt;
-  private final Bytes finished;
+  private final Optional<Function<byte[], Node<Bytes>>> prebuilt;
+  private final byte[] finished;
   private final NodeUpdater sink;
 
   /**
@@ -53,7 +55,7 @@ public final class AscendingCollapsePutVisitor extends PutVisitor<Bytes> {
   public AscendingCollapsePutVisitor(
       final NodeFactory<Bytes> nodeFactory,
       final Bytes value,
-      final Bytes finished,
+      final byte[] finished,
       final NodeUpdater sink) {
     this(nodeFactory, value, Optional.empty(), finished, sink);
   }
@@ -65,8 +67,8 @@ public final class AscendingCollapsePutVisitor extends PutVisitor<Bytes> {
   public AscendingCollapsePutVisitor(
       final NodeFactory<Bytes> nodeFactory,
       final Bytes firstValue,
-      final Optional<Function<Bytes, Node<Bytes>>> prebuilt,
-      final Bytes finished,
+      final Optional<Function<byte[], Node<Bytes>>> prebuilt,
+      final byte[] finished,
       final NodeUpdater sink) {
     super(nodeFactory, firstValue);
     this.prebuilt = prebuilt;
@@ -75,7 +77,7 @@ public final class AscendingCollapsePutVisitor extends PutVisitor<Bytes> {
   }
 
   @Override
-  protected Node<Bytes> newNode(final Bytes path) {
+  protected Node<Bytes> newNode(final byte[] path) {
     return prebuilt.map(subtree -> subtree.apply(path)).orElseGet(() -> super.newNode(path));
   }
 
@@ -87,7 +89,7 @@ public final class AscendingCollapsePutVisitor extends PutVisitor<Bytes> {
     if (finished == null || !(branchNode.child(childIndex) instanceof NullNode)) {
       return branchNode;
     }
-    final byte finishedIndex = finished.get(finished.size() - 1);
+    final byte finishedIndex = finished[finished.length - 1];
     final Node<Bytes> child = branchNode.child(finishedIndex);
     final Node<Bytes> collapsed = collapse(nodeFactory, sink, child, finished);
     if (collapsed == child) {
@@ -121,31 +123,31 @@ public final class AscendingCollapsePutVisitor extends PutVisitor<Bytes> {
       final NodeFactory<Bytes> nodeFactory,
       final NodeUpdater sink,
       final Node<Bytes> node,
-      final Bytes location) {
+      final byte[] location) {
     if (node instanceof NullNode || node instanceof StoredNode || !node.isReferencedByHash()) {
       return node;
     }
     commit(sink, node, location);
-    return new StoredNode<>(nodeFactory, location, node.getHash());
+    return new StoredNode<>(nodeFactory, location, node.hash());
   }
 
   /**
    * Hands {@code node} and the nodes below it that are not stubs yet to the sink, children first.
    * Below a finished subtree only its right edge is left, so this is O(depth).
    */
-  static void commit(final NodeUpdater sink, final Node<Bytes> node, final Bytes location) {
+  static void commit(final NodeUpdater sink, final Node<Bytes> node, final byte[] location) {
     if (node instanceof BranchNode<Bytes> branch) {
       for (int i = 0; i < branch.maxChild(); i++) {
         final Node<Bytes> child = branch.child((byte) i);
         if (isLeftToCommit(child)) {
-          commit(sink, child, Bytes.concatenate(location, Bytes.of(i)));
+          commit(sink, child, Nibbles.append(location, i));
         }
       }
     } else if (node instanceof ExtensionNode<Bytes> extension
         && isLeftToCommit(extension.getChild())) {
-      commit(sink, extension.getChild(), Bytes.concatenate(location, extension.getPath()));
+      commit(sink, extension.getChild(), Nibbles.concat(location, extension.path()));
     }
-    sink.store(location, node.getHash(), node.getEncodedBytes());
+    sink.store(Bytes.wrap(location), Bytes32.wrap(node.hash()), Bytes.wrap(node.encoded()));
   }
 
   private static boolean isLeftToCommit(final Node<Bytes> node) {
