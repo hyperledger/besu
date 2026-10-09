@@ -511,19 +511,15 @@ public class EVM {
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
+    // only tracers read the current operation, so untraced execution skips setting it
+    final boolean tracing = operationTracer.isEnabled();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
-      Operation currentOperation;
-      int opcode;
       int pc = frame.getPC();
-      if (pc < code.length) {
-        opcode = code[pc] & 0xff;
-        currentOperation = operationArray[opcode];
-      } else {
-        opcode = 0;
-        currentOperation = endOfScriptStop;
+      final int opcode = pc < code.length ? code[pc] & 0xff : 0;
+      if (tracing) {
+        frame.setCurrentOperation(pc < code.length ? operationArray[opcode] : endOfScriptStop);
+        operationTracer.tracePreExecution(frame);
       }
-      frame.setCurrentOperation(currentOperation);
-      operationTracer.tracePreExecution(frame);
 
       OperationResult result;
       try {
@@ -678,7 +674,9 @@ public class EVM {
         final int opSize = result.getPcIncrement();
         frame.setPC(currentPC + opSize);
       }
-      operationTracer.tracePostExecution(frame, result);
+      if (tracing) {
+        operationTracer.tracePostExecution(frame, result);
+      }
     }
   }
 
