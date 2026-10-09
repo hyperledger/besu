@@ -137,22 +137,18 @@ public class CKZG4844Helper {
    * @return the same commitments, proofs and versioned hashes, with the blobs recovered
    */
   public static BlobsWithCommitments recoverBlobs(final BlobsWithCommitments sparse) {
-    final List<BlobProofBundle> bundles = sparse.getBlobProofBundles();
-    return BlobsWithCommitments.createFromBlobsType1(
-        sparse.getKzgCommitments(),
-        bundles.stream().map(CKZG4844Helper::recoverBlob).toList(),
-        // the proofs the sender committed to, which recovery would only recompute
-        bundles.stream().map(BlobProofBundle::getKzgProof).toList(),
-        sparse.getVersionedHashes());
+    return BlobsWithCommitments.createFromBundles(
+        sparse.getBlobProofBundles().stream().map(CKZG4844Helper::recoverBundle).toList());
   }
 
   /**
-   * Recovers the blob of a bundle holding enough of its cells.
+   * Recovers the blob of a bundle holding enough of its cells, keeping everything the transaction
+   * arrived with.
    *
    * @param bundle the bundle to recover the blob of
-   * @return the recovered blob
+   * @return a bundle holding the recovered blob and every cell of it
    */
-  private static Blob recoverBlob(final BlobProofBundle bundle) {
+  private static BlobProofBundle recoverBundle(final BlobProofBundle bundle) {
     final CellsWithMask cellsWithMask =
         bundle
             .getCellsWithMask()
@@ -169,10 +165,20 @@ public class CKZG4844Helper {
         CKZG4844JNI.recoverCellsAndKzgProofs(
             heldCells.streamIndexes().asLongStream().toArray(),
             bundle.getBlobCellsBytes().orElseThrow().toArrayUnsafe());
+    final Bytes extendedCells = Bytes.wrap(recovered.getCells());
 
-    // The extension is systematic: it doubles the data, leaving the blob itself as the first half
-    // of the extended cells.
-    return new Blob(Bytes.wrap(recovered.getCells()).slice(0, BLOB_SIZE));
+    // The recovered cells are handed over rather than left to be computed from the blob: recovery
+    // has just produced them, and they are the whole set, so the bundle can serve every cell.
+    return new BlobProofBundle(
+        bundle.getBlobType(),
+        // The extension is systematic: it doubles the data, leaving the blob itself as the first
+        // half of the extended cells.
+        new Blob(extendedCells.slice(0, BLOB_SIZE)),
+        extendedCells,
+        bundle.getKzgCommitment(),
+        // the proofs the sender committed to, which recovery would only recompute
+        bundle.getKzgProof(),
+        bundle.getVersionedHash());
   }
 
   /**

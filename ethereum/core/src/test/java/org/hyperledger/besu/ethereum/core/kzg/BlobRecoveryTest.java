@@ -18,6 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.CELLS_PER_EXT_BLOB;
 import static org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper.CELLS_TO_RECOVER_BLOB;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
@@ -28,6 +32,7 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 /**
  * Rebuilding a blob from the cells a node sampled, which is how a transaction received over eth/72
@@ -119,6 +124,24 @@ class BlobRecoveryTest extends TrustedSetupClassLoaderExtension {
     assertThat(recovered.getKzgCommitments()).isEqualTo(full.getKzgCommitments());
     assertThat(recovered.getVersionedHashes()).isEqualTo(full.getVersionedHashes());
     assertThat(recovered.getKzgProofs()).isEqualTo(full.getKzgProofs());
+  }
+
+  @Test
+  void handsOverTheRecoveredCellsRatherThanExtendingTheBlobAgain() {
+    // Recovery produces the whole cell set, so extending the recovered blob to compute the cells
+    // would repeat work already done, once per blob, and leave the bundle holding two copies of
+    // the same 256 KiB.
+    final BlobsWithCommitments sampled = narrowTo(fullBlobs(), everyOtherCell());
+
+    final BlobsWithCommitments recovered;
+    try (MockedStatic<CKZG4844Helper> helper =
+        mockStatic(CKZG4844Helper.class, CALLS_REAL_METHODS)) {
+      recovered = CKZG4844Helper.recoverBlobs(sampled);
+      helper.verify(() -> CKZG4844Helper.computeCells(any()), never());
+    }
+
+    assertThat(recovered.hasBlobData()).isTrue();
+    assertThat(recovered.getCellMask()).isEqualTo(CellMask.FULL);
   }
 
   @Test
