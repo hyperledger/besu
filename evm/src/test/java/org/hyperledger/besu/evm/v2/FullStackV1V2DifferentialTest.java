@@ -19,9 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -31,6 +33,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -47,6 +50,9 @@ class FullStackV1V2DifferentialTest {
   static final List<Fork> FORKS = ProgramRun.FORKS;
 
   private static final int FULL = MessageFrame.DEFAULT_MAX_STACK_SIZE;
+
+  // with a base fee, so BASEFEE gets as far as pushing instead of halting as an invalid operation
+  private static final BlockValues BLOCK_VALUES = new FakeBlockValues(Optional.of(Wei.of(7)));
 
   @ParameterizedTest(name = "{0}")
   @FieldSource("FORKS")
@@ -76,14 +82,22 @@ class FullStackV1V2DifferentialTest {
     final MessageFrame frame;
     if (isV2) {
       final TestMessageFrameBuilderV2 builder =
-          new TestMessageFrameBuilderV2().worldUpdater(world).code(code).initialGas(1_000_000L);
+          new TestMessageFrameBuilderV2()
+              .worldUpdater(world)
+              .blockValues(BLOCK_VALUES)
+              .code(code)
+              .initialGas(1_000_000L);
       for (int i = 0; i < FULL; i++) {
         builder.pushStackItem(Bytes32.leftPad(Bytes.ofUnsignedInt(i)));
       }
       frame = builder.build();
     } else {
       final TestMessageFrameBuilder builder =
-          new TestMessageFrameBuilder().worldUpdater(world).code(code).initialGas(1_000_000L);
+          new TestMessageFrameBuilder()
+              .worldUpdater(world)
+              .blockValues(BLOCK_VALUES)
+              .code(code)
+              .initialGas(1_000_000L);
       for (int i = 0; i < FULL; i++) {
         builder.pushStackItem(Bytes32.leftPad(Bytes.ofUnsignedInt(i)));
       }
