@@ -502,6 +502,27 @@ public class EVM {
   }
 
   /**
+   * Whether a tracer class implements tracePreExecution or tracePostExecution. Tracers that only
+   * implement other hooks, like the parallel block processor's reward tracer, would get no-op calls
+   * and a stack copy for every operation, which costs more than the operation itself.
+   */
+  private static final ClassValue<Boolean> HAS_OPERATION_HOOKS =
+      new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(final Class<?> type) {
+          try {
+            return type.getMethod("tracePreExecution", MessageFrame.class).getDeclaringClass()
+                    != OperationTracer.class
+                || type.getMethod("tracePostExecution", MessageFrame.class, OperationResult.class)
+                        .getDeclaringClass()
+                    != OperationTracer.class;
+          } catch (final NoSuchMethodException e) {
+            return true;
+          }
+        }
+      };
+
+  /**
    * EVM v2 execution loop using long[] stack representation. The opcodes listed in the switch are
    * executed directly; all others by the v2 versions of the fork's registered operations.
    */
@@ -512,8 +533,10 @@ public class EVM {
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
-    // only tracers read the current operation and the v1 stack, so untraced execution skips both
-    final boolean tracing = operationTracer.isEnabled();
+    // only tracers with operation hooks read the current operation and the v1 stack per operation,
+    // so execution without them skips both
+    final boolean tracing =
+        operationTracer.isEnabled() && HAS_OPERATION_HOOKS.get(operationTracer.getClass());
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       int pc = frame.getPC();
       final int opcode = pc < code.length ? code[pc] & 0xff : 0;

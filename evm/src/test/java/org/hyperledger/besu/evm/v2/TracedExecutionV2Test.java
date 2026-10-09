@@ -127,6 +127,24 @@ class TracedExecutionV2Test {
   }
 
   @Test
+  void tracerWithoutOperationHooksGetsNoStackCopy() {
+    // like the parallel block processor's tracer, which only implements a reward hook
+    final OperationTracer tracer =
+        new OperationTracer() {
+          @Override
+          public void traceContextEnter(final MessageFrame frame) {}
+        };
+    // PUSH1 1 PUSH1 2 ADD STOP
+    final MessageFrame frame = start(Bytes.fromHexString("0x600160020100"));
+
+    evm.runToHalt(frame, tracer);
+
+    assertThat(frame.stackSize()).isZero();
+    assertThat(frame.getCurrentOperation()).isNull();
+    assertThat(frame.stackTopV2()).isEqualTo(1);
+  }
+
+  @Test
   void untracedExecutionLeavesTheV1StackEmpty() {
     // PUSH1 1 PUSH1 2 ADD STOP
     final MessageFrame frame = start(Bytes.fromHexString("0x600160020100"));
