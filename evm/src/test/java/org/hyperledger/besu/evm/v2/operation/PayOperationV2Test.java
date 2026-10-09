@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 
 class PayOperationV2Test {
 
-  private static final Address SENDER = Address.fromHexString("0x5e4d");
+  private static final Address CURRENT = Address.fromHexString("0x5e4d");
   private static final Address RECIPIENT = Address.fromHexString("0x4ec1");
 
   private final WorldUpdater worldUpdater = new ToyWorld().updater();
@@ -42,7 +42,7 @@ class PayOperationV2Test {
 
   @Test
   void paysTheValueAndPushesOne() {
-    worldUpdater.getOrCreate(SENDER).setBalance(Wei.of(1_000));
+    worldUpdater.getOrCreate(CURRENT).setBalance(Wei.of(1_000));
     final MessageFrame frame = frame(Bytes32.leftPad(RECIPIENT.getBytes()), 300);
 
     final Operation.OperationResult result = operation.execute(frame, null);
@@ -50,20 +50,53 @@ class PayOperationV2Test {
     assertThat(result.getHaltReason()).isNull();
     assertThat(frame.stackTopV2()).isEqualTo(1);
     assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ONE);
-    assertThat(worldUpdater.get(SENDER).getBalance()).isEqualTo(Wei.of(700));
+    assertThat(worldUpdater.get(CURRENT).getBalance()).isEqualTo(Wei.of(700));
     assertThat(worldUpdater.get(RECIPIENT).getBalance()).isEqualTo(Wei.of(300));
   }
 
   @Test
+  void paysFromTheCurrentAddressNotFromTheCaller() {
+    final Address caller = Address.fromHexString("0xca11");
+    worldUpdater.getOrCreate(caller).setBalance(Wei.of(5_000));
+    worldUpdater.getOrCreate(CURRENT).setBalance(Wei.of(1_000));
+    final MessageFrame frame =
+        new TestMessageFrameBuilderV2()
+            .worldUpdater(worldUpdater)
+            .sender(caller)
+            .address(CURRENT)
+            .initialGas(100_000L)
+            .pushStackItem(Bytes32.leftPad(Bytes.ofUnsignedLong(300)))
+            .pushStackItem(Bytes32.leftPad(RECIPIENT.getBytes()))
+            .build();
+
+    operation.execute(frame, null);
+
+    assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ONE);
+    assertThat(worldUpdater.get(CURRENT).getBalance()).isEqualTo(Wei.of(700));
+    assertThat(worldUpdater.get(caller).getBalance()).isEqualTo(Wei.of(5_000));
+  }
+
+  @Test
+  void payingItselfMoreThanItsBalancePushesZero() {
+    worldUpdater.getOrCreate(CURRENT).setBalance(Wei.of(100));
+    final MessageFrame frame = frame(Bytes32.leftPad(CURRENT.getBytes()), 300);
+
+    operation.execute(frame, null);
+
+    assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ZERO);
+    assertThat(worldUpdater.get(CURRENT).getBalance()).isEqualTo(Wei.of(100));
+  }
+
+  @Test
   void pushesZeroWithoutTheBalance() {
-    worldUpdater.getOrCreate(SENDER).setBalance(Wei.of(1));
+    worldUpdater.getOrCreate(CURRENT).setBalance(Wei.of(1));
     final MessageFrame frame = frame(Bytes32.leftPad(RECIPIENT.getBytes()), 300);
 
     final Operation.OperationResult result = operation.execute(frame, null);
 
     assertThat(result.getHaltReason()).isNull();
     assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ZERO);
-    assertThat(worldUpdater.get(SENDER).getBalance()).isEqualTo(Wei.of(1));
+    assertThat(worldUpdater.get(CURRENT).getBalance()).isEqualTo(Wei.of(1));
   }
 
   @Test
@@ -80,7 +113,7 @@ class PayOperationV2Test {
     final MessageFrame frame =
         new TestMessageFrameBuilderV2()
             .worldUpdater(worldUpdater)
-            .sender(SENDER)
+            .address(CURRENT)
             .isStatic(true)
             .pushStackItem(Bytes32.leftPad(Bytes.of(1)))
             .pushStackItem(Bytes32.leftPad(RECIPIENT.getBytes()))
@@ -107,7 +140,7 @@ class PayOperationV2Test {
   private MessageFrame frame(final Bytes32 recipient, final long value) {
     return new TestMessageFrameBuilderV2()
         .worldUpdater(worldUpdater)
-        .sender(SENDER)
+        .address(CURRENT)
         .initialGas(100_000L)
         .pushStackItem(Bytes32.leftPad(Bytes.ofUnsignedLong(value)))
         .pushStackItem(recipient)
