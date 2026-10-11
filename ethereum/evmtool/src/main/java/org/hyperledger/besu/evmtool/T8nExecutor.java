@@ -565,20 +565,23 @@ public class T8nExecutor {
 
       RequestProcessingContext requestContext =
           new RequestProcessingContext(blockProcessingContext, receipts);
-      Optional<List<Request>> maybeRequests =
-          Optional.of(rpc.process(requestContext, Optional.empty()));
-      Hash requestsHash = BodyValidation.requestsHash(maybeRequests.orElse(List.of()));
+      List<Request> processedRequests;
+      try {
+        processedRequests = rpc.process(requestContext, Optional.empty());
+      } catch (RuntimeException re) {
+        resultObject.put("blockException", re.getMessage());
+        processedRequests = List.of();
+      }
+      Hash requestsHash = BodyValidation.requestsHash(processedRequests);
 
       resultObject.put("requestsHash", requestsHash.getBytes().toHexString());
       ArrayNode requests = resultObject.putArray("requests");
-      maybeRequests
-          .orElseGet(List::of)
-          .forEach(
-              request -> {
-                if (!request.data().isEmpty()) {
-                  requests.add(request.getEncodedRequest().toHexString());
-                }
-              });
+      processedRequests.forEach(
+          request -> {
+            if (!request.data().isEmpty()) {
+              requests.add(request.getEncodedRequest().toHexString());
+            }
+          });
     }
 
     worldState.persist(blockHeader);
