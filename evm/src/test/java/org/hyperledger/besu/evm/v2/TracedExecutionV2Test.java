@@ -162,8 +162,7 @@ class TracedExecutionV2Test {
   }
 
   @Test
-  void tracerWithoutOperationHooksGetsNoOperationCalls() {
-    // like the parallel block processor's tracer, which only implements a reward hook
+  void tracerWithOnlyCallHooksSeesTheCurrentOperation() {
     final OperationTracer tracer =
         new OperationTracer() {
           @Override
@@ -174,6 +173,36 @@ class TracedExecutionV2Test {
 
     evm.runToHalt(frame, tracer);
 
+    assertThat(frame.getCurrentOperation().getName()).isEqualTo("STOP");
+  }
+
+  @Test
+  void tracerThatSkipsOperationsGetsNoOperationCalls() {
+    // like the parallel block processor's tracer, which only implements a reward hook
+    final List<String> calls = new ArrayList<>();
+    final OperationTracer tracer =
+        new OperationTracer() {
+          @Override
+          public boolean tracesOperations() {
+            return false;
+          }
+
+          @Override
+          public void tracePreExecution(final MessageFrame frame) {
+            calls.add("pre");
+          }
+
+          @Override
+          public void tracePostExecution(final MessageFrame frame, final OperationResult result) {
+            calls.add("post");
+          }
+        };
+    // PUSH1 1 PUSH1 2 ADD STOP
+    final MessageFrame frame = start(Bytes.fromHexString("0x600160020100"));
+
+    evm.runToHalt(frame, tracer);
+
+    assertThat(calls).isEmpty();
     assertThat(frame.getCurrentOperation()).isNull();
     assertThat(frame.stackTopV2()).isEqualTo(1);
   }

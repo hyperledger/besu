@@ -18,10 +18,14 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 /**
- * Leaves the stack of an operation that halts as v1 leaves it. The v1 operations pop their
- * arguments one at a time, so a stack underflow pops everything there is, and many pop their
- * arguments before checking gas or the static flag. EVM v2 operations check before they touch the
- * stack. Tracers show the stack after the halting operation, so EVM v2 pops what v1 pops.
+ * Leaves the stack of an operation that halts as v1 leaves it, for tracers, which show the stack
+ * after the halting operation. The v1 operations pop their arguments one at a time, so a stack
+ * underflow pops everything there is, and many pop their arguments before checking gas or the
+ * static flag.
+ *
+ * <p>Most EVM v2 operations check before they touch the stack, and this class pops for them.
+ * SSTORE, SELFDESTRUCT, JUMP and JUMPI pop their arguments themselves, as v1 does, so they have no
+ * entry in {@code POPPED_BEFORE_HALT}: an entry would pop them a second time.
  */
 public final class HaltedStackV2 {
 

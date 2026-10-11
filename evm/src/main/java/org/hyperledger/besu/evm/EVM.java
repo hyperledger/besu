@@ -502,27 +502,6 @@ public class EVM {
   }
 
   /**
-   * Whether a tracer class implements tracePreExecution or tracePostExecution. Tracers that only
-   * implement other hooks, like the parallel block processor's reward tracer, would otherwise get
-   * no-op calls and a current-operation store for every operation.
-   */
-  private static final ClassValue<Boolean> HAS_OPERATION_HOOKS =
-      new ClassValue<>() {
-        @Override
-        protected Boolean computeValue(final Class<?> type) {
-          try {
-            return type.getMethod("tracePreExecution", MessageFrame.class).getDeclaringClass()
-                    != OperationTracer.class
-                || type.getMethod("tracePostExecution", MessageFrame.class, OperationResult.class)
-                        .getDeclaringClass()
-                    != OperationTracer.class;
-          } catch (final NoSuchMethodException e) {
-            return true;
-          }
-        }
-      };
-
-  /**
    * EVM v2 execution loop using long[] stack representation. The opcodes listed in the switch are
    * executed directly; all others by the v2 versions of the fork's registered operations.
    */
@@ -533,10 +512,7 @@ public class EVM {
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
-    // only tracers with operation hooks read the current operation, so execution without them
-    // skips setting it
-    final boolean tracing =
-        operationTracer.isEnabled() && HAS_OPERATION_HOOKS.get(operationTracer.getClass());
+    final boolean tracing = operationTracer.tracesOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       int pc = frame.getPC();
       final int opcode = pc < code.length ? code[pc] & 0xff : 0;
@@ -686,7 +662,9 @@ public class EVM {
       }
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
-        HaltedStackV2.popAsV1(frame, opcode, haltReason);
+        if (tracing) {
+          HaltedStackV2.popAsV1(frame, opcode, haltReason);
+        }
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
         frame.setExceptionalHaltReason(Optional.of(haltReason));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
