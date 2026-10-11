@@ -513,6 +513,24 @@ public class SyncStateTest {
   }
 
   @Test
+  public void syncStatusListener_receivesEmptyWhenInitialSyncPhaseIsDone() {
+    syncState.setSyncProgress(10L, 42L);
+
+    syncState.markInitialSyncPhaseAsDone();
+
+    verify(syncStatusListener, times(2)).onSyncStatusChanged(syncStatusCaptor.capture());
+    assertThat(syncStatusCaptor.getAllValues().getFirst()).isPresent();
+    assertThat(syncStatusCaptor.getAllValues().getLast()).isEmpty();
+  }
+
+  @Test
+  public void syncStatusListener_isNotNotifiedWhenInitialSyncPhaseIsDoneWithoutProgress() {
+    syncState.markInitialSyncPhaseAsDone();
+
+    verify(syncStatusListener, never()).onSyncStatusChanged(any());
+  }
+
+  @Test
   public void syncStatusListener_isNotNotifiedOfProgressReportedAfterInitialSyncPhaseIsDone() {
     syncState.markInitialSyncPhaseAsDone();
 

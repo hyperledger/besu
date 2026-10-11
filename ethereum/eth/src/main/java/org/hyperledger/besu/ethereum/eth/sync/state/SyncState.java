@@ -428,9 +428,15 @@ public class SyncState implements NewPayloadListener {
   public void markInitialSyncPhaseAsDone() {
     isInitialSyncPhaseDone = true;
     isResyncNeeded = false;
+    final boolean hadProgress;
     synchronized (targetlessSyncProgressLock) {
       initialSyncPhaseCompleted = true;
+      hadProgress = targetlessSyncProgress != null;
       targetlessSyncProgress = null;
+    }
+    if (hadProgress) {
+      // Listeners cache the last reported status, so tell them the progress is gone.
+      publishSyncStatus(syncTarget);
     }
     completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
   }

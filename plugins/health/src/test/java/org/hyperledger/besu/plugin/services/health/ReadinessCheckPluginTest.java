@@ -265,6 +265,39 @@ public class ReadinessCheckPluginTest {
   }
 
   @Test
+  void shouldPassOnceAnEmptySyncStatusReplacesABehindOne() {
+    // Sync completion is signalled by an empty status; a stale "behind" one must not stick.
+    final ReadinessCheckPlugin plugin = new ReadinessCheckPlugin();
+    plugin.register(serviceManager);
+    plugin.start();
+
+    final var captor =
+        org.mockito.ArgumentCaptor.forClass(HealthCheckService.HealthCheckProvider.class);
+    verify(healthCheckService).registerHealthCheck(eq("/readiness"), captor.capture());
+
+    final HealthCheckService.HealthCheckProvider provider = captor.getValue();
+
+    final SyncStatus syncStatus = mock(SyncStatus.class);
+    when(syncStatus.getCurrentBlock()).thenReturn(100L);
+    when(syncStatus.getHighestBlock()).thenReturn(131L);
+    triggerSyncStatusUpdate(syncStatus);
+    final var listenerCaptor =
+        org.mockito.ArgumentCaptor.forClass(BesuEvents.SyncStatusListener.class);
+    verify(besuEvents).addSyncStatusListener(listenerCaptor.capture());
+    listenerCaptor.getValue().onSyncStatusChanged(Optional.empty());
+
+    final HealthCheckService.ParamSource params = mock(HealthCheckService.ParamSource.class);
+    when(params.getParam("minPeers")).thenReturn("1");
+    when(params.getParam("maxBlocksBehind")).thenReturn("2");
+    when(p2pService.isP2pEnabled()).thenReturn(true);
+    when(p2pService.getPeerCount()).thenReturn(1);
+
+    final var result = provider.check(params);
+    assertThat(result.isHealthy()).isTrue();
+    assertThat(result.getDetails()).doesNotContainKey("sync");
+  }
+
+  @Test
   void shouldPassWhenHighestBlockEqualsCurrentBlock() {
     final ReadinessCheckPlugin plugin = new ReadinessCheckPlugin();
     plugin.register(serviceManager);
