@@ -33,6 +33,9 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -202,6 +205,9 @@ public class MessageFrame {
   // Most frames stay far below the maximum, and a frame allocates its stack on every call.
   private static final int INITIAL_STACK_CAPACITY_V2 = 32;
 
+  private static final VarHandle LONG_BE =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
+
   // Global data fields.
   private final WorldUpdater worldUpdater;
 
@@ -219,12 +225,9 @@ public class MessageFrame {
   private long[] stackDataV2;
   private int stackTopV2;
   private final int stackMaxSizeV2;
-  // Tracer view of the v2 stack: the item last materialized for each slot and the limbs it was
-  // built from. Tracers snapshot the whole stack on every step; handing out the same immutable
-  // object while a slot is unchanged keeps those snapshots as cheap as v1's, whose stack holds
-  // shared objects. Allocated on first use, so untraced execution never pays for it.
-  private Bytes[] stackViewV2;
-  private long[] stackViewLimbsV2;
+  // Tracer view of the v2 stack: the item last handed out per slot, reused while the slot is
+  // unchanged so that tracers snapshotting the stack every step share objects, as on v1
+  private Bytes32[] stackViewV2;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -462,6 +465,8 @@ public class MessageFrame {
   /**
    * Removes the item at the top of the stack.
    *
+   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
+   *
    * @return the item at the top of the stack
    * @throws UnderflowException if the stack is empty
    */
@@ -472,6 +477,8 @@ public class MessageFrame {
   /**
    * Removes the corresponding number of items from the top of the stack.
    *
+   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
+   *
    * @param n The number of items to pop off the stack
    */
   public void popStackItems(final int n) {
@@ -481,6 +488,8 @@ public class MessageFrame {
   /**
    * Pushes the corresponding item onto the top of the stack
    *
+   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
+   *
    * @param value The value to push onto the stack.
    */
   public void pushStackItem(final Bytes value) {
@@ -489,6 +498,8 @@ public class MessageFrame {
 
   /**
    * Sets the stack item at the specified offset from the top of the stack to the value
+   *
+   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
    *
    * @param offset The item's position relative to the top of the stack
    * @param value The value to set the stack item to
@@ -529,53 +540,33 @@ public class MessageFrame {
     }
     final int slot = stackTopV2 - 1 - offset;
     final int index = slot << 2;
-    final long l0 = stackDataV2[index];
-    final long l1 = stackDataV2[index + 1];
-    final long l2 = stackDataV2[index + 2];
-    final long l3 = stackDataV2[index + 3];
-    if (stackViewV2 == null || slot >= stackViewV2.length) {
-      growStackViewV2(slot + 1);
+    final long u3 = stackDataV2[index];
+    final long u2 = stackDataV2[index + 1];
+    final long u1 = stackDataV2[index + 2];
+    final long u0 = stackDataV2[index + 3];
+    if (stackViewV2 == null) {
+      stackViewV2 = new Bytes32[stackDataV2.length >> 2];
+    } else if (stackViewV2.length < stackDataV2.length >> 2) {
+      stackViewV2 = Arrays.copyOf(stackViewV2, stackDataV2.length >> 2);
     }
-    final Bytes cached = stackViewV2[slot];
-    if (cached != null
-        && stackViewLimbsV2[index] == l0
-        && stackViewLimbsV2[index + 1] == l1
-        && stackViewLimbsV2[index + 2] == l2
-        && stackViewLimbsV2[index + 3] == l3) {
-      return cached;
+    final Bytes32 cached = stackViewV2[slot];
+    if (cached != null) {
+      final byte[] cachedBytes = cached.toArrayUnsafe();
+      if ((long) LONG_BE.get(cachedBytes, 0) == u3
+          && (long) LONG_BE.get(cachedBytes, 8) == u2
+          && (long) LONG_BE.get(cachedBytes, 16) == u1
+          && (long) LONG_BE.get(cachedBytes, 24) == u0) {
+        return cached;
+      }
     }
     final byte[] bytes = new byte[32];
-    putLimb(bytes, 0, l0);
-    putLimb(bytes, 8, l1);
-    putLimb(bytes, 16, l2);
-    putLimb(bytes, 24, l3);
-    final Bytes item = Bytes32.wrap(bytes);
+    LONG_BE.set(bytes, 0, u3);
+    LONG_BE.set(bytes, 8, u2);
+    LONG_BE.set(bytes, 16, u1);
+    LONG_BE.set(bytes, 24, u0);
+    final Bytes32 item = Bytes32.wrap(bytes);
     stackViewV2[slot] = item;
-    stackViewLimbsV2[index] = l0;
-    stackViewLimbsV2[index + 1] = l1;
-    stackViewLimbsV2[index + 2] = l2;
-    stackViewLimbsV2[index + 3] = l3;
     return item;
-  }
-
-  private static void putLimb(final byte[] bytes, final int offset, final long value) {
-    for (int b = 0; b < 8; b++) {
-      bytes[offset + b] = (byte) (value >>> (56 - (b << 3)));
-    }
-  }
-
-  private void growStackViewV2(final int needed) {
-    final int current = stackViewV2 == null ? 0 : stackViewV2.length;
-    final int capacity =
-        Math.min(
-            stackMaxSizeV2, Math.max(needed, Math.max(INITIAL_STACK_CAPACITY_V2, current * 2)));
-    if (stackViewV2 == null) {
-      stackViewV2 = new Bytes[capacity];
-      stackViewLimbsV2 = new long[capacity << 2];
-    } else {
-      stackViewV2 = Arrays.copyOf(stackViewV2, capacity);
-      stackViewLimbsV2 = Arrays.copyOf(stackViewLimbsV2, capacity << 2);
-    }
   }
 
   /**
