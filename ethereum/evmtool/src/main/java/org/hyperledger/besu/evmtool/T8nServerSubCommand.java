@@ -40,6 +40,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -51,6 +53,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import picocli.CommandLine;
@@ -111,19 +114,38 @@ public class T8nServerSubCommand implements Runnable {
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
-    Vertx.vertx()
-        .createHttpServer(
-            new HttpServerOptions()
-                .setHost(host)
-                .setPort(port)
-                .setHandle100ContinueAutomatically(true)
-                .setCompressionSupported(true))
-        .requestHandler(req -> req.bodyHandler(body -> handle(req, body)))
-        .listen()
-        .onSuccess(
-            server -> System.out.println("Transition server listening on " + server.actualPort()))
-        .onFailure(
-            err -> System.err.println("Failed to start transition server: " + err.getMessage()));
+    final Vertx vertx = Vertx.vertx();
+    final HttpServer server;
+    try {
+      server =
+          vertx
+              .createHttpServer(
+                  new HttpServerOptions()
+                      .setHost(host)
+                      .setPort(port)
+                      .setHandle100ContinueAutomatically(true)
+                      .setCompressionSupported(true))
+              .requestHandler(req -> req.bodyHandler(body -> handle(req, body)))
+              .listen()
+              .toCompletionStage()
+              .toCompletableFuture()
+              .join();
+    } catch (CompletionException e) {
+      vertx.close();
+      final Throwable cause = e.getCause() != null ? e.getCause() : e;
+      System.err.println("Failed to start transition server: " + cause.getMessage());
+      throw new CommandLine.ExecutionException(
+          new CommandLine(this), "Failed to start transition server", cause);
+    }
+    System.out.println("Transition server listening on " + server.actualPort());
+    // EvmTool.main exits the JVM as soon as run() returns, so serve until interrupted.
+    try {
+      new CountDownLatch(1).await();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } finally {
+      vertx.close();
+    }
   }
 
   void handle(final HttpServerRequest req, final Buffer body) {
