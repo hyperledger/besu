@@ -566,6 +566,30 @@ class DebugOperationTracerTest {
   }
 
   @Test
+  void shouldKeepTheGasAfterTheLastCapturedFrameWhenOperationsRunPastTheLimit() {
+    final OpCodeTracerConfig config =
+        OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+            .traceStorage(false)
+            .traceMemory(false)
+            .traceStack(false)
+            .limit(1)
+            .build();
+    final DebugOperationTracer tracer = new DebugOperationTracer(config, false);
+    final MessageFrame frame = validMessageFrame();
+
+    traceFrame(frame, tracer, anOperation);
+    frame.decrementRemainingGas(3);
+    final long gasAfterCapturedFrame = frame.getRemainingGas();
+    traceFrame(frame, tracer, anOperation);
+    frame.decrementRemainingGas(3);
+    traceFrame(frame, tracer, anOperation);
+
+    assertThat(tracer.getTraceFrames()).hasSize(1);
+    assertThat(tracer.getTraceFrames().get(0).getGasRemainingPostExecution())
+        .isEqualTo(gasAfterCapturedFrame);
+  }
+
+  @Test
   void shouldNotReadTheStackOfOperationsPastTheLimit() {
     final OpCodeTracerConfig config =
         OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
