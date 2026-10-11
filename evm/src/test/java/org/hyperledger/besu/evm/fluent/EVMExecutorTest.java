@@ -150,7 +150,7 @@ class EVMExecutorTest {
   void selfDestructDeletesAccountBeforeAmsterdam() {
     final SimpleWorld simpleWorld = createSimpleWorld();
 
-    executeSelfDestructingCreation(EvmSpecVersion.PRAGUE, simpleWorld);
+    executeSelfDestructingCreation(EvmSpecVersion.PRAGUE, simpleWorld, Wei.fromEth(1));
 
     assertThat(simpleWorld.get(SELF_DESTRUCTING_CONTRACT)).isNull();
   }
@@ -159,7 +159,7 @@ class EVMExecutorTest {
   void selfDestructPreservesBalanceFromAmsterdam() {
     final SimpleWorld simpleWorld = createSimpleWorld();
 
-    executeSelfDestructingCreation(EvmSpecVersion.AMSTERDAM, simpleWorld);
+    executeSelfDestructingCreation(EvmSpecVersion.AMSTERDAM, simpleWorld, Wei.fromEth(1));
 
     final Account account = simpleWorld.get(SELF_DESTRUCTING_CONTRACT);
     assertThat(account).isNotNull();
@@ -168,8 +168,17 @@ class EVMExecutorTest {
     assertThat(account.getCode()).isEqualTo(Bytes.EMPTY);
   }
 
+  @Test
+  void selfDestructWithZeroBalanceDeletesAccountFromAmsterdam() {
+    final SimpleWorld simpleWorld = createSimpleWorld();
+
+    executeSelfDestructingCreation(EvmSpecVersion.AMSTERDAM, simpleWorld, Wei.ZERO);
+
+    assertThat(simpleWorld.get(SELF_DESTRUCTING_CONTRACT)).isNull();
+  }
+
   private static void executeSelfDestructingCreation(
-      final EvmSpecVersion specVersion, final SimpleWorld simpleWorld) {
+      final EvmSpecVersion specVersion, final SimpleWorld simpleWorld, final Wei value) {
     // Init code ADDRESS SELFDESTRUCT: the new contract sends its balance to itself.
     new EVMExecutor(EvmSpec.evmSpec(specVersion))
         .worldUpdater(simpleWorld.updater())
@@ -177,7 +186,7 @@ class EVMExecutorTest {
         .sender(Address.fromHexString("0x200"))
         .contract(SELF_DESTRUCTING_CONTRACT)
         .receiver(SELF_DESTRUCTING_CONTRACT)
-        .ethValue(Wei.fromEth(1))
+        .ethValue(value)
         .gas(1_000_000L)
         .code(Bytes.fromHexString("0x30ff"))
         .commitWorldState()

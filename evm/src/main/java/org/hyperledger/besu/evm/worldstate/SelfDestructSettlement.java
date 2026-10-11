@@ -31,9 +31,8 @@ public final class SelfDestructSettlement {
    * Applies the fork's self-destruct rules to the given accounts.
    *
    * <p>Before EIP-8246 each account is deleted outright. Under EIP-8246 each account is cleared
-   * (nonce reset, code and storage removed) but keeps its balance; EIP-161 state clearing (via
-   * {@link WorldUpdater#clearAccountsThatAreEmpty()}) then removes any account left with a zero
-   * balance.
+   * (nonce reset, code and storage removed) but keeps its balance. An account with a zero balance
+   * is deleted instead, because not every caller runs EIP-161 state clearing afterwards.
    *
    * @param worldUpdater the world updater holding the accounts
    * @param selfDestructs the addresses marked for self-destruction
@@ -47,7 +46,12 @@ public final class SelfDestructSettlement {
       selfDestructs.forEach(
           address -> {
             final MutableAccount account = worldUpdater.getAccount(address);
-            if (account != null) {
+            if (account == null) {
+              return;
+            }
+            if (account.getBalance().isZero()) {
+              worldUpdater.deleteAccount(address);
+            } else {
               account.setNonce(0L);
               account.setCode(Bytes.EMPTY);
               account.clearStorage();
