@@ -395,18 +395,8 @@ final class ProgramRun {
   /** The frame's stack, top first, from whichever interpreter ran it. */
   private static List<String> stack(final MessageFrame frame) {
     final List<String> items = new ArrayList<>();
-    final long[] s = frame.stackDataV2();
-    if (s != null) {
-      for (int i = frame.stackTopV2() - 1; i >= 0; i--) {
-        items.add(
-            String.format(
-                "%016x%016x%016x%016x",
-                s[i << 2], s[(i << 2) + 1], s[(i << 2) + 2], s[(i << 2) + 3]));
-      }
-    } else {
-      for (int i = 0; i < frame.stackSize(); i++) {
-        items.add(Bytes32.leftPad(frame.getStackItem(i)).toUnprefixedHexString());
-      }
+    for (int i = 0; i < frame.stackSize(); i++) {
+      items.add(Bytes32.leftPad(frame.getStackItem(i)).toUnprefixedHexString());
     }
     return items;
   }

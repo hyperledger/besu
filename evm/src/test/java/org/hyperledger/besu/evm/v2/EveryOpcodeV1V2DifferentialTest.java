@@ -146,9 +146,8 @@ class EveryOpcodeV1V2DifferentialTest {
           // the prelude writes state, which a static frame cannot
           for (final Bytes start :
               isStatic ? List.of(Bytes.EMPTY) : List.of(Bytes.EMPTY, prelude)) {
-            // 0x00 as the immediate makes the opcode the last operation that costs gas; 0x80
-            // decodes
-            // to the small stack indices DUPN, SWAPN and EXCHANGE can reach on these stacks
+            // 0x00 makes the opcode the last operation that costs gas; 0x80 decodes to stack
+            // indices small enough for DUPN, SWAPN and EXCHANGE on these stacks
             for (final int immediate : List.of(0x00, 0x80)) {
               final Bytes code =
                   Bytes.concatenate(
