@@ -111,6 +111,10 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
 
   static final long DEFAULT_CHILD_QUEUE_HIGH_WATERMARK = 10_000;
   static final long DEFAULT_CHILD_QUEUE_LOW_WATERMARK = 5_000;
+  // Conservative heap cost of one queued storage or bytecode request, which only holds hashes.
+  static final long QUEUED_CHILD_REQUEST_BYTES = 1024;
+  // Share of the max heap that queued child requests may hold before account ranges pause.
+  static final long CHILD_QUEUE_HEAP_PERCENT = 5;
 
   private final long childQueueLowWatermark;
   private final long childQueueHighWatermark;
@@ -153,8 +157,15 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
     this.reorgHealer = reorgHealer;
     this.blockchain = blockchain;
     this.ethContext = ethContext;
-    this.childQueueLowWatermark = computeChildQueueLowWatermark(storagePipelineInFlightCapacity);
-    this.childQueueHighWatermark = computeChildQueueHighWatermark(childQueueLowWatermark);
+    final long minChildQueueLowWatermark =
+        computeChildQueueLowWatermark(storagePipelineInFlightCapacity);
+    this.childQueueHighWatermark =
+        computeChildQueueHighWatermark(minChildQueueLowWatermark, Runtime.getRuntime().maxMemory());
+    this.childQueueLowWatermark = Math.max(minChildQueueLowWatermark, childQueueHighWatermark / 2);
+    LOG.info(
+        "snap/2 account ranges pause once {} storage/code requests are queued, resume below {}",
+        childQueueHighWatermark,
+        childQueueLowWatermark);
 
     accountRangeTracker.setOnRangeCompleted(
         (rangeStart, rangeEnd) ->
@@ -876,9 +887,9 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
             accountRequestsPaused,
             childQueueLowWatermark,
             childQueueHighWatermark,
-            pendingStorageRequests,
-            pendingLargeStorageRequests,
-            pendingCodeRequests);
+            pendingStorageRequests.size()
+                + pendingLargeStorageRequests.size()
+                + pendingCodeRequests.size());
     return accountRequestsPaused;
   }
 
@@ -890,26 +901,32 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
     return Math.max(DEFAULT_CHILD_QUEUE_LOW_WATERMARK, storagePipelineInFlightCapacity * 5 / 4);
   }
 
-  static long computeChildQueueHighWatermark(final long childQueueLowWatermark) {
-    return Math.max(DEFAULT_CHILD_QUEUE_HIGH_WATERMARK, 2 * childQueueLowWatermark);
+  /**
+   * Sized from the heap budget: queued child requests only hold hashes, so account ranges can run
+   * far ahead of the storage and code downloads without risking the heap.
+   */
+  static long computeChildQueueHighWatermark(
+      final long childQueueLowWatermark, final long maxHeapBytes) {
+    final long countFloor =
+        Math.max(DEFAULT_CHILD_QUEUE_HIGH_WATERMARK, 2 * childQueueLowWatermark);
+    if (maxHeapBytes == Long.MAX_VALUE) {
+      return countFloor; // no known heap limit to size against
+    }
+    final long heapBudget =
+        maxHeapBytes / 100 * CHILD_QUEUE_HEAP_PERCENT / QUEUED_CHILD_REQUEST_BYTES;
+    return Math.max(countFloor, heapBudget);
   }
 
   /**
-   * Bounded backpressure with hysteresis: account ranges pause once any child queue backs up to the
-   * high watermark and keep flowing again only after every child queue has drained below the low
-   * watermark.
+   * Bounded backpressure with hysteresis: account ranges pause once the queued child requests reach
+   * the high watermark and keep flowing again only after they drain below the low watermark.
    */
   static boolean evaluateAccountBackpressure(
       final boolean currentlyPaused,
       final long lowWatermark,
       final long highWatermark,
-      final InMemoryTaskQueue<SnapDataRequest> pendingStorageRequests,
-      final InMemoryTaskQueue<SnapDataRequest> pendingLargeStorageRequests,
-      final InMemoryTaskQueue<SnapDataRequest> pendingCodeRequests) {
-    final long watermark = currentlyPaused ? lowWatermark : highWatermark;
-    return pendingStorageRequests.size() >= watermark
-        || pendingLargeStorageRequests.size() >= watermark
-        || pendingCodeRequests.size() >= watermark;
+      final long queuedChildRequests) {
+    return queuedChildRequests >= (currentlyPaused ? lowWatermark : highWatermark);
   }
 
   @Override

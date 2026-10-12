@@ -40,9 +40,11 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -191,32 +193,65 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
                     .notifyRangeProgress(
                         SnapSyncMetricsManager.Step.DOWNLOAD, endKeyHash, endKeyHash));
 
+    final boolean codeStoredByHash = isCodeStoredByHash(worldStateStorageCoordinator);
+    final Set<Hash> requestedCodeHashes = new HashSet<>();
+
     // Peer responses include boundary accounts outside [startKeyHash, endKeyHash] required for
     // proof verification; only generate children for in-range accounts.
     for (Map.Entry<Bytes32, Bytes> account :
         taskElement.keys().subMap(startKeyHash, true, endKeyHash, true).entrySet()) {
       final PmtStateTrieAccountValue accountValue =
           PmtStateTrieAccountValue.readFrom(RLP.input(account.getValue()));
+      // Copy the key: it is a slice of the peer message and would keep it alive while queued.
+      final Bytes32 accountHash = account.getKey().copy();
       if (!accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
         childRequests.add(
             new SnapV2StorageRangeRequest(
                 getPivotBlockHeader(),
-                account.getKey(),
+                accountHash,
                 Bytes32.wrap(accountValue.getStorageRoot().getBytes()),
                 MIN_RANGE,
                 MAX_RANGE,
                 startKeyHash));
       }
-      if (!accountValue.getCodeHash().equals(Hash.EMPTY)) {
+      if (!accountValue.getCodeHash().equals(Hash.EMPTY)
+          && isCodeMissing(
+              worldStateStorageCoordinator,
+              codeStoredByHash,
+              requestedCodeHashes,
+              Hash.wrap(accountHash),
+              accountValue.getCodeHash())) {
         childRequests.add(
             new SnapV2BytecodeRequest(
                 getPivotBlockHeader(),
-                account.getKey(),
+                accountHash,
                 Bytes32.wrap(accountValue.getCodeHash().getBytes()),
                 startKeyHash));
       }
     }
     return childRequests.stream();
+  }
+
+  private static boolean isCodeStoredByHash(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator) {
+    return worldStateStorageCoordinator.applyForStrategy(
+        bonsai -> bonsai.getFlatDbStrategy().isCodeByCodeHash(), forest -> true);
+  }
+
+  /**
+   * Whether the code still has to be downloaded. When code is keyed by hash, a hash already stored
+   * or already requested by this response is skipped.
+   */
+  private static boolean isCodeMissing(
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final boolean codeStoredByHash,
+      final Set<Hash> requestedCodeHashes,
+      final Hash accountHash,
+      final Hash codeHash) {
+    if (codeStoredByHash && !requestedCodeHashes.add(codeHash)) {
+      return false;
+    }
+    return worldStateStorageCoordinator.getCode(codeHash, accountHash).isEmpty();
   }
 
   public Bytes32 getStartKeyHash() {

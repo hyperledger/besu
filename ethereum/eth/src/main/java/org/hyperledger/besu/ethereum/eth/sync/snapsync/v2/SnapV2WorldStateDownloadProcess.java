@@ -219,7 +219,8 @@ public class SnapV2WorldStateDownloadProcess implements WorldStateDownloadProces
                   pivotBlockSelector.checkForNewPivotCandidate(downloadState::startPivotCatchup);
                   return tasks;
                 })
-            .thenProcessAsyncOrdered(
+            // Unordered: a slow or timed-out request must not hold back the completed ones.
+            .thenProcessAsync(
                 "snapV2BatchDownloadStorageData",
                 requestTask -> requestDataStep.requestStorage(requestTask),
                 maxOutstandingRequests)
@@ -243,7 +244,7 @@ public class SnapV2WorldStateDownloadProcess implements WorldStateDownloadProces
                   pivotBlockSelector.checkForNewPivotCandidate(downloadState::startPivotCatchup);
                   return task;
                 })
-            .thenProcessAsyncOrdered(
+            .thenProcessAsync(
                 "snapV2BatchDownloadLargeStorageData",
                 requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
                 maxOutstandingRequests)
@@ -283,7 +284,7 @@ public class SnapV2WorldStateDownloadProcess implements WorldStateDownloadProces
                   pivotBlockSelector.checkForNewPivotCandidate(downloadState::startPivotCatchup);
                   return tasks;
                 })
-            .thenProcessAsyncOrdered(
+            .thenProcessAsync(
                 "snapV2BatchDownloadCodeData",
                 tasks -> requestDataStep.requestCode(tasks),
                 maxOutstandingRequests)
