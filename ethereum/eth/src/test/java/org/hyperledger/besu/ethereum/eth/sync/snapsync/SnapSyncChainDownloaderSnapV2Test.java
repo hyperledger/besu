@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -97,6 +98,7 @@ class SnapSyncChainDownloaderSnapV2Test {
   private ChainSyncStateStorage chainSyncStateStorage;
   private BlockHeader initialPivot;
   private SynchronizerConfiguration syncConfig;
+  private Pipeline<Long> backwardPipeline;
   private Pipeline<List<BlockHeader>> balPipeline;
   private Pipeline<List<BlockHeader>> forwardPipeline;
   private final Deque<Runnable> scheduledRetries = new ArrayDeque<>();
@@ -122,7 +124,7 @@ class SnapSyncChainDownloaderSnapV2Test {
         .when(protocolSpec.getBlockHeaderFunctions())
         .thenReturn(new MainnetBlockHeaderFunctions());
 
-    final Pipeline<Long> backwardPipeline = mock(Pipeline.class);
+    backwardPipeline = mock(Pipeline.class);
     final BackwardHeaderDriver driver = mock(BackwardHeaderDriver.class);
     lenient().when(driver.getMatchedAncestor()).thenReturn(Optional.empty());
     lenient()
@@ -529,6 +531,67 @@ class SnapSyncChainDownloaderSnapV2Test {
     verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(initialPivot));
     verify(pipelineFactory, never())
         .createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void deferredCatchupStopsTheMainCycleInStage2() throws Exception {
+    // Without stopping it, the catch-up would wait for the whole first cycle: hours of bodies.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final BlockHeader catchupPivot = header(2000);
+    final CompletableFuture<Void> stage2 = new CompletableFuture<>();
+    // Like a real pipeline, aborting completes the download with a CancellationException.
+    doAnswer(inv -> stage2.completeExceptionally(new CancellationException("Pipeline aborted")))
+        .when(forwardPipeline)
+        .abort();
+    when(scheduler.startPipeline(forwardPipeline))
+        .thenReturn(stage2, CompletableFuture.completedFuture(null));
+    final SnapSyncChainDownloader downloader = downloader();
+    final CompletableFuture<Void> chainDownload = downloader.start();
+    catchupHeaderDownload(
+        catchupPivot, CompletableFuture.failedFuture(new WrongChainException("reorged out")));
+
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+
+    verify(forwardPipeline).abort();
+    assertThat(catchup).isCompleted();
+    verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
+    // Stage 2 resumes, now up to the new pivot.
+    verify(pipelineFactory)
+        .createForwardBodiesAndReceiptsDownloadPipeline(anyLong(), eq(catchupPivot), any());
+    downloader.onWorldStateHealFinished();
+    chainDownload.get(5, TimeUnit.SECONDS);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void deferredCatchupStopsTheMainCycleOnceStage1Finishes() throws Exception {
+    // The pivot update needs a complete header chain, so Stage 1 is not interrupted.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final BlockHeader catchupPivot = header(2000);
+    final CompletableFuture<Void> stage1 = new CompletableFuture<>();
+    when(scheduler.startPipeline(backwardPipeline))
+        .thenReturn(stage1, CompletableFuture.completedFuture(null));
+    final SnapSyncChainDownloader downloader = downloader();
+    final CompletableFuture<Void> chainDownload = downloader.start();
+    catchupHeaderDownload(
+        catchupPivot, CompletableFuture.failedFuture(new WrongChainException("reorged out")));
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+
+    verify(backwardPipeline, never()).abort();
+    stage1.complete(null);
+
+    assertThat(catchup).isCompleted();
+    // The stopped cycle went straight to the new pivot without its BALs or bodies.
+    verify(pipelineFactory, never())
+        .createBlockAccessListDownloadPipeline(anyLong(), eq(initialPivot));
+    verify(pipelineFactory, never())
+        .createForwardBodiesAndReceiptsDownloadPipeline(anyLong(), eq(initialPivot), any());
+    verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
+    downloader.onWorldStateHealFinished();
+    chainDownload.get(5, TimeUnit.SECONDS);
   }
 
   @Test

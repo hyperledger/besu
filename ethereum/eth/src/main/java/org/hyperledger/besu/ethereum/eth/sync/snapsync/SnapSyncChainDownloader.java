@@ -107,6 +107,7 @@ public class SnapSyncChainDownloader
   private volatile SnapWorldDownloadState worldDownloadState;
 
   private final AtomicBoolean downloadInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean preemptCycle = new AtomicBoolean(false);
   private final AtomicBoolean initialized = new AtomicBoolean(false);
   private final AtomicBoolean checkpointValidated = new AtomicBoolean(false);
   private final AtomicInteger sameStateRetryCount = new AtomicInteger(0);
@@ -124,6 +125,13 @@ public class SnapSyncChainDownloader
 
   private volatile CompletableFuture<Void> downloadResult;
   private Instant overallStartTime;
+
+  /** Stops a download cycle between stages so a pending pivot update is handled first. */
+  private static class CyclePreemptedException extends RuntimeException {
+    CyclePreemptedException() {
+      super("Chain download cycle stopped to handle a pivot update", null, false, false);
+    }
+  }
 
   private record SnapV2PivotCatchupRequest(
       BlockHeader currentPivotBlockHeader,
@@ -316,9 +324,29 @@ public class SnapSyncChainDownloader
                     "snap/2 pivot {} is not an ancestor of new pivot {}; deferring catch-up to the chain download cycle",
                     currentPivotBlockHeader.getNumber(),
                     newPivotBlockHeader.getNumber());
+                preemptCurrentCycle(newPivotBlockHeader);
               }
             });
     return completionFuture;
+  }
+
+  /**
+   * Stops the running cycle so the pending pivot update is handled now instead of after the whole
+   * cycle. A cycle in Stage 1 stops once Stage 1 finishes. Pivots at or below the cycle's own are
+   * left to the running cycle, which passes them anyway.
+   */
+  private void preemptCurrentCycle(final BlockHeader newPivotBlockHeader) {
+    // Before the chain sync state is loaded, the first cycle runs to the initial pivot.
+    final ChainSyncState state = chainSyncState.get();
+    final BlockHeader cyclePivot = state != null ? state.pivotBlockHeader() : initialPivotHeader;
+    if (newPivotBlockHeader.getNumber() <= cyclePivot.getNumber()) {
+      return;
+    }
+    preemptCycle.set(true);
+    final Pipeline<?> pipeline = currentPipeline;
+    if (pipeline != null && state != null && state.headersDownloadComplete()) {
+      pipeline.abort();
+    }
   }
 
   /**
@@ -960,7 +988,10 @@ public class SnapSyncChainDownloader
     performSingleDownloadCycle()
         .whenComplete(
             (downloadResult, error) -> {
-              if (error != null) {
+              if (error != null && !cancelled.get() && preemptCycle.getAndSet(false)) {
+                LOG.info("Chain download cycle stopped early to handle a pivot update");
+                handlePivotUpdateLoop(overallResult);
+              } else if (error != null) {
                 handleDownloadError(error, overallResult);
               } else {
                 resetRetryFailureTracking();
@@ -988,6 +1019,9 @@ public class SnapSyncChainDownloader
               if (cancelled.get()) {
                 return CompletableFuture.failedFuture(new CancellationException());
               }
+              if (preemptCycle.get()) {
+                return CompletableFuture.failedFuture(new CyclePreemptedException());
+              }
               if (pipelineFactory.isSnap2Enabled()) {
                 return runBlockAccessListDownload(chainSyncState.get());
               }
@@ -997,6 +1031,9 @@ public class SnapSyncChainDownloader
             ignore -> {
               if (cancelled.get()) {
                 return CompletableFuture.failedFuture(new CancellationException());
+              }
+              if (preemptCycle.get()) {
+                return CompletableFuture.failedFuture(new CyclePreemptedException());
               }
               return runStage2ForwardBodiesAndReceipts(chainSyncState.get());
             });
@@ -1170,6 +1207,8 @@ public class SnapSyncChainDownloader
               synchronized (this) {
                 updatedPivot = pendingPivotUpdate.getAndSet(null);
                 pivotUpdateFuture = new CompletableFuture<>();
+                // The update is handled now, whether or not the cycle was stopped for it.
+                preemptCycle.set(false);
               }
 
               final BlockHeader previousPivot = chainSyncState.get().pivotBlockHeader();
