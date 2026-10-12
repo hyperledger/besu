@@ -28,12 +28,16 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListChanges;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
@@ -45,10 +49,12 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +70,8 @@ public class SnapV2BlockAccessListApplier {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final MutableBlockchain blockchain;
   private final ProtocolSchedule protocolSchedule;
+  // Account trie locations whose subtree must be re-downloaded at the new pivot.
+  private final Set<Bytes> trieRepairLocations = ConcurrentHashMap.newKeySet();
 
   public SnapV2BlockAccessListApplier(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -88,7 +96,7 @@ public class SnapV2BlockAccessListApplier {
         accountRangeTracker.pendingRangeCount());
 
     final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
-    final MerkleTrie<Bytes, Bytes> accountTrie = openAccountTrie();
+    final MerkleTrie<Bytes, Bytes> accountTrie = openAccountTrie(accountRangeTracker);
 
     final Map<Hash, PerAccountChanges> changes =
         collectAccountChanges(fromBlock, toBlock, accountRangeTracker);
@@ -204,7 +212,13 @@ public class SnapV2BlockAccessListApplier {
     for (final Map.Entry<Hash, Bytes32> entry : correctRoots.entrySet()) {
       final Hash accountHash = entry.getKey();
       final Hash correctRoot = Hash.wrap(entry.getValue());
-      final PmtStateTrieAccountValue existingAccount = readTrieAccount(accountTrie, accountHash);
+      final PmtStateTrieAccountValue existingAccount;
+      try {
+        existingAccount = readTrieAccount(accountTrie, accountHash);
+      } catch (final MerkleTrieException e) {
+        scheduleTrieRepair(accountHash, e);
+        continue;
+      }
       if (existingAccount == null) {
         LOG.warn(
             "snap/2 skipping storage root patch for account {}: not found locally", accountHash);
@@ -224,7 +238,7 @@ public class SnapV2BlockAccessListApplier {
           updater,
           onBonsai -> onBonsai.putAccountInfoState(accountHash, encodedAccount),
           onForest -> {});
-      accountTrie.put(accountHash.getBytes(), encodedAccount);
+      putAccount(accountTrie, accountHash, encodedAccount);
       patched++;
     }
 
@@ -261,7 +275,7 @@ public class SnapV2BlockAccessListApplier {
     }
 
     final WorldStateKeyValueStorage.Updater updater = worldStateStorageCoordinator.updater();
-    final MerkleTrie<Bytes, Bytes> accountTrie = openAccountTrie();
+    final MerkleTrie<Bytes, Bytes> accountTrie = openAccountTrie(accountRangeTracker);
 
     final Set<Hash> deletedAccounts = new HashSet<>();
     final Map<Hash, Bytes32> correctedRoots = new HashMap<>();
@@ -310,7 +324,7 @@ public class SnapV2BlockAccessListApplier {
           updater,
           onBonsai -> onBonsai.putAccountInfoState(accountHash, encodedAccount),
           onForest -> {});
-      accountTrie.put(accountHash.getBytes(), encodedAccount);
+      putAccount(accountTrie, accountHash, encodedAccount);
       storeFetchedCodeIfMissing(accountHash, canonicalAccount, fetched, updater);
       correctedRoots.put(accountHash, Bytes32.wrap(canonicalAccount.getStorageRoot().getBytes()));
     }
@@ -342,7 +356,11 @@ public class SnapV2BlockAccessListApplier {
     }
     applyForStrategy(
         updater, onBonsai -> onBonsai.removeAccountInfoState(accountHash), onForest -> {});
-    accountTrie.remove(accountHash.getBytes());
+    try {
+      accountTrie.remove(accountHash.getBytes());
+    } catch (final MerkleTrieException e) {
+      scheduleTrieRepair(accountHash, e);
+    }
     storageRangeTracker.removeAccount(asBytes32(accountHash));
   }
 
@@ -465,10 +483,27 @@ public class SnapV2BlockAccessListApplier {
         Function.identity());
   }
 
-  private MerkleTrie<Bytes, Bytes> openAccountTrie() {
-    final Function<Bytes, Bytes> identity = Function.identity();
+  /**
+   * Opens the local account trie. A range commit at a newer pivot can rewrite a parent with the
+   * canonical hash of a subtree that is still being downloaded, whose local node holds the mix of
+   * pivots left by the last catch-up. Such a node is followed by location, since the next range
+   * commit inside that subtree rewrites it at the current pivot.
+   */
+  private MerkleTrie<Bytes, Bytes> openAccountTrie(
+      final DownloadedAccountRangeTracker accountRangeTracker) {
     final NodeLoader accountNodeLoader =
         (location, hash) -> worldStateStorageCoordinator.getAccountStateTrieNode(location, hash);
+    final StoredNodeFactory<Bytes> nodeFactory =
+        new StoredNodeFactory<>(accountNodeLoader, Function.identity(), Function.identity()) {
+          @Override
+          public Optional<Node<Bytes>> retrieve(final Bytes location, final Bytes32 hash) {
+            return super.retrieve(location, hash)
+                .or(
+                    () ->
+                        loadInProgressNode(location, accountRangeTracker)
+                            .map(rlp -> decode(location, rlp)));
+          }
+        };
 
     final Bytes32 rootHash =
         worldStateStorageCoordinator
@@ -476,7 +511,66 @@ public class SnapV2BlockAccessListApplier {
             .map(node -> Bytes32.wrap(Hash.hash(node).getBytes()))
             .orElse(MerkleTrie.EMPTY_TRIE_NODE_HASH);
 
-    return new StoredMerklePatriciaTrie<>(accountNodeLoader, rootHash, identity, identity);
+    return new StoredMerklePatriciaTrie<>(nodeFactory, rootHash);
+  }
+
+  /** Returns the local node at {@code location} if its subtree is not fully downloaded yet. */
+  private Optional<Bytes> loadInProgressNode(
+      final Bytes location, final DownloadedAccountRangeTracker accountRangeTracker) {
+    if (accountRangeTracker.isRangePersisted(subtreeStart(location), subtreeEnd(location))) {
+      return Optional.empty();
+    }
+    LOG.debug("snap/2 following local account trie node at {} still being downloaded", location);
+    return worldStateStorageCoordinator.applyForStrategy(
+        bonsai -> bonsai.getTrieNodeUnsafe(location), forest -> Optional.<Bytes>empty());
+  }
+
+  private void putAccount(
+      final MerkleTrie<Bytes, Bytes> accountTrie,
+      final Hash accountHash,
+      final Bytes encodedAccount) {
+    try {
+      accountTrie.put(accountHash.getBytes(), encodedAccount);
+    } catch (final MerkleTrieException e) {
+      scheduleTrieRepair(accountHash, e);
+    }
+  }
+
+  /**
+   * Leaves the account out of the local trie and records the subtree that could not be loaded, so
+   * it is re-downloaded at the new pivot instead of failing the whole download.
+   */
+  private void scheduleTrieRepair(final Hash accountHash, final MerkleTrieException e) {
+    if (e.getLocation() == null) {
+      throw e;
+    }
+    LOG.warn(
+        "snap/2 cannot update account {} in the local trie: node {} at {} is missing, scheduling a"
+            + " re-download of that subtree",
+        accountHash,
+        e.getHash(),
+        e.getLocation());
+    trieRepairLocations.add(e.getLocation());
+  }
+
+  /** Returns and clears the account trie locations whose subtree must be re-downloaded. */
+  public Set<Bytes> drainTrieRepairLocations() {
+    final Set<Bytes> drained = new HashSet<>(trieRepairLocations);
+    trieRepairLocations.removeAll(drained);
+    return drained;
+  }
+
+  /** First account hash under the trie node at {@code location}. */
+  static Bytes32 subtreeStart(final Bytes location) {
+    return InnerNodeDiscoveryManager.decodePath(location);
+  }
+
+  /** Last account hash under the trie node at {@code location}. */
+  static Bytes32 subtreeEnd(final Bytes location) {
+    final MutableBytes path = MutableBytes.create(Bytes32.SIZE * 2);
+    path.fill((byte) 0x0f);
+    path.set(0, location);
+    return InnerNodeDiscoveryManager.decodePath(path);
   }
 
   /**
@@ -529,7 +623,7 @@ public class SnapV2BlockAccessListApplier {
           onForest -> {});
       updatedAccounts++;
 
-      accountTrie.put(accountHash.getBytes(), encodedAccount);
+      putAccount(accountTrie, accountHash, encodedAccount);
 
       if (!storageResult.root.equals(oldStorageRoot)) {
         updatedStorageRoots++;

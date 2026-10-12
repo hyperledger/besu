@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
+import org.hyperledger.besu.ethereum.trie.RangeManager;
+
 import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
@@ -154,6 +156,35 @@ public class DownloadedAccountRangeTracker {
    */
   public boolean isAccountHashPersisted(final Bytes32 accountHash) {
     return isAccountHashDownloaded(accountHash) || isAccountHashPending(accountHash);
+  }
+
+  /**
+   * Check whether every account hash in [start, end] falls within a completed or pending interval.
+   */
+  public boolean isRangePersisted(final Bytes32 start, final Bytes32 end) {
+    Bytes32 cursor = start;
+    while (true) {
+      final Bytes32 intervalEnd = persistedIntervalEnd(cursor);
+      if (intervalEnd == null) {
+        return false;
+      }
+      if (intervalEnd.compareTo(end) >= 0) {
+        return true;
+      }
+      cursor = RangeManager.nextKey(intervalEnd);
+    }
+  }
+
+  private Bytes32 persistedIntervalEnd(final Bytes32 accountHash) {
+    final Entry<Bytes32, Bytes32> completed = completedRanges.floorEntry(accountHash);
+    if (completed != null && accountHash.compareTo(completed.getValue()) <= 0) {
+      return completed.getValue();
+    }
+    final Entry<Bytes32, PendingRange> pending = pendingRanges.floorEntry(accountHash);
+    if (pending != null && accountHash.compareTo(pending.getValue().endInclusive) <= 0) {
+      return pending.getValue().endInclusive;
+    }
+    return null;
   }
 
   /** Return an unmodifiable snapshot of completed ranges for external consumers (e.g. BAL). */

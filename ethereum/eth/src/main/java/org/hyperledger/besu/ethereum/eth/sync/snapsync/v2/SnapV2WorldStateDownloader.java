@@ -106,11 +106,13 @@ public class SnapV2WorldStateDownloader implements WorldStateDownloader {
     this.blockAccessListApplier =
         new SnapV2BlockAccessListApplier(
             worldStateStorageCoordinator, blockchain, protocolSchedule);
+    // Shares the applier so trie repairs found during reorg recovery are picked up too
     this.reorgHealer =
         new SnapV2ReorgHealer(
             blockchain,
-            worldStateStorageCoordinator,
             protocolSchedule,
+            blockAccessListApplier,
+            worldStateStorageCoordinator,
             SnapV2ReorgStateFetcher.fromEthContext(
                 ethContext, metricsSystem, worldStateStorageCoordinator));
 

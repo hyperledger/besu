@@ -52,6 +52,7 @@ import org.hyperledger.besu.services.tasks.TaskCollection;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -378,6 +379,8 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
     pendingCodeRequests.clear();
     accountRangeTracker.clear();
     storageRangeTracker.clear();
+    // Drop trie repairs that belong to this download
+    blockAccessListApplier.drainTrieRepairLocations();
     accountRequestsPaused = false;
     pivotCatchupFuture = null;
     chainCatchupFuture = null;
@@ -637,6 +640,7 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
           correctRoots = recovery.correctedStorageRoots();
         }
         retargetQueuedRequests(newPivotBlockHeader, correctRoots);
+        enqueueTrieRepairs(newPivotBlockHeader);
         snapSyncState.setCurrentHeader(newPivotBlockHeader);
       } catch (final Throwable e) {
         LOG.error(
@@ -699,6 +703,60 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
     retargetQueuedStorageRequests(pendingStorageRequests, newPivotBlockHeader, correctRoots);
     retargetQueuedStorageRequests(pendingLargeStorageRequests, newPivotBlockHeader, correctRoots);
     retargetQueuedCodeRequests(newPivotBlockHeader);
+  }
+
+  private void enqueueTrieRepairs(final BlockHeader newPivotBlockHeader) {
+    final List<SnapV2AccountRangeRequest> repairs =
+        trieRepairRequests(
+            blockAccessListApplier.drainTrieRepairLocations(),
+            pendingAccountRequests.asList(),
+            newPivotBlockHeader);
+    for (final SnapV2AccountRangeRequest repair : repairs) {
+      LOG.info(
+          "snap/2 re-downloading account range [{}, {}] at pivot {} to repair its trie nodes",
+          repair.getStartKeyHash(),
+          repair.getEndKeyHash(),
+          newPivotBlockHeader.getNumber());
+      pendingAccountRequests.add(repair);
+    }
+  }
+
+  /**
+   * Builds one trie repair request per account trie location, skipping locations whose subtree is
+   * already covered by a wider location or by a queued repair.
+   */
+  static List<SnapV2AccountRangeRequest> trieRepairRequests(
+      final Set<Bytes> locations,
+      final List<SnapDataRequest> queuedAccountRequests,
+      final BlockHeader pivotBlockHeader) {
+    final List<SnapV2AccountRangeRequest> covering = new ArrayList<>();
+    for (final SnapDataRequest request : queuedAccountRequests) {
+      if (request instanceof SnapV2AccountRangeRequest accountRequest
+          && accountRequest.isTrieRepair()) {
+        covering.add(accountRequest);
+      }
+    }
+    final List<SnapV2AccountRangeRequest> repairs = new ArrayList<>();
+    locations.stream()
+        .sorted(Comparator.comparingInt(Bytes::size))
+        .forEach(
+            location -> {
+              final Bytes32 start = SnapV2BlockAccessListApplier.subtreeStart(location);
+              final Bytes32 end = SnapV2BlockAccessListApplier.subtreeEnd(location);
+              final boolean covered =
+                  covering.stream()
+                      .anyMatch(
+                          r ->
+                              r.getStartKeyHash().compareTo(start) <= 0
+                                  && r.getEndKeyHash().compareTo(end) >= 0);
+              if (!covered) {
+                final SnapV2AccountRangeRequest repair =
+                    new SnapV2AccountRangeRequest(pivotBlockHeader, start, end, true);
+                covering.add(repair);
+                repairs.add(repair);
+              }
+            });
+    return repairs;
   }
 
   private void retargetQueuedAccountRequests(final BlockHeader newPivotBlockHeader) {
