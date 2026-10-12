@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedLis
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.RemovalReason;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
@@ -521,30 +522,30 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final Transaction replacementTx = createTransactionReplacement(tx, KEYS1);
     pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.empty());
 
-    final List<PendingTransaction> evaluatedTxs = new ArrayList<>();
     pendingTransactions.selectTransactions(
         pendingTxs -> {
-          evaluatedTxs.addAll(pendingTxs);
-          return Map.of();
+          // replace the tx before the result
+          final TransactionAddedResult addResult =
+              pendingTransactions.addTransaction(
+                  createRemotePendingTransaction(replacementTx), Optional.empty());
+          assertThat(addResult.isReplacement()).isTrue();
+
+          // the result for the evaluated tx arrives after it has been replaced
+          return Map.of(
+              pendingTxs.getFirst(),
+              TransactionSelectionResult.invalid(UPFRONT_GAS_COST_EXCEEDS_BALANCE.name()));
         });
 
-    pendingTransactions.addTransaction(
-        createRemotePendingTransaction(replacementTx), Optional.empty());
+    // there should be no tx with the first hash in the pool
+    assertThat(pendingTransactions.getTransactionByHash(tx.getHash())).isEmpty();
 
-    // the result for the evaluated tx arrives after it has been replaced
-    pendingTransactions.selectTransactions(
-        unused ->
-            Map.of(
-                evaluatedTxs.getFirst(),
-                TransactionSelectionResult.invalid(UPFRONT_GAS_COST_EXCEEDS_BALANCE.name())));
+    // while the replacement tx should be present
+    assertThat(pendingTransactions.getTransactionByHash(replacementTx.getHash())).isPresent();
 
-    pendingTransactions.selectTransactions(
-        pendingTxs -> {
-          assertThat(pendingTxs)
-              .map(PendingTransaction::getTransaction)
-              .containsExactly(replacementTx);
-          return Map.of();
-        });
+    // and still selectable
+    assertThat(layers.prioritizedTransactions.getByScore())
+        .map(PendingTransaction::getTransaction)
+        .containsExactly(replacementTx);
   }
 
   @Test
@@ -554,22 +555,23 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     pendingTransactions.addTransaction(createRemotePendingTransaction(tx0), Optional.empty());
     pendingTransactions.addTransaction(createRemotePendingTransaction(tx1), Optional.empty());
 
-    final List<PendingTransaction> evaluatedTxs = new ArrayList<>();
     pendingTransactions.selectTransactions(
         pendingTxs -> {
-          evaluatedTxs.addAll(pendingTxs);
-          return Map.of();
+          pendingTransactions.manageBlockAdded(
+              mockBlockHeader(), List.of(tx0), List.of(), FeeMarket.london(0L));
+
+          assertThat(pendingTxs.getFirst().getTransaction()).isEqualTo(tx0);
+
+          // there should be no tx with the first hash in the pool
+          assertThat(pendingTransactions.getTransactionByHash(tx0.getHash())).isEmpty();
+
+          // the result for the evaluated tx arrives after its block has been processed
+          // this will cause a removal of a non-existing tx, since already removed by the confirmed
+          // block
+          return Map.of(
+              pendingTxs.getFirst(),
+              TransactionSelectionResult.invalid(UPFRONT_GAS_COST_EXCEEDS_BALANCE.name()));
         });
-
-    pendingTransactions.manageBlockAdded(
-        mockBlockHeader(), List.of(tx0), List.of(), FeeMarket.london(0L));
-
-    // the result for the evaluated tx arrives after its block has been processed
-    pendingTransactions.selectTransactions(
-        unused ->
-            Map.of(
-                evaluatedTxs.getFirst(),
-                TransactionSelectionResult.invalid(UPFRONT_GAS_COST_EXCEEDS_BALANCE.name())));
 
     assertThat(layers.prioritizedTransactions.getByScore())
         .map(PendingTransaction::getTransaction)
