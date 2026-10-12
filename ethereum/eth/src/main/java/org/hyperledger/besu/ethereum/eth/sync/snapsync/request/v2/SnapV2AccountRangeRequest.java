@@ -64,25 +64,14 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
 
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private final boolean trieRepair;
   private final StackTrie stackTrie;
   private ResponseProofStatus responseProofStatus;
 
   public SnapV2AccountRangeRequest(
       final BlockHeader pivotBlockHeader, final Bytes32 startKeyHash, final Bytes32 endKeyHash) {
-    this(pivotBlockHeader, startKeyHash, endKeyHash, false);
-  }
-
-  /** A trie repair only rewrites the account trie nodes of an already tracked range. */
-  public SnapV2AccountRangeRequest(
-      final BlockHeader pivotBlockHeader,
-      final Bytes32 startKeyHash,
-      final Bytes32 endKeyHash,
-      final boolean trieRepair) {
     super(ACCOUNT_RANGE, pivotBlockHeader, startKeyHash);
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
-    this.trieRepair = trieRepair;
     this.responseProofStatus = ResponseProofStatus.PENDING;
     this.stackTrie = new StackTrie(pivotBlockHeader.getStateRoot(), startKeyHash);
   }
@@ -188,28 +177,19 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
             endKeyHash)
         .ifPresentOrElse(
             missingRightElement -> {
-              if (!trieRepair) {
-                downloadState
-                    .getMetricsManager()
-                    .notifyRangeProgress(
-                        SnapSyncMetricsManager.Step.DOWNLOAD, missingRightElement, endKeyHash);
-              }
+              downloadState
+                  .getMetricsManager()
+                  .notifyRangeProgress(
+                      SnapSyncMetricsManager.Step.DOWNLOAD, missingRightElement, endKeyHash);
               childRequests.add(
                   new SnapV2AccountRangeRequest(
-                      getPivotBlockHeader(), missingRightElement, endKeyHash, trieRepair));
+                      getPivotBlockHeader(), missingRightElement, endKeyHash));
             },
-            () -> {
-              if (!trieRepair) {
+            () ->
                 downloadState
                     .getMetricsManager()
                     .notifyRangeProgress(
-                        SnapSyncMetricsManager.Step.DOWNLOAD, endKeyHash, endKeyHash);
-              }
-            });
-
-    if (trieRepair) {
-      return childRequests.stream();
-    }
+                        SnapSyncMetricsManager.Step.DOWNLOAD, endKeyHash, endKeyHash));
 
     // Peer responses include boundary accounts outside [startKeyHash, endKeyHash] required for
     // proof verification; only generate children for in-range accounts.
@@ -251,12 +231,8 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
     return stackTrie.getElement(startKeyHash).keys();
   }
 
-  public boolean isTrieRepair() {
-    return trieRepair;
-  }
-
   public SnapV2AccountRangeRequest retarget(final BlockHeader newPivotBlockHeader) {
-    return new SnapV2AccountRangeRequest(newPivotBlockHeader, startKeyHash, endKeyHash, trieRepair);
+    return new SnapV2AccountRangeRequest(newPivotBlockHeader, startKeyHash, endKeyHash);
   }
 
   @Override

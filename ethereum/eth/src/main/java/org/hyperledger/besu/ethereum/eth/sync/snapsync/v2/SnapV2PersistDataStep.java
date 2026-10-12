@@ -144,10 +144,7 @@ public class SnapV2PersistDataStep {
       final SnapDataRequest request, final List<SnapDataRequest> children) {
     // Register tracking state before enqueueing children (no race)
     if (request instanceof SnapV2AccountRangeRequest accountRequest) {
-      // Trie repairs rewrite nodes of ranges that are already tracked
-      if (!accountRequest.isTrieRepair()) {
-        trackAccountRange(accountRequest, children);
-      }
+      trackAccountRange(accountRequest, children);
     } else if (request instanceof SnapV2StorageRangeRequest storageRequest) {
       trackStorageRange(storageRequest, children);
     } else if (request instanceof SnapV2BytecodeRequest codeRequest) {

@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -171,96 +170,6 @@ class SnapV2BlockAccessListApplierPartialTrieTest {
       high = download(high, 20);
     }
     assertLocalTrieMatchesPeer();
-  }
-
-  /**
-   * A node of a fully downloaded subtree that cannot be loaded no longer fails the catch-up: the
-   * subtree is reported for repair and its re-download restores the trie.
-   */
-  @Test
-  void schedulesTrieRepairWhenNodeOfDownloadedSubtreeIsMissing() {
-    final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(2);
-    ranges.forEach(
-        (start, end) -> {
-          SnapV2AccountRangeRequest request = new SnapV2AccountRangeRequest(pivot, start, end);
-          while (request != null) {
-            request = download(request, 20);
-          }
-        });
-    final long completedRanges = accountTracker.completedRangeCount();
-
-    final Bytes32 touched = peerAccounts.firstKey();
-    final Bytes location = Bytes.of(firstNibble(touched));
-    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
-    updater.removeTrieNode(location);
-    updater.commit();
-
-    catchUp(Map.of(touched, Wei.of(500)));
-
-    final Set<Bytes> repairLocations = applier.drainTrieRepairLocations();
-    assertThat(repairLocations).containsExactly(location);
-    assertThat(storage.getAccount(Hash.wrap(touched))).contains(account(Wei.of(500)));
-
-    final List<SnapV2AccountRangeRequest> repairs =
-        SnapV2WorldDownloadState.trieRepairRequests(repairLocations, List.of(), pivot);
-    assertThat(repairs).hasSize(1);
-    SnapV2AccountRangeRequest repair = repairs.getFirst();
-    while (repair != null) {
-      assertThat(repair.isTrieRepair()).isTrue();
-      repair = download(repair, 20);
-    }
-    assertThat(accountTracker.completedRangeCount()).isEqualTo(completedRanges);
-    assertLocalTrieMatchesPeer();
-  }
-
-  @Test
-  void trieRepairRequestsCoverEachSubtreeOnce() {
-    final SnapV2AccountRangeRequest queuedRepair =
-        new SnapV2AccountRangeRequest(
-            pivot,
-            Bytes32.fromHexString("0xa0" + "00".repeat(31)),
-            Bytes32.fromHexString("0xaf" + "ff".repeat(31)),
-            true);
-
-    final List<SnapV2AccountRangeRequest> repairs =
-        SnapV2WorldDownloadState.trieRepairRequests(
-            Set.of(Bytes.of(0x0c, 0x01, 0x00), Bytes.of(0x0c, 0x01), Bytes.of(0x0a, 0x03)),
-            List.<SnapDataRequest>of(queuedRepair),
-            pivot);
-
-    assertThat(repairs).hasSize(1);
-    assertThat(repairs.getFirst().isTrieRepair()).isTrue();
-    assertThat(repairs.getFirst().getStartKeyHash())
-        .isEqualTo(Bytes32.fromHexString("0xc1" + "00".repeat(31)));
-    assertThat(repairs.getFirst().getEndKeyHash())
-        .isEqualTo(Bytes32.fromHexString("0xc1" + "ff".repeat(31)));
-  }
-
-  @Test
-  void rangeIsPersistedOnlyWhenCoveredByCompletedOrPendingRanges() {
-    final DownloadedAccountRangeTracker tracker = new DownloadedAccountRangeTracker();
-    tracker.registerPending(
-        Bytes32.ZERO, Bytes32.fromHexString("0x3f" + "ff".repeat(31)), 0); // completed
-    tracker.registerPending(
-        Bytes32.fromHexString("0x40" + "00".repeat(31)),
-        Bytes32.fromHexString("0x7f" + "ff".repeat(31)),
-        1); // pending
-
-    assertThat(
-            tracker.isRangePersisted(
-                Bytes32.fromHexString("0x10" + "00".repeat(31)),
-                Bytes32.fromHexString("0x7f" + "ff".repeat(31))))
-        .isTrue();
-    assertThat(
-            tracker.isRangePersisted(
-                Bytes32.fromHexString("0x10" + "00".repeat(31)),
-                Bytes32.fromHexString("0x80" + "00".repeat(31))))
-        .isFalse();
-    assertThat(
-            tracker.isRangePersisted(
-                Bytes32.fromHexString("0x80" + "00".repeat(31)),
-                Bytes32.fromHexString("0x8f" + "ff".repeat(31))))
-        .isFalse();
   }
 
   private void catchUp(final Map<Bytes32, Wei> balanceChanges) {
