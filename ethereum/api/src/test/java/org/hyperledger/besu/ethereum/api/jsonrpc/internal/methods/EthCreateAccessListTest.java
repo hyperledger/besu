@@ -58,6 +58,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -72,6 +73,12 @@ public class EthCreateAccessListTest {
   private static final long TX_GAS_LIMIT_CAP = 1_000_000L;
   private static final long BLOCK_GAS_LIMIT = 2_000_000L;
   private static final String METHOD = "eth_createAccessList";
+  private static final Address SENDER =
+      Address.fromHexString("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  private static final Address RECIPIENT =
+      Address.fromHexString("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+  private static final Address PRECOMPILE =
+      Address.fromHexString("0x0000000000000000000000000000000000000001");
 
   private EthCreateAccessList method;
 
@@ -478,5 +485,54 @@ public class EthCreateAccessListTest {
   private List<AccessListEntry> generateRandomAccessList() {
     return List.of(
         new AccessListEntry(Address.wrap(Bytes.random(Address.SIZE)), List.of(Bytes32.random())));
+  }
+
+  @Test
+  public void senderIsExcludedFromAccessList() {
+    mockTransactionSimulatorResult(true, false, MIN_TX_GAS_COST, pendingBlockHeader);
+    assertThat(captureExcludedAddresses(callParameterWithSenderAndTo(SENDER, RECIPIENT)))
+        .contains(SENDER);
+  }
+
+  @Test
+  public void recipientIsExcludedFromAccessList() {
+    mockTransactionSimulatorResult(true, false, MIN_TX_GAS_COST, pendingBlockHeader);
+    assertThat(captureExcludedAddresses(callParameterWithSenderAndTo(SENDER, RECIPIENT)))
+        .contains(RECIPIENT);
+  }
+
+  @Test
+  public void precompileIsExcludedFromAccessList() {
+    when(precompileContractRegistry.getPrecompileAddresses()).thenReturn(Set.of(PRECOMPILE));
+    mockTransactionSimulatorResult(true, false, MIN_TX_GAS_COST, pendingBlockHeader);
+    assertThat(captureExcludedAddresses(callParameterWithSenderAndTo(SENDER, RECIPIENT)))
+        .contains(PRECOMPILE);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Set<Address> captureExcludedAddresses(final CallParameter callParams) {
+    final ArgumentCaptor<Set<Address>> captor = ArgumentCaptor.forClass(Set.class);
+    final AccessListOperationTracer tracer = mock(AccessListOperationTracer.class);
+    when(tracer.getAccessList()).thenReturn(List.of());
+    try (final MockedStatic<AccessListOperationTracer> tracerMockedStatic =
+        Mockito.mockStatic(AccessListOperationTracer.class)) {
+      tracerMockedStatic
+          .when(() -> AccessListOperationTracer.create(captor.capture()))
+          .thenReturn(tracer);
+      method.response(ethCreateAccessListRequest(callParams));
+      return captor.getValue();
+    }
+  }
+
+  private CallParameter callParameterWithSenderAndTo(final Address sender, final Address to) {
+    return ImmutableCallParameter.builder()
+        .sender(sender)
+        .to(to)
+        .gas(0L)
+        .gasPrice(Wei.ZERO)
+        .value(Wei.ZERO)
+        .input(Bytes.EMPTY)
+        .strict(true)
+        .build();
   }
 }
