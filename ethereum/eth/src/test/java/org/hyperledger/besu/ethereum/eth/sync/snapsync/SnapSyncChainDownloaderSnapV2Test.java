@@ -660,6 +660,8 @@ class SnapSyncChainDownloaderSnapV2Test {
     final CompletableFuture<Void> chainDownload = downloader.start();
     // The main cycle's BAL download reached the requested pivot.
     assertThat(staleCatchup).isCompleted();
+    // Completing the request stops its own download.
+    verify(staleHeaderPipeline).abort();
 
     // The world state moves on to the next pivot, then the stale download finally finishes.
     catchupHeaderDownload(header(2000), new CompletableFuture<>());
@@ -674,6 +676,42 @@ class SnapSyncChainDownloaderSnapV2Test {
     // Waking the main loop with the old pivot would have treated it as a rollback.
     verify(blockchain, never()).unsafeRemoveCanonicalIndexRange(anyLong(), anyLong());
     assertThat(nextCatchup).isNotDone();
+    // The stopped download does not go on to its BAL step: only the main cycle's BAL download ran.
+    verify(pipelineFactory, times(1))
+        .createBlockAccessListDownloadPipeline(anyLong(), eq(initialPivot));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void staleCatchupRetryIsCancelledWhenTheMainCycleCompletesTheRequest() {
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final BlockHeader oldPivot = header(500);
+    final SnapSyncChainDownloader downloader = downloader();
+    final Pipeline<Long> staleHeaderPipeline = mock(Pipeline.class);
+    when(pipelineFactory.createBackwardHeaderDownloadPipeline(
+            argThat(s -> s != null && s.headerDownloadAnchor().equals(oldPivot))))
+        .thenReturn(
+            new SnapSyncChainDownloadPipelineFactory.BackwardHeaderPipelineResult(
+                staleHeaderPipeline, mock(BackwardHeaderDriver.class)));
+    when(scheduler.startPipeline(staleHeaderPipeline))
+        .thenReturn(CompletableFuture.failedFuture(new TimeoutException("headers timed out")));
+    final CompletableFuture<Void> staleCatchup =
+        downloader.preparePivotCatchup(oldPivot, initialPivot);
+    assertThat(scheduledRetryResults).hasSize(1);
+
+    final CompletableFuture<Void> stage2 = new CompletableFuture<>();
+    when(scheduler.startPipeline(forwardPipeline)).thenReturn(stage2);
+    downloader.start();
+    assertThat(staleCatchup).isCompleted();
+
+    // Runs the retry even though it was cancelled, so the abort check is covered too.
+    runScheduledRetries();
+
+    assertThat(scheduledRetryResults.getFirst()).isCancelled();
+    verify(pipelineFactory, times(1))
+        .createBackwardHeaderDownloadPipeline(
+            argThat(s -> s != null && s.headerDownloadAnchor().equals(oldPivot)));
+    verify(scheduler, times(1)).startPipeline(staleHeaderPipeline);
   }
 
   /** Starts the chain download and leaves its first cycle running in Stage 2 (bodies/receipts). */

@@ -120,8 +120,6 @@ public class SnapSyncChainDownloader
 
   private volatile Pipeline<?> currentPipeline;
   private volatile BackwardHeaderDriver currentDriver;
-  private volatile Pipeline<?> catchupPipeline;
-  private volatile CompletableFuture<Void> catchupRetry;
 
   private volatile CompletableFuture<Void> downloadResult;
   private Instant overallStartTime;
@@ -279,9 +277,13 @@ public class SnapSyncChainDownloader
     // The catch-up only needs the headers and BALs between the two pivots, so it is downloaded
     // straight away rather than waiting for the current download cycle, which on the first cycle
     // spans the whole chain and can take hours.
-    downloadPivotCatchupRange(currentPivotBlockHeader, newPivotBlockHeader)
+    downloadPivotCatchupRange(request)
         .whenComplete(
             (ignore, error) -> {
+              if (completionFuture.isDone()) {
+                // Completed by the main cycle, or failed by cancel(), while this was downloading.
+                return;
+              }
               final Throwable cause = error == null ? null : ExceptionUtils.rootCause(error);
               if (cancelled.get() || cause instanceof CancellationException) {
                 // A normal shutdown, not a download failure: nothing to log.
@@ -360,13 +362,15 @@ public class SnapSyncChainDownloader
    * {@link WrongChainException} before writing anything at or below the current pivot.
    */
   private CompletableFuture<Void> downloadPivotCatchupRange(
-      final BlockHeader currentPivotBlockHeader, final BlockHeader newPivotBlockHeader) {
+      final SnapV2PivotCatchupRequest request) {
+    final BlockHeader currentPivotBlockHeader = request.currentPivotBlockHeader();
+    final BlockHeader newPivotBlockHeader = request.newPivotBlockHeader();
     return retryCatchupStep(
+            request,
             "header",
-            currentPivotBlockHeader,
-            newPivotBlockHeader,
             () ->
                 startCatchupPipeline(
+                    request,
                     pipelineFactory
                         .createBackwardHeaderDownloadPipeline(
                             new ChainSyncState(
@@ -379,11 +383,11 @@ public class SnapSyncChainDownloader
         .thenCompose(
             ignore ->
                 retryCatchupStep(
+                    request,
                     "BAL",
-                    currentPivotBlockHeader,
-                    newPivotBlockHeader,
                     () ->
                         startCatchupPipeline(
+                            request,
                             pipelineFactory.createBlockAccessListDownloadPipeline(
                                 currentPivotBlockHeader.getNumber(), newPivotBlockHeader)),
                     1));
@@ -397,16 +401,15 @@ public class SnapSyncChainDownloader
    * are retried first.
    */
   private CompletableFuture<Void> retryCatchupStep(
+      final SnapV2PivotCatchupRequest request,
       final String step,
-      final BlockHeader currentPivotBlockHeader,
-      final BlockHeader newPivotBlockHeader,
       final Supplier<CompletableFuture<Void>> download,
       final int attempt) {
-    return runCatchupStep(download)
+    return runCatchupStep(request, download)
         .exceptionallyCompose(
             error -> {
               final Throwable cause = ExceptionUtils.rootCause(error);
-              if (cancelled.get()
+              if (isCatchupStopped(request)
                   || cause instanceof CancellationException
                   || cause instanceof WrongChainException
                   || attempt >= MAX_SAME_STATE_RETRIES) {
@@ -417,8 +420,8 @@ public class SnapSyncChainDownloader
                   .setMessage(
                       "snap/2 pivot catch-up {} download from block {} to {} failed (attempt {}/{}), retrying in {}s: {}")
                   .addArgument(step)
-                  .addArgument(currentPivotBlockHeader.getNumber())
-                  .addArgument(newPivotBlockHeader.getNumber())
+                  .addArgument(request.currentPivotBlockHeader().getNumber())
+                  .addArgument(request.newPivotBlockHeader().getNumber())
                   .addArgument(attempt)
                   .addArgument(MAX_SAME_STATE_RETRIES)
                   .addArgument(delay.toSeconds())
@@ -428,20 +431,9 @@ public class SnapSyncChainDownloader
                   ethContext
                       .getScheduler()
                       .scheduleFutureTask(
-                          () ->
-                              retryCatchupStep(
-                                  step,
-                                  currentPivotBlockHeader,
-                                  newPivotBlockHeader,
-                                  download,
-                                  attempt + 1),
-                          delay);
-              // Registered for cancel() like the catch-up pipelines; cancelling the returned
-              // future also cancels the scheduled task.
-              catchupRetry = retry;
-              if (cancelled.get()) {
-                retry.cancel(false);
-              }
+                          () -> retryCatchupStep(request, step, download, attempt + 1), delay);
+              // Cancelling the returned future also cancels the scheduled task.
+              request.completionFuture().whenComplete((r, e) -> retry.cancel(false));
               return retry;
             });
   }
@@ -452,9 +444,10 @@ public class SnapSyncChainDownloader
     return Duration.ofMillis(Math.min(millis, RETRY_MAX_BACKOFF_MS));
   }
 
-  private CompletableFuture<Void> runCatchupStep(final Supplier<CompletableFuture<Void>> download) {
+  private CompletableFuture<Void> runCatchupStep(
+      final SnapV2PivotCatchupRequest request, final Supplier<CompletableFuture<Void>> download) {
     // Creating the header pipeline already stores the new pivot header.
-    if (cancelled.get()) {
+    if (isCatchupStopped(request)) {
       return CompletableFuture.failedFuture(new CancellationException());
     }
     try {
@@ -465,19 +458,22 @@ public class SnapSyncChainDownloader
   }
 
   /**
-   * Starts a catch-up pipeline and registers it for {@link #cancel()}. Cancellation is re-checked
-   * after registering, so either cancel() sees the pipeline or the pipeline sees the cancellation.
+   * Starts a catch-up pipeline that is aborted once its request is finished: completed by the main
+   * cycle, failed, or failed by {@link #cancel()}. If the request is already finished it is aborted
+   * straight away.
    */
-  private CompletableFuture<Void> startCatchupPipeline(final Pipeline<?> pipeline) {
-    if (cancelled.get()) {
+  private CompletableFuture<Void> startCatchupPipeline(
+      final SnapV2PivotCatchupRequest request, final Pipeline<?> pipeline) {
+    if (isCatchupStopped(request)) {
       return CompletableFuture.failedFuture(new CancellationException());
     }
     final CompletableFuture<Void> result = ethContext.getScheduler().startPipeline(pipeline);
-    catchupPipeline = pipeline;
-    if (cancelled.get()) {
-      pipeline.abort();
-    }
+    request.completionFuture().whenComplete((r, e) -> pipeline.abort());
     return result;
+  }
+
+  private boolean isCatchupStopped(final SnapV2PivotCatchupRequest request) {
+    return cancelled.get() || request.completionFuture().isDone();
   }
 
   @Override
@@ -1266,20 +1262,12 @@ public class SnapSyncChainDownloader
   public void cancel() {
     LOG.info("Cancelling two-stage fast sync chain download");
     cancelled.set(true);
-    // Fail the request first: stopping its download below can fail it with a wrapped error.
+    // Failing the request also aborts its download.
     failPendingSnapV2PivotCatchup(new CancellationException());
 
     final Pipeline<?> pipeline = currentPipeline;
     if (pipeline != null) {
       pipeline.abort();
-    }
-    final Pipeline<?> catchup = catchupPipeline;
-    if (catchup != null) {
-      catchup.abort();
-    }
-    final CompletableFuture<Void> retry = catchupRetry;
-    if (retry != null) {
-      retry.cancel(false);
     }
 
     final CompletableFuture<Void> result = downloadResult;
