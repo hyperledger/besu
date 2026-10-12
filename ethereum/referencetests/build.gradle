@@ -159,6 +159,8 @@ def registerFixtureExtraction = { String taskName, Provider<Directory> fixturesD
 }
 
 def stableFixturesDir = fixturesDirFor("execution-spec-tests", "tarConfig", 'execution-specs')
+// Read by :ethereum:evmtool, whose hive-equivalent tasks replay the same fixtures.
+ext.stableFixturesDir = stableFixturesDir
 def extractStableFixtures = registerFixtureExtraction(
   "extractStableFixtures",
   stableFixturesDir,
@@ -481,7 +483,7 @@ dependencies {
   // the following will be resolved via custom ivy repository declared in root build.gradle
   referenceTestImplementation(
     group: 'ethereum', name: 'execution-specs',
-    version: 'tests@v20.0.2', classifier: 'fixtures', ext: 'tar.gz'
+    version: 'tests@v21.0.1', classifier: 'fixtures', ext: 'tar.gz'
     )
   devnetTarConfig(
     group: 'ethereum', name: 'execution-specs',
