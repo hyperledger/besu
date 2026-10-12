@@ -109,7 +109,6 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
   private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(30);
   private static final long COMPLETION_DEBUG_LOG_INTERVAL_MS = TimeUnit.SECONDS.toMillis(10);
 
-  static final long DEFAULT_CHILD_QUEUE_HIGH_WATERMARK = 10_000;
   static final long DEFAULT_CHILD_QUEUE_LOW_WATERMARK = 5_000;
   // Conservative heap cost of one queued storage or bytecode request, which only holds hashes.
   static final long QUEUED_CHILD_REQUEST_BYTES = 1024;
@@ -157,11 +156,11 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
     this.reorgHealer = reorgHealer;
     this.blockchain = blockchain;
     this.ethContext = ethContext;
-    final long minChildQueueLowWatermark =
-        computeChildQueueLowWatermark(storagePipelineInFlightCapacity);
     this.childQueueHighWatermark =
-        computeChildQueueHighWatermark(minChildQueueLowWatermark, Runtime.getRuntime().maxMemory());
-    this.childQueueLowWatermark = Math.max(minChildQueueLowWatermark, childQueueHighWatermark / 2);
+        computeChildQueueHighWatermark(
+            computeChildQueueLowWatermark(storagePipelineInFlightCapacity),
+            Runtime.getRuntime().maxMemory());
+    this.childQueueLowWatermark = childQueueHighWatermark / 2;
     LOG.info(
         "snap/2 account ranges pause once {} storage/code requests are queued, resume below {}",
         childQueueHighWatermark,
@@ -902,13 +901,12 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
   }
 
   /**
-   * Sized from the heap budget: queued child requests only hold hashes, so account ranges can run
-   * far ahead of the storage and code downloads without risking the heap.
+   * Sized from the heap budget, as queued child requests only hold hashes, and never below twice
+   * the low watermark floor since account ranges resume at half of it.
    */
   static long computeChildQueueHighWatermark(
-      final long childQueueLowWatermark, final long maxHeapBytes) {
-    final long countFloor =
-        Math.max(DEFAULT_CHILD_QUEUE_HIGH_WATERMARK, 2 * childQueueLowWatermark);
+      final long lowWatermarkFloor, final long maxHeapBytes) {
+    final long countFloor = 2 * lowWatermarkFloor;
     if (maxHeapBytes == Long.MAX_VALUE) {
       return countFloor; // no known heap limit to size against
     }

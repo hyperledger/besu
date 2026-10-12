@@ -214,18 +214,16 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
                 MAX_RANGE,
                 startKeyHash));
       }
-      if (!accountValue.getCodeHash().equals(Hash.EMPTY)
-          && isCodeMissing(
-              worldStateStorageCoordinator,
-              codeStoredByHash,
-              requestedCodeHashes,
-              Hash.wrap(accountHash),
-              accountValue.getCodeHash())) {
+      final Hash codeHash = accountValue.getCodeHash();
+      // Code keyed by hash is shared, so request each hash once per response.
+      if (!codeHash.equals(Hash.EMPTY)
+          && (!codeStoredByHash || requestedCodeHashes.add(codeHash))
+          && worldStateStorageCoordinator.getCode(codeHash, Hash.wrap(accountHash)).isEmpty()) {
         childRequests.add(
             new SnapV2BytecodeRequest(
                 getPivotBlockHeader(),
                 accountHash,
-                Bytes32.wrap(accountValue.getCodeHash().getBytes()),
+                Bytes32.wrap(codeHash.getBytes()),
                 startKeyHash));
       }
     }
@@ -236,22 +234,6 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
       final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     return worldStateStorageCoordinator.applyForStrategy(
         bonsai -> bonsai.getFlatDbStrategy().isCodeByCodeHash(), forest -> true);
-  }
-
-  /**
-   * Whether the code still has to be downloaded. When code is keyed by hash, a hash already stored
-   * or already requested by this response is skipped.
-   */
-  private static boolean isCodeMissing(
-      final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final boolean codeStoredByHash,
-      final Set<Hash> requestedCodeHashes,
-      final Hash accountHash,
-      final Hash codeHash) {
-    if (codeStoredByHash && !requestedCodeHashes.add(codeHash)) {
-      return false;
-    }
-    return worldStateStorageCoordinator.getCode(codeHash, accountHash).isEmpty();
   }
 
   public Bytes32 getStartKeyHash() {
