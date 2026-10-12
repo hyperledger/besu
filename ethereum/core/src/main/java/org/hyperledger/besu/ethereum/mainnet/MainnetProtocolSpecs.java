@@ -125,6 +125,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import io.vertx.core.json.JsonArray;
 import org.slf4j.Logger;
@@ -286,21 +287,13 @@ public abstract class MainnetProtocolSpecs {
                 protocolSchedule,
                 balConfig) ->
                 new DaoBlockProcessor(
-                    isParallelTxProcessingEnabled
-                        ? new MainnetParallelBlockProcessor(
-                            transactionProcessor,
-                            transactionReceiptFactory,
-                            miningBeneficiaryCalculator,
-                            protocolSchedule,
-                            balConfig,
-                            metricsSystem)
-                        : new MainnetBlockProcessor(
-                            transactionProcessor,
-                            transactionReceiptFactory,
-                            miningBeneficiaryCalculator,
-                            protocolSchedule,
-                            balConfig,
-                            metricsSystem)))
+                    new MainnetBlockProcessor(
+                        transactionProcessor,
+                        transactionReceiptFactory,
+                        miningBeneficiaryCalculator,
+                        protocolSchedule,
+                        balConfig,
+                        metricsSystem)))
         .hardforkId(DAO_RECOVERY_INIT);
   }
 
@@ -1258,8 +1251,8 @@ public abstract class MainnetProtocolSpecs {
             .blockAccessListFactory(new BlockAccessListFactory())
             .blockAccessListValidatorBuilder(MainnetBlockAccessListValidator::create)
             .stateRootCommitterFactory(new StateRootCommitterFactory(balConfiguration))
-            // EIP-8037: Disable validation-time TX_MAX_GAS_LIMIT cap (enforced at runtime on
-            // execution gas)
+            // EIP-8037: tx.gas is capped at TX_MAX_TOTAL_GAS_LIMIT, while TX_MAX_GAS_LIMIT bounds
+            // only execution gas
             .gasLimitCalculatorBuilder(
                 (feeMarket, gasCalculator, blobSchedule) -> {
                   final long londonForkBlock =
@@ -1495,7 +1488,8 @@ public abstract class MainnetProtocolSpecs {
     }
   }
 
-  private record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
+  @VisibleForTesting
+  record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
 
     @Override
     public BlockProcessingResult processBlock(
@@ -1503,13 +1497,7 @@ public abstract class MainnetProtocolSpecs {
         final Blockchain blockchain,
         final MutableWorldState worldState,
         final Block block) {
-      updateWorldStateForDao(worldState);
-      return wrapped.processBlock(
-          protocolContext,
-          blockchain,
-          worldState,
-          block,
-          new AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing());
+      return processBlock(protocolContext, blockchain, worldState, block, Optional.empty());
     }
 
     @Override
@@ -1521,40 +1509,6 @@ public abstract class MainnetProtocolSpecs {
         final Optional<BlockAccessList> blockAccessList) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
-    }
-
-    @Override
-    public BlockProcessingResult processBlock(
-        final ProtocolContext protocolContext,
-        final Blockchain blockchain,
-        final MutableWorldState worldState,
-        final Block block,
-        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
-      return processBlock(
-          protocolContext,
-          blockchain,
-          worldState,
-          block,
-          Optional.empty(),
-          preprocessingBlockFunction);
-    }
-
-    @Override
-    public BlockProcessingResult processBlock(
-        final ProtocolContext protocolContext,
-        final Blockchain blockchain,
-        final MutableWorldState worldState,
-        final Block block,
-        final Optional<BlockAccessList> blockAccessList,
-        final AbstractBlockProcessor.PreprocessingFunction preprocessingBlockFunction) {
-      updateWorldStateForDao(worldState);
-      return wrapped.processBlock(
-          protocolContext,
-          blockchain,
-          worldState,
-          block,
-          blockAccessList,
-          preprocessingBlockFunction);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =

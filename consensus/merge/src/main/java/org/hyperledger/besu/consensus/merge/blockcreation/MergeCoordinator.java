@@ -27,7 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidationResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -67,6 +66,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -101,6 +101,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTasks =
       new ConcurrentHashMap<>();
+
+  private final AtomicReference<Hash> finalizedHashAfterBackwardSync = new AtomicReference<>();
+  private final AtomicReference<CompletableFuture<Void>> backwardSyncWithFinalizedUpdate =
+      new AtomicReference<>();
 
   /**
    * Instantiates a new Merge coordinator.
@@ -277,7 +281,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
               emptyBlockResult.getBlockAccessList(),
               result.getRequests(),
-              BlockCreationTiming.EMPTY));
+              emptyBlockResult.getBlockCreationTimings()));
       LOG.info(
           "Start building proposals for block {} identified by {}",
           emptyBlock.getHeader().getNumber(),
@@ -628,9 +632,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .log();
     } else if (mergeContext.isInitialSyncDone()) {
       backwardSyncContext.maybeUpdateTargetHeight(headHash);
-      backwardSyncContext
-          .syncBackwardsUntil(headHash)
-          .thenRun(() -> updateFinalized(finalizedHash));
+      finalizedHashAfterBackwardSync.set(finalizedHash);
+      final CompletableFuture<Void> session = backwardSyncContext.syncBackwardsUntil(headHash);
+      // all calls during a session share its future, so one callback applies the latest finalized
+      if (backwardSyncWithFinalizedUpdate.getAndSet(session) != session) {
+        session.thenRun(
+            () -> updateFinalized(Objects.requireNonNull(finalizedHashAfterBackwardSync.get())));
+      }
     }
     return maybeHeadHeader;
   }
@@ -666,9 +674,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                   .log();
               mergeContext.setFinalized(finalizedHeader);
             },
+            // a session can end without the head it was started for, e.g. when no peer serves it
             () ->
-                LOG.warn(
-                    "Internal error, backward sync completed but failed to import finalized block {}",
+                LOG.debug(
+                    "Finalized block {} is not on the chain after backward sync, a later forkchoice update will set it",
                     finalizedHash));
   }
 
