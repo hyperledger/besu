@@ -946,7 +946,10 @@ public class SnapSyncChainDownloader
    * @return CompletableFuture that completes when the cycle is done
    */
   private CompletableFuture<Void> performSingleDownloadCycle() {
-    return runStage1Download(chainSyncState.get())
+    // Creating the Stage 1 pipeline writes to the DB and can throw; inside the chain that is
+    // retried rather than escaping the retry loop.
+    return CompletableFuture.<Void>completedFuture(null)
+        .thenCompose(ignore -> runStage1Download(chainSyncState.get()))
         .thenCompose(
             ignore -> {
               if (cancelled.get()) {
