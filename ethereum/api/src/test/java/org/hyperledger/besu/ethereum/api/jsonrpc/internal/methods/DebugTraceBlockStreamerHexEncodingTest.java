@@ -107,6 +107,44 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             MiningConfiguration.MINING_DISABLED);
   }
 
+  /**
+   * Return data must be written when enableReturnData is set. The init code STATICCALLs the
+   * IDENTITY precompile, so the steps after the call have return data.
+   */
+  @Test
+  public void streamingAndAccumulatingPathsMatchWithReturnDataEnabled() throws Exception {
+    final TraceOptions withReturnData =
+        new TraceOptions(
+            TracerType.OPCODE_TRACER,
+            OpCodeTracerConfigBuilder.createFrom(TraceOptions.DEFAULT.opCodeTracerConfig())
+                .traceReturnData(true)
+                .build(),
+            java.util.Map.of());
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.EIP1559)
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(5))
+            .maxFeePerGas(Wei.of(7))
+            .gasLimit(200_000L)
+            .value(Wei.ZERO)
+            .payload(Bytes.fromHexString("0x602060006020600060045afa00"))
+            .chainId(BigInteger.valueOf(42))
+            .signAndBuild(KEY_PAIR);
+    final DebugTraceBlockStreamer streamer =
+        new DebugTraceBlockStreamer(
+            buildBlock(tx), withReturnData, fixture.getProtocolSchedule(), blockchainQueries);
+
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    streamer.streamTo(out, mapper, () -> true);
+    final JsonNode streamedRoot = mapper.readTree(out.toByteArray());
+    final JsonNode accRoot =
+        mapper.readTree(mapper.writeValueAsBytes(streamer.accumulateAll(() -> true)));
+
+    assertThat(accRoot.toString()).contains("\"returnData\"");
+    assertThat(streamedRoot).isEqualTo(accRoot);
+  }
+
   // ── revert reason tests ───────────────────────────────────────────
 
   /**
@@ -121,7 +159,7 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             block, TraceOptions.DEFAULT, fixture.getProtocolSchedule(), blockchainQueries);
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    assertThatCode(() -> streamer.streamTo(out, mapper)).doesNotThrowAnyException();
+    assertThatCode(() -> streamer.streamTo(out, mapper, () -> true)).doesNotThrowAnyException();
   }
 
   /**
@@ -136,7 +174,7 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             block, TraceOptions.DEFAULT, fixture.getProtocolSchedule(), blockchainQueries);
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
 
     final JsonNode structLogs = getStructLogs(out);
     final String reason = findRevertReason(structLogs);
@@ -154,7 +192,7 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             block, TraceOptions.DEFAULT, fixture.getProtocolSchedule(), blockchainQueries);
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
 
     final JsonNode structLogs = getStructLogs(out);
     final String reason = findRevertReason(structLogs);
@@ -177,11 +215,11 @@ public class DebugTraceBlockStreamerHexEncodingTest {
 
     // streaming path
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
     final JsonNode streamedRoot = mapper.readTree(out.toByteArray());
 
     // accumulating path
-    final List<Object> accumulated = streamer.accumulateAll();
+    final List<Object> accumulated = streamer.accumulateAll(() -> true);
     final JsonNode accRoot = mapper.readTree(mapper.writeValueAsBytes(accumulated));
 
     assertThat(streamedRoot)
@@ -243,7 +281,7 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             block, TraceOptions.DEFAULT, fixture.getProtocolSchedule(), blockchainQueries);
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    assertThatCode(() -> streamer.streamTo(out, mapper)).doesNotThrowAnyException();
+    assertThatCode(() -> streamer.streamTo(out, mapper, () -> true)).doesNotThrowAnyException();
 
     // Must be valid JSON
     assertThatCode(() -> mapper.readTree(out.toByteArray())).doesNotThrowAnyException();
@@ -262,11 +300,11 @@ public class DebugTraceBlockStreamerHexEncodingTest {
 
     // streaming path
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
     final JsonNode streamedRoot = mapper.readTree(out.toByteArray());
 
     // accumulating path
-    final List<Object> accumulated = streamer.accumulateAll();
+    final List<Object> accumulated = streamer.accumulateAll(() -> true);
     final JsonNode accRoot = mapper.readTree(mapper.writeValueAsBytes(accumulated));
 
     assertThat(streamedRoot)
@@ -283,7 +321,7 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             block, TraceOptions.DEFAULT, fixture.getProtocolSchedule(), blockchainQueries);
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
     final JsonNode root = mapper.readTree(out.toByteArray());
     final JsonNode structLogs = root.get(0).get("result").get("structLogs");
 
@@ -338,11 +376,11 @@ public class DebugTraceBlockStreamerHexEncodingTest {
 
     // streaming path
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
     final JsonNode streamedRoot = mapper.readTree(out.toByteArray());
 
     // accumulating path
-    final List<Object> accumulated = streamer.accumulateAll();
+    final List<Object> accumulated = streamer.accumulateAll(() -> true);
     final JsonNode accRoot = mapper.readTree(mapper.writeValueAsBytes(accumulated));
 
     // Verify memory entries are actually present (MSTORE creates memory)

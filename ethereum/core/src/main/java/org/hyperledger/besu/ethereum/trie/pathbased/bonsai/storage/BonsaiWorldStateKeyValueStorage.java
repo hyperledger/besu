@@ -31,9 +31,11 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFl
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.BonsaiTrieNodeStrategy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -46,11 +48,14 @@ import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -193,12 +198,6 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     return trieLogStorage.streamKeys().limit(limit);
   }
 
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, location.toArrayUnsafe())
-        .map(Bytes::wrap);
-  }
-
   public Optional<Bytes> getWorldStateRootHash() {
     return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).map(Bytes::wrap);
   }
@@ -331,7 +330,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
             getFlatDbStrategy()
                 .getFlatAccount(
                     this::getWorldStateRootHash,
-                    this::getAccountStateTrieNode,
+                    this::getTrieNode,
                     accountHash,
                     composedWorldStateStorage));
   }
@@ -365,38 +364,62 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
                 .getFlatStorageValueByStorageSlotKey(
                     this::getWorldStateRootHash,
                     storageRootSupplier,
-                    (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+                    (location, hash) -> getTrieNode(TrieNodeKey.of(accountHash, location), hash),
                     accountHash,
                     storageSlotKey,
                     composedWorldStateStorage));
   }
 
-  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
+  public List<Optional<Bytes>> getMultipleFlat(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    final List<Bytes> bytesKeys = new ArrayList<>(keys.size());
+    for (final byte[] key : keys) {
+      bytesKeys.add(Bytes.wrap(key));
+    }
+    return cacheManager.getMultipleFromCacheOrStorage(
+        segmentIdentifier,
+        bytesKeys,
+        getCurrentVersion(),
+        keysToFetch ->
+            getFlatDbStrategy()
+                .getMultipleFlat(segmentIdentifier, keysToFetch, composedWorldStateStorage));
+  }
+
+  /** The code, with its jump destination analysis when the storage holds it. */
+  public Optional<Code> getCode(final Hash codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
-      return Optional.of(Bytes.EMPTY);
+      return Optional.of(Code.EMPTY_CODE);
     }
     return getFlatDbStrategy().getFlatCode(codeHash, accountHash, composedWorldStateStorage);
   }
 
-  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+  /** The bytes of the code alone, for the readers that have no use for its analysis. */
+  public Optional<Bytes> getCodeBytes(final Hash codeHash, final Hash accountHash) {
+    return getFlatDbStrategy().getFlatCodeBytes(codeHash, accountHash, composedWorldStateStorage);
+  }
+
+  /**
+   * Returns the trie node stored under {@code key}, provided its hash matches {@code nodeHash}.
+   *
+   * @param key the {@link TrieNodeKey} of the node
+   * @param nodeHash the expected hash of the node
+   * @return the node, or empty if it is missing or does not match {@code nodeHash}
+   */
+  public Optional<Bytes> getTrieNode(final Bytes key, final Bytes32 nodeHash) {
     if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     }
     return trieNodeStrategy
-        .getFlatAccountTrieNode(location, nodeHash, composedWorldStateStorage)
+        .getTrieNode(composedWorldStateStorage, key, nodeHash)
         .filter(b -> Hash.hash(b).getBytes().equals(nodeHash));
   }
 
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
-    }
-    return trieNodeStrategy
-        .getFlatStorageTrieNode(accountHash, location, nodeHash, composedWorldStateStorage)
-        .filter(b -> Hash.hash(b).getBytes().equals(nodeHash));
-  }
-
+  /**
+   * Returns the trie node stored under {@code key} in the live trie, without verifying its hash.
+   *
+   * @param key the {@link TrieNodeKey} of the node
+   * @return the node, or empty if it is missing
+   */
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
     return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
   }
@@ -433,14 +456,18 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     getFlatDbStrategy().clearAll(composedWorldStateStorage);
     composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
     trieLogStorage.clear();
-    cacheManager.clear(ACCOUNT_INFO_STATE);
-    cacheManager.clear(ACCOUNT_STORAGE_STORAGE);
+    clearCrossBlockCache();
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
   public void clearFlatDatabase() {
     subscribers.forEach(StorageSubscriber::onClearFlatDatabaseStorage);
     getFlatDbStrategy().resetOnResync(composedWorldStateStorage);
+    clearCrossBlockCache();
+  }
+
+  /** Drops all cross-block flat-db cache entries without touching RocksDB. */
+  public void clearCrossBlockCache() {
     cacheManager.clear(ACCOUNT_INFO_STATE);
     cacheManager.clear(ACCOUNT_STORAGE_STORAGE);
   }
@@ -501,6 +528,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     protected final FlatDbStrategy flatDbStrategy;
     protected final SegmentedKeyValueStorage worldStorage;
     protected final TrieNodeStrategy trieNodeStrategy;
+    // code keyed by its hash is shared by every account holding it, so it is written only once
+    private final Set<Hash> writtenCodeHashes = ConcurrentHashMap.newKeySet();
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
@@ -528,7 +557,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     }
 
     public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
-      if (code.isEmpty()) {
+      if (code.isEmpty()
+          || (flatDbStrategy.isCodeByCodeHash() && !writtenCodeHashes.add(codeHash))) {
         return this;
       }
       flatDbStrategy.putFlatCode(
@@ -560,29 +590,32 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
       return this;
     }
 
-    public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+    /**
+     * Stores a trie node under {@code key}. The empty trie node is never stored.
+     *
+     * @param key the {@link TrieNodeKey} of the node
+     * @param nodeHash the hash of the node
+     * @param node the node
+     * @return this updater
+     */
+    public synchronized Updater putTrieNode(
+        final Bytes key, final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         return this;
       }
-      trieNodeStrategy.putFlatAccountTrieNode(
-          worldStorage, composedWorldStateTransaction, location, nodeHash, node);
+      trieNodeStrategy.putTrieNode(
+          worldStorage, composedWorldStateTransaction, key, nodeHash, node);
       return this;
     }
 
-    public Updater removeAccountStateTrieNode(final Bytes location) {
-      trieNodeStrategy.removeFlatAccountStateTrieNode(
-          worldStorage, composedWorldStateTransaction, location);
-      return this;
-    }
-
-    public synchronized Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
-      if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-        return this;
-      }
-      trieNodeStrategy.putFlatStorageTrieNode(
-          worldStorage, composedWorldStateTransaction, accountHash, location, nodeHash, node);
+    /**
+     * Removes the trie node stored under {@code key}.
+     *
+     * @param key the {@link TrieNodeKey} of the node
+     * @return this updater
+     */
+    public synchronized Updater removeTrieNode(final Bytes key) {
+      trieNodeStrategy.removeTrieNode(worldStorage, composedWorldStateTransaction, key);
       return this;
     }
 
@@ -609,21 +642,37 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
 
     @Override
     public void commit() {
+      // onBeforeCommit can throw; rollback to avoid leaking open transactions
+      try {
+        trieNodeStrategy.onBeforeCommit(worldStorage, composedWorldStateTransaction);
+      } catch (final Exception e) {
+        rollback();
+        throw e;
+      }
       trieLogStorageTransaction.commit();
       composedWorldStateTransaction.commit();
     }
 
     public void commitTrieLogOnly() {
+      trieNodeStrategy.onRollback(composedWorldStateTransaction);
       trieLogStorageTransaction.commit();
       composedWorldStateTransaction.close();
     }
 
     public void commitComposedOnly() {
+      // onBeforeCommit can throw; rollback to avoid leaking open transactions
+      try {
+        trieNodeStrategy.onBeforeCommit(worldStorage, composedWorldStateTransaction);
+      } catch (final Exception e) {
+        rollback();
+        throw e;
+      }
       composedWorldStateTransaction.commit();
       trieLogStorageTransaction.close();
     }
 
     public void rollback() {
+      trieNodeStrategy.onRollback(composedWorldStateTransaction);
       composedWorldStateTransaction.rollback();
       trieLogStorageTransaction.rollback();
     }
@@ -722,11 +771,25 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
       cacheManager.scheduleAsyncMaintenance();
     }
 
+    /**
+     * Write storage first, then publish the new cache version. While publishing, readers bypass the
+     * cross-block cache entirely so they neither hit stale entries nor insert (including negative)
+     * results that could race {@link #updateCache()}.
+     */
+    private void commitAndPublishCache(final Runnable storageCommit) {
+      cacheManager.beginCommitCacheBypass();
+      try {
+        storageCommit.run();
+        incrementCacheVersion();
+        updateCache();
+      } finally {
+        cacheManager.endCommitCacheBypass();
+      }
+    }
+
     @Override
     public void commit() {
-      incrementCacheVersion();
-      super.commit();
-      updateCache();
+      commitAndPublishCache(super::commit);
     }
 
     @Override
@@ -737,9 +800,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
 
     @Override
     public void commitComposedOnly() {
-      incrementCacheVersion();
-      super.commitComposedOnly();
-      updateCache();
+      commitAndPublishCache(super::commitComposedOnly);
     }
 
     @Override
