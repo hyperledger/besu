@@ -56,9 +56,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -120,7 +122,10 @@ class SnapSyncChainDownloaderSnapV2Test {
     lenient().when(blockchain.getChainHeadBlockNumber()).thenReturn(500L);
     lenient().when(blockchain.getChainHeadHeader()).thenReturn(header(500));
     // The catch-up's BAL step checks that the headers it downloaded are still indexed.
-    lenient().when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
+    lenient()
+        .when(blockchain.getBlockHeader(any(Hash.class)))
+        .thenAnswer(inv -> Optional.ofNullable(CHAIN.get(inv.<Hash>getArgument(0))));
+    lenient().when(blockchain.blockIsOnCanonicalChain(any())).thenReturn(true);
     lenient().when(ethContext.getScheduler()).thenReturn(scheduler);
     lenient().when(ethContext.getEthPeers()).thenReturn(ethPeers);
     lenient().when(ethPeers.peerCount()).thenReturn(1);
@@ -445,9 +450,10 @@ class SnapSyncChainDownloaderSnapV2Test {
     catchupHeaderDownload(
         catchupPivot, catchupHeaderPipeline, CompletableFuture.completedFuture(null));
     final Pipeline<List<BlockHeader>> catchupBalPipeline = catchupBalDownload(catchupPivot);
-    // Stands in for the main loop removing one of the range's index entries; all the others are
-    // still there. Only the BAL step's check reads the index.
-    when(blockchain.getBlockHashByNumber(trimmedBlockNumber)).thenReturn(Optional.empty());
+    // One of the range's index entries was removed by the main loop, or replaced by another fork's
+    // header; all the others are still there.
+    when(blockchain.blockIsOnCanonicalChain(header(trimmedBlockNumber).getHash()))
+        .thenReturn(false);
 
     final CompletableFuture<Void> catchup =
         downloader.preparePivotCatchup(initialPivot, catchupPivot);
@@ -915,7 +921,22 @@ class SnapSyncChainDownloaderSnapV2Test {
         headerDownloader);
   }
 
-  private static BlockHeader header(final long number) {
-    return new BlockHeaderTestFixture().number(number).buildHeader();
+  /** Headers 0..number of a single chain, linked by parent hash, keyed by hash. */
+  private static final Map<Hash, BlockHeader> CHAIN = new ConcurrentHashMap<>();
+
+  private static final List<BlockHeader> CHAIN_BY_NUMBER = new ArrayList<>();
+
+  private static synchronized BlockHeader header(final long number) {
+    while (CHAIN_BY_NUMBER.size() <= number) {
+      final BlockHeaderTestFixture fixture =
+          new BlockHeaderTestFixture().number(CHAIN_BY_NUMBER.size());
+      if (!CHAIN_BY_NUMBER.isEmpty()) {
+        fixture.parentHash(CHAIN_BY_NUMBER.getLast().getHash());
+      }
+      final BlockHeader header = fixture.buildHeader();
+      CHAIN_BY_NUMBER.add(header);
+      CHAIN.put(header.getHash(), header);
+    }
+    return CHAIN_BY_NUMBER.get((int) number);
   }
 }

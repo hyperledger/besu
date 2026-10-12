@@ -56,7 +56,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.LongStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -403,11 +402,11 @@ public class SnapSyncChainDownloader
   /**
    * The BAL download reads the headers through the canonical index, which the main loop can trim
    * after the header step (handleLoadedState, a pivot rollback). The headers are downloaded again
-   * first if any entry is gone, otherwise every attempt would fail on the missing header.
+   * first unless the canonical chain still links the new pivot to the current one.
    */
   private CompletableFuture<Void> downloadCatchupBals(final SnapV2PivotCatchupRequest request) {
     final CompletableFuture<Void> headers =
-        catchupHeadersAreIndexed(request)
+        canonicalChainLinks(request.newPivotBlockHeader(), request.currentPivotBlockHeader())
             ? CompletableFuture.completedFuture(null)
             : downloadCatchupHeaders(request);
     return headers.thenCompose(
@@ -416,13 +415,6 @@ public class SnapSyncChainDownloader
                 request,
                 pipelineFactory.createBlockAccessListDownloadPipeline(
                     request.currentPivotBlockHeader().getNumber(), request.newPivotBlockHeader())));
-  }
-
-  private boolean catchupHeadersAreIndexed(final SnapV2PivotCatchupRequest request) {
-    return LongStream.rangeClosed(
-            request.currentPivotBlockHeader().getNumber() + 1,
-            request.newPivotBlockHeader().getNumber())
-        .allMatch(number -> blockchain.getBlockHashByNumber(number).isPresent());
   }
 
   /**
