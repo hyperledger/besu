@@ -40,16 +40,6 @@ public class DebugGetModifiedAccountsByNumber extends AbstractDebugGetModifiedAc
     return blockchainQueries.getBlockchain().getBlockHeader(blockNumber(request, index));
   }
 
-  /**
-   * Renders a block number for an error message. The start block is hex and the end block is
-   * decimal matching the geth format.
-   */
-  @Override
-  protected String blockId(final JsonRpcRequestContext request, final int index) {
-    final long number = blockNumber(request, index);
-    return index == 0 ? Long.toHexString(number) : Long.toString(number);
-  }
-
   private long blockNumber(final JsonRpcRequestContext request, final int index) {
     final BlockParameter blockParameter;
     try {

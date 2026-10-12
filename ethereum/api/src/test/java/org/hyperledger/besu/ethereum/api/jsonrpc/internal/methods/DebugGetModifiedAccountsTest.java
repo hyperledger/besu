@@ -183,8 +183,8 @@ public class DebugGetModifiedAccountsTest {
     trieLog(2, layer());
     trieLog(3, layer());
 
-    assertThat(errorMessage(response(byHash, forked.getBlockHash().toString(), hash(3))))
-        .isEqualTo("start block is not an ancestor of end block");
+    assertThat(errorType(response(byHash, forked.getBlockHash().toString(), hash(3))))
+        .isEqualTo(RpcErrorType.INVALID_BLOCK_RANGE);
     verify(trieLogManager, never()).getTrieLogLayer(any());
   }
 
@@ -250,13 +250,6 @@ public class DebugGetModifiedAccountsTest {
   private static AccountValue account(
       final long nonce, final long balance, final Hash storageRoot, final Hash codeHash) {
     return new PmtStateTrieAccountValue(nonce, Wei.of(balance), storageRoot, codeHash);
-  }
-
-  private static String errorMessage(final JsonRpcResponse response) {
-    assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
-    final JsonRpcErrorResponse error = (JsonRpcErrorResponse) response;
-    assertThat(error.getError().getCode()).isEqualTo(-32000);
-    return error.getError().getMessage();
   }
 
   private static RpcErrorType errorType(final JsonRpcResponse response) {

@@ -10,7 +10,7 @@
     "id": 1,
     "error": {
       "code": -32000,
-      "message": "start block 63 not found"
+      "message": "Block not found"
     }
   },
   "statusCode": 200

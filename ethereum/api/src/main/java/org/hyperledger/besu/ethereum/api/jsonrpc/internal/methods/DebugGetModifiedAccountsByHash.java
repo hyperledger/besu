@@ -40,11 +40,6 @@ public class DebugGetModifiedAccountsByHash extends AbstractDebugGetModifiedAcco
     return blockchainQueries.getBlockchain().getBlockHeader(blockHash(request, index));
   }
 
-  @Override
-  protected String blockId(final JsonRpcRequestContext request, final int index) {
-    return blockHash(request, index).getBytes().toUnprefixedHexString();
-  }
-
   private Hash blockHash(final JsonRpcRequestContext request, final int index) {
     try {
       return request.getRequiredParameter(index, Hash.class);

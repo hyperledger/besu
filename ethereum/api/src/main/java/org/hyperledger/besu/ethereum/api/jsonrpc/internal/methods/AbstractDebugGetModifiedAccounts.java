@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -52,8 +51,6 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
   protected abstract Optional<BlockHeader> findHeader(
       final JsonRpcRequestContext request, final int index);
 
-  protected abstract String blockId(final JsonRpcRequestContext request, final int index);
-
   @Override
   public final JsonRpcResponse response(final JsonRpcRequestContext request) {
     final int paramLength = request.getRequest().getParamLength();
@@ -71,10 +68,7 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
 
     final Optional<BlockHeader> maybeFirstHeader = findHeader(request, 0);
     if (maybeFirstHeader.isEmpty()) {
-      return error(
-          request,
-          RpcErrorType.BLOCK_NOT_FOUND,
-          "start block " + blockId(request, 0) + " not found");
+      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
     }
 
     final Blockchain blockchain = blockchainQueries.getBlockchain();
@@ -85,31 +79,22 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
       final Optional<BlockHeader> maybeParent =
           blockchain.getBlockHeader(endHeader.getParentHash());
       if (maybeParent.isEmpty()) {
-        return error(
-            request,
-            RpcErrorType.PARENT_BLOCK_NOT_FOUND,
-            "block " + Long.toHexString(endHeader.getNumber()) + " has no parent");
+        return new JsonRpcErrorResponse(
+            request.getRequest().getId(), RpcErrorType.PARENT_BLOCK_NOT_FOUND);
       }
       startHeader = maybeParent.get();
     } else {
       startHeader = maybeFirstHeader.get();
       final Optional<BlockHeader> maybeEndHeader = findHeader(request, 1);
       if (maybeEndHeader.isEmpty()) {
-        return error(
-            request,
-            RpcErrorType.BLOCK_NOT_FOUND,
-            "end block " + blockId(request, 1) + " not found");
+        return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND);
       }
       endHeader = maybeEndHeader.get();
     }
 
     if (startHeader.getNumber() >= endHeader.getNumber()) {
-      return error(
-          request,
-          RpcErrorType.INVALID_BLOCK_RANGE,
-          String.format(
-              "start block height (%d) must be less than end block height (%d)",
-              startHeader.getNumber(), endHeader.getNumber()));
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), RpcErrorType.INVALID_BLOCK_RANGE);
     }
 
     if (endHeader.getNumber() - startHeader.getNumber() > trieLogManager.getMaxLayersToLoad()) {
@@ -132,17 +117,15 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
       blockHashes.add(header.getBlockHash());
       final Optional<BlockHeader> maybeParent = blockchain.getBlockHeader(header.getParentHash());
       if (maybeParent.isEmpty()) {
-        return error(
-            request,
-            RpcErrorType.PARENT_BLOCK_NOT_FOUND,
-            "block " + header.getBlockHash() + " has no parent");
+        return new JsonRpcErrorResponse(
+            request.getRequest().getId(), RpcErrorType.PARENT_BLOCK_NOT_FOUND);
       }
       header = maybeParent.get();
     }
 
     if (!header.getBlockHash().equals(startHeader.getBlockHash())) {
-      return error(
-          request, RpcErrorType.INVALID_BLOCK_RANGE, "start block is not an ancestor of end block");
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), RpcErrorType.INVALID_BLOCK_RANGE);
     }
 
     final Map<Address, PathBasedValue<AccountValue>> accounts = new HashMap<>();
@@ -170,11 +153,5 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
             .toList();
 
     return new JsonRpcSuccessResponse(request.getRequest().getId(), modified);
-  }
-
-  private static JsonRpcResponse error(
-      final JsonRpcRequestContext request, final RpcErrorType type, final String message) {
-    return new JsonRpcErrorResponse(
-        request.getRequest().getId(), new JsonRpcError(type.getCode(), message, null));
   }
 }

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -207,30 +208,26 @@ public class DebugGetModifiedAccountsIntegrationTest {
 
   @Test
   public void genesisHasNoParentToDiffAgainst() {
-    assertThat(error(BY_NUMBER, hex(0))).isEqualTo("block 0 has no parent");
+    assertThat(error(BY_NUMBER, hex(0))).isEqualTo(RpcErrorType.PARENT_BLOCK_NOT_FOUND);
     assertThat(error(BY_HASH, header(0).getBlockHash().toString()))
-        .isEqualTo("block 0 has no parent");
+        .isEqualTo(RpcErrorType.PARENT_BLOCK_NOT_FOUND);
   }
 
   @Test
   public void unknownBlockIsAnError() {
     assertThat(error(BY_NUMBER, hex(chainHead + 1), hex(chainHead + 2)))
-        .isEqualTo("start block " + Long.toHexString(chainHead + 1) + " not found");
+        .isEqualTo(RpcErrorType.BLOCK_NOT_FOUND);
     assertThat(error(BY_NUMBER, hex(1), hex(chainHead + 1)))
-        .isEqualTo("end block " + (chainHead + 1) + " not found");
+        .isEqualTo(RpcErrorType.BLOCK_NOT_FOUND);
     assertThat(error(BY_HASH, Hash.ZERO.toString(), header(chainHead).getBlockHash().toString()))
-        .isEqualTo(
-            "start block 0000000000000000000000000000000000000000000000000000000000000000 not found");
+        .isEqualTo(RpcErrorType.BLOCK_NOT_FOUND);
   }
 
   @Test
   public void startBlockNotBeforeEndBlockIsAnError() {
     assertThat(error(BY_NUMBER, hex(chainHead), hex(1)))
-        .isEqualTo(
-            String.format(
-                "start block height (%d) must be less than end block height (1)", chainHead));
-    assertThat(error(BY_NUMBER, hex(1), hex(1)))
-        .isEqualTo("start block height (1) must be less than end block height (1)");
+        .isEqualTo(RpcErrorType.INVALID_BLOCK_RANGE);
+    assertThat(error(BY_NUMBER, hex(1), hex(1))).isEqualTo(RpcErrorType.INVALID_BLOCK_RANGE);
   }
 
   @Test
@@ -337,10 +334,8 @@ public class DebugGetModifiedAccountsIntegrationTest {
     return (List<String>) ((JsonRpcSuccessResponse) response).getResult();
   }
 
-  private String error(final String method, final Object... params) {
-    final JsonRpcErrorResponse response = errorResponse(method, params);
-    assertThat(response.getError().getCode()).isEqualTo(-32000);
-    return response.getError().getMessage();
+  private RpcErrorType error(final String method, final Object... params) {
+    return errorResponse(method, params).getErrorType();
   }
 
   private JsonRpcErrorResponse errorResponse(final String method, final Object... params) {

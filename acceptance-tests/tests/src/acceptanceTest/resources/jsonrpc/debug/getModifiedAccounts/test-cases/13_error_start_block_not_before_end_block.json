@@ -9,8 +9,8 @@
     "jsonrpc": "2.0",
     "id": 1,
     "error": {
-      "code": -32000,
-      "message": "start block height (3) must be less than end block height (1)"
+      "code": -32602,
+      "message": "Invalid block range"
     }
   },
   "statusCode": 200
