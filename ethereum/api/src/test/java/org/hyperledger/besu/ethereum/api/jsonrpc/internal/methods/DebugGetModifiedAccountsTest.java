@@ -37,8 +37,11 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.WorldStateConfig;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -66,6 +69,9 @@ public class DebugGetModifiedAccountsTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
   private final TrieLogManager trieLogManager = mock(TrieLogManager.class);
+  private final PathBasedWorldStateProvider worldStateArchive =
+      mock(PathBasedWorldStateProvider.class);
+  private final WorldStateConfig worldStateConfig = mock(WorldStateConfig.class);
   private final List<BlockHeader> headers = new ArrayList<>();
 
   private DebugGetModifiedAccountsByNumber byNumber;
@@ -74,6 +80,9 @@ public class DebugGetModifiedAccountsTest {
   @BeforeEach
   public void setup() {
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(worldStateArchive);
+    when(worldStateArchive.getTrieLogManager()).thenReturn(trieLogManager);
+    when(worldStateArchive.getWorldStateSharedSpec()).thenReturn(worldStateConfig);
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(512L);
 
     Hash parent = Hash.ZERO;
@@ -86,8 +95,8 @@ public class DebugGetModifiedAccountsTest {
       parent = header.getBlockHash();
     }
 
-    byHash = new DebugGetModifiedAccountsByHash(blockchainQueries, trieLogManager);
-    byNumber = new DebugGetModifiedAccountsByNumber(blockchainQueries, trieLogManager);
+    byHash = new DebugGetModifiedAccountsByHash(blockchainQueries);
+    byNumber = new DebugGetModifiedAccountsByNumber(blockchainQueries);
   }
 
   @Test
@@ -185,6 +194,16 @@ public class DebugGetModifiedAccountsTest {
 
     assertThat(errorType(response(byNumber, number(1), number(3))))
         .isEqualTo(RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+  }
+
+  @Test
+  public void notEnabledWithoutTrieLogs() {
+    when(worldStateConfig.isTrieDisabled()).thenReturn(true);
+    assertThat(errorType(response(byNumber, number(3)))).isEqualTo(RpcErrorType.METHOD_NOT_ENABLED);
+
+    when(blockchainQueries.getWorldStateArchive()).thenReturn(mock(WorldStateArchive.class));
+    assertThat(errorType(response(byNumber, number(3)))).isEqualTo(RpcErrorType.METHOD_NOT_ENABLED);
+    assertThat(errorType(response(byHash, hash(3)))).isEqualTo(RpcErrorType.METHOD_NOT_ENABLED);
   }
 
   @Test

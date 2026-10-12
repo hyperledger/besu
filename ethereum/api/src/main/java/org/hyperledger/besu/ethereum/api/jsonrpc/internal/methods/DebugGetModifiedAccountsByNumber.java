@@ -22,14 +22,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
 
 import java.util.Optional;
 
 public class DebugGetModifiedAccountsByNumber extends AbstractDebugGetModifiedAccounts {
-  public DebugGetModifiedAccountsByNumber(
-      final BlockchainQueries blockchainQueries, final TrieLogManager trieLogManager) {
-    super(blockchainQueries, trieLogManager);
+  public DebugGetModifiedAccountsByNumber(final BlockchainQueries blockchainQueries) {
+    super(blockchainQueries);
   }
 
   @Override

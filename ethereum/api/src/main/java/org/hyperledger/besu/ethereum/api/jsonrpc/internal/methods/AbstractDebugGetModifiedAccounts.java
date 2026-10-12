@@ -41,12 +41,9 @@ import java.util.Optional;
 public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod {
 
   protected final BlockchainQueries blockchainQueries;
-  protected final TrieLogManager trieLogManager;
 
-  protected AbstractDebugGetModifiedAccounts(
-      final BlockchainQueries blockchainQueries, final TrieLogManager trieLogManager) {
+  protected AbstractDebugGetModifiedAccounts(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
-    this.trieLogManager = trieLogManager;
   }
 
   @Override
@@ -65,11 +62,12 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
           request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
-    if (blockchainQueries.getWorldStateArchive() instanceof PathBasedWorldStateProvider provider
-        && provider.getWorldStateSharedSpec().isTrieDisabled()) {
+    if (!(blockchainQueries.getWorldStateArchive() instanceof PathBasedWorldStateProvider provider)
+        || provider.getWorldStateSharedSpec().isTrieDisabled()) {
       return new JsonRpcErrorResponse(
           request.getRequest().getId(), RpcErrorType.METHOD_NOT_ENABLED);
     }
+    final TrieLogManager trieLogManager = provider.getTrieLogManager();
 
     final Optional<BlockHeader> maybeFirstHeader = findHeader(request, 0);
     if (maybeFirstHeader.isEmpty()) {
@@ -119,12 +117,13 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
           request.getRequest().getId(), RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
     }
 
-    return collectModifiedAccounts(request, blockchain, startHeader, endHeader);
+    return collectModifiedAccounts(request, blockchain, trieLogManager, startHeader, endHeader);
   }
 
   private JsonRpcResponse collectModifiedAccounts(
       final JsonRpcRequestContext request,
       final Blockchain blockchain,
+      final TrieLogManager trieLogManager,
       final BlockHeader startHeader,
       final BlockHeader endHeader) {
     final List<Hash> blockHashes = new ArrayList<>();
