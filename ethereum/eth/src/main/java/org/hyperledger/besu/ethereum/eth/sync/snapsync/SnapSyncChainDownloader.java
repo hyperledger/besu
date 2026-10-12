@@ -723,6 +723,26 @@ public class SnapSyncChainDownloader
   }
 
   /**
+   * Whether the stored canonical chain links {@code top} back down to {@code bottom}, as Stage 1
+   * would leave it. A canonical {@code top} alone is not enough: a header download stores its pivot
+   * first.
+   */
+  private boolean canonicalChainLinks(final BlockHeader top, final BlockHeader bottom) {
+    BlockHeader header = top;
+    while (header.getNumber() > bottom.getNumber()) {
+      if (!headerIsOnCanonicalChain(header)) {
+        return false;
+      }
+      final Optional<BlockHeader> parent = blockchain.getBlockHeader(header.getParentHash());
+      if (parent.isEmpty()) {
+        return false;
+      }
+      header = parent.get();
+    }
+    return header.getHash().equals(bottom.getHash());
+  }
+
+  /**
    * Decides whether the download should be retried after an error.
    *
    * @param error the error that caused the download to fail
@@ -1260,6 +1280,17 @@ public class SnapSyncChainDownloader
               final BlockHeader previousPivot = chainSyncState.get().pivotBlockHeader();
 
               if (updatedPivot.getNumber() > previousPivot.getNumber()) { // normal case
+                if (chainSyncState.get().headersDownloadComplete()
+                    && canonicalChainLinks(updatedPivot, previousPivot)) {
+                  // E.g. stored by a snap/2 pivot catch-up: Stage 1 has nothing to download.
+                  LOG.debug(
+                      "Pivot advanced from #{} to #{}, headers already stored.",
+                      previousPivot.getNumber(),
+                      updatedPivot.getNumber());
+                  chainSyncState.updateAndGet(s -> s.withCanonicalPivot(updatedPivot));
+                  chainSyncStateStorage.storeState(chainSyncState.get());
+                  return CompletableFuture.completedFuture(true);
+                }
                 LOG.debug(
                     "Pivot advanced from #{} to #{}, downloading new range.",
                     previousPivot.getNumber(),
