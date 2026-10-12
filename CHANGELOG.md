@@ -82,7 +82,7 @@
 - The jump destination analysis of contract code is computed once, when the code is stored, instead of on every code cache miss. [#11327](https://github.com/besu-eth/besu/pull/11327)
 - EVM v2: add AND, OR, XOR and NOT. [#11477](https://github.com/besu-eth/besu/pull/11477)
 - Schedule the Amsterdam fork on Hoodi at timestamp `1793036568` (Mon, 26 Oct 2026, 17:42:48 UTC). [#11531](https://github.com/besu-eth/besu/pull/11531)
-- With `--snapsync-server-enabled` on Bonsai full flat or archive storage, the local ENR now carries the `snap` entry, as go-ethereum does, so DNS discovery lists that select snap servers can include Besu nodes.
+- With `--snapsync-server-enabled` on Bonsai full flat or archive storage, the local ENR now carries the `snap` entry, as go-ethereum does, so DNS discovery lists that select snap servers can include Besu nodes. [#11565](https://github.com/besu-eth/besu/pull/11565)
 
 ## 26.9.0
 
