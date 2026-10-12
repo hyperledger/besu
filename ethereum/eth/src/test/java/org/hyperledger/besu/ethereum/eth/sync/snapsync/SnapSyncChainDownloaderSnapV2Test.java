@@ -59,6 +59,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -311,27 +312,21 @@ class SnapSyncChainDownloaderSnapV2Test {
 
   @Test
   @SuppressWarnings("unchecked")
-  void pivotCatchupKeepsRetryingUntilTheDownloadSucceeds() {
+  void pivotCatchupRetriesUntilTheDownloadSucceedsOnTheLastAttempt() {
     // A failed catch-up fails the snap/2 world state download, which restarts from scratch, so
-    // the catch-up must never give up on its own.
+    // the catch-up retries for as long as the attempt limit allows.
     final BlockHeader catchupPivot = header(2000);
     final SnapSyncChainDownloader downloader = downloader();
     startWithCycleBlockedInStage2(downloader);
     final Pipeline<Long> catchupHeaderPipeline = mock(Pipeline.class);
-    final CompletableFuture<Void> timeout =
-        CompletableFuture.failedFuture(new TimeoutException("BALs timed out"));
-    catchupHeaderDownload(catchupPivot, catchupHeaderPipeline, timeout);
+    catchupHeaderDownload(catchupPivot, catchupHeaderPipeline, new CompletableFuture<>());
+    final AtomicInteger attempts = new AtomicInteger();
     when(scheduler.startPipeline(catchupHeaderPipeline))
-        .thenReturn(
-            timeout,
-            timeout,
-            timeout,
-            timeout,
-            timeout,
-            timeout,
-            timeout,
-            timeout,
-            CompletableFuture.completedFuture(null));
+        .thenAnswer(
+            inv ->
+                attempts.incrementAndGet() < SnapSyncChainDownloader.MAX_SAME_STATE_RETRIES
+                    ? CompletableFuture.failedFuture(new TimeoutException("headers timed out"))
+                    : CompletableFuture.completedFuture(null));
     catchupBalDownload(catchupPivot);
 
     final CompletableFuture<Void> catchup =
@@ -340,7 +335,56 @@ class SnapSyncChainDownloaderSnapV2Test {
     runScheduledRetries();
 
     assertThat(catchup).isCompleted();
-    verify(scheduler, times(9)).startPipeline(catchupHeaderPipeline);
+    verify(scheduler, times(SnapSyncChainDownloader.MAX_SAME_STATE_RETRIES))
+        .startPipeline(catchupHeaderPipeline);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void pivotCatchupFailsAfterTheMaximumNumberOfAttempts() {
+    // A permanent error must not stall the sync silently: the world state download restarts.
+    final BlockHeader catchupPivot = header(2000);
+    final SnapSyncChainDownloader downloader = downloader();
+    startWithCycleBlockedInStage2(downloader);
+    final Pipeline<Long> catchupHeaderPipeline = mock(Pipeline.class);
+    catchupHeaderDownload(catchupPivot, catchupHeaderPipeline, new CompletableFuture<>());
+    when(scheduler.startPipeline(catchupHeaderPipeline))
+        .thenAnswer(inv -> CompletableFuture.failedFuture(new IllegalStateException("permanent")));
+
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+    runScheduledRetries();
+
+    assertThatThrownBy(() -> catchup.get(1, TimeUnit.SECONDS))
+        .hasRootCauseInstanceOf(IllegalStateException.class);
+    verify(scheduler, times(SnapSyncChainDownloader.MAX_SAME_STATE_RETRIES))
+        .startPipeline(catchupHeaderPipeline);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void pivotCatchupRetriesOnlyTheBalDownloadWhenItFails() {
+    final BlockHeader catchupPivot = header(2000);
+    final SnapSyncChainDownloader downloader = downloader();
+    startWithCycleBlockedInStage2(downloader);
+    catchupHeaderDownload(catchupPivot, CompletableFuture.completedFuture(null));
+    final Pipeline<List<BlockHeader>> catchupBalPipeline = catchupBalDownload(catchupPivot);
+    when(scheduler.startPipeline(catchupBalPipeline))
+        .thenReturn(
+            CompletableFuture.failedFuture(new TimeoutException("BALs timed out")),
+            CompletableFuture.completedFuture(null));
+
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+    runScheduledRetries();
+
+    assertThat(catchup).isCompleted();
+    // The headers were stored by the first attempt, so only the BAL download is repeated.
+    verify(pipelineFactory, times(1))
+        .createBackwardHeaderDownloadPipeline(
+            argThat(s -> s != null && s.pivotBlockHeader().equals(catchupPivot)));
+    verify(pipelineFactory, times(2))
+        .createBlockAccessListDownloadPipeline(initialPivot.getNumber(), catchupPivot);
   }
 
   @Test
