@@ -497,6 +497,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   }
 
   /**
+   * Flag to know whether the snap/2 protocol capability is enabled.
+   *
+   * @return true if snap/2 is enabled
+   */
+  public boolean isSnap2Enabled() {
+    return Boolean.TRUE.equals(snap2Enabled);
+  }
+
+  /**
    * Whether SNAP sync should download headers only down to the trusted checkpoint instead of
    * genesis.
    *

@@ -108,7 +108,8 @@ public final class PeerDiscoveryAgentFactoryV5 implements PeerDiscoveryAgentFact
             nodeKey,
             forkIdManager,
             natService,
-            config.discoveryConfiguration().isSnapServerEnabled()));
+            config.discoveryConfiguration().isSnapServerEnabled(),
+            config.discoveryConfiguration().isSnap2ServerEnabled()));
   }
 
   /** Package-private constructor for testing with a pre-built {@link NodeRecordManager}. */

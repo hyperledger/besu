@@ -175,7 +175,8 @@ public final class CompositePeerDiscoveryAgentFactory implements PeerDiscoveryAg
             nodeKey,
             forkIdManager,
             natService,
-            config.discoveryConfiguration().isSnapServerEnabled());
+            config.discoveryConfiguration().isSnapServerEnabled(),
+            config.discoveryConfiguration().isSnap2ServerEnabled());
 
     final PeerDiscoveryAgent agentV5;
     if (v5Enabled) {

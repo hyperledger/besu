@@ -2547,6 +2547,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .poaDiscoveryRetryBootnodes(p2PDiscoveryConfig.poaDiscoveryRetryBootnodes())
             .preferIpv6Outbound(p2PDiscoveryConfig.preferIpv6Outbound())
             .snapServerEnabled(canServeSnap())
+            .snap2ServerEnabled(canServeSnap() && unstableSynchronizerOptions.isSnap2Enabled())
             .discoveryMode(p2PDiscoveryConfig.discoveryMode())
             .transactionValidatorService(transactionValidatorServiceImpl)
             .build();

@@ -48,6 +48,7 @@ public class DiscoveryConfiguration {
   private double discV5MinimumPeerRatio = 0.8;
   private DiscoveryMode discoveryMode = DiscoveryMode.getDefault();
   private boolean snapServerEnabled = false;
+  private boolean snap2ServerEnabled = false;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -177,6 +178,15 @@ public class DiscoveryConfiguration {
 
   public DiscoveryConfiguration setSnapServerEnabled(final boolean snapServerEnabled) {
     this.snapServerEnabled = snapServerEnabled;
+    return this;
+  }
+
+  public boolean isSnap2ServerEnabled() {
+    return snap2ServerEnabled;
+  }
+
+  public DiscoveryConfiguration setSnap2ServerEnabled(final boolean snap2ServerEnabled) {
+    this.snap2ServerEnabled = snap2ServerEnabled;
     return this;
   }
 
@@ -342,6 +352,8 @@ public class DiscoveryConfiguration {
         + discoveryMode
         + ", snapServerEnabled="
         + snapServerEnabled
+        + ", snap2ServerEnabled="
+        + snap2ServerEnabled
         + '}';
   }
 }

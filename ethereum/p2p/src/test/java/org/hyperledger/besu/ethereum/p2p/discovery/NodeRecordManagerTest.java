@@ -198,7 +198,8 @@ class NodeRecordManagerTest {
 
   @Test
   void snapFieldMatchesGethEncodingWhenSnapServerEnabled() {
-    manager = new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true);
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, false);
     manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
 
     final NodeRecord record = getNodeRecord();
@@ -210,14 +211,57 @@ class NodeRecordManagerTest {
 
   @Test
   void restartWithSnapServerEnabled_doesNotIncrementSeq() {
-    manager = new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true);
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, false);
     manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
     final NodeRecord beforeRestart = getNodeRecord();
 
-    manager = new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true);
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, false);
     manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
 
     assertThat(getNodeRecord().getSeq()).isEqualTo(beforeRestart.getSeq());
+  }
+
+  @Test
+  void snapFieldListsBothVersionsWhenSnap2Served() {
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, true);
+    manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
+
+    // The value is the list of served versions, [1, 2].
+    assertThat(getNodeRecord().serialize().toHexString()).contains("84736e6170c20102");
+  }
+
+  @Test
+  void restartWithSnap2Served_doesNotIncrementSeq() {
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, true);
+    manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
+    final NodeRecord beforeRestart = getNodeRecord();
+
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, true);
+    manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
+
+    assertThat(getNodeRecord().getSeq()).isEqualTo(beforeRestart.getSeq());
+  }
+
+  @Test
+  void restartWithSnap2Toggled_rewritesEnr() {
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, false);
+    manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
+    final NodeRecord snap1Only = getNodeRecord();
+
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, true);
+    manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
+    final NodeRecord bothVersions = getNodeRecord();
+
+    assertThat(snap1Only.serialize().toHexString()).contains("84736e6170c0");
+    assertThat(bothVersions.serialize().toHexString()).contains("84736e6170c20102");
+    assertThat(bothVersions.getSeq()).isEqualTo(snap1Only.getSeq().add(1));
   }
 
   @Test
@@ -225,7 +269,8 @@ class NodeRecordManagerTest {
     manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
     final NodeRecord withoutSnap = getNodeRecord();
 
-    manager = new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true);
+    manager =
+        new NodeRecordManager(storageProvider, nodeKey, forkIdManager, natService, true, false);
     manager.initializeLocalNode(new HostEndpoint("127.0.0.1", 30303, 30303), Optional.empty());
     final NodeRecord withSnap = getNodeRecord();
 

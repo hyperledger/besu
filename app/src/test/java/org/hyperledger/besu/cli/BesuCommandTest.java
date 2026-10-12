@@ -1029,6 +1029,32 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void snap2AdvertisedInEnrWhenSnapServerAndSnap2Enabled() {
+    parseCommand("--snapsync-server-enabled", "--Xsnap2-enabled");
+
+    verify(mockRunnerBuilder).snapServerEnabled(eq(true));
+    verify(mockRunnerBuilder).snap2ServerEnabled(eq(true));
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void snap2NotAdvertisedInEnrWithoutSnapServer() {
+    parseCommand("--Xsnap2-enabled");
+
+    verify(mockRunnerBuilder).snapServerEnabled(eq(false));
+    verify(mockRunnerBuilder).snap2ServerEnabled(eq(false));
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void snap2NotAdvertisedInEnrWhenSnap2Disabled() {
+    parseCommand("--snapsync-server-enabled");
+
+    verify(mockRunnerBuilder).snap2ServerEnabled(eq(false));
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void poaDiscoveryRetryBootnodesValueTrueMustBeUsed() {
     parseCommand("--poa-discovery-retry-bootnodes", "true");
 
