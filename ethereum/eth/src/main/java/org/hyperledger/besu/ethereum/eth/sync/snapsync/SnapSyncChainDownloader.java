@@ -120,6 +120,7 @@ public class SnapSyncChainDownloader
   private volatile Pipeline<?> currentPipeline;
   private volatile BackwardHeaderDriver currentDriver;
   private volatile Pipeline<?> catchupPipeline;
+  private volatile CompletableFuture<Void> catchupRetry;
 
   private volatile CompletableFuture<Void> downloadResult;
   private Instant overallStartTime;
@@ -350,13 +351,21 @@ public class SnapSyncChainDownloader
                   .addArgument(delay.toSeconds())
                   .addArgument(cause.toString())
                   .log();
-              return ethContext
-                  .getScheduler()
-                  .scheduleFutureTask(
-                      () ->
-                          downloadPivotCatchupRange(
-                              currentPivotBlockHeader, newPivotBlockHeader, attempt + 1),
-                      delay);
+              final CompletableFuture<Void> retry =
+                  ethContext
+                      .getScheduler()
+                      .scheduleFutureTask(
+                          () ->
+                              downloadPivotCatchupRange(
+                                  currentPivotBlockHeader, newPivotBlockHeader, attempt + 1),
+                          delay);
+              // Registered for cancel() like the catch-up pipelines; cancelling the returned
+              // future also cancels the scheduled task.
+              catchupRetry = retry;
+              if (cancelled.get()) {
+                retry.cancel(false);
+              }
+              return retry;
             })
         .thenCompose(f -> f);
   }
@@ -369,6 +378,10 @@ public class SnapSyncChainDownloader
 
   private CompletableFuture<Void> downloadPivotCatchupRangeOnce(
       final BlockHeader currentPivotBlockHeader, final BlockHeader newPivotBlockHeader) {
+    // Creating the header pipeline already stores the new pivot header.
+    if (cancelled.get()) {
+      return CompletableFuture.failedFuture(new CancellationException());
+    }
     final SnapSyncChainDownloadPipelineFactory.BackwardHeaderPipelineResult headers;
     try {
       headers =
@@ -1163,6 +1176,8 @@ public class SnapSyncChainDownloader
   public void cancel() {
     LOG.info("Cancelling two-stage fast sync chain download");
     cancelled.set(true);
+    // Fail the request first: stopping its download below can fail it with a wrapped error.
+    failPendingSnapV2PivotCatchup(new CancellationException());
 
     final Pipeline<?> pipeline = currentPipeline;
     if (pipeline != null) {
@@ -1172,7 +1187,10 @@ public class SnapSyncChainDownloader
     if (catchup != null) {
       catchup.abort();
     }
-    failPendingSnapV2PivotCatchup(new CancellationException());
+    final CompletableFuture<Void> retry = catchupRetry;
+    if (retry != null) {
+      retry.cancel(false);
+    }
 
     final CompletableFuture<Void> result = downloadResult;
     if (result != null) {

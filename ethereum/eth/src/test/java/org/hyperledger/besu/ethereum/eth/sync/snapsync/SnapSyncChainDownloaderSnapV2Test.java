@@ -51,6 +51,7 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
@@ -98,6 +99,7 @@ class SnapSyncChainDownloaderSnapV2Test {
   private Pipeline<List<BlockHeader>> balPipeline;
   private Pipeline<List<BlockHeader>> forwardPipeline;
   private final Deque<Runnable> scheduledRetries = new ArrayDeque<>();
+  private final List<CompletableFuture<?>> scheduledRetryResults = new ArrayList<>();
 
   @BeforeEach
   @SuppressWarnings("unchecked")
@@ -146,6 +148,7 @@ class SnapSyncChainDownloaderSnapV2Test {
             inv -> {
               final Supplier<CompletableFuture<Object>> task = inv.getArgument(0);
               final CompletableFuture<Object> result = new CompletableFuture<>();
+              scheduledRetryResults.add(result);
               scheduledRetries.add(
                   () ->
                       task.get()
@@ -355,10 +358,16 @@ class SnapSyncChainDownloaderSnapV2Test {
         downloader.preparePivotCatchup(initialPivot, catchupPivot);
 
     downloader.cancel();
+    // Runs the retry even though it was cancelled, so the cancellation check is covered too.
     runScheduledRetries();
 
     assertThatThrownBy(() -> catchup.get(1, TimeUnit.SECONDS))
         .isInstanceOf(CancellationException.class);
+    assertThat(scheduledRetryResults).singleElement().satisfies(r -> assertThat(r).isCancelled());
+    // Creating the header pipeline stores the pivot header, so no retry may create one.
+    verify(pipelineFactory, times(1))
+        .createBackwardHeaderDownloadPipeline(
+            argThat(s -> s != null && s.pivotBlockHeader().equals(catchupPivot)));
     verify(scheduler, times(1)).startPipeline(catchupHeaderPipeline);
   }
 
