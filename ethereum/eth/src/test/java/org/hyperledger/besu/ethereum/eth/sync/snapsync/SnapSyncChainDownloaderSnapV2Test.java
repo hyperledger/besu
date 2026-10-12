@@ -643,6 +643,24 @@ class SnapSyncChainDownloaderSnapV2Test {
   }
 
   @Test
+  void cancelStopsStage2WhenItArrivesWhileStage2IsBeingCreated() {
+    // cancel() lands after the cycle's last check but before Stage 2 is registered.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final SnapSyncChainDownloader downloader = downloader();
+    when(pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(anyLong(), any(), any()))
+        .thenAnswer(
+            inv -> {
+              downloader.cancel();
+              return forwardPipeline;
+            });
+    when(scheduler.startPipeline(forwardPipeline)).thenReturn(new CompletableFuture<>());
+
+    downloader.start();
+
+    verify(forwardPipeline).abort();
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   void deferredCatchupStopsStage2WhenItArrivesWhileStage2IsBeingCreated() throws Exception {
     // The pre-emption lands after the cycle's last check but before Stage 2 is registered.

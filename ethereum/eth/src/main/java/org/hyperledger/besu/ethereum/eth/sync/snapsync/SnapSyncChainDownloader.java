@@ -359,12 +359,12 @@ public class SnapSyncChainDownloader
 
   /**
    * Registers the pipeline for abort only once started (abort throws before then), and re-checks a
-   * pre-emption that may have hit the previous stage instead.
+   * cancel or pre-emption that may have hit the previous stage instead.
    */
   private CompletableFuture<Void> startCyclePipeline(final Pipeline<?> pipeline) {
     final CompletableFuture<Void> result = ethContext.getScheduler().startPipeline(pipeline);
     currentPipeline = pipeline;
-    if (preemptCycle.get() && chainSyncState.get().headersDownloadComplete()) {
+    if (cancelled.get() || (preemptCycle.get() && chainSyncState.get().headersDownloadComplete())) {
       pipeline.abort();
     }
     return result;
