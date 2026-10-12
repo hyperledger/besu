@@ -68,6 +68,8 @@ public class QbftBlockImporterAdaptor implements QbftBlockImporter {
   public boolean importBlock(
       final QbftBlock block, final Optional<BlockAccessList> blockAccessList) {
     final Block besuBlock = AdaptorUtil.toBesuBlock(block);
+    // removed even if the fast path fails: block is imported only once, regular import is the
+    // fallback, so no later attempt can use the entry
     final Optional<ValidatedBlockCache.ValidatedBlock> validatedBlock =
         validatedBlockCache.take(besuBlock.getHash(), besuBlock.getHeader().getNumber());
     if (validatedBlock.isPresent() && importValidatedBlock(besuBlock, validatedBlock.get())) {
@@ -96,6 +98,9 @@ public class QbftBlockImporterAdaptor implements QbftBlockImporter {
    */
   private boolean importValidatedBlock(
       final Block block, final ValidatedBlockCache.ValidatedBlock validatedBlock) {
+    if (!validatedBlock.isExecutedBody(block.getBody())) {
+      return false;
+    }
     final MutableBlockchain blockchain = context.getBlockchain();
     final BlockHeader header = block.getHeader();
     // MainnetBlockImporter.importBlock is synchronized on the importer, which is shared with full
@@ -114,12 +119,9 @@ public class QbftBlockImporterAdaptor implements QbftBlockImporter {
       }
 
       blockchain.appendBlock(block, validatedBlock.receipts(), validatedBlock.blockAccessList());
-      if (context
-          .getWorldStateArchive()
-          .getWorldState(withBlockHeaderAndUpdateNodeHead(header))
-          .isEmpty()) {
-        LOG.warn("Unable to move the head world state to imported block {}", block.toLogString());
-      }
+      // result ignored like MainnetBlockImporter: if head world state can't move, the provider
+      // logs why, and next import rolls it forward from the trie logs
+      context.getWorldStateArchive().getWorldState(withBlockHeaderAndUpdateNodeHead(header));
     }
     LOG.debug("Imported block {} without executing it again", block.toLogString());
     return true;

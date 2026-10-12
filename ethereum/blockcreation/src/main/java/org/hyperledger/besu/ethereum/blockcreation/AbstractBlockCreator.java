@@ -327,11 +327,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final GasUsage usage =
           computeExcessBlobGas(transactionResults, newProtocolSpec, parentHeader);
 
+      final PathBasedWorldState trieLogWorldState =
+          trieLogWorldState(disposableWorldState, transactionResults);
       BlockHeaderBuilder builder =
           BlockHeaderBuilder.create()
               .populateFrom(processableBlockHeader)
               .ommersHash(BodyValidation.ommersHash(ommers))
-              .stateRoot(disposableWorldState.rootHash())
+              .stateRoot(
+                  trieLogWorldState != null
+                      ? trieLogWorldState.rootHashForTrieLog()
+                      : disposableWorldState.rootHash())
               .transactionsRoot(
                   BodyValidation.transactionsRoot(transactionResults.getSelectedTransactions()))
               .receiptsRoot(BodyValidation.receiptsRoot(transactionResults.getReceipts()))
@@ -366,11 +371,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
       timings.register("blockAssembled");
-      if (savesTrieLogOfCreatedBlocks()
-          && !blockBody.getTransactions().isEmpty()
-          && disposableWorldState instanceof PathBasedWorldState pathBasedWorldState
-          && pathBasedWorldState.isStorageFrozen()) {
-        saveTrieLog(pathBasedWorldState, parentHeader, blockHeader);
+      if (trieLogWorldState != null) {
+        saveTrieLog(trieLogWorldState, blockHeader);
         timings.register("trieLogSaved");
       }
       return new BlockCreationResult(
@@ -395,15 +397,19 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return false;
   }
 
-  private void saveTrieLog(
-      final PathBasedWorldState worldState,
-      final BlockHeader parentHeader,
-      final BlockHeader blockHeader) {
+  private @Nullable PathBasedWorldState trieLogWorldState(
+      final MutableWorldState worldState, final TransactionSelectionResults transactionResults) {
+    return savesTrieLogOfCreatedBlocks()
+            && !transactionResults.getSelectedTransactions().isEmpty()
+            && worldState instanceof PathBasedWorldState pathBasedWorldState
+            && pathBasedWorldState.isStorageFrozen()
+        ? pathBasedWorldState
+        : null;
+  }
+
+  private void saveTrieLog(final PathBasedWorldState worldState, final BlockHeader blockHeader) {
     try {
-      // rootHash() moved the frozen world state to the new root, its nodes are not stored.
-      // So restart from the parent root before persist.
-      worldState.resetWorldStateTo(parentHeader);
-      worldState.persist(blockHeader);
+      worldState.saveTrieLog(blockHeader);
     } catch (final RuntimeException e) {
       // block is still valid, import will just execute it again
       LOG.warn("Unable to save the trie log of created block {}", blockHeader.toLogString(), e);

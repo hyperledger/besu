@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -109,7 +110,7 @@ class QbftBlockValidatorAdaptorTest {
     assertThat(validatedBlockCache.take(block.getHash(), block.getHeader().getNumber()))
         .contains(
             new ValidatedBlockCache.ValidatedBlock(
-                block.getHeader().getNumber(), receipts, Optional.empty()));
+                block.getHeader().getNumber(), block.getBody(), receipts, Optional.empty()));
   }
 
   @Test
@@ -135,7 +136,7 @@ class QbftBlockValidatorAdaptorTest {
     final Block block = new BlockDataGenerator().block();
     final ValidatedBlockCache.ValidatedBlock validatedBlock =
         new ValidatedBlockCache.ValidatedBlock(
-            block.getHeader().getNumber(), List.of(), Optional.empty());
+            block.getHeader().getNumber(), block.getBody(), List.of(), Optional.empty());
     validatedBlockCache.put(block.getHash(), validatedBlock);
 
     final QbftBlockValidator.ValidationResult validationResult =
@@ -155,7 +156,7 @@ class QbftBlockValidatorAdaptorTest {
     validatedBlockCache.put(
         block.getHash(),
         new ValidatedBlockCache.ValidatedBlock(
-            block.getHeader().getNumber(), List.of(), Optional.empty()));
+            block.getHeader().getNumber(), block.getBody(), List.of(), Optional.empty()));
     final Optional<BlockAccessList> blockAccessList = Optional.of(new BlockAccessList(List.of()));
     when(blockValidator.validateAndProcessBlock(
             protocolContext,
@@ -172,5 +173,33 @@ class QbftBlockValidatorAdaptorTest {
 
     assertThat(validationResult.success()).isFalse();
     assertThat(validationResult.errorMessage()).contains("failed");
+  }
+
+  @Test
+  void executesBlockWithSameHashWhenBodyIsNotTheExecutedOne() {
+    final Block block = new BlockDataGenerator().block();
+    validatedBlockCache.put(
+        block.getHash(),
+        new ValidatedBlockCache.ValidatedBlock(
+            block.getHeader().getNumber(), block.getBody(), List.of(), Optional.empty()));
+    // same header and same transactions, but not the body object that was executed
+    final Block otherBody =
+        new Block(
+            block.getHeader(),
+            new BlockBody(block.getBody().getTransactions(), block.getBody().getOmmers()));
+    when(blockValidator.validateAndProcessBlock(
+            protocolContext,
+            otherBody,
+            HeaderValidationMode.LIGHT,
+            HeaderValidationMode.FULL,
+            Optional.empty(),
+            false))
+        .thenReturn(new BlockProcessingResult("failed"));
+
+    final QbftBlockValidator.ValidationResult validationResult =
+        new QbftBlockValidatorAdaptor(blockValidator, protocolContext, validatedBlockCache)
+            .validateBlock(new QbftBlockAdaptor(otherBody), Optional.empty());
+
+    assertThat(validationResult.success()).isFalse();
   }
 }

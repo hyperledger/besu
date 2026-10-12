@@ -16,6 +16,7 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import org.hyperledger.besu.consensus.common.bft.SizeLimitedMap;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 
@@ -39,13 +40,28 @@ public class ValidatedBlockCache {
    * Outputs needed by the import.
    *
    * @param blockNumber the block number
+   * @param body the executed block body
    * @param receipts the receipts produced by processing the block
    * @param blockAccessList the block access list produced by processing the block, if any
    */
   public record ValidatedBlock(
       long blockNumber,
+      BlockBody body,
       List<TransactionReceipt> receipts,
-      Optional<BlockAccessList> blockAccessList) {}
+      Optional<BlockAccessList> blockAccessList) {
+
+    /**
+     * Check the body is the one executed. Same object and not equals, to not compare all the
+     * transactions. The proposal and the committed block share the same body object.
+     *
+     * @param blockBody the body of the block to validate or import
+     * @return true if it is the executed body
+     */
+    @SuppressWarnings("ReferenceEquality")
+    public boolean isExecutedBody(final BlockBody blockBody) {
+      return body == blockBody;
+    }
+  }
 
   private final Map<Hash, ValidatedBlock> entries = new SizeLimitedMap<>(MAX_ENTRIES);
 

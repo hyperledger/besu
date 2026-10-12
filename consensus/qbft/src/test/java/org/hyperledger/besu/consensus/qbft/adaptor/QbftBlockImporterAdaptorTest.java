@@ -30,6 +30,7 @@ import org.hyperledger.besu.consensus.qbft.core.types.QbftBlock;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -155,6 +156,29 @@ class QbftBlockImporterAdaptorTest {
   }
 
   @Test
+  void processesValidatedBlockAgainWhenBodyIsNotTheExecutedOne() {
+    recordValidation();
+    stubFastPathPreconditions();
+    // same header and same transactions, but not the body object that was executed
+    final Block otherBody =
+        new Block(
+            besuBlock.getHeader(),
+            new BlockBody(besuBlock.getBody().getTransactions(), besuBlock.getBody().getOmmers()));
+    when(blockImporter.importBlock(
+            protocolContext,
+            otherBody,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty()))
+        .thenReturn(new BlockImportResult(IMPORTED));
+
+    assertThat(newImporter().importBlock(new QbftBlockAdaptor(otherBody), Optional.empty()))
+        .isTrue();
+
+    verify(blockchain, never()).appendBlock(any(), any(), any());
+  }
+
+  @Test
   void processesValidatedBlockAgainWhenHeaderIsInvalid() {
     recordValidation();
     stubFastPathPreconditions();
@@ -172,7 +196,7 @@ class QbftBlockImporterAdaptorTest {
   }
 
   @Test
-  void validatedBlockIsOnlyImportedFromCacheOnce() {
+  void secondImportOfSameBlockUsesRegularImporter() {
     recordValidation();
     stubFastPathPreconditions();
     final QbftBlockImporterAdaptor importer = newImporter();
@@ -220,7 +244,7 @@ class QbftBlockImporterAdaptorTest {
     validatedBlockCache.put(
         besuBlock.getHash(),
         new ValidatedBlockCache.ValidatedBlock(
-            besuBlock.getHeader().getNumber(), receipts, Optional.empty()));
+            besuBlock.getHeader().getNumber(), besuBlock.getBody(), receipts, Optional.empty()));
   }
 
   private void stubFastPathPreconditions() {

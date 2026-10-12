@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.mockito.ArgumentMatchers.any;
@@ -94,6 +95,7 @@ import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.PathBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.util.TrustedSetupClassLoaderExtension;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
@@ -452,6 +454,62 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                 .getWorldState(withBlockHeaderAndUpdateNodeHead(block.getHeader()))
                 .map(MutableWorldState::rootHash))
         .contains(block.getHeader().getStateRoot());
+  }
+
+  @Test
+  void savedTrieLogIsTheSameAsBlockProcessingSaves() throws Exception {
+    final CreateOn miningOn = blockCreatorWithBlobGasSupport(true);
+    final ProtocolContext protocolContext = miningOn.blockCreator.protocolContext;
+    final PathBasedWorldStateProvider worldStateArchive =
+        (PathBasedWorldStateProvider) protocolContext.getWorldStateArchive();
+    final BonsaiWorldStateKeyValueStorage storage =
+        worldStateArchive.getWorldStateKeyValueStorage();
+    final GenesisAccount sender = accounts.get(1);
+    final KeyPair keyPair =
+        SIGNATURE_ALGORITHM.createKeyPair(SECPPrivateKey.create(sender.privateKey(), "ECDSA"));
+    // PUSH1 1 PUSH1 0 SSTORE: the new contract stores 1 in slot 0
+    final Transaction storageWrite =
+        new TransactionTestFixture()
+            .sender(sender.address())
+            .to(Optional.empty())
+            .payload(Bytes.fromHexString("0x6001600055"))
+            .gasLimit(100_000L)
+            .nonce(sender.nonce() + 1)
+            .createTransaction(keyPair);
+
+    final Block block =
+        miningOn
+            .blockCreator
+            .createBlock(
+                Optional.of(List.of(transferTransaction(), storageWrite)),
+                Optional.empty(),
+                System.currentTimeMillis(),
+                miningOn.parentHeader)
+            .getBlock();
+    assertThat(block.getBody().getTransactions()).hasSize(2);
+    final byte[] savedAtCreation = storage.getTrieLog(block.getHash()).orElseThrow();
+
+    // remove it, then process the block like a validator, which saves the trie log again
+    final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
+    updater.getTrieLogStorageTransaction().remove(block.getHash().getBytes().toArrayUnsafe());
+    updater.commitTrieLogOnly();
+    assertThat(storage.getTrieLog(block.getHash())).isEmpty();
+    try (MutableWorldState worldState =
+        worldStateArchive
+            .getWorldState(withBlockHeaderAndNoUpdateNodeHead(miningOn.parentHeader))
+            .orElseThrow()) {
+      assertThat(
+              miningOn
+                  .blockCreator
+                  .protocolSchedule
+                  .getByBlockHeader(block.getHeader())
+                  .getBlockProcessor()
+                  .processBlock(protocolContext, protocolContext.getBlockchain(), worldState, block)
+                  .isSuccessful())
+          .isTrue();
+    }
+
+    assertThat(storage.getTrieLog(block.getHash())).hasValue(savedAtCreation);
   }
 
   @Test

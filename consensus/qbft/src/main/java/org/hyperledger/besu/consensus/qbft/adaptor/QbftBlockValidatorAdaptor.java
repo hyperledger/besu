@@ -52,10 +52,13 @@ public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
   public ValidationResult validateBlock(
       final QbftBlock block, final Optional<BlockAccessList> blockAccessList) {
     final Block besuBlock = AdaptorUtil.toBesuBlock(block);
-    // block already created or validated with same BAL, no need to execute it again
+    // block already created or validated with same body and BAL, no need to execute it again
     if (validatedBlockCache
         .get(besuBlock.getHash())
-        .filter(validatedBlock -> validatedBlock.blockAccessList().equals(blockAccessList))
+        .filter(
+            validatedBlock ->
+                validatedBlock.isExecutedBody(besuBlock.getBody())
+                    && validatedBlock.blockAccessList().equals(blockAccessList))
         .isPresent()) {
       return new ValidationResult(true, Optional.empty());
     }
@@ -76,6 +79,7 @@ public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
                       besuBlock.getHash(),
                       new ValidatedBlockCache.ValidatedBlock(
                           besuBlock.getHeader().getNumber(),
+                          besuBlock.getBody(),
                           outputs.getReceipts(),
                           outputs.getBlockAccessList())));
     }

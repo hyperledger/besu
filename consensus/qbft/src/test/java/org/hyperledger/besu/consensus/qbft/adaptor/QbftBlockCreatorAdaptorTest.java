@@ -94,7 +94,10 @@ class QbftBlockCreatorAdaptorTest {
     assertThat(validatedBlockCache.get(besuBlock.getHash()))
         .contains(
             new ValidatedBlockCache.ValidatedBlock(
-                besuBlock.getHeader().getNumber(), receipts, Optional.empty()));
+                besuBlock.getHeader().getNumber(),
+                besuBlock.getBody(),
+                receipts,
+                Optional.empty()));
   }
 
   @Test

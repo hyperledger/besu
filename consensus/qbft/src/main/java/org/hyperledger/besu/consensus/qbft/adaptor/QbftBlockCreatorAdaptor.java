@@ -65,6 +65,7 @@ public class QbftBlockCreatorAdaptor implements QbftBlockCreator {
         block.getHash(),
         new ValidatedBlockCache.ValidatedBlock(
             block.getHeader().getNumber(),
+            block.getBody(),
             blockResult.getTransactionSelectionResults().getReceipts(),
             blockResult.getBlockAccessList()));
     return new BlockCreationResult(
