@@ -47,6 +47,7 @@ public class DiscoveryConfiguration {
   private int discV5DiscoveryTimeoutSeconds = 60;
   private double discV5MinimumPeerRatio = 0.8;
   private DiscoveryMode discoveryMode = DiscoveryMode.getDefault();
+  private boolean snapServerEnabled = false;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -168,6 +169,15 @@ public class DiscoveryConfiguration {
 
   public boolean isFilterOnEnrForkIdEnabled() {
     return filterOnEnrForkId;
+  }
+
+  public boolean isSnapServerEnabled() {
+    return snapServerEnabled;
+  }
+
+  public DiscoveryConfiguration setSnapServerEnabled(final boolean snapServerEnabled) {
+    this.snapServerEnabled = snapServerEnabled;
+    return this;
   }
 
   public Optional<String> getBindHostIpv6() {
@@ -330,6 +340,8 @@ public class DiscoveryConfiguration {
         + preferIpv6Outbound
         + ", discoveryMode="
         + discoveryMode
+        + ", snapServerEnabled="
+        + snapServerEnabled
         + '}';
   }
 }

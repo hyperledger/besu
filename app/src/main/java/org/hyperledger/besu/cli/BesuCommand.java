@@ -2319,6 +2319,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return keyValueStorageProvider(keyValueStorageName);
   }
 
+  // SnapServer.start() serves only from Bonsai full flat or archive storage; advertising snap in
+  // the ENR on other storage would list a node that answers every snap request empty.
+  private boolean canServeSnap() {
+    final DataStorageConfiguration storage = getDataStorageConfiguration();
+    return unstableSynchronizerOptions.isSnapsyncServerEnabled()
+        && switch (storage.getDataStorageFormat()) {
+          case X_BONSAI_ARCHIVE -> true;
+          case BONSAI ->
+              storage.getExtraStorageConfiguration().getUnstable().getFullFlatDbEnabled();
+          case FOREST -> false;
+        };
+  }
+
   private SynchronizerConfiguration buildSyncConfig() {
     return unstableSynchronizerOptions
         .toDomainObject()
@@ -2533,6 +2546,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .allowedSubnets(p2PDiscoveryConfig.allowedSubnets())
             .poaDiscoveryRetryBootnodes(p2PDiscoveryConfig.poaDiscoveryRetryBootnodes())
             .preferIpv6Outbound(p2PDiscoveryConfig.preferIpv6Outbound())
+            .snapServerEnabled(canServeSnap())
             .discoveryMode(p2PDiscoveryConfig.discoveryMode())
             .transactionValidatorService(transactionValidatorServiceImpl)
             .build();
