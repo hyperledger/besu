@@ -596,6 +596,47 @@ class SnapSyncChainDownloaderSnapV2Test {
 
   @Test
   @SuppressWarnings("unchecked")
+  void stage1FailureIsRetriedFromTheSavedStateWhileACatchupWaitsToStopTheCycle() throws Exception {
+    // Stage 1 had not reached the old pivot when it failed. Restarting at the new pivot with the
+    // old pivot as anchor would leave the headers between the two anchors missing for good.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    lenient()
+        .when(scheduler.scheduleFutureTask(any(Runnable.class), any(Duration.class)))
+        .thenAnswer(
+            inv -> {
+              inv.getArgument(0, Runnable.class).run();
+              return CompletableFuture.completedFuture(null);
+            });
+    final BlockHeader catchupPivot = header(2000);
+    final CompletableFuture<Void> stage1 = new CompletableFuture<>();
+    when(scheduler.startPipeline(backwardPipeline))
+        .thenReturn(stage1, CompletableFuture.completedFuture(null));
+    final SnapSyncChainDownloader downloader = downloader();
+    final CompletableFuture<Void> chainDownload = downloader.start();
+    catchupHeaderDownload(
+        catchupPivot, CompletableFuture.failedFuture(new WrongChainException("reorged out")));
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+
+    stage1.completeExceptionally(new RuntimeException("peer timeout"));
+
+    // Stage 1 is retried down to the original anchor, then the cycle stops for the new pivot.
+    verify(pipelineFactory, times(2))
+        .createBackwardHeaderDownloadPipeline(
+            argThat(
+                s ->
+                    s != null
+                        && s.pivotBlockHeader().equals(initialPivot)
+                        && s.headerDownloadAnchor().getNumber() == 0));
+    verify(pipelineFactory, never())
+        .createBlockAccessListDownloadPipeline(anyLong(), eq(initialPivot));
+    assertThat(catchup).isCompleted();
+    downloader.onWorldStateHealFinished();
+    chainDownload.get(5, TimeUnit.SECONDS);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
   void staleCatchupDownloadDoesNotRollTheMainCycleBackAfterItCompletedTheRequest()
       throws Exception {
     // After a restart the main cycle starts at the new pivot and downloads the same range as the

@@ -988,7 +988,8 @@ public class SnapSyncChainDownloader
     performSingleDownloadCycle()
         .whenComplete(
             (downloadResult, error) -> {
-              if (error != null && !cancelled.get() && preemptCycle.getAndSet(false)) {
+              if (error != null && wasStoppedForPivotUpdate()) {
+                preemptCycle.set(false);
                 LOG.info("Chain download cycle stopped early to handle a pivot update");
                 handlePivotUpdateLoop(overallResult);
               } else if (error != null) {
@@ -1001,6 +1002,14 @@ public class SnapSyncChainDownloader
                 handlePivotUpdateLoop(overallResult);
               }
             });
+  }
+
+  /**
+   * Whether a failed cycle was stopped for a pivot update. Only cycles past Stage 1 qualify;
+   * earlier errors are retried so the header chain has no gap.
+   */
+  private boolean wasStoppedForPivotUpdate() {
+    return !cancelled.get() && preemptCycle.get() && chainSyncState.get().headersDownloadComplete();
   }
 
   /**
@@ -1218,8 +1227,10 @@ public class SnapSyncChainDownloader
                     "Pivot advanced from #{} to #{}, downloading new range.",
                     previousPivot.getNumber(),
                     updatedPivot.getNumber());
-                chainSyncState.updateAndGet(
-                    s -> s.restartHeaderDownload(updatedPivot, previousPivot));
+                // The previous pivot once its Stage 1 finished, otherwise the in-flight anchor.
+                final BlockHeader anchor =
+                    stage1RestartAnchor(updatedPivot.getNumber(), chainSyncState.get());
+                chainSyncState.updateAndGet(s -> s.restartHeaderDownload(updatedPivot, anchor));
                 chainSyncStateStorage.storeState(chainSyncState.get());
                 return CompletableFuture.completedFuture(true);
               } else {
