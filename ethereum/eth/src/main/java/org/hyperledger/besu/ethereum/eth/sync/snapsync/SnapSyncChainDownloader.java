@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import java.util.stream.LongStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -358,40 +359,57 @@ public class SnapSyncChainDownloader
 
   /**
    * Downloads the headers (currentPivot, newPivot] and their BALs, independently of the main
-   * download cycle. Using the current pivot as the checkpoint stops the header download from
-   * recovering below it: if the new pivot does not descend from the current one it fails with a
-   * {@link WrongChainException} before writing anything at or below the current pivot.
+   * download cycle. Each step is retried on its own.
    */
   private CompletableFuture<Void> downloadPivotCatchupRange(
       final SnapV2PivotCatchupRequest request) {
-    final BlockHeader currentPivotBlockHeader = request.currentPivotBlockHeader();
-    final BlockHeader newPivotBlockHeader = request.newPivotBlockHeader();
-    return retryCatchupStep(
-            request,
-            "header",
-            () ->
-                startCatchupPipeline(
-                    request,
-                    pipelineFactory
-                        .createBackwardHeaderDownloadPipeline(
-                            new ChainSyncState(
-                                newPivotBlockHeader,
-                                currentPivotBlockHeader,
-                                currentPivotBlockHeader,
-                                false))
-                        .pipeline()),
-            1)
+    return retryCatchupStep(request, "header", () -> downloadCatchupHeaders(request), 1)
         .thenCompose(
-            ignore ->
-                retryCatchupStep(
-                    request,
-                    "BAL",
-                    () ->
-                        startCatchupPipeline(
-                            request,
-                            pipelineFactory.createBlockAccessListDownloadPipeline(
-                                currentPivotBlockHeader.getNumber(), newPivotBlockHeader)),
-                    1));
+            ignore -> retryCatchupStep(request, "BAL", () -> downloadCatchupBals(request), 1));
+  }
+
+  /**
+   * Using the current pivot as the checkpoint stops the header download from recovering below it:
+   * if the new pivot does not descend from the current one it fails with a {@link
+   * WrongChainException} before writing anything at or below the current pivot.
+   */
+  private CompletableFuture<Void> downloadCatchupHeaders(final SnapV2PivotCatchupRequest request) {
+    final BlockHeader currentPivotBlockHeader = request.currentPivotBlockHeader();
+    return startCatchupPipeline(
+        request,
+        pipelineFactory
+            .createBackwardHeaderDownloadPipeline(
+                new ChainSyncState(
+                    request.newPivotBlockHeader(),
+                    currentPivotBlockHeader,
+                    currentPivotBlockHeader,
+                    false))
+            .pipeline());
+  }
+
+  /**
+   * The BAL download reads the headers through the canonical index, which the main loop can trim
+   * after the header step (handleLoadedState, a pivot rollback). The headers are downloaded again
+   * first if any entry is gone, otherwise every attempt would fail on the missing header.
+   */
+  private CompletableFuture<Void> downloadCatchupBals(final SnapV2PivotCatchupRequest request) {
+    final CompletableFuture<Void> headers =
+        catchupHeadersAreIndexed(request)
+            ? CompletableFuture.completedFuture(null)
+            : downloadCatchupHeaders(request);
+    return headers.thenCompose(
+        ignore ->
+            startCatchupPipeline(
+                request,
+                pipelineFactory.createBlockAccessListDownloadPipeline(
+                    request.currentPivotBlockHeader().getNumber(), request.newPivotBlockHeader())));
+  }
+
+  private boolean catchupHeadersAreIndexed(final SnapV2PivotCatchupRequest request) {
+    return LongStream.rangeClosed(
+            request.currentPivotBlockHeader().getNumber() + 1,
+            request.newPivotBlockHeader().getNumber())
+        .allMatch(number -> blockchain.getBlockHashByNumber(number).isPresent());
   }
 
   /**

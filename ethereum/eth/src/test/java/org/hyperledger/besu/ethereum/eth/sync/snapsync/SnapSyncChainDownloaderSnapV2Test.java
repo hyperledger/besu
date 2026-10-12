@@ -29,6 +29,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -68,6 +69,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -115,6 +118,8 @@ class SnapSyncChainDownloaderSnapV2Test {
     lenient().when(blockchain.getGenesisBlockHeader()).thenReturn(header(0));
     lenient().when(blockchain.getChainHeadBlockNumber()).thenReturn(500L);
     lenient().when(blockchain.getChainHeadHeader()).thenReturn(header(500));
+    // The catch-up's BAL step checks that the headers it downloaded are still indexed.
+    lenient().when(blockchain.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.ZERO));
     lenient().when(ethContext.getScheduler()).thenReturn(scheduler);
     lenient().when(ethContext.getEthPeers()).thenReturn(ethPeers);
     lenient().when(ethPeers.peerCount()).thenReturn(1);
@@ -425,6 +430,40 @@ class SnapSyncChainDownloaderSnapV2Test {
             argThat(s -> s != null && s.pivotBlockHeader().equals(catchupPivot)));
     verify(pipelineFactory, times(2))
         .createBlockAccessListDownloadPipeline(initialPivot.getNumber(), catchupPivot);
+  }
+
+  // The lowest, a middle and the highest entry of the catch-up range (1000, 2000].
+  @ParameterizedTest
+  @ValueSource(longs = {1001, 1500, 2000})
+  @SuppressWarnings("unchecked")
+  void pivotCatchupRedownloadsTrimmedHeaders(final long trimmedBlockNumber) {
+    final BlockHeader catchupPivot = header(2000);
+    final SnapSyncChainDownloader downloader = downloader();
+    startWithCycleBlockedInStage2(downloader);
+    final Pipeline<Long> catchupHeaderPipeline = mock(Pipeline.class);
+    catchupHeaderDownload(
+        catchupPivot, catchupHeaderPipeline, CompletableFuture.completedFuture(null));
+    final Pipeline<List<BlockHeader>> catchupBalPipeline = catchupBalDownload(catchupPivot);
+    // Stands in for the main loop removing one of the range's index entries; all the others are
+    // still there. Only the BAL step's check reads the index.
+    when(blockchain.getBlockHashByNumber(trimmedBlockNumber)).thenReturn(Optional.empty());
+
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+
+    assertThat(catchup).isCompleted();
+    // Once by the header step and again by the BAL step, before it starts the BAL download.
+    verify(pipelineFactory, times(2))
+        .createBackwardHeaderDownloadPipeline(
+            argThat(
+                s ->
+                    s != null
+                        && s.pivotBlockHeader().equals(catchupPivot)
+                        && s.headerDownloadAnchor().equals(initialPivot)
+                        && s.bodyCheckpoint().equals(initialPivot)));
+    final InOrder inOrder = inOrder(scheduler);
+    inOrder.verify(scheduler, times(2)).startPipeline(catchupHeaderPipeline);
+    inOrder.verify(scheduler).startPipeline(catchupBalPipeline);
   }
 
   @Test
