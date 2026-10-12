@@ -64,6 +64,9 @@
 - The block creation timing logged for an empty payload now shows when that block was built, instead of the process start time. [#11461](https://github.com/besu-eth/besu/pull/11461)
 - Amsterdam now rejects transactions with a gas limit above the EIP-8037 cap of `2^32-1`. [#11414](https://github.com/besu-eth/besu/pull/11414)
 - Receipt sync no longer rejects a partial receipt list from a peer when one of its transactions used more than 45M gas. [#11414](https://github.com/besu-eth/besu/pull/11414)
+- A client closing the connection during a streamed JSON-RPC response is logged as a closed connection instead of an error. [#11459](https://github.com/besu-eth/besu/pull/11459)
+- A transaction whose signature does not recover a public key is rejected as `Invalid signature` instead of causing an internal error. [#11458](https://github.com/besu-eth/besu/pull/11458)
+- The finalized block is updated once at the end of a backward sync session, instead of once per forkchoice update received during it. [#11457](https://github.com/besu-eth/besu/pull/11457)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
@@ -78,6 +81,7 @@
 - Warn at startup when a PoA chain on Amsterdam leaves the EIP-8282 builder deposit or exit request contract address out of the genesis, since blocks are invalid from the fork unless a contract is deployed at the default address. [#NNNN](https://github.com/besu-eth/besu/pull/NNNN)
 - The jump destination analysis of contract code is computed once, when the code is stored, instead of on every code cache miss. [#11327](https://github.com/besu-eth/besu/pull/11327)
 - EVM v2: add AND, OR, XOR and NOT. [#11477](https://github.com/besu-eth/besu/pull/11477)
+- Schedule the Amsterdam fork on Hoodi at timestamp `1793036568` (Mon, 26 Oct 2026, 17:42:48 UTC). [#11531](https://github.com/besu-eth/besu/pull/11531)
 
 ## 26.9.0
 
