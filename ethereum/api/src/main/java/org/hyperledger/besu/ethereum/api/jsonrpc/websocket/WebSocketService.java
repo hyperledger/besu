@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.AsyncResult;
@@ -292,10 +293,13 @@ public class WebSocketService {
             activeConnections,
             maxActiveConnections);
         final AtomicBoolean released = new AtomicBoolean(false);
+        // Holder so the lambda can pass itself to ConcurrentHashMap.remove(key, value) without
+        // referencing the still-initializing local (javac: "might not have been initialized").
+        final AtomicReference<Runnable> releaseRef = new AtomicReference<>();
         final Runnable releaseOnce =
             () -> {
               if (released.compareAndSet(false, true)) {
-                connectionReleases.remove(remoteAddress, releaseOnce);
+                connectionReleases.remove(remoteAddress, releaseRef.get());
                 final int remainingConnections = activeConnectionsCount.decrementAndGet();
                 LOG.debug(
                     "Connection closed from {}. Total of active connections: {}/{}",
@@ -304,6 +308,7 @@ public class WebSocketService {
                     maxActiveConnections);
               }
             };
+        releaseRef.set(releaseOnce);
         connectionReleases.put(remoteAddress, releaseOnce);
         connection.closeHandler(c -> releaseOnce.run());
         connection.exceptionHandler(
