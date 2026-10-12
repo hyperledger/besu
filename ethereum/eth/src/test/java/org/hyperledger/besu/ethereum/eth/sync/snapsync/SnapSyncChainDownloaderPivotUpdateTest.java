@@ -363,13 +363,14 @@ class SnapSyncChainDownloaderPivotUpdateTest {
   }
 
   /**
-   * Stubs the highest {@code count} headers as stored and canonical, and the initial pivot as
-   * stored, so the walk from the top can reach it.
+   * Stubs the highest {@code count} headers and the initial pivot as stored and canonical, so the
+   * walk from the top can reach the initial pivot.
    */
   private void stubStoredCanonical(final List<BlockHeader> headers, final int count) {
     lenient()
         .when(blockchain.getBlockHeader(initialPivot.getHash()))
         .thenReturn(Optional.of(initialPivot));
+    lenient().when(blockchain.blockIsOnCanonicalChain(initialPivot.getHash())).thenReturn(true);
     for (final BlockHeader header : headers.subList(headers.size() - count, headers.size())) {
       lenient().when(blockchain.blockIsOnCanonicalChain(header.getHash())).thenReturn(true);
       lenient().when(blockchain.getBlockHeader(header.getHash())).thenReturn(Optional.of(header));

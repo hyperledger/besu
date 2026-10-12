@@ -444,6 +444,7 @@ public class SnapSyncChainDownloader
           step,
           request.currentPivotBlockHeader().getNumber(),
           request.newPivotBlockHeader().getNumber());
+      // No cancel hook per wait: a wait firing after the request finished stops at once.
       return scheduleCatchupStep(
           request, step, download, attempt, Duration.ofMillis(NO_PEER_RETRY_DELAY_MILLISECONDS));
     }
@@ -469,7 +470,11 @@ public class SnapSyncChainDownloader
                   .addArgument(delay.toSeconds())
                   .addArgument(cause.toString())
                   .log();
-              return scheduleCatchupStep(request, step, download, attempt + 1, delay);
+              final CompletableFuture<Void> retry =
+                  scheduleCatchupStep(request, step, download, attempt + 1, delay);
+              // Cancelling the returned future also cancels the scheduled task.
+              request.completionFuture().whenComplete((r, e) -> retry.cancel(false));
+              return retry;
             });
   }
 
@@ -479,13 +484,9 @@ public class SnapSyncChainDownloader
       final Supplier<CompletableFuture<Void>> download,
       final int attempt,
       final Duration delay) {
-    final CompletableFuture<Void> retry =
-        ethContext
-            .getScheduler()
-            .scheduleFutureTask(() -> retryCatchupStep(request, step, download, attempt), delay);
-    // Cancelling the returned future also cancels the scheduled task.
-    request.completionFuture().whenComplete((r, e) -> retry.cancel(false));
-    return retry;
+    return ethContext
+        .getScheduler()
+        .scheduleFutureTask(() -> retryCatchupStep(request, step, download, attempt), delay);
   }
 
   /** 1s, 2s, 4s, ... doubling per failed attempt, capped at {@link #RETRY_MAX_BACKOFF_MS}. */
@@ -758,7 +759,7 @@ public class SnapSyncChainDownloader
       }
       header = parent.get();
     }
-    return header.getHash().equals(bottom.getHash());
+    return header.getHash().equals(bottom.getHash()) && headerIsOnCanonicalChain(bottom);
   }
 
   /**
