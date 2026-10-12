@@ -83,6 +83,7 @@ public class SnapSyncChainDownloader
   private static final long RETRY_WARN_INTERVAL_MS = 30_000L;
   private static final long RETRY_MAX_BACKOFF_MS = 30_000L;
   private static final int CATCHUP_RETRY_WARN_ATTEMPT = 3;
+  static final int MAX_CATCHUP_STEP_ATTEMPTS = MAX_SAME_STATE_RETRIES;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
 
@@ -395,16 +396,26 @@ public class SnapSyncChainDownloader
 
   /**
    * Runs one catch-up download step, retrying it alone with exponential backoff for up to {@link
-   * #MAX_SAME_STATE_RETRIES} attempts. Giving up fails the snap/2 world state download, which then
-   * restarts from scratch, so transient failures such as peer timeouts or write conflicts with the
-   * main cycle (which downloads the same range when it starts at the new pivot, e.g. on restart)
-   * are retried first.
+   * #MAX_CATCHUP_STEP_ATTEMPTS} attempts. Giving up fails the snap/2 world state download, which
+   * then restarts from scratch, so transient failures such as peer timeouts or write conflicts with
+   * the main cycle (which downloads the same range when it starts at the new pivot, e.g. on
+   * restart) are retried first. With no peers an attempt could only time out, so the step waits for
+   * a peer without using one up, and a peer outage does not fail the catch-up.
    */
   private CompletableFuture<Void> retryCatchupStep(
       final SnapV2PivotCatchupRequest request,
       final String step,
       final Supplier<CompletableFuture<Void>> download,
       final int attempt) {
+    if (!isCatchupStopped(request) && ethContext.getEthPeers().peerCount() == 0) {
+      LOG.debug(
+          "snap/2 pivot catch-up {} download from block {} to {} waiting for peers",
+          step,
+          request.currentPivotBlockHeader().getNumber(),
+          request.newPivotBlockHeader().getNumber());
+      return scheduleCatchupStep(
+          request, step, download, attempt, Duration.ofMillis(NO_PEER_RETRY_DELAY_MILLISECONDS));
+    }
     return runCatchupStep(request, download)
         .exceptionallyCompose(
             error -> {
@@ -412,7 +423,7 @@ public class SnapSyncChainDownloader
               if (isCatchupStopped(request)
                   || cause instanceof CancellationException
                   || cause instanceof WrongChainException
-                  || attempt >= MAX_SAME_STATE_RETRIES) {
+                  || attempt >= MAX_CATCHUP_STEP_ATTEMPTS) {
                 return CompletableFuture.failedFuture(error);
               }
               final Duration delay = catchupRetryDelay(attempt);
@@ -423,19 +434,27 @@ public class SnapSyncChainDownloader
                   .addArgument(request.currentPivotBlockHeader().getNumber())
                   .addArgument(request.newPivotBlockHeader().getNumber())
                   .addArgument(attempt)
-                  .addArgument(MAX_SAME_STATE_RETRIES)
+                  .addArgument(MAX_CATCHUP_STEP_ATTEMPTS)
                   .addArgument(delay.toSeconds())
                   .addArgument(cause.toString())
                   .log();
-              final CompletableFuture<Void> retry =
-                  ethContext
-                      .getScheduler()
-                      .scheduleFutureTask(
-                          () -> retryCatchupStep(request, step, download, attempt + 1), delay);
-              // Cancelling the returned future also cancels the scheduled task.
-              request.completionFuture().whenComplete((r, e) -> retry.cancel(false));
-              return retry;
+              return scheduleCatchupStep(request, step, download, attempt + 1, delay);
             });
+  }
+
+  private CompletableFuture<Void> scheduleCatchupStep(
+      final SnapV2PivotCatchupRequest request,
+      final String step,
+      final Supplier<CompletableFuture<Void>> download,
+      final int attempt,
+      final Duration delay) {
+    final CompletableFuture<Void> retry =
+        ethContext
+            .getScheduler()
+            .scheduleFutureTask(() -> retryCatchupStep(request, step, download, attempt), delay);
+    // Cancelling the returned future also cancels the scheduled task.
+    request.completionFuture().whenComplete((r, e) -> retry.cancel(false));
+    return retry;
   }
 
   /** 1s, 2s, 4s, ... doubling per failed attempt, capped at {@link #RETRY_MAX_BACKOFF_MS}. */

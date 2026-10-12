@@ -326,7 +326,7 @@ class SnapSyncChainDownloaderSnapV2Test {
     when(scheduler.startPipeline(catchupHeaderPipeline))
         .thenAnswer(
             inv ->
-                attempts.incrementAndGet() < SnapSyncChainDownloader.MAX_SAME_STATE_RETRIES
+                attempts.incrementAndGet() < SnapSyncChainDownloader.MAX_CATCHUP_STEP_ATTEMPTS
                     ? CompletableFuture.failedFuture(new TimeoutException("headers timed out"))
                     : CompletableFuture.completedFuture(null));
     catchupBalDownload(catchupPivot);
@@ -337,7 +337,45 @@ class SnapSyncChainDownloaderSnapV2Test {
     runScheduledRetries();
 
     assertThat(catchup).isCompleted();
-    verify(scheduler, times(SnapSyncChainDownloader.MAX_SAME_STATE_RETRIES))
+    verify(scheduler, times(SnapSyncChainDownloader.MAX_CATCHUP_STEP_ATTEMPTS))
+        .startPipeline(catchupHeaderPipeline);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void pivotCatchupWaitsForPeersWithoutUsingUpAttempts() {
+    // A failed catch-up restarts the world state download, so a peer outage must not fail it.
+    final BlockHeader catchupPivot = header(2000);
+    final SnapSyncChainDownloader downloader = downloader();
+    startWithCycleBlockedInStage2(downloader);
+    final Pipeline<Long> catchupHeaderPipeline = mock(Pipeline.class);
+    catchupHeaderDownload(catchupPivot, catchupHeaderPipeline, new CompletableFuture<>());
+    final AtomicInteger attempts = new AtomicInteger();
+    when(scheduler.startPipeline(catchupHeaderPipeline))
+        .thenAnswer(
+            inv ->
+                attempts.incrementAndGet() < SnapSyncChainDownloader.MAX_CATCHUP_STEP_ATTEMPTS
+                    ? CompletableFuture.failedFuture(new TimeoutException("headers timed out"))
+                    : CompletableFuture.completedFuture(null));
+    catchupBalDownload(catchupPivot);
+    when(ethPeers.peerCount()).thenReturn(0);
+
+    final CompletableFuture<Void> catchup =
+        downloader.preparePivotCatchup(initialPivot, catchupPivot);
+    for (int i = 0; i < 2 * SnapSyncChainDownloader.MAX_CATCHUP_STEP_ATTEMPTS; i++) {
+      scheduledRetries.remove().run();
+    }
+
+    // No pipeline is started without peers, so no attempt is used up while waiting.
+    assertThat(catchup).isNotDone();
+    verify(scheduler, never()).startPipeline(catchupHeaderPipeline);
+
+    // Once peers are back the step still has all its attempts.
+    when(ethPeers.peerCount()).thenReturn(1);
+    runScheduledRetries();
+
+    assertThat(catchup).isCompleted();
+    verify(scheduler, times(SnapSyncChainDownloader.MAX_CATCHUP_STEP_ATTEMPTS))
         .startPipeline(catchupHeaderPipeline);
   }
 
@@ -359,7 +397,7 @@ class SnapSyncChainDownloaderSnapV2Test {
 
     assertThatThrownBy(() -> catchup.get(1, TimeUnit.SECONDS))
         .hasRootCauseInstanceOf(IllegalStateException.class);
-    verify(scheduler, times(SnapSyncChainDownloader.MAX_SAME_STATE_RETRIES))
+    verify(scheduler, times(SnapSyncChainDownloader.MAX_CATCHUP_STEP_ATTEMPTS))
         .startPipeline(catchupHeaderPipeline);
   }
 
