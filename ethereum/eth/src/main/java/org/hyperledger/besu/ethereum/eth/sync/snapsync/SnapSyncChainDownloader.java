@@ -670,8 +670,14 @@ public class SnapSyncChainDownloader
       blockchain.unsafeRemoveCanonicalIndexRange(newPivotNumber, oldPivotNumber);
     }
 
+    // Above the old pivot the headers must link down to it; at or below it they are part of the
+    // chain the old pivot's Stage 1 completed.
+    final boolean newPivotHeadersStored =
+        newPivotNumber > oldPivotNumber
+            ? canonicalChainLinks(initialPivotHeader, loadedState.pivotBlockHeader())
+            : headerIsOnCanonicalChain(initialPivotHeader);
     final ChainSyncState stateToUse;
-    if (loadedState.headersDownloadComplete() && headerIsOnCanonicalChain(initialPivotHeader)) {
+    if (loadedState.headersDownloadComplete() && newPivotHeadersStored) {
       // We already hold a complete canonical header chain through the new pivot: skip Stage 1.
       stateToUse = loadedState.withCanonicalPivot(initialPivotHeader);
     } else {
