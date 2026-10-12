@@ -280,17 +280,27 @@ public class SnapSyncChainDownloader
                     currentPivotBlockHeader.getNumber(),
                     newPivotBlockHeader.getNumber(),
                     error);
-                failSnapV2PivotCatchupIfNeeded(error);
+                failSnapV2PivotCatchupIfStillPending(request, error);
                 return;
               }
               // Bodies and receipts up to the new pivot follow in the regular download loop. It is
               // only woken once the range is stored so it never downloads the range concurrently.
               synchronized (this) {
+                // Skip if this request is no longer pending (completed by the main cycle or
+                // superseded): the main loop would see its pivot as a rollback and remove the
+                // canonical entries above it.
+                if (!request.equals(pendingSnapV2PivotCatchup.get())) {
+                  LOG.debug(
+                      "snap/2 pivot catch-up from block {} to {} was already completed, ignoring its download result",
+                      currentPivotBlockHeader.getNumber(),
+                      newPivotBlockHeader.getNumber());
+                  return;
+                }
                 pendingPivotUpdate.getAndSet(newPivotBlockHeader);
                 pivotUpdateFuture.complete(null);
               }
               if (error == null) {
-                completeSnapV2PivotCatchupIfNeeded(newPivotBlockHeader);
+                completeSnapV2PivotCatchupIfStillPending(request);
               } else {
                 // The current pivot was reorged out. Recovering below it would rewrite canonical
                 // index entries the main cycle may still be importing, so the main cycle handles
@@ -946,16 +956,30 @@ public class SnapSyncChainDownloader
   private void completeSnapV2PivotCatchupIfNeeded(final BlockHeader completedPivotBlockHeader) {
     final SnapV2PivotCatchupRequest request = pendingSnapV2PivotCatchup.get();
     if (request != null
-        && request.newPivotBlockHeader().getHash().equals(completedPivotBlockHeader.getHash())
-        && pendingSnapV2PivotCatchup.compareAndSet(request, null)) {
+        && request.newPivotBlockHeader().getHash().equals(completedPivotBlockHeader.getHash())) {
+      completeSnapV2PivotCatchupIfStillPending(request);
+    }
+  }
+
+  /** Completes the request unless it was already completed, failed or replaced. */
+  private void completeSnapV2PivotCatchupIfStillPending(final SnapV2PivotCatchupRequest request) {
+    if (pendingSnapV2PivotCatchup.compareAndSet(request, null)) {
       LOG.info(
           "snap/2 chain catch-up completed for pivot block {}",
-          completedPivotBlockHeader.getNumber());
+          request.newPivotBlockHeader().getNumber());
       request.completionFuture().complete(null);
     }
   }
 
-  private void failSnapV2PivotCatchupIfNeeded(final Throwable error) {
+  /** Fails the request unless it was already completed, failed or replaced. */
+  private void failSnapV2PivotCatchupIfStillPending(
+      final SnapV2PivotCatchupRequest request, final Throwable error) {
+    if (pendingSnapV2PivotCatchup.compareAndSet(request, null)) {
+      request.completionFuture().completeExceptionally(error);
+    }
+  }
+
+  private void failPendingSnapV2PivotCatchup(final Throwable error) {
     final SnapV2PivotCatchupRequest request = pendingSnapV2PivotCatchup.getAndSet(null);
     if (request != null && !request.completionFuture().isDone()) {
       request.completionFuture().completeExceptionally(error);
@@ -977,7 +1001,7 @@ public class SnapSyncChainDownloader
       // Non-retryable error - fail. The CHAIN_DOWNLOAD_DURATION timer is deliberately left
       // running: the phase is measured once across re-pivots, so a later successful cycle records
       // it (see SyncDurationMetrics).
-      failSnapV2PivotCatchupIfNeeded(failWith.get());
+      failPendingSnapV2PivotCatchup(failWith.get());
       overallResult.completeExceptionally(failWith.get());
     } else {
       logRetryFailure(error);
@@ -1117,6 +1141,9 @@ public class SnapSyncChainDownloader
                   LOG.debug("Pivot is already canonical at height #{}.", updatedPivot.getNumber());
                   chainSyncState.updateAndGet(s -> s.withCanonicalPivot(updatedPivot));
                   chainSyncStateStorage.storeState(chainSyncState.get());
+                  // A catch-up deferred after a reorg always lands here or in a new cycle: the
+                  // last cycle stored the BALs up to the previous pivot, so this one is covered.
+                  completeSnapV2PivotCatchupIfNeeded(updatedPivot);
                   return isAnotherDownloadCycleNeeded();
                 } else {
                   LOG.debug(
@@ -1145,7 +1172,7 @@ public class SnapSyncChainDownloader
     if (catchup != null) {
       catchup.abort();
     }
-    failSnapV2PivotCatchupIfNeeded(new CancellationException());
+    failPendingSnapV2PivotCatchup(new CancellationException());
 
     final CompletableFuture<Void> result = downloadResult;
     if (result != null) {

@@ -219,7 +219,7 @@ class SnapSyncChainDownloaderSnapV2Test {
   }
 
   @Test
-  void pivotCatchupDoesNotNeedTheChainDownloadToHaveStarted() throws Exception {
+  void pivotCatchupDoesNotNeedTheChainDownloadToHaveStarted() {
     // The world state can request a catch-up while the chain downloader is still loading its
     // state, e.g. right after a restart.
     final BlockHeader catchupPivot = header(2000);
@@ -227,7 +227,7 @@ class SnapSyncChainDownloaderSnapV2Test {
     catchupHeaderDownload(catchupPivot, CompletableFuture.completedFuture(null));
     catchupBalDownload(catchupPivot);
 
-    downloader.preparePivotCatchup(initialPivot, catchupPivot).get(5, TimeUnit.SECONDS);
+    assertThat(downloader.preparePivotCatchup(initialPivot, catchupPivot)).isCompleted();
   }
 
   @Test
@@ -260,7 +260,7 @@ class SnapSyncChainDownloaderSnapV2Test {
   }
 
   @Test
-  void pivotCatchupCompletesWhileTheMainDownloadCycleIsStillRunning() throws Exception {
+  void pivotCatchupCompletesWhileTheMainDownloadCycleIsStillRunning() {
     final BlockHeader catchupPivot = header(2000);
     final SnapSyncChainDownloader downloader = downloader();
     final CompletableFuture<Void> chainDownload = startWithCycleBlockedInStage2(downloader);
@@ -271,7 +271,7 @@ class SnapSyncChainDownloaderSnapV2Test {
         downloader.preparePivotCatchup(initialPivot, catchupPivot);
 
     // The catch-up must not wait for the main cycle: on the first cycle that is the whole chain.
-    catchup.get(5, TimeUnit.SECONDS);
+    assertThat(catchup).isCompleted();
     assertThat(chainDownload).isNotDone();
     verify(pipelineFactory)
         .createBackwardHeaderDownloadPipeline(
@@ -302,13 +302,13 @@ class SnapSyncChainDownloaderSnapV2Test {
     assertThat(catchup).isNotDone();
     downloader.onWorldStateHealFinished();
     downloader.start().get(5, TimeUnit.SECONDS);
-    catchup.get(5, TimeUnit.SECONDS);
+    assertThat(catchup).isCompleted();
     verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
   }
 
   @Test
   @SuppressWarnings("unchecked")
-  void pivotCatchupKeepsRetryingUntilTheDownloadSucceeds() throws Exception {
+  void pivotCatchupKeepsRetryingUntilTheDownloadSucceeds() {
     // A failed catch-up fails the snap/2 world state download, which restarts from scratch, so
     // the catch-up must never give up on its own.
     final BlockHeader catchupPivot = header(2000);
@@ -336,7 +336,7 @@ class SnapSyncChainDownloaderSnapV2Test {
     assertThat(catchup).isNotDone();
     runScheduledRetries();
 
-    catchup.get(5, TimeUnit.SECONDS);
+    assertThat(catchup).isCompleted();
     verify(scheduler, times(9)).startPipeline(catchupHeaderPipeline);
   }
 
@@ -374,7 +374,7 @@ class SnapSyncChainDownloaderSnapV2Test {
 
   @Test
   @SuppressWarnings("unchecked")
-  void pivotCatchupRetriesATransientDownloadFailure() throws Exception {
+  void pivotCatchupRetriesATransientDownloadFailure() {
     // e.g. a RocksDB write conflict with the main cycle downloading the same range on restart
     final BlockHeader catchupPivot = header(2000);
     final SnapSyncChainDownloader downloader = downloader();
@@ -394,7 +394,7 @@ class SnapSyncChainDownloaderSnapV2Test {
         downloader.preparePivotCatchup(initialPivot, catchupPivot);
     runScheduledRetries();
 
-    catchup.get(5, TimeUnit.SECONDS);
+    assertThat(catchup).isCompleted();
     verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
   }
 
@@ -417,12 +417,12 @@ class SnapSyncChainDownloaderSnapV2Test {
   }
 
   @Test
-  void pivotCatchupIsAcceptedAgainAfterAPreviousRequestCompleted() throws Exception {
+  void pivotCatchupIsAcceptedAgainAfterAPreviousRequestCompleted() {
     final SnapSyncChainDownloader downloader = downloader();
     startWithCycleBlockedInStage2(downloader);
     catchupHeaderDownload(header(2000), CompletableFuture.completedFuture(null));
     catchupBalDownload(header(2000));
-    downloader.preparePivotCatchup(initialPivot, header(2000)).get(5, TimeUnit.SECONDS);
+    assertThat(downloader.preparePivotCatchup(initialPivot, header(2000))).isCompleted();
     catchupHeaderDownload(header(3000), new CompletableFuture<>());
 
     // The in-flight guard must have been cleared, otherwise the next snap/2 pivot could never be
@@ -433,6 +433,92 @@ class SnapSyncChainDownloaderSnapV2Test {
     assertThat(secondCatchup).isNotCompletedExceptionally();
   }
 
+  @Test
+  void deferredCatchupCompletesWhenTheMainCycleSkipsTheBalDownload() throws Exception {
+    // e.g. after a restart, the main cycle starts at the requested pivot and already holds its
+    // bodies, so its BAL download returns early.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    lenient().when(blockchain.getChainHeadHeader()).thenReturn(initialPivot);
+    lenient().when(blockchain.blockIsOnCanonicalChain(initialPivot.getHash())).thenReturn(true);
+    lenient()
+        .when(blockchain.getBlockBody(initialPivot.getHash()))
+        .thenReturn(Optional.of(mock(BlockBody.class)));
+    final BlockHeader oldPivot = header(500);
+    final SnapSyncChainDownloader downloader = downloader();
+    deferredCatchupHeaderDownload(oldPivot);
+
+    final CompletableFuture<Void> catchup = downloader.preparePivotCatchup(oldPivot, initialPivot);
+    assertThat(catchup).isNotDone();
+    downloader.onWorldStateHealFinished();
+    downloader.start().get(5, TimeUnit.SECONDS);
+
+    assertThat(catchup).isCompleted();
+    verify(pipelineFactory, never()).createBlockAccessListDownloadPipeline(anyLong(), any());
+  }
+
+  @Test
+  void deferredCatchupCompletesWhenItsPivotIsAlreadyCanonical() throws Exception {
+    // The main cycle already downloaded past the requested pivot, so the deferred pivot update
+    // finds it canonical and starts no new cycle.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final BlockHeader oldPivot = header(500);
+    final BlockHeader catchupPivot = header(800);
+    lenient().when(blockchain.blockIsOnCanonicalChain(catchupPivot.getHash())).thenReturn(true);
+    final SnapSyncChainDownloader downloader = downloader();
+    deferredCatchupHeaderDownload(oldPivot);
+
+    final CompletableFuture<Void> catchup = downloader.preparePivotCatchup(oldPivot, catchupPivot);
+    assertThat(catchup).isNotDone();
+    downloader.onWorldStateHealFinished();
+    downloader.start().get(5, TimeUnit.SECONDS);
+
+    assertThat(catchup).isCompleted();
+    verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(initialPivot));
+    verify(pipelineFactory, never())
+        .createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void staleCatchupDownloadDoesNotRollTheMainCycleBackAfterItCompletedTheRequest()
+      throws Exception {
+    // After a restart the main cycle starts at the new pivot and downloads the same range as the
+    // catch-up, so it can complete the request while the catch-up download is still running.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final BlockHeader oldPivot = header(500);
+    final SnapSyncChainDownloader downloader = downloader();
+    final Pipeline<Long> staleHeaderPipeline = mock(Pipeline.class);
+    final CompletableFuture<Void> staleHeaderDownload = new CompletableFuture<>();
+    when(pipelineFactory.createBackwardHeaderDownloadPipeline(
+            argThat(s -> s != null && s.headerDownloadAnchor().equals(oldPivot))))
+        .thenReturn(
+            new SnapSyncChainDownloadPipelineFactory.BackwardHeaderPipelineResult(
+                staleHeaderPipeline, mock(BackwardHeaderDriver.class)));
+    when(scheduler.startPipeline(staleHeaderPipeline)).thenReturn(staleHeaderDownload);
+    final CompletableFuture<Void> staleCatchup =
+        downloader.preparePivotCatchup(oldPivot, initialPivot);
+
+    final CompletableFuture<Void> stage2 = new CompletableFuture<>();
+    when(scheduler.startPipeline(forwardPipeline)).thenReturn(stage2);
+    final CompletableFuture<Void> chainDownload = downloader.start();
+    // The main cycle's BAL download reached the requested pivot.
+    assertThat(staleCatchup).isCompleted();
+
+    // The world state moves on to the next pivot, then the stale download finally finishes.
+    catchupHeaderDownload(header(2000), new CompletableFuture<>());
+    final CompletableFuture<Void> nextCatchup =
+        downloader.preparePivotCatchup(initialPivot, header(2000));
+    staleHeaderDownload.complete(null);
+
+    stage2.complete(null);
+    downloader.onWorldStateHealFinished();
+    chainDownload.get(5, TimeUnit.SECONDS);
+
+    // Waking the main loop with the old pivot would have treated it as a rollback.
+    verify(blockchain, never()).unsafeRemoveCanonicalIndexRange(anyLong(), anyLong());
+    assertThat(nextCatchup).isNotDone();
+  }
+
   /** Starts the chain download and leaves its first cycle running in Stage 2 (bodies/receipts). */
   private CompletableFuture<Void> startWithCycleBlockedInStage2(
       final SnapSyncChainDownloader downloader) {
@@ -441,6 +527,18 @@ class SnapSyncChainDownloaderSnapV2Test {
     final CompletableFuture<Void> chainDownload = downloader.start();
     verify(scheduler).startPipeline(forwardPipeline);
     return chainDownload;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void deferredCatchupHeaderDownload(final BlockHeader oldPivot) {
+    final Pipeline<Long> pipeline = mock(Pipeline.class);
+    when(pipelineFactory.createBackwardHeaderDownloadPipeline(
+            argThat(s -> s != null && s.headerDownloadAnchor().equals(oldPivot))))
+        .thenReturn(
+            new SnapSyncChainDownloadPipelineFactory.BackwardHeaderPipelineResult(
+                pipeline, mock(BackwardHeaderDriver.class)));
+    when(scheduler.startPipeline(pipeline))
+        .thenReturn(CompletableFuture.failedFuture(new WrongChainException("reorged out")));
   }
 
   @SuppressWarnings("unchecked")
