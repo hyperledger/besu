@@ -18,9 +18,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
-import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
+import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code.CodeStorageMigration;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.VersionedStorageFormat;
@@ -69,11 +70,14 @@ public class RevertCodeFormatSubCommand implements Runnable {
       LOG.info("Database in {} is {}, which needs no revert", dataDir, current);
       return;
     }
-    // opening the database migrates a code storage keyed by code hash that holds bare code, so one
-    // reverted without its metadata is migrated first and then reverted again
-    try (final BesuController controller = parentCommand.besuCommand.buildController()) {
-      CodeStorageMigration.revert(
-          controller.getStorageProvider().getStorageBySegmentIdentifiers(List.of(CODE_STORAGE)));
+    // the controller would run the startup trie log pruning with the options of this command
+    try (final StorageProvider storageProvider =
+            parentCommand.besuCommand.getStorageProviderWithoutController();
+        final SegmentedKeyValueStorage storage =
+            storageProvider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE))) {
+      CodeStorageMigration.revert(storage);
+    } catch (final IOException e) {
+      throw new IllegalStateException("Could not close the database in " + dataDir, e);
     }
     final VersionedStorageFormat reverted = maybeReverted.get();
     try {

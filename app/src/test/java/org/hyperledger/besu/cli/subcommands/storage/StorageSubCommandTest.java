@@ -26,6 +26,8 @@ import static org.hyperledger.besu.ethereum.core.VariablesStorageHelper.populate
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.BLOCKCHAIN;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VARIABLES;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,7 +88,7 @@ public class StorageSubCommandTest extends CommandTestAbstract {
   @Test
   public void revertCodeFormat(@TempDir final Path dataDir) throws IOException {
     final var codeStorage = new SegmentedInMemoryKeyValueStorage();
-    when(storageProvider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE)))
+    when(rocksDBStorageFactory.create(eq(List.of(CODE_STORAGE)), any(), any()))
         .thenReturn(codeStorage);
     final Bytes code = Bytes.fromHexString("0x605b5b");
     final byte[] key = Hash.hash(code).getBytes().toArrayUnsafe();
@@ -101,6 +103,7 @@ public class StorageSubCommandTest extends CommandTestAbstract {
     parseCommand("--data-path", dataDir.toString(), "storage", "revert-code-format");
 
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    verify(mockControllerBuilder, never()).build();
     assertThat(codeStorage.get(CODE_STORAGE, key)).contains(code.toArrayUnsafe());
     assertThat(codeStorage.get(CODE_STORAGE, JumpDestCodeStorageStrategy.MARKER_KEY)).isEmpty();
     assertThat(DatabaseMetadata.lookUpFrom(dataDir).getVersionedStorageFormat())
@@ -111,7 +114,7 @@ public class StorageSubCommandTest extends CommandTestAbstract {
   @Test
   public void revertCodeFormatKeepsTheNewerMetadataWhenTheVersionMetadataCannotBeDeleted(
       @TempDir final Path dataDir) throws IOException {
-    when(storageProvider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE)))
+    when(rocksDBStorageFactory.create(eq(List.of(CODE_STORAGE)), any(), any()))
         .thenReturn(new SegmentedInMemoryKeyValueStorage());
     new DatabaseMetadata(BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS)
         .writeToDirectory(dataDir);
@@ -124,6 +127,29 @@ public class StorageSubCommandTest extends CommandTestAbstract {
         .contains("Could not revert the database metadata in " + dataDir);
     assertThat(DatabaseMetadata.lookUpFrom(dataDir).getVersionedStorageFormat())
         .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS);
+  }
+
+  @Test
+  public void revertCodeFormatOnlyRevertsTheMetadataOfBareCode(@TempDir final Path dataDir)
+      throws IOException {
+    final var codeStorage = new SegmentedInMemoryKeyValueStorage();
+    when(rocksDBStorageFactory.create(eq(List.of(CODE_STORAGE)), any(), any()))
+        .thenReturn(codeStorage);
+    final Bytes code = Bytes.fromHexString("0x605b5b");
+    final byte[] key = Hash.hash(code).getBytes().toArrayUnsafe();
+    final var setup = codeStorage.startTransaction();
+    setup.put(CODE_STORAGE, key, code.toArrayUnsafe());
+    setup.commit();
+    new DatabaseMetadata(BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS)
+        .writeToDirectory(dataDir);
+
+    parseCommand("--data-path", dataDir.toString(), "storage", "revert-code-format");
+
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    assertThat(codeStorage.get(CODE_STORAGE, key)).contains(code.toArrayUnsafe());
+    assertThat(JumpDestCodeStorageStrategy.isMarked(codeStorage)).isFalse();
+    assertThat(DatabaseMetadata.lookUpFrom(dataDir).getVersionedStorageFormat())
+        .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION);
   }
 
   @Test
