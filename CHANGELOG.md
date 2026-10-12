@@ -65,6 +65,7 @@
 - Amsterdam now rejects transactions with a gas limit above the EIP-8037 cap of `2^32-1`. [#11414](https://github.com/besu-eth/besu/pull/11414)
 - Receipt sync no longer rejects a partial receipt list from a peer when one of its transactions used more than 45M gas. [#11414](https://github.com/besu-eth/besu/pull/11414)
 - A client closing the connection during a streamed JSON-RPC response is logged as a closed connection instead of an error. [#11459](https://github.com/besu-eth/besu/pull/11459)
+- A transaction whose signature does not recover a public key is rejected as `Invalid signature` instead of causing an internal error. [#11458](https://github.com/besu-eth/besu/pull/11458)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
