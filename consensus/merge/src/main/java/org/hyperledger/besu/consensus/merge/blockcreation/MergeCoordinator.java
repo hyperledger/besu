@@ -636,7 +636,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final CompletableFuture<Void> session = backwardSyncContext.syncBackwardsUntil(headHash);
       // all calls during a session share its future, so one callback applies the latest finalized
       if (backwardSyncWithFinalizedUpdate.getAndSet(session) != session) {
-        session.thenRun(() -> updateFinalized(finalizedHashAfterBackwardSync.get()));
+        session.thenRun(
+            () -> updateFinalized(Objects.requireNonNull(finalizedHashAfterBackwardSync.get())));
       }
     }
     return maybeHeadHeader;
