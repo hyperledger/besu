@@ -358,6 +358,19 @@ public class SnapSyncChainDownloader
   }
 
   /**
+   * Registers the pipeline for abort only once started (abort throws before then), and re-checks a
+   * pre-emption that may have hit the previous stage instead.
+   */
+  private CompletableFuture<Void> startCyclePipeline(final Pipeline<?> pipeline) {
+    final CompletableFuture<Void> result = ethContext.getScheduler().startPipeline(pipeline);
+    currentPipeline = pipeline;
+    if (preemptCycle.get() && chainSyncState.get().headersDownloadComplete()) {
+      pipeline.abort();
+    }
+    return result;
+  }
+
+  /**
    * Downloads the headers (currentPivot, newPivot] and their BALs, independently of the main
    * download cycle. Each step is retried on its own.
    */
@@ -814,12 +827,9 @@ public class SnapSyncChainDownloader
 
     final SnapSyncChainDownloadPipelineFactory.BackwardHeaderPipelineResult pipelineResult =
         pipelineFactory.createBackwardHeaderDownloadPipeline(state);
-    currentPipeline = pipelineResult.pipeline();
     currentDriver = pipelineResult.driver();
 
-    return ethContext
-        .getScheduler()
-        .startPipeline(pipelineResult.pipeline())
+    return startCyclePipeline(pipelineResult.pipeline())
         .thenApply(
             ignore -> {
               final Duration stage1Duration = Duration.between(stage1StartTime, Instant.now());
@@ -884,11 +894,8 @@ public class SnapSyncChainDownloader
 
     final Pipeline<List<BlockHeader>> balPipeline =
         pipelineFactory.createBlockAccessListDownloadPipeline(anchorNumber, pivotBlockHeader);
-    currentPipeline = balPipeline;
 
-    return ethContext
-        .getScheduler()
-        .startPipeline(balPipeline)
+    return startCyclePipeline(balPipeline)
         .thenApply(
             ignore -> {
               final Duration balDuration = Duration.between(balStartTime, Instant.now());
@@ -954,11 +961,8 @@ public class SnapSyncChainDownloader
     final Pipeline<List<BlockHeader>> bodiesAndReceiptsPipeline =
         pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(
             stage2StartBlock, pivotBlockHeader, syncState);
-    currentPipeline = bodiesAndReceiptsPipeline;
 
-    return ethContext
-        .getScheduler()
-        .startPipeline(bodiesAndReceiptsPipeline)
+    return startCyclePipeline(bodiesAndReceiptsPipeline)
         .thenApply(
             ignore -> {
               final Duration stage2Duration = Duration.between(stage2StartTime, Instant.now());

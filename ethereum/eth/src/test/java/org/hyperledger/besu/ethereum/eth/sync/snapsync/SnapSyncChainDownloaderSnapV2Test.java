@@ -62,6 +62,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -635,6 +636,41 @@ class SnapSyncChainDownloaderSnapV2Test {
     assertThat(catchup).isCompleted();
     verify(pipelineFactory).createBlockAccessListDownloadPipeline(anyLong(), eq(catchupPivot));
     // Stage 2 resumes, now up to the new pivot.
+    verify(pipelineFactory)
+        .createForwardBodiesAndReceiptsDownloadPipeline(anyLong(), eq(catchupPivot), any());
+    downloader.onWorldStateHealFinished();
+    chainDownload.get(5, TimeUnit.SECONDS);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void deferredCatchupStopsStage2WhenItArrivesWhileStage2IsBeingCreated() throws Exception {
+    // The pre-emption lands after the cycle's last check but before Stage 2 is registered.
+    lenient().when(pipelineFactory.isSnap2Enabled()).thenReturn(true);
+    final BlockHeader catchupPivot = header(2000);
+    final SnapSyncChainDownloader downloader = downloader();
+    catchupHeaderDownload(
+        catchupPivot, CompletableFuture.failedFuture(new WrongChainException("reorged out")));
+    final AtomicReference<CompletableFuture<Void>> catchup = new AtomicReference<>();
+    when(pipelineFactory.createForwardBodiesAndReceiptsDownloadPipeline(anyLong(), any(), any()))
+        .thenAnswer(
+            inv -> {
+              if (catchup.get() == null) {
+                catchup.set(downloader.preparePivotCatchup(initialPivot, catchupPivot));
+              }
+              return forwardPipeline;
+            });
+    final CompletableFuture<Void> stage2 = new CompletableFuture<>();
+    doAnswer(inv -> stage2.completeExceptionally(new CancellationException("Pipeline aborted")))
+        .when(forwardPipeline)
+        .abort();
+    when(scheduler.startPipeline(forwardPipeline))
+        .thenReturn(stage2, CompletableFuture.completedFuture(null));
+
+    final CompletableFuture<Void> chainDownload = downloader.start();
+
+    verify(forwardPipeline).abort();
+    assertThat(catchup.get()).isCompleted();
     verify(pipelineFactory)
         .createForwardBodiesAndReceiptsDownloadPipeline(anyLong(), eq(catchupPivot), any());
     downloader.onWorldStateHealFinished();
