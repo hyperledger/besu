@@ -201,7 +201,6 @@ configure(allprojects - project(':platform')) {
     exclusiveContent {
       forRepositories(ethExecSpecTestsRepo)
       filter {
-        includeModule('ethereum', 'execution-spec-tests')
         includeModule('ethereum', 'execution-specs')
       }
     }
@@ -903,6 +902,13 @@ subprojects {
 
   if (file('src/jmh').directory) {
     apply plugin: 'me.champeau.jmh'
+
+    tasks.named("jmhJar") {
+      zip64 = true
+      exclude("META-INF/services/java.net.spi.InetAddressResolverProvider")
+      exclude("META-INF/versions/*/META-INF/services/java.net.spi.InetAddressResolverProvider")
+    }
+
     tasks.named("jmh") {
       description = "Usage: gradle jmh -Pincludes=MyBench -PasyncProfiler=<libPath> -PasyncProfilerOptions=<options>\n" +
         "\nRun JMH benchmarks in each of the projects. Allows for controlling JMH execution directly from the command line.\n" +
@@ -977,6 +983,7 @@ application {
   mainClass = 'org.hyperledger.besu.Besu'
   applicationDefaultJvmArgs = [
     '-Dvertx.disableFileCPResolving=true',
+    '-XX:+ExitOnOutOfMemoryError',
     // BESU_HOME is replaced by a doFirst block in the run task.
     '-Dbesu.home=BESU_HOME',
     // We shutdown log4j ourselves, as otherwise this shutdown hook runs before our own and whatever

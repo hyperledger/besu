@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -32,7 +33,6 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public class BenchmarkHelper {
   /**
@@ -211,14 +211,14 @@ public class BenchmarkHelper {
       final int dataSize,
       final boolean fixedSrcDst) {
     for (int i = 0; i < sizePool.length; i++) {
-      sizePool[i] = Bytes.wrap(UInt256.valueOf(dataSize));
+      sizePool[i] = Bytes.wrap(UInt256.fromInt(dataSize).toBytesBE());
 
       if (fixedSrcDst) {
-        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
-        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(0));
+        destOffsetPool[i] = Bytes.wrap(UInt256.fromInt(0).toBytesBE());
+        srcOffsetPool[i] = Bytes.wrap(UInt256.fromInt(0).toBytesBE());
       } else {
-        destOffsetPool[i] = Bytes.wrap(UInt256.valueOf((i * 32) % 1024));
-        srcOffsetPool[i] = Bytes.wrap(UInt256.valueOf(i % Math.max(1, dataSize)));
+        destOffsetPool[i] = Bytes.wrap(UInt256.fromInt((i * 32) % 1024).toBytesBE());
+        srcOffsetPool[i] = Bytes.wrap(UInt256.fromInt(i % Math.max(1, dataSize)).toBytesBE());
       }
     }
   }
@@ -267,5 +267,71 @@ public class BenchmarkHelper {
     int nBits = Integer.remainderUnsigned(n, 8);
     bytes[31 - nBytes] = (byte) (1 << nBits);
     return Bytes.wrap(bytes);
+  }
+
+  /**
+   * Fills a Bytes array with 32-byte hashes all of which are different between them and have
+   * distinct hashcodes.
+   *
+   * @param pool destination array
+   * @param offset start index from which to generate hashes
+   */
+  public static void fillPoolWithDistinctHashes(final Bytes[] pool, final int offset) {
+    for (int i = 0; i < pool.length; i++) {
+      pool[i] = distinctHash(offset + i);
+    }
+  }
+
+  private static Bytes32 distinctHash(final int index) {
+    final byte[] bytes = new byte[32];
+    int remaining = index;
+    for (int i = 31; i >= 0; i--) {
+      bytes[i] = (byte) (remaining % 31);
+      remaining /= 31;
+    }
+    return Bytes32.wrap(bytes);
+  }
+
+  /**
+   * Fills a Bytes array with 32-byte hashes all of which have the same hashcode. In 32 bytes
+   * there's only 3^16 unique hashes that collide in their hashcode.
+   *
+   * @param pool destination array
+   * @param offset start index from which to generate hashes
+   */
+  public static void fillPoolWithCollidingHashes(final Bytes[] pool, final int offset) {
+    if (offset + pool.length > Math.pow(3, 16)) {
+      throw new IllegalArgumentException("exceeded maximum amount of colliding hashes");
+    }
+    for (int i = 0; i < pool.length; i++) {
+      pool[i] = collidingHash(offset + i);
+    }
+  }
+
+  private static void writeZeroSumPair(final byte[] bytes, final int offset, final int digit) {
+    switch (digit) {
+      case 0 -> {
+        bytes[offset] = 0;
+        bytes[offset + 1] = 0;
+      }
+      case 1 -> {
+        bytes[offset] = 1;
+        bytes[offset + 1] = (byte) -31;
+      }
+      default -> {
+        bytes[offset] = (byte) -1;
+        bytes[offset + 1] = 31;
+      }
+    }
+  }
+
+  private static Bytes32 collidingHash(final int index) {
+    final byte[] bytes = new byte[32];
+    long remaining = index;
+    for (int pair = 0; pair < 16; pair++) {
+      writeZeroSumPair(bytes, pair * 2, (int) (remaining % 3));
+      remaining /= 3;
+    }
+    return Bytes32.wrap(bytes);
   }
 }

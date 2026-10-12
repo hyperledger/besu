@@ -25,9 +25,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedValue;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.PathBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiValue;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog.LogTuple;
 
@@ -128,7 +128,7 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
           request.getRequest().getId(), RpcErrorType.INVALID_BLOCK_RANGE);
     }
 
-    final Map<Address, PathBasedValue<AccountValue>> accounts = new HashMap<>();
+    final Map<Address, BonsaiValue<AccountValue>> accounts = new HashMap<>();
     for (final Hash blockHash : blockHashes) {
       final Optional<TrieLog> maybeTrieLog = trieLogManager.getTrieLogLayer(blockHash);
       if (maybeTrieLog.isEmpty()) {
@@ -141,7 +141,7 @@ public abstract class AbstractDebugGetModifiedAccounts implements JsonRpcMethod 
       accountChanges.forEach(
           (address, change) ->
               accounts
-                  .computeIfAbsent(address, __ -> new PathBasedValue<>(null, change.getUpdated()))
+                  .computeIfAbsent(address, __ -> new BonsaiValue<>(null, change.getUpdated()))
                   .setPrior(change.getPrior()));
     }
 
