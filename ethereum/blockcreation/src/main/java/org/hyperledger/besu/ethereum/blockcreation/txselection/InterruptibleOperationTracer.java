@@ -134,4 +134,9 @@ public class InterruptibleOperationTracer implements OperationTracer {
       throw new RuntimeException(new InterruptedException("Transaction execution interrupted"));
     }
   }
+
+  @Override
+  public boolean isEnabled() {
+    return delegate.isEnabled();
+  }
 }

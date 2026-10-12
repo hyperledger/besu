@@ -174,8 +174,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         createTransactionSelectors(
             blockSelectionContext, selectorsStateManager, maybeBlockAccessListBuilder);
     this.pluginTransactionSelector = pluginTransactionSelector;
-    this.operationTracer =
-        new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
+    this.operationTracer = !pluginTransactionSelector.getOperationTracer().isEnabled() ?
+      OperationTracer.NO_TRACING :
+      new InterruptibleOperationTracer(pluginTransactionSelector.getOperationTracer());
     this.blockWorldStateUpdater = worldState.updater();
     this.txWorldStateUpdater = blockWorldStateUpdater.updater();
     final var blockTxsSelectionMaxTime =
