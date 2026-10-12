@@ -88,12 +88,14 @@ import org.hyperledger.besu.util.number.Fraction;
 
 import java.math.BigInteger;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -898,6 +900,112 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void describePayloadArgsChangesListsParentAndWithdrawalChanges() {
+    final BlockHeader previousParent = genesisState.getBlock().getHeader();
+    final BlockHeader nextParent = headerGenerator.number(1).buildHeader();
+    final PreparePayloadArgsBuilder args =
+        new PreparePayloadArgsBuilder()
+            .timestamp(1L)
+            .prevRandao(Bytes32.ZERO)
+            .feeRecipient(suggestedFeeRecipient);
+
+    final String changes =
+        MergeCoordinator.describePayloadArgsChanges(
+            args.parentHeader(previousParent).withdrawals(Optional.empty()).build(),
+            args.parentHeader(nextParent).withdrawals(Optional.of(List.of())).build());
+
+    assertThat(changes)
+        .isEqualTo(
+            "parent "
+                + previousParent.getHash()
+                + " -> "
+                + nextParent.getHash()
+                + ", withdrawals changed (none -> 0)");
+  }
+
+  @Test
+  public void describePayloadArgsChangesListsOnlyTheChangedAttributes() {
+    final PreparePayloadArgsBuilder args =
+        new PreparePayloadArgsBuilder()
+            .parentHeader(genesisState.getBlock().getHeader())
+            .timestamp(1L)
+            .prevRandao(Bytes32.ZERO)
+            .feeRecipient(suggestedFeeRecipient)
+            .slotNumber(Optional.of(7L));
+
+    final String changes =
+        MergeCoordinator.describePayloadArgsChanges(
+            args.targetGasLimit(Optional.of(60_000_000L)).build(),
+            args.targetGasLimit(Optional.of(45_000_000L)).build());
+
+    assertThat(changes).isEqualTo("targetGasLimit 60000000 -> 45000000");
+  }
+
+  @Test
+  public void describePayloadArgsChangesReportsNoneForTheSameArguments() {
+    final MergeMiningCoordinator.PreparePayloadArgs args =
+        new PreparePayloadArgsBuilder()
+            .parentHeader(genesisState.getBlock().getHeader())
+            .timestamp(1L)
+            .prevRandao(Bytes32.ZERO)
+            .feeRecipient(suggestedFeeRecipient)
+            .build();
+
+    assertThat(MergeCoordinator.describePayloadArgsChanges(args, args)).isEqualTo("none");
+  }
+
+  @Test
+  public void eachEmptyBlockHasItsOwnTimingStartedWhenItIsCreated() {
+    final List<PayloadWrapper> payloads = new CopyOnWriteArrayList<>();
+    doAnswer(
+            invocation -> {
+              payloads.add(invocation.getArgument(0, PayloadWrapper.class));
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any());
+    final long timestamp = System.currentTimeMillis() / 1000;
+
+    final PayloadIdentifier firstPayloadId =
+        coordinator.preparePayload(
+            new PreparePayloadArgsBuilder()
+                .parentHeader(genesisState.getBlock().getHeader())
+                .timestamp(timestamp)
+                .prevRandao(Bytes32.ZERO)
+                .feeRecipient(suggestedFeeRecipient)
+                .build());
+    final var firstEmptyBlockTiming =
+        firstPayloadStoredFor(payloads, firstPayloadId).getBlockCreationTimings();
+
+    final Instant secondPayloadPreparedAt = Instant.now();
+    final PayloadIdentifier secondPayloadId =
+        coordinator.preparePayload(
+            new PreparePayloadArgsBuilder()
+                .parentHeader(genesisState.getBlock().getHeader())
+                .timestamp(timestamp + 1)
+                .prevRandao(Bytes32.ZERO)
+                .feeRecipient(suggestedFeeRecipient)
+                .build());
+    final var secondEmptyBlockTiming =
+        firstPayloadStoredFor(payloads, secondPayloadId).getBlockCreationTimings();
+    coordinator.finalizeProposalById(secondPayloadId);
+
+    assertThat(secondEmptyBlockTiming).isNotSameAs(firstEmptyBlockTiming);
+    assertThat(secondEmptyBlockTiming.startedAt()).isAfterOrEqualTo(secondPayloadPreparedAt);
+  }
+
+  private PayloadWrapper firstPayloadStoredFor(
+      final List<PayloadWrapper> payloads, final PayloadIdentifier payloadId) {
+    final PayloadWrapper payload =
+        payloads.stream()
+            .filter(p -> p.payloadIdentifier().equals(payloadId))
+            .findFirst()
+            .orElseThrow();
+    assertThat(payload.transactionCount()).isZero();
+    return payload;
+  }
+
+  @Test
   public void shouldUseExtraDataFromMiningParameters() {
     final Bytes extraData = Bytes.fromHexString("0x1234");
 
@@ -1124,6 +1232,29 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void backwardSyncSessionUpdatesFinalizedOnceWithTheLatestFinalizedHash() {
+    when(mergeContext.isInitialSyncDone()).thenReturn(true);
+    final CompletableFuture<Void> firstSession = new CompletableFuture<>();
+    final CompletableFuture<Void> secondSession = new CompletableFuture<>();
+
+    when(backwardSyncContext.syncBackwardsUntil(any(Hash.class))).thenReturn(firstSession);
+    forkchoiceUpdateWithUnknownHead(1);
+    forkchoiceUpdateWithUnknownHead(2);
+    final BlockHeader firstSessionFinalized = forkchoiceUpdateWithUnknownHead(3);
+    firstSession.complete(null);
+
+    when(backwardSyncContext.syncBackwardsUntil(any(Hash.class))).thenReturn(secondSession);
+    forkchoiceUpdateWithUnknownHead(4);
+    final BlockHeader secondSessionFinalized = forkchoiceUpdateWithUnknownHead(5);
+    secondSession.complete(null);
+
+    final ArgumentCaptor<BlockHeader> finalized = ArgumentCaptor.forClass(BlockHeader.class);
+    verify(mergeContext, times(2)).setFinalized(finalized.capture());
+    assertThat(finalized.getAllValues())
+        .containsExactly(firstSessionFinalized, secondSessionFinalized);
+  }
+
+  @Test
   public void assertCheckAndMarkBadDescendantMarksTheChildOfABadBlock() {
     final BlockHeader badParent =
         headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
@@ -1308,6 +1439,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         Arguments.of("sepolia", 11_155_111L, 60_000_000L),
         Arguments.of("hoodi", 560_048L, 60_000_000L),
         Arguments.of("ephemery", 39_438_135L, 60_000_000L));
+  }
+
+  private BlockHeader forkchoiceUpdateWithUnknownHead(final long finalizedNumber) {
+    final BlockHeader finalizedHeader = headerGenerator.number(finalizedNumber).buildHeader();
+    when(blockchain.getBlockHeader(finalizedHeader.getHash()))
+        .thenReturn(Optional.of(finalizedHeader));
+    final Hash unknownHead = headerGenerator.number(finalizedNumber + 100).buildHeader().getHash();
+    coordinator.getOrSyncHeadByHash(unknownHead, finalizedHeader.getHash());
+    return finalizedHeader;
   }
 
   private void sendNewPayloadAndForkchoiceUpdate(
