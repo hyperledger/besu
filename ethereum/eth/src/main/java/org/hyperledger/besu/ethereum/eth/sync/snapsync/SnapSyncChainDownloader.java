@@ -311,20 +311,24 @@ public class SnapSyncChainDownloader
                       newPivotBlockHeader.getNumber());
                   return;
                 }
+                if (error != null) {
+                  // The current pivot was reorged out. Recovering below it would rewrite
+                  // canonical index entries the main cycle may still be importing, so the main
+                  // cycle handles the reorg in order and completes the request once it reaches
+                  // the new pivot.
+                  LOG.info(
+                      "snap/2 pivot {} is not an ancestor of new pivot {}; deferring catch-up to the chain download cycle",
+                      currentPivotBlockHeader.getNumber(),
+                      newPivotBlockHeader.getNumber());
+                  // Before publishing the update: the main loop clears the flag when it takes
+                  // the update, so setting it afterwards could stop the next cycle instead.
+                  preemptCurrentCycle(newPivotBlockHeader);
+                }
                 pendingPivotUpdate.getAndSet(newPivotBlockHeader);
                 pivotUpdateFuture.complete(null);
               }
               if (error == null) {
                 completeSnapV2PivotCatchupIfStillPending(request);
-              } else {
-                // The current pivot was reorged out. Recovering below it would rewrite canonical
-                // index entries the main cycle may still be importing, so the main cycle handles
-                // the reorg in order and completes the request once it reaches the new pivot.
-                LOG.info(
-                    "snap/2 pivot {} is not an ancestor of new pivot {}; deferring catch-up to the chain download cycle",
-                    currentPivotBlockHeader.getNumber(),
-                    newPivotBlockHeader.getNumber());
-                preemptCurrentCycle(newPivotBlockHeader);
               }
             });
     return completionFuture;
