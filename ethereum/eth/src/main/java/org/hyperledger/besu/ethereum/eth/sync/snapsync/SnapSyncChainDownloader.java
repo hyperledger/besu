@@ -82,7 +82,6 @@ public class SnapSyncChainDownloader
   static final int MAX_SAME_STATE_RETRIES = 20;
   private static final long RETRY_WARN_INTERVAL_MS = 30_000L;
   private static final long RETRY_MAX_BACKOFF_MS = 30_000L;
-  static final Duration CATCHUP_MAX_RETRY_DELAY = Duration.ofSeconds(30);
   private static final int CATCHUP_RETRY_WARN_ATTEMPT = 3;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
@@ -275,8 +274,14 @@ public class SnapSyncChainDownloader
     downloadPivotCatchupRange(currentPivotBlockHeader, newPivotBlockHeader)
         .whenComplete(
             (ignore, error) -> {
-              if (error != null
-                  && !(ExceptionUtils.rootCause(error) instanceof WrongChainException)) {
+              final Throwable cause = error == null ? null : ExceptionUtils.rootCause(error);
+              if (cancelled.get() || cause instanceof CancellationException) {
+                // A normal shutdown, not a download failure: nothing to log.
+                failSnapV2PivotCatchupIfStillPending(
+                    request, error != null ? error : new CancellationException());
+                return;
+              }
+              if (error != null && !(cause instanceof WrongChainException)) {
                 LOG.warn(
                     "snap/2 pivot catch-up download from block {} to {} failed",
                     currentPivotBlockHeader.getNumber(),
@@ -409,10 +414,10 @@ public class SnapSyncChainDownloader
             });
   }
 
-  /** 1s, 2s, 4s, ... doubling per failed attempt, capped at {@link #CATCHUP_MAX_RETRY_DELAY}. */
+  /** 1s, 2s, 4s, ... doubling per failed attempt, capped at {@link #RETRY_MAX_BACKOFF_MS}. */
   static Duration catchupRetryDelay(final int attempt) {
-    final long seconds = 1L << Math.min(attempt - 1, 5);
-    return Duration.ofSeconds(Math.min(seconds, CATCHUP_MAX_RETRY_DELAY.toSeconds()));
+    final long millis = 1_000L << Math.min(attempt - 1, 5);
+    return Duration.ofMillis(Math.min(millis, RETRY_MAX_BACKOFF_MS));
   }
 
   private CompletableFuture<Void> runCatchupStep(final Supplier<CompletableFuture<Void>> download) {
