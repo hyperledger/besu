@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,6 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.parallelization;
+package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
-public record PreprocessingContext(ParallelBlockTransactionProcessor processor) {}
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import org.junit.jupiter.api.Test;
+
+class RocksDBPluginTest {
+
+  @Test
+  void shouldFailToStartBeforeRegistration() {
+    final RocksDBPlugin plugin = new RocksDBPlugin();
+
+    assertThatThrownBy(plugin::start)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("RocksDB plugin must be registered before it can be started");
+  }
+}
