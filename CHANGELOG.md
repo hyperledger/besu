@@ -71,6 +71,7 @@
 - A transaction whose signature does not recover a public key is rejected as `Invalid signature` instead of causing an internal error. [#11458](https://github.com/besu-eth/besu/pull/11458)
 - The finalized block is updated once at the end of a backward sync session, instead of once per forkchoice update received during it. [#11457](https://github.com/besu-eth/besu/pull/11457)
 - Backward sync, the Engine API and block import no longer move the head world state concurrently, which could corrupt it and stall the node. [#11402](https://github.com/besu-eth/besu/pull/11402)
+- The layered transaction pool no longer gets corrupted when a sender with priority is promoted from the sparse layer, or when a late block selection result refers to a transaction the pool has since replaced or removed. [#11462](https://github.com/besu-eth/besu/pull/11462)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
