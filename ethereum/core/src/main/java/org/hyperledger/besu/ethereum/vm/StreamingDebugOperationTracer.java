@@ -48,9 +48,11 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         Bytes revertReason);
   }
 
+  private static final Bytes[] NO_MEMORY = new Bytes[0];
+
   private final FrameWriter frameWriter;
   private boolean hasEmittedFrame = false;
-  private Bytes[] preExecutionMemory;
+  private Bytes[] preExecutionMemory = NO_MEMORY;
   private int stepCount = 0;
 
   /**
@@ -76,7 +78,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
       return;
     }
     stepCount++;
-    preExecutionMemory = options.traceMemory() ? snapshotMemory(frame) : null;
+    preExecutionMemory = options.traceMemory() ? snapshotMemory(frame) : NO_MEMORY;
     memorySnapshotFrame = frame;
     memoryDirty = false;
   }
@@ -84,11 +86,9 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
   private Bytes[] snapshotMemory(final MessageFrame frame) {
     final int wordCount = frame.memoryWordSize();
     if (wordCount == 0) {
-      return null;
+      return NO_MEMORY;
     }
-    if (memoryUnchangedSinceSnapshot(frame)
-        && preExecutionMemory != null
-        && preExecutionMemory.length == wordCount) {
+    if (memoryUnchangedSinceSnapshot(frame) && preExecutionMemory.length == wordCount) {
       return preExecutionMemory;
     }
     final Bytes[] words = new Bytes[wordCount];
@@ -146,7 +146,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
           0L,
           frame.getDepth(),
           null,
-          null,
+          NO_MEMORY,
           frame,
           null,
           frame.getRevertReason().orElse(null));

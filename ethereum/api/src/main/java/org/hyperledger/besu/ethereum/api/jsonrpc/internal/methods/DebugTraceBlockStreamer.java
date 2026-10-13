@@ -433,7 +433,7 @@ public class DebugTraceBlockStreamer {
         writeByte(ARR_CLOSE);
       }
 
-      if (memory != null) {
+      if (traceOptions.opCodeTracerConfig().traceMemory() && memory.length > 0) {
         writeBytes(SL_MEMORY);
         for (int i = 0; i < memory.length; i++) {
           if (i > 0) writeByte(COMMA);
