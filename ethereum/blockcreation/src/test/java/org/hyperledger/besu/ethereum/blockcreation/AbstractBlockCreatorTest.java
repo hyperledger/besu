@@ -77,6 +77,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableBalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -504,7 +505,13 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
                   .protocolSchedule
                   .getByBlockHeader(block.getHeader())
                   .getBlockProcessor()
-                  .processBlock(protocolContext, protocolContext.getBlockchain(), worldState, block)
+                  .processBlock(
+                      BlockExecutionContext.builder()
+                          .protocolContext(protocolContext)
+                          .worldState(worldState)
+                          .block(block)
+                          .blockAccessList(Optional.empty())
+                          .build())
                   .isSuccessful())
           .isTrue();
     }
