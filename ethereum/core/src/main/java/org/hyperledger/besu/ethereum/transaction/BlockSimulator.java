@@ -405,7 +405,10 @@ public class BlockSimulator {
 
     BlockStateCallSimulationResult blockStateCallSimulationResult =
         new BlockStateCallSimulationResult(
-            protocolSpec, blockHeader.getGasLimit(), remainingRpcGas(simulationCumulativeGasUsed));
+            protocolSpec,
+            blockHeader.getGasLimit(),
+            remainingRpcGas(simulationCumulativeGasUsed),
+            validationParams.isAllowExceedingExecutionGasLimit());
 
     MiningBeneficiaryCalculator miningBeneficiaryCalculator =
         blockStateCall
