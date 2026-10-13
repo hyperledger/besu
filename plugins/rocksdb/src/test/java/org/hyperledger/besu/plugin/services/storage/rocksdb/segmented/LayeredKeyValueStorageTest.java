@@ -22,6 +22,7 @@ import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.atMostOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -344,6 +345,25 @@ public class LayeredKeyValueStorageTest {
     // The root mock should have been queried at most once across both top-level calls because the
     // intermediate layers cache the result and short-circuit before reaching the root
     verify(parentStorage, atMostOnce()).isClosed();
+  }
+
+  /**
+   * A lookup that misses every layer must check the closed state once per layer, not re-walk the
+   * remaining chain at every level, which made deep chains quadratic.
+   */
+  @Test
+  void getOnDeepOpenChainChecksEachLayerOnce() {
+    final byte[] key = {1};
+    final LayeredKeyValueStorage bottom = spy(layeredKeyValueStorage);
+    LayeredKeyValueStorage top = bottom;
+    for (int i = 0; i < 100; i++) {
+      top = new LayeredKeyValueStorage(top);
+    }
+    when(parentStorage.get(segmentId, key)).thenReturn(Optional.empty());
+
+    assertTrue(top.get(segmentId, key).isEmpty());
+
+    verify(bottom, times(1)).isClosed();
   }
 
   /**
