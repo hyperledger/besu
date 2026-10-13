@@ -77,9 +77,9 @@ public class RocksDBKeyValueStorageFactoryTest {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
           dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              ? BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS
               : (dataStorageFormat == X_BONSAI_ARCHIVE
-                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
+                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_JUMPDEST_ANALYSIS
                   : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
@@ -102,9 +102,9 @@ public class RocksDBKeyValueStorageFactoryTest {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
           dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              ? BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS
               : (dataStorageFormat == X_BONSAI_ARCHIVE
-                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
+                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_JUMPDEST_ANALYSIS
                   : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
@@ -147,7 +147,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION);
+          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS);
       assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
     }
   }
@@ -305,6 +305,51 @@ public class RocksDBKeyValueStorageFactoryTest {
       assertThat(DatabaseMetadata.lookUpFrom(tempRealDataDir).getVersionedStorageFormat())
           .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
     }
+  }
+
+  @Test
+  public void warnsHowToRevertTheUpgradeToTheJumpDestAnalysis() {
+    final Path dataDir = Path.of("data");
+
+    assertThat(
+            RocksDBKeyValueStorageFactory.codeFormatDowngradeWarning(
+                dataDir,
+                BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION,
+                BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS))
+        .contains(
+            "The database in "
+                + dataDir.toAbsolutePath()
+                + " was upgraded from BONSAI version 3 to BONSAI version 4, which Besu versions"
+                + " that support BONSAI version 3 at most cannot open. To downgrade to one of"
+                + " them, stop Besu and first run `besu --data-path="
+                + dataDir.toAbsolutePath()
+                + " <node options> storage revert-code-format` as the user Besu runs as, with the"
+                + " node's config file and BESU_* environment variables");
+  }
+
+  @Test
+  public void warnsHowToRevertTheArchiveUpgradeToTheJumpDestAnalysis() {
+    assertThat(
+            RocksDBKeyValueStorageFactory.codeFormatDowngradeWarning(
+                temporaryFolder,
+                BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION,
+                BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_JUMPDEST_ANALYSIS))
+        .hasValueSatisfying(
+            warning ->
+                assertThat(warning)
+                    .contains(
+                        "from X_BONSAI_ARCHIVE version 2 to X_BONSAI_ARCHIVE version 3, which Besu"
+                            + " versions that support X_BONSAI_ARCHIVE version 2 at most"));
+  }
+
+  @Test
+  public void staysSilentForUpgradesToOtherFormats() {
+    assertThat(
+            RocksDBKeyValueStorageFactory.codeFormatDowngradeWarning(
+                temporaryFolder,
+                BaseVersionedStorageFormat.FOREST_WITH_VARIABLES,
+                BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION))
+        .isEmpty();
   }
 
   private void mockCommonConfiguration(
