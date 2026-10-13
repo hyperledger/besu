@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.Optional;
@@ -84,6 +85,51 @@ class BlockExecutionContextTest {
             .build();
 
     assertThat(context.isSequentialExecutionRequested()).isFalse();
+  }
+
+  @Test
+  void blockTracerRequiresSequentialExecution() {
+    final BlockExecutionContext.Builder builder =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .blockTracer(mock(BlockAwareOperationTracer.class));
+
+    assertThatThrownBy(builder::build)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("blockTracer requires sequential execution");
+  }
+
+  @Test
+  void blockTracerIsKeptWithSequentialExecution() {
+    final BlockAwareOperationTracer blockTracer = mock(BlockAwareOperationTracer.class);
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .sequentialExecutionRequested(true)
+            .blockTracer(blockTracer)
+            .build();
+
+    assertThat(context.getBlockTracer()).containsSame(blockTracer);
+    assertThat(context.toBuilder().build().getBlockTracer()).containsSame(blockTracer);
+  }
+
+  @Test
+  void blockTracerIsEmptyByDefault() {
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .build();
+
+    assertThat(context.getBlockTracer()).isEmpty();
   }
 
   @Test

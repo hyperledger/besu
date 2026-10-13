@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.Objects;
@@ -35,6 +36,9 @@ import org.jspecify.annotations.Nullable;
  * <p>Sequential execution can optionally be requested for this execution, see {@link
  * Builder#sequentialExecutionRequested(boolean)}.
  *
+ * <p>A block tracer can optionally be set, see {@link Builder#blockTracer}. It requires sequential
+ * execution.
+ *
  * <p>Construct instances via {@link #builder()}.
  */
 public class BlockExecutionContext {
@@ -44,6 +48,7 @@ public class BlockExecutionContext {
   private final Block block;
   @Nullable private final BlockAccessList blockAccessList;
   private final boolean sequentialExecutionRequested;
+  @Nullable private final BlockAwareOperationTracer blockTracer;
 
   private BlockExecutionContext(final Builder builder) {
     this.protocolContext = builder.protocolContext;
@@ -51,6 +56,7 @@ public class BlockExecutionContext {
     this.block = builder.block;
     this.blockAccessList = builder.blockAccessList;
     this.sequentialExecutionRequested = builder.sequentialExecutionRequested;
+    this.blockTracer = builder.blockTracer;
   }
 
   /**
@@ -101,17 +107,31 @@ public class BlockExecutionContext {
   }
 
   /**
+   * Returns the tracer to use for this execution of the block. See {@link Builder#blockTracer}.
+   *
+   * @return the block tracer, or empty to use the plugin-provided block import tracer
+   */
+  public Optional<BlockAwareOperationTracer> getBlockTracer() {
+    return Optional.ofNullable(blockTracer);
+  }
+
+  /**
    * Returns a {@link Builder} initialized with this context's fields.
    *
    * @return a new {@link Builder} copying this context
    */
   public Builder toBuilder() {
-    return builder()
-        .protocolContext(protocolContext)
-        .worldState(worldState)
-        .block(block)
-        .blockAccessList(getBlockAccessList())
-        .sequentialExecutionRequested(sequentialExecutionRequested);
+    final Builder builder =
+        builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(getBlockAccessList())
+            .sequentialExecutionRequested(sequentialExecutionRequested);
+    if (blockTracer != null) {
+      builder.blockTracer(blockTracer);
+    }
+    return builder;
   }
 
   /**
@@ -132,6 +152,7 @@ public class BlockExecutionContext {
     @Nullable private BlockAccessList blockAccessList = null;
     private boolean blockAccessListSet = false;
     private boolean sequentialExecutionRequested = false;
+    @Nullable private BlockAwareOperationTracer blockTracer = null;
 
     /**
      * Sets the protocol context (required).
@@ -196,6 +217,21 @@ public class BlockExecutionContext {
     }
 
     /**
+     * Sets the tracer to use for this execution of the block, instead of the plugin-provided block
+     * import tracer (optional).
+     *
+     * <p>Requires {@link #sequentialExecutionRequested(boolean) sequential execution}: transactions
+     * whose result comes from parallel execution never reach the block tracer.
+     *
+     * @param blockTracer the tracer that observes this execution of the block
+     * @return this builder
+     */
+    public Builder blockTracer(final BlockAwareOperationTracer blockTracer) {
+      this.blockTracer = Objects.requireNonNull(blockTracer, "blockTracer");
+      return this;
+    }
+
+    /**
      * Builds the {@link BlockExecutionContext}.
      *
      * @return the constructed context
@@ -208,6 +244,10 @@ public class BlockExecutionContext {
       if (!blockAccessListSet) {
         throw new IllegalStateException(
             "blockAccessList is required: pass Optional.empty() if there is none");
+      }
+      if (blockTracer != null && !sequentialExecutionRequested) {
+        throw new IllegalStateException(
+            "blockTracer requires sequential execution: parallel results bypass the tracer");
       }
       return new BlockExecutionContext(this);
     }

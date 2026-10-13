@@ -176,7 +176,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getPreExecutionProcessor().createBlockHashLookup(blockchain, blockHeader);
 
     final BlockAwareOperationTracer blockTracer =
-        getBlockImportTracer(protocolContext, blockHeader);
+        context
+            .getBlockTracer()
+            .orElseGet(() -> getBlockImportTracer(protocolContext, blockHeader));
 
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
