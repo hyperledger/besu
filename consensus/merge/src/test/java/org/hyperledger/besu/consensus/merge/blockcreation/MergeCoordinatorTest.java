@@ -87,14 +87,18 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -749,6 +753,54 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void finalizingDuringThePauseBetweenBlockCreationsDoesNotWaitForThePauseToEnd()
+      throws InterruptedException {
+    final long pauseBetweenBlockCreations = 2000;
+    final MergeCoordinator slowRepetitionCoordinator =
+        new MergeCoordinator(
+            protocolContext,
+            protocolSchedule,
+            ethScheduler,
+            transactionPool,
+            ImmutableMiningConfiguration.builder()
+                .mutableInitValues(MutableInitValues.builder().coinbase(coinbase).build())
+                .unstable(
+                    Unstable.builder()
+                        .posBlockCreationRepetitionMinDuration(pauseBetweenBlockCreations)
+                        .build())
+                .build(),
+            backwardSyncContext);
+
+    // the empty block first, then the block built from the empty pool
+    final CountDownLatch firstBlockBuilt = new CountDownLatch(2);
+    doAnswer(
+            invocation -> {
+              firstBlockBuilt.countDown();
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any());
+
+    final var payloadId =
+        slowRepetitionCoordinator.preparePayload(
+            new PreparePayloadArgsBuilder()
+                .parentHeader(genesisState.getBlock().getHeader())
+                .timestamp(System.currentTimeMillis() / 1000)
+                .prevRandao(Bytes32.ZERO)
+                .feeRecipient(suggestedFeeRecipient)
+                .build());
+    firstBlockBuilt.await();
+
+    final long startedAt = System.nanoTime();
+    slowRepetitionCoordinator.finalizeProposalById(payloadId);
+    slowRepetitionCoordinator.awaitCurrentBuildCompletion(payloadId);
+    final long waitedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
+
+    assertThat(waitedMs).isLessThan(400);
+    assertThat(blockCreationTask).succeedsWithin(Duration.ofMillis(500));
+  }
+
+  @Test
   public void shouldNotStartAnotherBlockCreationJobIfCalledAgainWithTheSamePayloadId()
       throws ExecutionException, InterruptedException {
     final AtomicLong retries = new AtomicLong(0);
@@ -845,6 +897,112 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     assertThat(payloadId1).isNotEqualTo(payloadId2);
     assertThat(coordinator.isBlockCreationCancelled(payloadId1)).isTrue();
     assertThat(coordinator.isBlockCreationCancelled(payloadId2)).isFalse();
+  }
+
+  @Test
+  public void describePayloadArgsChangesListsParentAndWithdrawalChanges() {
+    final BlockHeader previousParent = genesisState.getBlock().getHeader();
+    final BlockHeader nextParent = headerGenerator.number(1).buildHeader();
+    final PreparePayloadArgsBuilder args =
+        new PreparePayloadArgsBuilder()
+            .timestamp(1L)
+            .prevRandao(Bytes32.ZERO)
+            .feeRecipient(suggestedFeeRecipient);
+
+    final String changes =
+        MergeCoordinator.describePayloadArgsChanges(
+            args.parentHeader(previousParent).withdrawals(Optional.empty()).build(),
+            args.parentHeader(nextParent).withdrawals(Optional.of(List.of())).build());
+
+    assertThat(changes)
+        .isEqualTo(
+            "parent "
+                + previousParent.getHash()
+                + " -> "
+                + nextParent.getHash()
+                + ", withdrawals changed (none -> 0)");
+  }
+
+  @Test
+  public void describePayloadArgsChangesListsOnlyTheChangedAttributes() {
+    final PreparePayloadArgsBuilder args =
+        new PreparePayloadArgsBuilder()
+            .parentHeader(genesisState.getBlock().getHeader())
+            .timestamp(1L)
+            .prevRandao(Bytes32.ZERO)
+            .feeRecipient(suggestedFeeRecipient)
+            .slotNumber(Optional.of(7L));
+
+    final String changes =
+        MergeCoordinator.describePayloadArgsChanges(
+            args.targetGasLimit(Optional.of(60_000_000L)).build(),
+            args.targetGasLimit(Optional.of(45_000_000L)).build());
+
+    assertThat(changes).isEqualTo("targetGasLimit 60000000 -> 45000000");
+  }
+
+  @Test
+  public void describePayloadArgsChangesReportsNoneForTheSameArguments() {
+    final MergeMiningCoordinator.PreparePayloadArgs args =
+        new PreparePayloadArgsBuilder()
+            .parentHeader(genesisState.getBlock().getHeader())
+            .timestamp(1L)
+            .prevRandao(Bytes32.ZERO)
+            .feeRecipient(suggestedFeeRecipient)
+            .build();
+
+    assertThat(MergeCoordinator.describePayloadArgsChanges(args, args)).isEqualTo("none");
+  }
+
+  @Test
+  public void eachEmptyBlockHasItsOwnTimingStartedWhenItIsCreated() {
+    final List<PayloadWrapper> payloads = new CopyOnWriteArrayList<>();
+    doAnswer(
+            invocation -> {
+              payloads.add(invocation.getArgument(0, PayloadWrapper.class));
+              return null;
+            })
+        .when(mergeContext)
+        .putPayloadById(any());
+    final long timestamp = System.currentTimeMillis() / 1000;
+
+    final PayloadIdentifier firstPayloadId =
+        coordinator.preparePayload(
+            new PreparePayloadArgsBuilder()
+                .parentHeader(genesisState.getBlock().getHeader())
+                .timestamp(timestamp)
+                .prevRandao(Bytes32.ZERO)
+                .feeRecipient(suggestedFeeRecipient)
+                .build());
+    final var firstEmptyBlockTiming =
+        firstPayloadStoredFor(payloads, firstPayloadId).getBlockCreationTimings();
+
+    final Instant secondPayloadPreparedAt = Instant.now();
+    final PayloadIdentifier secondPayloadId =
+        coordinator.preparePayload(
+            new PreparePayloadArgsBuilder()
+                .parentHeader(genesisState.getBlock().getHeader())
+                .timestamp(timestamp + 1)
+                .prevRandao(Bytes32.ZERO)
+                .feeRecipient(suggestedFeeRecipient)
+                .build());
+    final var secondEmptyBlockTiming =
+        firstPayloadStoredFor(payloads, secondPayloadId).getBlockCreationTimings();
+    coordinator.finalizeProposalById(secondPayloadId);
+
+    assertThat(secondEmptyBlockTiming).isNotSameAs(firstEmptyBlockTiming);
+    assertThat(secondEmptyBlockTiming.startedAt()).isAfterOrEqualTo(secondPayloadPreparedAt);
+  }
+
+  private PayloadWrapper firstPayloadStoredFor(
+      final List<PayloadWrapper> payloads, final PayloadIdentifier payloadId) {
+    final PayloadWrapper payload =
+        payloads.stream()
+            .filter(p -> p.payloadIdentifier().equals(payloadId))
+            .findFirst()
+            .orElseThrow();
+    assertThat(payload.transactionCount()).isZero();
+    return payload;
   }
 
   @Test
@@ -1074,6 +1232,29 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
   }
 
   @Test
+  public void backwardSyncSessionUpdatesFinalizedOnceWithTheLatestFinalizedHash() {
+    when(mergeContext.isInitialSyncDone()).thenReturn(true);
+    final CompletableFuture<Void> firstSession = new CompletableFuture<>();
+    final CompletableFuture<Void> secondSession = new CompletableFuture<>();
+
+    when(backwardSyncContext.syncBackwardsUntil(any(Hash.class))).thenReturn(firstSession);
+    forkchoiceUpdateWithUnknownHead(1);
+    forkchoiceUpdateWithUnknownHead(2);
+    final BlockHeader firstSessionFinalized = forkchoiceUpdateWithUnknownHead(3);
+    firstSession.complete(null);
+
+    when(backwardSyncContext.syncBackwardsUntil(any(Hash.class))).thenReturn(secondSession);
+    forkchoiceUpdateWithUnknownHead(4);
+    final BlockHeader secondSessionFinalized = forkchoiceUpdateWithUnknownHead(5);
+    secondSession.complete(null);
+
+    final ArgumentCaptor<BlockHeader> finalized = ArgumentCaptor.forClass(BlockHeader.class);
+    verify(mergeContext, times(2)).setFinalized(finalized.capture());
+    assertThat(finalized.getAllValues())
+        .containsExactly(firstSessionFinalized, secondSessionFinalized);
+  }
+
+  @Test
   public void assertCheckAndMarkBadDescendantMarksTheChildOfABadBlock() {
     final BlockHeader badParent =
         headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
@@ -1126,6 +1307,76 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     assertThat(coordinator.checkAndMarkBadDescendant(child.getHash())).isFalse();
     assertThat(badBlockManager.isBadBlock(child.getHash())).isFalse();
+  }
+
+  @Test
+  public void assertCheckAndMarkBadDescendantByHeaderMarksTheChildOfABadBlock() {
+    final BlockHeader badParent =
+        headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
+    final BlockHeader child = headerGenerator.parentHash(badParent.getHash()).buildHeader();
+    badBlockManager.addBadHeader(badParent, BadBlockCause.fromValidationFailure("failed"));
+
+    assertThat(coordinator.checkAndMarkBadDescendant(child))
+        .map(BadBlockCause::getDescription)
+        .contains("Descends from bad block " + badParent.toLogString());
+    assertThat(badBlockManager.isBadBlock(child.getHash())).isTrue();
+    verify(backwardSyncContext, never()).getBackwardChain();
+  }
+
+  @Test
+  public void assertCheckAndMarkBadDescendantByHeaderIgnoresAHeadWhoseParentIsOnTheChain() {
+    final BlockHeader chainParent = blockchain.getChainHeadHeader();
+    badBlockManager.addBadHeader(chainParent, BadBlockCause.fromValidationFailure("stale"));
+    final BlockHeader child = headerGenerator.parentHash(chainParent.getHash()).buildHeader();
+
+    assertThat(coordinator.checkAndMarkBadDescendant(child)).isEmpty();
+    assertThat(badBlockManager.isBadBlock(child.getHash())).isFalse();
+  }
+
+  @Test
+  public void assertOnBadChainKeepsTheBodyOfADescendantKnownAsBlock() {
+    final BlockHeader badHeader =
+        headerGenerator.parentHash(blockchain.getChainHeadHash()).buildHeader();
+    final BlockHeader descendantHeader =
+        headerGenerator.parentHash(badHeader.getHash()).buildHeader();
+    final Block descendant = new Block(descendantHeader, BlockBody.empty());
+    final BlockHeader headerOnlyDescendant =
+        headerGenerator.parentHash(descendantHeader.getHash()).buildHeader();
+    badBlockManager.addBadHeader(badHeader, BadBlockCause.fromValidationFailure("failed"));
+
+    coordinator.onBadChain(badHeader, List.of(descendant), List.of(headerOnlyDescendant));
+
+    assertThat(badBlockManager.getBadBlock(descendant.getHash())).contains(descendant);
+    assertThat(badBlockManager.getBadBlock(headerOnlyDescendant.getHash())).isEmpty();
+    assertThat(badBlockManager.isBadBlock(headerOnlyDescendant.getHash())).isTrue();
+  }
+
+  @Test
+  public void assertOnBadChainInheritsTheLatestValidHashOfAMarkedDescendantRoot() {
+    // the bad block is itself a marked descendant, its parent is not on the chain but its latest
+    // valid hash was recorded when it was marked
+    final Hash latestValidHash = Hash.fromHexStringLenient("0xcafe");
+    final BlockHeader root =
+        headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
+    badBlockManager.addBadHeader(root, BadBlockCause.fromValidationFailure("failed"));
+    badBlockManager.addLatestValidHash(root.getHash(), latestValidHash);
+    final BlockHeader descendant = headerGenerator.parentHash(root.getHash()).buildHeader();
+
+    coordinator.onBadChain(root, List.of(), List.of(descendant));
+
+    assertThat(badBlockManager.getLatestValidHash(descendant.getHash())).contains(latestValidHash);
+  }
+
+  @Test
+  public void assertOnBadChainMarksNothingForARootThatWasResetInBetween() {
+    final BlockHeader root =
+        headerGenerator.parentHash(Hash.fromHexStringLenient("0xbeef")).buildHeader();
+    final BlockHeader descendant = headerGenerator.parentHash(root.getHash()).buildHeader();
+
+    coordinator.onBadChain(root, List.of(), List.of(descendant));
+
+    assertThat(badBlockManager.isBadBlock(descendant.getHash())).isFalse();
+    assertThat(badBlockManager.getLatestValidHash(root.getHash())).isEmpty();
   }
 
   @Test
@@ -1188,6 +1439,15 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         Arguments.of("sepolia", 11_155_111L, 60_000_000L),
         Arguments.of("hoodi", 560_048L, 60_000_000L),
         Arguments.of("ephemery", 39_438_135L, 60_000_000L));
+  }
+
+  private BlockHeader forkchoiceUpdateWithUnknownHead(final long finalizedNumber) {
+    final BlockHeader finalizedHeader = headerGenerator.number(finalizedNumber).buildHeader();
+    when(blockchain.getBlockHeader(finalizedHeader.getHash()))
+        .thenReturn(Optional.of(finalizedHeader));
+    final Hash unknownHead = headerGenerator.number(finalizedNumber + 100).buildHeader().getHash();
+    coordinator.getOrSyncHeadByHash(unknownHead, finalizedHeader.getHash());
+    return finalizedHeader;
   }
 
   private void sendNewPayloadAndForkchoiceUpdate(

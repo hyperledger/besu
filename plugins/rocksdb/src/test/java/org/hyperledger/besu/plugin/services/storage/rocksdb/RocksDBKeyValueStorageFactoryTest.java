@@ -79,9 +79,9 @@ public class RocksDBKeyValueStorageFactoryTest {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
           dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              ? BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS
               : (dataStorageFormat == X_BONSAI_ARCHIVE
-                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
+                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_JUMPDEST_ANALYSIS
                   : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
@@ -104,9 +104,9 @@ public class RocksDBKeyValueStorageFactoryTest {
       // Side effect is creation of the Metadata version file
       final BaseVersionedStorageFormat expectedVersion =
           dataStorageFormat == BONSAI
-              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              ? BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS
               : (dataStorageFormat == X_BONSAI_ARCHIVE
-                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION
+                  ? BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_JUMPDEST_ANALYSIS
                   : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
           .isEqualTo(expectedVersion);
@@ -149,7 +149,7 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION);
+          .isEqualTo(BaseVersionedStorageFormat.BONSAI_WITH_JUMPDEST_ANALYSIS);
       assertThat(storageFactory.isSegmentIsolationSupported()).isTrue();
     }
   }
