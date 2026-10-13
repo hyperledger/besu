@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.evm.frame.KeyedNonces;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -140,6 +141,7 @@ public class Transaction
 
   private final Optional<List<Frame>> maybeFrames;
   private final Optional<List<FrameSignature>> maybeFrameSignatures;
+  private final Optional<List<UInt256>> maybeNonceKeys;
 
   private final Optional<Bytes> rawRlp;
 
@@ -221,6 +223,7 @@ public class Transaction
       final Optional<List<CodeDelegation>> maybeCodeDelegationList,
       final Optional<List<Frame>> maybeFrames,
       final Optional<List<FrameSignature>> maybeFrameSignatures,
+      final Optional<List<UInt256>> maybeNonceKeys,
       final Optional<Bytes> rawRlp,
       final Optional<Hash> hash,
       final Optional<Integer> sizeForAnnouncement,
@@ -277,7 +280,7 @@ public class Transaction
             "Frame transaction must have at least one frame");
       } else {
         checkArgument(
-            maybeFrames.isEmpty() && maybeFrameSignatures.isEmpty(),
+            maybeFrames.isEmpty() && maybeFrameSignatures.isEmpty() && maybeNonceKeys.isEmpty(),
             "Must not specify frames for transaction not supporting them");
       }
     }
@@ -301,6 +304,7 @@ public class Transaction
     this.maybeCodeDelegationList = maybeCodeDelegationList;
     this.maybeFrames = maybeFrames;
     this.maybeFrameSignatures = maybeFrameSignatures;
+    this.maybeNonceKeys = maybeNonceKeys;
     this.rawRlp = rawRlp;
     hash.ifPresent(h -> this.hash = h);
     sizeForAnnouncement.ifPresent(i -> this.sizeForAnnouncement = i);
@@ -819,6 +823,16 @@ public class Transaction
    */
   public Optional<List<FrameSignature>> getFrameSignatures() {
     return maybeFrameSignatures;
+  }
+
+  /**
+   * Returns the EIP-8250 nonce keys of a frame transaction. {@link #getNonce()} is the sequence
+   * every selected key must hold.
+   *
+   * @return the nonce keys, or empty for other transaction types
+   */
+  public Optional<List<UInt256>> getNonceKeys() {
+    return maybeNonceKeys;
   }
 
   /**
@@ -1361,6 +1375,7 @@ public class Transaction
             detachedCodeDelegationList,
             detachedFrames,
             detachedFrameSignatures,
+            maybeNonceKeys,
             Optional.empty(),
             Optional.ofNullable(hash),
             Optional.of(sizeForAnnouncement),
@@ -1467,6 +1482,7 @@ public class Transaction
     protected Optional<List<CodeDelegation>> codeDelegationAuthorizations = Optional.empty();
     protected Optional<List<Frame>> frames = Optional.empty();
     protected Optional<List<FrameSignature>> frameSignatures = Optional.empty();
+    protected Optional<List<UInt256>> nonceKeys = Optional.empty();
     protected Bytes rawRlp = null;
     private Optional<Hash> hash = Optional.empty();
     private Optional<Integer> sizeForAnnouncement = Optional.empty();
@@ -1490,6 +1506,9 @@ public class Transaction
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
       this.codeDelegationAuthorizations = toCopy.maybeCodeDelegationList;
+      this.frames = toCopy.maybeFrames;
+      this.frameSignatures = toCopy.maybeFrameSignatures;
+      this.nonceKeys = toCopy.maybeNonceKeys;
       return this;
     }
 
@@ -1581,6 +1600,11 @@ public class Transaction
       return this;
     }
 
+    public Builder nonceKeys(final List<UInt256> nonceKeys) {
+      this.nonceKeys = Optional.ofNullable(nonceKeys);
+      return this;
+    }
+
     public Builder frameSignatures(final List<FrameSignature> frameSignatures) {
       this.frameSignatures = Optional.ofNullable(frameSignatures);
       return this;
@@ -1628,11 +1652,18 @@ public class Transaction
     public Transaction build() {
       if (transactionType == null) guessType();
       if (transactionType.supportsFrames()) {
+        if (nonceKeys.isEmpty()) {
+          nonceKeys = Optional.of(KeyedNonces.LEGACY_NONCE_KEYS);
+        }
         // Frame transactions carry no explicit fields for gas limit, value or payload; the gas
         // limit is derived as the EIP-8141 max_gas the payer can be charged for.
         if (gasLimit == -1L && frames.isPresent() && sender != null) {
           gasLimit =
-              FrameTransactionGas.maxGas(frames.get(), frameSignatures.orElse(List.of()), sender);
+              FrameTransactionGas.maxGas(
+                  frames.get(),
+                  frameSignatures.orElse(List.of()),
+                  sender,
+                  FrameTransactionGas.nonceCalldata(nonceKeys.get(), nonce));
         }
         if (value == null) {
           value = Wei.ZERO;
@@ -1665,6 +1696,7 @@ public class Transaction
           codeDelegationAuthorizations,
           frames,
           frameSignatures,
+          nonceKeys,
           Optional.ofNullable(rawRlp),
           hash,
           sizeForAnnouncement,
