@@ -793,6 +793,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
+    // moved even when the chain head is already there: backward sync appends its blocks without
+    // the head world state lock, so a fork choice in between can leave the two at different blocks
+    if (!moveWorldStateTo(newHead)) {
+      LOG.atDebug()
+          .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+          .addArgument(newHead::toLogString)
+          .log();
+      return false;
+    }
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       LOG.atDebug()
@@ -802,27 +811,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (moveWorldStateTo(newHead)) {
-      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-        LOG.atDebug()
-            .setMessage(
-                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-            .addArgument(newHead::toLogString)
-            .log();
-        return blockchain.forwardToBlock(newHead);
-      } else {
-        LOG.atDebug()
-            .setMessage("New head {} is a chain reorg, rewind chain head to it")
-            .addArgument(newHead::toLogString)
-            .log();
-        return blockchain.rewindToBlock(newHead.getHash());
-      }
+    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+      LOG.atDebug()
+          .setMessage(
+              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+          .addArgument(newHead::toLogString)
+          .log();
+      return blockchain.forwardToBlock(newHead);
+    } else {
+      LOG.atDebug()
+          .setMessage("New head {} is a chain reorg, rewind chain head to it")
+          .addArgument(newHead::toLogString)
+          .log();
+      return blockchain.rewindToBlock(newHead.getHash());
     }
-    LOG.atDebug()
-        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
-        .addArgument(newHead::toLogString)
-        .log();
-    return false;
   }
 
   private boolean moveWorldStateTo(final BlockHeader newHead) {
