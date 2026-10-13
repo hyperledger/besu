@@ -294,6 +294,72 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   @Test
+  public void doesNotImportNewBlockOwnedByConsensus() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+    final Block nextNextBlock = blockchainUtil.getBlock(3);
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    // the consensus layer is finalising nextBlock itself, but not nextNextBlock
+    blockPropagationManager.setConsensusOwnedBlockPredicate(
+        hash -> hash.equals(nextBlock.getHash()));
+    blockPropagationManager.start();
+
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final NewBlockMessage nextAnnouncement =
+        NewBlockMessage.create(
+            nextBlock,
+            getFullBlockchain().getTotalDifficultyByHash(nextBlock.getHash()).get(),
+            maxMessageSize);
+    final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    // skipped: consensus imports it, not the ETH layer
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    // once consensus has imported it, its child is still imported from the network as usual
+    blockchainUtil.importBlockAtIndex(2);
+    final NewBlockMessage nextNextAnnouncement =
+        NewBlockMessage.create(
+            nextNextBlock,
+            getFullBlockchain().getTotalDifficultyByHash(nextNextBlock.getHash()).get(),
+            maxMessageSize);
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextNextAnnouncement);
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextNextBlock.getHash())).isTrue();
+  }
+
+  @Test
+  public void doesNotRequestAnnouncedBlockHashOwnedByConsensus() {
+    blockchainUtil.importFirstBlocks(2);
+    final Block nextBlock = blockchainUtil.getBlock(2);
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+
+    blockPropagationManager.setConsensusOwnedBlockPredicate(
+        hash -> hash.equals(nextBlock.getHash()));
+    blockPropagationManager.start();
+
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final NewBlockHashesMessage nextAnnouncement =
+        NewBlockHashesMessage.create(
+            Collections.singletonList(
+                new NewBlockHashesMessage.BlockAnnouncement(
+                    nextBlock.getHash(), nextBlock.getHeader().getNumber())));
+    final Responder responder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
+
+    EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
+    // the block is not even fetched from the peer
+    assertThat(peer.hasOutstandingRequests()).isFalse();
+    peer.respondWhile(responder, peer::hasOutstandingRequests);
+
+    assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
+    assertThat(processingBlocksManager.alreadyImporting(nextBlock.getHash())).isFalse();
+  }
+
+  @Test
   public void importsAnnouncedNewBlocks_aheadOfChainOutOfOrder() {
     blockchainUtil.importFirstBlocks(2);
     final Block nextBlock = blockchainUtil.getBlock(2);

@@ -65,8 +65,46 @@ public class ValidatedBlockCache {
 
   private final Map<Hash, ValidatedBlock> entries = new SizeLimitedMap<>(MAX_ENTRIES);
 
+  /** Hash to block number of proposals whose execution has started but not yet finished. */
+  private final Map<Hash, Long> validating = new SizeLimitedMap<>(MAX_ENTRIES);
+
   /** Creates an empty cache. */
   public ValidatedBlockCache() {}
+
+  /**
+   * Record that the consensus layer has started executing a proposal. Until {@link #put} or {@link
+   * #clearValidating} is called for the same hash, {@link #isOwnedByConsensus} returns true, so a
+   * {@code NewBlock} announcement for that block arriving mid-execution is not imported a second
+   * time by the ETH layer.
+   *
+   * @param blockHash the block hash
+   * @param blockNumber the block number
+   */
+  public synchronized void markValidating(final Hash blockHash, final long blockNumber) {
+    validating.put(blockHash, blockNumber);
+  }
+
+  /**
+   * Forget an in-flight validation that did not produce outputs, e.g. because the proposal was
+   * invalid.
+   *
+   * @param blockHash the block hash
+   */
+  public synchronized void clearValidating(final Hash blockHash) {
+    validating.remove(blockHash);
+  }
+
+  /**
+   * Whether the consensus layer created, is executing, or has executed this block and will import
+   * it itself once the round commits. Entries disappear on {@link #take}, so after the consensus
+   * import attempt the ETH layer is free to import the block from the network again.
+   *
+   * @param blockHash the block hash
+   * @return true if consensus owns the import of this block
+   */
+  public synchronized boolean isOwnedByConsensus(final Hash blockHash) {
+    return entries.containsKey(blockHash) || validating.containsKey(blockHash);
+  }
 
   /**
    * Add outputs of a created or validated block.
@@ -75,6 +113,7 @@ public class ValidatedBlockCache {
    * @param validatedBlock the block outputs
    */
   public synchronized void put(final Hash blockHash, final ValidatedBlock validatedBlock) {
+    validating.remove(blockHash);
     entries.put(blockHash, validatedBlock);
   }
 
@@ -99,6 +138,8 @@ public class ValidatedBlockCache {
   public synchronized Optional<ValidatedBlock> take(final Hash blockHash, final long blockNumber) {
     final ValidatedBlock validatedBlock = entries.remove(blockHash);
     entries.values().removeIf(entry -> entry.blockNumber() <= blockNumber);
+    validating.remove(blockHash);
+    validating.values().removeIf(number -> number <= blockNumber);
     return Optional.ofNullable(validatedBlock);
   }
 }

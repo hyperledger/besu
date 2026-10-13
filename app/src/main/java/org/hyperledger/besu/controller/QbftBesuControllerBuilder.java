@@ -88,6 +88,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -95,13 +96,18 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
+import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
@@ -128,6 +134,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftConfigOptions bftConfigOptions;
   private QbftExtraDataCodec qbftExtraDataCodec;
   private BftBlockInterface bftBlockInterface;
+
+  /**
+   * Shared by block creation, validation and import, and consulted by the synchronizer so that
+   * blocks this validator is already finalising are not imported again from NewBlock announcements.
+   */
+  private final ValidatedBlockCache validatedBlockCache = new ValidatedBlockCache();
 
   /** Default Constructor. */
   public QbftBesuControllerBuilder() {}
@@ -208,8 +220,6 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
-    // shared by block creation, validation and import
-    final ValidatedBlockCache validatedBlockCache = new ValidatedBlockCache();
     QbftProtocolSchedule qbftProtocolSchedule =
         new QbftProtocolScheduleAdaptor(bftProtocolSchedule, protocolContext, validatedBlockCache);
     final QbftBlockCreatorFactory blockCreatorFactory =
@@ -360,6 +370,36 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             });
 
     return miningCoordinator;
+  }
+
+  @Override
+  protected DefaultSynchronizer createSynchronizer(
+      final ProtocolSchedule protocolSchedule,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final ProtocolContext protocolContext,
+      final EthContext ethContext,
+      final PeerTaskExecutor peerTaskExecutor,
+      final SyncState syncState,
+      final EthProtocolManager ethProtocolManager,
+      final PivotBlockSelector pivotBlockSelector,
+      final Optional<ChainDataPruner> chainDataPruner) {
+    final DefaultSynchronizer synchronizer =
+        super.createSynchronizer(
+            protocolSchedule,
+            worldStateStorageCoordinator,
+            protocolContext,
+            ethContext,
+            peerTaskExecutor,
+            syncState,
+            ethProtocolManager,
+            pivotBlockSelector,
+            chainDataPruner);
+    // Peers that commit a block slightly before this validator announce it over the ETH layer.
+    // If the local QBFT round has already executed that block (or is executing it), importing the
+    // announcement would run the block a second time while holding the block importer lock and
+    // delay the round's own import. Leave such blocks to the consensus layer.
+    synchronizer.setConsensusOwnedBlockPredicate(validatedBlockCache::isOwnedByConsensus);
+    return synchronizer;
   }
 
   @Override

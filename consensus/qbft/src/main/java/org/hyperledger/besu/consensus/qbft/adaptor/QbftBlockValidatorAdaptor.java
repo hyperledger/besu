@@ -62,14 +62,26 @@ public class QbftBlockValidatorAdaptor implements QbftBlockValidator {
         .isPresent()) {
       return new ValidationResult(true, Optional.empty());
     }
-    final BlockProcessingResult blockProcessingResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext,
-            besuBlock,
-            HeaderValidationMode.LIGHT,
-            HeaderValidationMode.FULL,
-            blockAccessList,
-            false);
+    // claim the block before executing it: peers that already imported it will announce it on the
+    // ETH layer while we are still here, and that import must not race ours for the importer lock
+    validatedBlockCache.markValidating(besuBlock.getHash(), besuBlock.getHeader().getNumber());
+    final BlockProcessingResult blockProcessingResult;
+    try {
+      blockProcessingResult =
+          blockValidator.validateAndProcessBlock(
+              protocolContext,
+              besuBlock,
+              HeaderValidationMode.LIGHT,
+              HeaderValidationMode.FULL,
+              blockAccessList,
+              false);
+    } catch (final RuntimeException e) {
+      validatedBlockCache.clearValidating(besuBlock.getHash());
+      throw e;
+    }
+    if (!blockProcessingResult.isSuccessful() || blockProcessingResult.getYield().isEmpty()) {
+      validatedBlockCache.clearValidating(besuBlock.getHash());
+    }
     if (blockProcessingResult.isSuccessful()) {
       blockProcessingResult
           .getYield()

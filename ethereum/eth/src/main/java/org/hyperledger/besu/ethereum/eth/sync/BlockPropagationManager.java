@@ -69,6 +69,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -95,6 +96,14 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private Optional<Long> onBlockAddedSId = Optional.empty();
   private Optional<Long> newBlockSId;
   private Optional<Long> newBlockHashesSId;
+
+  /**
+   * Blocks the consensus layer has already executed (or is executing) and will import itself. On a
+   * BFT validator, peers that commit a block slightly earlier announce it over the ETH layer before
+   * the local round reaches its own import step; importing that announcement here would re-execute
+   * the block under the importer lock and stall the consensus thread. Defaults to never.
+   */
+  private volatile Predicate<Hash> consensusOwnedBlock = hash -> false;
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
@@ -137,6 +146,16 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     this.pendingBlocksManager = pendingBlocksManager;
     this.syncState.subscribeTTDReached(this::reactToTTDReachedEvent);
     this.processingBlocksManager = processingBlocksManager;
+  }
+
+  /**
+   * Skip importing announced blocks that the consensus layer owns, see {@link
+   * #consensusOwnedBlock}.
+   *
+   * @param consensusOwnedBlock true for a block hash the consensus layer will import itself
+   */
+  public void setConsensusOwnedBlockPredicate(final Predicate<Hash> consensusOwnedBlock) {
+    this.consensusOwnedBlock = consensusOwnedBlock;
   }
 
   public void start() {
@@ -338,6 +357,13 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
             .log();
         return;
       }
+      if (consensusOwnedBlock.test(block.getHash())) {
+        LOG.atDebug()
+            .setMessage("New block from network {} is being imported by consensus, skipping")
+            .addArgument(block::toLogString)
+            .log();
+        return;
+      }
       if (protocolContext.getBadBlockManager().isBadBlock(block.getHash())) {
         LOG.atDebug()
             .setMessage("Ignoring known-bad block {} from peer {}")
@@ -419,6 +445,12 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         }
         if (blockchain.contains(announcedBlock.hash())) {
           LOG.trace("New block hash from network {} was already imported", announcedBlock);
+          continue;
+        }
+        if (consensusOwnedBlock.test(announcedBlock.hash())) {
+          LOG.debug(
+              "New block hash from network {} is being imported by consensus, skipping",
+              announcedBlock);
           continue;
         }
         if (protocolContext.getBadBlockManager().isBadBlock(announcedBlock.hash())) {
