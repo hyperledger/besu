@@ -71,6 +71,11 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
 
   @Override
   protected void capturePreExecutionState(final MessageFrame frame) {
+    if (options.limit() > 0 && stepCount >= options.limit()) {
+      traceOpcode = false;
+      return;
+    }
+    stepCount++;
     preExecutionMemory = options.traceMemory() ? snapshotMemory(frame) : null;
     memorySnapshotFrame = frame;
     memoryDirty = false;
@@ -91,11 +96,6 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
       words[i] = frame.readMemory(i * 32L, 32);
     }
     return words;
-    if (options.limit() > 0 && stepCount >= options.limit()) {
-      traceOpcode = false;
-      return;
-    }
-    stepCount++;
   }
 
   @Override

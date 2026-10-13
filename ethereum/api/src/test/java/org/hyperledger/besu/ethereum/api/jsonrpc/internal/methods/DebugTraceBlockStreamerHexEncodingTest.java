@@ -440,10 +440,10 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             block, withMemory, fixture.getProtocolSchedule(), blockchainQueries);
 
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper);
+    streamer.streamTo(out, mapper, () -> true);
     final JsonNode streamed = mapper.readTree(out.toByteArray());
     final JsonNode accumulated =
-        mapper.readTree(mapper.writeValueAsBytes(streamer.accumulateAll()));
+        mapper.readTree(mapper.writeValueAsBytes(streamer.accumulateAll(() -> true)));
 
     for (final JsonNode root : List.of(streamed, accumulated)) {
       final JsonNode structLogs = root.get(0).get("result").get("structLogs");
