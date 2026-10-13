@@ -210,6 +210,18 @@ class TraceReplayTransactionTest {
   }
 
   @Test
+  void shouldRejectAnythingButTwoParams() {
+    final Hash hash = block.getBody().getTransactions().get(0).getHash();
+    for (final Object[] params :
+        List.of(new Object[] {hash}, new Object[] {hash, List.of("trace"), "latest"})) {
+      final JsonRpcResponse response = response(params);
+      assertThat(response).isInstanceOf(JsonRpcErrorResponse.class);
+      assertThat(((JsonRpcErrorResponse) response).getErrorType())
+          .isEqualTo(RpcErrorType.INVALID_PARAM_COUNT);
+    }
+  }
+
+  @Test
   void shouldExecuteOnTopOfPrecedingTransactions() {
     final JsonNode diff = replay(2, List.of("stateDiff")).get("stateDiff");
     assertThat(diff.get(sender.toHexString()).at("/nonce/*/from").asText()).isEqualTo("0x2");

@@ -79,6 +79,11 @@ public class TraceReplayTransaction implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
+    if (requestContext.getRequest().getParamLength() != 2) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
+    }
+
     final Hash transactionHash;
     try {
       transactionHash = requestContext.getRequiredParameter(0, Hash.class);
