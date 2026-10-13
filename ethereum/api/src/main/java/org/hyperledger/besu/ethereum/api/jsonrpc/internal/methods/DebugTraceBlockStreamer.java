@@ -310,9 +310,31 @@ public class DebugTraceBlockStreamer {
         new StreamingDebugOperationTracer(
             traceOptions.opCodeTracerConfig(),
             true,
-            (pc, opcode, gasRemaining, gasCost, depth, stack, memory, frame, halt, revert) ->
+            (pc,
+                opcode,
+                gasRemaining,
+                gasCost,
+                depth,
+                stack,
+                memory,
+                refund,
+                returnData,
+                frame,
+                halt,
+                revert) ->
                 writeStructLog(
-                    pc, opcode, gasRemaining, gasCost, depth, stack, memory, frame, halt, revert));
+                    pc,
+                    opcode,
+                    gasRemaining,
+                    gasCost,
+                    depth,
+                    stack,
+                    memory,
+                    refund,
+                    returnData,
+                    frame,
+                    halt,
+                    revert));
 
     try {
       if (!firstTx) writeByte(COMMA);
@@ -394,6 +416,8 @@ public class DebugTraceBlockStreamer {
       final int depth,
       final Bytes[] stack,
       final Bytes[] memory,
+      final long refund,
+      final Bytes returnData,
       final MessageFrame frame,
       final ExceptionalHaltReason haltReason,
       final Bytes revertReason) {
@@ -416,7 +440,6 @@ public class DebugTraceBlockStreamer {
       writeBytes(SL_DEPTH);
       writeInt(depth + 1);
 
-      final long refund = frame.getGasRefund();
       if (refund > 0) {
         writeBytes(SL_REFUND);
         writeLong(refund);
@@ -444,13 +467,10 @@ public class DebugTraceBlockStreamer {
         writeByte(ARR_CLOSE);
       }
 
-      if (traceOptions.opCodeTracerConfig().traceReturnData()) {
-        final Bytes returnData = frame.getReturnData();
-        if (returnData != null && !returnData.isEmpty()) {
-          writeBytes(SL_RETURN_DATA);
-          writeHex(returnData.toArrayUnsafe(), false);
-          writeByte(QUOTE);
-        }
+      if (traceOptions.opCodeTracerConfig().traceReturnData() && !returnData.isEmpty()) {
+        writeBytes(SL_RETURN_DATA);
+        writeHex(returnData.toArrayUnsafe(), false);
+        writeByte(QUOTE);
       }
 
       if (traceOptions.opCodeTracerConfig().traceStorage()) {

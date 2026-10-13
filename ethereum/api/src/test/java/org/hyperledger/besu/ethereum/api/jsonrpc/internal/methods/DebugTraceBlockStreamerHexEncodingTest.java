@@ -94,6 +94,18 @@ public class DebugTraceBlockStreamerHexEncodingTest {
   private static final Bytes DOUBLE_MSTORE_INIT_CODE =
       Bytes.fromHexString("0x6000600052600060205200");
 
+  // Init code that sets slot 0 then restores it to its original zero, earning a refund:
+  //   PUSH1 0x01 PUSH1 0x00 SSTORE PUSH1 0x00 PUSH1 0x00 SSTORE STOP
+  // structLogs[5] is the second SSTORE: no refund before it, a refund after.
+  private static final Bytes SSTORE_RESTORE_INIT_CODE =
+      Bytes.fromHexString("0x6001600055600060005500");
+
+  // Init code that STATICCALLs the IDENTITY precompile twice:
+  //   (PUSH1 0x00 PUSH1 0x00 PUSH1 0x20 PUSH1 0x00 PUSH1 0x04 GAS STATICCALL POP) x2 STOP
+  // structLogs[14] is the second STATICCALL: return data of the first call before it, none after.
+  private static final Bytes DOUBLE_STATICCALL_INIT_CODE =
+      Bytes.fromHexString("0x600060006020600060045afa50600060006020600060045afa5000");
+
   private ExecutionContextTestFixture fixture;
   private BlockchainQueries blockchainQueries;
   private final ObjectMapper mapper = new ObjectMapper();
@@ -459,6 +471,52 @@ public class DebugTraceBlockStreamerHexEncodingTest {
     }
   }
 
+  @Test
+  public void refundIsReportedAsOfBeforeTheOperationExecutes() throws Exception {
+    final DebugTraceBlockStreamer streamer =
+        new DebugTraceBlockStreamer(
+            buildBlock(contractCreation(SSTORE_RESTORE_INIT_CODE)),
+            TraceOptions.DEFAULT,
+            fixture.getProtocolSchedule(),
+            blockchainQueries);
+
+    for (final JsonNode structLogs : streamedAndAccumulatedStructLogs(streamer)) {
+      assertThat(structLogs.get(5).get("op").asText()).isEqualTo("SSTORE");
+      assertThat(structLogs.get(5).path("refund").asLong(0)).isZero();
+
+      assertThat(structLogs.get(6).get("op").asText()).isEqualTo("STOP");
+      assertThat(structLogs.get(6).path("refund").asLong(0)).isPositive();
+    }
+  }
+
+  @Test
+  public void returnDataIsReportedAsOfBeforeTheOperationExecutes() throws Exception {
+    final TraceOptions withReturnData =
+        new TraceOptions(
+            TracerType.OPCODE_TRACER,
+            OpCodeTracerConfigBuilder.createFrom(TraceOptions.DEFAULT.opCodeTracerConfig())
+                .traceReturnData(true)
+                .build(),
+            java.util.Map.of());
+    final DebugTraceBlockStreamer streamer =
+        new DebugTraceBlockStreamer(
+            buildBlock(contractCreation(DOUBLE_STATICCALL_INIT_CODE)),
+            withReturnData,
+            fixture.getProtocolSchedule(),
+            blockchainQueries);
+
+    for (final JsonNode structLogs : streamedAndAccumulatedStructLogs(streamer)) {
+      assertThat(structLogs.get(6).get("op").asText()).isEqualTo("STATICCALL");
+      assertThat(structLogs.get(6).has("returnData")).isFalse();
+
+      assertThat(structLogs.get(7).get("op").asText()).isEqualTo("POP");
+      assertThat(structLogs.get(7).has("returnData")).isTrue();
+
+      assertThat(structLogs.get(14).get("op").asText()).isEqualTo("STATICCALL");
+      assertThat(structLogs.get(14).has("returnData")).isTrue();
+    }
+  }
+
   // ── helpers ──────────────────────────────────────────────────────────────
 
   private Block buildBlockWithCalldata(final Bytes calldata, final int nonce) {
@@ -493,6 +551,31 @@ public class DebugTraceBlockStreamerHexEncodingTest {
             .signAndBuild(KEY_PAIR);
 
     return buildBlock(tx);
+  }
+
+  private Transaction contractCreation(final Bytes initCode) {
+    return Transaction.builder()
+        .type(TransactionType.EIP1559)
+        .nonce(0)
+        .maxPriorityFeePerGas(Wei.of(5))
+        .maxFeePerGas(Wei.of(7))
+        .gasLimit(200_000L)
+        .value(Wei.ZERO)
+        .payload(initCode)
+        .chainId(BigInteger.valueOf(42))
+        .signAndBuild(KEY_PAIR);
+  }
+
+  private List<JsonNode> streamedAndAccumulatedStructLogs(final DebugTraceBlockStreamer streamer)
+      throws Exception {
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    streamer.streamTo(out, mapper, () -> true);
+    final JsonNode streamed = mapper.readTree(out.toByteArray());
+    final JsonNode accumulated =
+        mapper.readTree(mapper.writeValueAsBytes(streamer.accumulateAll(() -> true)));
+    return List.of(
+        streamed.get(0).get("result").get("structLogs"),
+        accumulated.get(0).get("result").get("structLogs"));
   }
 
   private Block buildBlock(final Transaction tx) {

@@ -42,6 +42,8 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
 
   private Optional<UInt256> preExecutionStorageKey = Optional.empty();
   private Optional<Bytes[]> preExecutionMemory = Optional.empty();
+  private Optional<Bytes> preExecutionReturnData = Optional.empty();
+  private long preExecutionGasRefund;
   private Bytes inputData;
   private int stepCount;
   private boolean limitReached;
@@ -88,6 +90,8 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
       inputData = frame.getInputData().copy();
     else inputData = frame.getInputData();
     preExecutionMemory = captureMemory(frame);
+    preExecutionReturnData = captureReturnData(frame);
+    preExecutionGasRefund = frame.getGasRefund();
     memorySnapshotFrame = frame;
     memoryDirty = false;
   }
@@ -101,7 +105,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = preExecutionMemory;
-    final Optional<Bytes> returnData = captureReturnData(frame);
+    final Optional<Bytes> returnData = preExecutionReturnData;
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
     if (!traceFrames.isEmpty()) {
@@ -132,7 +136,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
             .setOpcodeNumber(opcodeNumber)
             .setGasRemaining(gasRemaining)
             .setGasCost(thisGasCost == 0 ? OptionalLong.empty() : OptionalLong.of(thisGasCost))
-            .setGasRefund(frame.getGasRefund())
+            .setGasRefund(preExecutionGasRefund)
             .setDepth(depth)
             .setExceptionalHaltReason(haltReason)
             .setRecipient(frame.getRecipientAddress())
@@ -339,6 +343,8 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
     memorySnapshotFrame = null;
     memoryDirty = false;
     preExecutionMemory = Optional.empty();
+    preExecutionReturnData = Optional.empty();
+    preExecutionGasRefund = 0;
     stepCount = 0;
     limitReached = false;
     preExecutionStorageKey = Optional.empty();

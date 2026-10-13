@@ -43,6 +43,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         int depth,
         Bytes[] preExecutionStack,
         Bytes[] preExecutionMemory,
+        long preExecutionGasRefund,
+        Bytes preExecutionReturnData,
         MessageFrame frame,
         ExceptionalHaltReason haltReason,
         Bytes revertReason);
@@ -53,6 +55,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
   private final FrameWriter frameWriter;
   private boolean hasEmittedFrame = false;
   private Bytes[] preExecutionMemory = NO_MEMORY;
+  private long preExecutionGasRefund;
+  private Bytes preExecutionReturnData = Bytes.EMPTY;
   private int stepCount = 0;
 
   /**
@@ -79,6 +83,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
     }
     stepCount++;
     preExecutionMemory = options.traceMemory() ? snapshotMemory(frame) : NO_MEMORY;
+    preExecutionGasRefund = frame.getGasRefund();
+    preExecutionReturnData = frame.getReturnData();
     memorySnapshotFrame = frame;
     memoryDirty = false;
   }
@@ -127,6 +133,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         depth,
         preExecutionStack.orElse(null),
         preExecutionMemory,
+        preExecutionGasRefund,
+        preExecutionReturnData,
         frame,
         haltReason,
         revertReason);
@@ -147,6 +155,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
           frame.getDepth(),
           null,
           NO_MEMORY,
+          frame.getGasRefund(),
+          frame.getReturnData(),
           frame,
           null,
           frame.getRevertReason().orElse(null));
