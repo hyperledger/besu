@@ -30,6 +30,7 @@
 - `--rpc-tx-feecap` will treat a value of 0 as limiting fees to 0. Today it treats 0 as "do not cap fees". To achieve similar behaviour set it to a suitably large value to effectively prevent any fee capping.
 
 ### Bug fixes
+- `evmtool t8n-server` keeps serving requests again. Since `evmtool` began exiting with the subcommand's exit code, the server process exited right after printing `Transition server listening on`, so filling tests with Besu as the transition tool failed. A server that cannot bind its port now exits with a non-zero code instead of 0. [#11555](https://github.com/besu-eth/besu/pull/11555)
 - DNS-discovered dual-stack peers now respect `--p2p-ipv6-outbound-enabled` when choosing the connection address. [#11422](https://github.com/besu-eth/besu/issues/11422)
 - Block propagation no longer repeatedly re-requests an announced block that is already saved as pending while waiting for its parent. The repeated header and body requests could use up the announcing peer's request capacity and starve the parent request, leaving a node that connects well behind the chain head stuck at its starting block. [#11517](https://github.com/besu-eth/besu/issues/11517)
 - `admin_logsRemoveCache` now returns an error when any log bloom cache segment could not be deleted, instead of reporting `Cache Removed` after a partial deletion. [#11067](https://github.com/besu-eth/besu/issues/11067)
