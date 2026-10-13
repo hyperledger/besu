@@ -319,6 +319,31 @@ public class TransactionSimulator {
         operationTracer,
         preWorldStateCloseGuard,
         (updater, miningBeneficiary) -> {
+          final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
+          final Wei blobGasPrice =
+              protocolSpec
+                  .getFeeMarket()
+                  .blobGasPricePerGas(
+                      blockchain
+                          .getBlockHeader(header.getParentHash())
+                          .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                          .orElse(BlobGas.ZERO));
+          // The transaction's own validity, which does not depend on the selected state, comes
+          // before the server's gas cap, so a malformed transaction reports its own error.
+          final ValidationResult<TransactionInvalidReason> validity =
+              protocolSpec
+                  .getTransactionValidatorFactory()
+                  .get()
+                  .validate(
+                      transaction,
+                      header.getBaseFee(),
+                      Optional.of(blobGasPrice),
+                      transactionValidationParams);
+          if (!validity.isValid()) {
+            return Optional.of(
+                new TransactionSimulatorResult(
+                    transaction, TransactionProcessingResult.invalid(validity)));
+          }
           if (rpcGasCap > 0 && Long.compareUnsigned(transaction.getGasLimit(), rpcGasCap) > 0) {
             return Optional.of(
                 new TransactionSimulatorResult(
@@ -329,15 +354,6 @@ public class TransactionSimulator {
                             "Signed transaction gas limit exceeds the RPC gas cap of "
                                 + rpcGasCap))));
           }
-          final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(header);
-          final Wei blobGasPrice =
-              protocolSpec
-                  .getFeeMarket()
-                  .blobGasPricePerGas(
-                      blockchain
-                          .getBlockHeader(header.getParentHash())
-                          .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
-                          .orElse(BlobGas.ZERO));
           final TransactionProcessingResult result =
               protocolSpec
                   .getTransactionProcessor()

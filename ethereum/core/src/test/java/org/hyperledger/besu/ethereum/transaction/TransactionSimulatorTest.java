@@ -54,6 +54,9 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -119,6 +122,8 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private GasLimitCalculator gasLimitCalculator;
+  @Mock private TransactionValidatorFactory transactionValidatorFactory;
+  @Mock private TransactionValidator transactionValidator;
   private final BlockHeaderTestFixture blockHeaderTestFixture = new BlockHeaderTestFixture();
 
   @BeforeEach
@@ -1135,6 +1140,36 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
     }
   }
 
+  @Test
+  public void shouldReportSignedTransactionValidityBeforeGasCap() {
+    final Transaction transaction =
+        Transaction.builder()
+            .type(TransactionType.FRONTIER)
+            .nonce(42L)
+            .gasPrice(Wei.ONE)
+            .gasLimit(RPC_GAS_CAP + 1)
+            .to(DEFAULT_FROM)
+            .sender(DEFAULT_FROM)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .signature(FAKE_SIGNATURE)
+            .build();
+    final BlockHeader header = mockBlockHeader(Hash.ZERO, 1L, Wei.ONE, DEFAULT_BLOCK_GAS_LIMIT);
+    mockWorldStateForAccount(header, DEFAULT_FROM, 1L);
+    mockProtocolSpecForProcessWithWorldUpdater();
+    final TransactionValidationParams params = TransactionValidationParams.blockReplay();
+    // Only the arguments normal processing passes reach the rejecting stub.
+    when(transactionValidator.validate(
+            same(transaction), eq(header.getBaseFee()), any(), same(params)))
+        .thenReturn(ValidationResult.invalid(TransactionInvalidReason.INVALID_SIGNATURE));
+    final Optional<TransactionSimulatorResult> result =
+        cappedTransactionSimulator.process(
+            transaction, params, NO_TRACING, (state, value) -> value, header);
+    assertThat(result.orElseThrow().getValidationResult().getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.INVALID_SIGNATURE);
+    verifyNoInteractions(transactionProcessor);
+  }
+
   private static Stream<Arguments> signedGasLimits() {
     return Stream.of(
         Arguments.of(0L, RPC_GAS_CAP + 1, false),
@@ -1328,6 +1363,10 @@ public class TransactionSimulatorTest extends TrustedSetupClassLoaderExtension {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
+    when(protocolSpec.getTransactionValidatorFactory()).thenReturn(transactionValidatorFactory);
+    when(transactionValidatorFactory.get()).thenReturn(transactionValidator);
+    when(transactionValidator.validate(any(), any(), any(), any()))
+        .thenReturn(ValidationResult.valid());
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
