@@ -58,7 +58,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.fluent.SimpleAccount;
 import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
-import org.hyperledger.besu.util.Subscribers;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -119,8 +118,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
   private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
-  private final PendingTransactionsListenersProxy pendingTransactionsListenersProxy =
-      new PendingTransactionsListenersProxy();
+  private final TransactionEventNotifier eventNotifier;
   private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
@@ -138,7 +136,8 @@ public class TransactionPool implements BlockAddedObserver {
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
       final TransactionPoolConfiguration configuration,
-      final BlobCache blobCache) {
+      final BlobCache blobCache,
+      final TransactionEventNotifier eventNotifier) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -149,11 +148,12 @@ public class TransactionPool implements BlockAddedObserver {
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(Runnable::run);
     this.cacheForBlobsOfTransactionsAddedToABlock = blobCache;
+    this.eventNotifier = eventNotifier;
     initializeBlobMetrics();
-    subscribePendingTransactions(this::mapBlobsOnTransactionAdded);
-    subscribeDroppedTransactions(
-        (transaction, reason) -> unmapBlobsOnTransactionDropped(transaction));
-    subscribeDroppedTransactions(transactionBroadcaster);
+    eventNotifier.subscribePendingTransactionAdded(this::mapBlobsOnTransactionAdded);
+    eventNotifier.subscribePendingTransactionDropped(
+        (transaction, _) -> unmapBlobsOnTransactionDropped(transaction));
+    eventNotifier.subscribePendingTransactionDropped(transactionBroadcaster);
   }
 
   @VisibleForTesting
@@ -363,19 +363,27 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
-    return pendingTransactionsListenersProxy.onAddedListeners.subscribe(listener);
+    return eventNotifier.subscribePendingTransactionAdded(listener);
+  }
+
+  public long subscribePendingTransactionsAsync(final PendingTransactionAddedListener listener) {
+    return eventNotifier.subscribePendingTransactionAddedAsync(listener);
   }
 
   public void unsubscribePendingTransactions(final long id) {
-    pendingTransactionsListenersProxy.onAddedListeners.unsubscribe(id);
+    eventNotifier.unsubscribePendingTransactionAdded(id);
   }
 
   public long subscribeDroppedTransactions(final PendingTransactionDroppedListener listener) {
-    return pendingTransactionsListenersProxy.onDroppedListeners.subscribe(listener);
+    return eventNotifier.subscribePendingTransactionDropped(listener);
+  }
+
+  public long subscribeDroppedTransactionsAsync(final PendingTransactionDroppedListener listener) {
+    return eventNotifier.subscribePendingTransactionDroppedAsync(listener);
   }
 
   public void unsubscribeDroppedTransactions(final long id) {
-    pendingTransactionsListenersProxy.onDroppedListeners.unsubscribe(id);
+    eventNotifier.unsubscribePendingTransactionDropped(id);
   }
 
   @Override
@@ -728,7 +736,6 @@ public class TransactionPool implements BlockAddedObserver {
     if (!isEnabled()) {
       logStart(configuration, getChainHeadBlockHeader());
       pendingTransactions = pendingTransactionsSupplier.get();
-      pendingTransactionsListenersProxy.subscribe();
       isPoolEnabled.set(true);
       subscribeConnectId =
           OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
@@ -763,7 +770,6 @@ public class TransactionPool implements BlockAddedObserver {
     if (isEnabled()) {
       isPoolEnabled.set(false);
       subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
-      pendingTransactionsListenersProxy.unsubscribe();
       mapOfBlobsInTransactionPool.clear();
       final CompletableFuture<Void> saveOperation =
           saveRestoreManager
@@ -969,36 +975,6 @@ public class TransactionPool implements BlockAddedObserver {
   private void initializeBlobMetrics() {
     metrics.createBlobCacheSizeMetric(this::getBlobCacheSize);
     metrics.createBlobMapSizeMetric(this::getBlobMapSize);
-  }
-
-  class PendingTransactionsListenersProxy {
-    private final Subscribers<PendingTransactionAddedListener> onAddedListeners =
-        Subscribers.create();
-    private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
-        Subscribers.create();
-
-    private volatile long onAddedListenerId;
-    private volatile long onDroppedListenerId;
-
-    void subscribe() {
-      onAddedListenerId = pendingTransactions.subscribePendingTransactions(this::onAdded);
-      onDroppedListenerId =
-          pendingTransactions.subscribeDroppedTransactions(
-              (transaction, reason) -> onDropped(transaction, reason));
-    }
-
-    void unsubscribe() {
-      pendingTransactions.unsubscribePendingTransactions(onAddedListenerId);
-      pendingTransactions.unsubscribeDroppedTransactions(onDroppedListenerId);
-    }
-
-    private void onDropped(final Transaction transaction, final RemovalReason reason) {
-      onDroppedListeners.forEach(listener -> listener.onTransactionDropped(transaction, reason));
-    }
-
-    private void onAdded(final Transaction transaction) {
-      onAddedListeners.forEach(listener -> listener.onTransactionAdded(transaction));
-    }
   }
 
   class SaveRestoreManager {
