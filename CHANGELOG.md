@@ -73,6 +73,7 @@
 - Backward sync, the Engine API and block import no longer move the head world state concurrently, which could corrupt it and stall the node. [#11402](https://github.com/besu-eth/besu/pull/11402)
 - The layered transaction pool no longer gets corrupted when a sender with priority is promoted from the sparse layer, or when a late block selection result refers to a transaction the pool has since replaced or removed. [#11462](https://github.com/besu-eth/besu/pull/11462)
 - Snap sync now restarts instead of staying idle when one of its world state download pipelines fails. [#11515](https://github.com/besu-eth/besu/pull/11515)
+- `eth_simulateV1` with `validation` disabled now returns `-32603` for a call whose sender nonce is `2^64-1`, as EIP-2681 requires. Previously the nonce wrapped to 0 and the call succeeded. A call whose nonce is below the sender nonce now runs instead of failing with `-38010`, because disabled validation skips the check that the call nonce equals the sender nonce. [#11578](https://github.com/besu-eth/besu/pull/11578)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
