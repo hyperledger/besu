@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,6 +181,29 @@ public class MainnetBlockValidator implements BlockValidator {
       return retval;
     }
 
+    final Supplier<BlockProcessingResult> process =
+        () ->
+            processOnParentWorldState(
+                context,
+                block,
+                parentHeader,
+                ommerValidationMode,
+                blockAccessList,
+                shouldUpdateHead,
+                shouldRecordBadBlock);
+    return shouldUpdateHead
+        ? context.getWorldStateArchive().withHeadWorldStateLock(process)
+        : process.get();
+  }
+
+  private BlockProcessingResult processOnParentWorldState(
+      final ProtocolContext context,
+      final Block block,
+      final BlockHeader parentHeader,
+      final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList,
+      final boolean shouldUpdateHead,
+      final boolean shouldRecordBadBlock) {
     final WorldStateQueryParams worldStateQueryParams =
         WorldStateQueryParams.newBuilder()
             .withBlockHeader(parentHeader)
@@ -248,6 +273,10 @@ public class MainnetBlockValidator implements BlockValidator {
           return result;
         }
 
+        // a block that validates cannot be bad, whatever an earlier attempt recorded, and its
+        // descendants must not be rejected on its account
+        context.getBadBlockManager().removeBadBlock(block.getHash());
+
         return new BlockProcessingResult(
             Optional.of(
                 new BlockProcessingOutputs(
@@ -296,20 +325,20 @@ public class MainnetBlockValidator implements BlockValidator {
       final boolean shouldRecordBadBlock,
       final ProtocolContext context) {
     if (result.causedBy().isPresent()) {
-      // Block processing failed exceptionally, we cannot assume the block was intrinsically invalid
       LOG.info(
           "Failed to process block {}: {}, caused by {}",
           failedBlock.toLogString(),
           result.errorMessage,
           result.causedBy().get());
       LOG.debug("with stack", result.causedBy().get());
+    } else if (result.errorMessage.isPresent()) {
+      LOG.info("Invalid block {}: {}", failedBlock.toLogString(), result.errorMessage);
     } else {
-      if (result.errorMessage.isPresent()) {
-        LOG.info("Invalid block {}: {}", failedBlock.toLogString(), result.errorMessage);
-      } else {
-        LOG.info("Invalid block {}", failedBlock.toLogString());
-      }
+      LOG.info("Invalid block {}", failedBlock.toLogString());
+    }
 
+    // a failure of this node says nothing about the block
+    if (!result.isLocalFailure()) {
       if (shouldRecordBadBlock) {
         // Result.errorMessage should not be empty on failure, but add a default to be safe
         String description = result.errorMessage.orElse("Unknown cause");
@@ -353,7 +382,12 @@ public class MainnetBlockValidator implements BlockValidator {
       final Optional<BlockAccessList> blockAccessList) {
 
     return blockProcessor.processBlock(
-        context, context.getBlockchain(), worldState, block, blockAccessList);
+        BlockExecutionContext.builder()
+            .protocolContext(context)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(blockAccessList)
+            .build());
   }
 
   @Override
