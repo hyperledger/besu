@@ -105,26 +105,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         new NoOpMetricsSystem());
   }
 
-  protected AbstractBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final ProtocolSchedule protocolSchedule,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-    this(
-        transactionProcessor,
-        transactionReceiptFactory,
-        miningBeneficiaryCalculator,
-        protocolSchedule,
-        balConfiguration,
-        new BlockProcessingMetrics(metricsSystem));
-  }
-
   /**
-   * Creates a processor that records into {@code blockProcessingMetrics}. Processors that serve the
-   * same chain should share it: a second instance registers the gauges again, and the metrics
-   * system keeps only the last registration.
+   * Creates a processor with its own {@link BlockProcessingMetrics}. Each instance registers the
+   * block processing gauges again, and the metrics system keeps only the last registration.
    */
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -132,13 +115,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration,
-      final BlockProcessingMetrics blockProcessingMetrics) {
+      final MetricsSystem metricsSystem) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.protocolSchedule = protocolSchedule;
     this.balConfiguration = balConfiguration;
-    this.blockProcessingMetrics = blockProcessingMetrics;
+    this.blockProcessingMetrics = new BlockProcessingMetrics(metricsSystem);
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -241,17 +224,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                               calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
               .orElse(Wei.ZERO);
 
-      parallelProcessor =
-          startParallelExecution(
-              protocolContext,
-              blockHeader,
-              transactions,
-              miningBeneficiary,
-              blockHashLookup,
-              blobGasPrice,
-              blockAccessListBuilder,
-              blockAccessList,
-              maybeParentHeader);
+      if (!context.isSequentialExecutionRequested()) {
+        parallelProcessor =
+            startParallelExecution(
+                protocolContext,
+                blockHeader,
+                transactions,
+                miningBeneficiary,
+                blockHashLookup,
+                blobGasPrice,
+                blockAccessListBuilder,
+                blockAccessList,
+                maybeParentHeader);
+      }
 
       boolean parallelizedTxFound = false;
       int nbParallelTx = 0;
@@ -551,7 +536,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   /**
    * Starts executing the block's transactions speculatively in parallel, before they are executed
    * in order. The returned processor is handed to {@link #processTransaction} for each transaction
-   * and aborted once the block is processed. Starts nothing by default.
+   * and aborted once the block is processed. Not called when the {@link BlockExecutionContext}
+   * requests sequential execution. Starts nothing by default.
    */
   @SuppressWarnings("unused") // the parameters are used by subclasses
   protected Optional<ParallelBlockTransactionProcessor> startParallelExecution(
