@@ -15,17 +15,28 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.WritePipe;
+import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
+import org.hyperledger.besu.testutil.TestClock;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +125,63 @@ public class SnapWorldStateDownloadProcessTest {
     process.abort();
 
     assertThat(errorOf(result)).isInstanceOf(CancellationException.class);
+  }
+
+  @Test
+  public void shouldAbortAllPipelinesWhenCancelled() {
+    final CompletableFuture<Void> result = process.start(scheduler);
+
+    result.cancel(true);
+
+    fetchPipelines.forEach(pipeline -> verify(pipeline).abort());
+    verify(completionPipeline).abort();
+  }
+
+  @Test
+  public void shouldFailTheDownloadWithTheErrorOfAFailedPipeline() {
+    final CompletableFuture<Void> download = downloadState().startDownload(process, scheduler);
+    final RuntimeException error = new RuntimeException("flat storage heal failed");
+
+    fetchFutures.get(6).completeExceptionally(error);
+
+    assertThat(errorOf(download)).isSameAs(error);
+  }
+
+  @Test
+  public void shouldNotFailTheDownloadWhenAborted() {
+    final CompletableFuture<Void> download = downloadState().startDownload(process, scheduler);
+
+    process.abort();
+
+    assertThat(download).isNotDone();
+  }
+
+  @Test
+  public void shouldAbortAllPipelinesWhenTheDownloadIsCancelled() {
+    final CompletableFuture<Void> download = downloadState().startDownload(process, scheduler);
+
+    download.cancel(true);
+
+    fetchPipelines.forEach(pipeline -> verify(pipeline, atLeastOnce()).abort());
+    verify(completionPipeline, atLeastOnce()).abort();
+  }
+
+  private SnapWorldDownloadState downloadState() {
+    final SnapSyncMetricsManager metricsManager = mock(SnapSyncMetricsManager.class);
+    when(metricsManager.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
+    return new SnapWorldDownloadState(
+        new WorldStateStorageCoordinator(
+            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
+        mock(SnapSyncStatePersistenceManager.class),
+        mock(Blockchain.class),
+        mock(SnapSyncProcessState.class),
+        new InMemoryTasksPriorityQueues<>(),
+        1000,
+        50_000,
+        metricsManager,
+        new TestClock(),
+        mock(EthContext.class),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private static Throwable errorOf(final CompletableFuture<Void> result) {

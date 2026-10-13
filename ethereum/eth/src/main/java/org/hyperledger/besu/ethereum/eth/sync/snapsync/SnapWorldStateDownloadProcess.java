@@ -102,6 +102,13 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     final CompletableFuture<Void> completionFuture = ethScheduler.startPipeline(completionPipeline);
 
     final CompletableFuture<Void> result = new CompletableFuture<>();
+    // Covers cancelling the result too, so it still stops the pipelines.
+    result.whenComplete(
+        (unused, error) -> {
+          if (error != null) {
+            abort();
+          }
+        });
     final List<CompletableFuture<Void>> fetchFutures =
         List.of(
             fetchAccountFuture,
@@ -138,13 +145,11 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
   }
 
   private void fail(final CompletableFuture<Void> result, final Throwable error) {
-    // Complete with the first error before aborting, so the cancellations the abort causes
-    // do not hide it.
-    if (result.completeExceptionally(error)) {
-      if (!(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
-        LOG.error("Pipeline failed", error);
-      }
-      abort();
+    // Only the first error completes the result, so the cancellations the abort causes do not
+    // hide it.
+    if (result.completeExceptionally(error)
+        && !(ExceptionUtils.rootCause(error) instanceof CancellationException)) {
+      LOG.error("Pipeline failed", error);
     }
   }
 
