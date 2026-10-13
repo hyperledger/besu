@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import static java.util.stream.Collectors.joining;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INTERNAL_ERROR;
 import static org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult.Status.INVALID;
 import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
@@ -26,9 +25,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
+import org.hyperledger.besu.ethereum.BlockValidationResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BadChainListener;
@@ -47,30 +46,31 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractGasLimitSpecification;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes32;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,6 +101,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTasks =
       new ConcurrentHashMap<>();
+
+  private final AtomicReference<Hash> finalizedHashAfterBackwardSync = new AtomicReference<>();
+  private final AtomicReference<CompletableFuture<Void>> backwardSyncWithFinalizedUpdate =
+      new AtomicReference<>();
 
   /**
    * Instantiates a new Merge coordinator.
@@ -248,7 +252,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return payloadIdentifier;
     }
     // it's a new payloadId so...
-    cancelAnyExistingBlockCreationTasks(payloadIdentifier);
+    cancelAnyExistingBlockCreationTasks(payloadIdentifier, preparePayloadArgs);
 
     final MergeBlockCreator mergeBlockCreator =
         this.mergeBlockCreatorFactory.forParams(
@@ -277,7 +281,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               new BlockWithReceipts(emptyBlock, result.getReceipts()),
               emptyBlockResult.getBlockAccessList(),
               result.getRequests(),
-              BlockCreationTiming.EMPTY));
+              emptyBlockResult.getBlockCreationTimings()));
       LOG.info(
           "Start building proposals for block {} identified by {}",
           emptyBlock.getHeader().getNumber(),
@@ -293,32 +297,70 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     }
 
     // Create the async block building task and store it
-    tryToBuildBetterBlock(
-        preparePayloadArgs.timestamp(),
-        preparePayloadArgs.prevRandao(),
-        payloadIdentifier,
-        mergeBlockCreator,
-        preparePayloadArgs.withdrawals(),
-        preparePayloadArgs.parentBeaconBlockRoot(),
-        preparePayloadArgs.slotNumber(),
-        preparePayloadArgs.targetGasLimit(),
-        preparePayloadArgs.parentHeader());
+    tryToBuildBetterBlock(payloadIdentifier, mergeBlockCreator, preparePayloadArgs);
 
     return payloadIdentifier;
   }
 
-  private void cancelAnyExistingBlockCreationTasks(final PayloadIdentifier payloadIdentifier) {
-    if (blockCreationTasks.size() > 0) {
-      String existingPayloadIdsBeingBuilt =
-          blockCreationTasks.keySet().stream()
-              .map(PayloadIdentifier::toHexString)
-              .collect(joining(","));
-      LOG.warn(
-          "New payloadId {} received so cancelling block creation tasks for the following payloadIds: {}",
-          payloadIdentifier,
-          existingPayloadIdsBeingBuilt);
+  private void cancelAnyExistingBlockCreationTasks(
+      final PayloadIdentifier payloadIdentifier, final PreparePayloadArgs preparePayloadArgs) {
+    // A CL sends new payload attributes whenever its head or the proposal inputs change, and only
+    // requests the payload of the latest ones, so this is expected and not worth a warning
+    if (LOG.isDebugEnabled()) {
+      blockCreationTasks.forEach(
+          (existingPayloadIdentifier, existingTask) ->
+              LOG.debug(
+                  "Replacing block creation for payload id {} with {}, changed: {}",
+                  existingPayloadIdentifier,
+                  payloadIdentifier,
+                  describePayloadArgsChanges(existingTask.preparePayloadArgs, preparePayloadArgs)));
+    }
 
-      blockCreationTasks.keySet().forEach(this::cleanupBlockCreationTask);
+    blockCreationTasks.keySet().forEach(this::cleanupBlockCreationTask);
+  }
+
+  @VisibleForTesting
+  static String describePayloadArgsChanges(
+      final PreparePayloadArgs previous, final PreparePayloadArgs next) {
+    final List<String> changes = new ArrayList<>();
+    addChange(changes, "parent", previous.parentHeader().getHash(), next.parentHeader().getHash());
+    addChange(changes, "timestamp", previous.timestamp(), next.timestamp());
+    addChange(changes, "prevRandao", previous.prevRandao(), next.prevRandao());
+    addChange(changes, "feeRecipient", previous.feeRecipient(), next.feeRecipient());
+    addChange(
+        changes,
+        "parentBeaconBlockRoot",
+        previous.parentBeaconBlockRoot().orElse(null),
+        next.parentBeaconBlockRoot().orElse(null));
+    addChange(
+        changes, "slotNumber", previous.slotNumber().orElse(null), next.slotNumber().orElse(null));
+    addChange(
+        changes,
+        "targetGasLimit",
+        previous.targetGasLimit().orElse(null),
+        next.targetGasLimit().orElse(null));
+    if (!previous.withdrawals().equals(next.withdrawals())) {
+      changes.add(
+          "withdrawals changed ("
+              + countWithdrawals(previous)
+              + " -> "
+              + countWithdrawals(next)
+              + ")");
+    }
+    return changes.isEmpty() ? "none" : String.join(", ", changes);
+  }
+
+  private static String countWithdrawals(final PreparePayloadArgs preparePayloadArgs) {
+    return preparePayloadArgs.withdrawals().map(ws -> String.valueOf(ws.size())).orElse("none");
+  }
+
+  private static void addChange(
+      final List<String> changes,
+      final String name,
+      final @Nullable Object previous,
+      final @Nullable Object next) {
+    if (!Objects.equals(previous, next)) {
+      changes.add(name + " " + previous + " -> " + next);
     }
   }
 
@@ -398,26 +440,21 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private void tryToBuildBetterBlock(
-      final Long timestamp,
-      final Bytes32 random,
       final PayloadIdentifier payloadIdentifier,
       final MergeBlockCreator mergeBlockCreator,
-      final Optional<List<Withdrawal>> withdrawals,
-      final Optional<Bytes32> parentBeaconBlockRoot,
-      final Optional<Long> slotNumber,
-      final Optional<Long> targetGasLimit,
-      final BlockHeader parentHeader) {
+      final PreparePayloadArgs preparePayloadArgs) {
 
+    final BlockHeader parentHeader = preparePayloadArgs.parentHeader();
     final Supplier<BlockCreationResult> blockCreator =
         () ->
             mergeBlockCreator.createBlock(
                 Optional.empty(),
-                random,
-                timestamp,
-                withdrawals,
-                parentBeaconBlockRoot,
-                slotNumber,
-                targetGasLimit,
+                preparePayloadArgs.prevRandao(),
+                preparePayloadArgs.timestamp(),
+                preparePayloadArgs.withdrawals(),
+                preparePayloadArgs.parentBeaconBlockRoot(),
+                preparePayloadArgs.slotNumber(),
+                preparePayloadArgs.targetGasLimit(),
                 parentHeader);
 
     LOG.debug(
@@ -432,7 +469,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     // starts before task is registered, causing isBlockCreationCancelled to incorrectly
     // return true during the race window
     blockCreationTasks.put(
-        payloadIdentifier, new BlockCreationTask(mergeBlockCreator, blockCreationFuture));
+        payloadIdentifier,
+        new BlockCreationTask(mergeBlockCreator, preparePayloadArgs, blockCreationFuture));
 
     // Schedule the async work and chain it to complete our controlled future
     ethScheduler
@@ -481,7 +519,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                 miningConfiguration.getUnstable().getPosBlockCreationRepetitionMinDuration()
                     - lastDuration);
         LOG.debug("Waiting {}ms before repeating block creation", waitBeforeRepetition);
-        Thread.sleep(waitBeforeRepetition);
+        pauseUnlessCancelled(payloadIdentifier, waitBeforeRepetition);
       } catch (final CancellationException | InterruptedException ce) {
         LOG.atDebug()
             .setMessage("Block creation for payload id {} has been cancelled, reason {}")
@@ -510,6 +548,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       }
     }
     return null;
+  }
+
+  private void pauseUnlessCancelled(final PayloadIdentifier payloadIdentifier, final long pauseMs)
+      throws InterruptedException {
+    final BlockCreationTask task = blockCreationTasks.get(payloadIdentifier);
+    if (task != null) {
+      // nothing is being built during the pause, so a cancellation must not wait for it to end
+      task.awaitCancellation(pauseMs);
+    }
   }
 
   private void recoverableBlockCreation(
@@ -570,12 +617,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean canRetryBlockCreation(final Throwable throwable) {
-    if (throwable instanceof StorageException) {
-      return true;
-    } else if (throwable instanceof MerkleTrieException) {
-      return true;
-    }
-    return false;
+    return BlockValidationResult.isStorageFailure(throwable);
   }
 
   @Override
@@ -590,9 +632,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .log();
     } else if (mergeContext.isInitialSyncDone()) {
       backwardSyncContext.maybeUpdateTargetHeight(headHash);
-      backwardSyncContext
-          .syncBackwardsUntil(headHash)
-          .thenRun(() -> updateFinalized(finalizedHash));
+      finalizedHashAfterBackwardSync.set(finalizedHash);
+      final CompletableFuture<Void> session = backwardSyncContext.syncBackwardsUntil(headHash);
+      // all calls during a session share its future, so one callback applies the latest finalized
+      if (backwardSyncWithFinalizedUpdate.getAndSet(session) != session) {
+        session.thenRun(
+            () -> updateFinalized(Objects.requireNonNull(finalizedHashAfterBackwardSync.get())));
+      }
     }
     return maybeHeadHeader;
   }
@@ -628,9 +674,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                   .log();
               mergeContext.setFinalized(finalizedHeader);
             },
+            // a session can end without the head it was started for, e.g. when no peer serves it
             () ->
-                LOG.warn(
-                    "Internal error, backward sync completed but failed to import finalized block {}",
+                LOG.debug(
+                    "Finalized block {} is not on the chain after backward sync, a later forkchoice update will set it",
                     finalizedHash));
   }
 
@@ -746,6 +793,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
+    // moved even when the chain head is already there: backward sync appends its blocks without
+    // the head world state lock, so a fork choice in between can leave the two at different blocks
+    if (!moveWorldStateTo(newHead)) {
+      LOG.atDebug()
+          .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+          .addArgument(newHead::toLogString)
+          .log();
+      return false;
+    }
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       LOG.atDebug()
@@ -755,27 +811,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (moveWorldStateTo(newHead)) {
-      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-        LOG.atDebug()
-            .setMessage(
-                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-            .addArgument(newHead::toLogString)
-            .log();
-        return blockchain.forwardToBlock(newHead);
-      } else {
-        LOG.atDebug()
-            .setMessage("New head {} is a chain reorg, rewind chain head to it")
-            .addArgument(newHead::toLogString)
-            .log();
-        return blockchain.rewindToBlock(newHead.getHash());
-      }
+    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+      LOG.atDebug()
+          .setMessage(
+              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+          .addArgument(newHead::toLogString)
+          .log();
+      return blockchain.forwardToBlock(newHead);
+    } else {
+      LOG.atDebug()
+          .setMessage("New head {} is a chain reorg, rewind chain head to it")
+          .addArgument(newHead::toLogString)
+          .log();
+      return blockchain.rewindToBlock(newHead.getHash());
     }
-    LOG.atDebug()
-        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
-        .addArgument(newHead::toLogString)
-        .log();
-    return false;
   }
 
   private boolean moveWorldStateTo(final BlockHeader newHead) {
@@ -823,8 +872,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public CompletableFuture<Void> appendNewPayloadToSync(final Block newPayload) {
-    return backwardSyncContext.syncBackwardsUntil(newPayload);
+  public CompletableFuture<Void> appendNewPayloadToSync(
+      final Block newPayload, final Optional<BlockAccessList> blockAccessList) {
+    return backwardSyncContext.syncBackwardsUntil(newPayload, blockAccessList);
   }
 
   @Override
@@ -948,33 +998,22 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   @Override
   public void onBadChain(
-      final Block badBlock,
+      final BlockHeader badBlock,
       final List<Block> badBlockDescendants,
       final List<BlockHeader> badBlockHeaderDescendants) {
     LOG.trace("Mark descendents of bad block {} as bad", badBlock.getHash());
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
 
     final Optional<BlockHeader> parentHeader =
-        protocolContext.getBlockchain().getBlockHeader(badBlock.getHeader().getParentHash());
+        protocolContext.getBlockchain().getBlockHeader(badBlock.getParentHash());
     final Optional<Hash> maybeLatestValidHash =
         parentHeader.isPresent() && isPoSHeader(parentHeader.get())
             ? Optional.of(parentHeader.get().getHash())
-            : Optional.empty();
+            // the bad block can itself be a marked descendant, whose parent is off the chain
+            : badBlockManager.getLatestValidHash(badBlock.getHash());
 
-    // Bad block has already been marked, record its latest valid hash so later children inherit it
-    if (badBlockManager.getLatestValidHash(badBlock.getHash()).isEmpty()) {
-      maybeLatestValidHash.ifPresent(
-          latestValidHash ->
-              badBlockManager.addLatestValidHash(badBlock.getHash(), latestValidHash));
-    }
-
-    Stream.concat(
-            badBlockDescendants.stream().map(Block::getHeader), badBlockHeaderDescendants.stream())
-        .forEach(
-            header -> {
-              LOG.trace("Add descendant {} to bad blocks", header.getHash());
-              badBlockManager.addBadDescendant(header, badBlock.getHeader(), maybeLatestValidHash);
-            });
+    badBlockManager.markBadChain(
+        badBlock, badBlockDescendants, badBlockHeaderDescendants, maybeLatestValidHash);
   }
 
   /**
@@ -1007,23 +1046,30 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public boolean checkAndMarkBadDescendant(final Hash blockHash) {
+  public Optional<BadBlockCause> checkAndMarkBadDescendant(final BlockHeader header) {
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
-    // nothing to descend from, keep the forkchoice hot path free of storage reads
-    if (badBlockManager.isEmpty()) {
+    // nothing to descend from, keep the engine hot path free of storage reads
+    if (!badBlockManager.isBadBlock(header.getParentHash())) {
+      return Optional.empty();
+    }
+    // a parent that made it onto the chain cannot be bad, a stale entry, e.g. left by a transient
+    // local failure, must not condemn its descendants
+    if (protocolContext.getBlockchain().contains(header.getParentHash())) {
+      return Optional.empty();
+    }
+    return badBlockManager.checkAndMarkBadDescendant(header);
+  }
+
+  @Override
+  public boolean checkAndMarkBadDescendant(final Hash blockHash) {
+    if (protocolContext.getBadBlockManager().isEmpty()) {
       return false;
     }
     // only a header we already know can be linked to its parent, anything else must be synced
     return backwardSyncContext
         .getBackwardChain()
         .getHeader(blockHash)
-        .filter(header -> badBlockManager.isBadBlock(header.getParentHash()))
-        // a parent that made it onto the chain cannot be bad, a stale entry, e.g. left by a
-        // transient local failure, must not condemn its descendants
-        .filter(
-            header ->
-                protocolContext.getBlockchain().getBlockHeader(header.getParentHash()).isEmpty())
-        .flatMap(badBlockManager::checkAndMarkBadDescendant)
+        .flatMap(this::checkAndMarkBadDescendant)
         .isPresent();
   }
 
@@ -1091,8 +1137,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     /** The Block creator. */
     final MergeBlockCreator blockCreator;
 
+    /** The arguments the block is built from. */
+    final PreparePayloadArgs preparePayloadArgs;
+
     /** The Cancelled. */
     final AtomicBoolean cancelled;
+
+    /** Released on cancellation. */
+    final CountDownLatch cancellation;
 
     /** The Future for the async block creation task. */
     final CompletableFuture<Void> blockCreationFuture;
@@ -1101,12 +1153,17 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
      * Instantiates a new Block creation task.
      *
      * @param blockCreator the block creator
+     * @param preparePayloadArgs the arguments the block is built from
      * @param blockCreationFuture the completable future for the async task
      */
     public BlockCreationTask(
-        final MergeBlockCreator blockCreator, final CompletableFuture<Void> blockCreationFuture) {
+        final MergeBlockCreator blockCreator,
+        final PreparePayloadArgs preparePayloadArgs,
+        final CompletableFuture<Void> blockCreationFuture) {
       this.blockCreator = blockCreator;
+      this.preparePayloadArgs = preparePayloadArgs;
       this.cancelled = new AtomicBoolean(false);
+      this.cancellation = new CountDownLatch(1);
       this.blockCreationFuture = blockCreationFuture;
     }
 
@@ -1122,7 +1179,18 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     /** Cancel. */
     public void cancel() {
       cancelled.set(true);
+      cancellation.countDown();
       blockCreator.cancel();
+    }
+
+    /**
+     * Waits until this task is cancelled or the timeout elapses.
+     *
+     * @param timeoutMs the maximum time to wait in milliseconds
+     * @throws InterruptedException if the waiting thread is interrupted
+     */
+    void awaitCancellation(final long timeoutMs) throws InterruptedException {
+      cancellation.await(timeoutMs, TimeUnit.MILLISECONDS);
     }
   }
 }
