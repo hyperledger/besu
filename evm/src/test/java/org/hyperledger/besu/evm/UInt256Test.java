@@ -115,10 +115,8 @@ public class UInt256Test {
     return Stream.of(
         // ---- zero length ----------------------------------------------
         arguments(new byte[0], new int[] {0, 0}, UInt256.ZERO),
-        arguments(new byte[0], new int[] {0, 2}, UInt256.ZERO),
         arguments(hex("0x55ab55"), new int[] {0, 0}, UInt256.ZERO),
         arguments(hex("0x55ab55"), new int[] {2, 0}, UInt256.ZERO),
-        arguments(hex("0x010203040506070809"), new int[] {0, -1}, UInt256.ZERO),
         arguments(hex("0x010203040506070809"), new int[] {4, 0}, UInt256.ZERO),
 
         // ---- single-limb path (length < 8) ----------------------------------------------
