@@ -29,7 +29,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,11 +41,10 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.PreprocessingContext;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelBlockTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -76,18 +75,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class AbstractBlockProcessorBalValidationTest {
 
   @Mock private ProtocolContext protocolContext;
+  @Mock private MutableBlockchain blockchain;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private GasCalculator gasCalculator;
 
-  private final Blockchain blockchain = new ReferenceTestBlockchain();
   private final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
 
   @BeforeEach
   void wireProtocolSpec() {
+    lenient().when(protocolContext.getBlockchain()).thenReturn(blockchain);
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    lenient()
+        .when(protocolSpec.getBlockRewardProcessor())
+        .thenReturn(BlockRewardProcessor.NO_REWARDS);
     lenient()
         .when(protocolSpec.getPreExecutionProcessor())
         .thenReturn(new FrontierPreExecutionProcessor());
@@ -133,7 +136,6 @@ class AbstractBlockProcessorBalValidationTest {
         new BalStubBlockProcessor(
             transactionProcessor,
             transactionReceiptFactory,
-            Wei.ZERO,
             BlockHeader::getCoinbase,
             protocolSchedule,
             BalConfiguration.DEFAULT,
@@ -151,11 +153,12 @@ class AbstractBlockProcessorBalValidationTest {
 
     final BlockProcessingResult result =
         processor.processBlock(
-            protocolContext,
-            blockchain,
-            worldState,
-            blockWithTxs(header, 1, 5_000L),
-            Optional.empty());
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTxs(header, 1, 5_000L))
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertThat(result.isSuccessful()).isTrue();
     assertThat(txCalls).hasValue(1);
@@ -189,7 +192,6 @@ class AbstractBlockProcessorBalValidationTest {
         new BalStubBlockProcessor(
             transactionProcessor,
             transactionReceiptFactory,
-            Wei.ZERO,
             BlockHeader::getCoinbase,
             protocolSchedule,
             BalConfiguration.DEFAULT,
@@ -206,11 +208,12 @@ class AbstractBlockProcessorBalValidationTest {
 
     final BlockProcessingResult result =
         processor.processBlock(
-            protocolContext,
-            blockchain,
-            worldState,
-            blockWithTxs(header, 6, 2000L),
-            Optional.empty());
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTxs(header, 6, 2000L))
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertThat(result.isSuccessful()).isFalse();
     assertThat(result.errorMessage.orElse("")).contains("Block access list size exceeds maximum");
@@ -231,7 +234,6 @@ class AbstractBlockProcessorBalValidationTest {
         new BalStubBlockProcessor(
             transactionProcessor,
             transactionReceiptFactory,
-            Wei.ZERO,
             BlockHeader::getCoinbase,
             protocolSchedule,
             BalConfiguration.DEFAULT,
@@ -246,11 +248,12 @@ class AbstractBlockProcessorBalValidationTest {
 
     final BlockProcessingResult result =
         processor.processBlock(
-            protocolContext,
-            blockchain,
-            worldState,
-            blockWithTxs(header, 1, 500_000L),
-            Optional.empty());
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTxs(header, 1, 500_000L))
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertThat(result.isSuccessful()).isFalse();
     assertThat(result.errorMessage.orElse("")).contains("hash mismatch");
@@ -292,7 +295,6 @@ class AbstractBlockProcessorBalValidationTest {
     BalStubBlockProcessor(
         final MainnetTransactionProcessor transactionProcessor,
         final TransactionReceiptFactory transactionReceiptFactory,
-        final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final ProtocolSchedule protocolSchedule,
         final BalConfiguration balConfiguration,
@@ -300,7 +302,6 @@ class AbstractBlockProcessorBalValidationTest {
       super(
           transactionProcessor,
           transactionReceiptFactory,
-          blockReward,
           miningBeneficiaryCalculator,
           protocolSchedule,
           balConfiguration);
@@ -308,16 +309,8 @@ class AbstractBlockProcessorBalValidationTest {
     }
 
     @Override
-    protected boolean rewardCoinbase(
-        final MutableWorldState worldState,
-        final BlockHeader header,
-        final List<org.hyperledger.besu.ethereum.core.BlockHeader> ommers) {
-      return true;
-    }
-
-    @Override
-    protected TransactionProcessingResult getTransactionProcessingResult(
-        final Optional<PreprocessingContext> preProcessingContext,
+    protected TransactionProcessingResult processTransaction(
+        final Optional<ParallelBlockTransactionProcessor> parallelProcessor,
         final BlockProcessingContext blockProcessingContext,
         final WorldUpdater transactionUpdater,
         final Wei blobGasPrice,
