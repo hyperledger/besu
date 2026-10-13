@@ -128,7 +128,8 @@ class PrecompileFlatTraceTest {
       assertThat(Long.decode(child.getAction().getGas()))
           .isEqualTo(opcode.equals("DELEGATECALL") ? 100_000L : 102_300L);
       if (failure) {
-        assertThat(child.getError()).isNotNull();
+        // bn128Add also records a revert reason, which must not turn its halt into Reverted.
+        assertThat(child.getError()).isEqualTo("Precompile error");
         assertThat(child.getResult()).isNull();
       } else {
         assertThat(child.getError()).isNull();

@@ -306,10 +306,14 @@ public class FlatTraceGenerator {
                     .gasUsed("0x" + Long.toHexString(frame.getPrecompiledGasCost().orElseThrow()))
                     .output(frame.getPrecompileOutputData().orElse(Bytes.EMPTY).toHexString()))
             .error(frame.getExceptionalHaltReason().map(ExceptionalHaltReason::getDescription));
-    frame
-        .getRevertReason()
-        .ifPresent(
-            reason -> child.error(Optional.of("Reverted")).revertReason(reason.toHexString()));
+    // A precompile that halts can also record a revert reason (the altbn128 contracts do); the
+    // halt names its error, so only a precompile that reverted without halting is Reverted.
+    if (frame.getExceptionalHaltReason().isEmpty()) {
+      frame
+          .getRevertReason()
+          .ifPresent(
+              reason -> child.error(Optional.of("Reverted")).revertReason(reason.toHexString()));
+    }
     flatTraces.add(child);
     contexts.peekLast().getBuilder().incSubTraces();
   }
