@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evmtool;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -69,12 +68,12 @@ class T8nServerSubCommandTest {
     final int port = freePort();
     final T8nServerSubCommand subject = new T8nServerSubCommand();
     new CommandLine(subject).parseArgs("--host", "127.0.0.1", "--port", String.valueOf(port));
-    final Thread serverThread = new Thread(subject);
+    final Thread serverThread = new Thread(subject::call);
     serverThread.start();
     try {
       awaitListening(port);
 
-      // EvmTool.main exits the JVM when run() returns, which would stop the server.
+      // EvmTool.main exits the JVM when call() returns, which would stop the server.
       assertThat(serverThread.isAlive()).isTrue();
     } finally {
       serverThread.interrupt();
@@ -84,15 +83,13 @@ class T8nServerSubCommandTest {
   }
 
   @Test
-  void runFailsWhenPortIsTaken() throws Exception {
+  void callReturnsNonZeroWhenPortIsTaken() throws Exception {
     try (ServerSocket taken = new ServerSocket(0, 50, InetAddress.getLoopbackAddress())) {
       final T8nServerSubCommand subject = new T8nServerSubCommand();
       new CommandLine(subject)
           .parseArgs("--host", "127.0.0.1", "--port", String.valueOf(taken.getLocalPort()));
 
-      assertThatThrownBy(subject::run)
-          .isInstanceOf(CommandLine.ExecutionException.class)
-          .hasMessageContaining("Failed to start transition server");
+      assertThat(subject.call()).isEqualTo(1);
     }
   }
 

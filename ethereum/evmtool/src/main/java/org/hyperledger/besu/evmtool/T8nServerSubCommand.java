@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 
@@ -77,7 +78,7 @@ import picocli.CommandLine.ParentCommand;
     name = "t8n-server",
     description = "Run Ethereum State Test server",
     versionProvider = VersionProvider.class)
-public class T8nServerSubCommand implements Runnable {
+public class T8nServerSubCommand implements Callable<Integer> {
 
   @CommandLine.Option(
       names = {"--host"},
@@ -112,7 +113,7 @@ public class T8nServerSubCommand implements Runnable {
   }
 
   @Override
-  public void run() {
+  public Integer call() {
     LogConfigurator.setLevel("", "OFF");
     final Vertx vertx = Vertx.vertx();
     final HttpServer server;
@@ -134,11 +135,10 @@ public class T8nServerSubCommand implements Runnable {
       vertx.close();
       final Throwable cause = e.getCause() != null ? e.getCause() : e;
       System.err.println("Failed to start transition server: " + cause.getMessage());
-      throw new CommandLine.ExecutionException(
-          new CommandLine(this), "Failed to start transition server", cause);
+      return 1;
     }
     System.out.println("Transition server listening on " + server.actualPort());
-    // EvmTool.main exits the JVM as soon as run() returns, so serve until interrupted.
+    // EvmTool.main exits the JVM as soon as call() returns, so serve until interrupted.
     try {
       new CountDownLatch(1).await();
     } catch (InterruptedException e) {
@@ -146,6 +146,7 @@ public class T8nServerSubCommand implements Runnable {
     } finally {
       vertx.close();
     }
+    return 0;
   }
 
   void handle(final HttpServerRequest req, final Buffer body) {
