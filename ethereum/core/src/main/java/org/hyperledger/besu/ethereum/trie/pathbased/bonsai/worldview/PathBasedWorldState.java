@@ -395,8 +395,9 @@ public abstract class PathBasedWorldState
   }
 
   /**
-   * Computes the state root of a frozen world state on its accumulator, not on a copy, so the trie
-   * log can be saved after without computing the root again. Call it after the last change.
+   * Computes the state root of a frozen world state on its accumulator, not on a copy, so {@link
+   * #saveTrieLog} does not compute it again. Computed once on purpose. Call it after the last
+   * change.
    *
    * @return the state root
    */
@@ -408,7 +409,8 @@ public abstract class PathBasedWorldState
   }
 
   /**
-   * Saves the trie log of a block, with the root computed by {@link #rootHashForTrieLog()}.
+   * Saves the trie log of a block, with the root computed by {@link #rootHashForTrieLog()}. The
+   * root check only guards against a header with another root.
    *
    * @param blockHeader the block header
    */

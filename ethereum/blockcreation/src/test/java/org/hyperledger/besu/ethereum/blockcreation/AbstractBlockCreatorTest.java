@@ -457,7 +457,7 @@ class AbstractBlockCreatorTest extends TrustedSetupClassLoaderExtension {
   }
 
   @Test
-  void savedTrieLogIsTheSameAsBlockProcessingSaves() throws Exception {
+  void trieLogFromBlockCreationEqualsTrieLogFromBlockProcessing() throws Exception {
     final CreateOn miningOn = blockCreatorWithBlobGasSupport(true);
     final ProtocolContext protocolContext = miningOn.blockCreator.protocolContext;
     final PathBasedWorldStateProvider worldStateArchive =
