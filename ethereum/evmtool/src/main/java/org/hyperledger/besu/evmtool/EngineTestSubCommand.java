@@ -274,18 +274,17 @@ public class EngineTestSubCommand implements Runnable, IExitCodeGenerator {
       final ObjectMapper mapper,
       final JavaType javaType,
       final FixtureRunner.TestResults results) {
+    byte @Nullable [] content = null;
     final Map<String, EngineTestCaseSpec> tests;
     try {
       // FixtureRunner.collectFiles passes the literal path "stdin" through unresolved, as the
-      // signal to read the fixture from standard input. block-test and state-test both honour it.
-      tests =
-          "stdin".equals(file.toString())
-              ? mapper.readValue(parentCommand.in, javaType)
-              : mapper.readValue(file.toFile(), javaType);
+      // signal to read the fixture from standard input; readFixture honours it.
+      content = FixtureRunner.readFixture(file, parentCommand.in);
+      tests = mapper.readValue(content, javaType);
     } catch (final Exception e) {
-      // Count what the file declared even though it could not be deserialized, so the cases it
+      // Count what the file declared even though it could not be read, so the cases it
       // contributes show up as unaccounted rather than vanishing from the totals.
-      results.recordDeclaredCases(FixtureRunner.countTestCases(file));
+      results.recordDeclaredCases(FixtureRunner.countUnreadableTestCases(content));
       results.recordUnreadable(file.toString(), "not readable as an engine test fixture: " + e);
       return;
     }

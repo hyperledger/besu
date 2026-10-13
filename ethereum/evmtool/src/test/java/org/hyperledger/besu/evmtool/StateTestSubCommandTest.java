@@ -22,9 +22,18 @@ import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import picocli.CommandLine;
 
 class StateTestSubCommandTest {
@@ -219,9 +228,131 @@ class StateTestSubCommandTest {
     final StateTestSubCommand stateTestSubCommand =
         new StateTestSubCommand(new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8)));
     stateTestSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("File content error: ");
+    assertThat(baos.toString(UTF_8)).contains("not readable as state tests");
     // A fixture that could not be parsed has to fail the run.
     assertThat(stateTestSubCommand.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void anUnreadableFixtureInAFilenameListFailsTheRunEvenBesideAPassingOne() {
+    // The filename-list mode used to bypass the declared-case count, so reconciliation was off.
+    final String filenames =
+        resourcePath("access-list.json") + "\n" + resourcePath("bogus-test.json") + "\n";
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(
+            new EvmToolCommand(
+                new ByteArrayInputStream(filenames.getBytes(UTF_8)),
+                new PrintWriter(baos, true, UTF_8)));
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("\"pass\":true").contains("NOT RUN:");
+    assertThat(stateTestSubCommand.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void aCaseWithNoVariantsInAFilenameListIsNotRun(@TempDir final Path dir) throws IOException {
+    final Path fixture = writeFixture(dir, Map.of("emptyPost", Map.of()));
+    final String filenames = resourcePath("access-list.json") + "\n" + fixture + "\n";
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(
+            new EvmToolCommand(
+                new ByteArrayInputStream(filenames.getBytes(UTF_8)),
+                new PrintWriter(baos, true, UTF_8)));
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("NOT RUN: 1 of 2 declared case(s) never executed");
+    assertThat(stateTestSubCommand.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void anUndeserializableStdinFixtureIsCountedBesideAPassingFile() {
+    // Standard input cannot be re-read, so the count has to come from the same buffered content.
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(
+            new EvmToolCommand(
+                new ByteArrayInputStream("{\"a\": 1, \"b\": 2}".getBytes(UTF_8)),
+                new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(stateTestSubCommand).parseArgs("stdin", resourcePath("access-list.json"));
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("NOT RUN: 2 of 3 declared case(s) never executed");
+    assertThat(stateTestSubCommand.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void aStdinFixtureThatIsNotJsonStillCountsAsACaseNotRun() {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(
+            new EvmToolCommand(
+                new ByteArrayInputStream("not json".getBytes(UTF_8)),
+                new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(stateTestSubCommand).parseArgs("stdin", resourcePath("access-list.json"));
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("NOT RUN: 1 of 2 declared case(s) never executed");
+    assertThat(stateTestSubCommand.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void aCaseWhollyExcludedByForkIndexIsFilteredRatherThanNotRun(@TempDir final Path dir)
+      throws IOException {
+    // Selecting one fork from a mixed tree is ordinary use; the cases without it must not fail it.
+    final Map<String, Object> berlin = accessListCase();
+    final Map<String, Object> cancunOnly = accessListCase();
+    cancunOnly.put("post", Map.of("Cancun", ((Map<?, ?>) berlin.get("post")).get("Berlin")));
+    final Path fixture = writeFixture(dir, Map.of("berlin", berlin, "cancunOnly", cancunOnly));
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(stateTestSubCommand).parseArgs("--fork-index", "Berlin", fixture.toString());
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("\"pass\":true").doesNotContain("NOT RUN");
+    assertThat(stateTestSubCommand.getExitCode()).isEqualTo(0);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"legacy-fork-tangerinewhistle.json", "legacy-fork-spuriousdragon.json"})
+  void legacyForkNamesRunUnderTheirEipSchedules(final String fixture) {
+    // The stable fixtures name these forks TangerineWhistle and SpuriousDragon, which the schedules
+    // know as EIP150 and EIP158. A touch test, so the two expect different roots: it only passes
+    // if each alias also picks up its fork's empty-account rule (EIP-161 from SpuriousDragon).
+    assertThat(runWithArgs("--summary-only", fixture))
+        .contains("State test summary: 1 passed, 0 failed")
+        .doesNotContain("NOT RUN");
+  }
+
+  @Test
+  void aCaseWithNoVariantsIsNotRunRatherThanExecuted(@TempDir final Path dir) throws IOException {
+    final Map<String, Object> emptyPost = accessListCase();
+    emptyPost.put("post", Map.of());
+    final Path fixture =
+        writeFixture(dir, Map.of("accessList", accessListCase(), "emptyPost", emptyPost));
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final StateTestSubCommand stateTestSubCommand =
+        new StateTestSubCommand(new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(stateTestSubCommand).parseArgs(fixture.toString());
+    stateTestSubCommand.run();
+    assertThat(baos.toString(UTF_8)).contains("NOT RUN: 1 of 2 declared case(s) never executed");
+    assertThat(stateTestSubCommand.getExitCode()).isEqualTo(1);
+  }
+
+  private static String resourcePath(final String resource) {
+    return StateTestSubCommandTest.class.getResource(resource).getPath();
+  }
+
+  private static Map<String, Object> accessListCase() throws IOException {
+    final Map<String, Map<String, Object>> fixture =
+        JsonUtils.createObjectMapper()
+            .readValue(new File(resourcePath("access-list.json")), new TypeReference<>() {});
+    return new LinkedHashMap<>(fixture.get("accessList"));
+  }
+
+  private static Path writeFixture(final Path dir, final Map<String, ?> cases) throws IOException {
+    final Path fixture = dir.resolve("fixture.json");
+    JsonUtils.createObjectMapper().writeValue(fixture.toFile(), cases);
+    return fixture;
   }
 
   @Test

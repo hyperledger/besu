@@ -247,9 +247,7 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
           }
           final File file = new File(fileName);
           if (file.isFile()) {
-            final Map<String, GeneralStateTestCaseSpec> generalStateTests =
-                stateTestMapper.readValue(file, javaType);
-            executeStateTest(generalStateTests);
+            runFile(file.toPath(), stateTestMapper, javaType);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -334,16 +332,17 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
    * counts agree either way.
    */
   private void runFile(final Path file, final ObjectMapper mapper, final JavaType javaType) {
+    byte @Nullable [] content = null;
     final Map<String, GeneralStateTestCaseSpec> generalStateTests;
     try {
-      generalStateTests =
-          "stdin".equals(file.toString())
-              ? mapper.readValue(parentCommand.in, javaType)
-              : mapper.readValue(file.toFile(), javaType);
+      // FixtureRunner.collectFiles passes the literal path "stdin" through unresolved, as the
+      // signal to read the fixture from standard input; readFixture honours it.
+      content = FixtureRunner.readFixture(file, parentCommand.in);
+      generalStateTests = mapper.readValue(content, javaType);
     } catch (final Exception e) {
-      // Count what the file declared even though it could not be deserialized, so the cases it
+      // Count what the file declared even though it could not be read, so the cases it
       // contributes show up as unaccounted rather than vanishing from the totals.
-      declaredCases.addAndGet(FixtureRunner.countTestCases(file));
+      declaredCases.addAndGet(FixtureRunner.countUnreadableTestCases(content));
       unreadableFiles.add(file + ": " + e);
       return;
     }
@@ -362,34 +361,52 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
             filteredCases.incrementAndGet();
           }
         } else {
-          if (isLastIteration) {
-            executedCases.incrementAndGet();
+          final String test = generalStateTestEntry.getKey();
+          final VariantTally tally = new VariantTally();
+          for (final List<GeneralStateTestCaseEipSpec> specs :
+              generalStateTestEntry.getValue().finalStateSpecs().values()) {
+            try {
+              traceTestSpecs(test, specs, isLastIteration, tally);
+            } catch (final UnsupportedForkException e) {
+              // An unknown fork is a harness configuration problem rather than a test failure, so
+              // let it out.
+              throw e;
+            } catch (final RuntimeException e) {
+              // Record against the test that caused it, so one broken fixture does not abandon the
+              // rest of the file.
+              tally.ran++;
+              if (isLastIteration) {
+                failCount.incrementAndGet();
+                anyFailure.set(true);
+                parentCommand.out.printf("FAIL: %s - execution error: %s%n", test, e);
+              }
+            }
           }
-          generalStateTestEntry
-              .getValue()
-              .finalStateSpecs()
-              .forEach(
-                  (__, specs) -> {
-                    try {
-                      traceTestSpecs(generalStateTestEntry.getKey(), specs, isLastIteration);
-                    } catch (final UnsupportedForkException e) {
-                      // An unknown fork is a harness configuration problem rather than a test
-                      // failure, so let it out.
-                      throw e;
-                    } catch (final RuntimeException e) {
-                      // Record against the test that caused it, so one broken fixture does not
-                      // abandon the rest of the file.
-                      if (isLastIteration) {
-                        failCount.incrementAndGet();
-                        anyFailure.set(true);
-                        parentCommand.out.printf(
-                            "FAIL: %s - execution error: %s%n", generalStateTestEntry.getKey(), e);
-                      }
-                    }
-                  });
+          if (isLastIteration) {
+            // A selected case only counts as executed once a variant actually produced a result.
+            // One whose every variant was deliberately skipped is filtered, not run; one with no
+            // variants at all is neither, and is left to surface as unaccounted.
+            if (tally.ran > 0) {
+              executedCases.incrementAndGet();
+            } else if (tally.skipped > 0) {
+              filteredCases.incrementAndGet();
+            }
+          }
         }
       }
     }
+  }
+
+  /** How the variants of one declared case were disposed of, for the end-of-run reconciliation. */
+  private static final class VariantTally {
+    /** Variants that produced a pass or a fail. */
+    int ran;
+
+    /**
+     * Variants deliberately not run: excluded by the index or fork options, or exceeding the block
+     * gas limit.
+     */
+    int skipped;
   }
 
   /** Whether {@code --test-name} selects the given test. With no filter, everything is selected. */
@@ -412,7 +429,8 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
   private void traceTestSpecs(
       final String test,
       final List<GeneralStateTestCaseEipSpec> specs,
-      final boolean isLastIteration) {
+      final boolean isLastIteration,
+      final VariantTally tally) {
     final OperationTracer tracer = // You should have picked Mercy.
         parentCommand.showJsonResults && isLastIteration
             ? new StreamingOperationTracer(
@@ -429,15 +447,19 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
       if (dataIndex != null && spec.getDataIndex() != dataIndex) {
+        tally.skipped++;
         continue;
       }
       if (gasIndex != null && spec.getGasIndex() != gasIndex) {
+        tally.skipped++;
         continue;
       }
       if (valueIndex != null && spec.getValueIndex() != valueIndex) {
+        tally.skipped++;
         continue;
       }
       if (forkIndex != null && !spec.getFork().equalsIgnoreCase(forkIndex)) {
+        tally.skipped++;
         continue;
       }
 
@@ -461,9 +483,11 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
         // Several of the GeneralStateTests check if the transaction could potentially
         // consume more gas than is left for the block it's attempted to be included in.
         // This check is performed within the `BlockImporter` rather than inside the
-        // `TransactionProcessor`, so these tests are skipped.
+        // `TransactionProcessor`, so these tests are skipped. Only this variant, though: the
+        // others in the list have their own transactions and still have to run.
         if (transaction.getGasLimit() > blockHeader.getGasLimit() - blockHeader.getGasUsed()) {
-          return;
+          tally.skipped++;
+          continue;
         }
 
         final String forkName = fork == null ? spec.getFork() : fork;
@@ -562,6 +586,7 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
         }
       }
 
+      tally.ran++;
       if (isLastIteration) {
         final boolean testPassed = summaryLine.has("pass") && summaryLine.get("pass").asBoolean();
         if (testPassed) {

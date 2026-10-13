@@ -56,6 +56,13 @@ public class ReferenceTestProtocolSchedules {
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
+  /**
+   * Upgrade names the stable fixtures use for forks these schedules know by their EIP names.
+   * Resolved before every lookup, so a fixture naming either gets the same schedule and rules.
+   */
+  private static final Map<String, String> FORK_ALIASES =
+      Map.of("tangerinewhistle", "EIP150", "spuriousdragon", "EIP158");
+
   private static final Set<String> FORKS_WITHOUT_BLOCK_BUILDING =
       Set.of(
           "frontier",
@@ -335,7 +342,11 @@ public class ReferenceTestProtocolSchedules {
   }
 
   public ProtocolSchedule getByName(final String name) {
-    return schedules.get(name.toLowerCase(Locale.ROOT));
+    return schedules.get(canonicalForkName(name).toLowerCase(Locale.ROOT));
+  }
+
+  private static String canonicalForkName(final String fork) {
+    return FORK_ALIASES.getOrDefault(fork.toLowerCase(Locale.ROOT), fork);
   }
 
   public ProtocolSpec geSpecByName(final String name) {
@@ -365,10 +376,10 @@ public class ReferenceTestProtocolSchedules {
   }
 
   public static boolean shouldClearEmptyAccounts(final String fork) {
-    return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(fork);
+    return !SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS.contains(canonicalForkName(fork));
   }
 
   public static boolean supportsBlockBuilding(final String fork) {
-    return !FORKS_WITHOUT_BLOCK_BUILDING.contains(fork.toLowerCase(Locale.ROOT));
+    return !FORKS_WITHOUT_BLOCK_BUILDING.contains(canonicalForkName(fork).toLowerCase(Locale.ROOT));
   }
 }

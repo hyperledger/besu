@@ -17,14 +17,18 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 /**
@@ -70,6 +74,38 @@ class BlockchainTestSubCommandTest {
     assertThat(results).hasSize(1);
     assertThat(results.getFirst().get("pass")).isEqualTo(false);
     assertThat(results.getFirst().get("error")).asString().contains("RLP exception");
+  }
+
+  @Test
+  void anUnreadableFixtureInAFilenameListIsReportedWithoutAbandoningTheRest(@TempDir final Path dir)
+      throws Exception {
+    // The filename-list mode used to abort on the first unreadable file, skipping every file after
+    // it, and bypassed the declared-case count entirely.
+    final Map<String, Object> mixed =
+        MAPPER.readValue(
+            new File(resourcePath("blockchain-mixed-rlp.json")), new TypeReference<>() {});
+    final Path good = dir.resolve("good.json");
+    MAPPER.writeValue(good.toFile(), Map.of("good_london_block", mixed.get("good_london_block")));
+    final String filenames = resourcePath("bogus-test.json") + "\n" + good + "\n";
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final BlockchainTestSubCommand command =
+        new BlockchainTestSubCommand(
+            new EvmToolCommand(
+                new ByteArrayInputStream(filenames.getBytes(UTF_8)),
+                new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(command).parseArgs();
+    command.run();
+
+    assertThat(baos.toString(UTF_8))
+        .contains("Passed:       1")
+        .contains("Unreadable:   1 file(s)")
+        .contains("NOT RUN:      1 of 2 declared case(s) never executed");
+    assertThat(command.getExitCode()).isEqualTo(1);
+  }
+
+  private static String resourcePath(final String resource) {
+    return BlockchainTestSubCommandTest.class.getResource(resource).getPath();
   }
 
   private static String runJsonArray(final String fixtureResource) {

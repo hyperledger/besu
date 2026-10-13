@@ -16,6 +16,7 @@ package org.hyperledger.besu.evmtool;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Fixture handling shared by {@code block-test} and {@code state-test}: expanding paths into
@@ -152,20 +154,43 @@ final class FixtureRunner {
   }
 
   /**
-   * Counts the test cases a fixture file declares, by reading its top-level object fields.
+   * Reads a fixture's raw content, from standard input when {@code file} is the literal {@code
+   * stdin} that {@link #collectFiles} passes through.
    *
-   * <p>Deliberately generic: this has to work on a file whose typed deserialization failed, which
-   * is the case the run reconciliation exists to catch.
+   * <p>Buffered rather than streamed into the typed read so that, if that read fails, {@link
+   * #countUnreadableTestCases} can still count the cases from the same content. Standard input
+   * cannot be read twice.
    *
-   * @param file the fixture file
-   * @return the number of declared cases, or 0 if the file cannot be read as JSON at all
+   * @param file the fixture file, or {@code stdin}
+   * @param stdin the command's standard input
+   * @return the fixture content
+   * @throws IOException if the content cannot be read
    */
-  static int countTestCases(final Path file) {
+  static byte[] readFixture(final Path file, final InputStream stdin) throws IOException {
+    return "stdin".equals(file.toString()) ? stdin.readAllBytes() : Files.readAllBytes(file);
+  }
+
+  /**
+   * Counts the test cases a fixture declares, by reading its top-level object fields.
+   *
+   * <p>Deliberately generic: this has to work on a fixture whose typed deserialization failed,
+   * which is the case the run reconciliation exists to catch. For the same reason it never answers
+   * 0: a fixture too broken to count still stands for at least one case that did not run, and
+   * counting it as none would let it vanish behind a sibling that passed.
+   *
+   * @param content the fixture content, as returned by {@link #readFixture}, or {@code null} if
+   *     even that failed
+   * @return the number of declared cases, and at least 1
+   */
+  static int countUnreadableTestCases(final byte @Nullable [] content) {
+    if (content == null) {
+      return 1;
+    }
     try {
-      final JsonNode root = JSON_ARRAY_MAPPER.readTree(file.toFile());
-      return root != null && root.isObject() ? root.size() : 0;
+      final JsonNode root = JSON_ARRAY_MAPPER.readTree(content);
+      return root != null && root.isObject() ? Math.max(1, root.size()) : 1;
     } catch (final IOException e) {
-      return 0;
+      return 1;
     }
   }
 

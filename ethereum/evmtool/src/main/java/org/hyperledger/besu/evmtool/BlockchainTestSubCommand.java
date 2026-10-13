@@ -218,9 +218,7 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
           }
           final File file = new File(fileName);
           if (file.isFile()) {
-            final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests =
-                blockchainTestMapper.readValue(file, javaType);
-            executeBlockchainTest(blockchainTests, results);
+            runFile(file.toPath(), blockchainTestMapper, javaType, results);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -316,16 +314,17 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
       final ObjectMapper mapper,
       final JavaType javaType,
       final FixtureRunner.TestResults results) {
+    byte @Nullable [] content = null;
     final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests;
     try {
-      blockchainTests =
-          "stdin".equals(file.toString())
-              ? mapper.readValue(parentCommand.in, javaType)
-              : mapper.readValue(file.toFile(), javaType);
+      // FixtureRunner.collectFiles passes the literal path "stdin" through unresolved, as the
+      // signal to read the fixture from standard input; readFixture honours it.
+      content = FixtureRunner.readFixture(file, parentCommand.in);
+      blockchainTests = mapper.readValue(content, javaType);
     } catch (final Exception e) {
-      // Count what the file declared even though it could not be deserialized, so the cases it
+      // Count what the file declared even though it could not be read, so the cases it
       // contributes show up as unaccounted rather than vanishing from the totals.
-      results.recordDeclaredCases(FixtureRunner.countTestCases(file));
+      results.recordDeclaredCases(FixtureRunner.countUnreadableTestCases(content));
       results.recordUnreadable(file.toString(), "not readable as a blockchain test fixture: " + e);
       return;
     }
