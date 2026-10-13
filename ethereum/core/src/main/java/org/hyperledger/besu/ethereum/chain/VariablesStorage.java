@@ -30,7 +30,8 @@ public interface VariablesStorage {
     FINALIZED_BLOCK_HASH("finalizedBlockHash"),
     SAFE_BLOCK_HASH("safeBlockHash"),
     SEQ_NO_STORE("local-enr-seqno"),
-    GENESIS_STATE_HASH("genesisStateHash");
+    GENESIS_STATE_HASH("genesisStateHash"),
+    MISSING_BLOCK_BODIES("missingBlockBodies");
 
     private final String key;
     private final byte[] byteArray;
@@ -68,6 +69,13 @@ public interface VariablesStorage {
 
   Optional<Hash> getGenesisStateHash();
 
+  /**
+   * The range of blocks whose bodies and receipts a snap sync left for later, if there is one.
+   *
+   * @return the blocks that have a header but no body and receipts yet
+   */
+  Optional<MissingBlockBodies> getMissingBlockBodies();
+
   Updater updater();
 
   interface Updater {
@@ -83,6 +91,10 @@ public interface VariablesStorage {
     void setLocalEnrSeqno(Bytes nodeRecord);
 
     void setGenesisStateHash(Hash genesisStateHash);
+
+    void setMissingBlockBodies(MissingBlockBodies missingBlockBodies);
+
+    void removeMissingBlockBodies();
 
     void removeAll();
 

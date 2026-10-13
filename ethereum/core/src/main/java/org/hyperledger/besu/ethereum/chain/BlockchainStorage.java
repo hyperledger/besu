@@ -39,6 +39,13 @@ public interface BlockchainStorage {
 
   Optional<Hash> getSafeBlock();
 
+  /**
+   * The range of blocks whose bodies and receipts a snap sync left for later, if there is one.
+   *
+   * @return the blocks that have a header but no body and receipts yet
+   */
+  Optional<MissingBlockBodies> getMissingBlockBodies();
+
   Optional<BlockHeader> getBlockHeader(Hash blockHash);
 
   Optional<BlockBody> getBlockBody(Hash blockHash);
@@ -100,6 +107,10 @@ public interface BlockchainStorage {
     void setFinalized(Hash blockHash);
 
     void setSafeBlock(Hash blockHash);
+
+    void setMissingBlockBodies(MissingBlockBodies missingBlockBodies);
+
+    void removeMissingBlockBodies();
 
     void removeBlockHash(long blockNumber);
 

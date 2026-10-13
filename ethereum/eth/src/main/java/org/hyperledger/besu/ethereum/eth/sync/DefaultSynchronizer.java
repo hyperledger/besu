@@ -28,7 +28,9 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.sync.common.NoSyncRequiredState;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.MissingBodiesDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapDownloaderFactory;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncChainDownloadPipelineFactory;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncController;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
@@ -65,6 +67,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   private final SyncDurationMetrics syncDurationMetrics;
   private Optional<SnapSyncController> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
+  // downloads the bodies and receipts a snap sync left for later, once the node follows the chain
+  private final Optional<MissingBodiesDownloader> missingBodiesDownloader;
   private final ProtocolContext protocolContext;
   private final PivotBlockSelector pivotBlockSelector;
   private final SyncTerminationCondition terminationCondition;
@@ -155,6 +159,22 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     // create a non-resync fast sync downloader:
     this.fastSyncDownloader = this.fastSyncFactory.get();
 
+    this.missingBodiesDownloader =
+        syncConfig.getSyncMode() == SyncMode.SNAP
+            ? Optional.of(
+                new MissingBodiesDownloader(
+                    new SnapSyncChainDownloadPipelineFactory(
+                        syncConfig,
+                        protocolSchedule,
+                        protocolContext,
+                        ethContext,
+                        new SnapSyncProcessState(),
+                        metricsSystem,
+                        chainDataPruner),
+                    protocolContext.getBlockchain(),
+                    ethContext))
+            : Optional.empty();
+
     metricsSystem.createLongGauge(
         BesuMetricCategory.ETHEREUM,
         "best_known_block_number",
@@ -195,6 +215,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         future = fastSyncDownloader.get().start().thenCompose(this::handleSyncResult);
       } else {
         syncState.markInitialSyncPhaseAsDone();
+        missingBodiesDownloader.ifPresent(MissingBodiesDownloader::start);
         future = startFullSync();
       }
       return future.thenApply(this::finalizeSync);
@@ -209,6 +230,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       LOG.info("Stopping synchronizer");
       fastSyncDownloader.ifPresent(SnapSyncController::stop);
       fullSyncDownloader.ifPresent(FullSyncDownloader::stop);
+      missingBodiesDownloader.ifPresent(MissingBodiesDownloader::stop);
       blockPropagationManager.ifPresent(
           manager -> {
             if (manager.isRunning()) {
@@ -257,6 +279,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       pivotBlockSelector.close();
       syncState.markInitialSyncPhaseAsDone();
     }
+    missingBodiesDownloader.ifPresent(MissingBodiesDownloader::start);
 
     if (terminationCondition.shouldContinueDownload()) {
       return startFullSync();

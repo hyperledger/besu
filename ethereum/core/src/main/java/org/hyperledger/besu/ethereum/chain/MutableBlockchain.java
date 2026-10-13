@@ -125,6 +125,38 @@ public interface MutableBlockchain extends Blockchain {
    */
   void unsafeAdvanceSyncChainHead(List<BlockHeader> blockHeaders);
 
+  /**
+   * Stores the bodies and receipts of blocks below the chain head that a snap sync left for later,
+   * together with their total difficulty. Nothing else about the chain changes.
+   *
+   * @param blocksAndReceipts The blocks and receipts to store
+   * @param indexTransactions Boolean whether to index transactions
+   * @param totalDifficulty The total difficulty of every one of the blocks, which is the same for
+   *     all blocks after the merge
+   */
+  void unsafeStoreSyncBodiesAndReceipts(
+      List<SyncBlockWithReceipts> blocksAndReceipts,
+      boolean indexTransactions,
+      Difficulty totalDifficulty);
+
+  /**
+   * Stores the total difficulty of a block whose header is already stored. A sync that imports
+   * blocks without those before them uses it for the block its import starts after.
+   *
+   * @param blockHeader The header of the block
+   * @param totalDifficulty The total difficulty of the block
+   */
+  void unsafeStoreTotalDifficulty(BlockHeader blockHeader, Difficulty totalDifficulty);
+
+  /**
+   * Records which blocks of the canonical chain have a header but no body and receipts yet, or that
+   * there are none any more.
+   *
+   * @param missingBlockBodies The range of blocks without body and receipts, empty if every block
+   *     from the earliest one on has them
+   */
+  void unsafeSetMissingBlockBodies(Optional<MissingBlockBodies> missingBlockBodies);
+
   void unsafeSetChainHead(final BlockHeader blockHeader, final Difficulty totalDifficulty);
 
   /**

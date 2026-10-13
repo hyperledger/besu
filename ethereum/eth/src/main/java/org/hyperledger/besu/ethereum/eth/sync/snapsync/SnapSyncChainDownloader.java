@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
+import org.hyperledger.besu.ethereum.chain.MissingBlockBodies;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -79,6 +80,14 @@ public class SnapSyncChainDownloader
   private static final int MAX_SAME_STATE_RETRIES = 20;
   private static final long RETRY_WARN_INTERVAL_MS = 30_000L;
   private static final long RETRY_MAX_BACKOFF_MS = 30_000L;
+
+  /**
+   * How many of the newest blocks up to the pivot block get their bodies and receipts before the
+   * sync completes, when those of the blocks before them are left for later. Enough for what the
+   * node looks up while it follows the chain: the blocks back to the last finalized one, and what
+   * is asked of a node about recent blocks.
+   */
+  static final long BLOCKS_BEFORE_PIVOT_WITH_BODIES = 8192;
 
   private final SnapSyncChainDownloadPipelineFactory pipelineFactory;
 
@@ -657,10 +666,11 @@ public class SnapSyncChainDownloader
 
   private CompletableFuture<Void> runStage2ForwardBodiesAndReceipts(final ChainSyncState state) {
 
-    final long stage2StartBlock = forwardDownloadAnchor(state);
-
     final BlockHeader pivotBlockHeader = state.pivotBlockHeader();
     final long pivotBlockNumber = pivotBlockHeader.getNumber();
+
+    final long stage2StartBlock =
+        leaveHistoryForLater(forwardDownloadAnchor(state), pivotBlockNumber);
 
     if (stage2StartBlock >= pivotBlockNumber) {
       LOG.debug(
@@ -693,6 +703,58 @@ public class SnapSyncChainDownloader
                   stage2Duration.toSeconds());
               return null;
             });
+  }
+
+  /**
+   * Decides which block the forward download starts after. That is the anchor, unless the bodies
+   * and receipts of the chain history are left for later. Then the download starts with the newest
+   * blocks before the pivot block, and the blocks between the anchor and those are recorded as
+   * missing with the blockchain: the sync completes without them, and {@link
+   * MissingBodiesDownloader} downloads them while the node follows the chain.
+   *
+   * <p>Only blocks after the merge are left for later. Their total difficulty is that of the
+   * anchor, so it is known without the blocks before them, which the chain head needs when it moves
+   * on from the block the download starts after.
+   *
+   * @param anchorNumber the last block that has its body, with every block before it
+   * @param pivotNumber the number of the pivot block
+   * @return the number of the block to start the forward download after
+   */
+  private long leaveHistoryForLater(final long anchorNumber, final long pivotNumber) {
+    if (!pipelineFactory.isHistoryBackfillEnabled()) {
+      return anchorNumber;
+    }
+    final Optional<MissingBlockBodies> alreadyMissing = blockchain.getMissingBlockBodies();
+    if (alreadyMissing.isPresent() && anchorNumber > alreadyMissing.get().lastBlock()) {
+      // The chain head is above what an earlier round left for later. Only one range is recorded,
+      // so this round downloads everything from the chain head on.
+      return anchorNumber;
+    }
+    final long lastBlockLeft = pivotNumber - BLOCKS_BEFORE_PIVOT_WITH_BODIES;
+    if (lastBlockLeft <= anchorNumber) {
+      return anchorNumber;
+    }
+    final Optional<BlockHeader> firstLeft = blockchain.getBlockHeader(anchorNumber + 1);
+    final Optional<BlockHeader> lastLeft = blockchain.getBlockHeader(lastBlockLeft);
+    final Optional<Difficulty> anchorTotalDifficulty =
+        blockchain
+            .getBlockHeader(anchorNumber)
+            .flatMap(anchor -> blockchain.getTotalDifficultyByHash(anchor.getHash()));
+    if (firstLeft.isEmpty()
+        || lastLeft.isEmpty()
+        || anchorTotalDifficulty.isEmpty()
+        || !firstLeft.get().getDifficulty().isZero()) {
+      return anchorNumber;
+    }
+
+    blockchain.unsafeStoreTotalDifficulty(lastLeft.get(), anchorTotalDifficulty.get());
+    blockchain.unsafeSetMissingBlockBodies(
+        Optional.of(new MissingBlockBodies(anchorNumber + 1, lastBlockLeft)));
+    LOG.info(
+        "Leaving the bodies and receipts of blocks {} to {} for after the sync",
+        anchorNumber + 1,
+        lastBlockLeft);
+    return lastBlockLeft;
   }
 
   /**

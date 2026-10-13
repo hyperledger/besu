@@ -82,6 +82,7 @@ public class DefaultBlockchain implements MutableBlockchain {
   private volatile Difficulty totalDifficulty;
   private volatile int chainHeadTransactionCount;
   private volatile Long earliestBlockNumber;
+  private volatile Optional<MissingBlockBodies> missingBlockBodies;
 
   private Comparator<BlockHeader> blockChoiceRule;
 
@@ -143,6 +144,7 @@ public class DefaultBlockchain implements MutableBlockchain {
     final Hash chainHead = blockchainStorage.getChainHead().get();
     chainHeader = blockchainStorage.getBlockHeader(chainHead).get();
     totalDifficulty = blockchainStorage.getTotalDifficulty(chainHead).get();
+    missingBlockBodies = blockchainStorage.getMissingBlockBodies();
 
     blockchainStorage
         .getBlockBody(chainHead)
@@ -397,12 +399,23 @@ public class DefaultBlockchain implements MutableBlockchain {
 
   @Override
   public Optional<Long> getEarliestBlockNumber() {
+    // The bodies a snap sync left for later are filled in from below, so until they are all there
+    // the blocks this node has completely start above them.
+    final Optional<MissingBlockBodies> missing = getMissingBlockBodies();
+    if (missing.isPresent()) {
+      return Optional.of(missing.get().lastBlock() + 1);
+    }
     if (earliestBlockNumber == null) {
       Optional<Long> maybeEarliestBlockNumber = getFirstNonGenesisBlockNumber();
       maybeEarliestBlockNumber.ifPresent(value -> earliestBlockNumber = value);
       return maybeEarliestBlockNumber;
     }
     return Optional.of(earliestBlockNumber);
+  }
+
+  @Override
+  public Optional<MissingBlockBodies> getMissingBlockBodies() {
+    return missingBlockBodies;
   }
 
   @Override
@@ -765,6 +778,46 @@ public class DefaultBlockchain implements MutableBlockchain {
       }
     }
     updater.commit();
+  }
+
+  @Override
+  public void unsafeStoreSyncBodiesAndReceipts(
+      final List<SyncBlockWithReceipts> blocksAndReceipts,
+      final boolean indexTransactions,
+      final Difficulty totalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
+      final Hash blockHash = blockAndReceipts.getHash();
+      final SyncBlockBody body = blockAndReceipts.getBlock().getBody();
+      updater.putSyncBlockBody(blockHash, body);
+      updater.putSyncTransactionReceipts(blockHash, blockAndReceipts.getReceipts());
+      updater.putTotalDifficulty(blockHash, totalDifficulty);
+      if (indexTransactions) {
+        final List<Hash> listOfTxHashes =
+            body.getEncodedTransactions().stream().map(Hash::hash).toList();
+        indexTransactionHashesForBlock(updater, blockHash, listOfTxHashes);
+      }
+    }
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeStoreTotalDifficulty(
+      final BlockHeader blockHeader, final Difficulty totalDifficulty) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    updater.putTotalDifficulty(blockHeader.getHash(), totalDifficulty);
+    updater.commit();
+  }
+
+  @Override
+  public void unsafeSetMissingBlockBodies(final Optional<MissingBlockBodies> missingBlockBodies) {
+    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    missingBlockBodies.ifPresentOrElse(
+        updater::setMissingBlockBodies, updater::removeMissingBlockBodies);
+    updater.commit();
+    this.missingBlockBodies = missingBlockBodies;
+    // where the blocks start that this node has completely is worked out again when asked for
+    this.earliestBlockNumber = null;
   }
 
   @Override

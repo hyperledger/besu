@@ -72,6 +72,15 @@ public class ChainDataPruner implements BlockAddedObserver {
     this.pruningExecutor = pruningExecutor;
   }
 
+  /**
+   * Whether this pruner removes the bodies and receipts of blocks, and not block access lists only.
+   *
+   * @return true if blocks are pruned
+   */
+  public boolean prunesBlocks() {
+    return pruningMode == PruningMode.PRE_MERGE_PRUNING || config.isBlockPruningEnabled();
+  }
+
   @Override
   public void onBlockAdded(final BlockAddedEvent event) {
     switch (pruningMode) {

@@ -73,6 +73,7 @@ public class SnapSyncConfiguration {
   public static final int DEFAULT_MAX_CONCURRENT_SNAP_REQUESTS_GLOBAL = 200;
 
   public static final Boolean DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED = Boolean.FALSE;
+  public static final Boolean DEFAULT_SNAP_SYNC_HISTORY_BACKFILL_ENABLED = Boolean.FALSE;
   public static final Boolean DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED = Boolean.TRUE;
 
   public static SnapSyncConfiguration getDefault() {
@@ -142,5 +143,10 @@ public class SnapSyncConfiguration {
   @Value.Default
   public Boolean isSnapSyncTransactionIndexingEnabled() {
     return DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED;
+  }
+
+  @Value.Default
+  public Boolean isHistoryBackfillEnabled() {
+    return DEFAULT_SNAP_SYNC_HISTORY_BACKFILL_ENABLED;
   }
 }

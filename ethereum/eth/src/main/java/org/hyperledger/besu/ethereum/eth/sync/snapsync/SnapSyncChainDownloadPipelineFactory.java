@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
+import org.hyperledger.besu.ethereum.chain.MissingBlockBodies;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.encoding.receipt.SyncTransactionReceiptEncoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.DownloadSyncBodiesStep;
@@ -29,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.common.ChainSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.common.DownloadBackwardHeadersStep;
 import org.hyperledger.besu.ethereum.eth.sync.common.DownloadSyncReceiptsStep;
 import org.hyperledger.besu.ethereum.eth.sync.common.ImportSyncBlocksStep;
+import org.hyperledger.besu.ethereum.eth.sync.common.StoreMissingBodiesStep;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.rlp.SimpleNoCopyRlpEncoder;
@@ -37,6 +40,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.services.pipeline.PipelineBuilder;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -226,6 +230,68 @@ public class SnapSyncChainDownloadPipelineFactory {
   }
 
   /**
+   * Creates the pipeline that downloads the bodies and receipts a snap sync left for later. It is
+   * the forward download of the sync, except that the blocks are below the chain head and only
+   * stored.
+   *
+   * @param missingBlockBodies the blocks to download the bodies and receipts of
+   * @param totalDifficulty the total difficulty of every one of those blocks
+   * @return the pipeline, which is complete when the last of the blocks is stored
+   */
+  public Pipeline<List<BlockHeader>> createMissingBodiesDownloadPipeline(
+      final MissingBlockBodies missingBlockBodies, final Difficulty totalDifficulty) {
+    final int downloaderParallelism = syncConfig.getDownloaderParallelism();
+    final int bodiesRequestSize = syncConfig.getDownloaderBodiesRequestSize();
+    final MutableBlockchain blockchain = protocolContext.getBlockchain();
+
+    final StoreMissingBodiesStep storeStep =
+        new StoreMissingBodiesStep(
+            blockchain,
+            missingBlockBodies,
+            totalDifficulty,
+            syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled(),
+            Clock.systemUTC());
+
+    final BlockHeaderSource headerSource =
+        new BlockHeaderSource(
+            blockchain,
+            missingBlockBodies.firstBlock() - 1,
+            missingBlockBodies.lastBlock(),
+            bodiesRequestSize,
+            (long) MAX_BATCHES_AHEAD_OF_CHAIN_HEAD * bodiesRequestSize,
+            storeStep::lastBlockStoredInOrder);
+
+    final DownloadSyncBodiesStep downloadBodiesStep =
+        new DownloadSyncBodiesStep(
+            protocolSchedule,
+            ethContext,
+            Duration.ofMillis(syncConfig.getBodiesDownloadStepTimeoutMillis()));
+
+    final DownloadSyncReceiptsStep downloadReceiptsStep =
+        new DownloadSyncReceiptsStep(
+            protocolSchedule,
+            ethContext,
+            new SyncTransactionReceiptEncoder(new SimpleNoCopyRlpEncoder()),
+            Duration.ofMillis(syncConfig.getForwardDownloadStepTimeoutMillis()));
+
+    return PipelineBuilder.createPipelineFrom(
+            "missingBodiesHeaderSource",
+            headerSource,
+            downloaderParallelism,
+            metricsSystem.createLabelledCounter(
+                BesuMetricCategory.SYNCHRONIZER,
+                "missing_bodies_receipts_pipeline_processed_total",
+                "Number of entries processed by each stage of the pipeline that downloads the bodies and receipts a snap sync left for later",
+                "step",
+                "action"),
+            true,
+            "missingBodiesReceipts")
+        .thenProcessAsync("downloadBodies", downloadBodiesStep, downloaderParallelism)
+        .thenProcessAsync("downloadReceipts", downloadReceiptsStep, downloaderParallelism)
+        .andFinishWith("storeBlocks", storeStep);
+  }
+
+  /**
    * Forward block-access-list (BAL) download from start block to end block. Used for snap/2 to
    * download BALs after headers are available.
    *
@@ -281,6 +347,19 @@ public class SnapSyncChainDownloadPipelineFactory {
         .thenProcessAsyncOrdered(
             "downloadBlockAccessLists", downloadBlockAccessListsStep, downloaderParallelism)
         .andFinishWith("finishBal", headers -> {});
+  }
+
+  /**
+   * Whether the sync may complete without the bodies and receipts of the chain history, which are
+   * then downloaded while the node follows the chain. Not if those blocks are pruned anyway, and
+   * not with snap/2, whose block access lists are downloaded from the chain head on.
+   *
+   * @return true if the bodies and receipts below the newest blocks can be left for later
+   */
+  public boolean isHistoryBackfillEnabled() {
+    return Boolean.TRUE.equals(syncConfig.getSnapSyncConfiguration().isHistoryBackfillEnabled())
+        && chainDataPruner.map(pruner -> !pruner.prunesBlocks()).orElse(true)
+        && !isSnap2Enabled();
   }
 
   public boolean isSnap2Enabled() {

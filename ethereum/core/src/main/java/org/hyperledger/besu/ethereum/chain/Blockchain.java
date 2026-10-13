@@ -61,6 +61,16 @@ public interface Blockchain {
   Optional<Long> getEarliestBlockNumber();
 
   /**
+   * The blocks of the canonical chain whose bodies and receipts a snap sync left for later. They
+   * are below the earliest block, and are downloaded while the node already follows the chain.
+   *
+   * @return the range of blocks that have a header but no body and receipts yet, if there is one
+   */
+  default Optional<MissingBlockBodies> getMissingBlockBodies() {
+    return Optional.empty();
+  }
+
+  /**
    * Return the block number of the head of the canonical chain.
    *
    * @return The block number of the head of the chain.

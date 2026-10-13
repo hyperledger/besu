@@ -147,6 +147,57 @@ public class DefaultBlockchainTest {
   }
 
   @Test
+  public void shouldKeepTheMissingBlockBodiesAcrossARestart() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
+    final Block genesisBlock = gen.genesisBlock();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock);
+    assertThat(blockchain.getMissingBlockBodies()).isEmpty();
+
+    final MissingBlockBodies missing = new MissingBlockBodies(17, 4711);
+    blockchain.unsafeSetMissingBlockBodies(Optional.of(missing));
+
+    assertThat(blockchain.getMissingBlockBodies()).contains(missing);
+    assertThat(
+            createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock)
+                .getMissingBlockBodies())
+        .contains(missing);
+
+    blockchain.unsafeSetMissingBlockBodies(Optional.empty());
+
+    assertThat(blockchain.getMissingBlockBodies()).isEmpty();
+    assertThat(
+            createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock)
+                .getMissingBlockBodies())
+        .isEmpty();
+  }
+
+  @Test
+  public void shouldReportTheBlockAfterTheMissingBodiesAsTheEarliest() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final List<Block> blocks = gen.blockSequence(10);
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(
+            new InMemoryKeyValueStorage(), new InMemoryKeyValueStorage(), blocks.get(0));
+    for (int i = 1; i < blocks.size(); i++) {
+      blockchain.appendBlock(blocks.get(i), gen.receipts(blocks.get(i)));
+    }
+    assertThat(blockchain.getEarliestBlockNumber()).contains(0L);
+
+    blockchain.unsafeSetMissingBlockBodies(Optional.of(new MissingBlockBodies(1, 6)));
+    assertThat(blockchain.getEarliestBlockNumber()).contains(7L);
+
+    // the range shrinks from its first block, which leaves the earliest block where it is
+    blockchain.unsafeSetMissingBlockBodies(Optional.of(new MissingBlockBodies(4, 6)));
+    assertThat(blockchain.getEarliestBlockNumber()).contains(7L);
+
+    blockchain.unsafeSetMissingBlockBodies(Optional.empty());
+    assertThat(blockchain.getEarliestBlockNumber()).contains(0L);
+  }
+
+  @Test
   public void initializeReadOnly_withSmallChain() {
     final BlockDataGenerator gen = new BlockDataGenerator();
     final KeyValueStorage kvStore = new InMemoryKeyValueStorage();

@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_S
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockchainStorage;
+import org.hyperledger.besu.ethereum.chain.MissingBlockBodies;
 import org.hyperledger.besu.ethereum.chain.TransactionLocation;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -138,6 +139,11 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   @Override
   public Optional<Hash> getSafeBlock() {
     return variablesStorage.getSafeBlock();
+  }
+
+  @Override
+  public Optional<MissingBlockBodies> getMissingBlockBodies() {
+    return variablesStorage.getMissingBlockBodies();
   }
 
   @Override
@@ -417,6 +423,16 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     @Override
     public void setSafeBlock(final Hash blockHash) {
       variablesUpdater.setSafeBlock(blockHash);
+    }
+
+    @Override
+    public void setMissingBlockBodies(final MissingBlockBodies missingBlockBodies) {
+      variablesUpdater.setMissingBlockBodies(missingBlockBodies);
+    }
+
+    @Override
+    public void removeMissingBlockBodies() {
+      variablesUpdater.removeMissingBlockBodies();
     }
 
     @Override

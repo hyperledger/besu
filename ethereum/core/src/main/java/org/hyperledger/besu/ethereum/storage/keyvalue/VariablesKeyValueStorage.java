@@ -17,12 +17,15 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.CHAIN_HEAD_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FINALIZED_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.FORK_HEADS;
+import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.MISSING_BLOCK_BODIES;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SAFE_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.chain.VariablesStorage.Keys.SEQ_NO_STORE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.MissingBlockBodies;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 
@@ -70,6 +73,20 @@ public class VariablesKeyValueStorage implements VariablesStorage {
   @Override
   public Optional<Hash> getGenesisStateHash() {
     return getVariable(Keys.GENESIS_STATE_HASH).map(this::bytesToHash);
+  }
+
+  @Override
+  public Optional<MissingBlockBodies> getMissingBlockBodies() {
+    return getVariable(MISSING_BLOCK_BODIES)
+        .map(
+            bytes -> {
+              final RLPInput in = RLP.input(bytes);
+              in.enterList();
+              final MissingBlockBodies missingBlockBodies =
+                  new MissingBlockBodies(in.readLongScalar(), in.readLongScalar());
+              in.leaveList();
+              return missingBlockBodies;
+            });
   }
 
   @Override
@@ -124,6 +141,24 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     @Override
     public void setGenesisStateHash(final Hash genesisStateHash) {
       setVariable(Keys.GENESIS_STATE_HASH, genesisStateHash.getBytes());
+    }
+
+    @Override
+    public void setMissingBlockBodies(final MissingBlockBodies missingBlockBodies) {
+      setVariable(
+          MISSING_BLOCK_BODIES,
+          RLP.encode(
+              out -> {
+                out.startList();
+                out.writeLongScalar(missingBlockBodies.firstBlock());
+                out.writeLongScalar(missingBlockBodies.lastBlock());
+                out.endList();
+              }));
+    }
+
+    @Override
+    public void removeMissingBlockBodies() {
+      removeVariable(MISSING_BLOCK_BODIES);
     }
 
     @Override
