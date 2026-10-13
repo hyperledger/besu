@@ -123,7 +123,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
     if (transactionType.supportsBlob()) {
       final ValidationResult<TransactionInvalidReason> blobTransactionResult =
-          blobsValidator.validate(transaction);
+          blobsValidator.validate(transaction, transactionValidationParams);
       if (!blobTransactionResult.isValid()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug(
@@ -394,11 +394,10 @@ public class MainnetTransactionValidator implements TransactionValidator {
               halfCurveOrder, signature.getS()));
     }
 
-    // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
-    // IllegalArgumentException for "Invalid point compression" for bad signatures.
+    // sender recovery throws for a signature that does not recover a public key
     try {
       transaction.getSender();
-    } catch (final IllegalArgumentException e) {
+    } catch (final IllegalArgumentException | IllegalStateException e) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,
           "sender could not be extracted from transaction signature");
