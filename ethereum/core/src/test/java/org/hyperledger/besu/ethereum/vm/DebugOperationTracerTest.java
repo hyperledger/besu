@@ -485,8 +485,6 @@ class DebugOperationTracerTest {
 
     traceFrame(frame, tracer, anOperation);
 
-    // A child call returning output, or a precompile writing its result, updates the parent frame's
-    // memory outside of any traced operation and without changing its size.
     frame.writeMemory(0L, 32, WORD_2, true);
     traceFrame(frame, tracer, anOperation);
 

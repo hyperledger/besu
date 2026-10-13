@@ -435,31 +435,14 @@ public class DebugTraceBlockStreamerHexEncodingTest {
                 .traceMemory(true)
                 .build(),
             java.util.Map.of());
-    final Transaction tx =
-        Transaction.builder()
-            .type(TransactionType.EIP1559)
-            .nonce(0)
-            .maxPriorityFeePerGas(Wei.of(5))
-            .maxFeePerGas(Wei.of(7))
-            .gasLimit(200_000L)
-            .value(Wei.ZERO)
-            .payload(DOUBLE_MSTORE_INIT_CODE)
-            .chainId(BigInteger.valueOf(42))
-            .signAndBuild(KEY_PAIR);
-    final Block block = buildBlock(tx);
     final DebugTraceBlockStreamer streamer =
         new DebugTraceBlockStreamer(
-            block, withMemory, fixture.getProtocolSchedule(), blockchainQueries);
+            buildBlock(contractCreation(DOUBLE_MSTORE_INIT_CODE)),
+            withMemory,
+            fixture.getProtocolSchedule(),
+            blockchainQueries);
 
-    final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    streamer.streamTo(out, mapper, () -> true);
-    final JsonNode streamed = mapper.readTree(out.toByteArray());
-    final JsonNode accumulated =
-        mapper.readTree(mapper.writeValueAsBytes(streamer.accumulateAll(() -> true)));
-
-    for (final JsonNode root : List.of(streamed, accumulated)) {
-      final JsonNode structLogs = root.get(0).get("result").get("structLogs");
-
+    for (final JsonNode structLogs : streamedAndAccumulatedStructLogs(streamer)) {
       assertThat(structLogs.get(2).get("op").asText()).isEqualTo("MSTORE");
       assertThat(structLogs.get(2).has("memory")).isFalse();
 
