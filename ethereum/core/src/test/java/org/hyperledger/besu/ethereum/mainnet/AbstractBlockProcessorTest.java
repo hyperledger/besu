@@ -28,9 +28,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -39,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.StateGasCostCalculator;
@@ -59,19 +57,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 abstract class AbstractBlockProcessorTest {
 
   @Mock private ProtocolContext protocolContext;
+  @Mock private MutableBlockchain blockchain;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   @Mock private ProtocolSchedule protocolSchedule;
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
+  @Mock private BlockRewardProcessor blockRewardProcessor;
 
-  final Blockchain blockchain = new ReferenceTestBlockchain();
   final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
   private TestBlockProcessor blockProcessor;
 
   @BeforeEach
   void baseSetup() {
+    lenient().when(protocolContext.getBlockchain()).thenReturn(blockchain);
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    // Reject at the reward step so processBlock stops right after withdrawals; these tests only
+    // care about withdrawal handling, not the BAL / state-root steps that follow.
+    lenient()
+        .when(blockRewardProcessor.rewardBeneficiaries(any(), any(), any(), any()))
+        .thenReturn(false);
+    lenient().when(protocolSpec.getBlockRewardProcessor()).thenReturn(blockRewardProcessor);
     lenient()
         .when(protocolSpec.getPreExecutionProcessor())
         .thenReturn(new FrontierPreExecutionProcessor());
@@ -82,9 +88,7 @@ abstract class AbstractBlockProcessorTest {
         new TestBlockProcessor(
             transactionProcessor,
             transactionReceiptFactory,
-            Wei.ZERO,
             BlockHeader::getCoinbase,
-            true,
             protocolSchedule,
             BalConfiguration.DEFAULT);
   }
@@ -93,7 +97,12 @@ abstract class AbstractBlockProcessorTest {
   void withProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
@@ -101,7 +110,12 @@ abstract class AbstractBlockProcessorTest {
   void withNoProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
@@ -111,7 +125,12 @@ abstract class AbstractBlockProcessorTest {
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(withdrawals))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any(), any());
   }
 
@@ -122,7 +141,12 @@ abstract class AbstractBlockProcessorTest {
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(withdrawals))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
@@ -167,28 +191,15 @@ abstract class AbstractBlockProcessorTest {
     protected TestBlockProcessor(
         final MainnetTransactionProcessor transactionProcessor,
         final TransactionReceiptFactory transactionReceiptFactory,
-        final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        final boolean skipZeroBlockRewards,
         final ProtocolSchedule protocolSchedule,
         final BalConfiguration balConfiguration) {
       super(
           transactionProcessor,
           transactionReceiptFactory,
-          blockReward,
           miningBeneficiaryCalculator,
-          skipZeroBlockRewards,
           protocolSchedule,
           balConfiguration);
-    }
-
-    @Override
-    boolean rewardCoinbase(
-        final MutableWorldState worldState,
-        final BlockHeader header,
-        final List<BlockHeader> ommers,
-        final boolean skipZeroBlockRewards) {
-      return false;
     }
   }
 
