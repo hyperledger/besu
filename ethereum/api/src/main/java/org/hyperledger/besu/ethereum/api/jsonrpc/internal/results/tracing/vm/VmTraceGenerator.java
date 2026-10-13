@@ -103,8 +103,9 @@ public class VmTraceGenerator {
   private boolean mustIgnore(final TraceFrame frame) {
     if ("STOP".equals(frame.getOpcode()) && transactionTrace.getTraceFrames().size() == 1) {
       return true;
-    } else if (frame.isVirtualOperation() && frame.isPrecompile()) {
-      // synthetic frame for a transaction sent directly to a precompile: no opcode was executed
+    } else if (frame.isVirtualOperation()) {
+      // synthetic frame, such as a transaction sent directly to a precompile or a root creation
+      // that failed before its first opcode: no opcode was executed
       return true;
     } else if (frame.getExceptionalHaltReason().isPresent()) {
       final Optional<ExceptionalHaltReason> haltReason = frame.getExceptionalHaltReason();
@@ -112,7 +113,7 @@ public class VmTraceGenerator {
           && haltReason.get() != ExceptionalHaltReason.INSUFFICIENT_GAS
           && haltReason.get() != ExceptionalHaltReason.ILLEGAL_STATE_CHANGE;
     } else {
-      return frame.isVirtualOperation();
+      return false;
     }
   }
 
