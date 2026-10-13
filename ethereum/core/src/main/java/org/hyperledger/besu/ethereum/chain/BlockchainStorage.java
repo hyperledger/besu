@@ -64,6 +64,29 @@ public interface BlockchainStorage {
 
   Updater updater();
 
+  /**
+   * An updater whose writes to the block data skip the write-ahead log of the storage. A crash
+   * loses them until {@link #flush()} returns. For blocks that can be downloaded again.
+   *
+   * @return the updater
+   */
+  default Updater unloggedUpdater() {
+    return updater();
+  }
+
+  /** Writes the block data that is in memory to disk, and returns when it is there. */
+  default void flush() {}
+
+  /**
+   * Whether blocks that were stored are still waiting in memory to be written out. Storing more
+   * while they do can make the storage stop every write until they are.
+   *
+   * @return true if a write buffer of the storage waits to be flushed
+   */
+  default boolean isWriteBufferWaitingForFlush() {
+    return false;
+  }
+
   interface Updater {
 
     void putBlockHeader(Hash blockHash, BlockHeader blockHeader);

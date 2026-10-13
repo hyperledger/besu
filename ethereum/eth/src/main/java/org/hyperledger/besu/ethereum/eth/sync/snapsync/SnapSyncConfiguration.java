@@ -74,6 +74,8 @@ public class SnapSyncConfiguration {
 
   public static final Boolean DEFAULT_SNAP_SYNC_TRANSACTION_INDEXING_ENABLED = Boolean.FALSE;
   public static final Boolean DEFAULT_SNAP_SYNC_HISTORY_BACKFILL_ENABLED = Boolean.FALSE;
+  // no limit
+  public static final int DEFAULT_SNAP_SYNC_HISTORY_BACKFILL_MAX_MEGABYTES_PER_SECOND = 0;
   public static final Boolean DEFAULT_SNAP_SYNC_SAVE_PRE_MERGE_HEADERS_ONLY_ENABLED = Boolean.TRUE;
 
   public static SnapSyncConfiguration getDefault() {
@@ -148,5 +150,16 @@ public class SnapSyncConfiguration {
   @Value.Default
   public Boolean isHistoryBackfillEnabled() {
     return DEFAULT_SNAP_SYNC_HISTORY_BACKFILL_ENABLED;
+  }
+
+  /**
+   * How many megabytes of bodies and receipts the download of the chain history stores per second
+   * at most, while the node already follows the chain. 0 for no limit.
+   *
+   * @return the limit in megabytes per second
+   */
+  @Value.Default
+  public int getHistoryBackfillMaxMegabytesPerSecond() {
+    return DEFAULT_SNAP_SYNC_HISTORY_BACKFILL_MAX_MEGABYTES_PER_SECOND;
   }
 }

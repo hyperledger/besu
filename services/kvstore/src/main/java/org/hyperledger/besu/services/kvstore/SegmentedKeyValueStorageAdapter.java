@@ -126,6 +126,22 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
   }
 
   @Override
+  public KeyValueStorageTransaction startUnloggedTransaction() throws StorageException {
+    return new KeyValueStorageTransactionAdapter(
+        segmentIdentifier, storage.startUnloggedTransaction());
+  }
+
+  @Override
+  public void flush() throws StorageException {
+    storage.flush(segmentIdentifier);
+  }
+
+  @Override
+  public boolean isWriteBufferWaitingForFlush() {
+    return storage.isWriteBufferWaitingForFlush(segmentIdentifier);
+  }
+
+  @Override
   public boolean isClosed() {
     return storage.isClosed();
   }
@@ -150,7 +166,19 @@ public class SegmentedKeyValueStorageAdapter implements KeyValueStorage {
      */
     public KeyValueStorageTransactionAdapter(
         final SegmentIdentifier segmentIdentifier, final SegmentedKeyValueStorage storage) {
-      this.segmentedTransaction = storage.startTransaction();
+      this(segmentIdentifier, storage.startTransaction());
+    }
+
+    /**
+     * Instantiates a new Key value storage transaction adapter for a transaction that is started.
+     *
+     * @param segmentIdentifier the segmentIdentifier to use for the wrapped transaction
+     * @param segmentedTransaction the transaction to wrap
+     */
+    public KeyValueStorageTransactionAdapter(
+        final SegmentIdentifier segmentIdentifier,
+        final SegmentedKeyValueStorageTransaction segmentedTransaction) {
+      this.segmentedTransaction = segmentedTransaction;
       this.segmentIdentifier = segmentIdentifier;
     }
 

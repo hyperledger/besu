@@ -71,6 +71,17 @@ public interface Blockchain {
   }
 
   /**
+   * Whether blocks that were stored are still waiting in memory to be written out. Storing many
+   * more while they do can make the storage stop every write, the import of a new block included,
+   * until they are. What stores blocks that are in no hurry waits for this to be false.
+   *
+   * @return true if a write buffer of the block storage waits to be flushed
+   */
+  default boolean isStorageWaitingForFlush() {
+    return false;
+  }
+
+  /**
    * Return the block number of the head of the canonical chain.
    *
    * @return The block number of the head of the chain.

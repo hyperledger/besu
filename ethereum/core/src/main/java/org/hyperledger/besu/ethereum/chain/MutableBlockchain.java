@@ -129,6 +129,11 @@ public interface MutableBlockchain extends Blockchain {
    * Stores the bodies and receipts of blocks below the chain head that a snap sync left for later,
    * together with their total difficulty. Nothing else about the chain changes.
    *
+   * <p>They are written past the write-ahead log of the storage, so that they are written to disk
+   * once and not twice. A crash loses what was stored since the last {@link
+   * #unsafePersistSyncBodiesAndReceipts()}, which has to come before anything is recorded that
+   * relies on them being there.
+   *
    * @param blocksAndReceipts The blocks and receipts to store
    * @param indexTransactions Boolean whether to index transactions
    * @param totalDifficulty The total difficulty of every one of the blocks, which is the same for
@@ -138,6 +143,12 @@ public interface MutableBlockchain extends Blockchain {
       List<SyncBlockWithReceipts> blocksAndReceipts,
       boolean indexTransactions,
       Difficulty totalDifficulty);
+
+  /**
+   * Makes the bodies and receipts stored with {@link #unsafeStoreSyncBodiesAndReceipts(List,
+   * boolean, Difficulty)} survive a crash, and returns once they do.
+   */
+  default void unsafePersistSyncBodiesAndReceipts() {}
 
   /**
    * Stores the total difficulty of a block whose header is already stored. A sync that imports

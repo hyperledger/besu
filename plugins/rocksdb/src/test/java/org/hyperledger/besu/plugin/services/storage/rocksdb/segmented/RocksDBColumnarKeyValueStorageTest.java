@@ -27,12 +27,14 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.kvstore.AbstractKeyValueStorageTest;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
@@ -43,9 +45,11 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
@@ -413,6 +417,86 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
       assertThat(labelledCountersHelpArgs.getValue())
           .isEqualTo("Number of RocksDB transactions rolled back.");
     }
+  }
+
+  @Test
+  public void unloggedWritesSurviveACrashOnlyOnceTheirSegmentIsFlushed(@TempDir final Path testPath)
+      throws Exception {
+    final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, TestSegment.FOO);
+    final Path dbPath = testPath.resolve("db");
+    final byte[] logged = bytesFromHexString("01");
+    final byte[] unlogged = bytesFromHexString("02");
+    final byte[] value = bytesFromHexString("0FFF");
+    // the variant of createSegmentedStore that opens the database at the path it is given
+    try (SegmentedKeyValueStorage store =
+        createSegmentedStore(dbPath, new NoOpMetricsSystem(), segments, List.of())) {
+      final SegmentedKeyValueStorageTransaction loggedTx = store.startTransaction();
+      loggedTx.put(TestSegment.FOO, logged, value);
+      loggedTx.commit();
+      final KeyValueStorageTransaction unloggedTx =
+          new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store).startUnloggedTransaction();
+      unloggedTx.put(unlogged, value);
+      unloggedTx.commit();
+      assertThat(store.get(TestSegment.FOO, unlogged)).contains(value);
+
+      // what a crash leaves behind now: the logged write is replayed from the log, the other lost
+      final Path crashed = copyOfTheFiles(dbPath, testPath.resolve("crashed"));
+      try (SegmentedKeyValueStorage recovered =
+          createSegmentedStore(crashed, new NoOpMetricsSystem(), segments, List.of())) {
+        assertThat(recovered.get(TestSegment.FOO, logged)).contains(value);
+        assertThat(recovered.get(TestSegment.FOO, unlogged)).isEmpty();
+      }
+
+      new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store).flush();
+      final Path crashedAfterFlush = copyOfTheFiles(dbPath, testPath.resolve("flushed"));
+      try (SegmentedKeyValueStorage recovered =
+          createSegmentedStore(crashedAfterFlush, new NoOpMetricsSystem(), segments, List.of())) {
+        assertThat(recovered.get(TestSegment.FOO, logged)).contains(value);
+        assertThat(recovered.get(TestSegment.FOO, unlogged)).contains(value);
+      }
+    }
+  }
+
+  private static Path copyOfTheFiles(final Path from, final Path to) throws IOException {
+    Files.createDirectories(to);
+    try (Stream<Path> files = Files.list(from)) {
+      for (final Path file : files.toList()) {
+        if (!file.getFileName().toString().equals("LOCK")) {
+          Files.copy(file, to.resolve(file.getFileName()));
+        }
+      }
+    }
+    return to;
+  }
+
+  @Test
+  public void writeBufferWaitsForFlushOnlyOnceItIsFull() throws Exception {
+    final SegmentedKeyValueStorage store = createSegmentedStore();
+    final KeyValueStorage fooStore = new SegmentedKeyValueStorageAdapter(TestSegment.FOO, store);
+    assertThat(store.isWriteBufferWaitingForFlush(TestSegment.FOO)).isFalse();
+    assertThat(fooStore.isWriteBufferWaitingForFlush()).isFalse();
+
+    // a megabyte at a time until a write buffer is full and handed over to be flushed
+    final byte[] value = new byte[1024 * 1024];
+    final Random random = new Random(1);
+    boolean seenWaiting = false;
+    for (int i = 0; i < 256 && !seenWaiting; i++) {
+      random.nextBytes(value);
+      final SegmentedKeyValueStorageTransaction tx = store.startTransaction();
+      tx.put(TestSegment.FOO, ByteBuffer.allocate(4).putInt(i).array(), value);
+      tx.commit();
+      seenWaiting = fooStore.isWriteBufferWaitingForFlush();
+    }
+    assertThat(seenWaiting).isTrue();
+    // only the segment that was written to
+    assertThat(store.isWriteBufferWaitingForFlush(TestSegment.BAR)).isFalse();
+
+    final long deadline = System.nanoTime() + Duration.ofSeconds(60).toNanos();
+    while (store.isWriteBufferWaitingForFlush(TestSegment.FOO) && System.nanoTime() < deadline) {
+      Thread.sleep(10);
+    }
+    assertThat(store.isWriteBufferWaitingForFlush(TestSegment.FOO)).isFalse();
+    store.close();
   }
 
   @Test

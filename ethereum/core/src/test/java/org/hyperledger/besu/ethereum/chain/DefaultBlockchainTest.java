@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.core.SyncBlockBody;
 import org.hyperledger.besu.ethereum.core.SyncBlockWithReceipts;
@@ -61,6 +62,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
@@ -144,6 +146,66 @@ public class DefaultBlockchainTest {
     assertBlockDataIsStored(blockchain, genesisBlock, Collections.emptyList());
     assertBlockIsHead(blockchain, genesisBlock);
     assertTotalDifficultiesAreConsistent(blockchain, genesisBlock);
+  }
+
+  @Test
+  public void shouldStoreBodiesLeftForLaterPastTheLogUntilTheyArePersisted() {
+    final AtomicInteger unloggedTransactions = new AtomicInteger();
+    final AtomicInteger flushes = new AtomicInteger();
+    final KeyValueStorage kvStore =
+        new InMemoryKeyValueStorage() {
+          @Override
+          public KeyValueStorageTransaction startUnloggedTransaction() {
+            unloggedTransactions.incrementAndGet();
+            return startTransaction();
+          }
+
+          @Override
+          public void flush() {
+            flushes.incrementAndGet();
+          }
+        };
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final List<Block> chain = gen.blockSequence(3);
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(kvStore, new InMemoryKeyValueStorage(), chain.getFirst());
+    blockchain.storeBlockHeaders(List.of(chain.get(1).getHeader(), chain.get(2).getHeader()));
+
+    blockchain.unsafeStoreSyncBodiesAndReceipts(
+        List.of(
+            new SyncBlockWithReceipts(
+                new SyncBlock(
+                    chain.get(1).getHeader(),
+                    SyncBlockBody.emptyWithNullWithdrawals(
+                        ProtocolScheduleFixture.TESTING_NETWORK)),
+                List.of())),
+        false,
+        Difficulty.ONE);
+
+    assertThat(unloggedTransactions).hasValue(1);
+    assertThat(flushes).hasValue(0);
+    assertThat(blockchain.getBlockBody(chain.get(1).getHash())).isPresent();
+    blockchain.unsafePersistSyncBodiesAndReceipts();
+    assertThat(flushes).hasValue(1);
+  }
+
+  @Test
+  public void shouldTellWhetherTheBlockStorageWaitsForAFlush() {
+    final AtomicBoolean waiting = new AtomicBoolean();
+    final KeyValueStorage kvStore =
+        new InMemoryKeyValueStorage() {
+          @Override
+          public boolean isWriteBufferWaitingForFlush() {
+            return waiting.get();
+          }
+        };
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(
+            kvStore, new InMemoryKeyValueStorage(), new BlockDataGenerator().genesisBlock());
+
+    assertThat(blockchain.isStorageWaitingForFlush()).isFalse();
+    waiting.set(true);
+    assertThat(blockchain.isStorageWaitingForFlush()).isTrue();
   }
 
   @Test

@@ -419,6 +419,16 @@ public class DefaultBlockchain implements MutableBlockchain {
   }
 
   @Override
+  public void unsafePersistSyncBodiesAndReceipts() {
+    blockchainStorage.flush();
+  }
+
+  @Override
+  public boolean isStorageWaitingForFlush() {
+    return blockchainStorage.isWriteBufferWaitingForFlush();
+  }
+
+  @Override
   public Hash getChainHeadHash() {
     return chainHeader.getHash();
   }
@@ -785,7 +795,7 @@ public class DefaultBlockchain implements MutableBlockchain {
       final List<SyncBlockWithReceipts> blocksAndReceipts,
       final boolean indexTransactions,
       final Difficulty totalDifficulty) {
-    final BlockchainStorage.Updater updater = blockchainStorage.updater();
+    final BlockchainStorage.Updater updater = blockchainStorage.unloggedUpdater();
     for (final SyncBlockWithReceipts blockAndReceipts : blocksAndReceipts) {
       final Hash blockHash = blockAndReceipts.getHash();
       final SyncBlockBody body = blockAndReceipts.getBlock().getBody();

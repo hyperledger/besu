@@ -250,6 +250,7 @@ public class SnapSyncChainDownloadPipelineFactory {
             missingBlockBodies,
             totalDifficulty,
             syncConfig.getSnapSyncConfiguration().isSnapSyncTransactionIndexingEnabled(),
+            syncConfig.getSnapSyncConfiguration().getHistoryBackfillMaxMegabytesPerSecond(),
             Clock.systemUTC());
 
     final BlockHeaderSource headerSource =

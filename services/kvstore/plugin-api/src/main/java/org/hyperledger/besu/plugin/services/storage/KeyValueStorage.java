@@ -138,6 +138,35 @@ public interface KeyValueStorage extends Closeable {
   KeyValueStorageTransaction startTransaction() throws StorageException;
 
   /**
+   * Begins a transaction whose writes skip the write-ahead log, see {@link
+   * SegmentedKeyValueStorage#startUnloggedTransaction()}.
+   *
+   * @return An object representing the transaction.
+   * @throws StorageException problem encountered when starting a new transaction.
+   */
+  default KeyValueStorageTransaction startUnloggedTransaction() throws StorageException {
+    return startTransaction();
+  }
+
+  /**
+   * Writes what is in memory to disk and returns when it is there, see {@link
+   * SegmentedKeyValueStorage#flush}.
+   *
+   * @throws StorageException problem encountered while flushing.
+   */
+  default void flush() throws StorageException {}
+
+  /**
+   * Whether data that was written to this storage is still waiting in memory to be written out, see
+   * {@link SegmentedKeyValueStorage#isWriteBufferWaitingForFlush}.
+   *
+   * @return true if a write buffer of this storage waits to be flushed
+   */
+  default boolean isWriteBufferWaitingForFlush() {
+    return false;
+  }
+
+  /**
    * Return Whether the underlying storage is closed.
    *
    * @return boolean indicating whether the storage is closed.
