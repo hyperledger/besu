@@ -15,7 +15,6 @@
 package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -133,11 +132,10 @@ class QbftBlockValidatorAdaptorTest {
   }
 
   @Test
-  void ownsBlockWhileExecutingItAndAfterwards() {
+  void validatingABlockDoesNotMakeConsensusOwnIt() {
+    // e.g. the prepared block of a round change: only proposals are claimed, by ProposalValidator
     final BlockDataGenerator generator = new BlockDataGenerator();
     final Block block = generator.block();
-    final List<TransactionReceipt> receipts = generator.receipts(block);
-    assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isFalse();
     when(blockValidator.validateAndProcessBlock(
             protocolContext,
             block,
@@ -145,58 +143,16 @@ class QbftBlockValidatorAdaptorTest {
             HeaderValidationMode.FULL,
             Optional.empty(),
             false))
-        .thenAnswer(
-            invocation -> {
-              // a NewBlock announcement arriving mid-execution must already be claimed
-              assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isTrue();
-              return new BlockProcessingResult(
-                  Optional.of(new BlockProcessingOutputs(mock(MutableWorldState.class), receipts)));
-            });
+        .thenReturn(
+            new BlockProcessingResult(
+                Optional.of(
+                    new BlockProcessingOutputs(
+                        mock(MutableWorldState.class), generator.receipts(block)))));
 
     new QbftBlockValidatorAdaptor(blockValidator, protocolContext, validatedBlockCache)
         .validateBlock(new QbftBlockAdaptor(block), Optional.empty());
 
-    assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isTrue();
-    // released once the consensus import consumes the entry
-    validatedBlockCache.take(block.getHash(), block.getHeader().getNumber());
-    assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isFalse();
-  }
-
-  @Test
-  void releasesBlockWhenValidationFails() {
-    final Block block = new BlockDataGenerator().block();
-    when(blockValidator.validateAndProcessBlock(
-            protocolContext,
-            block,
-            HeaderValidationMode.LIGHT,
-            HeaderValidationMode.FULL,
-            Optional.empty(),
-            false))
-        .thenReturn(new BlockProcessingResult("failed"));
-
-    new QbftBlockValidatorAdaptor(blockValidator, protocolContext, validatedBlockCache)
-        .validateBlock(new QbftBlockAdaptor(block), Optional.empty());
-
-    assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isFalse();
-  }
-
-  @Test
-  void releasesBlockWhenValidationThrows() {
-    final Block block = new BlockDataGenerator().block();
-    when(blockValidator.validateAndProcessBlock(
-            protocolContext,
-            block,
-            HeaderValidationMode.LIGHT,
-            HeaderValidationMode.FULL,
-            Optional.empty(),
-            false))
-        .thenThrow(new IllegalStateException("boom"));
-
-    final QbftBlockValidatorAdaptor adaptor =
-        new QbftBlockValidatorAdaptor(blockValidator, protocolContext, validatedBlockCache);
-    assertThatThrownBy(() -> adaptor.validateBlock(new QbftBlockAdaptor(block), Optional.empty()))
-        .isInstanceOf(IllegalStateException.class);
-
+    assertThat(validatedBlockCache.get(block.getHash())).isPresent();
     assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isFalse();
   }
 

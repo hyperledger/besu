@@ -88,6 +88,16 @@ class QbftBlockImporterAdaptorTest {
   }
 
   @Test
+  void claimsAndReleasesProposalInSharedCache() {
+    newImporter().claim(block);
+    assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isTrue();
+
+    // any adaptor instance releases it, they are created per call but share the cache
+    newImporter().releaseClaim(block);
+    assertThat(validatedBlockCache.isOwnedByConsensus(block.getHash())).isFalse();
+  }
+
+  @Test
   void importsBlockSuccessfullyWhenBesuBlockAlreadyImported() {
     when(blockImporter.importBlock(
             protocolContext,

@@ -85,6 +85,16 @@ public class QbftBlockImporterAdaptor implements QbftBlockImporter {
     return blockImportResult.isImported();
   }
 
+  @Override
+  public void claim(final QbftBlock proposal) {
+    validatedBlockCache.claim(proposal.getHash(), proposal.getHeader().getNumber());
+  }
+
+  @Override
+  public void releaseClaim(final QbftBlock proposal) {
+    validatedBlockCache.release(proposal.getHash());
+  }
+
   /**
    * Imports a block whose proposal was already processed, without executing it again. Block
    * creation or validation saved its trie log, used to move the head world state after append, like

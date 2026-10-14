@@ -65,45 +65,46 @@ public class ValidatedBlockCache {
 
   private final Map<Hash, ValidatedBlock> entries = new SizeLimitedMap<>(MAX_ENTRIES);
 
-  /** Hash to block number of proposals whose execution has started but not yet finished. */
-  private final Map<Hash, Long> validating = new SizeLimitedMap<>(MAX_ENTRIES);
+  /**
+   * Hash to block number of the proposals the current QBFT round claimed. Kept apart from {@link
+   * #entries}: outputs outlive the round that produced them, a claim does not.
+   */
+  private final Map<Hash, Long> claimed = new SizeLimitedMap<>(MAX_ENTRIES);
 
   /** Creates an empty cache. */
   public ValidatedBlockCache() {}
 
   /**
-   * Record that the consensus layer has started executing a proposal. Until {@link #put} or {@link
-   * #clearValidating} is called for the same hash, {@link #isOwnedByConsensus} returns true, so a
-   * {@code NewBlock} announcement for that block arriving mid-execution is not imported a second
-   * time by the ETH layer.
+   * Record that the current QBFT round is validating this proposal, or has accepted it and will
+   * import it if the round commits. Until {@link #release}, {@link #isOwnedByConsensus} returns
+   * true, so a {@code NewBlock} announcement for that block is not imported by the ETH layer at the
+   * same time. Claims of lower heights are dropped, their blocks are already decided.
    *
-   * @param blockHash the block hash
+   * @param blockHash the proposal hash
    * @param blockNumber the block number
    */
-  public synchronized void markValidating(final Hash blockHash, final long blockNumber) {
-    validating.put(blockHash, blockNumber);
+  public synchronized void claim(final Hash blockHash, final long blockNumber) {
+    claimed.values().removeIf(number -> number < blockNumber);
+    claimed.put(blockHash, blockNumber);
   }
 
   /**
-   * Forget an in-flight validation that did not produce outputs, e.g. because the proposal was
-   * invalid.
+   * Release a claim: the proposal was rejected, its round ended, or its import was attempted.
    *
-   * @param blockHash the block hash
+   * @param blockHash the proposal hash
    */
-  public synchronized void clearValidating(final Hash blockHash) {
-    validating.remove(blockHash);
+  public synchronized void release(final Hash blockHash) {
+    claimed.remove(blockHash);
   }
 
   /**
-   * Whether the consensus layer created, is executing, or has executed this block and will import
-   * it itself once the round commits. Entries disappear on {@link #take}, so after the consensus
-   * import attempt the ETH layer is free to import the block from the network again.
+   * Whether the current QBFT round claimed this block and will import it itself if it commits.
    *
    * @param blockHash the block hash
    * @return true if consensus owns the import of this block
    */
   public synchronized boolean isOwnedByConsensus(final Hash blockHash) {
-    return entries.containsKey(blockHash) || validating.containsKey(blockHash);
+    return claimed.containsKey(blockHash);
   }
 
   /**
@@ -113,7 +114,6 @@ public class ValidatedBlockCache {
    * @param validatedBlock the block outputs
    */
   public synchronized void put(final Hash blockHash, final ValidatedBlock validatedBlock) {
-    validating.remove(blockHash);
     entries.put(blockHash, validatedBlock);
   }
 
@@ -138,8 +138,6 @@ public class ValidatedBlockCache {
   public synchronized Optional<ValidatedBlock> take(final Hash blockHash, final long blockNumber) {
     final ValidatedBlock validatedBlock = entries.remove(blockHash);
     entries.values().removeIf(entry -> entry.blockNumber() <= blockNumber);
-    validating.remove(blockHash);
-    validating.values().removeIf(number -> number <= blockNumber);
     return Optional.ofNullable(validatedBlock);
   }
 }

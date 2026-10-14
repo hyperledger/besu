@@ -480,6 +480,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
 
   private void startNewRound(final int roundNumber) {
     LOG.debug("Starting new round {}", roundNumber);
+    // the round being replaced can no longer import its proposal
+    currentRound.ifPresent(QbftRound::releaseClaim);
     // validate the current round
     if (futureRoundStateBuffer.containsKey(roundNumber)) {
       currentRound =
