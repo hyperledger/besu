@@ -1930,6 +1930,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         || genesisConfigOptions.getBpo4Time().isPresent()
         || genesisConfigOptions.getBpo5Time().isPresent()
         || genesisConfigOptions.getAmsterdamTime().isPresent()
+        || genesisConfigOptions.getBogotaTime().isPresent()
         || genesisConfigOptions.getFutureEipsTime().isPresent();
   }
 
@@ -2315,6 +2316,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return the storage provider
    */
   public StorageProvider getStorageProvider() {
+    return keyValueStorageProvider(keyValueStorageName);
+  }
+
+  /**
+   * Get the storage provider of the data path without building the controller, so that nothing that
+   * runs when the node starts, such as trie log pruning, touches the database.
+   *
+   * @return the storage provider
+   */
+  public StorageProvider getStorageProviderWithoutController() {
+    pluginCommonConfiguration.init(
+        dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration());
     return keyValueStorageProvider(keyValueStorageName);
   }
 
