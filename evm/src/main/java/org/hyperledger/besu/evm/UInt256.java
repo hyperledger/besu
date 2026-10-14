@@ -77,6 +77,27 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // --------------------------------------------------------------------------
 
   /**
+   * Convert {@code length} bytes starting at {@code offset} (inclusive) to a UInt256 value. This method must only be
+   * used when {@code length} is a multiple of {@code N_BYTES_PER_LIMB} - this is a shortcut for performance reasons.
+   *
+   * @param bytes raw bytes in BigEndian order.
+   * @param offset start index of the bytes array to convert, inclusive
+   * @param length amount of bytes to take for conversion, multiple of {@code N_BYTES_PER_LIMB}
+   * @return Big-endian UInt256 represented by the bytes.
+   */
+  public static UInt256 fromBytesBEWholeLimbs(final byte[] bytes, final int offset, final int length) {
+    final int end = offset + length;
+    assert length > 0 && length % N_BYTES_PER_LIMB == 0 && end <= bytes.length :
+      "offset=" + offset + " length=" + length + " are invalid; bytes.length=" + bytes.length;
+
+    return new UInt256(
+      length < 32 ? 0 : (long) LONG_BE.get(bytes, end - 32),
+      length < 24 ? 0 : (long) LONG_BE.get(bytes, end - 24),
+      length < 16 ? 0 : (long) LONG_BE.get(bytes, end - 16),
+      (long) LONG_BE.get(bytes, end - 8));
+  }
+
+  /**
    * Instantiates a new UInt256 from byte array.
    *
    * @param bytes raw bytes in BigEndian order.

@@ -178,11 +178,15 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
       if (!frame.stackHasSpaceV2(1)) return OVERFLOW_RESPONSE;
       final int start = pc + 1;
       final int end = start + pushSize;
-      final int remainingSize = Math.min(end, code.length) - start;
-      UInt256 pushValue = UInt256.fromBytesBE(code, start, remainingSize);
-
+      UInt256 pushValue;
+      if (end <= code.length) {
+        pushValue = pushSize % 8 == 0 ?
+          UInt256.fromBytesBEWholeLimbs(code, start, pushSize) :
+          UInt256.fromBytesBE(code, start, pushSize);
+      } else {
       // Slow-path - when push is truncated and zeros need to be appended
-      if (end > code.length) {
+        final int remainingSize = code.length - start;
+        pushValue = UInt256.fromBytesBE(code, start, remainingSize);
         pushValue = pushValue.shiftLeft((pushSize - remainingSize) * 8);
       }
 
