@@ -22,7 +22,7 @@ import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_GAS_COST_EXCEEDS_BALANCE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -70,6 +70,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -232,12 +233,34 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   }
 
   @Test
+  public void shouldRejectTransactionWithUnrecoverableSignature() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+    // r = 5 is a valid scalar but not the x-coordinate of any curve point
+    final Transaction transaction =
+        Transaction.builder()
+            .copiedFrom(basicTransaction)
+            .sender(null)
+            .signature(
+                SIGNATURE_ALGORITHM.createSignature(
+                    BigInteger.valueOf(5), BigInteger.ONE, (byte) 0))
+            .build();
+
+    assertThat(
+            validator.validate(
+                transaction, Optional.empty(), Optional.empty(), transactionProcessingParams))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_SIGNATURE));
+  }
+
+  @Test
   public void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
     assertThat(validator.validateForSender(basicTransaction, null, processingBlockParams))
-        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE));
+        .isEqualTo(
+            ValidationResult.invalid(TransactionInvalidReason.UPFRONT_GAS_COST_EXCEEDS_BALANCE));
   }
 
   @Test
@@ -364,7 +387,8 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   static List<Arguments> transactionWithMaxFeeTimesGasLimitGreaterThanBalanceArguments =
       List.of(
           Arguments.of(
-              transactionSimulationParams, ValidationResult.invalid(UPFRONT_COST_EXCEEDS_BALANCE)),
+              transactionSimulationParams,
+              ValidationResult.invalid(UPFRONT_GAS_COST_EXCEEDS_BALANCE)),
           Arguments.of(transactionPoolParams, ValidationResult.valid()));
 
   @ParameterizedTest
@@ -394,8 +418,10 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
         .isEqualTo(validationResult);
   }
 
-  @Test
-  public void shouldRejectTransactionWithMaxPriorityFeeGreaterThanMaxFee() {
+  @ParameterizedTest
+  // a base fee of 5 is also above the fee cap: the tip above the cap is reported first
+  @ValueSource(longs = {1, 5})
+  public void shouldRejectTransactionWithMaxPriorityFeeGreaterThanMaxFee(final long baseFee) {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -424,11 +450,51 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
 
     final ValidationResult<TransactionInvalidReason> validationResult =
         validator.validate(
-            transaction, Optional.of(Wei.ONE), Optional.empty(), transactionProcessingParams);
+            transaction,
+            Optional.of(Wei.of(baseFee)),
+            Optional.empty(),
+            transactionProcessingParams);
     assertThat(validationResult)
         .isEqualTo(ValidationResult.invalid(MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS));
     assertThat(validationResult.getErrorMessage())
         .isEqualTo("max priority fee per gas cannot be greater than max fee per gas");
+  }
+
+  @Test
+  public void shouldRejectCodeDelegationTransactionWithEmptyDelegationList() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            GasLimitCalculator.constant(),
+            FeeMarket.london(0L),
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.DELEGATE_CODE),
+            Integer.MAX_VALUE);
+    final Transaction transaction =
+        Transaction.builder()
+            .type(TransactionType.DELEGATE_CODE)
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1))
+            .maxFeePerGas(Wei.of(2))
+            .gasLimit(21_000)
+            .to(Address.ZERO)
+            .value(Wei.ZERO)
+            .payload(Bytes.EMPTY)
+            .chainId(BigInteger.ONE)
+            .codeDelegations(List.of())
+            .signAndBuild(senderKeys);
+
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        validator.validate(
+            transaction, Optional.of(Wei.ONE), Optional.empty(), transactionPoolParams);
+
+    assertThat(validationResult.isValid()).isFalse();
+    assertThat(validationResult.getInvalidReason())
+        .isEqualTo(TransactionInvalidReason.EMPTY_CODE_DELEGATION);
+    assertThat(validationResult.getErrorMessage())
+        .isEqualTo(
+            "transaction code delegation transactions must have a non-empty code delegation list");
   }
 
   @Test
@@ -778,8 +844,7 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .blobsWithCommitments(
                 Optional.of(
-                    new BlobsWithCommitments(
-                        BlobType.KZG_PROOF,
+                    BlobsWithCommitments.createFromBlobsType0(
                         List.of(new KZGCommitment(Bytes48.ZERO)),
                         List.of(new Blob(Bytes.EMPTY)),
                         List.of(new KZGProof(Bytes48.ZERO)),
@@ -884,6 +949,54 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
     }
   }
 
+  @ParameterizedTest
+  @MethodSource("shouldSupportTransactionTotalGasLimitCap_EIP_8037")
+  public void shouldSupportTransactionTotalGasLimitCap_EIP_8037(
+      final ValidationParamsVariant validationParamsVariant,
+      final long txGasLimit,
+      final boolean valid) {
+    final var feeMarket = FeeMarket.london(0L);
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator,
+            new AmsterdamTargetingGasLimitCalculator(
+                0L, feeMarket, gasCalculator, 6, 3, OptionalInt.of(6), OptionalInt.empty()),
+            feeMarket,
+            false,
+            Optional.of(BigInteger.ONE),
+            Set.of(TransactionType.FRONTIER, TransactionType.EIP1559),
+            Integer.MAX_VALUE);
+    final Transaction transaction =
+        new TransactionTestFixture()
+            .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
+            .maxFeePerGas(Optional.of(Wei.of(150000L)))
+            .type(TransactionType.EIP1559)
+            .chainId(Optional.of(BigInteger.ONE))
+            .gasLimit(txGasLimit)
+            .createTransaction(senderKeys);
+    final Optional<Wei> basefee = Optional.of(Wei.of(150000L));
+    when(gasCalculator.transactionIntrinsicGasCost(any(), anyLong())).thenReturn(50L);
+
+    final var validationParams =
+        switch (validationParamsVariant) {
+          case PROCESSING -> processingBlockParams;
+          case SIMULATING -> transactionSimulationParams;
+        };
+
+    final var validationResult =
+        validator.validate(transaction, basefee, Optional.empty(), validationParams);
+
+    if (valid) {
+      assertThat(validationResult.isValid()).isTrue();
+    } else {
+      assertThat(validationResult.isValid()).isFalse();
+      assertThat(validationResult.getInvalidReason())
+          .isEqualTo(TransactionInvalidReason.EXCEEDS_TRANSACTION_GAS_LIMIT);
+      assertThat(validationResult.getErrorMessage())
+          .isEqualTo("Transaction gas limit must be at most 4294967295");
+    }
+  }
+
   private enum ValidationParamsVariant {
     PROCESSING,
     SIMULATING
@@ -893,8 +1006,21 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
     return Stream.of(
         Arguments.of(ValidationParamsVariant.PROCESSING, 16_777_216L, true),
         Arguments.of(ValidationParamsVariant.PROCESSING, 16_777_217L, false),
+        // Long.MIN_VALUE == 2^63 in unsigned representation; signed '>' comparison would treat
+        // it as negative and incorrectly pass the cap check — must be rejected unsigned
+        Arguments.of(ValidationParamsVariant.PROCESSING, Long.MIN_VALUE, false),
         Arguments.of(ValidationParamsVariant.SIMULATING, 16_777_216L, true),
         Arguments.of(ValidationParamsVariant.SIMULATING, 16_777_217L, true));
+  }
+
+  private static Stream<Arguments> shouldSupportTransactionTotalGasLimitCap_EIP_8037() {
+    return Stream.of(
+        // above the EIP-7825 cap, which bounds only execution gas in Amsterdam
+        Arguments.of(ValidationParamsVariant.PROCESSING, 16_777_217L, true),
+        Arguments.of(ValidationParamsVariant.PROCESSING, 4_294_967_295L, true),
+        Arguments.of(ValidationParamsVariant.PROCESSING, 4_294_967_296L, false),
+        Arguments.of(ValidationParamsVariant.PROCESSING, Long.MIN_VALUE, false),
+        Arguments.of(ValidationParamsVariant.SIMULATING, 4_294_967_296L, true));
   }
 
   private Account accountWithNonce(final long nonce) {

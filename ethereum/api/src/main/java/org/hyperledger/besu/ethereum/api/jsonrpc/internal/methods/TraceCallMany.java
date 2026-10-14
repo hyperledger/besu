@@ -16,7 +16,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.BLOCK_NOT_FOUND;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.WORLD_STATE_UNAVAILABLE;
 
+import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
@@ -25,13 +27,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcPara
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
@@ -55,7 +60,15 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries, protocolSchedule, transactionSimulator);
+    this(blockchainQueries, protocolSchedule, transactionSimulator, null);
+  }
+
+  public TraceCallMany(
+      final BlockchainQueries blockchainQueries,
+      final ProtocolSchedule protocolSchedule,
+      final TransactionSimulator transactionSimulator,
+      final ApiConfiguration apiConfiguration) {
+    super(blockchainQueries, protocolSchedule, transactionSimulator, apiConfiguration);
   }
 
   @Override
@@ -101,6 +114,9 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.INVALID_TRACE_CALL_MANY_PARAMS);
     }
+    Arrays.stream(transactionsAndTraceTypeParameters)
+        .map(param -> param.getTuple().getCallParameter())
+        .forEach(CallParameterUtil::rejectMixedFeeFields);
 
     final Optional<BlockHeader> maybeBlockHeader =
         blockchainQueriesSupplier.get().getBlockHeaderByNumber(blockNumber);
@@ -112,33 +128,42 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     final List<JsonNode> traceCallResults = new ArrayList<>();
 
+    // unwrap the Optional: AbstractBlockParameterMethod only sends a bare JsonRpcErrorResponse as
+    // an error, and would serialize one inside an Optional as a successful result
     return getBlockchainQueries()
-        .getAndMapWorldState(
+        .<Object>getAndMapWorldState(
             blockHeader.getBlockHash(),
             ws -> {
-              final WorldUpdater updater = transactionSimulator.getEffectiveWorldStateUpdater(ws);
               try {
                 Arrays.stream(transactionsAndTraceTypeParameters)
                     .forEachOrdered(
                         param -> {
+                          // a fresh updater per call, as in block processing: Bonsai returns its
+                          // accumulator again, Forest one over the state committed so far
+                          final WorldUpdater updater =
+                              transactionSimulator.getEffectiveWorldStateUpdater(ws);
                           final WorldUpdater localUpdater = updater.updater();
                           traceCallResults.add(
                               getSingleCallResult(
-                                  param.getTuple().getCallParameter(),
+                                  withoutNonce(param.getTuple().getCallParameter()),
                                   param.getTuple().getTraceTypeParameter(),
                                   blockHeader,
                                   localUpdater));
                           localUpdater.commit();
+                          // each call is a separate transaction, so later calls must take
+                          // this state as the original storage for SSTORE gas and refunds;
+                          // committed first, as in block processing, the boundary only resets
+                          // the accounts this call touched
+                          updater.commit();
+                          updater.markTransactionBoundary();
                         });
               } catch (final TransactionInvalidException e) {
-                LOG.error("Invalid transaction simulator result");
                 return Optional.of(
-                    new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
+                    new JsonRpcErrorResponse(
+                        requestContext.getRequest().getId(),
+                        JsonRpcError.from(e.validationResult)));
               } catch (final EmptySimulatorResultException e) {
-                LOG.error(
-                    "Empty simulator result, call params: {}, blockHeader: {} ",
-                    CallParameterUtil.validateAndGetCallParams(requestContext),
-                    blockHeader);
+                LOG.error("Empty simulator result, blockHeader: {}", blockHeader);
                 return Optional.of(
                     new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               } catch (final Exception e) {
@@ -146,7 +171,11 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
                     new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
               }
               return Optional.of(traceCallResults);
-            });
+            })
+        .orElseGet(
+            () ->
+                new JsonRpcErrorResponse(
+                    requestContext.getRequest().getId(), WORLD_STATE_UNAVAILABLE));
   }
 
   private JsonNode getSingleCallResult(
@@ -156,7 +185,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
     final DebugOperationTracer tracer =
-        new DebugOperationTracer(buildTraceOptions(traceTypes).opCodeTracerConfig(), false);
+        new DebugOperationTracer(
+            applyServerStepLimit(buildTraceOptions(traceTypes)).opCodeTracerConfig(), false);
     final var miningBeneficiary =
         protocolSchedule
             .getByBlockHeader(header)
@@ -166,7 +196,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
         transactionSimulator.processWithWorldUpdater(
             callParameter,
             Optional.empty(),
-            buildTransactionValidationParams(),
+            buildTransactionValidationParams(header, callParameter),
             tracer,
             header,
             worldUpdater,
@@ -179,7 +209,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     }
     final TransactionSimulatorResult simulatorResult = maybeSimulatorResult.get();
     if (simulatorResult.isInvalid()) {
-      throw new TransactionInvalidException();
+      throw new TransactionInvalidException(simulatorResult.getValidationResult());
     }
 
     final TransactionTrace transactionTrace =
@@ -193,8 +223,11 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
   }
 
   private static class TransactionInvalidException extends RuntimeException {
-    TransactionInvalidException() {
+    private final ValidationResult<TransactionInvalidReason> validationResult;
+
+    TransactionInvalidException(final ValidationResult<TransactionInvalidReason> validationResult) {
       super();
+      this.validationResult = validationResult;
     }
   }
 

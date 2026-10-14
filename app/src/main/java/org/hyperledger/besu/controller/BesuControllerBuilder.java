@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 
 import org.hyperledger.besu.chainimport.BlockHeadersCachePreload;
 import org.hyperledger.besu.components.BesuComponent;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.consensus.merge.NewPayloadListener;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -89,18 +91,17 @@ import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.BonsaiArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.BonsaiArchiveWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.BonsaiFlatDbToArchiveMigrator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.code.PathBasedCodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.flat.CodeHashCodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.PathBasedExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive.WorldStateHealer;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -116,15 +117,16 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -238,7 +240,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   protected boolean isLegacyBftProtocolEncodingEnabled = false;
 
   /** The global code cache */
-  protected PathBasedCodeCache codeCache;
+  protected BonsaiCodeCache codeCache;
 
   /** The effective checkpoint to sync to (CLI override or genesis). */
   protected Optional<Checkpoint> checkpoint = Optional.empty();
@@ -660,12 +662,12 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
     checkNotNull(besuComponent, "Must supply a BesuComponent");
 
-    this.codeCache =
-        besuComponent.map(BesuComponent::getCodeCache).orElse(new PathBasedCodeCache());
+    this.codeCache = besuComponent.map(BesuComponent::getCodeCache).orElse(new BonsaiCodeCache());
     this.codeCache.setupMetricsSystem(metricsSystem);
 
     prepForBuild();
 
+    final List<Closeable> closeables = new ArrayList<>();
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
@@ -714,14 +716,37 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             .map(BesuComponent::getCachedMerkleTrieLoader)
             .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
 
-    final var worldStateHealerSupplier = new AtomicReference<WorldStateHealer>();
-
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(
             worldStateStorageCoordinator,
             blockchain,
             bonsaiCachedMerkleTrieLoader,
-            worldStateHealerSupplier::get);
+            protocolSchedule);
+
+    // Install the archive strategy before the genesis write so block 0 is captured.
+    ArchiveTrieNodeStrategy archiveTrieNodeStrategy = null;
+    if (DataStorageFormat.X_BONSAI_ARCHIVE.equals(dataStorageConfiguration.getDataStorageFormat())
+        && dataStorageConfiguration
+            .getExtraStorageConfiguration()
+            .getUnstable()
+            .getBonsaiArchiveStateProofsEnabled()) {
+      final ExtraStorageConfiguration.Unstable archiveUnstable =
+          dataStorageConfiguration.getExtraStorageConfiguration().getUnstable();
+      final BonsaiWorldStateKeyValueStorage keyValueStorage =
+          worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+      final ExecutorService trieCapturePool =
+          MonitoredExecutors.newFixedThreadPool(
+              "trie-capture", syncConfig.getComputationParallelism(), metricsSystem);
+      archiveTrieNodeStrategy =
+          ArchiveTrieNodeStrategy.createArchiveStrategy(
+              keyValueStorage.getComposedWorldStateStorage(),
+              trieCapturePool,
+              archiveUnstable.getBonsaiArchiveShallowCheckpointInterval(),
+              archiveUnstable.getBonsaiArchiveDeepCheckpointInterval());
+      keyValueStorage.setTrieNodeStrategy(archiveTrieNodeStrategy);
+      closeables.add(archiveTrieNodeStrategy);
+      LOG.info("Bonsai archive proofs enabled (--Xbonsai-archive-state-proofs-enabled)");
+    }
 
     if (maybeStoredGenesisBlockHash.isEmpty()) {
       genesisState.writeStateTo(worldStateArchive.getWorldState());
@@ -792,15 +817,17 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final ChainPruningStrategy pruningMode = chainPrunerConfiguration.pruningMode();
     final boolean preMergeEnabled = dataStorageConfiguration.getHistoryExpiryPruneEnabled();
 
+    final Optional<ChainDataPruner> chainDataPruner;
     if (pruningMode != ChainPruningStrategy.NONE || preMergeEnabled) {
       LOG.info("Adding ChainDataPruner to observe block added events");
       final AtomicLong chainDataPrunerObserverId = new AtomicLong();
-      final ChainDataPruner chainDataPruner =
+      final ChainDataPruner pruner =
           createChainPruner(
               blockchainStorage,
               () -> blockchain.removeObserver(chainDataPrunerObserverId.get()),
               syncState);
-      chainDataPrunerObserverId.set(blockchain.observeBlockAdded(chainDataPruner));
+      chainDataPrunerObserverId.set(blockchain.observeBlockAdded(pruner));
+      chainDataPruner = Optional.of(pruner);
 
       if (pruningMode == ChainPruningStrategy.ALL) {
         LOG.info(
@@ -829,6 +856,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             chainPrunerConfiguration.chainPruningFrequency(),
             chainPrunerConfiguration.preMergePruningBlocksQuantity());
       }
+    } else {
+      chainDataPruner = Optional.empty();
     }
 
     final TransactionPool transactionPool =
@@ -873,11 +902,18 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             peerTaskExecutor,
             syncState,
             ethProtocolManager,
-            pivotBlockSelector);
-
-    worldStateHealerSupplier.set(synchronizer::healWorldState);
+            pivotBlockSelector,
+            chainDataPruner);
 
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
+
+    if (archiveTrieNodeStrategy != null) {
+      archiveTrieNodeStrategy.setHasChainEstimate(
+          () -> syncState.getBestPeerChainHead().isPresent());
+      synchronizer.subscribeInSync(
+          archiveTrieNodeStrategy,
+          dataStorageConfiguration.getExtraStorageConfiguration().getMaxLayersToLoad());
+    }
 
     if (syncConfig.getSyncMode() == SyncMode.SNAP) {
       synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
@@ -915,8 +951,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             protocolContext, protocolSchedule, miningConfiguration);
 
     if (DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
-      final PathBasedExtraStorageConfiguration subStorageConfiguration =
-          dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
+      final ExtraStorageConfiguration subStorageConfiguration =
+          dataStorageConfiguration.getExtraStorageConfiguration();
       if (subStorageConfiguration.getLimitTrieLogsEnabled()) {
         final TrieLogManager trieLogManager =
             ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
@@ -928,7 +964,6 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       }
     }
 
-    final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
 
@@ -1026,7 +1061,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
   private GenesisState getGenesisState(
       final Optional<BlockHeader> maybeGenesisBlockHeader,
       final ProtocolSchedule protocolSchedule,
-      final PathBasedCodeCache codeCache) {
+      final BonsaiCodeCache codeCache) {
     final Optional<Hash> maybeGenesisStateRoot =
         genesisStateHashCacheEnabled
             ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
@@ -1047,8 +1082,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       final Blockchain blockchain,
       final EthScheduler scheduler) {
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
-    final PathBasedExtraStorageConfiguration subStorageConfiguration =
-        dataStorageConfiguration.getPathBasedExtraStorageConfiguration();
+    final ExtraStorageConfiguration subStorageConfiguration =
+        dataStorageConfiguration.getExtraStorageConfiguration();
     final TrieLogPruner trieLogPruner =
         new TrieLogPruner(
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
@@ -1074,7 +1109,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final ScheduledExecutorService migrationExecutor =
         MonitoredExecutors.newScheduledThreadPool("archive-migrator", 1, metricsSystem);
     final BonsaiArchiveFlatDbStrategy archiveStrategy =
-        new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+        new BonsaiArchiveFlatDbStrategy(
+            metricsSystem, worldStateKeyValueStorage.getFlatDbStrategy().getCodeStorageStrategy());
     return new BonsaiFlatDbToArchiveMigrator(
         worldStateKeyValueStorage,
         trieLogManager,
@@ -1095,6 +1131,7 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
    * @param pivotBlockSelector the pivot block selector
+   * @param chainDataPruner the chain data pruner
    * @return the synchronizer
    */
   protected DefaultSynchronizer createSynchronizer(
@@ -1105,7 +1142,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       final PeerTaskExecutor peerTaskExecutor,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
-      final PivotBlockSelector pivotBlockSelector) {
+      final PivotBlockSelector pivotBlockSelector,
+      final Optional<ChainDataPruner> chainDataPruner) {
 
     return new DefaultSynchronizer(
         syncConfig,
@@ -1121,7 +1159,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         clock,
         metricsSystem,
         getFullSyncTerminationCondition(protocolContext.getBlockchain()),
-        pivotBlockSelector);
+        pivotBlockSelector,
+        chainDataPruner);
   }
 
   private PivotBlockSelector createPivotSelector(
@@ -1393,14 +1432,31 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             snapMessages,
             ethScheduler,
             protocolContext,
-            synchronizer));
+            synchronizer,
+            metricsSystem));
+  }
+
+  /**
+   * Returns the earliest milestone of Amsterdam or any later fork, so that a schedule activating a
+   * later fork without an explicit Amsterdam milestone still gets Amsterdam behaviour.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @return the earliest Amsterdam-or-later milestone, if any
+   */
+  static Optional<Long> amsterdamOrLaterMilestone(final ProtocolSchedule protocolSchedule) {
+    return Arrays.stream(MainnetHardforkId.values())
+        .filter(hardforkId -> hardforkId.ordinal() >= AMSTERDAM.ordinal())
+        .map(protocolSchedule::milestoneFor)
+        .flatMap(Optional::stream)
+        .min(Long::compareUnsigned);
   }
 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
-      final Supplier<WorldStateHealer> worldStateHealerSupplier) {
+      final ProtocolSchedule protocolSchedule) {
+    final Optional<Long> amsterdamMilestone = amsterdamOrLaterMilestone(protocolSchedule);
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1409,12 +1465,12 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
         yield new BonsaiWorldStateProvider(
             worldStateKeyValueStorage,
             blockchain,
-            dataStorageConfiguration.getPathBasedExtraStorageConfiguration(),
+            dataStorageConfiguration.getExtraStorageConfiguration(),
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier,
-            codeCache);
+            codeCache,
+            amsterdamMilestone);
       }
       case X_BONSAI_ARCHIVE -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1427,9 +1483,9 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             bonsaiCachedMerkleTrieLoader,
             besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
             evmConfiguration,
-            worldStateHealerSupplier,
             codeCache,
-            metricsSystem);
+            metricsSystem,
+            amsterdamMilestone);
       }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =

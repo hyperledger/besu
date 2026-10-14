@@ -22,9 +22,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.channels.ClosedChannelException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpClosedException;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.impl.future.FailedFuture;
 import io.vertx.core.impl.future.SucceededFuture;
@@ -119,6 +124,89 @@ public class JsonResponseStreamerTest {
     verify(failedResponse).write(argThat(bufferContains("xyz")));
     verify(failedResponse, never()).write(argThat(bufferContains("abc")));
     verify(failedResponse).end();
+  }
+
+  @Test
+  public void writeAbortsWhenConnectionClosesWhileQueueIsFull() {
+    when(httpResponse.writeQueueFull()).thenReturn(true);
+    when(httpResponse.closed()).thenReturn(true);
+
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
+
+    assertThatThrownBy(() -> streamer.write("xyz".getBytes(StandardCharsets.UTF_8)))
+        .isInstanceOf(ClosedChannelException.class);
+    verify(httpResponse, never()).write(any(Buffer.class));
+  }
+
+  @Test
+  public void writeReportsClosedChannelWhenClientHangsUpWhileQueueIsFull() {
+    final AtomicBoolean connectionClosed = new AtomicBoolean();
+    final AtomicReference<Handler<Throwable>> exceptionHandler = new AtomicReference<>();
+    when(httpResponse.writeQueueFull()).thenReturn(true);
+    when(httpResponse.closed()).thenAnswer(invocation -> connectionClosed.get());
+    when(httpResponse.exceptionHandler(any()))
+        .thenAnswer(
+            invocation -> {
+              exceptionHandler.set(invocation.getArgument(0));
+              return httpResponse;
+            });
+    // the client hangs up once the writer waits: the response is closed, then the failure reported
+    when(httpResponse.drainHandler(any()))
+        .thenAnswer(
+            invocation -> {
+              if (invocation.getArgument(0) != null) {
+                connectionClosed.set(true);
+                exceptionHandler.get().handle(new HttpClosedException("Connection was closed"));
+              }
+              return httpResponse;
+            });
+
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
+
+    assertThatThrownBy(() -> streamer.write("xyz".getBytes(StandardCharsets.UTF_8)))
+        .isInstanceOf(ClosedChannelException.class)
+        .hasCauseInstanceOf(HttpClosedException.class);
+    verify(httpResponse, never()).write(any(Buffer.class));
+  }
+
+  @Test
+  public void writeAbortsWhenResponseAlreadyEndedWhileQueueIsFull() {
+    // the timeout handler ends the response while a worker thread is blocked on backpressure
+    when(httpResponse.writeQueueFull()).thenReturn(true);
+    when(httpResponse.ended()).thenReturn(true);
+
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
+
+    assertThatThrownBy(() -> streamer.write("xyz".getBytes(StandardCharsets.UTF_8)))
+        .isInstanceOf(ClosedChannelException.class);
+    verify(httpResponse, never()).write(any(Buffer.class));
+  }
+
+  @Test
+  public void writeAbortsWhenResponseAlreadyEndedAndQueueIsNotFull() {
+    // the timeout handler ends the response while the worker thread is between writes, so there is
+    // no backpressure wait to abort
+    when(httpResponse.writeQueueFull()).thenReturn(false);
+    when(httpResponse.ended()).thenReturn(true);
+
+    JsonResponseStreamer streamer = new JsonResponseStreamer(httpResponse, testAddress);
+
+    assertThatThrownBy(() -> streamer.write("xyz".getBytes(StandardCharsets.UTF_8)))
+        .isInstanceOf(ClosedChannelException.class);
+    verify(httpResponse, never()).write(any(Buffer.class));
+  }
+
+  @Test
+  public void writeKeepsTheOriginalFailureRatherThanReportingAClosedChannel() throws IOException {
+    final IOException cause = new IOException("SSL write failed");
+    when(failedResponse.write(any(Buffer.class))).thenReturn(new FailedFuture<>(cause));
+
+    JsonResponseStreamer streamer = new JsonResponseStreamer(failedResponse, testAddress);
+    streamer.write("xyz".getBytes(StandardCharsets.UTF_8));
+
+    // a genuine write error must stay distinguishable from a peer that simply hung up
+    assertThatThrownBy(() -> streamer.write("abc".getBytes(StandardCharsets.UTF_8)))
+        .isSameAs(cause);
   }
 
   private ArgumentMatcher<Buffer> bufferContains(final String text) {

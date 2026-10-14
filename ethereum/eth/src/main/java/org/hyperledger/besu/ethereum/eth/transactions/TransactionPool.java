@@ -20,9 +20,10 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStru
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolStructuredLogUtils.logStop;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_NOT_AVAILABLE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.EXCEEDS_MAX_TX_BYTES;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INTERNAL_ERROR;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.TRANSACTION_ALREADY_KNOWN;
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -37,6 +38,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
+import org.hyperledger.besu.ethereum.core.kzg.CellsWithMask;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -71,7 +75,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -87,6 +90,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -124,6 +128,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final ListMultimap<VersionedHash, BlobProofBundle> mapOfBlobsInTransactionPool =
       Multimaps.synchronizedListMultimap(
           Multimaps.newListMultimap(new HashMap<>(), () -> new ArrayList<>(1)));
+  private final AtomicReference<Bytes> blobCustodyColumns = new AtomicReference<>();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -161,10 +166,13 @@ public class TransactionPool implements BlockAddedObserver {
       final Transaction transaction) {
 
     final boolean hasPriority = isPriorityTransaction(transaction, true);
-    final var result = addTransaction(transaction, true, hasPriority, MAX_SCORE);
+    final var outcome = addTransaction(transaction, true, hasPriority, MAX_SCORE);
+    final var result = outcome.result();
     if (result.isValid()) {
       localSenders.add(transaction.getSender());
-      transactionBroadcaster.onTransactionsAdded(List.of(transaction));
+      // broadcast the pooled representation, not the submitted one: they can differ (see
+      // AdditionOutcome) and peers must be announced the transaction we will actually serve.
+      transactionBroadcaster.onTransactionsAdded(List.of(outcome.pooledTransaction()));
     } else {
       logInvalid(transaction, result, true, hasPriority);
     }
@@ -179,17 +187,7 @@ public class TransactionPool implements BlockAddedObserver {
     LOG.trace("Adding {} remote transactions", initialCount);
 
     // recover and cache tx sender:
-    var txStream =
-        transactions.stream()
-            .filter(
-                tx -> {
-                  try {
-                    tx.getSender();
-                    return true;
-                  } catch (IllegalArgumentException | IllegalStateException ex) {
-                    return false;
-                  }
-                });
+    var txStream = transactions.stream().filter(TransactionPool::hasRecoverableSender);
 
     final var validationResults =
         sortedBySenderAndNonce(txStream)
@@ -200,9 +198,11 @@ public class TransactionPool implements BlockAddedObserver {
                       final boolean hasPriority = isPriorityTransaction(transaction, false);
                       ValidationResult<TransactionInvalidReason> result;
                       try {
-                        result = addTransaction(transaction, false, hasPriority, MAX_SCORE);
+                        final var outcome =
+                            addTransaction(transaction, false, hasPriority, MAX_SCORE);
+                        result = outcome.result();
                         if (result.isValid()) {
-                          addedTransactions.add(transaction);
+                          addedTransactions.add(outcome.pooledTransaction());
                           return result;
                         }
                       } catch (final RuntimeException e) {
@@ -240,7 +240,25 @@ public class TransactionPool implements BlockAddedObserver {
     return validationResults;
   }
 
-  private ValidationResult<TransactionInvalidReason> addTransaction(
+  /**
+   * The outcome of an attempt to add a transaction to the pool: the validation result, plus the
+   * transaction as it was actually pooled.
+   *
+   * <p>The pooled transaction is not always the one that was submitted: fork specific
+   * pre-processing may rewrite it. EIP-7594 (Osaka) upgrades a locally submitted blob transaction
+   * from the version 0 to the version 1 network wrapper, which changes its pooled encoding, and
+   * therefore its size, without changing its hash. Callers must broadcast and announce the pooled
+   * transaction, because that is the one {@code GetPooledTransactions} will serve, and the size in
+   * a {@code NewPooledTransactionHashes} announcement has to match it.
+   *
+   * @param result the validation result
+   * @param pooledTransaction the transaction as pooled, which is the submitted transaction when no
+   *     pre-processing applied, or when the transaction was not added at all
+   */
+  private record AdditionOutcome(
+      ValidationResult<TransactionInvalidReason> result, Transaction pooledTransaction) {}
+
+  private AdditionOutcome addTransaction(
       final Transaction baseTransaction,
       final boolean isLocal,
       final boolean hasPriority,
@@ -253,7 +271,8 @@ public class TransactionPool implements BlockAddedObserver {
           .log();
       // We already have this transaction, don't even validate it.
       metrics.incrementRejected(isLocal, hasPriority, TRANSACTION_ALREADY_KNOWN, "txpool");
-      return ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN);
+      return new AdditionOutcome(
+          ValidationResult.invalid(TRANSACTION_ALREADY_KNOWN), baseTransaction);
     }
 
     // Apply any necessary fork related pre-processing before submitting the transaction to the pool
@@ -291,7 +310,7 @@ public class TransactionPool implements BlockAddedObserver {
             .addArgument(rejectReason)
             .log();
         metrics.incrementRejected(isLocal, hasPriority, rejectReason, "txpool");
-        return ValidationResult.invalid(rejectReason);
+        return new AdditionOutcome(ValidationResult.invalid(rejectReason), transaction);
       }
     } else {
       LOG.atTrace()
@@ -304,7 +323,7 @@ public class TransactionPool implements BlockAddedObserver {
           isLocal, hasPriority, validationResult.result.getInvalidReason(), "txpool");
     }
 
-    return validationResult.result;
+    return new AdditionOutcome(validationResult.result, transaction);
   }
 
   private Optional<Wei> getMaxGasPrice(final Transaction transaction) {
@@ -328,8 +347,19 @@ public class TransactionPool implements BlockAddedObserver {
       // unless no-local-priority option is specified, senders of local sent txs are prioritized
       return true;
     }
-    // otherwise check if the sender belongs to the priority list
-    return configuration.getPrioritySenders().contains(transaction.getSender());
+    // otherwise check if the sender belongs to the priority list, an unrecoverable sender is left
+    // to the transaction validator to reject
+    return hasRecoverableSender(transaction)
+        && configuration.getPrioritySenders().contains(transaction.getSender());
+  }
+
+  private static boolean hasRecoverableSender(final Transaction transaction) {
+    try {
+      transaction.getSender();
+      return true;
+    } catch (final IllegalArgumentException | IllegalStateException e) {
+      return false;
+    }
   }
 
   public long subscribePendingTransactions(final PendingTransactionAddedListener listener) {
@@ -430,6 +460,17 @@ public class TransactionPool implements BlockAddedObserver {
           .addArgument(transaction::getHash)
           .log();
       return ValidationResultAndAccount.invalid(CHAIN_HEAD_NOT_AVAILABLE);
+    }
+
+    final int txSizeForBlockInclusion = transaction.getSizeForBlockInclusion();
+    if (txSizeForBlockInclusion > configuration.getTxPoolMaxTxBytes()) {
+      LOG.atDebug()
+          .setMessage("rejecting transaction {} with {} bytes > max tx bytes of {}")
+          .addArgument(transaction::getHash)
+          .addArgument(txSizeForBlockInclusion)
+          .addArgument(configuration::getTxPoolMaxTxBytes)
+          .log();
+      return ValidationResultAndAccount.invalid(EXCEEDS_MAX_TX_BYTES);
     }
 
     final FeeMarket feeMarket =
@@ -744,14 +785,155 @@ public class TransactionPool implements BlockAddedObserver {
     blobProofBundles.forEach(bq -> mapOfBlobsInTransactionPool.remove(bq.getVersionedHash(), bq));
   }
 
+  /**
+   * Retrieves a {@link BlobProofBundle} associated with the given {@link VersionedHash}. The blob
+   * could be part of different transactions, and its presence in each transaction is optional. This
+   * method searches the first transaction that contains a blob from the transaction pool. If no
+   * such transaction exists, it checks the cache for transactions that have been added to a block.
+   *
+   * @param vh the {@link VersionedHash} used to locate the associated {@link BlobProofBundle}.
+   * @return the {@link BlobProofBundle} if a blob is present in the transaction pool or cache,
+   *     otherwise returns null.
+   */
   public BlobProofBundle getBlobProofBundle(final VersionedHash vh) {
-    try {
-      // returns an empty list if the key is not present, so getFirst() will throw
-      return mapOfBlobsInTransactionPool.get(vh).getFirst();
-    } catch (NoSuchElementException e) {
-      // do nothing
+    // the same blob could be part of different txs, and blob presence is optional for each one,
+    // so we try searching for the first one with a blob present
+    final Optional<BlobProofBundle> maybeInPool;
+    synchronized (mapOfBlobsInTransactionPool) {
+      maybeInPool =
+          mapOfBlobsInTransactionPool.get(vh).stream()
+              .filter(b -> b.getBlob().isPresent())
+              .findFirst();
     }
-    return cacheForBlobsOfTransactionsAddedToABlock.get(vh);
+    return maybeInPool.orElseGet(
+        () -> {
+          final BlobProofBundle maybeCached = cacheForBlobsOfTransactionsAddedToABlock.get(vh);
+          if (maybeCached != null && maybeCached.getBlob().isPresent()) {
+            return maybeCached;
+          }
+          return null;
+        });
+  }
+
+  /**
+   * Retrieves a {@link BlobProofBundle} that matches the specified {@link VersionedHash} and holds
+   * as many of the requested cells as are available. This method searches for the blob within the
+   * transaction pool, and in the cache of blobs for transactions added to a block. The returned
+   * bundle need not hold every requested cell: engine_getBlobsV4 answers a cell it cannot serve
+   * with a null in place, so the caller has to ask the bundle which cells it holds. Only when none
+   * of the requested cells is held does this return null, as for an unknown blob; an empty request
+   * for a blob some transaction holds cells of returns a bundle, to answer with no cells.
+   *
+   * <p>Where no single transaction holds every requested cell, the cells of several are merged into
+   * one bundle. That is sound because the versioned hash is the hash of the commitment, so any two
+   * transactions carrying it carry the same blob, and the cell at a given index of that blob is the
+   * same cell whichever transaction it came with.
+   *
+   * @param vh the {@link VersionedHash} used to locate the associated {@link BlobProofBundle}.
+   * @param cellIndexes the indexes of the cells requested.
+   * @return a {@link BlobProofBundle} holding every requested cell that is available, or null if no
+   *     transaction holds any cells of the blob or none of the requested ones.
+   */
+  public BlobProofBundle getBlobProofBundle(
+      final VersionedHash vh, final List<Integer> cellIndexes) {
+    // the same blob could be part of different txs, and cells presence is optional for each one,
+    // so we gather each requested cell from whichever of them holds it
+    final List<BlobProofBundle> bundlesWithCells;
+    synchronized (mapOfBlobsInTransactionPool) {
+      bundlesWithCells =
+          mapOfBlobsInTransactionPool.get(vh).stream()
+              .filter(b -> b.getCellsWithMask().isPresent())
+              .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    final BlobProofBundle maybeCached = cacheForBlobsOfTransactionsAddedToABlock.get(vh);
+    if (maybeCached != null && maybeCached.getCellsWithMask().isPresent()) {
+      bundlesWithCells.add(maybeCached);
+    }
+
+    if (bundlesWithCells.isEmpty()) {
+      // nothing holds any cells of this blob
+      return null;
+    }
+
+    // usually a single transaction carries the blob, so try the first bundle on its own
+    final BlobProofBundle firstBundle = bundlesWithCells.getFirst();
+    if (cellIndexes.stream().allMatch(firstBundle.getCellsWithMask().orElseThrow()::hasCell)) {
+      return firstBundle;
+    }
+
+    // Which bundles a requested cell was found in, tracked by position: a set would deduplicate by
+    // equality, and a bundle's equality now covers its cells, so every insertion would hash them.
+    final boolean[] contributes = new boolean[bundlesWithCells.size()];
+
+    // A cell no bundle holds is left out rather than failing the request: the caller answers it
+    // with a null in place.
+    for (final Integer cellIndex : cellIndexes) {
+      for (int i = 0; i < bundlesWithCells.size(); i++) {
+        if (bundlesWithCells.get(i).getCellsWithMask().orElseThrow().hasCell(cellIndex)) {
+          contributes[i] = true;
+          break;
+        }
+      }
+    }
+
+    final List<BlobProofBundle> matchingBundles =
+        IntStream.range(0, bundlesWithCells.size())
+            .filter(i -> contributes[i])
+            .mapToObj(bundlesWithCells::get)
+            .toList();
+
+    if (matchingBundles.isEmpty()) {
+      // none of the requested cells is held, which is no different from not knowing the blob
+      return null;
+    }
+
+    if (matchingBundles.size() == 1) {
+      return matchingBundles.getFirst();
+    }
+
+    // Merging in order keeps, at each index, the cell of the first bundle that holds it.
+    final CellsWithMask mergedCells =
+        matchingBundles.stream()
+            .map(BlobProofBundle::getCellsWithMask)
+            .map(Optional::orElseThrow)
+            .reduce(CellsWithMask::merge)
+            .orElseThrow();
+
+    // A partial bundle's proofs are verified only where it holds the cell, so each proof has to
+    // come from the same bundle as the cell at its index. Where no bundle holds the cell there is
+    // nothing for the proof to vouch for, and any bundle's will do.
+    final List<KZGProof> proofs = new ArrayList<>(CKZG4844Helper.CELL_PROOFS_PER_BLOB);
+    for (int index = 0; index < CKZG4844Helper.CELL_PROOFS_PER_BLOB; index++) {
+      final int cellIndex = index;
+      final BlobProofBundle supplier =
+          matchingBundles.stream()
+              .filter(b -> b.getCellsWithMask().orElseThrow().hasCell(cellIndex))
+              .findFirst()
+              .orElse(firstBundle);
+      proofs.add(supplier.getKzgProof().get(index));
+    }
+
+    return new BlobProofBundle(
+        firstBundle.getBlobType(),
+        mergedCells,
+        firstBundle.getKzgCommitment(),
+        proofs,
+        firstBundle.getVersionedHash());
+  }
+
+  /**
+   * The CL's current blob custody column set, as last reported via {@code
+   * engine_forkchoiceUpdatedV4}'s {@code custodyColumns} parameter.
+   *
+   * @return the 16-byte custody bitarray, or empty if the CL has never reported one.
+   */
+  public Optional<Bytes> getBlobCustodyColumns() {
+    return Optional.ofNullable(blobCustodyColumns.get());
+  }
+
+  public void updateBlobCustodyColumns(final Bytes custodyColumns) {
+    blobCustodyColumns.set(custodyColumns);
   }
 
   public boolean isEnabled() {
@@ -977,7 +1159,7 @@ public class TransactionPool implements BlockAddedObserver {
                                   EncodingContext.POOLED_TRANSACTION);
                           final boolean hasPriority = isPriorityTransaction(tx, isLocal);
                           final ValidationResult<TransactionInvalidReason> result =
-                              addTransaction(tx, isLocal, hasPriority, score);
+                              addTransaction(tx, isLocal, hasPriority, score).result();
                           return result.isValid() ? "OK" : result.getInvalidReason().name();
                         })
                     .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));

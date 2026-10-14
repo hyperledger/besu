@@ -29,13 +29,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.PreprocessingFunction.NoPreprocessing;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.AccessLocationTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BlockAccessListBuilder;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.PreprocessingContext;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelBlockTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessingContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.systemcall.BlockProcessingContext;
@@ -61,6 +60,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,15 +79,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractBlockProcessor.class);
 
-  static final int MAX_GENERATION = 6;
-
   protected final MainnetTransactionProcessor transactionProcessor;
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
-  final Wei blockReward;
-
-  protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
   protected final BalConfiguration balConfiguration;
   private final BlockProcessingMetrics blockProcessingMetrics;
@@ -98,17 +93,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration) {
     this(
         transactionProcessor,
         transactionReceiptFactory,
-        blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards,
         protocolSchedule,
         balConfiguration,
         new NoOpMetricsSystem());
@@ -117,20 +108,37 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    this(
+        transactionProcessor,
+        transactionReceiptFactory,
+        miningBeneficiaryCalculator,
+        protocolSchedule,
+        balConfiguration,
+        new BlockProcessingMetrics(metricsSystem));
+  }
+
+  /**
+   * Creates a processor that records into {@code blockProcessingMetrics}. Processors that serve the
+   * same chain should share it: a second instance registers the gauges again, and the metrics
+   * system keeps only the last registration.
+   */
+  protected AbstractBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionReceiptFactory transactionReceiptFactory,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final ProtocolSchedule protocolSchedule,
+      final BalConfiguration balConfiguration,
+      final BlockProcessingMetrics blockProcessingMetrics) {
     this.transactionProcessor = transactionProcessor;
     this.transactionReceiptFactory = transactionReceiptFactory;
-    this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
-    this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
     this.balConfiguration = balConfiguration;
-    this.blockProcessingMetrics = new BlockProcessingMetrics(metricsSystem);
+    this.blockProcessingMetrics = blockProcessingMetrics;
   }
 
   private BlockAwareOperationTracer getBlockImportTracer(
@@ -156,67 +164,20 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     return blockImportTracerProvider.getBlockImportTracer(header);
   }
 
-  /**
-   * Processes the block with no privateMetadata and no preprocessor.
-   *
-   * @param protocolContext the current context of the protocol
-   * @param blockchain the blockchain to append the block to
-   * @param worldState the world state to apply changes to
-   * @param block the block to process
-   * @return the block processing result
-   */
   @Override
-  public BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block) {
-    return processBlock(
-        protocolContext, blockchain, worldState, block, Optional.empty(), new NoPreprocessing());
-  }
-
-  @Override
-  public BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block,
-      final PreprocessingFunction preprocessingBlockFunction) {
-    return processBlock(
-        protocolContext,
-        blockchain,
-        worldState,
-        block,
-        Optional.empty(),
-        preprocessingBlockFunction);
-  }
-
-  @Override
-  public BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block,
-      final Optional<BlockAccessList> blockAccessList) {
-    return processBlock(
-        protocolContext, blockchain, worldState, block, blockAccessList, new NoPreprocessing());
-  }
-
-  @Override
-  public BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block,
-      final Optional<BlockAccessList> blockAccessList,
-      final PreprocessingFunction preprocessingBlockFunction) {
+  public BlockProcessingResult processBlock(final BlockExecutionContext context) {
+    final ProtocolContext protocolContext = context.getProtocolContext();
+    final Blockchain blockchain = protocolContext.getBlockchain();
+    final MutableWorldState worldState = context.getWorldState();
+    final Block block = context.getBlock();
+    final Optional<BlockAccessList> blockAccessList = context.getBlockAccessList();
     final List<TransactionReceipt> receipts = new ArrayList<>();
     // EIP-7778: Track two separate cumulative gas values
-    // cumulativeRegularGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
+    // cumulativeExecutionGasUsed: For block gas limit enforcement (uses protocol-specific strategy)
     //   - Pre-Amsterdam: gasLimit - gasRemaining (post-refund)
     //   - Amsterdam+: pre-refund gas (prevents block gas limit circumvention via refunds)
     // cumulativeReceiptGasUsed: For receipt cumulativeGasUsed field (always post-refund)
-    long cumulativeRegularGasUsed = 0;
+    long cumulativeExecutionGasUsed = 0;
     long cumulativeReceiptGasUsed = 0;
     long cumulativeStateGasUsed = 0;
     long currentBlobGasUsed = 0;
@@ -242,7 +203,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final StateRootCommitter stateRootCommitter =
         protocolSpec
             .getStateRootCommitterFactory()
-            .forBlock(protocolContext, blockHeader, blockAccessList)
+            .forBlock(protocolContext, blockHeader, blockAccessList, worldState.isStorageFrozen())
             .timed(blockProcessingMetrics.stateRootCalculationTimer());
 
     final Optional<BlockAccessListBuilder> blockAccessListBuilder =
@@ -250,6 +211,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .getBlockAccessListFactory()
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
+    Optional<ParallelBlockTransactionProcessor> parallelProcessor = Optional.empty();
     try {
       final Optional<AccessLocationTracker> preExecutionAccessLocationTracker =
           blockAccessListBuilder.map(
@@ -279,8 +241,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                               calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
               .orElse(Wei.ZERO);
 
-      final Optional<PreprocessingContext> preProcessingContext =
-          preprocessingBlockFunction.run(
+      parallelProcessor =
+          startParallelExecution(
               protocolContext,
               blockHeader,
               transactions,
@@ -302,21 +264,21 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           transactionUpdater = blockUpdater;
         }
         // EIP-8037: per-dimension 2D-aware budget check using
-        // worst-case regular and state consumption derived from transaction intrinsics.
+        // worst-case execution and state consumption derived from transaction intrinsics.
         if (!hasAvailableBlockBudget(
             blockHeader,
             transaction,
-            cumulativeRegularGasUsed,
+            cumulativeExecutionGasUsed,
             cumulativeStateGasUsed,
             protocolSpec)) {
-          return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
+          return BlockProcessingResult.INSUFFICIENT_BLOCK_GAS;
         }
 
         final Optional<AccessLocationTracker> transactionLocationTracker =
             createTransactionAccessLocationTracker(blockAccessListBuilder, i);
         TransactionProcessingResult transactionProcessingResult =
-            getTransactionProcessingResult(
-                preProcessingContext,
+            processTransaction(
+                parallelProcessor,
                 blockProcessingContext,
                 transactionUpdater,
                 blobGasPrice,
@@ -351,10 +313,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
         // EIP-7778: Update both cumulative gas values
         // Block gas uses protocol-specific strategy (pre-refund for Amsterdam+)
-        cumulativeRegularGasUsed +=
+        cumulativeExecutionGasUsed +=
             protocolSpec
                 .getBlockGasAccountingStrategy()
-                .calculateTransactionRegularGas(transaction, transactionProcessingResult);
+                .calculateTransactionExecutionGas(transaction, transactionProcessingResult);
         // Receipt gas always uses standard post-refund calculation
         cumulativeReceiptGasUsed +=
             BlockGasAccountingStrategy.calculateReceiptGas(
@@ -365,7 +327,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         final long gasMeteredSoFar =
             protocolSpec
                 .getBlockGasAccountingStrategy()
-                .effectiveGasUsed(cumulativeRegularGasUsed, cumulativeStateGasUsed);
+                .effectiveGasUsed(cumulativeExecutionGasUsed, cumulativeStateGasUsed);
         if (gasMeteredSoFar > blockHeader.getGasLimit()) {
           return new BlockProcessingResult(Optional.empty(), "gas metered exceeds block gas limit");
         }
@@ -489,8 +451,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         }
       }
 
-      if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
-        // no need to log, rewardCoinbase logs the error.
+      if (!protocolSpec
+          .getBlockRewardProcessor()
+          .rewardBeneficiaries(worldState, blockHeader, ommers, miningBeneficiary)) {
+        // no need to log, rewardBeneficiaries logs the error.
         if (worldState instanceof BonsaiWorldState) {
           ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
         }
@@ -557,28 +521,84 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), e);
       }
 
-      // EIP-8037: gas_metered = max(cumulative_regular, cumulative_state)
-      final long gasMetered = Math.max(cumulativeRegularGasUsed, cumulativeStateGasUsed);
+      // EIP-8037: gas_metered = max(cumulative_execution, cumulative_state)
+      final long gasMetered = Math.max(cumulativeExecutionGasUsed, cumulativeStateGasUsed);
 
       return new BlockProcessingResult(
           Optional.of(
               new BlockProcessingOutputs(
-                  worldState, receipts, maybeRequests, maybeBlockAccessList, gasMetered)),
+                  worldState,
+                  receipts,
+                  maybeRequests,
+                  maybeBlockAccessList,
+                  gasMetered,
+                  blockHashLookup.getAccessedAncestors())),
           parallelizedTxFound ? Optional.of(nbParallelTx) : Optional.empty());
     } finally {
       stateRootCommitter.cancel();
+      parallelProcessor.ifPresent(
+          processor -> {
+            try {
+              // Cancel any speculative futures not yet consumed by the main loop.
+              processor.abort();
+            } catch (final Exception e) {
+              LOG.debug("Error aborting parallel transaction execution futures", e);
+            }
+          });
     }
   }
 
-  @SuppressWarnings("unused") // preProcessingContext and location are used by subclasses
-  protected TransactionProcessingResult getTransactionProcessingResult(
-      final Optional<PreprocessingContext> preProcessingContext,
+  /**
+   * Starts executing the block's transactions speculatively in parallel, before they are executed
+   * in order. The returned processor is handed to {@link #processTransaction} for each transaction
+   * and aborted once the block is processed. Starts nothing by default.
+   */
+  @SuppressWarnings("unused") // the parameters are used by subclasses
+  protected Optional<ParallelBlockTransactionProcessor> startParallelExecution(
+      final ProtocolContext protocolContext,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
+      final Address miningBeneficiary,
+      final BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice,
+      final Optional<BlockAccessListBuilder> blockAccessListBuilder,
+      final Optional<BlockAccessList> blockAccessList,
+      final Optional<BlockHeader> maybeParentHeader) {
+    return Optional.empty();
+  }
+
+  /**
+   * Processes a transaction of the block, by default sequentially. Subclasses may instead return
+   * the result {@code parallelProcessor} computed for it.
+   */
+  @SuppressWarnings("unused") // parallelProcessor and location are used by subclasses
+  protected TransactionProcessingResult processTransaction(
+      final Optional<ParallelBlockTransactionProcessor> parallelProcessor,
       final BlockProcessingContext blockProcessingContext,
       final WorldUpdater transactionUpdater,
       final Wei blobGasPrice,
       final Address miningBeneficiary,
       final Transaction transaction,
       final int location,
+      final BlockHashLookup blockHashLookup,
+      final Optional<AccessLocationTracker> accessLocationTracker) {
+    return processTransactionSequentially(
+        blockProcessingContext,
+        transactionUpdater,
+        blobGasPrice,
+        miningBeneficiary,
+        transaction,
+        blockHashLookup,
+        accessLocationTracker);
+  }
+
+  /** Processes a transaction on the state left by the transactions before it. */
+  protected final TransactionProcessingResult processTransactionSequentially(
+      final BlockProcessingContext blockProcessingContext,
+      final WorldUpdater transactionUpdater,
+      final Wei blobGasPrice,
+      final Address miningBeneficiary,
+      final Transaction transaction,
       final BlockHashLookup blockHashLookup,
       final Optional<AccessLocationTracker> accessLocationTracker) {
     return transactionProcessor.processTransaction(
@@ -593,34 +613,29 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         accessLocationTracker);
   }
 
+  @VisibleForTesting
   @SuppressWarnings(
       "java:S2629") // INFO level logging rarely disabled in this project per maintainer feedback
-  protected boolean hasAvailableBlockBudget(
+  final boolean hasAvailableBlockBudget(
       final BlockHeader blockHeader,
       final Transaction transaction,
-      final long cumulativeRegularGasUsed,
+      final long cumulativeExecutionGasUsed,
       final long cumulativeStateGasUsed,
       final ProtocolSpec protocolSpec) {
     final BlockGasAccountingStrategy strategy = protocolSpec.getBlockGasAccountingStrategy();
     final var gasCalculator = protocolSpec.getGasCalculator();
-    final var intrinsic = TransactionIntrinsicGas.of(transaction, gasCalculator);
     if (!strategy.hasBlockCapacity(
         transaction.getGasLimit(),
-        intrinsic.regularGas(),
-        intrinsic.stateGas(),
-        gasCalculator.stateGasCostCalculator().transactionRegularGasLimit(),
-        cumulativeRegularGasUsed,
+        gasCalculator.stateGasCostCalculator().transactionExecutionGasLimit(),
+        cumulativeExecutionGasUsed,
         cumulativeStateGasUsed,
         blockHeader.getGasLimit())) {
       LOG.info(
           "Block processing error: transaction gas limit {} exceeds available block budget"
-              + " (regular={}, state={}, intrinsicRegular={}, intrinsicState={}, limit={})."
-              + " Block {} Transaction {}",
+              + " (execution={}, state={}, limit={}). Block {} Transaction {}",
           transaction.getGasLimit(),
-          cumulativeRegularGasUsed,
+          cumulativeExecutionGasUsed,
           cumulativeStateGasUsed,
-          intrinsic.regularGas(),
-          intrinsic.stateGas(),
           blockHeader.getGasLimit(),
           blockHeader.getHash().getBytes().toHexString(),
           transaction.getHash().getBytes().toHexString());
@@ -652,45 +667,5 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Optional<BlockAccessListBuilder> blockAccessListBuilder) {
     partialBlockAccessView.ifPresent(
         view -> blockAccessListBuilder.ifPresent(builder -> builder.apply(view)));
-  }
-
-  protected MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {
-    return miningBeneficiaryCalculator;
-  }
-
-  abstract boolean rewardCoinbase(
-      final MutableWorldState worldState,
-      final BlockHeader header,
-      final List<BlockHeader> ommers,
-      final boolean skipZeroBlockRewards);
-
-  public interface PreprocessingFunction {
-    Optional<PreprocessingContext> run(
-        final ProtocolContext protocolContext,
-        final BlockHeader blockHeader,
-        final List<Transaction> transactions,
-        final Address miningBeneficiary,
-        final BlockHashLookup blockHashLookup,
-        final Wei blobGasPrice,
-        final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-        final Optional<BlockAccessList> maybeBlockBal,
-        final Optional<BlockHeader> maybeParentHeader);
-
-    class NoPreprocessing implements PreprocessingFunction {
-
-      @Override
-      public Optional<PreprocessingContext> run(
-          final ProtocolContext protocolContext,
-          final BlockHeader blockHeader,
-          final List<Transaction> transactions,
-          final Address miningBeneficiary,
-          final BlockHashLookup blockHashLookup,
-          final Wei blobGasPrice,
-          final Optional<BlockAccessListBuilder> blockAccessListBuilder,
-          final Optional<BlockAccessList> maybeBlockBal,
-          final Optional<BlockHeader> maybeParentHeader) {
-        return Optional.empty();
-      }
-    }
   }
 }

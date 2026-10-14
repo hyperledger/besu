@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -26,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.AccountChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.CodeChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.NonceChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.SlotChanges;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
@@ -33,15 +35,17 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListAc
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListOverlay;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.worldview.accumulator.PathBasedValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,8 +100,7 @@ class BonsaiBalWorldStateUpdateAccumulatorTest {
           assertThat(readAccount.getBalance()).isEqualTo(balBalance);
           assertThat(readAccount.getNonce()).isEqualTo(balNonce);
 
-          final PathBasedValue<BonsaiAccount> tracked =
-              accumulator.getAccountsToUpdate().get(ADDRESS);
+          final BonsaiValue<BonsaiAccount> tracked = accumulator.getAccountsToUpdate().get(ADDRESS);
           assertThat(tracked.getPrior()).isNull();
           assertThat(tracked.getUpdated().getBalance()).isEqualTo(balBalance);
           assertThat(tracked.getUpdated().getNonce()).isEqualTo(balNonce);
@@ -131,7 +134,7 @@ class BonsaiBalWorldStateUpdateAccumulatorTest {
           assertThat(readAccount.getBalance()).isEqualTo(balBalance);
           assertThat(readAccount.getNonce()).isEqualTo(balNonce);
 
-          final PathBasedValue<BonsaiAccount> tracked =
+          final BonsaiValue<BonsaiAccount> tracked =
               accumulator.getAccountsToUpdate().get(balOnlyAddress);
           assertThat(tracked.getPrior()).isNull();
           assertThat(tracked.getUpdated().getBalance()).isEqualTo(balBalance);
@@ -212,6 +215,41 @@ class BonsaiBalWorldStateUpdateAccumulatorTest {
         bal,
         1L,
         accumulator -> assertThat(accumulator.get(ADDRESS).getBalance()).isEqualTo(Wei.of(2_000)));
+  }
+
+  @Test
+  void codeReadsReturnTheBalCode() {
+    // JUMPDEST; STOP
+    final Bytes balCode = Bytes.fromHexString("0x5b00");
+    final Hash balCodeHash = Hash.hash(balCode);
+
+    final BlockAccessList bal =
+        new BlockAccessList(
+            List.of(
+                new AccountChanges(
+                    ADDRESS,
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(new CodeChange(0, balCode)))));
+
+    withAccumulator(
+        bal,
+        1L,
+        accumulator -> {
+          final Code first = accumulator.getCode(ADDRESS, balCodeHash).orElseThrow();
+          assertThat(first.getBytes()).isEqualTo(balCode);
+          assertThat(first.isJumpDestInvalid(0)).isFalse();
+          assertThat(first.isJumpDestInvalid(1)).isTrue();
+
+          final Code second = accumulator.getCode(ADDRESS, balCodeHash).orElseThrow();
+          assertThat(second.getBytes()).isEqualTo(balCode);
+
+          final BonsaiValue<Bytes> tracked = accumulator.getCodeToUpdate().get(ADDRESS);
+          assertThat(tracked.getPrior()).isNull();
+          assertThat(tracked.getUpdated()).isEqualTo(balCode);
+        });
   }
 
   private void withAccumulator(

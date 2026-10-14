@@ -68,8 +68,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -80,6 +82,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Stopwatch;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,12 +132,13 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
   private WorldUpdater blockWorldStateUpdater;
   private WorldUpdater txWorldStateUpdater;
-  private volatile TransactionEvaluationContext currTxEvaluationContext;
+  private volatile @Nullable TransactionEvaluationContext currTxEvaluationContext;
   private final List<PendingAction> selectionPendingActions = new ArrayList<>(1);
   private final AtomicInteger currentTxnLocation = new AtomicInteger(0);
-  private volatile TransactionSelectionResult validTxSelectionTimeoutResult;
-  private volatile TransactionSelectionResult invalidTxSelectionTimeoutResult;
-  private volatile FutureTask<Void> currTxSelectionTask;
+  private volatile @Nullable TransactionSelectionResult validTxSelectionTimeoutResult;
+  private volatile @Nullable TransactionSelectionResult invalidTxSelectionTimeoutResult;
+  private volatile @Nullable FutureTask<Void> currTxSelectionTask;
+  private final List<CompletableFuture<Void>> scheduledSelectionTasks = new ArrayList<>(2);
 
   public BlockTransactionSelector(
       final MiningConfiguration miningConfiguration,
@@ -216,6 +220,17 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     return transactionSelectionResults;
   }
 
+  /**
+   * Returns a future that completes once no selection task is running anymore. A task that timed
+   * out or was cancelled can keep executing its current transaction after the selection returned,
+   * so the world state must stay open until then.
+   *
+   * @return a future that completes when every scheduled selection task has stopped
+   */
+  public CompletableFuture<Void> selectionTasksDone() {
+    return CompletableFuture.allOf(scheduledSelectionTasks.toArray(CompletableFuture[]::new));
+  }
+
   public void cancel() {
     isCancelled.set(true);
     if (currTxSelectionTask != null) {
@@ -287,8 +302,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             },
             null);
 
-    ethScheduler.scheduleBlockCreationTask(
-        blockSelectionContext.pendingBlockHeader().getNumber(), currTxSelectionTask);
+    scheduledSelectionTasks.add(
+        ethScheduler.scheduleBlockCreationTask(
+            blockSelectionContext.pendingBlockHeader().getNumber(), currTxSelectionTask));
 
     try {
       currTxSelectionTask.get(remainingSelectionTime, TimeUnit.NANOSECONDS);
@@ -354,8 +370,9 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             },
             null);
 
-    ethScheduler.scheduleBlockCreationTask(
-        blockSelectionContext.pendingBlockHeader().getNumber(), currTxSelectionTask);
+    scheduledSelectionTasks.add(
+        ethScheduler.scheduleBlockCreationTask(
+            blockSelectionContext.pendingBlockHeader().getNumber(), currTxSelectionTask));
 
     try {
       currTxSelectionTask.get(pluginTxsSelectionMaxTimeNanos, TimeUnit.NANOSECONDS);
@@ -412,7 +429,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
           .setMessage(
               "{} transaction selection state {}, waiting at max {}ms for the thread to process the interrupt")
           .addArgument(context)
-          .addArgument(currTxSelectionTask::state)
+          .addArgument(Objects.requireNonNull(currTxSelectionTask)::state)
           .addArgument(() -> nanosToMillis(maxWaitTimeNanos))
           .log();
 
@@ -421,7 +438,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
             .setMessage("{} selection cancellation processed in {}ms, task status {}")
             .addArgument(context)
             .addArgument(() -> nanosToMillis(System.nanoTime() - waitStartTime))
-            .addArgument(currTxSelectionTask.state())
+            .addArgument(Objects.requireNonNull(currTxSelectionTask).state())
             .log();
       } else {
         LOG.info(
@@ -443,9 +460,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
 
   private void cancelEvaluatingTxWithGraceTime(final FutureTask<Void> txSelectionTask) {
     final long txRemainingTime;
-    if (currTxEvaluationContext != null) {
+    final var evaluationContext = currTxEvaluationContext;
+    if (evaluationContext != null) {
       final long txElapsedTime =
-          currTxEvaluationContext.getEvaluationTimer().elapsed(TimeUnit.NANOSECONDS);
+          evaluationContext.getEvaluationTimer().elapsed(TimeUnit.NANOSECONDS);
       // adding a grace time so we are sure it take strictly more than the block selection max time
       txRemainingTime =
           (blockTxsSelectionMaxTimeNanos - txElapsedTime) + CANCELLATION_GRACE_TIME_NANOS;
@@ -453,7 +471,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       LOG.atDebug()
           .setMessage(
               "Transaction {} is processing for {}ms, giving it {}ms grace time, before considering it taking too much time to execute")
-          .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+          .addArgument(evaluationContext.getPendingTransaction()::toTraceLog)
           .addArgument(() -> nanosToMillis(txElapsedTime))
           .addArgument(() -> nanosToMillis(txRemainingTime))
           .log();
@@ -465,30 +483,31 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
     }
     ethScheduler.scheduleFutureTask(
         () -> {
+          final var scheduledEvaluationContext = currTxEvaluationContext;
           if (txSelectionTask.isDone()) {
-            if (currTxEvaluationContext != null) {
+            if (scheduledEvaluationContext != null) {
               LOG.atDebug()
                   .setMessage(
                       "Transaction {} processed within the grace time, total processing time {}ms,"
                           + " nothing to do and no penalization applied")
-                  .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+                  .addArgument(scheduledEvaluationContext.getPendingTransaction()::toTraceLog)
                   .addArgument(
                       () ->
-                          currTxEvaluationContext
+                          scheduledEvaluationContext
                               .getEvaluationTimer()
                               .elapsed(TimeUnit.MILLISECONDS))
                   .log();
             }
           } else {
-            if (currTxEvaluationContext != null) {
+            if (scheduledEvaluationContext != null) {
               LOG.atDebug()
                   .setMessage(
                       "Transaction {} is still processing after the grace time, total processing time {}ms,"
                           + " greater than max block selection time of {}ms, forcing an interrupt")
-                  .addArgument(currTxEvaluationContext.getPendingTransaction()::toTraceLog)
+                  .addArgument(scheduledEvaluationContext.getPendingTransaction()::toTraceLog)
                   .addArgument(
                       () ->
-                          currTxEvaluationContext
+                          scheduledEvaluationContext
                               .getEvaluationTimer()
                               .elapsed(TimeUnit.MILLISECONDS))
                   .addArgument(() -> nanosToMillis(blockTxsSelectionMaxTimeNanos))
@@ -738,7 +757,7 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
         blockSelectionContext
             .protocolSpec()
             .getBlockGasAccountingStrategy()
-            .calculateTransactionRegularGas(transaction, processingResult);
+            .calculateTransactionExecutionGas(transaction, processingResult);
 
     // Receipt gas: Standard post-refund calculation (gasLimit - gasRemaining)
     // This is used for receipt cumulativeGasUsed field
@@ -834,9 +853,10 @@ public class BlockTransactionSelector implements BlockTransactionSelectionServic
       return selectionResult.discard() ? INVALID_TX_EVALUATION_TOO_LONG : TX_EVALUATION_TOO_LONG;
     }
 
-    return selectionResult.discard()
-        ? invalidTxSelectionTimeoutResult
-        : validTxSelectionTimeoutResult;
+    return Objects.requireNonNull(
+        selectionResult.discard()
+            ? invalidTxSelectionTimeoutResult
+            : validTxSelectionTimeoutResult);
   }
 
   /**

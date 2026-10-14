@@ -86,12 +86,11 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   @CommandLine.Option(
       names = {"--discovery-mode"},
       description =
-          "Discovery protocol(s) to run: BOTH (default), V5, or V4. "
-              + "BOTH runs DiscV4 and DiscV5 concurrently on a shared UDP socket. "
+          "Discovery protocol(s) to run: V4, V5, or BOTH (default: ${DEFAULT-VALUE}). "
+              + "V4 runs only DiscV4. "
               + "V5 runs only DiscV5 (requires a secp256k1 node key; falls back to V4 if unsupported). "
-              + "V4 runs only DiscV4.",
-      defaultValue = "BOTH")
-  public DiscoveryMode discoveryMode = DiscoveryMode.BOTH;
+              + "BOTH runs DiscV4 and DiscV5 concurrently on a shared UDP socket.")
+  public DiscoveryMode discoveryMode = DiscoveryMode.getDefault();
 
   /**
    * A list of bootstrap nodes can be passed and a hardcoded list will be used otherwise by the
@@ -252,14 +251,13 @@ public class P2PDiscoveryOptions implements CLIOptions<P2PDiscoveryConfiguration
   }
 
   // Boolean option to set that in a PoA network the bootnodes should always be queried during
-  // peer table refresh. If this flag is disabled bootnodes are only sent FINDN requests on first
-  // startup, meaning that an offline bootnode or network outage at the client can prevent it
-  // discovering any peers without a restart.
+  // the periodic peer table refresh. Regardless of this flag and of the network type, bootnodes
+  // are always retried while the node has fewer peers than it wants.
   @CommandLine.Option(
       names = {"--poa-discovery-retry-bootnodes"},
       description =
           "Always use of bootnodes for discovery in PoA networks. Disabling this reverts "
-              + " to the same behaviour as non-PoA networks, where neighbours are only discovered from bootnodes on first startup."
+              + " to the same behaviour as non-PoA networks, where bootnodes are only queried on first startup and while the node is under-peered."
               + "(default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Boolean poaDiscoveryRetryBootnodes = true;

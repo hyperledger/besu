@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
+import org.hyperledger.besu.ethereum.mainnet.BlockRewardProcessor;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockImporter;
@@ -148,9 +149,12 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .blockValidatorBuilder(MainnetBlockValidatorBuilder::frontier)
         .blockImporterBuilder(MainnetBlockImporter::new)
         .difficultyCalculator((time, parent) -> BigInteger.ONE)
-        .skipZeroBlockRewards(true)
+        // BFT is a PoA consensus, so specs must not be marked as PoS even when the network is
+        // configured with an execution fork that is PoS on mainnet (Paris and later). Otherwise
+        // any behaviour conditioned on ProtocolSpec.isPoS() would wrongly follow the PoS path.
+        .isPoS(false)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
-        .blockReward(Wei.of(configOptions.getBlockRewardWei()))
+        .blockRewardProcessor(BlockRewardProcessor.of(Wei.of(configOptions.getBlockRewardWei())))
         .withdrawalsValidator(new WithdrawalsValidator.NotApplicableWithdrawals())
         .miningBeneficiaryCalculator(
             header -> configOptions.getMiningBeneficiary().orElseGet(header::getCoinbase))

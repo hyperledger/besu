@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.config.BlobSchedule;
 import org.hyperledger.besu.datatypes.HardforkId;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -30,7 +29,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidator;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.DefaultStateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.mainnet.transactionpool.TransactionPoolPreProcessor;
 import org.hyperledger.besu.evm.EVM;
@@ -55,8 +53,7 @@ public class ProtocolSpecBuilder {
 
   private Supplier<GasCalculator> gasCalculatorBuilder;
   private GasLimitCalculatorBuilder gasLimitCalculatorBuilder;
-  private Wei blockReward;
-  private boolean skipZeroBlockRewards;
+  private BlockRewardProcessor blockRewardProcessor;
 
   private BlockHeaderFunctions blockHeaderFunctions;
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
@@ -92,12 +89,13 @@ public class ProtocolSpecBuilder {
   private BlobSchedule blobSchedule = new BlobSchedule.NoBlobSchedule();
   private BadBlockManager badBlockManager;
   private boolean isPoS = false;
+  private boolean slotNumberRequired = false;
   private Duration slotDuration;
   private boolean isReplayProtectionSupported = false;
   private TransactionPoolPreProcessor transactionPoolPreProcessor;
   private BlockAccessListFactory blockAccessListFactory;
   private StateRootCommitterFactory stateRootCommitterFactory =
-      new DefaultStateRootCommitterFactory();
+      new StateRootCommitterFactory(BalConfiguration.DISABLED);
   private BalConfiguration balConfiguration = BalConfiguration.DEFAULT;
   private BlockGasAccountingStrategy blockGasAccountingStrategy =
       BlockGasAccountingStrategy.FRONTIER;
@@ -123,13 +121,8 @@ public class ProtocolSpecBuilder {
     return gasLimitCalculatorBuilder;
   }
 
-  public ProtocolSpecBuilder blockReward(final Wei blockReward) {
-    this.blockReward = blockReward;
-    return this;
-  }
-
-  public ProtocolSpecBuilder skipZeroBlockRewards(final boolean skipZeroBlockRewards) {
-    this.skipZeroBlockRewards = skipZeroBlockRewards;
+  public ProtocolSpecBuilder blockRewardProcessor(final BlockRewardProcessor blockRewardProcessor) {
+    this.blockRewardProcessor = blockRewardProcessor;
     return this;
   }
 
@@ -292,6 +285,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder slotNumberRequired(final boolean slotNumberRequired) {
+    this.slotNumberRequired = slotNumberRequired;
+    return this;
+  }
+
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
     return this;
@@ -360,7 +358,7 @@ public class ProtocolSpecBuilder {
     checkNotNull(blockImporterBuilder, "Missing block importer");
     checkNotNull(blockValidatorBuilder, "Missing block validator");
     checkNotNull(blockHeaderFunctions, "Missing block hash function");
-    checkNotNull(blockReward, "Missing block reward");
+    checkNotNull(blockRewardProcessor, "Missing block reward processor");
     checkNotNull(difficultyCalculator, "Missing difficulty calculator");
     checkNotNull(transactionReceiptFactory, "Missing transaction receipt factory");
     checkNotNull(hardforkId, "Missing hardfork id");
@@ -444,10 +442,9 @@ public class ProtocolSpecBuilder {
         blockHeaderFunctions,
         transactionReceiptFactory,
         difficultyCalculator,
-        blockReward,
+        blockRewardProcessor,
         miningBeneficiaryCalculator,
         precompileContractRegistry,
-        skipZeroBlockRewards,
         gasCalculator,
         gasLimitCalculator,
         feeMarket,
@@ -457,6 +454,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(requestProcessorCoordinator),
         preExecutionProcessor,
         isPoS,
+        slotNumberRequired,
         slotDuration,
         isReplayProtectionSupported,
         Optional.ofNullable(transactionPoolPreProcessor),
@@ -473,9 +471,7 @@ public class ProtocolSpecBuilder {
     return blockProcessorBuilder.apply(
         transactionProcessor,
         transactionReceiptFactory,
-        blockReward,
         miningBeneficiaryCalculator,
-        skipZeroBlockRewards,
         protocolSchedule,
         balConfiguration);
   }
@@ -506,9 +502,7 @@ public class ProtocolSpecBuilder {
     BlockProcessor apply(
         MainnetTransactionProcessor transactionProcessor,
         AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-        Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-        boolean skipZeroBlockRewards,
         ProtocolSchedule protocolSchedule,
         BalConfiguration balConfiguration);
   }

@@ -74,13 +74,12 @@ public class BlobTestFixture {
     List<VersionedHash> versionedHashes = new ArrayList<>();
     for (int i = 0; i < blobCount; i++) {
       BlobProofBundle blobProofBundle = createBlobProofBundle(BlobType.KZG_PROOF);
-      blobs.add(blobProofBundle.getBlob());
+      blobs.add(blobProofBundle.getBlob().orElseThrow());
       commitments.add(blobProofBundle.getKzgCommitment());
       proofs.addAll(blobProofBundle.getKzgProof());
       versionedHashes.add(blobProofBundle.getVersionedHash());
     }
-    return new BlobsWithCommitments(
-        BlobType.KZG_PROOF, commitments, blobs, proofs, versionedHashes);
+    return BlobsWithCommitments.createFromBlobsType0(commitments, blobs, proofs, versionedHashes);
   }
 
   private VersionedHash hashCommitment(final KZGCommitment commitment) {

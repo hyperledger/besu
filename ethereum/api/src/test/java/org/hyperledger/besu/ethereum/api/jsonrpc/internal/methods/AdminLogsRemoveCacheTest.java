@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -31,6 +30,8 @@ import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,9 +104,8 @@ public class AdminLogsRemoveCacheTest {
     when(blockchain.getBlockByNumber(anyLong())).thenReturn(Optional.of(block));
     when(blockchainQueries.getTransactionLogBloomCacher())
         .thenReturn(Optional.of(transactionLogBloomCacher));
-    doNothing()
-        .when(transactionLogBloomCacher)
-        .removeSegments(fromBlock.capture(), toBlock.capture());
+    when(transactionLogBloomCacher.removeSegments(fromBlock.capture(), toBlock.capture()))
+        .thenReturn(true);
 
     final JsonRpcResponse actualResponse = adminLogsRemoveCache.response(request);
 
@@ -127,10 +127,49 @@ public class AdminLogsRemoveCacheTest {
     when(blockchainQueries.getTransactionLogBloomCacher())
         .thenReturn(Optional.of(transactionLogBloomCacher));
     when(blockchainQueries.headBlockNumber()).thenReturn(1000L);
+    when(transactionLogBloomCacher.removeSegments(anyLong(), anyLong())).thenReturn(true);
 
     final JsonRpcResponse actualResponse = adminLogsRemoveCache.response(request);
 
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestCacheRemovalSkippedWhileCachingTest() {
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_logsRemoveCache", new String[] {}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), RpcErrorType.CACHE_REMOVAL_IN_PROGRESS);
+
+    when(blockchainQueries.getTransactionLogBloomCacher())
+        .thenReturn(Optional.of(transactionLogBloomCacher));
+    when(blockchainQueries.headBlockNumber()).thenReturn(1000L);
+    when(transactionLogBloomCacher.removeSegments(anyLong(), anyLong())).thenReturn(false);
+
+    final JsonRpcResponse actualResponse = adminLogsRemoveCache.response(request);
+
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
+  @Test
+  public void requestCacheRemovalFailedTest() {
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest("2.0", "admin_logsRemoveCache", new String[] {}));
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.CACHE_REMOVAL_FAILED);
+
+    when(blockchainQueries.getTransactionLogBloomCacher())
+        .thenReturn(Optional.of(transactionLogBloomCacher));
+    when(blockchainQueries.headBlockNumber()).thenReturn(1000L);
+    when(transactionLogBloomCacher.removeSegments(anyLong(), anyLong()))
+        .thenThrow(new UncheckedIOException(new IOException("Deletion failed")));
+
+    assertThat(adminLogsRemoveCache.response(request))
+        .usingRecursiveComparison()
+        .isEqualTo(expectedResponse);
   }
 
   @Test

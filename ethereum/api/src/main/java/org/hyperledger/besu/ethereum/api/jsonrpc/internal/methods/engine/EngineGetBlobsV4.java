@@ -1,0 +1,218 @@
+/*
+ * Copyright contributors to Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
+
+import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlobCellsAndProofsV1;
+import org.hyperledger.besu.ethereum.core.kzg.BlobProofBundle;
+import org.hyperledger.besu.ethereum.core.kzg.CKZG4844Helper;
+import org.hyperledger.besu.ethereum.core.kzg.CellsWithMask;
+import org.hyperledger.besu.ethereum.core.kzg.KZGProof;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+import jakarta.validation.constraints.NotNull;
+import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Implementation of engine_getBlobsV4 API method.
+ *
+ * <p>Unlike {@code engine_getBlobsV3}, this method returns only the individual cells (and their KZG
+ * proofs) selected by a caller-supplied indices bitarray, rather than full blobs.
+ *
+ * <p>Specification:
+ *
+ * <ul>
+ *   <li>Returns null while syncing and before cell proofs exist, which is before Osaka
+ *   <li>Returns partial responses with null entries for missing blobs
+ *   <li>Supports at least 128 blob versioned hashes per request
+ *   <li>Only supports KZG_CELL_PROOFS blob type (rejects KZG_PROOF)
+ *   <li>Each returned {@link BlobCellsAndProofsV1} contains only the cells/proofs at the indices
+ *       set in {@code indices_bitarray}
+ * </ul>
+ */
+public class EngineGetBlobsV4 extends ExecutionEngineJsonRpcMethod {
+  private static final Logger LOG = LoggerFactory.getLogger(EngineGetBlobsV4.class);
+  public static final int REQUEST_MAX_VERSIONED_HASHES = 128;
+  private static final int INDICES_BITARRAY_BYTE_LENGTH = 16;
+
+  private final TransactionPool transactionPool;
+  protected final GetBlobsMetrics getBlobsMetrics;
+
+  public EngineGetBlobsV4(
+      final ConstructorArguments constructorArguments,
+      final HardforkId minSupportedFork,
+      final HardforkId firstUnsupportedFork) {
+    super(constructorArguments, minSupportedFork, firstUnsupportedFork);
+    this.transactionPool = constructorArguments.transactionPool();
+    this.getBlobsMetrics =
+        new GetBlobsMetrics(constructorArguments.metricsSystem(), getNumericVersion());
+  }
+
+  @Override
+  public String getName() {
+    return RpcMethod.ENGINE_GET_BLOBS_V4.getMethodName();
+  }
+
+  @Override
+  public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
+    final VersionedHash[] versionedHashes = extractVersionedHashes(requestContext);
+    final Bytes indicesBitarray = extractIndicesBitarray(requestContext);
+    if (versionedHashes.length > REQUEST_MAX_VERSIONED_HASHES) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(),
+          RpcErrorType.INVALID_ENGINE_GET_BLOBS_TOO_LARGE_REQUEST);
+    }
+    if (mergeContext.get().isSyncing()) {
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+    final long timestamp = protocolContext.getBlockchain().getChainHeadHeader().getTimestamp();
+    if (!validateForkSupported(timestamp).isValid()) {
+      // this method has no unsupported fork error, without cell proofs it is unable to serve blob
+      // pool data
+      return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), null);
+    }
+
+    getBlobsMetrics.increaseRequested(versionedHashes.length);
+
+    final List<Integer> cellIndexes = cellIndexesFor(indicesBitarray);
+    final List<BlobCellsAndProofsV1> result = getBlobV4Result(versionedHashes, cellIndexes);
+
+    // count available blobs (non-null entries)
+    int nonNullCount = 0;
+    for (final BlobCellsAndProofsV1 bcp : result) {
+      if (bcp != null) {
+        ++nonNullCount;
+        // a cell that is not held is a null in place, so the list always has the requested size
+        if (bcp.getBlobCells().stream().allMatch(Objects::nonNull)) {
+          getBlobsMetrics.increaseCellsFullyReturned();
+        } else {
+          getBlobsMetrics.increaseCellsPartiallyReturned();
+        }
+      }
+    }
+
+    final int availableCount = nonNullCount;
+
+    getBlobsMetrics.increaseAvailable(availableCount);
+    getBlobsMetrics.increaseMissing(versionedHashes.length - availableCount);
+
+    // Track if this was a partial or full response. For V4 a full response means every requested
+    // blob was available and something was returned for each one, even if only some of the
+    // requested cells: whether all of them were is tracked per blob by the cells counters above.
+    if (availableCount == versionedHashes.length) {
+      getBlobsMetrics.increaseFull();
+    } else {
+      getBlobsMetrics.increasePartial();
+    }
+
+    LOG.atDebug()
+        .setMessage("Requested {} bundles, found {} valid bundles, {} missing")
+        .addArgument(versionedHashes.length)
+        .addArgument(availableCount)
+        .addArgument(() -> versionedHashes.length - availableCount)
+        .log();
+
+    return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
+  }
+
+  private VersionedHash[] extractVersionedHashes(final JsonRpcRequestContext requestContext) {
+    try {
+      return requestContext.getRequiredParameter(0, VersionedHash[].class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid versioned hashes parameter (index 0)",
+          RpcErrorType.INVALID_VERSIONED_HASHES_PARAMS,
+          e);
+    }
+  }
+
+  private Bytes extractIndicesBitarray(final JsonRpcRequestContext requestContext) {
+    final Bytes indicesBitarray;
+    try {
+      indicesBitarray = requestContext.getRequiredParameter(1, Bytes.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid indices bitarray parameter (index 1)",
+          RpcErrorType.INVALID_INDICES_BITARRAY_PARAMS,
+          e);
+    }
+    if (indicesBitarray.size() != INDICES_BITARRAY_BYTE_LENGTH) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid indices bitarray parameter (index 1): expected %d bytes, got %d"
+              .formatted(INDICES_BITARRAY_BYTE_LENGTH, indicesBitarray.size()),
+          RpcErrorType.INVALID_INDICES_BITARRAY_PARAMS);
+    }
+    return indicesBitarray;
+  }
+
+  private List<Integer> cellIndexesFor(final Bytes indicesBitarray) {
+    final List<Integer> indexes = new ArrayList<>();
+    for (int i = 0; i < CKZG4844Helper.CELL_PROOFS_PER_BLOB; i++) {
+      final int byteIndex = i / Byte.SIZE;
+      final int bitIndex = i % Byte.SIZE;
+      if ((Byte.toUnsignedInt(indicesBitarray.get(byteIndex)) & (1 << bitIndex)) != 0) {
+        indexes.add(i);
+      }
+    }
+    return indexes;
+  }
+
+  private @NotNull List<BlobCellsAndProofsV1> getBlobV4Result(
+      final VersionedHash[] versionedHashes, final List<Integer> cellIndexes) {
+    // One entry per requested hash, in request order, null where we cannot answer: dropping the
+    // entries we cannot answer would shift every later one onto the wrong versioned hash.
+    return Arrays.stream(versionedHashes)
+        .map(vh -> transactionPool.getBlobProofBundle(vh, cellIndexes))
+        .map(bundle -> bundle == null ? null : getBlobCellsAndProofsV1(bundle, cellIndexes))
+        .toList();
+  }
+
+  private BlobCellsAndProofsV1 getBlobCellsAndProofsV1(
+      final BlobProofBundle bundle, final List<Integer> cellIndexes) {
+    // the pool only returns bundles that hold cells
+    final CellsWithMask cellsWithMask = bundle.getCellsWithMask().orElseThrow();
+    // The pool may hold only some of the requested cells. Each one it does not hold is a null in
+    // both lists, as the spec requires, and the proof has to be null too: a partial bundle's proofs
+    // are verified only where it holds the cell, so any other proof is one nobody has checked.
+    final List<Bytes> cells =
+        cellIndexes.stream()
+            .map(
+                index ->
+                    cellsWithMask.hasCell(index) ? cellsWithMask.getCell(index).getData() : null)
+            .toList();
+    final List<KZGProof> proofs =
+        cellIndexes.stream()
+            .map(index -> cellsWithMask.hasCell(index) ? bundle.getKzgProof().get(index) : null)
+            .toList();
+    return new BlobCellsAndProofsV1(cells, proofs);
+  }
+}

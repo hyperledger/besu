@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
@@ -27,9 +28,10 @@ import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.OrderedExecutionJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ForkchoiceStateV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ForkchoiceUpdatedRequestParametersV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.PayloadAttributesV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -37,6 +39,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ForkchoiceUpdatedResultV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV1;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
@@ -53,12 +56,26 @@ import org.slf4j.LoggerFactory;
  * the full FCU implementation; later versions extend and override specific hooks to introduce their
  * own concepts without modifying this class.
  *
+ * <p>Parameter parsing follows the same shape as {@code engine_newPayload}'s {@code
+ * NewPayloadRequestParametersV*} hierarchy: {@link #readRequestParameters(JsonRpcRequestContext)}
+ * is called once per request and decorates the previous version's params object with any new fields
+ * a version adds (see {@link EngineForkchoiceUpdatedV4} for the {@code custodyColumns} example), so
+ * {@link #syncResponse(JsonRpcRequestContext)} works off one typed object instead of reading {@code
+ * requestContext} directly.
+ *
  * <p>Parameterized so that V2 can extend this class while narrowing the payload type.
  *
+ * <p>Extends {@link OrderedExecutionJsonRpcMethod} because the Engine API spec mandates that
+ * forkchoiceUpdated calls are processed in the order they have been received; this applies to the
+ * whole sealed V1-V4 hierarchy.
+ *
  * @param <PA> the payload-attributes type this version accepts
+ * @param <FRP> the request-parameters type this version reads
  */
-public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
-    extends ExecutionEngineJsonRpcMethod permits EngineForkchoiceUpdatedV2 {
+public sealed class EngineForkchoiceUpdatedV1<
+        PA extends PayloadAttributesV1,
+        FRP extends ForkchoiceUpdatedRequestParametersV1<? extends PA>>
+    extends OrderedExecutionJsonRpcMethod permits EngineForkchoiceUpdatedV2 {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV1.class);
 
@@ -74,7 +91,8 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
       final HardforkId minSupportedFork,
       final HardforkId firstUnsupportedFork) {
     super(constructorArguments, minSupportedFork, firstUnsupportedFork);
-    this.mergeCoordinator = constructorArguments.mergeCoordinator();
+    this.mergeCoordinator =
+        checkNotNull(constructorArguments.mergeCoordinator(), "mergeCoordinator must not be null");
   }
 
   @Override
@@ -93,29 +111,17 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
 
     final Object requestId = requestContext.getRequest().getId();
 
-    final ForkchoiceStateV1 forkChoice;
+    final FRP requestParameters;
     try {
-      forkChoice = requestContext.getRequiredParameter(0, ForkchoiceStateV1.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
-      throw new InvalidJsonRpcParameters(
-          "Invalid forkchoice state parameter (index 0)",
-          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
-          e);
+      requestParameters = readRequestParameters(requestContext);
+    } catch (final InvalidRequestParametersException e) {
+      return new JsonRpcErrorResponse(requestId, e.getRpcErrorType());
     }
 
-    logger().debug("Forkchoice parameters {}", forkChoice);
+    applyUnverifiedRequestParameters(requestParameters);
 
-    final Optional<PA> maybePayloadAttributes;
-    try {
-      maybePayloadAttributes =
-          requestContext.getOptionalParameter(
-              1, getPayloadAttributesClass(), FAIL_ON_UNKNOWN_BUT_NULL);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
-      logger().debug("Invalid payload attributes parameter", e);
-      return new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError());
-    }
-
-    logger().debug("Payload attributes {}", maybePayloadAttributes);
+    final ForkchoiceStateV1 forkChoice = requestParameters.forkchoiceState();
+    final Optional<? extends PA> maybePayloadAttributes = requestParameters.payloadAttributes();
 
     // Structural parameter check (-32602) — must happen before any FCU processing.
     final ValidationResult<RpcErrorType> structResult = validateForkchoiceStateParams(forkChoice);
@@ -123,17 +129,12 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
       return new JsonRpcErrorResponse(requestId, structResult);
     }
 
-    if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())) {
+    // a head that descends from a bad block must not start a backward sync, it would re-execute the
+    // bad block on every forkchoice update
+    if (mergeCoordinator.isBadBlock(forkChoice.getHeadBlockHash())
+        || mergeCoordinator.checkAndMarkBadDescendant(forkChoice.getHeadBlockHash())) {
       logFCU(INVALID, forkChoice);
-      return new JsonRpcSuccessResponse(
-          requestId,
-          new ForkchoiceUpdatedResultV1(
-              INVALID,
-              mergeCoordinator
-                  .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
-                  .orElse(Hash.ZERO),
-              null,
-              Optional.of(forkChoice.getHeadBlockHash() + " is an invalid block")));
+      return new JsonRpcSuccessResponse(requestId, createInvalidBlockResult(forkChoice));
     }
 
     // this event is used to inform initial sync about chain progress
@@ -181,7 +182,7 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
     if (mergeCoordinator.isAncestorOfFinalized(newHead)) {
       logFCU(VALID, forkChoice);
       return new JsonRpcSuccessResponse(
-          requestId, new ForkchoiceUpdatedResultV1(VALID, forkChoice.getHeadBlockHash()));
+          requestId, createValidResult(forkChoice.getHeadBlockHash(), null));
     }
 
     // 3. If forkchoiceState.headBlockHash references a PoW block, client software
@@ -224,8 +225,7 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
     // forkchoiceState and only if the payload referenced by forkchoiceState.headBlockHash is VALID.
     // The processing flow is as follows:
     if (forkchoiceResult.shouldNotProceedToPayloadBuildProcess()) {
-      logFCU(INVALID, forkChoice);
-      return handleNonValidForkchoiceUpdate(requestId, forkchoiceResult);
+      return handleNonValidForkchoiceUpdate(requestId, forkChoice, forkchoiceResult);
     }
 
     PayloadIdentifier payloadId = null;
@@ -239,7 +239,7 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
         return new JsonRpcErrorResponse(requestId, attrResult);
       }
 
-      // Fork-range check (-38005) is owned here; concrete versions never call
+      // Fork-range check (-38005) is owned here; concreate versions never call
       // ForkSupportHelper directly.
       final ValidationResult<RpcErrorType> forkResult = validateForkSupported(attrs.getTimestamp());
       if (!forkResult.isValid()) {
@@ -262,11 +262,68 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
     logFCU(VALID, forkChoice);
     return new JsonRpcSuccessResponse(
         requestId,
-        new ForkchoiceUpdatedResultV1(
-            VALID,
-            forkchoiceResult.getNewHead().map(BlockHeader::getHash).orElse(null),
-            payloadId));
+        createValidResult(
+            forkchoiceResult.getNewHead().map(BlockHeader::getHash).orElse(null), payloadId));
   }
+
+  protected ForkchoiceUpdatedResultV1 createValidResult(
+      final Hash lastValid, final PayloadIdentifier payloadId) {
+    return new ForkchoiceUpdatedResultV1(new PayloadStatusV1(VALID, lastValid), payloadId);
+  }
+
+  protected ForkchoiceUpdatedResultV1 createInvalidBlockResult(final ForkchoiceStateV1 forkChoice) {
+    return new ForkchoiceUpdatedResultV1(
+        new PayloadStatusV1(
+            INVALID,
+            // null when no valid ancestor can be determined, Hash.ZERO would assert invalid
+            // ancestry all the way back to the pre-merge terminal block
+            mergeCoordinator
+                .getLatestValidHashOfBadBlock(forkChoice.getHeadBlockHash())
+                .orElse(null),
+            forkChoice.getHeadBlockHash() + " is an invalid block"));
+  }
+
+  /**
+   * Reads and decodes this version's request parameters. Each version overrides this to call {@code
+   * super.readRequestParameters(...)} and decorate the result with its own additional parameter(s),
+   * mirroring {@code EngineNewPayloadVN.readRequestParameters(...)}.
+   */
+  @SuppressWarnings("unchecked")
+  protected FRP readRequestParameters(final JsonRpcRequestContext requestContext) {
+    final ForkchoiceStateV1 forkChoice;
+    try {
+      forkChoice = requestContext.getRequiredParameter(0, ForkchoiceStateV1.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidRequestParametersException(
+          "Invalid forkchoice state parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
+          e);
+    }
+
+    logger().debug("Forkchoice parameters {}", forkChoice);
+
+    final Optional<PA> maybePayloadAttributes;
+    try {
+      maybePayloadAttributes =
+          requestContext.getOptionalParameter(
+              1, getPayloadAttributesClass(), FAIL_ON_UNKNOWN_BUT_NULL);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidRequestParametersException(
+          "Invalid payload attributes parameter (index 1)", getInvalidPayloadAttributesError(), e);
+    }
+
+    logger().debug("Payload attributes {}", maybePayloadAttributes);
+
+    return (FRP) new ForkchoiceUpdatedRequestParametersV1<>(forkChoice, maybePayloadAttributes);
+  }
+
+  /**
+   * Applies any side effect a version's additional request parameter(s) require, called once right
+   * after a successful {@link #readRequestParameters(JsonRpcRequestContext)} but before any FCU
+   * processing and any other kind of functional validation. Default: no-op. See {@link
+   * EngineForkchoiceUpdatedV4} for the {@code custodyColumns} override.
+   */
+  protected void applyUnverifiedRequestParameters(final FRP requestParameters) {}
 
   /** Validates version-specific payload attributes field requirements. */
   protected ValidationResult<RpcErrorType> validatePayloadAttributes(
@@ -278,7 +335,9 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
       final BlockHeader newHead, final PA attrs) {
     // 8.i. Verify that payloadAttributes.timestamp is greater than timestamp of a block referenced
     // by forkchoiceState.headBlockHash and return -38003: Invalid payload attributes on failure.
-    if (attrs.getTimestamp() <= newHead.getTimestamp()) {
+    // Both timestamps are uint64 carried in longs, so they must be compared unsigned: a value above
+    // Long.MAX_VALUE is negative and would otherwise look older than the head block.
+    if (Long.compareUnsigned(attrs.getTimestamp(), newHead.getTimestamp()) <= 0) {
       return ValidationResult.invalid(
           getInvalidPayloadAttributesError(),
           "Payload attributes timestamp %d not greater than head block timestamp %d"
@@ -355,18 +414,28 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
   }
 
   private JsonRpcResponse handleNonValidForkchoiceUpdate(
-      final Object requestId, final ForkchoiceResult result) {
+      final Object requestId, final ForkchoiceStateV1 forkChoice, final ForkchoiceResult result) {
+    if (result.getStatus() == ForkchoiceResult.Status.INTERNAL_ERROR) {
+      return new JsonRpcErrorResponse(
+          requestId, RpcErrorType.INTERNAL_ERROR, result.getErrorMessage().orElse(null));
+    }
+    logFCU(INVALID, forkChoice);
     final Optional<Hash> latestValid = result.getLatestValid();
     if (result.getStatus() == ForkchoiceResult.Status.INVALID) {
       return new JsonRpcSuccessResponse(
           requestId,
-          new ForkchoiceUpdatedResultV1(
-              INVALID, latestValid.orElse(null), null, result.getErrorMessage()));
+          createInvalidForkchoiceUpdateResult(
+              latestValid.orElse(null), result.getErrorMessage().orElse(null)));
     }
     throw new AssertionError(
         "Unexpected ForkchoiceResult.Status: "
             + result.getStatus()
             + " (updateForkChoiceWithoutLegacySkip should not emit IGNORE_UPDATE_TO_OLD_HEAD)");
+  }
+
+  protected ForkchoiceUpdatedResultV1 createInvalidForkchoiceUpdateResult(
+      final Hash latestValid, final String errorMessage) {
+    return new ForkchoiceUpdatedResultV1(new PayloadStatusV1(INVALID, latestValid, errorMessage));
   }
 
   private JsonRpcResponse syncingResponse(
@@ -378,8 +447,11 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
             forkChoice.getHeadBlockHash(),
             forkChoice.getSafeBlockHash(),
             forkChoice.getFinalizedBlockHash());
-    return new JsonRpcSuccessResponse(
-        requestId, new ForkchoiceUpdatedResultV1(SYNCING, null, null, Optional.empty()));
+    return new JsonRpcSuccessResponse(requestId, createSyncingResult());
+  }
+
+  protected ForkchoiceUpdatedResultV1 createSyncingResult() {
+    return new ForkchoiceUpdatedResultV1(new PayloadStatusV1(SYNCING));
   }
 
   private void logFCU(final EngineStatus status, final ForkchoiceStateV1 forkChoice) {
@@ -390,5 +462,16 @@ public sealed class EngineForkchoiceUpdatedV1<PA extends PayloadAttributesV1>
             forkChoice.getHeadBlockHash().toShortLogString(),
             forkChoice.getSafeBlockHash().toShortLogString(),
             forkChoice.getFinalizedBlockHash().toShortLogString());
+  }
+
+  protected static class InvalidRequestParametersException extends InvalidJsonRpcRequestException {
+    InvalidRequestParametersException(final String message, final RpcErrorType rpcErrorType) {
+      super(message, rpcErrorType);
+    }
+
+    InvalidRequestParametersException(
+        final String message, final RpcErrorType rpcErrorType, final Throwable cause) {
+      super(message, rpcErrorType, cause);
+    }
   }
 }

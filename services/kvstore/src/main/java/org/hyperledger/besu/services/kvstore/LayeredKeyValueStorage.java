@@ -46,6 +46,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +109,77 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   }
 
   /**
+   * Layer-local lookup that does not consult the parent.
+   *
+   * @param segmentId the segment identifier
+   * @param key the key
+   * @return empty if the key is absent on this layer; otherwise present with the layer value (an
+   *     empty inner Optional means a deletion tombstone)
+   */
+  public Optional<Optional<byte[]>> peekThisLayer(
+      final SegmentIdentifier segmentId, final byte[] key) {
+    throwIfClosed();
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      final NavigableMap<Bytes, Optional<byte[]>> segmentMap = hashValueStore.get(segmentId);
+      if (segmentMap == null) {
+        return Optional.empty();
+      }
+      final Bytes wrapKey = Bytes.wrap(key);
+      if (!segmentMap.containsKey(wrapKey)) {
+        return Optional.empty();
+      }
+      return Optional.of(segmentMap.get(wrapKey));
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public List<Optional<byte[]>> multiget(final SegmentIdentifier segment, final List<byte[]> keys)
+      throws StorageException {
+    throwIfClosed();
+    if (keys.isEmpty()) {
+      return List.of();
+    }
+
+    final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
+    final List<Integer> missingIndices = new ArrayList<>();
+    final List<byte[]> missingKeys = new ArrayList<>();
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+          hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+      for (int i = 0; i < keys.size(); i++) {
+        final byte[] key = keys.get(i);
+        final Optional<byte[]> localValue = segmentMap.get(Bytes.wrap(key));
+        if (localValue != null) {
+          results.add(localValue);
+        } else {
+          results.add(null);
+          missingIndices.add(i);
+          missingKeys.add(key);
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+
+    if (!missingKeys.isEmpty()) {
+      final List<Optional<byte[]>> parentResults = parent.multiget(segment, missingKeys);
+      for (int j = 0; j < missingIndices.size(); j++) {
+        results.set(missingIndices.get(j), parentResults.get(j));
+      }
+    }
+
+    return results;
+  }
+
+  /**
    * Bytes-keyed variant for callers that want to inject a function evaluated at the bottom of the
    * layer chain when no layer has a value for the key. Used by Bonsai to consult the cross-block
    * cache without going through the persistent storage twice.
@@ -134,7 +206,9 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         : cur.parent.get(segmentId, key.toArrayUnsafe()).map(Bytes::wrap);
   }
 
-  private Optional<byte[]> getLocal(final SegmentIdentifier segmentId, final Bytes key) {
+  // null = not in this layer, empty = deleted in this layer (mirrors the layer map's get)
+  @SuppressWarnings("NullableOptional")
+  private @Nullable Optional<byte[]> getLocal(final SegmentIdentifier segmentId, final Bytes key) {
     final Lock lock = rwLock.readLock();
     lock.lock();
     try {
@@ -249,9 +323,13 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       private final Iterator<Map.Entry<Bytes, Optional<byte[]>>> iterator;
       private Map.Entry<Bytes, Optional<byte[]>> head;
 
-      Source(final int rank, final Iterator<Map.Entry<Bytes, Optional<byte[]>>> iterator) {
+      Source(
+          final int rank,
+          final Iterator<Map.Entry<Bytes, Optional<byte[]>>> iterator,
+          final Map.Entry<Bytes, Optional<byte[]>> head) {
         this.rank = rank;
         this.iterator = iterator;
+        this.head = head;
       }
     }
 
@@ -261,7 +339,10 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
     LayeredMergeIterator(final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources) {
       for (int i = 0; i < sources.size(); i++) {
-        advance(new Source(i, sources.get(i)));
+        final Iterator<Map.Entry<Bytes, Optional<byte[]>>> source = sources.get(i);
+        if (source.hasNext()) {
+          queue.add(new Source(i, source, source.next()));
+        }
       }
     }
 
@@ -273,7 +354,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     }
 
     @Override
-    protected Pair<byte[], byte[]> computeNext() {
+    protected @Nullable Pair<byte[], byte[]> computeNext() {
       while (!queue.isEmpty()) {
         final Source top = queue.poll();
         final Map.Entry<Bytes, Optional<byte[]>> winner = top.head;

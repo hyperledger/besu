@@ -16,6 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -37,21 +41,31 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListAccountLookup;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelTransactionPreprocessing;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.OptimisticConcurrentTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelBlockTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalStateRootCommitter;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.bal.BlockAccessListStateRootCalculator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
+import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
+import org.hyperledger.besu.plugin.services.worldstate.StateRootComputation;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -87,9 +101,9 @@ class AbstractBlockProcessorIntegrationTest {
   // EIP-8282 builder request predeploys: the Amsterdam requests processor invokes an empty-data
   // system call on every block, so both appear in every block's access list.
   private static final Address BUILDER_DEPOSIT_CONTRACT =
-      Address.fromHexString("0x0000884d2aa32eaa155f59a2f24efa73d9008282");
+      Address.fromHexString("0x0000bff46984e3725691fa540a8c7589300d8282");
   private static final Address BUILDER_EXIT_CONTRACT =
-      Address.fromHexString("0x000014574a74c805590aff9499fc7a690f008282");
+      Address.fromHexString("0x000064d678505ad48f8ccb093bc65613800e8282");
   // EIP-2935 history contract. It is not deployed in this test genesis, but the pre-execution
   // system call still reads the account, so EIP-7928 lists it in every block's access list.
   private static final Address HISTORY_STORAGE_CONTRACT =
@@ -130,13 +144,14 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   private static Stream<Arguments> blockProcessors(
-      final Wei coinbaseReward, final boolean skipRewards) {
+      final BlockRewardProcessor blockRewardProcessor) {
     final ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
 
-    final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
+    final ProtocolSchedule protocolSchedule =
+        withBlockRewards(contextTestFixture.getProtocolSchedule(), blockRewardProcessor);
     final var protocolSpec =
         protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
 
@@ -147,9 +162,7 @@ class AbstractBlockProcessorIntegrationTest {
         new MainnetBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            coinbaseReward,
             BlockHeader::getCoinbase,
-            skipRewards,
             protocolSchedule,
             BalConfiguration.DEFAULT);
 
@@ -157,24 +170,46 @@ class AbstractBlockProcessorIntegrationTest {
         new MainnetParallelBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            coinbaseReward,
             BlockHeader::getCoinbase,
-            skipRewards,
             protocolSchedule,
             BalConfiguration.DEFAULT,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            Runnable::run,
+            Optional.empty());
 
     return Stream.of(
         Arguments.of("sequential", sequentialBlockProcessor),
         Arguments.of("parallel", parallelBlockProcessor));
   }
 
+  /**
+   * Returns {@code protocolSchedule} with every spec paying rewards through {@code
+   * blockRewardProcessor}. The test genesis is proof of stake, whose specs pay no rewards.
+   */
+  private static ProtocolSchedule withBlockRewards(
+      final ProtocolSchedule protocolSchedule, final BlockRewardProcessor blockRewardProcessor) {
+    final Map<ProtocolSpec, ProtocolSpec> specs = new ConcurrentHashMap<>();
+    final ProtocolSchedule schedule = spy(protocolSchedule);
+    doAnswer(
+            invocation ->
+                specs.computeIfAbsent(
+                    (ProtocolSpec) invocation.callRealMethod(),
+                    spec -> {
+                      final ProtocolSpec rewarding = spy(spec);
+                      doReturn(blockRewardProcessor).when(rewarding).getBlockRewardProcessor();
+                      return rewarding;
+                    }))
+        .when(schedule)
+        .getByBlockHeader(any());
+    return schedule;
+  }
+
   private static Stream<Arguments> blockProcessorProvider() {
-    return blockProcessors(COINBASE_REWARD, false);
+    return blockProcessors(new MainnetBlockRewardProcessor(COINBASE_REWARD));
   }
 
   private static Stream<Arguments> blockProcessorProviderWithoutRewards() {
-    return blockProcessors(Wei.ZERO, true);
+    return blockProcessors(BlockRewardProcessor.NO_REWARDS);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -233,13 +268,19 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x12e2d5cb327081eef6e04e4140c9c41ad3dcbf9e228ea57607f244f8ede32e1f",
+            "0x2a1d8095d148b89d28a5e7b03b205116eb228c30ae9d86b2d113e81e96e57b65",
             Wei.of(5),
             transactionTransfer1,
             transactionTransfer2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
@@ -267,7 +308,7 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0xadf0aed3b36be9973cca00c632bdffd5e59e8b9cd0513afab64704eedc0c553d",
+            "0xbc68b632221f19f22fff7c5883755fe9610be5bbe8722cb6cdb6e8cbf9814a50",
             Wei.of(5),
             setSlot1Transaction,
             getSlot1Transaction,
@@ -275,7 +316,13 @@ class AbstractBlockProcessorIntegrationTest {
             setSlot4Transaction);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
     assertBalComputesHeaderRoot(blockWithTransactions, blockProcessingResult);
@@ -310,6 +357,158 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   @Test
+  void parallelFailureIsRerunOnSequentialFallback() {
+    final ProtocolSchedule protocolSchedule = protocolSchedule();
+    final Block block = createBlockWithTwoTransfers();
+
+    final BlockProcessingResult result =
+        new FailingAtSecondTransaction(
+                protocolSchedule, Optional.of(sequentialBlockProcessor(protocolSchedule)))
+            .processBlock(
+                BlockExecutionContext.builder()
+                    .protocolContext(protocolContext)
+                    .worldState(worldStateArchive.getWorldState())
+                    .block(block)
+                    .blockAccessList(Optional.empty())
+                    .build());
+
+    // The parallel attempt applied the first transfer before failing. The rerun only succeeds if
+    // the world state was reset first; otherwise the first transfer fails on its nonce.
+    assertThat(result.isSuccessful()).isTrue();
+  }
+
+  @Test
+  void parallelFailureIsReturnedWithoutSequentialFallback() {
+    final Block block = createBlockWithTwoTransfers();
+
+    final BlockProcessingResult result =
+        new FailingAtSecondTransaction(protocolSchedule(), Optional.empty())
+            .processBlock(
+                BlockExecutionContext.builder()
+                    .protocolContext(protocolContext)
+                    .worldState(worldStateArchive.getWorldState())
+                    .block(block)
+                    .blockAccessList(Optional.empty())
+                    .build());
+
+    assertThat(result.isFailed()).isTrue();
+  }
+
+  private Block createBlockWithTwoTransfers() {
+    return createBlockWithTransactions(
+        "0x8d9a8161b2c255f8f514cd92e5364624a775e274739dc9379cf938efd7d45ebc",
+        Wei.ZERO,
+        createTransferTransaction(
+            0, 1_000_000_000_000_000_000L, 300000L, 0L, 0L, ACCOUNT_2, ACCOUNT_GENESIS_1_KEYPAIR),
+        createTransferTransaction(
+            0, 2_000_000_000_000_000_000L, 300000L, 0L, 0L, ACCOUNT_3, ACCOUNT_GENESIS_2_KEYPAIR));
+  }
+
+  private static ProtocolSchedule protocolSchedule() {
+    return ExecutionContextTestFixture.builder(GenesisConfig.fromResource(GENESIS_RESOURCE))
+        .dataStorageFormat(DataStorageFormat.BONSAI)
+        .build()
+        .getProtocolSchedule();
+  }
+
+  private static ProtocolSpec genesisSpec(final ProtocolSchedule protocolSchedule) {
+    return protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
+  }
+
+  private static BlockProcessor sequentialBlockProcessor(final ProtocolSchedule protocolSchedule) {
+    final ProtocolSpec spec = genesisSpec(protocolSchedule);
+    return new MainnetBlockProcessor(
+        spec.getTransactionProcessor(),
+        spec.getTransactionReceiptFactory(),
+        BlockHeader::getCoinbase,
+        protocolSchedule,
+        BalConfiguration.DEFAULT);
+  }
+
+  /**
+   * Fails the block only when processed in parallel: the first transaction is processed
+   * sequentially and changes the world state, then the second gets a result that uses more gas than
+   * the block allows. That failure path does not reset the world state, so only the fallback's
+   * reset makes the sequential rerun succeed.
+   */
+  private static final class FailingAtSecondTransaction extends MainnetParallelBlockProcessor {
+
+    FailingAtSecondTransaction(
+        final ProtocolSchedule protocolSchedule,
+        final Optional<BlockProcessor> sequentialBlockProcessor) {
+      this(genesisSpec(protocolSchedule), protocolSchedule, sequentialBlockProcessor);
+    }
+
+    private FailingAtSecondTransaction(
+        final ProtocolSpec spec,
+        final ProtocolSchedule protocolSchedule,
+        final Optional<BlockProcessor> sequentialBlockProcessor) {
+      super(
+          spec.getTransactionProcessor(),
+          spec.getTransactionReceiptFactory(),
+          BlockHeader::getCoinbase,
+          protocolSchedule,
+          BalConfiguration.DEFAULT,
+          new NoOpMetricsSystem(),
+          Runnable::run,
+          sequentialBlockProcessor);
+    }
+
+    @Override
+    protected Optional<ParallelBlockTransactionProcessor> startParallelExecution(
+        final ProtocolContext protocolContext,
+        final BlockHeader blockHeader,
+        final List<Transaction> transactions,
+        final Address miningBeneficiary,
+        final BlockHashLookup blockHashLookup,
+        final Wei blobGasPrice,
+        final Optional<BlockAccessList.BlockAccessListBuilder> blockAccessListBuilder,
+        final Optional<BlockAccessList> blockAccessList,
+        final Optional<BlockHeader> maybeParentHeader) {
+      return Optional.of(
+          new OverBudgetSecondTransaction(transactionProcessor, blockHeader.getGasLimit() + 1));
+    }
+  }
+
+  /**
+   * Has no result for the first transaction, so it is processed sequentially, and a result for the
+   * second that uses {@code gasUsed}.
+   */
+  private static final class OverBudgetSecondTransaction
+      extends OptimisticConcurrentTransactionProcessor {
+
+    private final long gasUsed;
+
+    OverBudgetSecondTransaction(
+        final MainnetTransactionProcessor transactionProcessor, final long gasUsed) {
+      super(transactionProcessor);
+      this.gasUsed = gasUsed;
+    }
+
+    @Override
+    public Optional<TransactionProcessingResult> getProcessingResult(
+        final MutableWorldState worldState,
+        final Address miningBeneficiary,
+        final Transaction transaction,
+        final int location,
+        final Optional<Counter> confirmedParallelizedTransactionCounter,
+        final Optional<Counter> conflictingButCachedTransactionCounter) {
+      if (location == 0) {
+        return Optional.empty();
+      }
+      // gasLimit - gasRemaining (pre-Amsterdam) and gasUsed (Amsterdam) both come to gasUsed.
+      return Optional.of(
+          TransactionProcessingResult.successful(
+              List.of(),
+              gasUsed,
+              transaction.getGasLimit() - gasUsed,
+              Bytes.EMPTY,
+              Optional.empty(),
+              ValidationResult.valid()));
+    }
+  }
+
+  @Test
   void testProcessBlockZeroReward() {
     ExecutionContextTestFixture contextTestFixture =
         ExecutionContextTestFixture.builder(
@@ -330,7 +529,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block block =
         createBlockWithTransactions(
-            "0x5ffc1cf9f92418561f5aa3aa34c7ea030551026a3e1f01bb0db1804f54b10d80",
+            "0x8d9a8161b2c255f8f514cd92e5364624a775e274739dc9379cf938efd7d45ebc",
             Wei.ZERO,
             transactions);
 
@@ -345,23 +544,39 @@ class AbstractBlockProcessorIntegrationTest {
         new MainnetBlockProcessor(
             transactionProcessor,
             receiptFactory,
-            Wei.ZERO,
             BlockHeader::getCoinbase,
-            true,
             protocolSchedule,
             BalConfiguration.DEFAULT);
 
+    // No block-level fallback, so a parallel failure is not masked by a sequential rerun.
+    BlockProcessor parallelBlockProcessor =
+        new MainnetParallelBlockProcessor(
+            transactionProcessor,
+            receiptFactory,
+            BlockHeader::getCoinbase,
+            protocolSchedule,
+            BalConfiguration.DEFAULT,
+            new NoOpMetricsSystem(),
+            Runnable::run,
+            Optional.empty());
+
     BlockProcessingResult parallelResult =
-        blockProcessor.processBlock(
-            protocolContext,
-            blockchain,
-            worldStateParallel,
-            block,
-            new ParallelTransactionPreprocessing(
-                transactionProcessor, Runnable::run, BalConfiguration.DEFAULT));
+        parallelBlockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldStateParallel)
+                .block(block)
+                .blockAccessList(Optional.empty())
+                .build());
 
     BlockProcessingResult sequentialResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldStateSequential, block);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldStateSequential)
+                .block(block)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(sequentialResult.isSuccessful());
     assertTrue(parallelResult.isSuccessful());
@@ -433,13 +648,19 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x9443ad1296b19bc6f76eff7f60bd2f9100dcf5268dd99fb92f8defb24a0e1eda",
+            "0x38119f4725a9ed2fe968d067c7e1a391c9dc4074f2757c5cacb837a021f53cf9",
             Wei.of(5),
             transactionTransfer1,
             transactionTransfer2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     BonsaiAccount updatedSenderAccount1 =
         (BonsaiAccount) worldState.get(transactionTransfer1.getSender());
@@ -497,14 +718,20 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0xc855d6ac6b443599d47cf53cdd6c36a28df6751f340160ec059aecf8afc1eff5",
+            "0x9cb3ab2482e8c14c26caf12a9f7b804367aa00d7f61c9640882d9db26599de3f",
             Wei.of(5),
             transferTransaction1,
             transferTransaction2,
             transferTransaction3);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     BonsaiAccount updatedSenderAccount =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -573,13 +800,19 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x4a7a3523e32584e9efc9e9068c51cff74454287fe5ee576699f731284ec08993",
+            "0xc592c108785d1277b0575c3062ba9032c7d2b1ed1c714ceb5c22a4340d7c090c",
             Wei.of(5),
             transferTransaction1,
             transferTransaction2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     BonsaiAccount updatedSenderAccount1 =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -654,13 +887,19 @@ class AbstractBlockProcessorIntegrationTest {
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x6418f2ad534bb875d10abbb51d9ed21c6b6581165e5be463b8447624ea0d2eca",
+            "0x85be71c7eb00ae86d5fc859085a14d76d55579ec64e033d588e3d69fc29bacea",
             Wei.of(5),
             transferTransaction1,
             transferTransaction2);
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     BonsaiAccount updatedSenderAccount1 =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -723,7 +962,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x46f3fe76f6a3604ed3ee6a6bc5b0c7a90ec9dc8f5a7df30cd842c25132a8a8b4",
+            "0x85af922b9234c2137cf2bd030036ac011f5753aa5aec4fa46ab96c284acff4bb",
             Wei.of(5),
             setSlot1Transaction,
             getSlot1Transaction,
@@ -732,7 +971,13 @@ class AbstractBlockProcessorIntegrationTest {
 
     MutableWorldState worldState = worldStateArchive.getWorldState();
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -786,7 +1031,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0xc9abb93f3fd6274cdc450749550a6eedf4775d9e0cead62c9e3d0f4edfe3cb91",
+            "0xaf3d69d49cf2f4a00b81c634bb9b89371827870c6410e6beb48b901bda5bd2a5",
             Wei.of(5),
             getSlot1Transaction,
             setSlot1Transaction,
@@ -795,7 +1040,13 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -857,7 +1108,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x9fcfd27a635a53d2098a54a5b75fccd69471cc44d0c972215892ff179aca98b6",
+            "0xece29b75b27056f5794e428c553fcaf2e4e281ff4a7b2c4627b82def314188d4",
             Wei.of(5),
             transactionTransfer,
             getcontractBalanceTransaction,
@@ -865,7 +1116,13 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -928,7 +1185,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0xd367d7cee13b9c411833f5d21daaf6654deb7afaea166ea47b5ee4ab3d0872b1",
+            "0xfd9cc32aad4462bf112f8c6b35f24fe5fe3ef190dff017ffec1f1938c19bda0c",
             Wei.of(5),
             transactionTransfer,
             sendEthFromContractTransaction,
@@ -936,7 +1193,13 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
     assertTrue(blockProcessingResult.isSuccessful());
 
     // Verify the state
@@ -998,7 +1261,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x41fd5227eca8c4375f4fd577f6c6785fc34077bdb730062128d2d15862f5a226",
+            "0xe7baefd8e65f1205bc45089d0b67d8caf169323ba0a859f319c871e043884a68",
             Wei.of(5),
             transactionTransfer,
             getcontractBalanceTransaction,
@@ -1006,7 +1269,13 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -1070,7 +1339,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     Block blockWithTransactions =
         createBlockWithTransactions(
-            "0x41fd5227eca8c4375f4fd577f6c6785fc34077bdb730062128d2d15862f5a226",
+            "0xe7baefd8e65f1205bc45089d0b67d8caf169323ba0a859f319c871e043884a68",
             Wei.of(5),
             transactionTransfer,
             sendEthFromContractTransaction,
@@ -1078,7 +1347,13 @@ class AbstractBlockProcessorIntegrationTest {
     MutableWorldState worldState = worldStateArchive.getWorldState();
 
     BlockProcessingResult blockProcessingResult =
-        blockProcessor.processBlock(protocolContext, blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(protocolContext)
+                .worldState(worldState)
+                .block(blockWithTransactions)
+                .blockAccessList(Optional.empty())
+                .build());
 
     assertTrue(blockProcessingResult.isSuccessful());
 
@@ -1340,12 +1615,30 @@ class AbstractBlockProcessorIntegrationTest {
     final BlockAccessList blockAccessList =
         result.getYield().orElseThrow().getBlockAccessList().orElseThrow();
 
-    final Hash computedRoot =
-        BlockAccessListStateRootCalculator.computeAsync(
-                protocolContext, block.getHeader(), blockAccessList)
-            .join()
-            .root();
+    final BalStateRootCommitter committer =
+        new BalStateRootCommitter(
+                protocolContext,
+                block.getHeader(),
+                BlockAccessListAccountLookup.of(blockAccessList),
+                false)
+            .start();
 
-    assertThat(computedRoot).isEqualTo(expectedRoot);
+    final BlockHeader parentHeader =
+        protocolContext
+            .getBlockchain()
+            .getBlockHeader(block.getHeader().getParentHash())
+            .orElseThrow();
+
+    try (BonsaiWorldState worldState =
+        (BonsaiWorldState)
+            protocolContext
+                .getWorldStateArchive()
+                .getWorldState(
+                    WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead(parentHeader))
+                .orElseThrow()) {
+      final StateRootComputation computation =
+          committer.compute(worldState, block.getHeader(), worldState.updater());
+      assertThat(computation.root()).isEqualTo(expectedRoot);
+    }
   }
 }

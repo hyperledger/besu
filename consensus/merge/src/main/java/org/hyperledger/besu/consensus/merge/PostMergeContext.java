@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -92,12 +93,13 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public void setIsPostMerge(final Difficulty totalDifficulty) {
-    if (isPostMerge.get().orElse(Boolean.FALSE)) {
+    if (Objects.requireNonNull(isPostMerge.get()).orElse(Boolean.FALSE)) {
       // if we have finalized, we never switch back to a pre-merge once we have transitioned
       // post-TTD.
       return;
     }
-    final boolean newState = terminalTotalDifficulty.get().lessOrEqualThan(totalDifficulty);
+    final boolean newState =
+        Objects.requireNonNull(terminalTotalDifficulty.get()).lessOrEqualThan(totalDifficulty);
     final Optional<Boolean> oldState = isPostMerge.getAndSet(Optional.of(newState));
 
     // if we are past TTD, set it:
@@ -115,7 +117,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public boolean isPostMerge() {
-    return isPostMerge.get().orElse(Boolean.FALSE);
+    return Objects.requireNonNull(isPostMerge.get()).orElse(Boolean.FALSE);
   }
 
   @Override
@@ -134,10 +136,11 @@ public class PostMergeContext implements MergeContext {
     if (!state.isInitialSyncPhaseDone()) {
       return true;
     }
-    // Pre-TTD: if terminal difficulty hasn't been reached we're still in PoW sync.
-    // When started with --p2p-enabled=false the controller marks TTD reached at startup,
-    // so this branch is skipped and the node can serve the engine API immediately.
-    if (!state.hasReachedTerminalDifficulty().orElse(false)) {
+    // Pre-TTD: if terminal difficulty is known *not* to have been reached we're still in PoW sync.
+    // An empty Optional just means "not determined yet" (normal right after startup), so default to
+    // "reached" as SyncState.isInSync() does; a node genuinely mid-PoW-sync has peers ahead of it
+    // and is still caught by the isInSync() check below.
+    if (!state.hasReachedTerminalDifficulty().orElse(true)) {
       return true;
     }
     // Post-TTD (post-merge): rely solely on peer sync state. This correctly handles full sync on
@@ -196,7 +199,7 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public Difficulty getTerminalTotalDifficulty() {
-    return terminalTotalDifficulty.get();
+    return Objects.requireNonNull(terminalTotalDifficulty.get());
   }
 
   @Override
@@ -221,12 +224,12 @@ public class PostMergeContext implements MergeContext {
 
   @Override
   public Optional<BlockHeader> getTerminalPoWBlock() {
-    return terminalPoWBlock.get();
+    return Objects.requireNonNull(terminalPoWBlock.get());
   }
 
   @Override
   public void setTerminalPoWBlock(final Optional<BlockHeader> hashAndNumber) {
-    terminalPoWBlock.set(hashAndNumber);
+    terminalPoWBlock.set(Objects.requireNonNull(hashAndNumber));
   }
 
   @Override
