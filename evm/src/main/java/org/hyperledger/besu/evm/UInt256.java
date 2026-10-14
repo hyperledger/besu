@@ -77,24 +77,26 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   // --------------------------------------------------------------------------
 
   /**
-   * Convert {@code length} bytes starting at {@code offset} (inclusive) to a UInt256 value. This method must only be
-   * used when {@code length} is a multiple of {@code N_BYTES_PER_LIMB} - this is a shortcut for performance reasons.
+   * Convert {@code length} bytes starting at {@code offset} (inclusive) to a UInt256 value. This
+   * method must only be used when {@code length} is a multiple of {@code N_BYTES_PER_LIMB} - this
+   * is a shortcut for performance reasons.
    *
    * @param bytes raw bytes in BigEndian order.
    * @param offset start index of the bytes array to convert, inclusive
    * @param length amount of bytes to take for conversion, multiple of {@code N_BYTES_PER_LIMB}
    * @return Big-endian UInt256 represented by the bytes.
    */
-  public static UInt256 fromBytesBEWholeLimbs(final byte[] bytes, final int offset, final int length) {
+  public static UInt256 fromBytesBEWholeLimbs(
+      final byte[] bytes, final int offset, final int length) {
     final int end = offset + length;
-    assert length > 0 && length % N_BYTES_PER_LIMB == 0 && end <= bytes.length :
-      "offset=" + offset + " length=" + length + " are invalid; bytes.length=" + bytes.length;
+    assert length > 0 && length % N_BYTES_PER_LIMB == 0 && end <= bytes.length
+        : "offset=" + offset + " length=" + length + " are invalid; bytes.length=" + bytes.length;
 
     return new UInt256(
-      length < 32 ? 0 : (long) LONG_BE.get(bytes, end - 32),
-      length < 24 ? 0 : (long) LONG_BE.get(bytes, end - 24),
-      length < 16 ? 0 : (long) LONG_BE.get(bytes, end - 16),
-      (long) LONG_BE.get(bytes, end - 8));
+        length < 32 ? 0 : (long) LONG_BE.get(bytes, end - 32),
+        length < 24 ? 0 : (long) LONG_BE.get(bytes, end - 24),
+        length < 16 ? 0 : (long) LONG_BE.get(bytes, end - 16),
+        (long) LONG_BE.get(bytes, end - 8));
   }
 
   /**
@@ -172,15 +174,15 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   /**
-   * Get a long value off bytes array starting at `from` and ending at `to`, exclusive. Trims the prefix and suffix
-   * of the array if needed.
+   * Get a long value off bytes array starting at `from` and ending at `to`, exclusive. Trims the
+   * prefix and suffix of the array if needed.
    */
   private static long getTrimmedLong(final byte[] bytes, final int from, final int to) {
     assert bytes.length >= N_BYTES_PER_LIMB
-      && from >= 0
-      && to >= from
-      && to <= from + N_BYTES_PER_LIMB :
-      "to=" + to + " from=" + from + " indices out of bounds; bytes.length=" + bytes.length;
+            && from >= 0
+            && to >= from
+            && to <= from + N_BYTES_PER_LIMB
+        : "to=" + to + " from=" + from + " indices out of bounds; bytes.length=" + bytes.length;
 
     if (from == to) return 0L;
     int start = Math.max(0, to - 8);
@@ -191,15 +193,16 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   /**
-   * Get a long value off bytes array starting at `from` and ending at `to`, exclusive. Truncates the suffix if needed.
+   * Get a long value off bytes array starting at `from` and ending at `to`, exclusive. Truncates
+   * the suffix if needed.
    */
   private static long getTruncatedLong(final byte[] bytes, final int from, final int to) {
     assert bytes.length >= N_BYTES_PER_LIMB
-      && from >= 0
-      && from + N_BYTES_PER_LIMB <= bytes.length
-      && to >= from
-      && to <= from + N_BYTES_PER_LIMB :
-      "to=" + to + " from=" + from + " indices out of bounds; bytes.length=" + bytes.length;
+            && from >= 0
+            && from + N_BYTES_PER_LIMB <= bytes.length
+            && to >= from
+            && to <= from + N_BYTES_PER_LIMB
+        : "to=" + to + " from=" + from + " indices out of bounds; bytes.length=" + bytes.length;
 
     int shift = (N_BYTES_PER_LIMB + from - to) * 8;
     if (shift == N_BITS_PER_LIMB) {
@@ -210,14 +213,12 @@ public record UInt256(long u3, long u2, long u1, long u0) {
   }
 
   /**
-   * Used when we are parsing a single limb and we have less than 8 consecutive bytes, so cannot use VarHandles,
-   * otherwise we get an AIOBE. So we need to manually loop through the byte[] array.
+   * Used when we are parsing a single limb and we have less than 8 consecutive bytes, so cannot use
+   * VarHandles, otherwise we get an AIOBE. So we need to manually loop through the byte[] array.
    */
   private static long getLongSlow(final byte[] bytes, final int from, final int to) {
-    assert from >= 0
-      && to >= from
-      && to <= bytes.length :
-      "to=" + to + " from=" + from + " indices out of bounds; bytes.length=" + bytes.length;
+    assert from >= 0 && to >= from && to <= bytes.length
+        : "to=" + to + " from=" + from + " indices out of bounds; bytes.length=" + bytes.length;
 
     if (bytes.length == 0) {
       return 0;

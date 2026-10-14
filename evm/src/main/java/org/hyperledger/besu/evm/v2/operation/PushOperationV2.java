@@ -180,11 +180,12 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
       final int end = start + pushSize;
       UInt256 pushValue;
       if (end <= code.length) {
-        pushValue = pushSize % 8 == 0 ?
-          UInt256.fromBytesBEWholeLimbs(code, start, pushSize) :
-          UInt256.fromBytesBE(code, start, pushSize);
+        pushValue =
+            pushSize % 8 == 0
+                ? UInt256.fromBytesBEWholeLimbs(code, start, pushSize)
+                : UInt256.fromBytesBE(code, start, pushSize);
       } else {
-      // Slow-path - when push is truncated and zeros need to be appended
+        // Slow-path - when push is truncated and zeros need to be appended
         final int remainingSize = code.length - start;
         pushValue = UInt256.fromBytesBE(code, start, remainingSize);
         pushValue = pushValue.shiftLeft((pushSize - remainingSize) * 8);
