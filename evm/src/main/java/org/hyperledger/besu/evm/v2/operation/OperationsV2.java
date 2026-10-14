@@ -127,6 +127,8 @@ import org.hyperledger.besu.evm.operation.TimestampOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 
+import java.lang.reflect.Modifier;
+
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
@@ -164,6 +166,16 @@ public final class OperationsV2 {
       final Operation operation,
       final GasCalculator gasCalculator,
       final EvmSpecVersion evmSpecVersion) {
+    // the patterns below also match subclasses, which can change what the v1 operation does
+    if (operation != null
+        && !Modifier.isAbstract(operation.getClass().getSuperclass().getModifiers())) {
+      throw new IllegalArgumentException(
+          "EVM v2 has no version of operation "
+              + operation.getName()
+              + ", whose class "
+              + operation.getClass().getName()
+              + " extends a v1 operation");
+    }
     return switch (operation) {
       case null -> null;
       // stack-less, so the v1 operation runs on a v2 frame as it is

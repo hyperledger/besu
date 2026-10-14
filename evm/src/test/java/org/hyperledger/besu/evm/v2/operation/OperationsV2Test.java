@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.AbstractOperation;
+import org.hyperledger.besu.evm.operation.CreateOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
@@ -117,6 +118,17 @@ class OperationsV2Test {
     assertThatThrownBy(() -> OperationsV2.of(operations, gasCalculator, EvmSpecVersion.FRONTIER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("CUSTOM");
+  }
+
+  @Test
+  void rejectsASubclassOfAV1Operation() {
+    final GasCalculator gasCalculator = new FrontierGasCalculator();
+    final Operation[] operations = new Operation[256];
+    operations[0xf0] = new CreateOperation(gasCalculator) {};
+
+    assertThatThrownBy(() -> OperationsV2.of(operations, gasCalculator, EvmSpecVersion.FRONTIER))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("CREATE");
   }
 
   private static SStoreOperationV2 sStore(final EVM evm) {
