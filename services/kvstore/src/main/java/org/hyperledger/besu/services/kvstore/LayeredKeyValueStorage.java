@@ -125,22 +125,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   public Optional<Optional<byte[]>> peekThisLayer(
       final SegmentIdentifier segmentId, final byte[] key) {
     throwIfClosed();
-
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      final NavigableMap<Bytes, Optional<byte[]>> segmentMap = hashValueStore.get(segmentId);
-      if (segmentMap == null) {
-        return Optional.empty();
-      }
-      final Bytes wrapKey = Bytes.wrap(key);
-      if (!segmentMap.containsKey(wrapKey)) {
-        return Optional.empty();
-      }
-      return Optional.of(segmentMap.get(wrapKey));
-    } finally {
-      lock.unlock();
-    }
+    return Optional.ofNullable(getLocal(segmentId, Bytes.wrap(key)));
   }
 
   @Override

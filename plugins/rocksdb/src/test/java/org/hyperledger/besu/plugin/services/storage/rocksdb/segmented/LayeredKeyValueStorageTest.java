@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doReturn;
@@ -587,6 +588,24 @@ public class LayeredKeyValueStorageTest {
     LayeredKeyValueStorage top = layer(parentStorage, Map.of(4, Optional.of(new byte[] {1})));
 
     assertEquals(0, top.streamFromKey(segmentId, new byte[] {5}, new byte[] {3}).count());
+  }
+
+  @Test
+  void peekThisLayerReadsOnlyThisLayer() {
+    byte[] value = {1};
+    LayeredKeyValueStorage bottom = layer(parentStorage, Map.of(1, Optional.of(value)));
+    LayeredKeyValueStorage top = layer(bottom, Map.of(2, Optional.of(value), 3, Optional.empty()));
+
+    // absent segment
+    assertEquals(
+        Optional.empty(), top.peekThisLayer(mock(SegmentIdentifier.class), new byte[] {2}));
+    // absent on this layer, even though a lower layer has it
+    assertEquals(Optional.empty(), top.peekThisLayer(segmentId, new byte[] {1}));
+    // present
+    assertArrayEquals(value, top.peekThisLayer(segmentId, new byte[] {2}).orElseThrow().get());
+    // deletion tombstone
+    assertEquals(Optional.of(Optional.empty()), top.peekThisLayer(segmentId, new byte[] {3}));
+    verify(parentStorage, never()).get(eq(segmentId), any());
   }
 
   @Test
