@@ -72,4 +72,40 @@ class BlockExecutionContextTest {
 
     assertThat(context.getBlockAccessList()).contains(blockAccessList);
   }
+
+  @Test
+  void sequentialExecutionIsNotRequestedByDefault() {
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .build();
+
+    assertThat(context.isSequentialExecutionRequested()).isFalse();
+  }
+
+  @Test
+  void toBuilderCopiesAllFields() {
+    final BlockAccessList blockAccessList = mock(BlockAccessList.class);
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.of(blockAccessList))
+            .build();
+
+    final BlockExecutionContext sequential =
+        context.toBuilder().sequentialExecutionRequested(true).build();
+
+    assertThat(sequential.getProtocolContext()).isSameAs(protocolContext);
+    assertThat(sequential.getWorldState()).isSameAs(worldState);
+    assertThat(sequential.getBlock()).isSameAs(block);
+    assertThat(sequential.getBlockAccessList()).contains(blockAccessList);
+    assertThat(sequential.isSequentialExecutionRequested()).isTrue();
+    assertThat(sequential.toBuilder().build().isSequentialExecutionRequested()).isTrue();
+    assertThat(context.isSequentialExecutionRequested()).isFalse();
+  }
 }
