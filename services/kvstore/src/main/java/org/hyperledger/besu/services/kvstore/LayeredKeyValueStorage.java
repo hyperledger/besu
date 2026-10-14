@@ -308,15 +308,18 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         sources.add(segment.entrySet().iterator());
       }
     }
+    final Stream<Pair<byte[], byte[]>> baseStream = baseStorage.stream(segmentId);
     sources.add(
-        baseStorage.stream(segmentId)
+        baseStream
             .map(pair -> Map.entry(Bytes.wrap(pair.getKey()), Optional.ofNullable(pair.getValue())))
             .iterator());
 
+    // iterator() drops the base stream's close handler (e.g. releasing a RocksDB iterator)
     return StreamSupport.stream(
-        Spliterators.spliteratorUnknownSize(
-            new LayeredMergeIterator(sources), ORDERED | SORTED | DISTINCT),
-        false);
+            Spliterators.spliteratorUnknownSize(
+                new LayeredMergeIterator(sources), ORDERED | SORTED | DISTINCT),
+            false)
+        .onClose(baseStream::close);
   }
 
   /** Merges sorted sources; higher layers win on duplicate keys and empty values are deletions. */

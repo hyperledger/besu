@@ -546,6 +546,29 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
+  void closingStreamClosesBaseStorageStream() {
+    // RocksDB streams release their native iterator in onClose
+    AtomicInteger baseCloses = new AtomicInteger();
+    when(parentStorage.stream(segmentId))
+        .thenAnswer(
+            __ ->
+                Stream.of(Pair.of(new byte[] {1}, new byte[] {1}))
+                    .onClose(baseCloses::incrementAndGet));
+    LayeredKeyValueStorage top =
+        new LayeredKeyValueStorage(new LayeredKeyValueStorage(parentStorage));
+
+    try (Stream<Pair<byte[], byte[]>> stream = top.stream(segmentId)) {
+      assertEquals(1, stream.count());
+    }
+    assertEquals(1, baseCloses.get());
+
+    try (Stream<Pair<byte[], byte[]>> stream = top.streamFromKey(segmentId, new byte[] {0})) {
+      assertEquals(1, stream.count());
+    }
+    assertEquals(2, baseCloses.get());
+  }
+
+  @Test
   void streamMergesKeysOfDifferentLengthsInUnsignedByteOrder() {
     byte[] p = {9};
     byte[] v = {7};
