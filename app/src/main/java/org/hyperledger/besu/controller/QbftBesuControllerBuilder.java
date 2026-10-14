@@ -88,7 +88,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethods;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.chain.ChainDataPruner;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -96,18 +95,14 @@ import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
-import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
-import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskExecutor;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
-import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.Subscribers;
@@ -119,6 +114,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -373,32 +369,16 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected DefaultSynchronizer createSynchronizer(
-      final ProtocolSchedule protocolSchedule,
-      final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final ProtocolContext protocolContext,
-      final EthContext ethContext,
-      final PeerTaskExecutor peerTaskExecutor,
-      final SyncState syncState,
-      final EthProtocolManager ethProtocolManager,
-      final PivotBlockSelector pivotBlockSelector,
-      final Optional<ChainDataPruner> chainDataPruner) {
-    final DefaultSynchronizer synchronizer =
-        super.createSynchronizer(
-            protocolSchedule,
-            worldStateStorageCoordinator,
-            protocolContext,
-            ethContext,
-            peerTaskExecutor,
-            syncState,
-            ethProtocolManager,
-            pivotBlockSelector,
-            chainDataPruner);
+  protected void configureSynchronizer(final DefaultSynchronizer synchronizer) {
     // leave blocks the QBFT round claimed to the round, and import them from the network if the
     // round releases them without importing them
     synchronizer.setConsensusOwnedBlockPredicate(validatedBlockCache::isOwnedByConsensus);
     validatedBlockCache.setReleaseListener(synchronizer::onConsensusOwnershipReleased);
-    return synchronizer;
+  }
+
+  @VisibleForTesting
+  ValidatedBlockCache getValidatedBlockCache() {
+    return validatedBlockCache;
   }
 
   @Override
