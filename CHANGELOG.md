@@ -89,6 +89,7 @@
 - Schedule the Amsterdam fork on Hoodi at timestamp `1793036568` (Mon, 26 Oct 2026, 17:42:48 UTC). [#11531](https://github.com/besu-eth/besu/pull/11531)
 - The EVM no longer calls the operation tracer for every operation when tracing is disabled.
 - New `besu storage revert-code-format` subcommand reverts the contract code storage and the database metadata, so that a database upgraded to store the jump destination analysis can be opened by an older Besu version again; Besu logs how to run it after the upgrade. [#11364](https://github.com/besu-eth/besu/pull/11364)
+- Bonsai rolls the world state of a deep reorg in batches, and `engine_forkchoiceUpdated` answers `SYNCING` while a deep head move runs in the background instead of timing out. [#11585](https://github.com/besu-eth/besu/pull/11585)
 
 ## 26.9.0
 
