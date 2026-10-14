@@ -57,6 +57,11 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   private static final Logger LOG = LoggerFactory.getLogger(LayeredKeyValueStorage.class);
 
+  // Same unsigned byte-wise order as the layer maps and RocksDB; Bytes.compareTo differs for keys
+  // of different lengths and treats all-zero keys (EMPTY, 0x00, ...) as equal.
+  private static final Comparator<Bytes> KEY_ORDER =
+      Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compareUnsigned);
+
   private final SegmentedKeyValueStorage parent;
 
   /** The parent if it is also a layer, otherwise null. */
@@ -309,16 +314,57 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   @Override
   public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentId) {
+    return streamRange(segmentId, null, null);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentId, final byte[] startKey) {
+    return streamRange(segmentId, Bytes.wrap(startKey), null);
+  }
+
+  @Override
+  public Stream<Pair<byte[], byte[]>> streamFromKey(
+      final SegmentIdentifier segmentId, final byte[] startKey, final byte[] endKey) {
+    return streamRange(segmentId, Bytes.wrap(startKey), Bytes.wrap(endKey));
+  }
+
+  /**
+   * Streams the merged entries of all layers and the base storage, optionally bounded so that each
+   * layer and the base storage only read the requested range.
+   *
+   * @param startKey inclusive lower bound, or null for the start of the segment
+   * @param endKey inclusive upper bound, or null for the end of the segment; requires startKey
+   */
+  private Stream<Pair<byte[], byte[]>> streamRange(
+      final SegmentIdentifier segmentId,
+      final @Nullable Bytes startKey,
+      final @Nullable Bytes endKey) {
     throwIfClosed();
+    if (startKey != null && endKey != null && KEY_ORDER.compare(startKey, endKey) > 0) {
+      return Stream.empty();
+    }
     // Merge all layers (top first) and the persistent parent in one pass rather than recursively.
     final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources = new ArrayList<>();
     for (LayeredKeyValueStorage layer = this; layer != null; layer = layer.parentLayer) {
       final NavigableMap<Bytes, Optional<byte[]>> segment = layer.hashValueStore.get(segmentId);
       if (segment != null) {
-        sources.add(segment.entrySet().iterator());
+        final NavigableMap<Bytes, Optional<byte[]>> range =
+            startKey == null
+                ? segment
+                : endKey == null
+                    ? segment.tailMap(startKey, true)
+                    : segment.subMap(startKey, true, endKey, true);
+        sources.add(range.entrySet().iterator());
       }
     }
-    final Stream<Pair<byte[], byte[]>> baseStream = baseStorage.stream(segmentId);
+    final Stream<Pair<byte[], byte[]>> baseStream =
+        startKey == null
+            ? baseStorage.stream(segmentId)
+            : endKey == null
+                ? baseStorage.streamFromKey(segmentId, startKey.toArrayUnsafe())
+                : baseStorage.streamFromKey(
+                    segmentId, startKey.toArrayUnsafe(), endKey.toArrayUnsafe());
     sources.add(
         baseStream
             .map(pair -> Map.entry(Bytes.wrap(pair.getKey()), Optional.ofNullable(pair.getValue())))
@@ -349,11 +395,6 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         this.head = head;
       }
     }
-
-    // Same unsigned byte-wise order as the layer maps and RocksDB; Bytes.compareTo differs for keys
-    // of different lengths and treats all-zero keys (EMPTY, 0x00, ...) as equal.
-    private static final Comparator<Bytes> KEY_ORDER =
-        Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compareUnsigned);
 
     private final PriorityQueue<Source> queue =
         new PriorityQueue<>(
@@ -393,23 +434,6 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       }
       return endOfData();
     }
-  }
-
-  @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(
-      final SegmentIdentifier segmentId, final byte[] startKey) {
-    final Bytes startKeyBytes = Bytes.wrap(startKey);
-    return stream(segmentId).filter(e -> startKeyBytes.compareTo(Bytes.wrap(e.getKey())) <= 0);
-  }
-
-  @Override
-  public Stream<Pair<byte[], byte[]>> streamFromKey(
-      final SegmentIdentifier segmentId, final byte[] startKey, final byte[] endKey) {
-    final Bytes startKeyBytes = Bytes.wrap(startKey);
-    final Bytes endKeyBytes = Bytes.wrap(endKey);
-    return stream(segmentId)
-        .filter(e -> startKeyBytes.compareTo(Bytes.wrap(e.getKey())) <= 0)
-        .filter(e -> endKeyBytes.compareTo(Bytes.wrap(e.getKey())) >= 0);
   }
 
   @Override

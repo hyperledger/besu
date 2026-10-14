@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -510,6 +511,11 @@ public class LayeredKeyValueStorageTest {
             __ ->
                 Stream.of(Pair.of(new byte[] {1}, new byte[] {1}))
                     .onClose(baseCloses::incrementAndGet));
+    when(parentStorage.streamFromKey(eq(segmentId), aryEq(new byte[] {0})))
+        .thenAnswer(
+            __ ->
+                Stream.of(Pair.of(new byte[] {1}, new byte[] {1}))
+                    .onClose(baseCloses::incrementAndGet));
     LayeredKeyValueStorage top =
         new LayeredKeyValueStorage(new LayeredKeyValueStorage(parentStorage));
 
@@ -522,6 +528,65 @@ public class LayeredKeyValueStorageTest {
       assertEquals(1, stream.count());
     }
     assertEquals(2, baseCloses.get());
+  }
+
+  @Test
+  void streamFromKeyWithEndKeyReadsOnlyTheRangeFromLayersAndBaseStorage() {
+    byte[] p = {0};
+    byte[] a = {1};
+    // the base storage is asked for the range only, and applies the bounds itself
+    when(parentStorage.streamFromKey(eq(segmentId), aryEq(new byte[] {3}), aryEq(new byte[] {6})))
+        .thenAnswer(
+            __ ->
+                Stream.of(
+                    Pair.of(new byte[] {3}, p),
+                    Pair.of(new byte[] {4}, p),
+                    Pair.of(new byte[] {6}, p)));
+
+    LayeredKeyValueStorage bottom =
+        layer(parentStorage, Map.of(2, Optional.of(a), 5, Optional.of(a), 7, Optional.of(a)));
+    LayeredKeyValueStorage top =
+        layer(bottom, Map.of(1, Optional.of(a), 3, Optional.empty(), 6, Optional.of(a)));
+
+    // 1, 2, 7: layer keys outside the range; 3: deleted at the start key;
+    // 4: base only; 5: bottom only; 6: top overrides base at the inclusive end key
+    assertEquals(
+        List.of(
+            Pair.of(Bytes.of(4), Bytes.wrap(p)),
+            Pair.of(Bytes.of(5), Bytes.wrap(a)),
+            Pair.of(Bytes.of(6), Bytes.wrap(a))),
+        top.streamFromKey(segmentId, new byte[] {3}, new byte[] {6})
+            .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
+            .toList());
+    verify(parentStorage, never()).stream(segmentId);
+  }
+
+  @Test
+  void streamFromKeyReadsFromStartKeyInLayersAndBaseStorage() {
+    byte[] p = {0};
+    byte[] a = {1};
+    when(parentStorage.streamFromKey(eq(segmentId), aryEq(new byte[] {3})))
+        .thenAnswer(__ -> Stream.of(Pair.of(new byte[] {3}, p), Pair.of(new byte[] {8}, p)));
+
+    LayeredKeyValueStorage top =
+        layer(parentStorage, Map.of(2, Optional.of(a), 3, Optional.of(a), 9, Optional.of(a)));
+
+    assertEquals(
+        List.of(
+            Pair.of(Bytes.of(3), Bytes.wrap(a)),
+            Pair.of(Bytes.of(8), Bytes.wrap(p)),
+            Pair.of(Bytes.of(9), Bytes.wrap(a))),
+        top.streamFromKey(segmentId, new byte[] {3})
+            .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
+            .toList());
+    verify(parentStorage, never()).stream(segmentId);
+  }
+
+  @Test
+  void streamFromKeyWithStartAfterEndIsEmpty() {
+    LayeredKeyValueStorage top = layer(parentStorage, Map.of(4, Optional.of(new byte[] {1})));
+
+    assertEquals(0, top.streamFromKey(segmentId, new byte[] {5}, new byte[] {3}).count());
   }
 
   @Test
