@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -38,6 +40,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.ArrayList;
@@ -123,6 +126,7 @@ public class RequestDataStepLocalFlatDataTest {
     scheduled.forEach(Runnable::run);
 
     assertThat(result).isCompletedWithValue(task);
+    assertRangeProven(request);
     // the first ten accounts were read, so the rest of the range is left to a follow-up request
     assertThat(childRequests(request))
         .singleElement()
@@ -156,11 +160,22 @@ public class RequestDataStepLocalFlatDataTest {
     scheduled.forEach(Runnable::run);
 
     assertThat(result).isCompletedWithValue(task);
+    assertRangeProven(request);
     // two of the three slots were read, so the rest of the range is left to follow-up requests
     assertThat(childRequests(request))
         .isNotEmpty()
         .allSatisfy(
             child -> assertThat(child).isInstanceOf(StorageFlatDatabaseHealingRangeRequest.class));
+  }
+
+  // a range that failed its proof would be read again from the trie when it is persisted
+  private void assertRangeProven(final SnapDataRequest request) {
+    final WorldStateStorageCoordinator coordinator = spy(worldStateStorageCoordinator);
+    final WorldStateKeyValueStorage.Updater updater = spy(worldStateStorage.updater());
+
+    request.persist(coordinator, updater, downloadState, snapSyncState, snapSyncConfiguration);
+
+    verifyNoInteractions(coordinator, updater);
   }
 
   private List<SnapDataRequest> childRequests(final SnapDataRequest request) {
