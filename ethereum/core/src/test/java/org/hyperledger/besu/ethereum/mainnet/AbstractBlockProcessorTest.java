@@ -41,6 +41,9 @@ import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitt
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.StateGasCostCalculator;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.List;
@@ -117,6 +120,44 @@ abstract class AbstractBlockProcessorTest {
             .blockAccessList(Optional.empty())
             .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
+  }
+
+  @Test
+  void blockTracerFromContextIsUsedInsteadOfBlockImportTracer() {
+    final BlockAwareOperationTracer blockTracer = mock(BlockAwareOperationTracer.class);
+
+    blockProcessor.processBlock(
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .sequentialExecutionRequested(true)
+            .blockTracer(blockTracer)
+            .build());
+
+    verify(blockTracer).traceStartBlock(any(), any(BlockHeader.class), any(Address.class));
+    verify(protocolContext, never()).getPluginServiceManager();
+  }
+
+  @Test
+  void blockImportTracerIsUsedWithoutBlockTracerInContext() {
+    final BlockAwareOperationTracer importTracer = mock(BlockAwareOperationTracer.class);
+    final ServiceManager serviceManager = mock(ServiceManager.class);
+    final BlockImportTracerProvider provider = header -> importTracer;
+    when(protocolContext.getPluginServiceManager()).thenReturn(serviceManager);
+    when(serviceManager.getService(BlockImportTracerProvider.class))
+        .thenReturn(Optional.of(provider));
+
+    blockProcessor.processBlock(
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .build());
+
+    verify(importTracer).traceStartBlock(any(), any(BlockHeader.class), any(Address.class));
   }
 
   @Test
