@@ -149,24 +149,34 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
     final List<Integer> missingIndices = new ArrayList<>();
     final List<byte[]> missingKeys = new ArrayList<>();
-    for (int i = 0; i < keys.size(); i++) {
-      final byte[] key = keys.get(i);
-      final Optional<byte[]> found = getFromLayers(segment, Bytes.wrap(key));
-      if (found != null) {
-        results.add(found);
-      } else {
-        results.add(Optional.empty());
-        missingIndices.add(i);
-        missingKeys.add(key);
+
+    final Lock lock = rwLock.readLock();
+    lock.lock();
+    try {
+      final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+          hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
+      for (int i = 0; i < keys.size(); i++) {
+        final byte[] key = keys.get(i);
+        final Optional<byte[]> localValue = segmentMap.get(Bytes.wrap(key));
+        if (localValue != null) {
+          results.add(localValue);
+        } else {
+          results.add(null);
+          missingIndices.add(i);
+          missingKeys.add(key);
+        }
       }
+    } finally {
+      lock.unlock();
     }
 
     if (!missingKeys.isEmpty()) {
-      final List<Optional<byte[]>> baseResults = baseStorage.multiget(segment, missingKeys);
+      final List<Optional<byte[]>> parentResults = parent.multiget(segment, missingKeys);
       for (int j = 0; j < missingIndices.size(); j++) {
-        results.set(missingIndices.get(j), baseResults.get(j));
+        results.set(missingIndices.get(j), parentResults.get(j));
       }
     }
+
     return results;
   }
 
