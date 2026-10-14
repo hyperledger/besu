@@ -55,6 +55,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -62,11 +63,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -154,6 +155,15 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
   private Boolean enablePrecompileCache = false;
 
   @Option(
+      names = {"--block-access-list"},
+      description =
+          "Import each block with the access list its fixture carries (default: ${DEFAULT-VALUE})."
+              + " --noblock-access-list imports without one, as full sync does, so post-Amsterdam"
+              + " blocks take the accumulator state root path rather than the access list one.",
+      negatable = true)
+  private Boolean useBlockAccessList = true;
+
+  @Option(
       names = {"--verbose"},
       description = "Verbose logs, listing all skipped tests")
   private final Boolean verbose = false;
@@ -218,7 +228,8 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
           }
           final File file = new File(fileName);
           if (file.isFile()) {
-            runFile(file.toPath(), blockchainTestMapper, javaType, results);
+            // No stdin: these are file names, and the stream is the list still being read.
+            runFile(file.toPath(), null, blockchainTestMapper, javaType, results);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -227,11 +238,8 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
         FixtureRunner.runFiles(
             FixtureRunner.collectFiles(blockchainTestFiles),
             workers,
-            file -> runFile(file, blockchainTestMapper, javaType, results));
+            file -> runFile(file, parentCommand.in, blockchainTestMapper, javaType, results));
       }
-    } catch (final JsonProcessingException jpe) {
-      setupFailed = true;
-      parentCommand.out.println("File content error: " + jpe);
     } catch (final IOException e) {
       setupFailed = true;
       System.err.println("Unable to read state file: " + e.getMessage());
@@ -261,6 +269,7 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
               ? 1
               : 0;
       if (jsonArray) {
+        results.addNotRunRows(jsonArrayResults, "fork", "lastBlockHash");
         FixtureRunner.printJsonArray(parentCommand.out, jsonArrayResults);
       } else if (results.hasTests() || results.unaccountedCases() > 0) {
         results.printSummary(parentCommand.out);
@@ -311,21 +320,21 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
    */
   private void runFile(
       final Path file,
+      final @Nullable InputStream stdin,
       final ObjectMapper mapper,
       final JavaType javaType,
       final FixtureRunner.TestResults results) {
-    byte @Nullable [] content = null;
-    final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests;
-    try {
-      // FixtureRunner.collectFiles passes the literal path "stdin" through unresolved, as the
-      // signal to read the fixture from standard input; readFixture honours it.
-      content = FixtureRunner.readFixture(file, parentCommand.in);
-      blockchainTests = mapper.readValue(content, javaType);
-    } catch (final Exception e) {
-      // Count what the file declared even though it could not be read, so the cases it
-      // contributes show up as unaccounted rather than vanishing from the totals.
-      results.recordDeclaredCases(FixtureRunner.countUnreadableTestCases(content));
-      results.recordUnreadable(file.toString(), "not readable as a blockchain test fixture: " + e);
+    final Map<String, BlockchainReferenceTestCaseSpec> blockchainTests =
+        FixtureRunner.readTests(
+            file,
+            stdin,
+            mapper,
+            javaType,
+            test -> nameFilter == null || matchesTestName(test),
+            (cases, e) ->
+                results.recordUnreadable(
+                    file.toString(), "not readable as a blockchain test fixture: " + e, cases));
+    if (blockchainTests == null) {
       return;
     }
     results.recordDeclaredCases(blockchainTests.size());
@@ -364,6 +373,18 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
         ReferenceTestProtocolSchedules.cached(
                 parentCommand.getEvmConfiguration(), spec.getBlobScheduleOptions().orElse(null))
             .getByName(spec.getNetwork());
+    if (schedule == null) {
+      // Recorded against this test, as engine-test does. Left to throw, it escaped the whole file,
+      // so the rest of the file and every file after it went unread and uncounted.
+      if (isLastIteration) {
+        final String reason = "Unsupported fork: " + spec.getNetwork();
+        if (!jsonArray) {
+          printBlockchainImportResult(reason);
+        }
+        recordResult(test, spec, blockchain, false, reason, results);
+      }
+      return;
+    }
 
     BlockTestTracerManager tracerManager = null;
     if (parentCommand.showJsonResults && isLastIteration) {
@@ -429,7 +450,7 @@ public class BlockchainTestSubCommand implements Runnable, IExitCodeGenerator {
                 block,
                 validationMode,
                 validationMode,
-                candidateBlock.getBlockAccessList());
+                useBlockAccessList ? candidateBlock.getBlockAccessList() : Optional.empty());
 
         timer.stop();
 

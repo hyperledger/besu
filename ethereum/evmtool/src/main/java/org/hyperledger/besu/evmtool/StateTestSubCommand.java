@@ -49,17 +49,18 @@ import org.hyperledger.besu.util.LogConfigurator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -187,8 +188,14 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
   // Collected results for --json-array mode
   private final List<ObjectNode> jsonArrayResults = Collections.synchronizedList(new ArrayList<>());
 
-  // Fixture files we could not build a test from; reported at the end rather than dropped
-  private final List<String> unreadableFiles = Collections.synchronizedList(new ArrayList<>());
+  // Fixture files we could not build a test from, with the reason; reported at the end rather
+  // than dropped
+  private final Map<String, String> unreadableFiles =
+      Collections.synchronizedMap(new LinkedHashMap<>());
+
+  // Variants skipped because their transaction exceeds the block's gas limit. Listed at the end:
+  // they count as filtered, and so would otherwise go unchecked without anything saying so.
+  private final List<String> gasLimitSkipped = Collections.synchronizedList(new ArrayList<>());
 
   // Cached across all tests; guarded by getSchedules()
   private @Nullable ReferenceTestProtocolSchedules cachedSchedules;
@@ -247,7 +254,8 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
           }
           final File file = new File(fileName);
           if (file.isFile()) {
-            runFile(file.toPath(), stateTestMapper, javaType);
+            // No stdin: these are file names, and the stream is the list still being read.
+            runFile(file.toPath(), null, stateTestMapper, javaType);
           } else {
             parentCommand.out.println("File not found: " + fileName);
           }
@@ -256,15 +264,10 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
         FixtureRunner.runFiles(
             FixtureRunner.collectFiles(stateTestFiles),
             workers,
-            file -> runFile(file, stateTestMapper, javaType));
+            file -> runFile(file, parentCommand.in, stateTestMapper, javaType));
       }
     } catch (final UnsupportedForkException e) {
       throw e;
-    } catch (final JsonProcessingException jpe) {
-      // A fixture that could not be parsed has to fail the run, otherwise a broken fixture tree
-      // reports success.
-      parentCommand.out.println("File content error: " + jpe);
-      anyFailure.set(true);
     } catch (final IOException e) {
       System.err.println("Unable to read state file: " + e.getMessage());
       anyFailure.set(true);
@@ -289,7 +292,22 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
       anyFailure.set(true);
     }
 
+    final int unaccounted = unaccountedCases();
     if (jsonArray) {
+      // A failing row for everything that did not run, so the array alone explains a non-zero exit
+      synchronized (unreadableFiles) {
+        unreadableFiles.forEach(
+            (file, reason) ->
+                jsonArrayResults.add(FixtureRunner.notRunRow(file, reason, "fork", "stateRoot")));
+      }
+      if (unaccounted > 0) {
+        jsonArrayResults.add(
+            FixtureRunner.notRunRow(
+                "NOT RUN",
+                FixtureRunner.notRunMessage(unaccounted, declaredCases.get()),
+                "fork",
+                "stateRoot"));
+      }
       FixtureRunner.printJsonArray(parentCommand.out, jsonArrayResults);
     } else {
       if (passCount.get() + failCount.get() > 0
@@ -298,17 +316,32 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
             "%nState test summary: %d passed, %d failed%n", passCount.get(), failCount.get());
       }
       // Not printed under --json-array, where that output is parsed and only the array belongs.
+      if (filteredCases.get() > 0) {
+        parentCommand.out.printf(
+            "Filtered out: %d case(s), none of whose variants were selected%n",
+            filteredCases.get());
+      }
+      if (!gasLimitSkipped.isEmpty()) {
+        parentCommand.out.printf(
+            "%n%d variant(s) skipped, their transaction exceeding the block gas limit (not"
+                + " checked):%n",
+            gasLimitSkipped.size());
+        synchronized (gasLimitSkipped) {
+          gasLimitSkipped.forEach(v -> parentCommand.out.println("  - " + v));
+        }
+      }
       if (!unreadableFiles.isEmpty()) {
         parentCommand.out.printf(
             "%n%d fixture file(s) were not readable as state tests (no test in them ran):%n",
             unreadableFiles.size());
-        unreadableFiles.forEach(f -> parentCommand.out.println("  - " + f));
+        synchronized (unreadableFiles) {
+          unreadableFiles.forEach(
+              (f, reason) -> parentCommand.out.println("  - " + f + ": " + reason));
+        }
       }
-      final int unaccounted = unaccountedCases();
       if (unaccounted > 0) {
         parentCommand.out.printf(
-            "%nNOT RUN: %d of %d declared case(s) never executed%n",
-            unaccounted, declaredCases.get());
+            "%nNOT RUN: %s%n", FixtureRunner.notRunMessage(unaccounted, declaredCases.get()));
       }
     }
   }
@@ -331,19 +364,24 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
    * Reads one fixture file and runs it. Used by both the sequential and the parallel path so the
    * counts agree either way.
    */
-  private void runFile(final Path file, final ObjectMapper mapper, final JavaType javaType) {
-    byte @Nullable [] content = null;
-    final Map<String, GeneralStateTestCaseSpec> generalStateTests;
-    try {
-      // FixtureRunner.collectFiles passes the literal path "stdin" through unresolved, as the
-      // signal to read the fixture from standard input; readFixture honours it.
-      content = FixtureRunner.readFixture(file, parentCommand.in);
-      generalStateTests = mapper.readValue(content, javaType);
-    } catch (final Exception e) {
-      // Count what the file declared even though it could not be read, so the cases it
-      // contributes show up as unaccounted rather than vanishing from the totals.
-      declaredCases.addAndGet(FixtureRunner.countUnreadableTestCases(content));
-      unreadableFiles.add(file + ": " + e);
+  private void runFile(
+      final Path file,
+      final @Nullable InputStream stdin,
+      final ObjectMapper mapper,
+      final JavaType javaType) {
+    final Map<String, GeneralStateTestCaseSpec> generalStateTests =
+        FixtureRunner.readTests(
+            file,
+            stdin,
+            mapper,
+            javaType,
+            this::selects,
+            (cases, e) -> {
+              declaredCases.addAndGet(cases.declared());
+              filteredCases.addAndGet(cases.filtered());
+              unreadableFiles.put(file.toString(), e.toString());
+            });
+    if (generalStateTests == null) {
       return;
     }
     declaredCases.addAndGet(generalStateTests.size());
@@ -365,22 +403,7 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
           final VariantTally tally = new VariantTally();
           for (final List<GeneralStateTestCaseEipSpec> specs :
               generalStateTestEntry.getValue().finalStateSpecs().values()) {
-            try {
-              traceTestSpecs(test, specs, isLastIteration, tally);
-            } catch (final UnsupportedForkException e) {
-              // An unknown fork is a harness configuration problem rather than a test failure, so
-              // let it out.
-              throw e;
-            } catch (final RuntimeException e) {
-              // Record against the test that caused it, so one broken fixture does not abandon the
-              // rest of the file.
-              tally.ran++;
-              if (isLastIteration) {
-                failCount.incrementAndGet();
-                anyFailure.set(true);
-                parentCommand.out.printf("FAIL: %s - execution error: %s%n", test, e);
-              }
-            }
+            traceTestSpecs(test, specs, isLastIteration, tally);
           }
           if (isLastIteration) {
             // A selected case only counts as executed once a variant actually produced a result.
@@ -446,177 +469,220 @@ public class StateTestSubCommand implements Runnable, IExitCodeGenerator {
             : OperationTracer.NO_TRACING;
 
     for (final GeneralStateTestCaseEipSpec spec : specs) {
-      if (dataIndex != null && spec.getDataIndex() != dataIndex) {
-        tally.skipped++;
-        continue;
+      try {
+        traceVariant(test, spec, tracer, isLastIteration, tally);
+      } catch (final UnsupportedForkException e) {
+        // An unknown fork is a harness configuration problem rather than a test failure, so let it
+        // out.
+        throw e;
+      } catch (final RuntimeException e) {
+        // Recorded against this variant alone. Caught any further out, it abandoned the variants
+        // after it, so the failure count stayed too low until this one was fixed.
+        tally.ran++;
+        if (isLastIteration) {
+          recordExecutionError(test, spec, e);
+        }
       }
-      if (gasIndex != null && spec.getGasIndex() != gasIndex) {
-        tally.skipped++;
-        continue;
+    }
+  }
+
+  private void recordExecutionError(
+      final String test, final GeneralStateTestCaseEipSpec spec, final RuntimeException e) {
+    failCount.incrementAndGet();
+    anyFailure.set(true);
+    if (jsonArray) {
+      final ObjectNode row =
+          FixtureRunner.notRunRow(test, "execution error: " + e, "fork", "stateRoot");
+      row.put("fork", spec.getFork());
+      jsonArrayResults.add(row);
+    } else {
+      parentCommand.out.printf("FAIL: %s - execution error: %s%n", describeVariant(test, spec), e);
+    }
+  }
+
+  private static String describeVariant(final String test, final GeneralStateTestCaseEipSpec spec) {
+    return String.format(
+        "%s [%s d=%d g=%d v=%d]",
+        test, spec.getFork(), spec.getDataIndex(), spec.getGasIndex(), spec.getValueIndex());
+  }
+
+  private void traceVariant(
+      final String test,
+      final GeneralStateTestCaseEipSpec spec,
+      final OperationTracer tracer,
+      final boolean isLastIteration,
+      final VariantTally tally) {
+    if (dataIndex != null && spec.getDataIndex() != dataIndex) {
+      tally.skipped++;
+      return;
+    }
+    if (gasIndex != null && spec.getGasIndex() != gasIndex) {
+      tally.skipped++;
+      return;
+    }
+    if (valueIndex != null && spec.getValueIndex() != valueIndex) {
+      tally.skipped++;
+      return;
+    }
+    if (forkIndex != null
+        && !ReferenceTestProtocolSchedules.isSameFork(spec.getFork(), forkIndex)) {
+      tally.skipped++;
+      return;
+    }
+
+    final BlockHeader blockHeader = spec.getBlockHeader();
+    final Transaction transaction = spec.getTransaction(0);
+    final ObjectNode summaryLine = SHARED_OBJECT_MAPPER.createObjectNode();
+    if (transaction == null) {
+      if ((parentCommand.showJsonAlloc || parentCommand.showJsonResults) && isLastIteration) {
+        parentCommand.out.println(
+            "{\"error\":\"Transaction was invalid, trace and alloc unavailable.\"}");
       }
-      if (valueIndex != null && spec.getValueIndex() != valueIndex) {
+      summaryLine.put("test", test);
+      summaryLine.put("fork", spec.getFork());
+      summaryLine.put("d", spec.getDataIndex());
+      summaryLine.put("g", spec.getGasIndex());
+      summaryLine.put("v", spec.getValueIndex());
+      summaryLine.put("pass", spec.getExpectException() != null);
+      summaryLine.put("validationError", "Transaction had out-of-bounds parameters");
+    } else {
+      final MutableWorldState worldState = spec.getInitialWorldState().copy();
+      // Several of the GeneralStateTests check if the transaction could potentially
+      // consume more gas than is left for the block it's attempted to be included in.
+      // This check is performed within the `BlockImporter` rather than inside the
+      // `TransactionProcessor`, so these tests are skipped. Only this variant, though: the
+      // others in the list have their own transactions and still have to run.
+      if (transaction.getGasLimit() > blockHeader.getGasLimit() - blockHeader.getGasUsed()) {
         tally.skipped++;
-        continue;
-      }
-      if (forkIndex != null && !spec.getFork().equalsIgnoreCase(forkIndex)) {
-        tally.skipped++;
-        continue;
+        if (isLastIteration) {
+          gasLimitSkipped.add(describeVariant(test, spec));
+        }
+        return;
       }
 
-      final BlockHeader blockHeader = spec.getBlockHeader();
-      final Transaction transaction = spec.getTransaction(0);
-      final ObjectNode summaryLine = SHARED_OBJECT_MAPPER.createObjectNode();
-      if (transaction == null) {
-        if ((parentCommand.showJsonAlloc || parentCommand.showJsonResults) && isLastIteration) {
-          parentCommand.out.println(
-              "{\"error\":\"Transaction was invalid, trace and alloc unavailable.\"}");
+      final String forkName = fork == null ? spec.getFork() : fork;
+      final ProtocolSchedule protocolSchedule = getSchedules().getByName(forkName);
+      if (protocolSchedule == null) {
+        throw new UnsupportedForkException(forkName);
+      }
+
+      final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+      final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
+      final WorldUpdater worldStateUpdater = worldState.updater();
+      final Stopwatch timer = Stopwatch.createStarted();
+      // EIP-4844: use excessBlobGas from block header for correct blob gas price calculation
+      final BlobGas excessBlobGas = blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO);
+      final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
+      final TransactionProcessingResult result =
+          processor.processTransaction(
+              worldStateUpdater,
+              blockHeader,
+              transaction,
+              blockHeader.getCoinbase(),
+              tracer,
+              (__, blockNumber) ->
+                  Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
+              TransactionValidationParams.processingBlock(),
+              blobGasPrice);
+      timer.stop();
+      // Only touch coinbase and commit state changes if the transaction was valid.
+      // When transaction fails validation (e.g., insufficient balance), we should not
+      // modify state at all - matching geth's behavior for consensus compatibility.
+      if (!result.isInvalid()) {
+        // The rules of the fork being run, which --fork may have overridden, not the fixture's
+        if (shouldClearEmptyAccounts(forkName)) {
+          final Account coinbase =
+              worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
+          if (coinbase != null && coinbase.isEmpty()) {
+            worldStateUpdater.deleteAccount(coinbase.getAddress());
+          }
+          final Account sender = worldStateUpdater.getAccount(transaction.getSender());
+          if (sender != null && sender.isEmpty()) {
+            worldStateUpdater.deleteAccount(sender.getAddress());
+          }
         }
-        summaryLine.put("test", test);
-        summaryLine.put("fork", spec.getFork());
-        summaryLine.put("d", spec.getDataIndex());
-        summaryLine.put("g", spec.getGasIndex());
-        summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("pass", spec.getExpectException() != null);
-        summaryLine.put("validationError", "Transaction had out-of-bounds parameters");
+        worldStateUpdater.commit();
+        worldState.persist(blockHeader);
+      }
+
+      summaryLine.put("output", result.getOutput().toUnprefixedHexString());
+      final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
+      final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
+      final float mGps = gasUsed * 1000.0f / timeNs;
+
+      if (parentCommand.eip3155strict) {
+        summaryLine.put("gasUsed", StreamingOperationTracer.shortNumber(gasUsed));
       } else {
-        final MutableWorldState worldState = spec.getInitialWorldState().copy();
-        // Several of the GeneralStateTests check if the transaction could potentially
-        // consume more gas than is left for the block it's attempted to be included in.
-        // This check is performed within the `BlockImporter` rather than inside the
-        // `TransactionProcessor`, so these tests are skipped. Only this variant, though: the
-        // others in the list have their own transactions and still have to run.
-        if (transaction.getGasLimit() > blockHeader.getGasLimit() - blockHeader.getGasUsed()) {
-          tally.skipped++;
-          continue;
-        }
-
-        final String forkName = fork == null ? spec.getFork() : fork;
-        final ProtocolSchedule protocolSchedule = getSchedules().getByName(forkName);
-        if (protocolSchedule == null) {
-          throw new UnsupportedForkException(forkName);
-        }
-
-        final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
-        final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
-        final WorldUpdater worldStateUpdater = worldState.updater();
-        final Stopwatch timer = Stopwatch.createStarted();
-        // EIP-4844: use excessBlobGas from block header for correct blob gas price calculation
-        final BlobGas excessBlobGas = blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO);
-        final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(excessBlobGas);
-        final TransactionProcessingResult result =
-            processor.processTransaction(
-                worldStateUpdater,
-                blockHeader,
-                transaction,
-                blockHeader.getCoinbase(),
-                tracer,
-                (__, blockNumber) ->
-                    Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
-                TransactionValidationParams.processingBlock(),
-                blobGasPrice);
-        timer.stop();
-        // Only touch coinbase and commit state changes if the transaction was valid.
-        // When transaction fails validation (e.g., insufficient balance), we should not
-        // modify state at all - matching geth's behavior for consensus compatibility.
-        if (!result.isInvalid()) {
-          if (shouldClearEmptyAccounts(spec.getFork())) {
-            final Account coinbase =
-                worldStateUpdater.getOrCreate(spec.getBlockHeader().getCoinbase());
-            if (coinbase != null && coinbase.isEmpty()) {
-              worldStateUpdater.deleteAccount(coinbase.getAddress());
-            }
-            final Account sender = worldStateUpdater.getAccount(transaction.getSender());
-            if (sender != null && sender.isEmpty()) {
-              worldStateUpdater.deleteAccount(sender.getAddress());
-            }
-          }
-          worldStateUpdater.commit();
-          worldState.persist(blockHeader);
-        }
-
-        summaryLine.put("output", result.getOutput().toUnprefixedHexString());
-        final long gasUsed = transaction.getGasLimit() - result.getGasRemaining();
-        final long timeNs = timer.elapsed(TimeUnit.NANOSECONDS);
-        final float mGps = gasUsed * 1000.0f / timeNs;
-
-        if (parentCommand.eip3155strict) {
-          summaryLine.put("gasUsed", StreamingOperationTracer.shortNumber(gasUsed));
-        } else {
-          summaryLine.put("gasUsed", gasUsed);
-        }
-
-        if (!parentCommand.noTime) {
-          summaryLine.put("time", timeNs);
-          summaryLine.put("Mgps", String.format("%.3f", mGps));
-        }
-
-        // Check the world state root hash.
-        summaryLine.put("test", test);
-        summaryLine.put("fork", spec.getFork());
-        summaryLine.put("d", spec.getDataIndex());
-        summaryLine.put("g", spec.getGasIndex());
-        summaryLine.put("v", spec.getValueIndex());
-        summaryLine.put("stateRoot", worldState.rootHash().getBytes().toHexString());
-        final List<Log> logs = result.getLogs();
-        final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
-        summaryLine.put("postLogsHash", actualLogsHash.getBytes().toHexString());
-
-        // Every fixture requires the post state root and the logs hash to match. A fixture that
-        // expects an exception additionally requires the transaction to be rejected; checking the
-        // rejection alone would also pass when we reject for the wrong reason or corrupt state.
-        final boolean exceptionExpected = spec.getExpectException() != null;
-
-        final boolean postStateMatches =
-            worldState.rootHash().equals(spec.getExpectedRootHash())
-                && actualLogsHash.equals(spec.getExpectedLogsHash());
-        final boolean pass = postStateMatches && (!exceptionExpected || result.isInvalid());
-        summaryLine.put("pass", pass);
-        if (result.isInvalid()) {
-          summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
-        } else if (exceptionExpected) {
-          summaryLine.put(
-              "validationError",
-              "Exception '" + spec.getExpectException() + "' was expected but did not occur");
-        }
-        if (!result.getValidationResult().isValid()) {
-          summaryLine.put("error", result.getValidationResult().getErrorMessage());
-        }
-        if (parentCommand.showJsonAlloc && isLastIteration) {
-          EvmToolCommand.dumpWorldState(worldState, parentCommand.out);
-        }
+        summaryLine.put("gasUsed", gasUsed);
       }
 
-      tally.ran++;
-      if (isLastIteration) {
-        final boolean testPassed = summaryLine.has("pass") && summaryLine.get("pass").asBoolean();
-        if (testPassed) {
-          passCount.incrementAndGet();
-        } else {
-          failCount.incrementAndGet();
-          anyFailure.set(true);
+      if (!parentCommand.noTime) {
+        summaryLine.put("time", timeNs);
+        summaryLine.put("Mgps", String.format("%.3f", mGps));
+      }
+
+      // Check the world state root hash.
+      summaryLine.put("test", test);
+      summaryLine.put("fork", spec.getFork());
+      summaryLine.put("d", spec.getDataIndex());
+      summaryLine.put("g", spec.getGasIndex());
+      summaryLine.put("v", spec.getValueIndex());
+      summaryLine.put("stateRoot", worldState.rootHash().getBytes().toHexString());
+      final List<Log> logs = result.getLogs();
+      final Hash actualLogsHash = Hash.hash(RLP.encode(out -> out.writeList(logs, Log::writeTo)));
+      summaryLine.put("postLogsHash", actualLogsHash.getBytes().toHexString());
+
+      // Every fixture requires the post state root and the logs hash to match. A fixture that
+      // expects an exception additionally requires the transaction to be rejected; checking the
+      // rejection alone would also pass when we reject for the wrong reason or corrupt state.
+      final boolean exceptionExpected = spec.getExpectException() != null;
+
+      final boolean postStateMatches =
+          worldState.rootHash().equals(spec.getExpectedRootHash())
+              && actualLogsHash.equals(spec.getExpectedLogsHash());
+      final boolean pass = postStateMatches && (!exceptionExpected || result.isInvalid());
+      summaryLine.put("pass", pass);
+      if (result.isInvalid()) {
+        summaryLine.put("validationError", result.getValidationResult().getErrorMessage());
+      } else if (exceptionExpected) {
+        summaryLine.put(
+            "validationError",
+            "Exception '" + spec.getExpectException() + "' was expected but did not occur");
+      }
+      if (!result.getValidationResult().isValid()) {
+        summaryLine.put("error", result.getValidationResult().getErrorMessage());
+      }
+      if (parentCommand.showJsonAlloc && isLastIteration) {
+        EvmToolCommand.dumpWorldState(worldState, parentCommand.out);
+      }
+    }
+
+    tally.ran++;
+    if (isLastIteration) {
+      final boolean testPassed = summaryLine.has("pass") && summaryLine.get("pass").asBoolean();
+      if (testPassed) {
+        passCount.incrementAndGet();
+      } else {
+        failCount.incrementAndGet();
+        anyFailure.set(true);
+      }
+      if (jsonArray) {
+        final ObjectNode standardResult = SHARED_OBJECT_MAPPER.createObjectNode();
+        standardResult.put("name", summaryLine.has("test") ? summaryLine.get("test").asText() : "");
+        standardResult.put("pass", summaryLine.has("pass") && summaryLine.get("pass").asBoolean());
+        standardResult.put("fork", summaryLine.has("fork") ? summaryLine.get("fork").asText() : "");
+        standardResult.put(
+            "stateRoot", summaryLine.has("stateRoot") ? summaryLine.get("stateRoot").asText() : "");
+        String error = "";
+        if (summaryLine.has("validationError")) {
+          error = summaryLine.get("validationError").asText();
+        } else if (summaryLine.has("error")) {
+          error = summaryLine.get("error").asText();
         }
-        if (jsonArray) {
-          final ObjectNode standardResult = SHARED_OBJECT_MAPPER.createObjectNode();
-          standardResult.put(
-              "name", summaryLine.has("test") ? summaryLine.get("test").asText() : "");
-          standardResult.put(
-              "pass", summaryLine.has("pass") && summaryLine.get("pass").asBoolean());
-          standardResult.put(
-              "fork", summaryLine.has("fork") ? summaryLine.get("fork").asText() : "");
-          standardResult.put(
-              "stateRoot",
-              summaryLine.has("stateRoot") ? summaryLine.get("stateRoot").asText() : "");
-          String error = "";
-          if (summaryLine.has("validationError")) {
-            error = summaryLine.get("validationError").asText();
-          } else if (summaryLine.has("error")) {
-            error = summaryLine.get("error").asText();
-          }
-          standardResult.put("error", error);
-          jsonArrayResults.add(standardResult);
-        } else if (!summaryOnly || !testPassed) {
-          parentCommand.out.println(summaryLine);
-        }
+        standardResult.put("error", error);
+        jsonArrayResults.add(standardResult);
+      } else if (!summaryOnly || !testPassed) {
+        parentCommand.out.println(summaryLine);
       }
     }
   }

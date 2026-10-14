@@ -31,9 +31,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -154,20 +156,74 @@ final class FixtureRunner {
   }
 
   /**
-   * Reads a fixture's raw content, from standard input when {@code file} is the literal {@code
-   * stdin} that {@link #collectFiles} passes through.
+   * The test cases a fixture declares that its typed read could not reach, split by whether the
+   * name filter selected them.
    *
-   * <p>Buffered rather than streamed into the typed read so that, if that read fails, {@link
-   * #countUnreadableTestCases} can still count the cases from the same content. Standard input
-   * cannot be read twice.
-   *
-   * @param file the fixture file, or {@code stdin}
-   * @param stdin the command's standard input
-   * @return the fixture content
-   * @throws IOException if the content cannot be read
+   * @param notRun cases the run selected but never executed
+   * @param filtered cases the name filter excluded anyway, so they count as filtered, not missing
    */
-  static byte[] readFixture(final Path file, final InputStream stdin) throws IOException {
-    return "stdin".equals(file.toString()) ? stdin.readAllBytes() : Files.readAllBytes(file);
+  record UnreadableCases(int notRun, int filtered) {
+
+    /** Every case the fixture declares, selected or not. */
+    int declared() {
+      return notRun + filtered;
+    }
+  }
+
+  /** Receives a fixture that could not be read as the expected test type. */
+  @FunctionalInterface
+  interface UnreadableFixtureHandler {
+    /**
+     * Records the failed read.
+     *
+     * @param cases the cases the fixture declared
+     * @param error why the read failed
+     */
+    void accept(UnreadableCases cases, Exception error);
+  }
+
+  /**
+   * Reads one fixture file into its typed test map, or reports it to {@code onUnreadable}.
+   *
+   * <p>The raw content is buffered rather than streamed into the typed read so that, if that read
+   * fails, {@link #countUnreadableTestCases} can still count the cases from the same content:
+   * standard input cannot be read twice. It is only reachable from this method, though, so it is
+   * released as soon as the read returns rather than held for the whole of the file's run. That
+   * matters on the largest fixtures, where the raw bytes outweigh the parsed tests.
+   *
+   * @param file the fixture file, or the literal {@code stdin} that {@link #collectFiles} passes
+   *     through to mean standard input
+   * @param stdin the command's standard input, or {@code null} if {@code file} always names a file.
+   *     Pass {@code null} when the file names were themselves read from standard input, where an
+   *     entry named {@code stdin} is a file, and the stream is the list still being read.
+   * @param mapper the mapper to read with
+   * @param javaType the {@code Map<String, T>} type to read
+   * @param selects whether the name filter selects a test, so an unreadable file's unselected cases
+   *     count as filtered
+   * @param onUnreadable called, instead of returning tests, when the file cannot be read
+   * @param <T> the test case type
+   * @return the tests, or {@code null} if the file was reported unreadable
+   */
+  static <T> @Nullable Map<String, T> readTests(
+      final Path file,
+      final @Nullable InputStream stdin,
+      final ObjectMapper mapper,
+      final JavaType javaType,
+      final Predicate<String> selects,
+      final UnreadableFixtureHandler onUnreadable) {
+    byte @Nullable [] content = null;
+    try {
+      content =
+          stdin != null && "stdin".equals(file.toString())
+              ? stdin.readAllBytes()
+              : Files.readAllBytes(file);
+      return mapper.readValue(content, javaType);
+    } catch (final Exception e) {
+      // Count what the file declared even though it could not be read, so the cases it
+      // contributes show up as unaccounted rather than vanishing from the totals.
+      onUnreadable.accept(countUnreadableTestCases(content, selects), e);
+      return null;
+    }
   }
 
   /**
@@ -178,20 +234,67 @@ final class FixtureRunner {
    * 0: a fixture too broken to count still stands for at least one case that did not run, and
    * counting it as none would let it vanish behind a sibling that passed.
    *
-   * @param content the fixture content, as returned by {@link #readFixture}, or {@code null} if
-   *     even that failed
-   * @return the number of declared cases, and at least 1
+   * <p>The top-level fields are the test names, so the name filter applies to them as it would have
+   * to the tests: a run filtered to one fork is not failed by an unreadable fixture whose cases it
+   * would never have selected.
+   *
+   * @param content the fixture content, or {@code null} if even reading it failed
+   * @param selects whether the name filter selects a test
+   * @return the declared cases, split into selected and filtered
    */
-  static int countUnreadableTestCases(final byte @Nullable [] content) {
+  static UnreadableCases countUnreadableTestCases(
+      final byte @Nullable [] content, final Predicate<String> selects) {
     if (content == null) {
-      return 1;
+      return new UnreadableCases(1, 0);
     }
+    final JsonNode root;
     try {
-      final JsonNode root = JSON_ARRAY_MAPPER.readTree(content);
-      return root != null && root.isObject() ? Math.max(1, root.size()) : 1;
+      root = JSON_ARRAY_MAPPER.readTree(content);
     } catch (final IOException e) {
-      return 1;
+      return new UnreadableCases(1, 0);
     }
+    if (root == null || !root.isObject() || root.isEmpty()) {
+      return new UnreadableCases(1, 0);
+    }
+    int notRun = 0;
+    int filtered = 0;
+    for (final String name : (Iterable<String>) root::fieldNames) {
+      if (selects.test(name)) {
+        notRun++;
+      } else {
+        filtered++;
+      }
+    }
+    return new UnreadableCases(notRun, filtered);
+  }
+
+  /**
+   * Creates a failing {@code --json-array} row for something the run could not execute: an
+   * unreadable fixture, or the declared cases that never ran. Without these rows a run could exit 1
+   * while every row in its array passed, leaving a consumer of the array nothing to explain it.
+   *
+   * @param name what the row stands for
+   * @param error why it did not run
+   * @param emptyFields the command's other row fields, set empty so every row has the same shape
+   * @return the row
+   */
+  static ObjectNode notRunRow(final String name, final String error, final String... emptyFields) {
+    final ObjectNode row = newResultNode();
+    row.put("name", name);
+    row.put("pass", false);
+    for (final String field : emptyFields) {
+      row.put(field, "");
+    }
+    row.put("error", error);
+    return row;
+  }
+
+  /**
+   * The message for declared cases that never ran, shared by the summary and the {@code
+   * --json-array} row.
+   */
+  static String notRunMessage(final int unaccounted, final int declared) {
+    return String.format("%d of %d declared case(s) never executed", unaccounted, declared);
   }
 
   /**
@@ -235,8 +338,35 @@ final class FixtureRunner {
       filteredCases.incrementAndGet();
     }
 
-    void recordUnreadable(final String file, final String reason) {
+    /**
+     * Records a fixture that could not be read, with the cases it declared.
+     *
+     * @param file the fixture file
+     * @param reason why it could not be read
+     * @param cases the cases it declared, so the selected ones count as not run
+     */
+    void recordUnreadable(final String file, final String reason, final UnreadableCases cases) {
       unreadable.put(file, reason);
+      declaredCases.addAndGet(cases.declared());
+      filteredCases.addAndGet(cases.filtered());
+    }
+
+    /**
+     * Appends a failing {@code --json-array} row for each unreadable fixture and for the declared
+     * cases that never ran, so the array accounts for a non-zero exit on its own.
+     *
+     * @param rows the array being built
+     * @param emptyFields the command's other row fields
+     */
+    void addNotRunRows(final List<ObjectNode> rows, final String... emptyFields) {
+      synchronized (unreadable) {
+        unreadable.forEach((file, reason) -> rows.add(notRunRow(file, reason, emptyFields)));
+      }
+      final int unaccounted = unaccountedCases();
+      if (unaccounted > 0) {
+        rows.add(
+            notRunRow("NOT RUN", notRunMessage(unaccounted, declaredCases.get()), emptyFields));
+      }
     }
 
     boolean hasTests() {
@@ -274,9 +404,7 @@ final class FixtureRunner {
         out.printf("Unreadable:   %d file(s)%n", unreadable.size());
       }
       if (unaccounted > 0) {
-        out.printf(
-            "NOT RUN:      %d of %d declared case(s) never executed%n",
-            unaccounted, declaredCases.get());
+        out.printf("NOT RUN:      %s%n", notRunMessage(unaccounted, declaredCases.get()));
       }
       if (!failures.isEmpty()) {
         out.println("\nFailed tests:");

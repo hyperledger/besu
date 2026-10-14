@@ -16,12 +16,14 @@ package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,6 +104,77 @@ class BlockchainTestSubCommandTest {
         .contains("Unreadable:   1 file(s)")
         .contains("NOT RUN:      1 of 2 declared case(s) never executed");
     assertThat(command.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void anUnknownNetworkFailsItsTestWithoutAbandoningTheFile(@TempDir final Path dir)
+      throws Exception {
+    // The null schedule used to throw out of the whole file, so its siblings never ran and the
+    // --json-array output was an empty array.
+    final Map<String, Object> mixed =
+        MAPPER.readValue(
+            new File(resourcePath("blockchain-mixed-rlp.json")), new TypeReference<>() {});
+    final Map<String, Object> unknown =
+        new LinkedHashMap<>((Map<String, Object>) mixed.get("good_london_block"));
+    unknown.put("network", "NoSuchFork");
+    final Path fixture = dir.resolve("fixture.json");
+    MAPPER.writeValue(
+        fixture.toFile(),
+        Map.of("good_london_block", mixed.get("good_london_block"), "unknown_network", unknown));
+
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final BlockchainTestSubCommand command =
+        new BlockchainTestSubCommand(
+            new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(command).parseArgs("--json-array", fixture.toString());
+    command.run();
+
+    final List<Map<String, Object>> rows =
+        MAPPER.readValue(baos.toString(UTF_8), new TypeReference<>() {});
+    assertThat(rows)
+        .extracting(row -> row.get("name"), row -> row.get("pass"), row -> row.get("error"))
+        .containsExactlyInAnyOrder(
+            tuple("good_london_block", true, null),
+            tuple("unknown_network", false, "Unsupported fork: NoSuchFork"));
+    assertThat(command.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void jsonArrayCarriesAFailingRowForAnUnreadableFileAndTheCasesNotRun() throws Exception {
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final BlockchainTestSubCommand command =
+        new BlockchainTestSubCommand(
+            new EvmToolCommand(System.in, new PrintWriter(baos, true, UTF_8)));
+    new CommandLine(command).parseArgs("--json-array", resourcePath("bogus-test.json"));
+    command.run();
+
+    final List<Map<String, Object>> rows =
+        MAPPER.readValue(baos.toString(UTF_8), new TypeReference<>() {});
+    assertThat(rows)
+        .extracting(row -> row.get("name"), row -> row.get("pass"))
+        .containsExactly(tuple(resourcePath("bogus-test.json"), false), tuple("NOT RUN", false));
+    assertThat(command.getExitCode()).isEqualTo(1);
+  }
+
+  @Test
+  void blocksCanBeImportedWithoutTheirAccessList() {
+    // Through the root command, whose negation pattern makes this --noblock-access-list
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final int exitCode =
+        new EvmToolCommand()
+            .execute(
+                System.in,
+                new PrintWriter(baos, true, UTF_8),
+                new String[] {
+                  "block-test",
+                  "--noblock-access-list",
+                  "--test-name",
+                  "good_london_block",
+                  resourcePath("blockchain-mixed-rlp.json")
+                });
+    assertThat(baos.toString(UTF_8)).contains("Passed:       1");
+    assertThat(exitCode).isEqualTo(0);
   }
 
   private static String resourcePath(final String resource) {
