@@ -25,6 +25,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -336,9 +337,15 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       }
     }
 
+    // Same unsigned byte-wise order as the layer maps and RocksDB; Bytes.compareTo differs for keys
+    // of different lengths and treats all-zero keys (EMPTY, 0x00, ...) as equal.
+    private static final Comparator<Bytes> KEY_ORDER =
+        Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compareUnsigned);
+
     private final PriorityQueue<Source> queue =
         new PriorityQueue<>(
-            Comparator.comparing((Source s) -> s.head.getKey()).thenComparingInt(s -> s.rank));
+            Comparator.comparing((Source s) -> s.head.getKey(), KEY_ORDER)
+                .thenComparingInt(s -> s.rank));
 
     LayeredMergeIterator(final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources) {
       for (int i = 0; i < sources.size(); i++) {
@@ -363,7 +370,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         final Map.Entry<Bytes, Optional<byte[]>> winner = top.head;
         advance(top);
         // drop the same key from lower-precedence sources
-        while (!queue.isEmpty() && queue.peek().head.getKey().compareTo(winner.getKey()) == 0) {
+        while (!queue.isEmpty()
+            && KEY_ORDER.compare(queue.peek().head.getKey(), winner.getKey()) == 0) {
           advance(queue.poll());
         }
         if (winner.getValue().isPresent()) {

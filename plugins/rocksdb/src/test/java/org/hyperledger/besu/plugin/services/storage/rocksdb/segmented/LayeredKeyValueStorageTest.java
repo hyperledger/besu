@@ -546,6 +546,34 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
+  void streamMergesKeysOfDifferentLengthsInUnsignedByteOrder() {
+    byte[] p = {9};
+    byte[] v = {7};
+    // unsigned byte order, as in RocksDB: 0x0105 sorts before 0x02
+    List<Pair<byte[], byte[]>> parentEntries =
+        List.of(Pair.of(new byte[] {1, 5}, p), Pair.of(new byte[] {2}, p));
+    when(parentStorage.stream(segmentId)).thenAnswer(__ -> parentEntries.stream());
+
+    // all-zero keys of different lengths (e.g. the trie root at EMPTY and its child at 0x00) are
+    // distinct keys, and the tombstone on 0x02 must hide the parent entry
+    var tx = layeredKeyValueStorage.startTransaction();
+    tx.put(segmentId, Bytes.EMPTY.toArrayUnsafe(), v);
+    tx.put(segmentId, new byte[] {0}, v);
+    tx.remove(segmentId, new byte[] {2});
+    tx.commit();
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(layeredKeyValueStorage);
+
+    assertEquals(
+        List.of(
+            Pair.of(Bytes.EMPTY, Bytes.wrap(v)),
+            Pair.of(Bytes.of(0), Bytes.wrap(v)),
+            Pair.of(Bytes.of(1, 5), Bytes.wrap(p))),
+        top.stream(segmentId)
+            .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
+            .toList());
+  }
+
+  @Test
   void deepChainStreamReachesParentAtConstantStackDepth() {
     byte[] key = {1};
     AtomicInteger maxDepth = new AtomicInteger();
