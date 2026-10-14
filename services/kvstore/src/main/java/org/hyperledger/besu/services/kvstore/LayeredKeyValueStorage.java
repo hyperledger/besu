@@ -190,18 +190,21 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final Bytes key,
       final Function<SegmentedKeyValueStorage, Optional<Bytes>> cacheGetFunction) {
     throwIfClosed();
-    final Optional<byte[]> found = getFromLayers(segmentId, key);
+    // The layer maps compare keys via toArrayUnsafe(), which copies for keys such as
+    // Bytes.concatenate results; materialize once rather than on every comparison in every layer.
+    final Bytes arrayKey = Bytes.wrap(key.toArrayUnsafe());
+    final Optional<byte[]> found = getFromLayers(segmentId, arrayKey);
     if (found != null) {
       return found.map(Bytes::wrap);
     }
     // a subclass layer below: let it check its own layers and apply the function to the
     // persistent storage beneath it, so the function is never handed a layer
     if (baseStorage instanceof LayeredKeyValueStorage layered) {
-      return layered.get(segmentId, key, cacheGetFunction);
+      return layered.get(segmentId, arrayKey, cacheGetFunction);
     }
     return cacheGetFunction != null
         ? cacheGetFunction.apply(baseStorage)
-        : baseStorage.get(segmentId, key.toArrayUnsafe()).map(Bytes::wrap);
+        : baseStorage.get(segmentId, arrayKey.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   /**

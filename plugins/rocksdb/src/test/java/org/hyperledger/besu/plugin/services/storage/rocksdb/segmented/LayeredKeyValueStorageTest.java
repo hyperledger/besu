@@ -648,6 +648,27 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
+  void getBytesVariantMaterializesKeyOnceAcrossLayers() {
+    // e.g. a Bytes.concatenate key, whose toArrayUnsafe() copies on every call
+    byte[] keyArray = {1, 2};
+    Bytes key = mock(Bytes.class);
+    when(key.toArrayUnsafe()).thenReturn(keyArray);
+    when(parentStorage.get(eq(segmentId), aryEq(keyArray))).thenReturn(Optional.empty());
+
+    // committed through transactions so the layers use the production (unsigned) segment maps
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(parentStorage);
+    for (int i = 0; i < 10; i++) {
+      top = new LayeredKeyValueStorage(top);
+      var tx = top.startTransaction();
+      tx.put(segmentId, new byte[] {(byte) (i + 2)}, new byte[] {1});
+      tx.commit();
+    }
+
+    assertEquals(Optional.empty(), top.get(segmentId, key, null));
+    verify(key, times(1)).toArrayUnsafe();
+  }
+
+  @Test
   void peekThisLayerReadsOnlyThisLayer() {
     byte[] value = {1};
     LayeredKeyValueStorage bottom = layer(parentStorage, Map.of(1, Optional.of(value)));
