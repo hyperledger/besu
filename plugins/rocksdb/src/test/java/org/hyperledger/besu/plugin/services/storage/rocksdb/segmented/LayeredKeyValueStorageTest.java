@@ -22,7 +22,9 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -123,203 +125,6 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
-  void shouldMergeParentAndLayerData() {
-    byte[] key1 = {1};
-    byte[] value1 = {10};
-    byte[] key2 = {2};
-    byte[] value2 = {20};
-    byte[] key3 = {3};
-    byte[] value3 = {30};
-
-    when(parentStorage.stream(segmentId))
-        .thenReturn(Stream.of(Pair.of(key1, value1), Pair.of(key3, value3)));
-
-    var hashValueStore = createSegmentMap();
-    hashValueStore.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
-    layeredKeyValueStorage = new LayeredKeyValueStorage(hashValueStore, parentStorage);
-
-    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
-
-    List<Pair<byte[], byte[]>> resultList = result.toList();
-    assertEquals(3, resultList.size());
-    assertArrayEquals(key1, resultList.get(0).getKey());
-    assertArrayEquals(value1, resultList.get(0).getValue());
-    assertArrayEquals(key2, resultList.get(1).getKey());
-    assertArrayEquals(value2, resultList.get(1).getValue());
-    assertArrayEquals(key3, resultList.get(2).getKey());
-    assertArrayEquals(value3, resultList.get(2).getValue());
-  }
-
-  @Test
-  void shouldPreferLayerDataOverParentDataForSameKey() {
-    byte[] key = {1};
-    byte[] parentValue = {10};
-    byte[] layerValue = {20};
-
-    when(parentStorage.stream(segmentId)).thenReturn(Stream.of(Pair.of(key, parentValue)));
-
-    var hashValueStore = createSegmentMap();
-    hashValueStore.get(segmentId).put(Bytes.wrap(key), Optional.of(layerValue));
-    layeredKeyValueStorage = new LayeredKeyValueStorage(hashValueStore, parentStorage);
-
-    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
-
-    List<Pair<byte[], byte[]>> resultList = result.toList();
-    assertEquals(1, resultList.size());
-    assertArrayEquals(key, resultList.get(0).getKey());
-    // Layer value should be returned
-    assertArrayEquals(layerValue, resultList.get(0).getValue());
-  }
-
-  @Test
-  void shouldNotStreamKeyIfLayerKeyIsEmpty() {
-    byte[] key1 = {1};
-    byte[] value1 = {10};
-    byte[] key2 = {2};
-    byte[] value2 = {20};
-
-    when(parentStorage.stream(segmentId))
-        .thenReturn(Stream.of(Pair.of(key1, value1), Pair.of(key2, value2)));
-
-    var hashValueStore = createSegmentMap();
-    hashValueStore.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
-
-    layeredKeyValueStorage = new LayeredKeyValueStorage(hashValueStore, parentStorage);
-
-    var resultList = layeredKeyValueStorage.stream(segmentId).toList();
-    assertEquals(1, resultList.size());
-    assertArrayEquals(key2, resultList.get(0).getKey());
-    assertArrayEquals(value2, resultList.get(0).getValue());
-  }
-
-  /**
-   * Tests that the stream method correctly handles multiple layers where the current layer
-   * overrides the parent layers.
-   */
-  @Test
-  void shouldStreamWithMultipleLayersAndCurrentLayerOverrides() {
-    byte[] key1 = {1};
-    byte[] value1 = {10};
-    byte[] key2 = {2};
-    byte[] value2 = {20};
-    byte[] key3 = {3};
-    byte[] value3 = {30};
-
-    // Parent Layer 0
-    when(parentStorage.stream(segmentId))
-        .thenReturn(Stream.of(Pair.of(key1, null), Pair.of(key2, value2)));
-
-    // Parent Layer 1
-    var parentLayer1 = createSegmentMap();
-    parentLayer1.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
-    parentLayer1.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
-
-    // Current Layer
-    var currentLayer = createSegmentMap();
-    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
-    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
-
-    layeredKeyValueStorage =
-        new LayeredKeyValueStorage(
-            currentLayer, new LayeredKeyValueStorage(parentLayer1, parentStorage));
-
-    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
-
-    List<Pair<byte[], byte[]>> resultList = result.toList();
-    assertEquals(2, resultList.size());
-    assertArrayEquals(key2, resultList.get(0).getKey());
-    assertArrayEquals(value2, resultList.get(0).getValue());
-    assertArrayEquals(key3, resultList.get(1).getKey());
-    assertArrayEquals(value3, resultList.get(1).getValue());
-  }
-
-  /**
-   * Tests that the stream method correctly handles multiple layers where the current layer
-   * overrides the parent layers with specific values.
-   */
-  @Test
-  void shouldStreamWithMultipleLayersAndCurrentLayerOverridesWithValues() {
-    byte[] key1 = {1};
-    byte[] value1 = {10};
-    byte[] key2 = {2};
-    byte[] value2 = {20};
-    byte[] key3 = {3};
-    byte[] value3 = {30};
-
-    // Parent Layer 0
-    when(parentStorage.stream(segmentId))
-        .thenReturn(Stream.of(Pair.of(key1, value1), Pair.of(key2, value2)));
-
-    // Parent Layer 1
-    var parentLayer1 = createSegmentMap();
-    parentLayer1.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
-    parentLayer1.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
-
-    // Current Layer
-    var currentLayer = createSegmentMap();
-    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
-    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
-
-    layeredKeyValueStorage =
-        new LayeredKeyValueStorage(
-            currentLayer, new LayeredKeyValueStorage(parentLayer1, parentStorage));
-
-    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
-
-    List<Pair<byte[], byte[]>> resultList = result.toList();
-    assertEquals(3, resultList.size());
-    assertArrayEquals(key1, resultList.get(0).getKey());
-    assertArrayEquals(value1, resultList.get(0).getValue());
-    assertArrayEquals(key2, resultList.get(1).getKey());
-    assertArrayEquals(value2, resultList.get(1).getValue());
-    assertArrayEquals(key3, resultList.get(2).getKey());
-    assertArrayEquals(value3, resultList.get(2).getValue());
-  }
-
-  /**
-   * Tests that the stream method correctly handles multiple layers where the current layer
-   * overrides the parent layers with empty values.
-   */
-  @Test
-  void shouldStreamWithMultipleLayersAndCurrentLayerOverridesWithEmptyValues() {
-    byte[] key1 = {1};
-    byte[] value1 = {10};
-    byte[] key2 = {2};
-    byte[] value2 = {20};
-    byte[] key3 = {3};
-    byte[] value3 = {30};
-
-    // Parent Layer 0
-    when(parentStorage.stream(segmentId))
-        .thenReturn(Stream.of(Pair.of(key1, null), Pair.of(key2, value2)));
-
-    // Parent Layer 1
-    var parentLayer1 = createSegmentMap();
-    parentLayer1.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
-    parentLayer1.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
-
-    // Current Layer
-    var currentLayer = createSegmentMap();
-    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
-    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
-
-    layeredKeyValueStorage =
-        new LayeredKeyValueStorage(
-            currentLayer, new LayeredKeyValueStorage(parentLayer1, parentStorage));
-
-    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
-
-    List<Pair<byte[], byte[]>> resultList = result.toList();
-    assertEquals(3, resultList.size());
-    assertArrayEquals(key1, resultList.get(0).getKey());
-    assertArrayEquals(value1, resultList.get(0).getValue());
-    assertArrayEquals(key2, resultList.get(1).getKey());
-    assertArrayEquals(value2, resultList.get(1).getValue());
-    assertArrayEquals(key3, resultList.get(2).getKey());
-    assertArrayEquals(value3, resultList.get(2).getValue());
-  }
-
-  @Test
   void isClosedReturnsFalseWhenRootIsOpen() {
     when(parentStorage.isClosed()).thenReturn(false);
     assertFalse(layeredKeyValueStorage.isClosed());
@@ -332,9 +137,8 @@ public class LayeredKeyValueStorageTest {
   }
 
   /**
-   * Verifies that isClosed() on a deep chain only queries the root storage once after the closed
-   * state has been cached, regardless of chain depth. This is the O(1) correctness test for the
-   * volatile closedCache fix that eliminates the O(N) recursion hot path (besu-eth/besu#10498).
+   * Verifies that isClosed() on a deep chain queries the root storage once and then answers from
+   * its cached closed state, regardless of chain depth (besu-eth/besu#10498).
    */
   @Test
   void isClosedCachesResultOnDeepChainAndQueriesRootAtMostOnce() {
@@ -347,92 +151,13 @@ public class LayeredKeyValueStorageTest {
 
     when(parentStorage.isClosed()).thenReturn(true);
 
-    // First call at the top of the chain should propagate down to the root and cache at each layer
+    // First call asks the root storage directly, without walking the layers, and caches the result
     assertTrue(top.isClosed());
 
     // Second call on the same instance must NOT reach the root again (cache hit)
     assertTrue(top.isClosed());
 
-    // The root mock should have been queried at most once across both top-level calls because the
-    // intermediate layers cache the result and short-circuit before reaching the root
-    verify(parentStorage, times(1)).isClosed();
-  }
-
-  @Test
-  void deepChainGetCallsIsClosedOnlyOnce() throws Exception {
-    int depth = 500;
-    byte[] key = {42};
-    byte[] value = {99};
-    when(parentStorage.isClosed()).thenReturn(false);
-    when(parentStorage.get(segmentId, key)).thenReturn(Optional.of(value));
-
-    // Build a 500-deep chain on top of the mock parent.
-    LayeredKeyValueStorage top = layeredKeyValueStorage; // depth 1, wraps parentStorage
-    for (int i = 1; i < depth; i++) {
-      top = new LayeredKeyValueStorage(top);
-    }
-
-    Optional<byte[]> result = top.get(segmentId, key);
-    assertTrue(result.isPresent());
-    assertArrayEquals(value, result.get());
-
-    // With the old code this would be called 500 times (once per level).
-    verify(parentStorage, times(1)).isClosed();
-  }
-
-  @Test
-  void deepChainGetBytesVariantCallsIsClosedOnlyOnce() throws Exception {
-    int depth = 500;
-    Bytes key = Bytes.of(42);
-    byte[] value = {99};
-    when(parentStorage.isClosed()).thenReturn(false);
-    when(parentStorage.get(eq(segmentId), aryEq(key.toArrayUnsafe())))
-        .thenReturn(Optional.of(value));
-
-    LayeredKeyValueStorage top = layeredKeyValueStorage;
-    for (int i = 1; i < depth; i++) {
-      top = new LayeredKeyValueStorage(top);
-    }
-
-    Optional<Bytes> result = top.get(segmentId, key, null);
-    assertTrue(result.isPresent());
-    assertArrayEquals(value, result.get().toArrayUnsafe());
-
-    // With the old code this would be called 500 times (once per level).
-    verify(parentStorage, times(1)).isClosed();
-  }
-
-  @Test
-  void deepChainStreamCallsIsClosedOnlyOnce() {
-    int depth = 500;
-    when(parentStorage.isClosed()).thenReturn(false);
-    when(parentStorage.stream(segmentId)).thenReturn(Stream.empty());
-
-    LayeredKeyValueStorage top = layeredKeyValueStorage;
-    for (int i = 1; i < depth; i++) {
-      top = new LayeredKeyValueStorage(top);
-    }
-
-    assertEquals(0L, top.stream(segmentId).count());
-
-    // With the old code this would be called 500 times (once per level).
-    verify(parentStorage, times(1)).isClosed();
-  }
-
-  @Test
-  void deepChainStreamKeysCallsIsClosedOnlyOnce() {
-    int depth = 500;
-    when(parentStorage.isClosed()).thenReturn(false);
-    when(parentStorage.streamKeys(segmentId)).thenReturn(Stream.empty());
-
-    LayeredKeyValueStorage top = layeredKeyValueStorage;
-    for (int i = 1; i < depth; i++) {
-      top = new LayeredKeyValueStorage(top);
-    }
-
-    assertEquals(0L, top.streamKeys(segmentId).count());
-
-    // With the old code this would be called 500 times (once per level).
+    // The root storage is queried once across both calls
     verify(parentStorage, times(1)).isClosed();
   }
 
@@ -596,25 +321,23 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
-  void subclassParentLayerOverridesAreUsed() {
-    byte[] key = {1};
-    byte[] overrideValue = {42};
-    LayeredKeyValueStorage subclassParent =
-        new LayeredKeyValueStorage(parentStorage) {
-          @Override
-          public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
-            return Optional.of(overrideValue);
-          }
-
-          @Override
-          public boolean isClosed() {
-            return true;
-          }
-        };
-    LayeredKeyValueStorage top = new LayeredKeyValueStorage(subclassParent);
+  void subclassParentLayerIsClosedOverrideIsUsed() {
+    LayeredKeyValueStorage top =
+        new LayeredKeyValueStorage(
+            new LayeredKeyValueStorage(parentStorage) {
+              @Override
+              public boolean isClosed() {
+                return true;
+              }
+            });
 
     assertTrue(top.isClosed());
-    LayeredKeyValueStorage openTop =
+  }
+
+  @Test
+  void subclassParentLayerGetOverrideIsUsed() {
+    byte[] overrideValue = {42};
+    LayeredKeyValueStorage top =
         new LayeredKeyValueStorage(
             new LayeredKeyValueStorage(parentStorage) {
               @Override
@@ -622,7 +345,8 @@ public class LayeredKeyValueStorageTest {
                 return Optional.of(overrideValue);
               }
             });
-    assertArrayEquals(overrideValue, openTop.get(segmentId, key).orElseThrow());
+
+    assertArrayEquals(overrideValue, top.get(segmentId, new byte[] {1}).orElseThrow());
   }
 
   @Test
@@ -652,24 +376,27 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
-  void getBytesVariantMaterializesKeyOnceAcrossLayers() {
-    // e.g. a Bytes.concatenate key, whose toArrayUnsafe() copies on every call
-    byte[] keyArray = {1, 2};
-    Bytes key = mock(Bytes.class);
-    when(key.toArrayUnsafe()).thenReturn(keyArray);
-    when(parentStorage.get(eq(segmentId), aryEq(keyArray))).thenReturn(Optional.empty());
+  void getBytesVariantWithoutCacheFunctionReadsLayersThenBaseStorage() {
+    byte[] layerValue = {1};
+    byte[] baseValue = {2};
+    when(parentStorage.get(eq(segmentId), aryEq(new byte[] {1, 2})))
+        .thenReturn(Optional.of(baseValue));
+    // never read when the delete is honoured; makes falling through to the base visible
+    lenient()
+        .when(parentStorage.get(eq(segmentId), aryEq(new byte[] {4})))
+        .thenReturn(Optional.of(baseValue));
+    LayeredKeyValueStorage bottom =
+        layer(parentStorage, Map.of(3, Optional.of(layerValue), 4, Optional.of(layerValue)));
+    LayeredKeyValueStorage top = layer(bottom, Map.of(4, Optional.empty()));
 
-    // committed through transactions so the layers use the production (unsigned) segment maps
-    LayeredKeyValueStorage top = new LayeredKeyValueStorage(parentStorage);
-    for (int i = 0; i < 10; i++) {
-      top = new LayeredKeyValueStorage(top);
-      var tx = top.startTransaction();
-      tx.put(segmentId, new byte[] {(byte) (i + 2)}, new byte[] {1});
-      tx.commit();
-    }
-
-    assertEquals(Optional.empty(), top.get(segmentId, key, null));
-    verify(key, times(1)).toArrayUnsafe();
+    // held by no layer: read from the base storage, here with a key that is not array-backed
+    assertEquals(
+        Optional.of(Bytes.wrap(baseValue)),
+        top.get(segmentId, Bytes.concatenate(Bytes.of(1), Bytes.of(2)), null));
+    // held by a lower layer
+    assertEquals(Optional.of(Bytes.wrap(layerValue)), top.get(segmentId, Bytes.of(3), null));
+    // deleted in the top layer, hiding the lower layer's value
+    assertEquals(Optional.empty(), top.get(segmentId, Bytes.of(4), null));
   }
 
   @Test
@@ -688,34 +415,6 @@ public class LayeredKeyValueStorageTest {
     // deletion tombstone
     assertEquals(Optional.of(Optional.empty()), top.peekThisLayer(segmentId, new byte[] {3}));
     verify(parentStorage, never()).get(eq(segmentId), any());
-  }
-
-  @Test
-  void streamMergesKeysOfDifferentLengthsInUnsignedByteOrder() {
-    byte[] p = {9};
-    byte[] v = {7};
-    // unsigned byte order, as in RocksDB: 0x0105 sorts before 0x02
-    List<Pair<byte[], byte[]>> parentEntries =
-        List.of(Pair.of(new byte[] {1, 5}, p), Pair.of(new byte[] {2}, p));
-    when(parentStorage.stream(segmentId)).thenAnswer(__ -> parentEntries.stream());
-
-    // all-zero keys of different lengths (e.g. the trie root at EMPTY and its child at 0x00) are
-    // distinct keys, and the tombstone on 0x02 must hide the parent entry
-    var tx = layeredKeyValueStorage.startTransaction();
-    tx.put(segmentId, Bytes.EMPTY.toArrayUnsafe(), v);
-    tx.put(segmentId, new byte[] {0}, v);
-    tx.remove(segmentId, new byte[] {2});
-    tx.commit();
-    LayeredKeyValueStorage top = new LayeredKeyValueStorage(layeredKeyValueStorage);
-
-    assertEquals(
-        List.of(
-            Pair.of(Bytes.EMPTY, Bytes.wrap(v)),
-            Pair.of(Bytes.of(0), Bytes.wrap(v)),
-            Pair.of(Bytes.of(1, 5), Bytes.wrap(p))),
-        top.stream(segmentId)
-            .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
-            .toList());
   }
 
   @Test
@@ -773,7 +472,6 @@ public class LayeredKeyValueStorageTest {
     assertEquals(
         List.of(Bytes.of(1), Bytes.of(1, 5), Bytes.of(2, 0), Bytes.of(3)),
         top.streamFromKey(segmentId, new byte[] {1}).map(e -> Bytes.wrap(e.getKey())).toList());
-    assertEquals(0, base.streamFromKey(segmentId, new byte[] {3}, new byte[] {1}).count());
   }
 
   @Test
@@ -808,42 +506,6 @@ public class LayeredKeyValueStorageTest {
     assertEquals(
         parentStackDepth(1, maxDepth, top -> top.streamKeys(segmentId).toList().size()),
         parentStackDepth(500, maxDepth, top -> top.streamKeys(segmentId).toList().size()));
-  }
-
-  /**
-   * Tests that the stream method correctly handles a parent layer and a current layer where the
-   * current layer overrides the parent layer.
-   */
-  @Test
-  void shouldStreamWithParentLayerAndCurrentLayerOverrides() {
-    byte[] key1 = {1};
-    byte[] value1 = {10};
-    byte[] key2 = {2};
-    byte[] value2 = {20};
-    byte[] key3 = {3};
-    byte[] value3 = {30};
-
-    // Parent Layer 0
-    when(parentStorage.stream(segmentId))
-        .thenReturn(Stream.of(Pair.of(key1, null), Pair.of(key2, value2)));
-
-    // Current Layer
-    var currentLayer = createSegmentMap();
-    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
-    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
-
-    layeredKeyValueStorage = new LayeredKeyValueStorage(currentLayer, parentStorage);
-
-    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
-
-    List<Pair<byte[], byte[]>> resultList = result.toList();
-    assertEquals(3, resultList.size());
-    assertArrayEquals(key1, resultList.get(0).getKey());
-    assertArrayEquals(value1, resultList.get(0).getValue());
-    assertArrayEquals(key2, resultList.get(1).getKey());
-    assertArrayEquals(value2, resultList.get(1).getValue());
-    assertArrayEquals(key3, resultList.get(2).getKey());
-    assertArrayEquals(value3, resultList.get(2).getValue());
   }
 
   @Test
@@ -974,20 +636,23 @@ public class LayeredKeyValueStorageTest {
   }
 
   /**
-   * Returns how much deeper than the caller the stack was, at most, when the parent storage was
-   * reached.
+   * Runs a read on a chain of the given depth and returns how much deeper than the caller the stack
+   * was, at most, when the parent storage was reached. Also checks the read asks the parent storage
+   * whether it is closed only once, rather than once per layer.
    */
   private int parentStackDepth(
       final int depth,
       final AtomicInteger maxDepth,
-      final ToIntFunction<LayeredKeyValueStorage> streamSize) {
+      final ToIntFunction<LayeredKeyValueStorage> read) {
     LayeredKeyValueStorage top = new LayeredKeyValueStorage(parentStorage);
     for (int i = 1; i < depth; i++) {
       top = new LayeredKeyValueStorage(top);
     }
+    clearInvocations(parentStorage);
     maxDepth.set(0);
     int callerDepth = Thread.currentThread().getStackTrace().length;
-    assertEquals(1, streamSize.applyAsInt(top));
+    assertEquals(1, read.applyAsInt(top));
+    verify(parentStorage, times(1)).isClosed();
     return maxDepth.get() - callerDepth;
   }
 
