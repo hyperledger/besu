@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.Objects;
@@ -32,6 +33,12 @@ import org.jspecify.annotations.Nullable;
  * an Amsterdam block loses its BAL-based parallel execution and prefetch, with nothing failing, so
  * leaving it out must be a decision rather than an omission.
  *
+ * <p>Sequential execution can optionally be requested for this execution, see {@link
+ * Builder#sequentialExecutionRequested(boolean)}.
+ *
+ * <p>A block tracer can optionally be set, see {@link Builder#blockTracer}. It requires sequential
+ * execution.
+ *
  * <p>Construct instances via {@link #builder()}.
  */
 public class BlockExecutionContext {
@@ -40,12 +47,16 @@ public class BlockExecutionContext {
   private final MutableWorldState worldState;
   private final Block block;
   @Nullable private final BlockAccessList blockAccessList;
+  private final boolean sequentialExecutionRequested;
+  @Nullable private final BlockAwareOperationTracer blockTracer;
 
   private BlockExecutionContext(final Builder builder) {
     this.protocolContext = builder.protocolContext;
     this.worldState = builder.worldState;
     this.block = builder.block;
     this.blockAccessList = builder.blockAccessList;
+    this.sequentialExecutionRequested = builder.sequentialExecutionRequested;
+    this.blockTracer = builder.blockTracer;
   }
 
   /**
@@ -86,6 +97,44 @@ public class BlockExecutionContext {
   }
 
   /**
+   * Returns whether the caller requested sequential execution for this execution of the block. See
+   * {@link Builder#sequentialExecutionRequested(boolean)}.
+   *
+   * @return {@code true} if the block's transactions must be executed in order only
+   */
+  public boolean isSequentialExecutionRequested() {
+    return sequentialExecutionRequested;
+  }
+
+  /**
+   * Returns the tracer to use for this execution of the block. See {@link Builder#blockTracer}.
+   *
+   * @return the block tracer, or empty to use the plugin-provided block import tracer
+   */
+  public Optional<BlockAwareOperationTracer> getBlockTracer() {
+    return Optional.ofNullable(blockTracer);
+  }
+
+  /**
+   * Returns a {@link Builder} initialized with this context's fields.
+   *
+   * @return a new {@link Builder} copying this context
+   */
+  public Builder toBuilder() {
+    final Builder builder =
+        builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(getBlockAccessList())
+            .sequentialExecutionRequested(sequentialExecutionRequested);
+    if (blockTracer != null) {
+      builder.blockTracer(blockTracer);
+    }
+    return builder;
+  }
+
+  /**
    * Returns a new {@link Builder}.
    *
    * @return a new {@link Builder}
@@ -102,6 +151,8 @@ public class BlockExecutionContext {
     private Block block;
     @Nullable private BlockAccessList blockAccessList = null;
     private boolean blockAccessListSet = false;
+    private boolean sequentialExecutionRequested = false;
+    @Nullable private BlockAwareOperationTracer blockTracer = null;
 
     /**
      * Sets the protocol context (required).
@@ -151,6 +202,36 @@ public class BlockExecutionContext {
     }
 
     /**
+     * Sets whether the block's transactions must be executed in order only, without speculative
+     * parallel execution (optional, defaults to {@code false}).
+     *
+     * <p>Applies only to this execution of this block. It does not change the node's parallel
+     * transaction processing setting, and processors that never execute in parallel ignore it.
+     *
+     * @param sequentialExecutionRequested {@code true} to request sequential execution
+     * @return this builder
+     */
+    public Builder sequentialExecutionRequested(final boolean sequentialExecutionRequested) {
+      this.sequentialExecutionRequested = sequentialExecutionRequested;
+      return this;
+    }
+
+    /**
+     * Sets the tracer to use for this execution of the block, instead of the plugin-provided block
+     * import tracer (optional).
+     *
+     * <p>Requires {@link #sequentialExecutionRequested(boolean) sequential execution}: transactions
+     * whose result comes from parallel execution never reach the block tracer.
+     *
+     * @param blockTracer the tracer that observes this execution of the block
+     * @return this builder
+     */
+    public Builder blockTracer(final BlockAwareOperationTracer blockTracer) {
+      this.blockTracer = Objects.requireNonNull(blockTracer, "blockTracer");
+      return this;
+    }
+
+    /**
      * Builds the {@link BlockExecutionContext}.
      *
      * @return the constructed context
@@ -163,6 +244,10 @@ public class BlockExecutionContext {
       if (!blockAccessListSet) {
         throw new IllegalStateException(
             "blockAccessList is required: pass Optional.empty() if there is none");
+      }
+      if (blockTracer != null && !sequentialExecutionRequested) {
+        throw new IllegalStateException(
+            "blockTracer requires sequential execution: parallel results bypass the tracer");
       }
       return new BlockExecutionContext(this);
     }
