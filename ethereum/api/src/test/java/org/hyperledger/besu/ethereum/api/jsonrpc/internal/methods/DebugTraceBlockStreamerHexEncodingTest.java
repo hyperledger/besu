@@ -50,6 +50,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -99,6 +100,12 @@ public class DebugTraceBlockStreamerHexEncodingTest {
   // structLogs[5] is the second SSTORE: no refund before it, a refund after.
   private static final Bytes SSTORE_RESTORE_INIT_CODE =
       Bytes.fromHexString("0x6001600055600060005500");
+
+  // Init code that writes slot 0, then reads unwritten slot 5 and written slot 0:
+  //   PUSH1 0x01 PUSH1 0x00 SSTORE PUSH1 0x05 SLOAD POP PUSH1 0x00 SLOAD POP STOP
+  // structLogs[2] is the SSTORE, structLogs[4] and [7] are the SLOADs.
+  private static final Bytes SSTORE_SLOAD_INIT_CODE =
+      Bytes.fromHexString("0x6001600055600554506000545000");
 
   // Init code that STATICCALLs the IDENTITY precompile twice:
   //   (PUSH1 0x00 PUSH1 0x00 PUSH1 0x20 PUSH1 0x00 PUSH1 0x04 GAS STATICCALL POP) x2 STOP
@@ -470,6 +477,35 @@ public class DebugTraceBlockStreamerHexEncodingTest {
       assertThat(structLogs.get(6).get("op").asText()).isEqualTo("STOP");
       assertThat(structLogs.get(6).path("refund").asLong(0)).isPositive();
     }
+  }
+
+  @Test
+  public void storageIsReportedOnlyForTheSlotTouchedBySloadAndSstore() throws Exception {
+    final DebugTraceBlockStreamer streamer =
+        new DebugTraceBlockStreamer(
+            buildBlock(contractCreation(SSTORE_SLOAD_INIT_CODE)),
+            TraceOptions.DEFAULT,
+            fixture.getProtocolSchedule(),
+            blockchainQueries);
+
+    final List<JsonNode> structLogs = streamedAndAccumulatedStructLogs(streamer);
+    assertThat(structLogs.get(0)).isEqualTo(structLogs.get(1));
+
+    final JsonNode streamed = structLogs.get(0);
+    final String zero = UInt256.ZERO.toHexString();
+    final String one = UInt256.ONE.toHexString();
+    final String five = UInt256.valueOf(5).toHexString();
+    for (int i = 0; i < streamed.size(); i++) {
+      assertThat(streamed.get(i).has("storage"))
+          .as("step %d", i)
+          .isEqualTo(i == 2 || i == 4 || i == 7);
+    }
+    assertThat(streamed.get(2).get("op").asText()).isEqualTo("SSTORE");
+    assertThat(streamed.get(2).get("storage").get(zero).asText()).isEqualTo(one);
+    assertThat(streamed.get(4).get("op").asText()).isEqualTo("SLOAD");
+    assertThat(streamed.get(4).get("storage").get(five).asText()).isEqualTo(zero);
+    assertThat(streamed.get(7).get("op").asText()).isEqualTo("SLOAD");
+    assertThat(streamed.get(7).get("storage").get(zero).asText()).isEqualTo(one);
   }
 
   @Test

@@ -33,11 +33,8 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.vm.StreamingDebugOperationTracer;
-import org.hyperledger.besu.evm.ModificationNotAllowedException;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,7 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.BooleanSupplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -106,7 +102,6 @@ public class DebugTraceBlockStreamer {
 
   private final byte[] numBuf = new byte[20];
   private final byte[] writeBuf = new byte[BUF_SIZE];
-  private final TreeMap<UInt256, UInt256> sortedStorage = new TreeMap<>();
   private final HashMap<String, byte[]> opcodeCache = new HashMap<>(256);
 
   private OutputStream rawOut;
@@ -319,7 +314,7 @@ public class DebugTraceBlockStreamer {
                 memory,
                 refund,
                 returnData,
-                frame,
+                storage,
                 halt,
                 revert) ->
                 writeStructLog(
@@ -332,7 +327,7 @@ public class DebugTraceBlockStreamer {
                     memory,
                     refund,
                     returnData,
-                    frame,
+                    storage,
                     halt,
                     revert));
 
@@ -418,7 +413,7 @@ public class DebugTraceBlockStreamer {
       final Bytes[] memory,
       final long refund,
       final Bytes returnData,
-      final MessageFrame frame,
+      final Map<UInt256, UInt256> storage,
       final ExceptionalHaltReason haltReason,
       final Bytes revertReason) {
     try {
@@ -473,34 +468,21 @@ public class DebugTraceBlockStreamer {
         writeByte(QUOTE);
       }
 
-      if (traceOptions.opCodeTracerConfig().traceStorage()) {
-        try {
-          final MutableAccount account =
-              frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
-          if (account != null) {
-            final Map<UInt256, UInt256> updatedStorage = account.getUpdatedStorage();
-            if (!updatedStorage.isEmpty()) {
-              writeBytes(SL_STORAGE);
-              sortedStorage.clear();
-              sortedStorage.putAll(updatedStorage);
-              boolean firstEntry = true;
-              for (final Map.Entry<UInt256, UInt256> entry : sortedStorage.entrySet()) {
-                if (!firstEntry) writeByte(COMMA);
-                firstEntry = false;
-                writeByte(QUOTE);
-                writeHex(entry.getKey().toArrayUnsafe(), false);
-                writeByte(QUOTE);
-                writeByte(COLON);
-                writeByte(QUOTE);
-                writeHex(entry.getValue().toArrayUnsafe(), false);
-                writeByte(QUOTE);
-              }
-              writeByte(OBJ_CLOSE);
-            }
-          }
-        } catch (final ModificationNotAllowedException e) {
-          // no storage to write
+      if (traceOptions.opCodeTracerConfig().traceStorage() && !storage.isEmpty()) {
+        writeBytes(SL_STORAGE);
+        boolean firstEntry = true;
+        for (final Map.Entry<UInt256, UInt256> entry : storage.entrySet()) {
+          if (!firstEntry) writeByte(COMMA);
+          firstEntry = false;
+          writeByte(QUOTE);
+          writeHex(entry.getKey().toArrayUnsafe(), false);
+          writeByte(QUOTE);
+          writeByte(COLON);
+          writeByte(QUOTE);
+          writeHex(entry.getValue().toArrayUnsafe(), false);
+          writeByte(QUOTE);
         }
+        writeByte(OBJ_CLOSE);
       }
 
       if (revertReason != null) {

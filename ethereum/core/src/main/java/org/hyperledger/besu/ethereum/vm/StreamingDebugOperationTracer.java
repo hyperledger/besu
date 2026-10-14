@@ -20,7 +20,10 @@ import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
+import java.util.Map;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An {@link AbstractDebugOperationTracer} that streams trace data directly to a {@link FrameWriter}
@@ -30,9 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer {
 
-  /**
-   * Functional interface for zero-allocation streaming of trace data directly from a MessageFrame.
-   */
+  /** Functional interface for zero-allocation streaming of trace data. */
   @FunctionalInterface
   public interface FrameWriter {
     void writeFrame(
@@ -45,7 +46,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         Bytes[] preExecutionMemory,
         long preExecutionGasRefund,
         Bytes preExecutionReturnData,
-        MessageFrame frame,
+        Map<UInt256, UInt256> storage,
         ExceptionalHaltReason haltReason,
         Bytes revertReason);
   }
@@ -135,7 +136,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         preExecutionMemory,
         preExecutionGasRefund,
         preExecutionReturnData,
-        frame,
+        captureStorage(frame, currentOperation, operationResult).orElse(Map.of()),
         haltReason,
         revertReason);
 
@@ -157,7 +158,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
           NO_MEMORY,
           frame.getGasRefund(),
           frame.getReturnData(),
-          frame,
+          Map.of(),
           null,
           frame.getRevertReason().orElse(null));
       hasEmittedFrame = true;
