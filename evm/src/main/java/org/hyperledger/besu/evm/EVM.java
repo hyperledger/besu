@@ -247,6 +247,9 @@ public class EVM {
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
+    // A node that builds blocks also runs this loop with the interruptible selection tracer, so the
+    // tracer call sites are not monomorphic; skip them entirely when tracing is disabled.
+    final boolean tracingEnabled = operationTracer.isEnabled();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
       int opcode;
@@ -259,7 +262,9 @@ public class EVM {
         currentOperation = endOfScriptStop;
       }
       frame.setCurrentOperation(currentOperation);
-      operationTracer.tracePreExecution(frame);
+      if (tracingEnabled) {
+        operationTracer.tracePreExecution(frame);
+      }
 
       OperationResult result;
       try {
@@ -463,7 +468,9 @@ public class EVM {
         final int opSize = result.getPcIncrement();
         frame.setPC(currentPC + opSize);
       }
-      operationTracer.tracePostExecution(frame, result);
+      if (tracingEnabled) {
+        operationTracer.tracePostExecution(frame, result);
+      }
     }
   }
 
