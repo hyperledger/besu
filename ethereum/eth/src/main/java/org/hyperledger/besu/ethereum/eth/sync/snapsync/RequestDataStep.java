@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -47,7 +48,6 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -305,19 +305,15 @@ public class RequestDataStep {
     final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
 
     // the map comes back sorted, and copying it into another one would sort every entry again
-    final AtomicReference<NavigableMap<Bytes32, Bytes>> localAccounts =
-        new AtomicReference<>(new TreeMap<>());
-
-    worldStateStorageCoordinator.applyOnMatchingFlatMode(
-        FlatDbMode.FULL,
-        onBonsai -> {
-          localAccounts.set(
-              onBonsai.streamFlatAccounts(
-                  accountDataRequest.getStartKeyHash(),
-                  accountDataRequest.getEndKeyHash(),
-                  snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest()));
-        });
-    final NavigableMap<Bytes32, Bytes> accounts = localAccounts.get();
+    final NavigableMap<Bytes32, Bytes> accounts =
+        worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
+            ? worldStateStorageCoordinator
+                .getStrategy(BonsaiWorldStateKeyValueStorage.class)
+                .streamFlatAccounts(
+                    accountDataRequest.getStartKeyHash(),
+                    accountDataRequest.getEndKeyHash(),
+                    snapSyncConfiguration.getLocalFlatAccountCountToHealPerRequest())
+            : new TreeMap<>();
 
     final List<Bytes> proofs = new ArrayList<>();
     if (!accounts.isEmpty()) {
@@ -363,19 +359,16 @@ public class RequestDataStep {
     storageDataRequest.setRootHash(blockHeader.getStateRoot());
 
     // the map comes back sorted, and copying it into another one would sort every entry again
-    final AtomicReference<NavigableMap<Bytes32, Bytes>> localSlots =
-        new AtomicReference<>(new TreeMap<>());
-    worldStateStorageCoordinator.applyOnMatchingFlatMode(
-        FlatDbMode.FULL,
-        onBonsai -> {
-          localSlots.set(
-              onBonsai.streamFlatStorages(
-                  storageDataRequest.getAccountHash(),
-                  storageDataRequest.getStartKeyHash(),
-                  storageDataRequest.getEndKeyHash(),
-                  snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest()));
-        });
-    final NavigableMap<Bytes32, Bytes> slots = localSlots.get();
+    final NavigableMap<Bytes32, Bytes> slots =
+        worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)
+            ? worldStateStorageCoordinator
+                .getStrategy(BonsaiWorldStateKeyValueStorage.class)
+                .streamFlatStorages(
+                    storageDataRequest.getAccountHash(),
+                    storageDataRequest.getStartKeyHash(),
+                    storageDataRequest.getEndKeyHash(),
+                    snapSyncConfiguration.getLocalFlatStorageCountToHealPerRequest())
+            : new TreeMap<>();
 
     final List<Bytes> proofs = new ArrayList<>();
     if (!slots.isEmpty()) {
