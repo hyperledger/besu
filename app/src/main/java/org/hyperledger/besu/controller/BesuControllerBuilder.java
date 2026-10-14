@@ -67,7 +67,6 @@ import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorAtHead;
 import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromPeers;
 import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromSafeBlock;
 import org.hyperledger.besu.ethereum.eth.sync.common.SingleBlockHeaderDownloader;
@@ -1199,35 +1198,18 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       final PivotBlockSelector selector;
       final NewPayloadListener newPayloadListener;
       final UnverifiedForkchoiceListener forkchoiceListener;
-      if (Boolean.TRUE.equals(syncConfig.getSnapSyncConfiguration().isSnap2Enabled())) {
-        final PivotSelectorAtHead atHeadSelector =
-            new PivotSelectorAtHead(
-                protocolContext,
-                genesisConfigOptions,
-                headerDownloader,
-                protocolSchedule,
-                ethContext,
-                syncConfig.getSyncMinimumPeerCount(),
-                Clock.systemUTC(),
-                syncConfig.getSnapSyncConfiguration().getPivotBlockWindowValidity(),
-                cleanupAction);
-        selector = atHeadSelector;
-        newPayloadListener = atHeadSelector;
-        forkchoiceListener = atHeadSelector;
-      } else {
-        final PivotSelectorFromSafeBlock safeBlockSelector =
-            new PivotSelectorFromSafeBlock(
-                protocolContext,
-                genesisConfigOptions,
-                headerDownloader,
-                protocolSchedule,
-                Clock.systemUTC(),
-                syncConfig.getSnapSyncConfiguration().getPivotBlockWindowValidity(),
-                cleanupAction);
-        selector = safeBlockSelector;
-        newPayloadListener = safeBlockSelector;
-        forkchoiceListener = safeBlockSelector;
-      }
+      final PivotSelectorFromSafeBlock safeBlockSelector =
+          new PivotSelectorFromSafeBlock(
+              protocolContext,
+              genesisConfigOptions,
+              headerDownloader,
+              protocolSchedule,
+              Clock.systemUTC(),
+              syncConfig.getSnapSyncConfiguration().getPivotBlockWindowValidity(),
+              cleanupAction);
+      selector = safeBlockSelector;
+      newPayloadListener = safeBlockSelector;
+      forkchoiceListener = safeBlockSelector;
 
       final long newPayloadSubscriptionId = mergeContext.addNewPayloadListener(newPayloadListener);
       cleanups.add(
