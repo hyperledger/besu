@@ -64,7 +64,11 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   private final SegmentedKeyValueStorage parent;
 
-  /** The parent if it is also a layer, otherwise null. */
+  /**
+   * The parent if it is exactly a {@link LayeredKeyValueStorage}, otherwise null. Lookups walk
+   * these layers' maps directly, so a subclass parent is instead treated as the base storage and
+   * queried through its own methods, keeping any overrides.
+   */
   private final @Nullable LayeredKeyValueStorage parentLayer;
 
   /** The first non-layered storage below this layer, where lookups end when no layer has a key. */
@@ -96,7 +100,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final SegmentedKeyValueStorage parent) {
     super(map);
     this.parent = parent;
-    this.parentLayer = parent instanceof LayeredKeyValueStorage layer ? layer : null;
+    this.parentLayer =
+        parent.getClass() == LayeredKeyValueStorage.class ? (LayeredKeyValueStorage) parent : null;
     this.baseStorage = parentLayer != null ? parentLayer.baseStorage : parent;
   }
 

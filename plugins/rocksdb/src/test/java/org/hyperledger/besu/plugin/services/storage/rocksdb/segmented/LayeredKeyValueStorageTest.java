@@ -591,6 +591,38 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
+  void subclassParentLayerOverridesAreUsed() {
+    byte[] key = {1};
+    byte[] overrideValue = {42};
+    LayeredKeyValueStorage subclassParent =
+        new LayeredKeyValueStorage(parentStorage) {
+          @Override
+          public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
+            return Optional.of(overrideValue);
+          }
+
+          @Override
+          public boolean isClosed() {
+            return true;
+          }
+        };
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(subclassParent);
+
+    assertTrue(top.isClosed());
+    LayeredKeyValueStorage openTop =
+        new LayeredKeyValueStorage(
+            new LayeredKeyValueStorage(parentStorage) {
+              @Override
+              public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key) {
+                return Optional.of(overrideValue);
+              }
+            });
+    assertArrayEquals(overrideValue, openTop.get(segmentId, key).orElseThrow());
+    assertArrayEquals(
+        overrideValue, openTop.get(segmentId, Bytes.wrap(key), null).orElseThrow().toArrayUnsafe());
+  }
+
+  @Test
   void peekThisLayerReadsOnlyThisLayer() {
     byte[] value = {1};
     LayeredKeyValueStorage bottom = layer(parentStorage, Map.of(1, Optional.of(value)));
