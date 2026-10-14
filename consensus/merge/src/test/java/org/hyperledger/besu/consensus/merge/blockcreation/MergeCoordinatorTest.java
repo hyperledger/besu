@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction.MAX_SCORE;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -83,6 +84,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
 import org.hyperledger.besu.plugin.data.AddedBlockContext.EventType;
+import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
@@ -1583,6 +1585,44 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
 
     verify(blockchain, never()).setFinalized(block1Header.getHash());
     verify(blockchain, never()).setSafeBlock(block1Header.getHash());
+  }
+
+  @Test
+  public void updateForkChoiceToTheChainHeadMovesTheWorldStateToIt() {
+    final BlockHeader terminalHeader = terminalPowBlock();
+    sendNewPayloadAndForkchoiceUpdate(
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+    final BlockHeader block1Header = nextBlockHeader(terminalHeader);
+    sendNewPayloadAndForkchoiceUpdate(
+        new Block(block1Header, BlockBody.empty()), Optional.empty(), terminalHeader.getHash());
+    assertThat(blockchain.getChainHeadHash()).isEqualTo(block1Header.getHash());
+
+    // backward sync may have left the head world state at another block
+    final WorldStateArchive movingArchive = mock(WorldStateArchive.class);
+    when(movingArchive.getWorldState(
+            any(org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.class)))
+        .thenReturn(Optional.of(mock(MutableWorldState.class)));
+    final MergeCoordinator movingCoordinator =
+        new MergeCoordinator(
+            new ProtocolContext.Builder()
+                .withBlockchain(blockchain)
+                .withWorldStateArchive(movingArchive)
+                .withConsensusContext(mergeContext)
+                .withBadBlockManager(badBlockManager)
+                .build(),
+            protocolSchedule,
+            ethScheduler,
+            transactionPool,
+            miningConfiguration,
+            backwardSyncContext);
+
+    final ForkchoiceResult result =
+        movingCoordinator.updateForkChoice(
+            block1Header, terminalHeader.getHash(), terminalHeader.getHash());
+
+    assertThat(result.getStatus()).isEqualTo(ForkchoiceResult.Status.VALID);
+    verify(movingArchive).getWorldState(withBlockHeaderAndUpdateNodeHead(block1Header));
+    assertThat(blockchain.getChainHeadHash()).isEqualTo(block1Header.getHash());
   }
 
   private static BlockHeader mockBlockHeader() {

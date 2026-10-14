@@ -62,6 +62,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -70,6 +73,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 public class MainnetBlockValidatorTest {
@@ -82,6 +86,7 @@ public class MainnetBlockValidatorTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
+  private final ReentrantLock headWorldStateLock = new ReentrantLock();
   private final BadBlockManager badBlockManager =
       chainUtil.getProtocolContext().getBadBlockManager();
   private final BlockProcessor blockProcessor = mock(BlockProcessor.class);
@@ -132,6 +137,16 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(worldStateArchive.getWorldState()).thenReturn(worldState);
+    when(worldStateArchive.withHeadWorldStateLock(any()))
+        .thenAnswer(
+            invocation -> {
+              headWorldStateLock.lock();
+              try {
+                return invocation.<Supplier<?>>getArgument(0).get();
+              } finally {
+                headWorldStateLock.unlock();
+              }
+            });
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any(), any()))
@@ -142,6 +157,33 @@ public class MainnetBlockValidatorTest {
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();
+  }
+
+  @ParameterizedTest(name = "shouldUpdateHead={0}")
+  @ValueSource(booleans = {true, false})
+  public void validateAndProcessBlock_holdsHeadWorldStateLockOnlyWhenUpdatingHead(
+      final boolean shouldUpdateHead) {
+    final AtomicBoolean heldWhileProcessing = new AtomicBoolean();
+    when(blockProcessor.processBlock(contextWith(Optional.empty())))
+        .thenAnswer(
+            invocation -> {
+              heldWhileProcessing.set(headWorldStateLock.isHeldByCurrentThread());
+              return new BlockProcessingResult(Optional.empty(), false);
+            });
+
+    final BlockProcessingResult result =
+        mainnetFrontierBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty(),
+            shouldUpdateHead,
+            true);
+
+    assertThat(result.isSuccessful()).isTrue();
+    assertThat(heldWhileProcessing.get()).isEqualTo(shouldUpdateHead);
+    assertThat(headWorldStateLock.isLocked()).isFalse();
   }
 
   @Test
