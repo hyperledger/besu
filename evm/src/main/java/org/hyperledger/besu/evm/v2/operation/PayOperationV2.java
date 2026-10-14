@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.v2.operation.AbstractOperationV2.UNDERFLOW_RESPONSE;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readWeiAt;
@@ -22,14 +22,16 @@ import static org.hyperledger.besu.evm.v2.operation.StackUtil.readWeiAt;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.operation.PayOperation;
 
-/** The PAY operation (EIP-5920). */
-public class PayOperationV2 extends AbstractOperationV2 {
+/**
+ * The Pay operation (EIP-5920) on the v2 long[] stack. The payment itself is the one of {@link
+ * PayOperation}.
+ */
+public class PayOperationV2 extends PayOperation {
 
   /**
    * Instantiates a new Pay operation.
@@ -37,7 +39,7 @@ public class PayOperationV2 extends AbstractOperationV2 {
    * @param gasCalculator the gas calculator
    */
   public PayOperationV2(final GasCalculator gasCalculator) {
-    super(0xfc, "PAY", 2, 1, gasCalculator);
+    super(gasCalculator);
   }
 
   @Override
@@ -56,61 +58,13 @@ public class PayOperationV2 extends AbstractOperationV2 {
     final Address to = readAddressAt(stack, top, 0);
     if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
     final Wei value = readWeiAt(stack, top, 1);
-    final boolean hasValue = value.greaterThan(Wei.ZERO);
-    final Account recipient = getAccount(to, frame);
-
-    final boolean accountIsWarm = frame.warmUpAddress(to);
-
-    final long cost = cost(to, hasValue, recipient, accountIsWarm);
-    if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
-    if (!hasValue) {
-      pushLong(1L, stack, top - 2);
-      frame.setTopV2(top - 1);
-      return new OperationResult(cost, null);
-    }
-
-    // EIP-5920 pays from the current address, the one ADDRESS returns, not from the caller
-    final Address from = frame.getRecipientAddress();
-    final MutableAccount fromAccount = getMutableAccount(from, frame);
-    if (fromAccount == null || value.compareTo(fromAccount.getBalance()) > 0) {
-      pushLong(0L, stack, top - 2);
-      frame.setTopV2(top - 1);
-      return new OperationResult(cost, null);
-    }
-
-    if (!from.equals(to)) {
-      final MutableAccount recipientAccount = getOrCreateAccount(to, frame);
-      fromAccount.decrementBalance(value);
-      recipientAccount.incrementBalance(value);
-    }
-
-    pushLong(1L, stack, top - 2);
-    frame.setTopV2(top - 1);
-    return new OperationResult(cost, null);
+    return pay(frame, to, value);
   }
 
-  private long cost(
-      final Address to,
-      final boolean hasValue,
-      final Account recipient,
-      final boolean accountIsWarm) {
-    long cost = 0;
-    if (hasValue) {
-      cost = gasCalculator().callValueTransferGasCost();
-    }
-    if (accountIsWarm || gasCalculator().isPrecompile(to)) {
-      return clampedAdd(cost, gasCalculator().getWarmStorageReadCost());
-    }
-
-    cost = clampedAdd(cost, gasCalculator().getColdAccountAccessCost());
-
-    if (recipient == null && hasValue) {
-      cost = clampedAdd(cost, gasCalculator().newAccountGasCost());
-    }
-
-    return cost;
+  @Override
+  protected void popArgumentsAndPushResult(final MessageFrame frame, final boolean success) {
+    final int resultSlot = frame.stackTopV2() - getStackItemsConsumed();
+    pushLong(success ? 1L : 0L, frame.stackDataV2(), resultSlot);
+    frame.setTopV2(resultSlot + 1);
   }
 }
