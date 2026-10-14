@@ -112,9 +112,14 @@ public abstract class PathBasedWorldStateCacheManager implements StorageSubscrib
 
   private synchronized void scrubCachedLayers(final long newMaxHeight) {
     final long waterline = newMaxHeight - RETAINED_LAYERS;
+    // blocks imported without fork choice can run far ahead of the chain head, whose state is
+    // still read by the transaction pool, block building and RPC calls
+    final Hash chainHeadHash = archive.getChainHeadHash();
     if (cachedWorldStatesByHash.size() > RETAINED_LAYERS) {
       cachedWorldStatesByHash.values().stream()
-          .filter(layer -> layer.getBlockNumber() < waterline)
+          .filter(
+              layer ->
+                  layer.getBlockNumber() < waterline && !layer.getBlockHash().equals(chainHeadHash))
           .toList()
           .forEach(
               layer -> {
@@ -122,7 +127,50 @@ public abstract class PathBasedWorldStateCacheManager implements StorageSubscrib
                 layer.close();
               });
     }
-    stateRootToBlockHeaderCache.values().removeIf(h -> h.getNumber() < waterline);
+    stateRootToBlockHeaderCache
+        .values()
+        .removeIf(h -> h.getNumber() < waterline && !h.getBlockHash().equals(chainHeadHash));
+  }
+
+  /**
+   * Gets the number of in-memory layers a read on the cached world state of the block, or else of
+   * its parent, walks before it reaches a database snapshot.
+   *
+   * @param blockHeader the block
+   * @return the number of layers, 0 if neither world state is cached as a layer
+   */
+  public int getCachedLayerDepth(final BlockHeader blockHeader) {
+    return Optional.ofNullable(cachedWorldStatesByHash.get(blockHeader.getBlockHash()))
+        .or(() -> Optional.ofNullable(cachedWorldStatesByHash.get(blockHeader.getParentHash())))
+        .map(BonsaiCachedWorldStateView::getWorldStateStorage)
+        .map(
+            storage ->
+                storage instanceof BonsaiWorldStateLayerStorage layer
+                    ? layer.getComposedWorldStateStorage().getDepth()
+                    : 0)
+        .orElse(0);
+  }
+
+  /**
+   * Drops the cached world states that are in-memory layers, keeping the database snapshots and the
+   * world state of the chain head.
+   */
+  public synchronized void dropCachedLayers() {
+    final Hash chainHeadHash = archive.getChainHeadHash();
+    cachedWorldStatesByHash.values().stream()
+        .filter(
+            cached ->
+                cached.getWorldStateStorage() instanceof BonsaiWorldStateLayerStorage
+                    && !cached.getBlockHash().equals(chainHeadHash))
+        .toList()
+        .forEach(
+            cached -> {
+              cachedWorldStatesByHash.remove(cached.getBlockHash());
+              // empty blocks can share the state root of their parent
+              stateRootToBlockHeaderCache.remove(
+                  cached.getBlockHeader().getStateRoot(), cached.getBlockHeader());
+              cached.close();
+            });
   }
 
   public Optional<PathBasedWorldState> getWorldState(final Hash blockHash) {

@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -229,6 +230,36 @@ class TrieLogHelperTest {
                     dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("No finalized block present, can't safely run trie log prune");
+  }
+
+  @Test
+  public void cannotPruneIfWorldStateIsNotOnTheCanonicalChain() {
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(BONSAI)
+            .extraStorageConfiguration(
+                ImmutableExtraStorageConfiguration.builder()
+                    .maxLayersToLoad(3L)
+                    .limitTrieLogsEnabled(true)
+                    .build())
+            .build();
+    // the world state was persisted at block 4 of a branch that fork choice has not selected
+    final BlockHeader branchBlock4 =
+        new BlockHeaderTestFixture().number(4).extraData(Bytes.of(1)).buildHeader();
+    inMemoryWorldState
+        .updater()
+        .saveWorldState(branchBlock4.getHash().getBytes(), Bytes32.ZERO, Bytes.EMPTY)
+        .commit();
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
+    when(blockchain.getBlockHeader(branchBlock4.getHash())).thenReturn(Optional.of(branchBlock4));
+    when(blockchain.getBlockHashByNumber(4L)).thenReturn(Optional.of(blockHeader4.getHash()));
+
+    assertThatThrownBy(
+            () ->
+                nonValidatingTrieLogHelper.prune(
+                    dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("not one of the canonical blocks whose trie logs are retained");
   }
 
   @Test

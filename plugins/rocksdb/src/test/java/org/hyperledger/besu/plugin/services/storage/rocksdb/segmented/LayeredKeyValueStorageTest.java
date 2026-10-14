@@ -62,6 +62,17 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
+  void depthCountsTheLayersAboveTheStorageBelowThem() {
+    final LayeredKeyValueStorage secondLayer = new LayeredKeyValueStorage(layeredKeyValueStorage);
+    final LayeredKeyValueStorage thirdLayer = new LayeredKeyValueStorage(secondLayer);
+
+    assertEquals(1, layeredKeyValueStorage.getDepth());
+    assertEquals(2, secondLayer.getDepth());
+    assertEquals(3, thirdLayer.getDepth());
+    assertEquals(3, ((LayeredKeyValueStorage) thirdLayer.clone()).getDepth());
+  }
+
+  @Test
   void shouldReturnEmptyStreamWhenParentAndLayerAreEmpty() {
     when(parentStorage.stream(segmentId)).thenReturn(Stream.empty());
     Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);

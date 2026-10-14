@@ -1625,6 +1625,55 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     assertThat(blockchain.getChainHeadHash()).isEqualTo(block1Header.getHash());
   }
 
+  @Test
+  public void updateForkChoiceToTheChainHeadKeepsTheWorldStateTheDepthCapMoved() {
+    final BlockHeader terminalHeader = terminalPowBlock();
+    sendNewPayloadAndForkchoiceUpdate(
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+    final BlockHeader block1Header = nextBlockHeader(terminalHeader);
+    sendNewPayloadAndForkchoiceUpdate(
+        new Block(block1Header, BlockBody.empty()), Optional.empty(), terminalHeader.getHash());
+
+    final WorldStateArchive cappedArchive = mock(WorldStateArchive.class);
+    when(cappedArchive.isHeadWorldStateMovedByDepthCap()).thenReturn(true);
+
+    final ForkchoiceResult result =
+        coordinatorWith(cappedArchive)
+            .updateForkChoice(block1Header, terminalHeader.getHash(), terminalHeader.getHash());
+
+    assertThat(result.getStatus()).isEqualTo(ForkchoiceResult.Status.VALID);
+    verify(cappedArchive, never()).getWorldState(withBlockHeaderAndUpdateNodeHead(block1Header));
+    assertThat(blockchain.getChainHeadHash()).isEqualTo(block1Header.getHash());
+  }
+
+  @Test
+  public void rememberBlockCapsTheLayersOfItsParentBeforeImportingIt() {
+    final BlockHeader terminalHeader = terminalPowBlock();
+    sendNewPayloadAndForkchoiceUpdate(
+        new Block(terminalHeader, BlockBody.empty()), Optional.empty(), Hash.ZERO);
+    final BlockHeader block1Header = nextBlockHeader(terminalHeader);
+
+    final WorldStateArchive cappingArchive = mock(WorldStateArchive.class);
+    coordinatorWith(cappingArchive).rememberBlock(new Block(block1Header, BlockBody.empty()));
+
+    verify(cappingArchive).capCachedLayerDepth(terminalHeader);
+  }
+
+  private MergeCoordinator coordinatorWith(final WorldStateArchive archive) {
+    return new MergeCoordinator(
+        new ProtocolContext.Builder()
+            .withBlockchain(blockchain)
+            .withWorldStateArchive(archive)
+            .withConsensusContext(mergeContext)
+            .withBadBlockManager(badBlockManager)
+            .build(),
+        protocolSchedule,
+        ethScheduler,
+        transactionPool,
+        miningConfiguration,
+        backwardSyncContext);
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));

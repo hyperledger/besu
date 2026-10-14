@@ -47,6 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -67,6 +68,10 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   // would leave its data out of step with its block hash marker. Fair, so that a fork choice
   // waiting for it is not overtaken by backward sync importing the next block
   private final ReentrantLock headWorldStateLock = new ReentrantLock(true);
+  // every block imported without a fork choice is a layer on its parent's, and a read that misses
+  // walks all of them
+  private int maxCachedLayerDepth = 64;
+  private volatile boolean headWorldStateMovedByDepthCap = false;
   protected final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
   // Configuration that will be shared by all instances of world state at their creation
@@ -225,9 +230,64 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   private Optional<MutableWorldState> getFullWorldStateFromHead(final Hash blockHash) {
     // a failure here keeps the chain head from moving, so it must be visible at the default level
     return withHeadWorldStateLock(
-        () ->
-            rollFullWorldStateToBlockHash(headWorldState, blockHash, Level.WARN)
-                .map(MutableWorldState.class::cast));
+        () -> {
+          headWorldStateMovedByDepthCap = false;
+          return rollFullWorldStateToBlockHash(headWorldState, blockHash, Level.WARN)
+              .map(MutableWorldState.class::cast);
+        });
+  }
+
+  @Override
+  public void capCachedLayerDepth(final BlockHeader blockHeader) {
+    final int depth = worldStateCacheManager.getCachedLayerDepth(blockHeader);
+    if (depth <= maxCachedLayerDepth) {
+      return;
+    }
+    withHeadWorldStateLock(
+        () -> {
+          try {
+            // the cached world state of the block becomes a snapshot of the persisted one, so
+            // the layers below it are no longer needed
+            if (rollFullWorldStateToBlockHash(
+                    headWorldState, blockHeader.getBlockHash(), Level.WARN)
+                .isPresent()) {
+              worldStateCacheManager.dropCachedLayers();
+              headWorldStateMovedByDepthCap = true;
+              LOG.atInfo()
+                  .setMessage(
+                      "Persisted the world state at block {}, ahead of the chain head, to bound the {} in-memory layers of blocks imported without a fork choice")
+                  .addArgument(blockHeader::toLogString)
+                  .addArgument(depth)
+                  .log();
+            }
+          } catch (final RuntimeException e) {
+            // the block is still imported on top of the layers, so this is not fatal
+            LOG.warn(
+                "Failed to persist the world state at block {} to bound its in-memory layers",
+                blockHeader.toLogString(),
+                e);
+          }
+          return null;
+        });
+  }
+
+  @Override
+  public boolean isHeadWorldStateMovedByDepthCap() {
+    return headWorldStateMovedByDepthCap;
+  }
+
+  @VisibleForTesting
+  public void setMaxCachedLayerDepth(final int maxCachedLayerDepth) {
+    this.maxCachedLayerDepth = maxCachedLayerDepth;
+  }
+
+  /**
+   * Gets the hash of the chain head, whose world state stays cached.
+   *
+   * @return the chain head hash
+   */
+  public Hash getChainHeadHash() {
+    return blockchain.getChainHeadHash();
   }
 
   /**
@@ -412,6 +472,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public void resetArchiveStateTo(final BlockHeader blockHeader) {
     headWorldStateLock.lock();
     try {
+      headWorldStateMovedByDepthCap = false;
       headWorldState.resetWorldStateTo(blockHeader);
       this.worldStateCacheManager.reset();
       this.worldStateCacheManager.addCachedLayer(

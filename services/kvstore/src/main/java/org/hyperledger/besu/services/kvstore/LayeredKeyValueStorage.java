@@ -62,6 +62,9 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
    */
   private final SegmentedKeyValueStorage baseStorage;
 
+  /** The number of layers a read that misses walks, this one included. */
+  private final int depth;
+
   /**
    * Cached result of baseStorage.isClosed(). The closed state transitions from false to true
    * exactly once per process lifetime and never back, so caching the first true result is safe.
@@ -93,6 +96,17 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         parent.getClass() == LayeredKeyValueStorage.class
             ? ((LayeredKeyValueStorage) parent).baseStorage
             : parent;
+    this.depth = parent instanceof LayeredKeyValueStorage layer ? layer.depth + 1 : 1;
+  }
+
+  /**
+   * Gets the number of layers a read that misses walks before it reaches the storage below them,
+   * this layer included.
+   *
+   * @return the depth of this layer
+   */
+  public int getDepth() {
+    return depth;
   }
 
   @Override

@@ -79,6 +79,25 @@ public interface WorldStateArchive extends Closeable {
   }
 
   /**
+   * Bounds the in-memory layers that blocks imported without a fork choice stack on top of each
+   * other. When reads on the world state of the block walk too many of them, the head world state
+   * is persisted at the block, even though the chain head stays where it is.
+   *
+   * @param blockHeader the parent of the block about to be imported
+   */
+  default void capCachedLayerDepth(final BlockHeader blockHeader) {}
+
+  /**
+   * Whether the head world state was last moved by {@link #capCachedLayerDepth(BlockHeader)}, so it
+   * is at a block imported after the chain head instead of at the chain head.
+   *
+   * @return true if the depth cap moved the head world state since the last head move
+   */
+  default boolean isHeadWorldStateMovedByDepthCap() {
+    return false;
+  }
+
+  /**
    * Resetting the archive cache and adding the new pivot as the only entry
    *
    * @param blockHeader new pivot block header

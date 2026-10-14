@@ -191,7 +191,7 @@ class BonsaiWorldStateCacheManagerTest {
         final Map<Hash, BonsaiCachedWorldStateView> map,
         final BonsaiWorldStateKeyValueStorage snapshotStorage) {
       super(
-          null,
+          Mockito.mock(PathBasedWorldStateProvider.class),
           storage,
           map,
           EvmConfiguration.DEFAULT,

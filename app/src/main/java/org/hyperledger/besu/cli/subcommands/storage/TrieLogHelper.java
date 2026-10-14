@@ -224,6 +224,23 @@ public class TrieLogHelper {
               clampedCountBeforePruning, layersToRetain));
     }
 
+    // only the trie logs of canonical blocks are kept, and the world state is rolled with them to
+    // the chain head. Blocks imported without a fork choice can leave it ahead of the chain head
+    final Optional<Hash> worldStateBlockHash = rootWorldStateStorage.getWorldStateBlockHash();
+    final boolean worldStateOnRetainedCanonicalBlock =
+        worldStateBlockHash.isEmpty()
+            || worldStateBlockHash
+                .flatMap(blockchain::getBlockHeader)
+                .filter(header -> header.getNumber() >= lastBlockNumberToRetainTrieLogsFor)
+                .flatMap(header -> blockchain.getBlockHashByNumber(header.getNumber()))
+                .equals(worldStateBlockHash);
+    if (!worldStateOnRetainedCanonicalBlock) {
+      throw new IllegalArgumentException(
+          String.format(
+              "The world state is persisted at block %s, which is not one of the canonical blocks whose trie logs are retained. Run Besu until the consensus client moves its head, then prune.",
+              worldStateBlockHash.map(hash -> hash.getBytes().toHexString()).orElse("unknown")));
+    }
+
     final Optional<Hash> finalizedBlockHash = blockchain.getFinalized();
 
     if (finalizedBlockHash.isEmpty()) {
