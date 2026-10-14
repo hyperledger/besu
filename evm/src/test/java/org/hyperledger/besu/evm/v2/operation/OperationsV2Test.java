@@ -70,7 +70,9 @@ class OperationsV2Test {
       if (v1[opcode] instanceof InvalidOperation) {
         assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isSameAs(v1[opcode]);
       } else if (v2[opcode] != null) {
-        assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isInstanceOf(AbstractOperationV2.class);
+        assertThat(v2[opcode].getClass().getPackage())
+            .as("opcode 0x%02x", opcode)
+            .isEqualTo(OperationsV2.class.getPackage());
         assertThat(v2[opcode].getOpcode()).isEqualTo(opcode);
         assertThat(v2[opcode].getName()).isEqualTo(v1[opcode].getName());
       }
