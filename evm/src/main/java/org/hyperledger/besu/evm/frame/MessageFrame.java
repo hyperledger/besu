@@ -219,8 +219,9 @@ public class MessageFrame {
   private long gasRemaining;
   private int pc;
   private final Memory memory = new Memory();
-  // null on a frame built for EVM v2, which only uses the v2 stack
-  private final OperandStack stack;
+  // null on a frame EVM v2 runs, which only uses the v2 stack. The stack accessors tracers use
+  // check this field, which v1 reads anyway, rather than the v2 stack, to keep v1 as fast.
+  private OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
   private long[] stackDataV2;
@@ -457,7 +458,7 @@ public class MessageFrame {
    * @throws UnderflowException if the offset is out of range
    */
   public Bytes getStackItem(final int offset) {
-    if (stackDataV2 != null) {
+    if (stack == null) {
       return stackItemV2(offset);
     }
     return stack.get(offset);
@@ -516,7 +517,7 @@ public class MessageFrame {
    * @return The current stack size
    */
   public int stackSize() {
-    if (stackDataV2 != null) {
+    if (stack == null) {
       return stackTopV2;
     }
     return stack.size();
@@ -526,12 +527,14 @@ public class MessageFrame {
   // ---------------------------------------------------------------------------
 
   /**
-   * Allocates the v2 operand stack if the frame was built without one. Frames are built in places
-   * that do not know which interpreter will run them, so the v2 interpreter calls this first.
+   * Allocates the v2 operand stack if the frame was built without one, and drops the v1 stack,
+   * which v2 does not use. Frames are built in places that do not know which interpreter will run
+   * them, so the v2 interpreter calls this first.
    */
   public void ensureStackV2() {
     if (stackDataV2 == null) {
       stackDataV2 = new long[Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2) << 2];
+      stack = null;
     }
   }
 
