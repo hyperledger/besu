@@ -219,6 +219,7 @@ public class MessageFrame {
   private long gasRemaining;
   private int pc;
   private final Memory memory = new Memory();
+  // null on a frame built for EVM v2, which only uses the v2 stack
   private final OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
@@ -299,7 +300,7 @@ public class MessageFrame {
     this.type = type;
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
-    this.stack = new OperandStack(txValues.maxStackSize());
+    this.stack = enableEvmV2 ? null : new OperandStack(txValues.maxStackSize());
     this.stackDataV2 =
         enableEvmV2
             ? new long[Math.min(INITIAL_STACK_CAPACITY_V2, txValues.maxStackSize()) << 2]
@@ -1956,7 +1957,9 @@ public class MessageFrame {
     }
 
     /**
-     * Sets whether the experimental EVM v2 (long[] stack) is enabled.
+     * Sets whether the experimental EVM v2 (long[] stack) runs the frame. A frame built for EVM v2
+     * has no v1 stack. A child frame runs on the interpreter of its parent, so it is built for EVM
+     * v2 when its parent runs on it.
      *
      * @param enableEvmV2 true to enable EVM v2
      * @return the builder
@@ -2038,7 +2041,7 @@ public class MessageFrame {
 
       MessageFrame messageFrame =
           new MessageFrame(
-              enableEvmV2,
+              enableEvmV2 || (parentMessageFrame != null && parentMessageFrame.stackDataV2 != null),
               type,
               updater,
               initialGas,
