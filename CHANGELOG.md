@@ -8,6 +8,7 @@
 - `trace_call` and `trace_callMany` now select transaction validation as `eth_call` does, including its `strict` flag. Unless `strict` is `true`, a call whose `gasPrice`, `maxFeePerGas` and `maxPriorityFeePerGas` are all zero or omitted runs with `GASPRICE` and `BASEFEE` 0 and pays no execution gas fees. Previously such a call was rejected as underpriced at a block with a base fee, or, with its fees omitted, was charged at the base fee. Calls that `eth_call` validates and charges are still validated and charged, each call in a `trace_callMany` bundle is priced on its own, and, as in `eth_call`, a nonce above the sender's is accepted. A `trace_call` that fails validation now returns the reason, such as `Gas price below current base fee` (`-32009`), instead of `Internal error`. [#11404](https://github.com/besu-eth/besu/pull/11404)
 
 - Chain data pruning now retains blocks and block access lists for the EIP-4444 history expiry window (`HISTORY_PRUNE_EPOCHS` = 14299 epochs) instead of the weak subjectivity period (3533 epochs), as required by EIP-7928. The default and minimum of `--Xchain-pruning-blocks-retained`, `--Xchain-pruning-bals-retained` and `--Xchain-pruning-retained-minimum` change from `113056` to `457568` blocks. [#11316](https://github.com/besu-eth/besu/issues/11316)
+- `trace_transaction` now returns `null` for an unknown transaction hash instead of an empty array, matching `trace_get`, `eth_getTransactionByHash`, Erigon and Reth. An empty array no longer means the transaction is unknown. [#11379](https://github.com/besu-eth/besu/pull/11379)
 - `trace_block` and `trace_replayBlockTransactions` now return a `Block not found` error (`-32000`) for a block number that is not on the chain instead of a `null` result, as `trace_call` and `trace_callMany` already do. [#11381](https://github.com/besu-eth/besu/pull/11381)
 - `trace_filter` now honours `blockHash` and traces exactly that block, as `eth_getLogs` does. Previously the member was parsed and ignored, so `{"blockHash": ...}` traced the latest block, and with `fromBlock` or `toBlock` the hash was dropped. A non-null `blockHash` combined with a non-null `fromBlock` or `toBlock` is now rejected with `Invalid filter params` (`-32602`). An unknown or noncanonical hash returns `Block not found` (`-32000`), a canonical block without a stored body, as after history pruning, returns `Pruned history unavailable` (`4444`), and a block that cannot be traced on its parent state returns `World state unavailable` (`-32000`), including with `count: 0`. A null `blockHash` is still ignored. [#11407](https://github.com/besu-eth/besu/pull/11407)
 - Bonsai databases storing code by its hash are upgraded on first start to store the jump destination analysis next to the code (Bonsai database version 4, archive version 3); the upgrade takes a few minutes on mainnet, after which the database cannot be opened by an older version of Besu. [#11327](https://github.com/besu-eth/besu/pull/11327)
@@ -29,6 +30,7 @@
 - `--rpc-tx-feecap` will treat a value of 0 as limiting fees to 0. Today it treats 0 as "do not cap fees". To achieve similar behaviour set it to a suitably large value to effectively prevent any fee capping.
 
 ### Bug fixes
+- `evmtool t8n-server` keeps serving requests again. Since `evmtool` began exiting with the subcommand's exit code, the server process exited right after printing `Transition server listening on`, so filling tests with Besu as the transition tool failed. A server that cannot bind its port now exits with a non-zero code instead of 0. [#11555](https://github.com/besu-eth/besu/pull/11555)
 - DNS-discovered dual-stack peers now respect `--p2p-ipv6-outbound-enabled` when choosing the connection address. [#11422](https://github.com/besu-eth/besu/issues/11422)
 - Block propagation no longer repeatedly re-requests an announced block that is already saved as pending while waiting for its parent. The repeated header and body requests could use up the announcing peer's request capacity and starve the parent request, leaving a node that connects well behind the chain head stuck at its starting block. [#11517](https://github.com/besu-eth/besu/issues/11517)
 - `admin_logsRemoveCache` now returns an error when any log bloom cache segment could not be deleted, instead of reporting `Cache Removed` after a partial deletion. [#11067](https://github.com/besu-eth/besu/issues/11067)
@@ -68,6 +70,11 @@
 - A client closing the connection during a streamed JSON-RPC response is logged as a closed connection instead of an error. [#11459](https://github.com/besu-eth/besu/pull/11459)
 - A transaction whose signature does not recover a public key is rejected as `Invalid signature` instead of causing an internal error. [#11458](https://github.com/besu-eth/besu/pull/11458)
 - The finalized block is updated once at the end of a backward sync session, instead of once per forkchoice update received during it. [#11457](https://github.com/besu-eth/besu/pull/11457)
+- Backward sync, the Engine API and block import no longer move the head world state concurrently, which could corrupt it and stall the node. [#11402](https://github.com/besu-eth/besu/pull/11402)
+- The layered transaction pool no longer gets corrupted when a sender with priority is promoted from the sparse layer, or when a late block selection result refers to a transaction the pool has since replaced or removed. [#11462](https://github.com/besu-eth/besu/pull/11462)
+- Snap sync now restarts instead of staying idle when one of its world state download pipelines fails. [#11515](https://github.com/besu-eth/besu/pull/11515)
+- Snap sync no longer downloads the storage and code of an account twice when an account range response goes past the end of the range. [#11516](https://github.com/besu-eth/besu/pull/11516)
+- Snap sync no longer stalls when a download completes while the pipeline stage is handing on another result. [#11514](https://github.com/besu-eth/besu/pull/11514)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
@@ -83,6 +90,8 @@
 - The jump destination analysis of contract code is computed once, when the code is stored, instead of on every code cache miss. [#11327](https://github.com/besu-eth/besu/pull/11327)
 - EVM v2: add AND, OR, XOR and NOT. [#11477](https://github.com/besu-eth/besu/pull/11477)
 - Schedule the Amsterdam fork on Hoodi at timestamp `1793036568` (Mon, 26 Oct 2026, 17:42:48 UTC). [#11531](https://github.com/besu-eth/besu/pull/11531)
+- The EVM no longer calls the operation tracer for every operation when tracing is disabled.
+- New `besu storage revert-code-format` subcommand reverts the contract code storage and the database metadata, so that a database upgraded to store the jump destination analysis can be opened by an older Besu version again; Besu logs how to run it after the upgrade. [#11364](https://github.com/besu-eth/besu/pull/11364)
 
 ## 26.9.0
 
