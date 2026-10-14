@@ -23,6 +23,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+import java.util.function.Supplier;
+
 /** The Create operation. */
 public class CreateOperationV2 extends AbstractCreateOperationV2 {
 
@@ -36,7 +38,7 @@ public class CreateOperationV2 extends AbstractCreateOperationV2 {
   }
 
   @Override
-  protected long cost(final MessageFrame frame) {
+  public long cost(final MessageFrame frame, final Supplier<Code> unused) {
     final int inputOffset = clampedToInt(frame.stackDataV2(), frame.stackTopV2(), 1);
     final int inputSize = clampedToInt(frame.stackDataV2(), frame.stackTopV2(), 2);
     return clampedAdd(
