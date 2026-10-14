@@ -132,6 +132,49 @@ public interface SegmentedKeyValueStorage extends Closeable {
   }
 
   /**
+   * Begins a transaction committed as one write batch, without checking its writes for conflicts
+   * with concurrent ones, for writers that never conflict. Storage without conflict checks falls
+   * back to {@link #startTransaction()}.
+   *
+   * @return An object representing the transaction.
+   * @throws StorageException the storage exception
+   */
+  default SegmentedKeyValueStorageTransaction startBatchTransaction() throws StorageException {
+    return startTransaction();
+  }
+
+  /**
+   * Begins a batch transaction whose writes skip the write-ahead log: a crash before the next
+   * {@link #flush()} loses them. Storage without a write-ahead log falls back to {@link
+   * #startBatchTransaction()}.
+   *
+   * @return An object representing the transaction.
+   * @throws StorageException the storage exception
+   */
+  default SegmentedKeyValueStorageTransaction startUnloggedBatchTransaction()
+      throws StorageException {
+    return startBatchTransaction();
+  }
+
+  /**
+   * Persists the writes still held in memory, including those that skipped the write-ahead log.
+   *
+   * @throws StorageException the storage exception
+   */
+  default void flush() throws StorageException {}
+
+  /**
+   * Persists the writes of one segment still held in memory, including those that skipped the
+   * write-ahead log, leaving the memory of the other segments alone.
+   *
+   * @param segment the segment to persist
+   * @throws StorageException the storage exception
+   */
+  default void flush(final SegmentIdentifier segment) throws StorageException {
+    flush();
+  }
+
+  /**
    * Returns a stream of all keys for the segment.
    *
    * @param segmentIdentifier The segment identifier whose keys we want to stream.
