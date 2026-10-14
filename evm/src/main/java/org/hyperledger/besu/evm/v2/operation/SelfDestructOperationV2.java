@@ -14,23 +14,22 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
+import static org.hyperledger.besu.evm.v2.operation.AbstractOperationV2.UNDERFLOW_RESPONSE;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.TransferLogEmitter;
+import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 
-/** The Self destruct operation. */
-public class SelfDestructOperationV2 extends AbstractOperationV2 {
-
-  private final boolean eip6780Semantics;
-  private final TransferLogEmitter transferLogEmitter;
+/**
+ * The Self destruct operation on the v2 long[] stack. The self destruct itself is the one of {@link
+ * SelfDestructOperation}.
+ */
+public class SelfDestructOperationV2 extends SelfDestructOperation {
 
   /**
    * Instantiates a new Self destruct operation.
@@ -43,9 +42,16 @@ public class SelfDestructOperationV2 extends AbstractOperationV2 {
       final GasCalculator gasCalculator,
       final boolean eip6780Semantics,
       final TransferLogEmitter transferLogEmitter) {
-    super(0xFF, "SELFDESTRUCT", 1, 0, gasCalculator);
-    this.eip6780Semantics = eip6780Semantics;
-    this.transferLogEmitter = transferLogEmitter;
+    super(gasCalculator, eip6780Semantics, transferLogEmitter);
+  }
+
+  /**
+   * Instantiates the v2 version of a fork's Self destruct operation, with its settings.
+   *
+   * @param operation the operation the fork registers
+   */
+  public SelfDestructOperationV2(final SelfDestructOperation operation) {
+    super(operation);
   }
 
   @Override
@@ -58,73 +64,6 @@ public class SelfDestructOperationV2 extends AbstractOperationV2 {
     final int top = frame.stackTopV2();
     final Address beneficiaryAddress = readAddressAt(frame.stackDataV2(), top, 0);
     frame.setTopV2(top - 1);
-
-    final boolean beneficiaryIsWarm =
-        frame.warmUpAddress(beneficiaryAddress) || gasCalculator().isPrecompile(beneficiaryAddress);
-    final long beneficiaryAccessCost =
-        beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost();
-    final long staticCost =
-        gasCalculator().selfDestructOperationStaticGasCost() + beneficiaryAccessCost;
-
-    if (frame.getRemainingGas() < staticCost) {
-      return new OperationResult(staticCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
-    final Account beneficiaryNullable = getAccount(beneficiaryAddress, frame);
-    final Address originatorAddress = frame.getRecipientAddress();
-    final MutableAccount originatorAccount = getMutableAccount(originatorAddress, frame);
-    final Wei originatorBalance = originatorAccount.getBalance();
-
-    final long cost =
-        gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
-            + beneficiaryAccessCost;
-    if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
-    // EIP-8037: Deduct execution gas before charging state gas (ordering requirement).
-    frame.decrementRemainingGas(cost);
-
-    // EIP-8037: Charge state gas when SELFDESTRUCT forces creation of an empty beneficiary.
-    if ((beneficiaryNullable == null || beneficiaryNullable.isEmpty())
-        && !originatorBalance.isZero()
-        && !frame.consumeStateGas(gasCalculator().stateGasCostCalculator().newAccountStateGas())) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
-
-    // Add execution gas back — the EVM loop will deduct it via the OperationResult.
-    frame.incrementRemainingGas(cost);
-
-    final MutableAccount beneficiaryAccount = getOrCreateAccount(beneficiaryAddress, frame);
-
-    // Pre-Cancun, or for an account created in the same transaction, the account is destroyed;
-    // otherwise only its balance is sent.
-    final boolean willBeDestroyed =
-        !eip6780Semantics || frame.wasCreatedInTransaction(originatorAccount.getAddress());
-
-    originatorAccount.decrementBalance(originatorBalance);
-    beneficiaryAccount.incrementBalance(originatorBalance);
-
-    // EIP-7708: a transfer log for the value moved to the beneficiary. Pre-EIP-8246 a
-    // self-referential destruction burned the balance, which is logged too.
-    final boolean emitBurnLog =
-        willBeDestroyed && !gasCalculator().isSelfDestructBalancePreserved();
-    if (!originatorAddress.equals(beneficiaryAddress) || emitBurnLog) {
-      transferLogEmitter.emitSelfDestructLog(
-          frame, originatorAddress, beneficiaryAddress, originatorBalance);
-    }
-
-    // EIP-8246 preserves the balance of a destroyed account until the transaction ends; before it,
-    // the balance is zeroed here, which burns ether when the account is its own beneficiary.
-    if (willBeDestroyed) {
-      frame.addSelfDestruct(originatorAccount.getAddress());
-      if (!gasCalculator().isSelfDestructBalancePreserved()) {
-        originatorAccount.setBalance(Wei.ZERO);
-      }
-    }
-
-    frame.addRefund(beneficiaryAddress, originatorBalance);
-    frame.setState(MessageFrame.State.CODE_SUCCESS);
-    return new OperationResult(cost, null);
+    return selfDestruct(frame, beneficiaryAddress);
   }
 }

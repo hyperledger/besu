@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter;
 import org.hyperledger.besu.evm.log.TransferLogEmitter;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -98,6 +99,22 @@ class SelfDestructOperationV2Test {
     assertThat(result.getHaltReason()).isNull();
     assertThat(frame.getLogs()).hasSize(1);
     assertThat(worldUpdater.get(BENEFICIARY).getBalance()).isEqualTo(Wei.of(1_001));
+  }
+
+  @Test
+  void takesTheSettingsOfTheOperationItIsBuiltFrom() {
+    worldUpdater.getOrCreate(BENEFICIARY).setBalance(Wei.ONE);
+    final MessageFrame frame = frame(false);
+
+    final Operation.OperationResult result =
+        new SelfDestructOperationV2(
+                new SelfDestructOperation(
+                    new AmsterdamGasCalculator(), true, EIP7708TransferLogEmitter.INSTANCE))
+            .execute(frame, null);
+
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(frame.getSelfDestructs()).isEmpty();
+    assertThat(frame.getLogs()).hasSize(1);
   }
 
   @Test
