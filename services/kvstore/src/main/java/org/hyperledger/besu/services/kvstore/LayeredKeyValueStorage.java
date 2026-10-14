@@ -194,6 +194,11 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     if (found != null) {
       return found.map(Bytes::wrap);
     }
+    // a subclass layer below: let it check its own layers and apply the function to the
+    // persistent storage beneath it, so the function is never handed a layer
+    if (baseStorage instanceof LayeredKeyValueStorage layered) {
+      return layered.get(segmentId, key, cacheGetFunction);
+    }
     return cacheGetFunction != null
         ? cacheGetFunction.apply(baseStorage)
         : baseStorage.get(segmentId, key.toArrayUnsafe()).map(Bytes::wrap);

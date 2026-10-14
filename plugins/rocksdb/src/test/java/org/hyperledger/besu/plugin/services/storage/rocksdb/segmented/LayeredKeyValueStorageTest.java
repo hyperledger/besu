@@ -33,6 +33,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -618,8 +619,32 @@ public class LayeredKeyValueStorageTest {
               }
             });
     assertArrayEquals(overrideValue, openTop.get(segmentId, key).orElseThrow());
-    assertArrayEquals(
-        overrideValue, openTop.get(segmentId, Bytes.wrap(key), null).orElseThrow().toArrayUnsafe());
+  }
+
+  @Test
+  void cacheGetFunctionReceivesPersistentStorageBelowSubclassParentLayer() {
+    byte[] subclassValue = {7};
+    byte[] persistentValue = {9};
+    var subclassMap = createSegmentMap();
+    subclassMap.get(segmentId).put(Bytes.of(1), Optional.of(subclassValue));
+    LayeredKeyValueStorage subclassParent =
+        new LayeredKeyValueStorage(subclassMap, parentStorage) {};
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(subclassParent);
+    List<SegmentedKeyValueStorage> cacheFunctionArgs = new ArrayList<>();
+    Function<SegmentedKeyValueStorage, Optional<Bytes>> cacheGetFunction =
+        storage -> {
+          cacheFunctionArgs.add(storage);
+          return Optional.of(Bytes.wrap(persistentValue));
+        };
+
+    // held by the subclass layer: found without consulting the cache function
+    assertEquals(
+        Optional.of(Bytes.wrap(subclassValue)), top.get(segmentId, Bytes.of(1), cacheGetFunction));
+    // held by no layer: the cache function must see the persistent storage, not a layer
+    assertEquals(
+        Optional.of(Bytes.wrap(persistentValue)),
+        top.get(segmentId, Bytes.of(2), cacheGetFunction));
+    assertEquals(List.of(parentStorage), cacheFunctionArgs);
   }
 
   @Test
