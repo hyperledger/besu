@@ -134,7 +134,7 @@ public class GetBlockAccessListsFromPeerTask implements PeerTask<List<Optional<B
 
       final int responseIndex = i;
       final Hash actualBalHash =
-          BodyValidation.balHashOfEncoded(
+          BodyValidation.balHash(
               maybeBal
                   .get()
                   .rawRlp()

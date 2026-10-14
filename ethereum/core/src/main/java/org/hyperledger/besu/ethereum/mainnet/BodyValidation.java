@@ -21,6 +21,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.LogsBloomFilter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.SyncBlockAccessList;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Util;
@@ -137,8 +138,7 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the block access list hash: the keccak256 of the canonical RLP encoding of {@code
-   * bal}. This is the consensus definition of the hash.
+   * Generates the block access list hash.
    *
    * @param bal the block access list
    * @return the block access list hash
@@ -148,19 +148,22 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the block access list hash directly from RLP bytes as received (e.g. from a peer),
-   * without decoding and re-encoding them.
+   * Generates the block access list hash from an already RLP-encoded block access list.
    *
-   * <p>This agrees with {@link #balHash(BlockAccessList)} only because {@link
-   * org.hyperledger.besu.ethereum.core.encoding.BlockAccessListDecoder} rejects every non-canonical
-   * encoding: any bytes that decode successfully are exactly the canonical re-encoding of the
-   * decoded list. Bytes that are not canonical hash to a value that cannot match a header produced
-   * from the canonical form, so they are rejected, which is the safe direction.
-   *
-   * @param encodedBal the RLP-encoded block access list, exactly as received
+   * @param balRlp the RLP-encoded block access list
    * @return the block access list hash
    */
-  public static Hash balHashOfEncoded(final Bytes encodedBal) {
-    return Hash.wrap(keccak256(encodedBal));
+  public static Hash balHash(final Bytes balRlp) {
+    return Hash.wrap(keccak256(balRlp));
+  }
+
+  /**
+   * Generates the block access list hash from a sync block access list holder.
+   *
+   * @param syncBlockAccessList the sync block access list
+   * @return the block access list hash
+   */
+  public static Hash balHash(final SyncBlockAccessList syncBlockAccessList) {
+    return balHash(syncBlockAccessList.getRlp());
   }
 }
