@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doReturn;
@@ -39,6 +40,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -429,6 +431,84 @@ public class LayeredKeyValueStorageTest {
   }
 
   @Test
+  void deepChainGetReachesParentAtConstantStackDepth() {
+    byte[] key = {1};
+    AtomicInteger maxDepth = new AtomicInteger();
+    when(parentStorage.get(segmentId, key))
+        .thenAnswer(
+            __ -> {
+              recordStackDepth(maxDepth);
+              return Optional.of(key);
+            });
+
+    // A recursive implementation reaches the parent roughly one frame deeper per layer.
+    assertEquals(
+        parentStackDepth(1, maxDepth, top -> top.get(segmentId, key).isPresent() ? 1 : 0),
+        parentStackDepth(500, maxDepth, top -> top.get(segmentId, key).isPresent() ? 1 : 0));
+  }
+
+  @Test
+  void deepChainGetBytesVariantReachesCacheFunctionAtConstantStackDepth() {
+    Bytes key = Bytes.of(1);
+    AtomicInteger maxDepth = new AtomicInteger();
+    Function<SegmentedKeyValueStorage, Optional<Bytes>> cacheGetFunction =
+        storage -> {
+          recordStackDepth(maxDepth);
+          return Optional.of(key);
+        };
+
+    // A recursive implementation reaches the parent roughly one frame deeper per layer.
+    assertEquals(
+        parentStackDepth(
+            1, maxDepth, top -> top.get(segmentId, key, cacheGetFunction).isPresent() ? 1 : 0),
+        parentStackDepth(
+            500, maxDepth, top -> top.get(segmentId, key, cacheGetFunction).isPresent() ? 1 : 0));
+  }
+
+  @Test
+  void deepChainMultigetCallsIsClosedOnlyOnceAndQueriesParentForMissingKeysOnly() {
+    int depth = 500;
+    byte[] layerKey = {1};
+    byte[] parentKey = {2};
+    byte[] layerValue = {10};
+    byte[] parentValue = {20};
+    when(parentStorage.isClosed()).thenReturn(false);
+    when(parentStorage.multiget(segmentId, List.of(parentKey)))
+        .thenReturn(List.of(Optional.of(parentValue)));
+
+    // layerKey lives in the bottom layer, so it must be found without reaching the parent
+    LayeredKeyValueStorage top = layer(parentStorage, Map.of(1, Optional.of(layerValue)));
+    for (int i = 1; i < depth; i++) {
+      top = new LayeredKeyValueStorage(top);
+    }
+
+    List<Optional<byte[]>> result = top.multiget(segmentId, List.of(parentKey, layerKey));
+    assertArrayEquals(parentValue, result.get(0).orElseThrow());
+    assertArrayEquals(layerValue, result.get(1).orElseThrow());
+
+    // With the old code this would be called 500 times (once per level).
+    verify(parentStorage, times(1)).isClosed();
+    verify(parentStorage).multiget(segmentId, List.of(parentKey));
+  }
+
+  @Test
+  void deepChainMultigetReachesParentAtConstantStackDepth() {
+    byte[] key = {1};
+    AtomicInteger maxDepth = new AtomicInteger();
+    when(parentStorage.multiget(eq(segmentId), anyList()))
+        .thenAnswer(
+            __ -> {
+              recordStackDepth(maxDepth);
+              return List.of(Optional.of(key));
+            });
+
+    // A recursive implementation reaches the parent roughly one frame deeper per layer.
+    assertEquals(
+        parentStackDepth(1, maxDepth, top -> top.multiget(segmentId, List.of(key)).size()),
+        parentStackDepth(500, maxDepth, top -> top.multiget(segmentId, List.of(key)).size()));
+  }
+
+  @Test
   void streamAndStreamKeysApplyPrecedenceAcrossLayers() {
     byte[] p = {0};
     byte[] a = {1};
@@ -663,8 +743,8 @@ public class LayeredKeyValueStorageTest {
   }
 
   /**
-   * Returns how much deeper than the caller the stack was when the parent storage was reached,
-   * either to open its stream or to pull its single element.
+   * Returns how much deeper than the caller the stack was, at most, when the parent storage was
+   * reached.
    */
   private int parentStackDepth(
       final int depth,

@@ -58,10 +58,15 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   private final SegmentedKeyValueStorage parent;
 
+  /** The parent if it is also a layer, otherwise null. */
+  private final @Nullable LayeredKeyValueStorage parentLayer;
+
+  /** The first non-layered storage below this layer, where lookups end when no layer has a key. */
+  private final SegmentedKeyValueStorage baseStorage;
+
   /**
-   * Cached result of parent.isClosed(). The closed state transitions from false to true exactly
-   * once per process lifetime and never back, so caching the first true result is safe and converts
-   * the O(N) parent-chain walk into an O(1) check.
+   * Cached result of baseStorage.isClosed(). The closed state transitions from false to true
+   * exactly once per process lifetime and never back, so caching the first true result is safe.
    */
   private volatile boolean closedCache = false;
 
@@ -85,6 +90,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final SegmentedKeyValueStorage parent) {
     super(map);
     this.parent = parent;
+    this.parentLayer = parent instanceof LayeredKeyValueStorage layer ? layer : null;
+    this.baseStorage = parentLayer != null ? parentLayer.baseStorage : parent;
   }
 
   @Override
@@ -97,15 +104,8 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   public Optional<byte[]> get(final SegmentIdentifier segmentId, final byte[] key)
       throws StorageException {
     throwIfClosed();
-    final Bytes wrapKey = Bytes.wrap(key);
-    LayeredKeyValueStorage cur = this;
-    Optional<byte[]> found = cur.getLocal(segmentId, wrapKey);
-    while (found == null && cur.parent instanceof LayeredKeyValueStorage next) {
-      cur = next;
-      found = cur.getLocal(segmentId, wrapKey);
-    }
-    if (found != null) return found;
-    return cur.parent.get(segmentId, key);
+    final Optional<byte[]> found = getFromLayers(segmentId, Bytes.wrap(key));
+    return found != null ? found : baseStorage.get(segmentId, key);
   }
 
   /**
@@ -148,34 +148,24 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     final List<Optional<byte[]>> results = new ArrayList<>(keys.size());
     final List<Integer> missingIndices = new ArrayList<>();
     final List<byte[]> missingKeys = new ArrayList<>();
-
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      final NavigableMap<Bytes, Optional<byte[]>> segmentMap =
-          hashValueStore.computeIfAbsent(segment, s -> newSegmentMap());
-      for (int i = 0; i < keys.size(); i++) {
-        final byte[] key = keys.get(i);
-        final Optional<byte[]> localValue = segmentMap.get(Bytes.wrap(key));
-        if (localValue != null) {
-          results.add(localValue);
-        } else {
-          results.add(null);
-          missingIndices.add(i);
-          missingKeys.add(key);
-        }
+    for (int i = 0; i < keys.size(); i++) {
+      final byte[] key = keys.get(i);
+      final Optional<byte[]> found = getFromLayers(segment, Bytes.wrap(key));
+      if (found != null) {
+        results.add(found);
+      } else {
+        results.add(Optional.empty());
+        missingIndices.add(i);
+        missingKeys.add(key);
       }
-    } finally {
-      lock.unlock();
     }
 
     if (!missingKeys.isEmpty()) {
-      final List<Optional<byte[]>> parentResults = parent.multiget(segment, missingKeys);
+      final List<Optional<byte[]>> baseResults = baseStorage.multiget(segment, missingKeys);
       for (int j = 0; j < missingIndices.size(); j++) {
-        results.set(missingIndices.get(j), parentResults.get(j));
+        results.set(missingIndices.get(j), baseResults.get(j));
       }
     }
-
     return results;
   }
 
@@ -194,16 +184,31 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final Bytes key,
       final Function<SegmentedKeyValueStorage, Optional<Bytes>> cacheGetFunction) {
     throwIfClosed();
-    LayeredKeyValueStorage cur = this;
-    Optional<byte[]> found = cur.getLocal(segmentId, key);
-    while (found == null && cur.parent instanceof LayeredKeyValueStorage next) {
-      cur = next;
-      found = cur.getLocal(segmentId, key);
+    final Optional<byte[]> found = getFromLayers(segmentId, key);
+    if (found != null) {
+      return found.map(Bytes::wrap);
     }
-    if (found != null) return found.map(Bytes::wrap);
     return cacheGetFunction != null
-        ? cacheGetFunction.apply(cur.parent)
-        : cur.parent.get(segmentId, key.toArrayUnsafe()).map(Bytes::wrap);
+        ? cacheGetFunction.apply(baseStorage)
+        : baseStorage.get(segmentId, key.toArrayUnsafe()).map(Bytes::wrap);
+  }
+
+  /**
+   * Looks the key up in this layer and then each parent layer, stopping at the first layer that
+   * holds it.
+   *
+   * @return null if no layer holds the key; otherwise the value, empty if the key was deleted
+   */
+  @SuppressWarnings("NullableOptional")
+  private @Nullable Optional<byte[]> getFromLayers(
+      final SegmentIdentifier segmentId, final Bytes key) {
+    for (LayeredKeyValueStorage layer = this; layer != null; layer = layer.parentLayer) {
+      final Optional<byte[]> found = layer.getLocal(segmentId, key);
+      if (found != null) {
+        return found;
+      }
+    }
+    return null;
   }
 
   // null = not in this layer, empty = deleted in this layer (mirrors the layer map's get)
@@ -296,16 +301,14 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     throwIfClosed();
     // Merge all layers (top first) and the persistent parent in one pass rather than recursively.
     final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources = new ArrayList<>();
-    SegmentedKeyValueStorage cur = this;
-    while (cur instanceof LayeredKeyValueStorage layered) {
-      final NavigableMap<Bytes, Optional<byte[]>> segment = layered.hashValueStore.get(segmentId);
+    for (LayeredKeyValueStorage layer = this; layer != null; layer = layer.parentLayer) {
+      final NavigableMap<Bytes, Optional<byte[]>> segment = layer.hashValueStore.get(segmentId);
       if (segment != null) {
         sources.add(segment.entrySet().iterator());
       }
-      cur = layered.parent;
     }
     sources.add(
-        cur.stream(segmentId)
+        baseStorage.stream(segmentId)
             .map(pair -> Map.entry(Bytes.wrap(pair.getKey()), Optional.ofNullable(pair.getValue())))
             .iterator());
 
@@ -393,26 +396,24 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     throwIfClosed();
     // Collapse all layers into one key -> isPresent map; the highest layer with a key decides.
     final Map<Bytes, Boolean> layeredKeys = new HashMap<>();
-    SegmentedKeyValueStorage cur = this;
-    while (cur instanceof LayeredKeyValueStorage layered) {
-      final Lock lock = layered.rwLock.readLock();
+    for (LayeredKeyValueStorage layer = this; layer != null; layer = layer.parentLayer) {
+      final Lock lock = layer.rwLock.readLock();
       lock.lock();
       try {
-        final NavigableMap<Bytes, Optional<byte[]>> segment = layered.hashValueStore.get(segmentId);
+        final NavigableMap<Bytes, Optional<byte[]>> segment = layer.hashValueStore.get(segmentId);
         if (segment != null) {
           segment.forEach((key, value) -> layeredKeys.putIfAbsent(key, value.isPresent()));
         }
       } finally {
         lock.unlock();
       }
-      cur = layered.parent;
     }
 
     return Streams.concat(
         layeredKeys.entrySet().stream()
             .filter(Map.Entry::getValue)
             .map(entry -> entry.getKey().toArrayUnsafe()),
-        cur.streamKeys(segmentId).filter(key -> !layeredKeys.containsKey(Bytes.wrap(key))));
+        baseStorage.streamKeys(segmentId).filter(key -> !layeredKeys.containsKey(Bytes.wrap(key))));
   }
 
   @Override
@@ -464,14 +465,10 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
   @Override
   public boolean isClosed() {
-    if (closedCache) return true;
-    SegmentedKeyValueStorage cur = parent;
-    while (cur instanceof LayeredKeyValueStorage layered) {
-      if (layered.closedCache) return closedCache = true;
-      cur = layered.parent;
+    if (!closedCache && baseStorage.isClosed()) {
+      closedCache = true;
     }
-    if (cur.isClosed()) return closedCache = true;
-    return false;
+    return closedCache;
   }
 
   @Override
