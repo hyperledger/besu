@@ -18,10 +18,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -63,7 +66,7 @@ public class BonsaiArchiveWorldStateLayerStorage extends BonsaiWorldStateLayerSt
     return getFlatDbStrategy()
         .getFlatAccount(
             this::getWorldStateRootHash,
-            this::getAccountStateTrieNode,
+            this::getTrieNode,
             accountHash,
             getComposedWorldStateStorage());
   }
@@ -82,10 +85,16 @@ public class BonsaiArchiveWorldStateLayerStorage extends BonsaiWorldStateLayerSt
         .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
-            (location, hash) -> getAccountStorageTrieNode(accountHash, location, hash),
+            (location, hash) -> getTrieNode(TrieNodeKey.of(accountHash, location), hash),
             accountHash,
             storageSlotKey,
             getComposedWorldStateStorage());
+  }
+
+  @Override
+  public List<Optional<Bytes>> getMultipleFlat(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    return List.of();
   }
 
   @Override

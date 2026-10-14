@@ -15,10 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.calltrace;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Log;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.CallTracerResult.CallLog;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -32,6 +35,8 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -54,26 +59,34 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class CallTracer implements OperationTracer {
 
-  private static final String CALL = "CALL";
-  private static final String CALLCODE = "CALLCODE";
-  private static final String DELEGATECALL = "DELEGATECALL";
-  private static final String STATICCALL = "STATICCALL";
-  private static final String CREATE = "CREATE";
-  private static final String CREATE2 = "CREATE2";
-  private static final String SELFDESTRUCT = "SELFDESTRUCT";
+  // Frame type literals emitted in CallTracerResult.type; shared with FlatCallTracer.
+  static final String CALL = "CALL";
+  static final String CALLCODE = "CALLCODE";
+  static final String DELEGATECALL = "DELEGATECALL";
+  static final String STATICCALL = "STATICCALL";
+  static final String CREATE = "CREATE";
+  static final String CREATE2 = "CREATE2";
+  static final String SELFDESTRUCT = "SELFDESTRUCT";
 
   private static final String EXECUTION_REVERTED = "execution reverted";
   private static final String PRECOMPILE_FAILED = "precompile failed";
-  private static final String ZERO_VALUE = "0x0";
 
   private static final long GAS_CALL_STIPEND_DIVISOR = 64L;
 
   private final boolean onlyTopCall;
+  private final boolean withLog;
+  private final int logIndexOffset;
   private final Deque<Node> callStack = new ArrayDeque<>();
+  // Identity-keyed: TransactionProcessingResult.getLogs() holds the same Log instances the frames
+  // emitted, and equal logs from a reverted and a successful frame must not be confused.
+  private final IdentityHashMap<Log, CallLog> emittedLogs = new IdentityHashMap<>();
 
   private String rootType;
   private long rootGas;
   private CallTracerResult.Builder rootBuilder;
+  // Logs added to the initial frame after the root frame exits (EIP-7708 closure logs) follow
+  // this many logs; geth attributes them to the root frame.
+  private int rootLogsAtExit;
 
   // Captured in tracePreExecution for the CALL/CREATE/SELFDESTRUCT opcode about to run on the
   // *current* frame; consumed immediately afterwards by traceContextEnter (real entry),
@@ -85,11 +98,38 @@ public class CallTracer implements OperationTracer {
   /**
    * Instantiates a new Call tracer.
    *
+   * @param onlyTopCall whether to trace only the top-level call
+   */
+  public CallTracer(final boolean onlyTopCall) {
+    this(onlyTopCall, false, 0);
+  }
+
+  /**
+   * Instantiates a new Call tracer.
+   *
    * @param traceOptions the trace options containing the tracer configuration
    */
   public CallTracer(final TraceOptions traceOptions) {
-    this.onlyTopCall =
-        Boolean.TRUE.equals(traceOptions.tracerConfig().getOrDefault("onlyTopCall", false));
+    this(traceOptions, 0);
+  }
+
+  /**
+   * Instantiates a new Call tracer.
+   *
+   * @param traceOptions the trace options containing the tracer configuration
+   * @param logIndexOffset the number of logs the preceding transactions of the block emitted
+   */
+  public CallTracer(final TraceOptions traceOptions, final int logIndexOffset) {
+    this(
+        traceOptions.tracerConfigFlag("onlyTopCall"),
+        traceOptions.tracerConfigFlag("withLog"),
+        logIndexOffset);
+  }
+
+  private CallTracer(final boolean onlyTopCall, final boolean withLog, final int logIndexOffset) {
+    this.onlyTopCall = onlyTopCall;
+    this.withLog = withLog;
+    this.logIndexOffset = logIndexOffset;
   }
 
   @Override
@@ -97,10 +137,12 @@ public class CallTracer implements OperationTracer {
     this.rootType = transaction.isContractCreation() ? CREATE : CALL;
     this.rootGas = transaction.getGasLimit();
     this.rootBuilder = null;
+    this.rootLogsAtExit = 0;
     this.pendingBuilder = null;
     this.pendingInOffset = 0L;
     this.pendingInLength = 0L;
     this.callStack.clear();
+    this.emittedLogs.clear();
   }
 
   @Override
@@ -122,6 +164,9 @@ public class CallTracer implements OperationTracer {
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final Operation.OperationResult result) {
+    if (recordsLogsOf(frame)) {
+      recordNewLogs(callStack.peek(), frame);
+    }
     if (onlyTopCall) {
       return;
     }
@@ -224,14 +269,26 @@ public class CallTracer implements OperationTracer {
   }
 
   @Override
+  public void traceContextReEnter(final MessageFrame frame) {
+    if (recordsLogsOf(frame)) {
+      // The completed child's logs were just merged into this frame; they are not its own.
+      callStack.peek().logsSeen = frame.getLogs().size();
+    }
+  }
+
+  @Override
   public void traceContextExit(final MessageFrame frame) {
     if (onlyTopCall && frame.getDepth() != 0) {
       return;
     }
     final Node node = callStack.pop();
+    if (withLog) {
+      recordNewLogs(node, frame);
+    }
     finalizeNode(node, frame);
     if (callStack.isEmpty()) {
       rootBuilder = node.builder;
+      rootLogsAtExit = frame.getLogs().size();
     } else {
       callStack.peek().builder.addCall(node.builder.build());
     }
@@ -274,7 +331,48 @@ public class CallTracer implements OperationTracer {
     if (!result.isSuccessful()) {
       applyRootError(tx, result);
     }
-    return rootBuilder.build();
+    final List<Log> effectiveLogs = result.getLogs();
+    if (withLog) {
+      for (int i = rootLogsAtExit; i < effectiveLogs.size(); i++) {
+        final CallLog callLog = new CallLog(effectiveLogs.get(i), rootBuilder.callCount());
+        rootBuilder.addLog(callLog);
+        emittedLogs.put(effectiveLogs.get(i), callLog);
+      }
+    }
+    final CallTracerResult root = rootBuilder.build();
+    if (withLog) {
+      for (int i = 0; i < effectiveLogs.size(); i++) {
+        final CallLog callLog = emittedLogs.get(effectiveLogs.get(i));
+        if (callLog != null) {
+          callLog.setIndex(logIndexOffset + i);
+        }
+      }
+      dropRevertedLogs(root);
+    }
+    return root;
+  }
+
+  private boolean recordsLogsOf(final MessageFrame frame) {
+    return withLog && !callStack.isEmpty() && (!onlyTopCall || frame.getDepth() == 0);
+  }
+
+  private void recordNewLogs(final Node node, final MessageFrame frame) {
+    final List<Log> logs = frame.getLogs();
+    for (int i = node.logsSeen; i < logs.size(); i++) {
+      final CallLog callLog = new CallLog(logs.get(i), node.builder.callCount());
+      node.builder.addLog(callLog);
+      emittedLogs.put(logs.get(i), callLog);
+    }
+    node.logsSeen = logs.size();
+  }
+
+  private static void dropRevertedLogs(final CallTracerResult call) {
+    if (call.getLogs() != null) {
+      call.getLogs().removeIf(log -> log.getIndex() == null);
+    }
+    if (call.getCalls() != null) {
+      call.getCalls().forEach(CallTracer::dropRevertedLogs);
+    }
   }
 
   private void applyRootError(final Transaction tx, final TransactionProcessingResult result) {
@@ -287,11 +385,17 @@ public class CallTracer implements OperationTracer {
     if (tx.isContractCreation()) {
       rootBuilder.to(null);
       result.getRevertReason().ifPresent(rootBuilder::revertReason);
-    } else if (result.getExceptionalHaltReason().isEmpty()
-        && result.getRevertReason().isPresent()) {
-      rootBuilder.output(result.getRevertReason().get().toHexString());
-      JsonRpcErrorResponse.decodeRevertReason(result.getRevertReason().get())
-          .ifPresent(rootBuilder::revertReasonDecoded);
+    } else if (result.getExceptionalHaltReason().isEmpty()) {
+      // Geth omits "output" when the revert carries no return data.
+      result
+          .getRevertReason()
+          .filter(revertBytes -> !revertBytes.isEmpty())
+          .ifPresent(
+              revertBytes -> {
+                rootBuilder.output(revertBytes.toHexString());
+                JsonRpcErrorResponse.decodeRevertReason(revertBytes)
+                    .ifPresent(rootBuilder::revertReasonDecoded);
+              });
     }
   }
 
@@ -356,7 +460,7 @@ public class CallTracer implements OperationTracer {
       } else if (DELEGATECALL.equals(opcode)) {
         cb.value(frame.getApparentValue().toShortHexString());
       } else {
-        cb.value(ZERO_VALUE);
+        cb.value(Quantity.HEX_ZERO);
       }
       cb.input(frame.getInputData().toHexString());
     } else {
@@ -481,6 +585,7 @@ public class CallTracer implements OperationTracer {
     private final long entryGas;
     private final Address ownAddress;
     private boolean isPrecompile;
+    private int logsSeen;
 
     private Node(
         final CallTracerResult.Builder builder, final long entryGas, final Address ownAddress) {

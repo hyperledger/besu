@@ -1,0 +1,64 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code;
+
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public interface CodeStorageStrategy {
+
+  Optional<Code> getFlatCode(
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage);
+
+  /**
+   * The bytes of the code alone, for the readers that have no use for its analysis.
+   *
+   * @param codeHash the hash of the code
+   * @param accountHash the hash of the account holding the code
+   * @param storage the storage holding the code column family
+   * @return the bytes of the code, when it is stored
+   */
+  default Optional<Bytes> getFlatCodeBytes(
+      final Hash codeHash, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+    return getFlatCode(codeHash, accountHash, storage).map(Code::getBytes);
+  }
+
+  void putFlatCode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash,
+      final Bytes code);
+
+  void removeFlatCode(
+      final SegmentedKeyValueStorage storage,
+      final SegmentedKeyValueStorageTransaction transaction,
+      final Hash accountHash,
+      final Hash codeHash);
+
+  /**
+   * Records in an emptied code column family which strategy it belongs to, for the strategies whose
+   * values cannot be recognised by inspection.
+   *
+   * @param storage the storage holding the emptied code column family
+   */
+  default void markEmpty(final SegmentedKeyValueStorage storage) {}
+}

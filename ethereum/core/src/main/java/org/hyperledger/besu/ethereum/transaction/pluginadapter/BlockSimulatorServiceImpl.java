@@ -29,8 +29,8 @@ import org.hyperledger.besu.ethereum.transaction.BlockSimulator;
 import org.hyperledger.besu.ethereum.transaction.BlockStateCall;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.BlockOverrides;
@@ -146,13 +146,16 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
       final List<? extends Transaction> transactions,
       final BlockOverrides blockOverrides,
       final StateOverrideMap stateOverrides) {
-    return processSimulation(
-        blockNumber,
-        transactions,
-        blockOverrides,
-        stateOverrides,
-        true,
-        OperationTracer.NO_TRACING);
+    // the simulation executes on the head world state and persists it
+    return worldStateArchive.withHeadWorldStateLock(
+        () ->
+            processSimulation(
+                blockNumber,
+                transactions,
+                blockOverrides,
+                stateOverrides,
+                true,
+                OperationTracer.NO_TRACING));
   }
 
   private PluginBlockSimulationResult processSimulation(
@@ -172,7 +175,7 @@ public class BlockSimulatorServiceImpl implements BlockSimulationService {
           new BlockSimulationParameter.BlockSimulationParameterBuilder()
               .blockStateCalls(List.of(blockStateCall))
               .validation(true)
-              .enforceConsensusGasLimitCaps(true)
+              .enforceConsensusGasLimit(true)
               .fakeSignature(fakeSignature)
               .build();
 

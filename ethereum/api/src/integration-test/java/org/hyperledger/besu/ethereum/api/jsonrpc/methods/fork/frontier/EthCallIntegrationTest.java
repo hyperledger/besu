@@ -164,8 +164,8 @@ public class EthCallIntegrationTest {
             null,
             JsonRpcError.from(
                 ValidationResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-                    "transaction up-front cost 0x2fefd80000000000000 exceeds transaction sender account balance 0x340ab63a0215af0d for sender 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b")));
+                    TransactionInvalidReason.UPFRONT_GAS_COST_EXCEEDS_BALANCE,
+                    "transaction up-front gas cost 0x2fefd80000000000000 exceeds transaction sender account balance 0x340ab63a0215af0d for sender 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b")));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -209,8 +209,8 @@ public class EthCallIntegrationTest {
             null,
             JsonRpcError.from(
                 ValidationResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-                    "transaction up-front cost 0x2fefd80000000000000 exceeds transaction sender account balance 0x340ab63a0215af0d for sender 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b")));
+                    TransactionInvalidReason.UPFRONT_GAS_COST_EXCEEDS_BALANCE,
+                    "transaction up-front gas cost 0x2fefd80000000000000 exceeds transaction sender account balance 0x340ab63a0215af0d for sender 0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b")));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -253,8 +253,8 @@ public class EthCallIntegrationTest {
             null,
             JsonRpcError.from(
                 ValidationResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
-                    "transaction up-front cost 0x2fefd80 exceeds transaction sender account balance 0x0 for sender 0xdeadbeef00000000000000000000000000000000")));
+                    TransactionInvalidReason.UPFRONT_GAS_COST_EXCEEDS_BALANCE,
+                    "transaction up-front gas cost 0x2fefd80 exceeds transaction sender account balance 0x0 for sender 0xdeadbeef00000000000000000000000000000000")));
 
     final JsonRpcResponse response = method.response(request);
 
@@ -301,7 +301,7 @@ public class EthCallIntegrationTest {
   }
 
   @Test
-  public void shouldReturnSuccessWithInvalidGasPricingAndEmptyBalance() {
+  public void shouldRejectDynamicFeesBeforeLondon() {
     final CallParameter callParameter =
         ImmutableCallParameter.builder()
             .sender(Address.fromHexString("0xdeadbeef00000000000000000000000000000000"))
@@ -310,10 +310,16 @@ public class EthCallIntegrationTest {
             .input(Bytes.fromHexString("0x12a7b914"))
             .build();
 
+    // dynamic fees make an EIP-1559 call, which no block before London can include. It carries a
+    // chain ID, so on this chain, which predates EIP-155, the chain ID check rejects it first.
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
-        new JsonRpcSuccessResponse(
-            null, "0x0000000000000000000000000000000000000000000000000000000000000001");
+        new JsonRpcErrorResponse(
+            null,
+            JsonRpcError.from(
+                ValidationResult.invalid(
+                    TransactionInvalidReason.REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED,
+                    "replay protected signatures is not supported")));
 
     final JsonRpcResponse response = method.response(request);
 

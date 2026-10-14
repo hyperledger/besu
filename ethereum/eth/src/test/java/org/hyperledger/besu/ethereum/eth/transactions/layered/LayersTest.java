@@ -61,8 +61,8 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
@@ -1214,7 +1214,32 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSparseForSender(S3, 0)
                 .addForSender(SP1, 0, 1, 2)
                 .expectedSparseForSender(SP1, 0, 1, 2)
-                .expectedDroppedForSender(S3, 0)));
+                .expectedDroppedForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("promote priority sender from sparse leaving a nonce gap")
+                .addForSender(SP2, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP2, 3, 4, 5)
+                .addForSender(SP1, 0, 2)
+                .expectedSparseForSender(SP1, 0, 2)
+                .confirmedForSenders(SP2, 0)
+                .expectedPrioritizedForSender(SP2, 1, 2, 3)
+                .expectedReadyForSenders(SP2, 4, SP2, 5, SP1, 0)
+                .expectedSparseForSender(SP1, 2)
+                .expectedNextNonceForSenders(SP1, 1)),
+        Arguments.of(
+            new Scenario(
+                    "promote sequential txs of priority sender from sparse leaving a nonce gap")
+                .addForSender(SP2, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(SP2, 0, 1, 2)
+                .expectedReadyForSender(SP2, 3, 4, 5)
+                .addForSender(SP1, 0, 1, 3)
+                .expectedSparseForSender(SP1, 0, 1, 3)
+                .confirmedForSenders(SP2, 1)
+                .expectedPrioritizedForSender(SP2, 2, 3, 4)
+                .expectedReadyForSenders(SP2, 5, SP1, 0, SP1, 1)
+                .expectedSparseForSender(SP1, 3)
+                .expectedNextNonceForSenders(SP1, 2)));
   }
 
   static Stream<Arguments> providerMaxPrioritizedByType() {

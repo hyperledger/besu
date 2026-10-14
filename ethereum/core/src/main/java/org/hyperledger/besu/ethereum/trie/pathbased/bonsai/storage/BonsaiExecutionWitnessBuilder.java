@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
-import static org.hyperledger.besu.ethereum.trie.pathbased.common.provider.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndNoUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -22,13 +22,13 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.PathBasedWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.NoOpBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.cache.NoOpBonsaiWorldStateCacheManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.code.PathBasedCodeCache;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.provider.PathBasedWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -132,11 +132,11 @@ public class BonsaiExecutionWitnessBuilder {
     final BonsaiWorldStateWitnessStorage witnessStorage =
         new BonsaiWorldStateWitnessStorage(
             new NoOpMetricsSystem(), worldView.getWorldStateStorage());
-    final PathBasedCodeCache codeCache = new PathBasedCodeCache();
+    final BonsaiCodeCache codeCache = new BonsaiCodeCache();
     try (final BonsaiWorldState witnessWorldState =
         new BonsaiWorldState(
             witnessStorage,
-            new NoOpBonsaiCachedMerkleTrieLoader(),
+            NoOpBonsaiCachedMerkleTrieLoader.INSTANCE,
             new NoOpBonsaiWorldStateCacheManager(
                 witnessStorage, EvmConfiguration.DEFAULT, codeCache),
             new NoOpTrieLogManager(),
@@ -188,7 +188,7 @@ public class BonsaiExecutionWitnessBuilder {
       if (account != null && !account.getCodeHash().equals(Hash.EMPTY)) {
         worldView
             .getCode(address, account.getCodeHash())
-            .ifPresent(bytes -> resultSet.add(bytes.toHexString()));
+            .ifPresent(code -> resultSet.add(code.getBytes().toHexString()));
       }
     }
     return resultSet.stream().sorted().toList();

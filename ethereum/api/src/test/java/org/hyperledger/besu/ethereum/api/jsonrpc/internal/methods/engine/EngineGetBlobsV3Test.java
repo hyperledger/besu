@@ -198,11 +198,12 @@ public class EngineGetBlobsV3Test extends AbstractScheduledApiTest {
   }
 
   @Test
-  void shouldFailWhenOsakaNotActive() {
+  void shouldReturnNullWhenOsakaNotActive() {
     when(blockHeader.getTimestamp()).thenReturn(osakaHardfork.milestone() - 1);
-    var response = method.syncResponse(buildRequestContext());
-    assertThat(fromErrorResp(response).getCode())
-        .isEqualTo(RpcErrorType.UNSUPPORTED_FORK.getCode());
+    BlobProofBundle bundle = createBundleWithBlobType(KZG_CELL_PROOFS);
+    JsonRpcSuccessResponse response =
+        getSuccessResponse(buildRequestContext(bundle.getVersionedHash()));
+    assertThat(response.getResult()).isNull();
   }
 
   @Test
@@ -261,7 +262,8 @@ public class EngineGetBlobsV3Test extends AbstractScheduledApiTest {
     List<BlobAndProofV2> result = (List<BlobAndProofV2>) response.getResult();
     assertThat(result).hasSize(1);
     assertThat(result.getFirst()).isNotNull();
-    assertThat(result.getFirst().getBlob().getData()).isEqualTo(expected.getBlob().getData());
+    assertThat(result.getFirst().getBlob().getData())
+        .isEqualTo(expected.getBlob().orElseThrow().getData());
     assertThat(result.getFirst().getProofs()).hasSize(expected.getKzgProof().size());
   }
 }

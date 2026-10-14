@@ -16,13 +16,14 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.PathBasedSnapshotWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.common.storage.StorageSubscriber;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SnappableKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -32,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKeyValueStorage
-    implements PathBasedSnapshotWorldStateKeyValueStorage, StorageSubscriber {
+    implements StorageSubscriber {
 
   protected final BonsaiWorldStateKeyValueStorage parentWorldStateStorage;
   private static final Logger LOG =
@@ -90,13 +91,18 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
+  public Optional<Code> getCode(final Hash codeHash, final Hash accountHash) {
     return isClosedGet() ? Optional.empty() : super.getCode(codeHash, accountHash);
   }
 
   @Override
-  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
-    return isClosedGet() ? Optional.empty() : super.getAccountStateTrieNode(location, nodeHash);
+  public Optional<Bytes> getCodeBytes(final Hash codeHash, final Hash accountHash) {
+    return isClosedGet() ? Optional.empty() : super.getCodeBytes(codeHash, accountHash);
+  }
+
+  @Override
+  public Optional<Bytes> getTrieNode(final Bytes key, final Bytes32 nodeHash) {
+    return isClosedGet() ? Optional.empty() : super.getTrieNode(key, nodeHash);
   }
 
   @Override
@@ -105,21 +111,8 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
-    return isClosedGet()
-        ? Optional.empty()
-        : super.getAccountStorageTrieNode(accountHash, location, nodeHash);
-  }
-
-  @Override
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
     return isClosedGet() ? Optional.empty() : super.getTrieLog(blockHash);
-  }
-
-  @Override
-  public Optional<Bytes> getStateTrieNode(final Bytes location) {
-    return isClosedGet() ? Optional.empty() : super.getStateTrieNode(location);
   }
 
   @Override
@@ -153,6 +146,15 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     return isClosedGet()
         ? Optional.empty()
         : super.getStorageValueByStorageSlotKey(storageRootSupplier, accountHash, storageSlotKey);
+  }
+
+  @Override
+  public List<Optional<Bytes>> getMultipleFlat(
+      final SegmentIdentifier segmentIdentifier, final List<byte[]> keys) {
+    if (isClosedGet()) {
+      return List.of();
+    }
+    return super.getMultipleFlat(segmentIdentifier, keys);
   }
 
   @Override
@@ -237,7 +239,6 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
     }
   }
 
-  @Override
   public BonsaiWorldStateKeyValueStorage getParentWorldStateStorage() {
     return parentWorldStateStorage;
   }
