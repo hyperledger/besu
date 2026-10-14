@@ -112,32 +112,39 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   }
 
   @Override
-  public BlockProcessingResult processBlock(final BlockExecutionContext context) {
+  public final BlockProcessingResult processBlock(final BlockExecutionContext context) {
     final BlockProcessingResult blockProcessingResult = super.processBlock(context);
-    // If the block processing failed and sequential execution was not requested, rerun the block
-    // with sequential execution requested.
-    if (blockProcessingResult.isFailed() && !context.isSequentialExecutionRequested()) {
-      final Block block = context.getBlock();
-      LOG.info(
-          "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
-          block.getHeader().getNumber(),
-          block.getHash());
-      final MutableWorldState worldState = context.getWorldState();
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
-      }
-      return processBlockSequentially(context, blockProcessingResult);
+    // Return the result as-is if the block succeeded or this processor does not rerun failed
+    // blocks.
+    if (!blockProcessingResult.isFailed() || !shouldRerunSequentially()) {
+      return blockProcessingResult;
     }
-    return blockProcessingResult;
+    // The block already ran sequentially, so there is no parallel attempt to fall back from.
+    if (context.isSequentialExecutionRequested()) {
+      return blockProcessingResult;
+    }
+    final Block block = context.getBlock();
+    LOG.info(
+        "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
+        block.getHeader().getNumber(),
+        block.getHash());
+    final MutableWorldState worldState = context.getWorldState();
+    if (worldState instanceof BonsaiWorldState) {
+      ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+    }
+    return processBlockSequentially(context);
+  }
+
+  /** Returns whether a block whose parallel processing failed is rerun sequentially. */
+  protected boolean shouldRerunSequentially() {
+    return true;
   }
 
   /**
    * Reruns the block on this processor with sequential execution requested, after the parallel
-   * attempt failed with {@code parallelResult} and the world state was reset.
+   * attempt failed and the world state was reset.
    */
-  @SuppressWarnings("unused") // parallelResult is used by subclasses
-  protected BlockProcessingResult processBlockSequentially(
-      final BlockExecutionContext context, final BlockProcessingResult parallelResult) {
+  protected BlockProcessingResult processBlockSequentially(final BlockExecutionContext context) {
     return super.processBlock(context.toBuilder().sequentialExecutionRequested(true).build());
   }
 

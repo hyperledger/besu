@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
-import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -45,8 +43,7 @@ public class NoFallbackParallelBlockProcessor extends MainnetParallelBlockProces
   }
 
   @Override
-  protected BlockProcessingResult processBlockSequentially(
-      final BlockExecutionContext context, final BlockProcessingResult parallelResult) {
-    return parallelResult;
+  protected boolean shouldRerunSequentially() {
+    return false;
   }
 }

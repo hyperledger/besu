@@ -51,6 +51,7 @@ import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -126,14 +127,22 @@ class DaoRecoveryBlockParallelProcessingTest {
     final ExecutionContextTestFixture ctx = fixture(genesis, false);
     final ProtocolSpec spec = ctx.getProtocolSchedule().getByBlockHeader(blockOneHeader(ctx));
     final FailingInParallel parallel = new FailingInParallel(spec, ctx.getProtocolSchedule());
-    final BlockProcessor daoOverParallel = new MainnetProtocolSpecs.DaoBlockProcessor(parallel);
+    // Records the world state the parallel processor receives, after the DAO transfers.
+    final AtomicReference<Wei> refundBalanceAtParallelAttempt = new AtomicReference<>();
+    final BlockProcessor recordingParallel =
+        context -> {
+          refundBalanceAtParallelAttempt.set(balance(context.getWorldState(), DAO_REFUND_CONTRACT));
+          return parallel.processBlock(context);
+        };
+    final BlockProcessor daoOverParallel =
+        new MainnetProtocolSpecs.DaoBlockProcessor(recordingParallel);
 
     final BlockProcessingResult result =
         processBlockOne(
             ctx, ctx.getStateArchive().getWorldState(), expectedStateRoot, daoOverParallel);
 
     // The DAO transfers were applied before the parallel attempt...
-    assertThat(parallel.refundBalanceAtParallelAttempt).isEqualTo(Wei.fromEth(3));
+    assertThat(refundBalanceAtParallelAttempt.get()).isEqualTo(Wei.fromEth(3));
     // ...and gone when the fallback reran the block: the reset dropped them.
     assertThat(parallel.refundBalanceAtRerun).isEqualTo(Wei.ZERO);
     assertThat(parallel.daoAccountBalanceAtRerun).isEqualTo(Wei.fromEth(1));
@@ -284,22 +293,14 @@ class DaoRecoveryBlockParallelProcessingTest {
           Runnable::run);
     }
 
-    private Wei refundBalanceAtParallelAttempt;
     private Wei refundBalanceAtRerun;
     private Wei daoAccountBalanceAtRerun;
 
     @Override
-    public BlockProcessingResult processBlock(final BlockExecutionContext context) {
-      refundBalanceAtParallelAttempt = balance(context.getWorldState(), DAO_REFUND_CONTRACT);
-      return super.processBlock(context);
-    }
-
-    @Override
-    protected BlockProcessingResult processBlockSequentially(
-        final BlockExecutionContext context, final BlockProcessingResult parallelResult) {
+    protected BlockProcessingResult processBlockSequentially(final BlockExecutionContext context) {
       refundBalanceAtRerun = balance(context.getWorldState(), DAO_REFUND_CONTRACT);
       daoAccountBalanceAtRerun = balance(context.getWorldState(), DAO_ACCOUNT_1);
-      return super.processBlockSequentially(context, parallelResult);
+      return super.processBlockSequentially(context);
     }
 
     @Override

@@ -392,6 +392,8 @@ class AbstractBlockProcessorIntegrationTest {
                 .build());
 
     assertThat(result.isFailed()).isTrue();
+    // Only the first attempt runs in parallel, so the rerun was sequential.
+    assertThat(blockProcessor.parallelAttempts).isEqualTo(1);
     assertThat(blockProcessor.sequentialReruns).isEqualTo(1);
   }
 
@@ -493,10 +495,9 @@ class AbstractBlockProcessorIntegrationTest {
     private int sequentialReruns;
 
     @Override
-    protected BlockProcessingResult processBlockSequentially(
-        final BlockExecutionContext context, final BlockProcessingResult parallelResult) {
+    protected BlockProcessingResult processBlockSequentially(final BlockExecutionContext context) {
       sequentialReruns++;
-      return super.processBlockSequentially(context, parallelResult);
+      return super.processBlockSequentially(context);
     }
 
     @Override
