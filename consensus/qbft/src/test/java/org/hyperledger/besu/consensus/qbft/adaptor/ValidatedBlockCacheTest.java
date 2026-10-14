@@ -16,9 +16,11 @@ package org.hyperledger.besu.consensus.qbft.adaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -70,6 +72,19 @@ class ValidatedBlockCacheTest {
 
     assertThat(cache.isOwnedByConsensus(block.getHash())).isFalse();
     assertThat(cache.isOwnedByConsensus(nextBlock.getHash())).isTrue();
+  }
+
+  @Test
+  void tellsReleaseListenerAboutReleasedClaimsOnly() {
+    final List<Hash> released = new ArrayList<>();
+    cache.setReleaseListener(released::add);
+
+    cache.release(block.getHash());
+    cache.claim(block.getHash(), blockNumber);
+    cache.release(block.getHash());
+    cache.release(block.getHash());
+
+    assertThat(released).containsExactly(block.getHash());
   }
 
   private ValidatedBlockCache.ValidatedBlock validatedBlock() {

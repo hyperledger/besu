@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Outputs of blocks created or validated by this node, to not execute them again for validation or
@@ -71,8 +72,20 @@ public class ValidatedBlockCache {
    */
   private final Map<Hash, Long> claimed = new SizeLimitedMap<>(MAX_ENTRIES);
 
+  /** Told about released claims, so that block propagation imports a block consensus did not. */
+  private volatile Consumer<Hash> releaseListener = hash -> {};
+
   /** Creates an empty cache. */
   public ValidatedBlockCache() {}
+
+  /**
+   * Set the listener told about every released claim, outside of this cache's lock.
+   *
+   * @param releaseListener receives the hash of each released claim
+   */
+  public void setReleaseListener(final Consumer<Hash> releaseListener) {
+    this.releaseListener = releaseListener;
+  }
 
   /**
    * Record that the current QBFT round is validating this proposal, or has accepted it and will
@@ -93,8 +106,14 @@ public class ValidatedBlockCache {
    *
    * @param blockHash the proposal hash
    */
-  public synchronized void release(final Hash blockHash) {
-    claimed.remove(blockHash);
+  public void release(final Hash blockHash) {
+    final boolean released;
+    synchronized (this) {
+      released = claimed.remove(blockHash) != null;
+    }
+    if (released) {
+      releaseListener.accept(blockHash);
+    }
   }
 
   /**

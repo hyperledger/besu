@@ -137,7 +137,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
 
   /**
    * Shared by block creation, validation and import, and consulted by the synchronizer so that
-   * blocks this validator is already finalising are not imported again from NewBlock announcements.
+   * blocks the QBFT round claimed are not imported a second time from NewBlock announcements.
    */
   private final ValidatedBlockCache validatedBlockCache = new ValidatedBlockCache();
 
@@ -394,11 +394,10 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             ethProtocolManager,
             pivotBlockSelector,
             chainDataPruner);
-    // Peers that commit a block slightly before this validator announce it over the ETH layer.
-    // If the local QBFT round has already executed that block (or is executing it), importing the
-    // announcement would run the block a second time while holding the block importer lock and
-    // delay the round's own import. Leave such blocks to the consensus layer.
+    // leave blocks the QBFT round claimed to the round, and import them from the network if the
+    // round releases them without importing them
     synchronizer.setConsensusOwnedBlockPredicate(validatedBlockCache::isOwnedByConsensus);
+    validatedBlockCache.setReleaseListener(synchronizer::onConsensusOwnershipReleased);
     return synchronizer;
   }
 

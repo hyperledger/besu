@@ -60,12 +60,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -82,6 +84,10 @@ import org.slf4j.LoggerFactory;
 public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
   private static final long TIMEOUT = Duration.ofSeconds(60L).toMillis();
+
+  /** Longest time a block is left to consensus before importing it anyway. */
+  private static final Duration MAX_CONSENSUS_OWNERSHIP = Duration.ofSeconds(10);
+
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -98,12 +104,22 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   private Optional<Long> newBlockHashesSId;
 
   /**
-   * Blocks the consensus layer has already executed (or is executing) and will import itself. On a
-   * BFT validator, peers that commit a block slightly earlier announce it over the ETH layer before
-   * the local round reaches its own import step; importing that announcement here would re-execute
-   * the block under the importer lock and stall the consensus thread. Defaults to never.
+   * Blocks the consensus layer owns: it is executing them, or will import them itself. On a BFT
+   * validator, peers that commit a block slightly earlier announce it over the ETH layer before the
+   * local round reaches its own import step; importing that announcement here would execute the
+   * block a second time under the importer lock and stall the consensus thread. Such a block is
+   * still validated and relayed, but its import is left to consensus. Defaults to never.
+   *
+   * <p>Pending children of a block and full sync are not checked: a block a full block ahead means
+   * this node is catching up, and its proposal cannot be owned yet anyway.
    */
   private volatile Predicate<Hash> consensusOwnedBlock = hash -> false;
+
+  /**
+   * Validated blocks whose import was left to the consensus layer owning them. Imported from here
+   * if consensus releases them without importing them, see {@link #onConsensusOwnershipReleased}.
+   */
+  private final Map<Hash, Block> blocksLeftToConsensus = new ConcurrentHashMap<>();
 
   BlockPropagationManager(
       final SynchronizerConfiguration config,
@@ -149,13 +165,27 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   }
 
   /**
-   * Skip importing announced blocks that the consensus layer owns, see {@link
-   * #consensusOwnedBlock}.
+   * Leave the import of blocks the consensus layer owns to consensus, see {@link
+   * #consensusOwnedBlock}. The consensus layer must call {@link #onConsensusOwnershipReleased} when
+   * it releases a block.
    *
-   * @param consensusOwnedBlock true for a block hash the consensus layer will import itself
+   * @param consensusOwnedBlock true for a block hash the consensus layer owns
    */
   public void setConsensusOwnedBlockPredicate(final Predicate<Hash> consensusOwnedBlock) {
     this.consensusOwnedBlock = consensusOwnedBlock;
+  }
+
+  /**
+   * The consensus layer released a block it owned, imported or not. A block whose import was left
+   * to consensus is imported now, unless consensus already did.
+   *
+   * @param blockHash the released block hash
+   */
+  public void onConsensusOwnershipReleased(final Hash blockHash) {
+    final Block block = blocksLeftToConsensus.remove(blockHash);
+    if (block != null) {
+      ethContext.getScheduler().scheduleSyncWorkerTask(() -> importReleasedBlock(block));
+    }
   }
 
   public void start() {
@@ -357,13 +387,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
             .log();
         return;
       }
-      if (consensusOwnedBlock.test(block.getHash())) {
-        LOG.atDebug()
-            .setMessage("New block from network {} is being imported by consensus, skipping")
-            .addArgument(block::toLogString)
-            .log();
-        return;
-      }
       if (protocolContext.getBadBlockManager().isBadBlock(block.getHash())) {
         LOG.atDebug()
             .setMessage("Ignoring known-bad block {} from peer {}")
@@ -445,12 +468,6 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
         }
         if (blockchain.contains(announcedBlock.hash())) {
           LOG.trace("New block hash from network {} was already imported", announcedBlock);
-          continue;
-        }
-        if (consensusOwnedBlock.test(announcedBlock.hash())) {
-          LOG.debug(
-              "New block hash from network {} is being imported by consensus, skipping",
-              announcedBlock);
           continue;
         }
         if (protocolContext.getBadBlockManager().isBadBlock(announcedBlock.hash())) {
@@ -809,7 +826,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
     if (blockHeaderValidator.validateHeader(
         block.getHeader(), parent, protocolContext, validationMode)) {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
-      return runImportTask(block);
+      return importUnlessOwnedByConsensus(block);
     } else {
       processingBlocksManager.registerBlockImportDone(block.getHash());
       final String description = String.format("Failed header validation (%s)", validationMode);
@@ -818,6 +835,37 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           "Added to bad block manager for invalid header, failed to import announced block {}",
           block.toLogString());
       return CompletableFuture.completedFuture(block);
+    }
+  }
+
+  private CompletableFuture<Block> importUnlessOwnedByConsensus(final Block block) {
+    final Hash hash = block.getHash();
+    if (!consensusOwnedBlock.test(hash)) {
+      return runImportTask(block);
+    }
+    LOG.atTrace()
+        .setMessage("Leaving import of block {} to consensus, which owns it")
+        .addArgument(block::toLogString)
+        .log();
+    // stays registered as importing until released, so copies from other peers are ignored
+    blocksLeftToConsensus.put(hash, block);
+    if (consensusOwnedBlock.test(hash)) {
+      // import it anyway if consensus never releases it
+      ethContext
+          .getScheduler()
+          .scheduleFutureTask(() -> onConsensusOwnershipReleased(hash), MAX_CONSENSUS_OWNERSHIP);
+    } else {
+      // released before the block was registered above
+      onConsensusOwnershipReleased(hash);
+    }
+    return CompletableFuture.completedFuture(block);
+  }
+
+  private void importReleasedBlock(final Block block) {
+    if (protocolContext.getBlockchain().contains(block.getHash())) {
+      processingBlocksManager.registerBlockImportDone(block.getHash());
+    } else {
+      runImportTask(block);
     }
   }
 

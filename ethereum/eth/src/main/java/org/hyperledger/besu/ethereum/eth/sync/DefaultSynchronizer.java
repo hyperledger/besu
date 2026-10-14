@@ -179,15 +179,24 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   }
 
   /**
-   * Blocks announced by peers that the consensus layer has already executed and will import itself
-   * are not imported again from the network. See {@link
-   * BlockPropagationManager#setConsensusOwnedBlockPredicate(Predicate)}.
+   * Leave the import of blocks announced by peers to the consensus layer while it owns them. See
+   * {@link BlockPropagationManager#setConsensusOwnedBlockPredicate(Predicate)}.
    *
    * @param consensusOwnedBlock true for a block hash owned by the consensus layer
    */
   public void setConsensusOwnedBlockPredicate(final Predicate<Hash> consensusOwnedBlock) {
     blockPropagationManager.ifPresent(
         manager -> manager.setConsensusOwnedBlockPredicate(consensusOwnedBlock));
+  }
+
+  /**
+   * The consensus layer released a block it owned. See {@link
+   * BlockPropagationManager#onConsensusOwnershipReleased(Hash)}.
+   *
+   * @param blockHash the released block hash
+   */
+  public void onConsensusOwnershipReleased(final Hash blockHash) {
+    blockPropagationManager.ifPresent(manager -> manager.onConsensusOwnershipReleased(blockHash));
   }
 
   @Override
