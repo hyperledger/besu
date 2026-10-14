@@ -74,7 +74,7 @@ public abstract class PushOperationBenchmarkBase {
 
   @Setup
   public void setUp() {
-    frame = BenchmarkHelper.createMessageCallFrame();
+    frame = createFrame();
     code =
         new byte
             [switch (getCodeSize()) {
@@ -121,9 +121,27 @@ public abstract class PushOperationBenchmarkBase {
   public void executeOperation(final Blackhole blackhole) {
     blackhole.consume(invoke(frame, code, pcPool[index], pushSizePool[index]));
 
-    frame.popStackItem();
+    popResult(frame);
 
     index = (index + 1) % SAMPLE_SIZE;
+  }
+
+  /**
+   * Creates the frame the PUSH operations run on.
+   *
+   * @return the frame
+   */
+  protected MessageFrame createFrame() {
+    return BenchmarkHelper.createMessageCallFrame();
+  }
+
+  /**
+   * Removes the item a PUSH operation pushed.
+   *
+   * @param frame the frame
+   */
+  protected void popResult(final MessageFrame frame) {
+    frame.popStackItem();
   }
 
   protected abstract Operation.OperationResult invoke(

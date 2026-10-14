@@ -27,9 +27,6 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
  * and the fork's operation table has no instance of them.
  */
 public final class PushOperationV2 {
-  /** The constant PUSH_BASE. */
-  public static final int PUSH_BASE = 0x5F;
-
   /** The Push operation success result. */
   private static final OperationResult pushSuccess = new OperationResult(3, null);
 
