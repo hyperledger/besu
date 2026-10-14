@@ -30,11 +30,14 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -423,6 +426,77 @@ public class LayeredKeyValueStorageTest {
     verify(parentStorage, times(1)).isClosed();
   }
 
+  @Test
+  void streamAndStreamKeysApplyPrecedenceAcrossLayers() {
+    byte[] p = {0};
+    byte[] a = {1};
+    byte[] b = {2};
+    byte[] c = {3};
+    List<Pair<byte[], byte[]>> parentEntries =
+        List.of(
+            Pair.of(new byte[] {1}, p),
+            Pair.of(new byte[] {2}, p),
+            Pair.of(new byte[] {3}, p),
+            Pair.of(new byte[] {4}, p));
+    when(parentStorage.stream(segmentId)).thenAnswer(__ -> parentEntries.stream());
+    when(parentStorage.streamKeys(segmentId))
+        .thenAnswer(__ -> parentEntries.stream().map(Pair::getKey));
+
+    LayeredKeyValueStorage bottom =
+        layer(parentStorage, Map.of(2, Optional.of(a), 5, Optional.of(a), 6, Optional.of(a)));
+    LayeredKeyValueStorage middle = layer(bottom, Map.of(3, Optional.empty(), 5, Optional.of(b)));
+    LayeredKeyValueStorage top = layer(middle, Map.of(1, Optional.of(c), 6, Optional.empty()));
+
+    // 1: top overrides parent; 2: bottom overrides parent; 3: deleted in middle;
+    // 4: parent only; 5: middle overrides bottom; 6: deleted in top
+    assertEquals(
+        List.of(
+            Pair.of(Bytes.of(1), Bytes.wrap(c)),
+            Pair.of(Bytes.of(2), Bytes.wrap(a)),
+            Pair.of(Bytes.of(4), Bytes.wrap(p)),
+            Pair.of(Bytes.of(5), Bytes.wrap(b))),
+        top.stream(segmentId)
+            .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
+            .toList());
+    assertEquals(
+        List.of(Bytes.of(1), Bytes.of(2), Bytes.of(4), Bytes.of(5)),
+        top.streamKeys(segmentId).map(Bytes::wrap).sorted().toList());
+  }
+
+  @Test
+  void deepChainStreamReachesParentAtConstantStackDepth() {
+    byte[] key = {1};
+    AtomicInteger maxDepth = new AtomicInteger();
+    when(parentStorage.stream(segmentId))
+        .thenAnswer(
+            __ -> {
+              recordStackDepth(maxDepth);
+              return Stream.of(Pair.of(key, key)).peek(e -> recordStackDepth(maxDepth));
+            });
+
+    // A recursive implementation reaches the parent roughly one frame deeper per layer.
+    assertEquals(
+        parentStackDepth(1, maxDepth, top -> top.stream(segmentId).toList().size()),
+        parentStackDepth(500, maxDepth, top -> top.stream(segmentId).toList().size()));
+  }
+
+  @Test
+  void deepChainStreamKeysReachesParentAtConstantStackDepth() {
+    byte[] key = {1};
+    AtomicInteger maxDepth = new AtomicInteger();
+    when(parentStorage.streamKeys(segmentId))
+        .thenAnswer(
+            __ -> {
+              recordStackDepth(maxDepth);
+              return Stream.of(key).peek(e -> recordStackDepth(maxDepth));
+            });
+
+    // A recursive implementation reaches the parent roughly one frame deeper per layer.
+    assertEquals(
+        parentStackDepth(1, maxDepth, top -> top.streamKeys(segmentId).toList().size()),
+        parentStackDepth(500, maxDepth, top -> top.streamKeys(segmentId).toList().size()));
+  }
+
   /**
    * Tests that the stream method correctly handles a parent layer and a current layer where the
    * current layer overrides the parent layer.
@@ -457,5 +531,34 @@ public class LayeredKeyValueStorageTest {
     assertArrayEquals(value2, resultList.get(1).getValue());
     assertArrayEquals(key3, resultList.get(2).getKey());
     assertArrayEquals(value3, resultList.get(2).getValue());
+  }
+
+  private LayeredKeyValueStorage layer(
+      final SegmentedKeyValueStorage parent, final Map<Integer, Optional<byte[]>> entries) {
+    var map = createSegmentMap();
+    entries.forEach((key, value) -> map.get(segmentId).put(Bytes.of(key), value));
+    return new LayeredKeyValueStorage(map, parent);
+  }
+
+  /**
+   * Returns how much deeper than the caller the stack was when the parent storage was reached,
+   * either to open its stream or to pull its single element.
+   */
+  private int parentStackDepth(
+      final int depth,
+      final AtomicInteger maxDepth,
+      final ToIntFunction<LayeredKeyValueStorage> streamSize) {
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(parentStorage);
+    for (int i = 1; i < depth; i++) {
+      top = new LayeredKeyValueStorage(top);
+    }
+    maxDepth.set(0);
+    int callerDepth = Thread.currentThread().getStackTrace().length;
+    assertEquals(1, streamSize.applyAsInt(top));
+    return maxDepth.get() - callerDepth;
+  }
+
+  private static void recordStackDepth(final AtomicInteger maxDepth) {
+    maxDepth.accumulateAndGet(Thread.currentThread().getStackTrace().length, Math::max);
   }
 }

@@ -24,11 +24,15 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +42,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
@@ -215,69 +220,73 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public Stream<Pair<byte[], byte[]>> stream(final SegmentIdentifier segmentId) {
     throwIfClosed();
-    return streamUnchecked(segmentId);
-  }
-
-  private Stream<Pair<byte[], byte[]>> streamUnchecked(final SegmentIdentifier segmentId) {
-    var ourLayerState = hashValueStore.computeIfAbsent(segmentId, s -> newSegmentMap());
-
-    PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator =
-        new PeekingIterator<>(ourLayerState.entrySet().stream().iterator());
-    Stream<Pair<byte[], byte[]>> parentStream =
-        parent instanceof LayeredKeyValueStorage layered
-            ? layered.streamUnchecked(segmentId)
-            : parent.stream(segmentId);
-    PeekingIterator<Pair<byte[], byte[]>> parentIterator =
-        new PeekingIterator<>(parentStream.iterator());
+    // Merge all layers (top first) and the persistent parent in one pass rather than recursively.
+    final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources = new ArrayList<>();
+    SegmentedKeyValueStorage cur = this;
+    while (cur instanceof LayeredKeyValueStorage layered) {
+      final NavigableMap<Bytes, Optional<byte[]>> segment = layered.hashValueStore.get(segmentId);
+      if (segment != null) {
+        sources.add(segment.entrySet().iterator());
+      }
+      cur = layered.parent;
+    }
+    sources.add(
+        cur.stream(segmentId)
+            .map(pair -> Map.entry(Bytes.wrap(pair.getKey()), Optional.ofNullable(pair.getValue())))
+            .iterator());
 
     return StreamSupport.stream(
-            Spliterators.spliteratorUnknownSize(
-                new LayeredIterator(ourIterator, parentIterator), ORDERED | SORTED | DISTINCT),
-            false)
-        .filter(e -> e.getValue() != null);
+        Spliterators.spliteratorUnknownSize(
+            new LayeredMergeIterator(sources), ORDERED | SORTED | DISTINCT),
+        false);
   }
 
-  private static class LayeredIterator implements Iterator<Pair<byte[], byte[]>> {
-    private final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator;
-    private final PeekingIterator<Pair<byte[], byte[]>> parentIterator;
+  /** Merges sorted sources; higher layers win on duplicate keys and empty values are deletions. */
+  private static class LayeredMergeIterator extends AbstractIterator<Pair<byte[], byte[]>> {
 
-    LayeredIterator(
-        final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator,
-        final PeekingIterator<Pair<byte[], byte[]>> parentIterator) {
-      this.ourIterator = ourIterator;
-      this.parentIterator = parentIterator;
+    private static final class Source {
+      private final int rank;
+      private final Iterator<Map.Entry<Bytes, Optional<byte[]>>> iterator;
+      private Map.Entry<Bytes, Optional<byte[]>> head;
+
+      Source(final int rank, final Iterator<Map.Entry<Bytes, Optional<byte[]>>> iterator) {
+        this.rank = rank;
+        this.iterator = iterator;
+      }
+    }
+
+    private final PriorityQueue<Source> queue =
+        new PriorityQueue<>(
+            Comparator.comparing((Source s) -> s.head.getKey()).thenComparingInt(s -> s.rank));
+
+    LayeredMergeIterator(final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources) {
+      for (int i = 0; i < sources.size(); i++) {
+        advance(new Source(i, sources.get(i)));
+      }
+    }
+
+    private void advance(final Source source) {
+      if (source.iterator.hasNext()) {
+        source.head = source.iterator.next();
+        queue.add(source);
+      }
     }
 
     @Override
-    public boolean hasNext() {
-      return ourIterator.hasNext() || parentIterator.hasNext();
-    }
-
-    private Pair<byte[], byte[]> mapEntryToPair(final Map.Entry<Bytes, Optional<byte[]>> entry) {
-      byte[] value = entry.getValue().orElse(null);
-      return Pair.of(entry.getKey().toArrayUnsafe(), value);
-    }
-
-    @Override
-    public Pair<byte[], byte[]> next() {
-      var ourPeek = ourIterator.peek();
-      var parentPeek = parentIterator.peek();
-
-      if (ourPeek == null || parentPeek == null) {
-        return ourPeek == null ? parentIterator.next() : mapEntryToPair(ourIterator.next());
+    protected Pair<byte[], byte[]> computeNext() {
+      while (!queue.isEmpty()) {
+        final Source top = queue.poll();
+        final Map.Entry<Bytes, Optional<byte[]>> winner = top.head;
+        advance(top);
+        // drop the same key from lower-precedence sources
+        while (!queue.isEmpty() && queue.peek().head.getKey().compareTo(winner.getKey()) == 0) {
+          advance(queue.poll());
+        }
+        if (winner.getValue().isPresent()) {
+          return Pair.of(winner.getKey().toArrayUnsafe(), winner.getValue().get());
+        }
       }
-
-      // otherwise compare:
-      int comparison = ourPeek.getKey().compareTo(Bytes.wrap(parentPeek.getKey()));
-      if (comparison < 0) {
-        return mapEntryToPair(ourIterator.next());
-      } else if (comparison == 0) {
-        // skip dupe key from parent, return ours:
-        parentIterator.next();
-        return mapEntryToPair(ourIterator.next());
-      } else {
-        return parentIterator.next();
-      }
+      return endOfData();
     }
   }
 
@@ -301,35 +310,28 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public Stream<byte[]> streamKeys(final SegmentIdentifier segmentId) {
     throwIfClosed();
-    return streamKeysUnchecked(segmentId);
-  }
-
-  private Stream<byte[]> streamKeysUnchecked(final SegmentIdentifier segmentId) {
-    final Lock lock = rwLock.readLock();
-    lock.lock();
-    try {
-      // copy of our in memory store to use for streaming and filtering:
-      var ourLayerState =
-          Optional.ofNullable(hashValueStore.get(segmentId))
-              .map(HashMap::new)
-              .orElse(new HashMap<>());
-
-      Stream<byte[]> parentStream =
-          parent instanceof LayeredKeyValueStorage layered
-              ? layered.streamKeysUnchecked(segmentId)
-              : parent.streamKeys(segmentId);
-
-      return Streams.concat(
-          ourLayerState.entrySet().stream()
-              .filter(entry -> entry.getValue().isPresent())
-              .map(bytesEntry -> bytesEntry.getKey().toArrayUnsafe())
-          // since we are layered, concat a parent stream filtered by our map entries:
-          ,
-          parentStream.filter(e -> !ourLayerState.containsKey(Bytes.of(e))));
-
-    } finally {
-      lock.unlock();
+    // Collapse all layers into one key -> isPresent map; the highest layer with a key decides.
+    final Map<Bytes, Boolean> layeredKeys = new HashMap<>();
+    SegmentedKeyValueStorage cur = this;
+    while (cur instanceof LayeredKeyValueStorage layered) {
+      final Lock lock = layered.rwLock.readLock();
+      lock.lock();
+      try {
+        final NavigableMap<Bytes, Optional<byte[]>> segment = layered.hashValueStore.get(segmentId);
+        if (segment != null) {
+          segment.forEach((key, value) -> layeredKeys.putIfAbsent(key, value.isPresent()));
+        }
+      } finally {
+        lock.unlock();
+      }
+      cur = layered.parent;
     }
+
+    return Streams.concat(
+        layeredKeys.entrySet().stream()
+            .filter(Map.Entry::getValue)
+            .map(entry -> entry.getKey().toArrayUnsafe()),
+        cur.streamKeys(segmentId).filter(key -> !layeredKeys.containsKey(Bytes.wrap(key))));
   }
 
   @Override
@@ -400,32 +402,6 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     if (isClosed()) {
       LOG.error("Attempting to use a closed RocksDBKeyValueStorage");
       throw new StorageException("Storage has been closed");
-    }
-  }
-
-  private static class PeekingIterator<E> implements Iterator<E> {
-    private final Iterator<E> iterator;
-    private E next;
-
-    public PeekingIterator(final Iterator<E> iterator) {
-      this.iterator = iterator;
-      this.next = iterator.hasNext() ? iterator.next() : null;
-    }
-
-    public E peek() {
-      return next;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return next != null;
-    }
-
-    @Override
-    public E next() {
-      E oldNext = next;
-      next = iterator.hasNext() ? iterator.next() : null;
-      return oldNext;
     }
   }
 }
