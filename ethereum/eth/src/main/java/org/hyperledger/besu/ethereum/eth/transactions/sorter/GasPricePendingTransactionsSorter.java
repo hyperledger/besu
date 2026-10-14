@@ -49,8 +49,8 @@ public class GasPricePendingTransactionsSorter extends AbstractPendingTransactio
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final TransactionEventNotifier asyncNotifier) {
-    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier, asyncNotifier);
+      final TransactionEventNotifier eventNotifier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier, eventNotifier);
   }
 
   @Override

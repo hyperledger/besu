@@ -84,7 +84,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected long spaceUsed = 0;
   protected final int[] txCountByType = new int[TransactionType.values().length];
   private final BlobCache blobCache;
-  private final TransactionEventNotifier asyncNotifier;
+  private final TransactionEventNotifier eventNotifier;
 
   protected AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
@@ -93,7 +93,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
           transactionReplacementTester,
       final TransactionPoolMetrics metrics,
       final BlobCache blobCache,
-      final TransactionEventNotifier asyncNotifier) {
+      final TransactionEventNotifier eventNotifier) {
     this.poolConfig = poolConfig;
     this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
@@ -107,7 +107,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
                 metrics.initTransactionCountByType(
                     () -> txCountByType[type.ordinal()], name(), type));
     this.blobCache = blobCache;
-    this.asyncNotifier = asyncNotifier;
+    this.eventNotifier = eventNotifier;
   }
 
   protected abstract boolean gapsAllowed();
@@ -215,7 +215,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
       if (addReason.sendNotification()) {
         logAdded(addedPendingTransaction, gap, addReason, name());
-        asyncNotifier.notifyPendingTransactionAdded(addedPendingTransaction);
+        eventNotifier.notifyPendingTransactionAdded(addedPendingTransaction);
       }
 
     } else {
@@ -411,7 +411,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     decreaseCounters(replacedTx);
     metrics.incrementRemoved(replacedTx, REPLACED.label(), name());
     internalReplaced(replacedTx);
-    asyncNotifier.notifyPendingTransactionDropped(replacedTx, REPLACED);
+    eventNotifier.notifyPendingTransactionDropped(replacedTx, REPLACED);
   }
 
   protected abstract void internalReplaced(final PendingTransaction replacedTx);
@@ -449,7 +449,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       internalRemove(senderTxs, removedTx, removalReason);
       if (removalReason.removedFrom().equals(POOL)) {
         logRemoved(removedTx, removalReason, name());
-        asyncNotifier.notifyPendingTransactionDropped(removedTx, removalReason);
+        eventNotifier.notifyPendingTransactionDropped(removedTx, removalReason);
       } else {
         logMoved(removedTx, removalReason, name());
       }

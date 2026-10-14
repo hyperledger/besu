@@ -347,14 +347,33 @@ public class EthScheduler {
     private final Queue<ITEM> queue = new ConcurrentLinkedQueue<>();
     private final ReentrantLock lock = new ReentrantLock();
     private final Consumer<ITEM> processor;
+    private final AtomicBoolean disabled = new AtomicBoolean(false);
 
     private OrderedProcessor(final Consumer<ITEM> processor) {
       this.processor = processor;
     }
 
-    public void submit(final ITEM item) {
-      // add the item to the processing queue
-      queue.add(item);
+    /**
+     * Submits an item for processing. If the processor is disabled, the item will be ignored.
+     * Otherwise, the item is added to the processing queue. If no thread is already processing or
+     * waiting to process the queue, a new thread is scheduled to handle the queued items.
+     * Processing errors for individual items will be logged but will not halt the processing of
+     * subsequent items.
+     *
+     * @param item the item to be processed
+     * @return {@code true} if the item was successfully added to the processing queue, {@code
+     *     false} if the processor is disabled
+     */
+    public boolean submit(final ITEM item) {
+      final boolean added;
+      synchronized (disabled) {
+        if (disabled.get()) {
+          LOG.trace("Ordered processor is disabled, ignoring submitted item {}", item);
+          return false;
+        }
+        // add the item to the processing queue
+        added = queue.add(item);
+      }
 
       if (lock.hasQueuedThreads()) {
         // another thread is already waiting to process the queue with our item, there is no need to
@@ -367,19 +386,74 @@ public class EthScheduler {
               lock.lock();
               try {
                 // now that we have the lock, process as many items as possible
-                for (ITEM i = queue.poll(); i != null; i = queue.poll()) {
-                  try {
-                    processor.accept(i);
-                  } catch (final Exception e) {
-                    // a failing item must not prevent the following ones from being processed
-                    LOG.warn("Error processing ordered item", e);
-                  }
-                }
+                scheduleItemProcessing();
               } finally {
                 lock.unlock();
               }
             });
       }
+      return added;
+    }
+
+    private void scheduleItemProcessing() {
+      // now that we have the lock, process as many items as possible
+      for (ITEM i = queue.poll(); i != null; i = queue.poll()) {
+        try {
+          processor.accept(i);
+        } catch (final Throwable t) {
+          if (t instanceof VirtualMachineError) {
+            throw t;
+          }
+          // a failing item must not prevent the following ones from being processed
+          LOG.warn("Error processing ordered item {}", i, t);
+        }
+      }
+    }
+
+    /**
+     * Awaits for the processing to drain and be disabled completely within the specified timeout
+     * duration. This method clears the processing queue, waits for any in-progress processing to
+     * complete, and ensures that no new items are processed.
+     *
+     * @param timeout the maximum duration to wait for the processing to drain and be disabled
+     * @return {@code true} if the processing drained and was disabled completely within the timeout
+     *     duration, {@code false} if the timeout was reached or if the operation was interrupted
+     */
+    public boolean awaitDrainedAndDisabled(final Duration timeout) {
+      synchronized (disabled) {
+        disabled.set(true);
+        LOG.trace(
+            "Got disable signal, dropping remaining {} items still in the queue", queue.size());
+        queue.clear();
+      }
+      // now await for any in progress processing to complete before returning, or timeout.
+      try {
+        if (lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
+          lock.unlock();
+          LOG.trace("Ordered processor has been drained and disabled");
+          return true;
+        } else {
+          LOG.debug(
+              "Timeout, after {}, while waiting for ordered processor to completely disable",
+              timeout);
+        }
+      } catch (InterruptedException e) {
+        LOG.warn(
+            "Interrupted while waiting {} for ordered processor to completely disable", timeout, e);
+      }
+      return false;
+    }
+
+    /**
+     * Enables the processing operation that was previously disabled. Allows the processor to begin
+     * accepting and handling new items from the queue. If the processor was already active, this
+     * method has no effect.
+     */
+    public void enable() {
+      synchronized (disabled) {
+        disabled.set(false);
+      }
+      LOG.trace("Ordered processor enabled");
     }
   }
 }

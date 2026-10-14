@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.time.Duration;
+
 /**
  * Notifies the listeners of the transactions added to and dropped from the pending transactions.
  * Listeners are notified synchronously on the caller thread, unless subscribed with the async
@@ -24,9 +26,9 @@ import org.hyperledger.besu.util.Subscribers;
  */
 public class TransactionEventNotifier {
   private final Subscribers<PendingTransactionAddedListener> onAddedListeners =
-      Subscribers.create();
+      Subscribers.create(true);
   private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
-      Subscribers.create();
+      Subscribers.create(true);
   private final EthScheduler.OrderedProcessor<Runnable> orderedProcessor;
 
   public TransactionEventNotifier(final EthScheduler ethScheduler) {
@@ -118,5 +120,22 @@ public class TransactionEventNotifier {
    */
   public void unsubscribePendingTransactionDropped(final long id) {
     onDroppedListeners.unsubscribe(id);
+  }
+
+  /**
+   * Stop notifying async listeners, dropping the notifications not yet delivered, and wait for the
+   * one in progress, if any, to complete. Sync listeners are not affected.
+   *
+   * @param timeout the maximum time to wait for the notification in progress to complete
+   * @return {@code true} if no async notification is in progress, {@code false} if the timeout was
+   *     reached or the wait was interrupted
+   */
+  public boolean awaitDisabled(final Duration timeout) {
+    return orderedProcessor.awaitDrainedAndDisabled(timeout);
+  }
+
+  /** Start notifying async listeners again, after they were disabled. */
+  public void enable() {
+    orderedProcessor.enable();
   }
 }

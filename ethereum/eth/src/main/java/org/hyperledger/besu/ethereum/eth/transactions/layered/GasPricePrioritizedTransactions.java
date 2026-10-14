@@ -45,7 +45,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
       final BlobCache blobCache,
       final MiningConfiguration miningConfiguration,
       final SenderBalanceChecker senderBalanceChecker,
-      final TransactionEventNotifier asyncNotifier) {
+      final TransactionEventNotifier eventNotifier) {
     super(
         poolConfig,
         nextLayer,
@@ -53,7 +53,7 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
         transactionReplacementTester,
         blobCache,
         miningConfiguration,
-        asyncNotifier);
+        eventNotifier);
     this.senderBalanceChecker = senderBalanceChecker;
   }
 

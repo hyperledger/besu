@@ -54,8 +54,8 @@ public class BaseFeePendingTransactionsSorter extends AbstractPendingTransaction
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final TransactionEventNotifier asyncNotifier) {
-    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier, asyncNotifier);
+      final TransactionEventNotifier eventNotifier) {
+    super(poolConfig, clock, metricsSystem, chainHeadHeaderSupplier, eventNotifier);
     this.baseFee = chainHeadHeaderSupplier.get().getBaseFee();
   }
 

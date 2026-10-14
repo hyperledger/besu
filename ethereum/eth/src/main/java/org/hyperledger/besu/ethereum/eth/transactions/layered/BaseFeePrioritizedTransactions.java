@@ -53,7 +53,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       final BlobCache blobCache,
       final MiningConfiguration miningConfiguration,
       final SenderBalanceChecker senderBalanceChecker,
-      final TransactionEventNotifier asyncNotifier) {
+      final TransactionEventNotifier eventNotifier) {
     super(
         poolConfig,
         nextLayer,
@@ -61,7 +61,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         transactionReplacementTester,
         blobCache,
         miningConfiguration,
-        asyncNotifier);
+        eventNotifier);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
     this.senderBalanceChecker = senderBalanceChecker;

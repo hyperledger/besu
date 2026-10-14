@@ -39,14 +39,14 @@ import java.util.function.Predicate;
 public class EndLayer implements TransactionsLayer {
 
   private final TransactionPoolMetrics metrics;
-  private final TransactionEventNotifier asyncNotifier;
+  private final TransactionEventNotifier eventNotifier;
 
   private long droppedCount = 0;
 
   public EndLayer(
-      final TransactionPoolMetrics metrics, final TransactionEventNotifier asyncNotifier) {
+      final TransactionPoolMetrics metrics, final TransactionEventNotifier eventNotifier) {
     this.metrics = metrics;
-    this.asyncNotifier = asyncNotifier;
+    this.eventNotifier = eventNotifier;
   }
 
   @Override
@@ -83,7 +83,7 @@ public class EndLayer implements TransactionsLayer {
   public TransactionAddedResult add(
       final PendingTransaction pendingTransaction, final int gap, final AddReason reason) {
     logRemoved(pendingTransaction, DROPPED, name());
-    asyncNotifier.notifyPendingTransactionDropped(pendingTransaction, DROPPED);
+    eventNotifier.notifyPendingTransactionDropped(pendingTransaction, DROPPED);
     metrics.incrementRemoved(pendingTransaction, DROPPED.label(), name());
     ++droppedCount;
     return TransactionAddedResult.DROPPED;

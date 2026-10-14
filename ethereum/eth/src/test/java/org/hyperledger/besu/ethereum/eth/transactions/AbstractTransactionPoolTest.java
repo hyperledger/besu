@@ -575,6 +575,31 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   }
 
   @Test
+  public void asyncListenersDoNotReceiveEventsQueuedBeforeThePoolWasDisabled() {
+    final Transaction transactionBeforeDisable = createTransaction(0, Wei.of(50));
+    final Transaction transactionAfterReEnable = createTransaction(0, Wei.of(100));
+
+    givenTransactionIsValid(transactionBeforeDisable);
+    givenTransactionIsValid(transactionAfterReEnable);
+
+    transactionPool.subscribePendingTransactionsAsync(listener);
+
+    final MockExecutorService servicesExecutor =
+        ((DeterministicEthScheduler) ethScheduler).mockServiceExecutor();
+    servicesExecutor.setAutoRun(false);
+
+    addAndAssertRemoteTransactionsValid(transactionBeforeDisable);
+    transactionPool.setDisabled();
+    transactionPool.setEnabled();
+    addAndAssertRemoteTransactionsValid(transactionAfterReEnable);
+
+    servicesExecutor.runPendingFutures();
+
+    verify(listener).onTransactionAdded(transactionAfterReEnable);
+    verifyNoMoreInteractions(listener);
+  }
+
+  @Test
   public void unsubscribingAsyncListenersDoesNotUnsubscribeInternalListeners() {
     final Transaction transaction0a = createTransaction(0, Wei.of(50));
     final Transaction transaction0b = createTransaction(0, Wei.of(100));

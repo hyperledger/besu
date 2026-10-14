@@ -282,6 +282,58 @@ public class TransactionEventNotifierTest {
   }
 
   @Test
+  public void asyncListenersAreNotNotifiedWhileDisabled() {
+    deterministicEthScheduler.disableAutoRun();
+    final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var asyncAddedListener = mock(PendingTransactionAddedListener.class);
+    notifier.subscribePendingTransactionAdded(addedListener);
+    notifier.subscribePendingTransactionAddedAsync(asyncAddedListener);
+    final PendingTransaction pendingTx2 = createPendingTransaction(2);
+
+    // queued before disabling, then dropped
+    notifier.notifyPendingTransactionAdded(pendingTx0);
+    assertThat(notifier.awaitDisabled(Duration.ofSeconds(1))).isTrue();
+    // ignored while disabled
+    notifier.notifyPendingTransactionAdded(pendingTx1);
+    deterministicEthScheduler.runPendingFutures();
+    verifyNoInteractions(asyncAddedListener);
+
+    notifier.enable();
+    notifier.notifyPendingTransactionAdded(pendingTx2);
+    deterministicEthScheduler.runPendingFutures();
+    verify(asyncAddedListener).onTransactionAdded(pendingTx2.getTransaction());
+    verifyNoMoreInteractions(asyncAddedListener);
+
+    // sync listeners are not affected
+    final InOrder inOrder = inOrder(addedListener);
+    inOrder.verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
+    inOrder.verify(addedListener).onTransactionAdded(pendingTx1.getTransaction());
+    inOrder.verify(addedListener).onTransactionAdded(pendingTx2.getTransaction());
+    inOrder.verifyNoMoreInteractions();
+  }
+
+  @Test
+  public void failingSyncListenerDoesNotPreventOtherListenersAndDoesNotPropagate() {
+    final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    notifier.subscribePendingTransactionAdded(
+        tx -> {
+          throw new IllegalStateException("listener failure");
+        });
+    notifier.subscribePendingTransactionAdded(addedListener);
+    notifier.subscribePendingTransactionDropped(
+        (tx, reason) -> {
+          throw new IllegalStateException("listener failure");
+        });
+    notifier.subscribePendingTransactionDropped(droppedListener);
+
+    notifier.notifyPendingTransactionAdded(pendingTx0);
+    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+
+    verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
+    verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
+  }
+
+  @Test
   public void failingAsyncListenerDoesNotPreventOtherNotifications() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
     final List<Transaction> failingListenerCalls = new ArrayList<>();

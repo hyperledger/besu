@@ -366,6 +366,109 @@ public class EthSchedulerTest {
     assertThat(executedTasks).containsExactly(1, 2);
   }
 
+  @Test
+  public void disabledOrderedProcessorIgnoresSubmittedItemsUntilEnabled() {
+    final List<Integer> processedItems = new ArrayList<>();
+    final var orderedProcessor =
+        ethScheduler.createOrderedProcessor((Integer item) -> processedItems.add(item));
+
+    assertThat(orderedProcessor.awaitDrainedAndDisabled(Duration.ofSeconds(1))).isTrue();
+    assertThat(orderedProcessor.submit(1)).isFalse();
+    assertThat(processedItems).isEmpty();
+
+    orderedProcessor.enable();
+    assertThat(orderedProcessor.submit(2)).isTrue();
+    assertThat(processedItems).containsExactly(2);
+  }
+
+  @Test
+  public void awaitDrainedAndDisabledDropsQueuedItems() {
+    ethScheduler.disableAutoRun();
+    final List<Integer> processedItems = new ArrayList<>();
+    final var orderedProcessor =
+        ethScheduler.createOrderedProcessor((Integer item) -> processedItems.add(item));
+
+    orderedProcessor.submit(1);
+    orderedProcessor.submit(2);
+    assertThat(orderedProcessor.awaitDrainedAndDisabled(Duration.ofSeconds(1))).isTrue();
+
+    ethScheduler.runPendingFutures();
+    assertThat(processedItems).isEmpty();
+  }
+
+  @Test
+  public void awaitDrainedAndDisabledWaitsForTheItemInProgress() throws InterruptedException {
+    final EthScheduler realEthScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    try {
+      final List<Integer> processedItems = new CopyOnWriteArrayList<>();
+      final CountDownLatch firstItemStarted = new CountDownLatch(1);
+      final CountDownLatch releaseFirstItem = new CountDownLatch(1);
+      final var orderedProcessor =
+          realEthScheduler.createOrderedProcessor(
+              (Integer item) -> {
+                if (item == 0) {
+                  firstItemStarted.countDown();
+                  await(releaseFirstItem);
+                }
+                processedItems.add(item);
+              });
+
+      orderedProcessor.submit(0);
+      firstItemStarted.await();
+      orderedProcessor.submit(1);
+      orderedProcessor.submit(2);
+
+      final Thread releaser =
+          new Thread(
+              () -> {
+                sleep(100);
+                releaseFirstItem.countDown();
+              });
+      releaser.start();
+
+      // the item in progress completes, while the queued ones are dropped
+      assertThat(orderedProcessor.awaitDrainedAndDisabled(Duration.ofSeconds(30))).isTrue();
+      assertThat(processedItems).containsExactly(0);
+      releaser.join();
+    } finally {
+      realEthScheduler.stop();
+      realEthScheduler.awaitStop();
+    }
+  }
+
+  @Test
+  public void awaitDrainedAndDisabledReturnsFalseIfTheItemInProgressDoesNotCompleteInTime()
+      throws InterruptedException {
+    final EthScheduler realEthScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final CountDownLatch releaseFirstItem = new CountDownLatch(1);
+    try {
+      final CountDownLatch firstItemStarted = new CountDownLatch(1);
+      final var orderedProcessor =
+          realEthScheduler.createOrderedProcessor(
+              (Integer item) -> {
+                firstItemStarted.countDown();
+                await(releaseFirstItem);
+              });
+
+      orderedProcessor.submit(0);
+      firstItemStarted.await();
+
+      assertThat(orderedProcessor.awaitDrainedAndDisabled(Duration.ofMillis(100))).isFalse();
+    } finally {
+      releaseFirstItem.countDown();
+      realEthScheduler.stop();
+      realEthScheduler.awaitStop();
+    }
+  }
+
+  private static void await(final CountDownLatch latch) {
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static void sleep(final long millis) {
     try {
       Thread.sleep(millis);

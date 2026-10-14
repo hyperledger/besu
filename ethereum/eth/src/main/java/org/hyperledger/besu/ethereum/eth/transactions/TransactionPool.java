@@ -735,6 +735,7 @@ public class TransactionPool implements BlockAddedObserver {
   public CompletableFuture<Void> setEnabled() {
     if (!isEnabled()) {
       logStart(configuration, getChainHeadBlockHeader());
+      eventNotifier.enable();
       pendingTransactions = pendingTransactionsSupplier.get();
       isPoolEnabled.set(true);
       subscribeConnectId =
@@ -770,6 +771,13 @@ public class TransactionPool implements BlockAddedObserver {
     if (isEnabled()) {
       isPoolEnabled.set(false);
       subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
+      final Duration disableNotifierTimeout = Duration.ofSeconds(1);
+      if (!eventNotifier.awaitDisabled(disableNotifierTimeout)) {
+        LOG.warn(
+            "Async transaction listeners still processing a notification after {}, "
+                + "if you are running any plugin, verify that it is not processing transaction notifications too slowly",
+            disableNotifierTimeout);
+      }
       mapOfBlobsInTransactionPool.clear();
       final CompletableFuture<Void> saveOperation =
           saveRestoreManager

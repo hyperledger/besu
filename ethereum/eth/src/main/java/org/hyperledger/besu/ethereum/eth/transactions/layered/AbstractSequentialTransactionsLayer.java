@@ -42,8 +42,8 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
           transactionReplacementTester,
       final TransactionPoolMetrics metrics,
       final BlobCache blobCache,
-      final TransactionEventNotifier asyncNotifier) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache, asyncNotifier);
+      final TransactionEventNotifier eventNotifier) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache, eventNotifier);
   }
 
   @Override
