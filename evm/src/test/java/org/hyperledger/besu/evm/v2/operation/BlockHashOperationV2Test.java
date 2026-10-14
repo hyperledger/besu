@@ -27,6 +27,8 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
@@ -97,6 +99,29 @@ class BlockHashOperationV2Test {
     operation.execute(frame, null);
 
     assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ZERO);
+  }
+
+  @Test
+  void shouldPushZeroWhenArgumentHasHighBitOfLowLimbSet() {
+    // These fit in the low limb but are negative as a signed long. 0xff..ff reads as -1, which
+    // passes both window checks when the current block is below the lookback, so without the
+    // soughtBlock >= 0 guard the lookup would be queried for block -1.
+    for (final String block :
+        List.of("0x8000000000000000", "0xffffffffffffffff", "0x8000000000000001")) {
+      final MessageFrame frame =
+          createFrame(
+              Bytes32.fromHexString(block),
+              10,
+              (__, ___) -> {
+                throw new AssertionError("lookup must not be called for block " + block);
+              },
+              ENOUGH_GAS);
+
+      final OperationResult result = operation.execute(frame, null);
+
+      assertThat(result.getHaltReason()).isNull();
+      assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ZERO);
+    }
   }
 
   @Test

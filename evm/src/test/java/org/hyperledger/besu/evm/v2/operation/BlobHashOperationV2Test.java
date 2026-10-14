@@ -88,6 +88,23 @@ class BlobHashOperationV2Test {
   }
 
   @Test
+  void shouldPushZeroWhenIndexHasHighBitOfLowLimbSet() {
+    // 2^63 and 2^64-1 both fit in the low limb but are negative when read as a signed long.
+    // Without the index >= 0 guard these would pass the `index < size` bounds check and the
+    // narrowing cast would index the list with a negative or truncated value.
+    for (final String index :
+        List.of("0x8000000000000000", "0xffffffffffffffff", "0x8000000000000001")) {
+      final MessageFrame frame =
+          createFrame(Bytes32.fromHexString(index), Optional.of(List.of(VERSIONED_HASH)));
+
+      final OperationResult result = operation.execute(frame, null);
+
+      assertThat(result.getHaltReason()).isNull();
+      assertThat(getV2StackItem(frame, 0)).isEqualTo(UInt256.ZERO);
+    }
+  }
+
+  @Test
   void shouldHaltOnInsufficientGasWithoutChangingStack() {
     final MessageFrame frame =
         new TestMessageFrameBuilderV2()

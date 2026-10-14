@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushHash;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushBytes32;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.util.List;
+
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Blob hash operation. */
 public class BlobHashOperationV2 extends AbstractFixedCostOperationV2 {
@@ -51,7 +53,7 @@ public class BlobHashOperationV2 extends AbstractFixedCostOperationV2 {
         && index >= 0
         && versionedHashes != null
         && index < versionedHashes.size()) {
-      pushHash(versionedHashes.get((int) index), stack, top - 1);
+      pushBytes32(Bytes32.wrap(versionedHashes.get((int) index).getBytes()), stack, top - 1);
     } else {
       pushZero(stack, top - 1);
     }
