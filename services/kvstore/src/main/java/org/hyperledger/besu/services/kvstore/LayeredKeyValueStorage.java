@@ -17,6 +17,7 @@ package org.hyperledger.besu.services.kvstore;
 import static java.util.Spliterator.DISTINCT;
 import static java.util.Spliterator.ORDERED;
 import static java.util.Spliterator.SORTED;
+import static org.hyperledger.besu.services.kvstore.KeyComparator.UNSIGNED_KEY_ORDER;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -25,7 +26,6 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import org.hyperledger.besu.plugin.services.storage.SnappedKeyValueStorage;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,11 +56,6 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     implements SnappedKeyValueStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(LayeredKeyValueStorage.class);
-
-  // Same unsigned byte-wise order as the layer maps and RocksDB; Bytes.compareTo differs for keys
-  // of different lengths and treats all-zero keys (EMPTY, 0x00, ...) as equal.
-  private static final Comparator<Bytes> KEY_ORDER =
-      Comparator.comparing(Bytes::toArrayUnsafe, Arrays::compareUnsigned);
 
   private final SegmentedKeyValueStorage parent;
 
@@ -339,7 +334,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final @Nullable Bytes startKey,
       final @Nullable Bytes endKey) {
     throwIfClosed();
-    if (startKey != null && endKey != null && KEY_ORDER.compare(startKey, endKey) > 0) {
+    if (startKey != null && endKey != null && UNSIGNED_KEY_ORDER.compare(startKey, endKey) > 0) {
       return Stream.empty();
     }
     // Merge all layers (top first) and the persistent parent in one pass rather than recursively.
@@ -396,7 +391,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
 
     private final PriorityQueue<Source> queue =
         new PriorityQueue<>(
-            Comparator.comparing((Source s) -> s.head.getKey(), KEY_ORDER)
+            Comparator.comparing((Source s) -> s.head.getKey(), UNSIGNED_KEY_ORDER)
                 .thenComparingInt(s -> s.rank));
 
     LayeredMergeIterator(final List<Iterator<Map.Entry<Bytes, Optional<byte[]>>>> sources) {
@@ -423,7 +418,7 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         advance(top);
         // drop the same key from lower-precedence sources
         while (!queue.isEmpty()
-            && KEY_ORDER.compare(queue.peek().head.getKey(), winner.getKey()) == 0) {
+            && UNSIGNED_KEY_ORDER.compare(queue.peek().head.getKey(), winner.getKey()) == 0) {
           advance(queue.poll());
         }
         if (winner.getValue().isPresent()) {

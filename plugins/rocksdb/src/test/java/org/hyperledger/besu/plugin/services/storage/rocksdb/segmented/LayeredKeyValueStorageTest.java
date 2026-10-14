@@ -31,7 +31,9 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.KeyComparator;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +82,9 @@ public class LayeredKeyValueStorageTest {
       createSegmentMap() {
     ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> map =
         new ConcurrentHashMap<>();
-    NavigableMap<Bytes, Optional<byte[]>> segmentMap = new TreeMap<>();
+    // same order as the production segment maps
+    NavigableMap<Bytes, Optional<byte[]>> segmentMap =
+        new TreeMap<>(KeyComparator.UNSIGNED_KEY_ORDER);
     map.put(segmentId, segmentMap);
     return map;
   }
@@ -712,6 +716,64 @@ public class LayeredKeyValueStorageTest {
         top.stream(segmentId)
             .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
             .toList());
+  }
+
+  @Test
+  void streamOverInMemoryBaseMergesKeysOfDifferentLengthsInUnsignedByteOrder() {
+    byte[] p = {9};
+    byte[] v = {7};
+    SegmentedInMemoryKeyValueStorage base = new SegmentedInMemoryKeyValueStorage();
+    var baseTx = base.startTransaction();
+    baseTx.put(segmentId, new byte[] {1, 5}, p);
+    baseTx.put(segmentId, new byte[] {2}, p);
+    baseTx.commit();
+
+    // the tombstone on 0x0105 must hide the base entry, which is only possible if the base streams
+    // in the same unsigned byte order as the layers (0x0105 before 0x02); in numeric order the
+    // base would stream 0x0105 after 0x02, past the point where the tombstone was merged
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(base);
+    var tx = top.startTransaction();
+    tx.put(segmentId, Bytes.EMPTY.toArrayUnsafe(), v);
+    tx.put(segmentId, new byte[] {0}, v);
+    tx.remove(segmentId, new byte[] {1, 5});
+    tx.commit();
+
+    assertEquals(
+        List.of(
+            Pair.of(Bytes.EMPTY, Bytes.wrap(v)),
+            Pair.of(Bytes.of(0), Bytes.wrap(v)),
+            Pair.of(Bytes.of(2), Bytes.wrap(p))),
+        top.stream(segmentId)
+            .map(e -> Pair.of(Bytes.wrap(e.getKey()), Bytes.wrap(e.getValue())))
+            .toList());
+  }
+
+  @Test
+  void streamFromKeyOverInMemoryBaseUsesUnsignedByteOrderBounds() {
+    byte[] p = {9};
+    byte[] v = {7};
+    SegmentedInMemoryKeyValueStorage base = new SegmentedInMemoryKeyValueStorage();
+    var baseTx = base.startTransaction();
+    baseTx.put(segmentId, new byte[] {0, 1}, p);
+    baseTx.put(segmentId, new byte[] {1, 5}, p);
+    baseTx.put(segmentId, new byte[] {3}, p);
+    baseTx.commit();
+    LayeredKeyValueStorage top = new LayeredKeyValueStorage(base);
+    var tx = top.startTransaction();
+    tx.put(segmentId, new byte[] {1}, v);
+    tx.put(segmentId, new byte[] {2, 0}, v);
+    tx.commit();
+
+    // unsigned byte order: 0x0001 < 0x01 < 0x0105 < 0x0200 < 0x03
+    assertEquals(
+        List.of(Bytes.of(1), Bytes.of(1, 5), Bytes.of(2, 0)),
+        top.streamFromKey(segmentId, new byte[] {1}, new byte[] {2, 0})
+            .map(e -> Bytes.wrap(e.getKey()))
+            .toList());
+    assertEquals(
+        List.of(Bytes.of(1), Bytes.of(1, 5), Bytes.of(2, 0), Bytes.of(3)),
+        top.streamFromKey(segmentId, new byte[] {1}).map(e -> Bytes.wrap(e.getKey())).toList());
+    assertEquals(0, base.streamFromKey(segmentId, new byte[] {3}, new byte[] {1}).count());
   }
 
   @Test
