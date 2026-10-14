@@ -39,7 +39,7 @@ public final class PushOperationV2 {
   private PushOperationV2() {}
 
   private static void pushUInt256ToStack(final MessageFrame frame, final UInt256 pushValue) {
-    if (!frame.stackHasSpaceV2(1)) {
+    if (!frame.ensureStackCapacityV2(1)) {
       throw new OverflowException();
     }
     final long[] stack = frame.stackDataV2();
@@ -53,7 +53,7 @@ public final class PushOperationV2 {
   }
 
   private static void pushLongToStack(final MessageFrame frame, final long u0) {
-    if (!frame.stackHasSpaceV2(1)) {
+    if (!frame.ensureStackCapacityV2(1)) {
       throw new OverflowException();
     }
     final long[] stack = frame.stackDataV2();

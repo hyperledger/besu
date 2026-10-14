@@ -72,7 +72,7 @@ public class DupNOperationV2 extends AbstractFixedCostOperationV2 {
     }
     final int n = Eip8024Decoder.DECODE_SINGLE[imm];
     if (!frame.stackHasItemsV2(n)) return DUPN_UNDERFLOW;
-    if (!frame.stackHasSpaceV2(1)) return DUPN_OVERFLOW;
+    if (!frame.ensureStackCapacityV2(1)) return DUPN_OVERFLOW;
     final int top = frame.stackTopV2();
     copyWord(frame.stackDataV2(), top - n, top);
     frame.setTopV2(top + 1);

@@ -140,7 +140,7 @@ public class BenchmarkHelperV2 {
    * @param value the UInt256 value to push
    */
   static void pushUInt256(final MessageFrame frame, final UInt256 value) {
-    if (!frame.stackHasSpaceV2(1)) {
+    if (!frame.ensureStackCapacityV2(1)) {
       throw new IllegalStateException("More stack items than the stack can hold");
     }
     final long[] s = frame.stackDataV2();

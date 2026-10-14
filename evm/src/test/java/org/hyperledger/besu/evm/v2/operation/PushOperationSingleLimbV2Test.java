@@ -194,7 +194,7 @@ public class PushOperationSingleLimbV2Test {
   @Test
   void pushOntoFullStackOverflows() {
     final byte[] code = generateCode(20);
-    while (frame.stackHasSpaceV2(1)) {
+    while (frame.ensureStackCapacityV2(1)) {
       frame.setTopV2(frame.stackTopV2() + 1);
     }
     final int top = frame.stackTopV2();

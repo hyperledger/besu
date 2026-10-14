@@ -607,14 +607,14 @@ public class MessageFrame {
   }
 
   /**
-   * Returns true if the stack has space for {@code n} more items, growing the backing array when
-   * the items fit the maximum stack size but not the array. A caller that pushes reads {@link
-   * #stackDataV2()} after this check.
+   * Makes room for {@code n} more items, growing the backing array when the items fit the maximum
+   * stack size but not the array. Growing replaces the array, so a caller that pushes reads {@link
+   * #stackDataV2()} after this call.
    *
    * @param n the number of additional items
-   * @return true if the stack can accommodate n more items
+   * @return true if the stack can accommodate n more items, false if they exceed the maximum size
    */
-  public boolean stackHasSpaceV2(final int n) {
+  public boolean ensureStackCapacityV2(final int n) {
     final int needed = stackTopV2 + n;
     return needed <= stackDataV2.length >> 2 || growStackV2(needed);
   }
