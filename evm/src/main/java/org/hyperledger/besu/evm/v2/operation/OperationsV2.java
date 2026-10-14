@@ -194,6 +194,7 @@ public final class OperationsV2 {
       case GtOperation ignored -> null;
       case SLtOperation ignored -> null;
       case SGtOperation ignored -> null;
+      case EqOperation ignored -> null;
       case IsZeroOperation ignored -> null;
       case AndOperation ignored -> null;
       case AndOperationOptimized ignored -> null;
@@ -223,7 +224,6 @@ public final class OperationsV2 {
       case SwapNOperation ignored -> null;
       case ExchangeOperation ignored -> null;
       // executed through this table
-      case EqOperation ignored -> new EqOperationV2(gasCalculator);
       case Keccak256Operation ignored -> new Keccak256OperationV2(gasCalculator);
       case AddressOperation ignored -> new AddressOperationV2(gasCalculator);
       case BalanceOperation ignored -> new BalanceOperationV2(gasCalculator);

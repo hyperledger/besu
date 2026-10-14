@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
 
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -27,6 +28,15 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
  */
 public class EqOperationV2 extends AbstractFixedCostOperationV2 {
 
+  private static final OperationResult EQ_SUCCESS = new OperationResult(3, null);
+
+  // v1 runs EQ through its fixed-cost operation, which checks the gas before it touches the stack
+  // and charges the cost on a stack underflow, and traces show both
+  private static final OperationResult EQ_OUT_OF_GAS =
+      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_GAS);
+  private static final OperationResult EQ_UNDERFLOW =
+      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+
   /**
    * Instantiates a new Eq operation.
    *
@@ -34,6 +44,11 @@ public class EqOperationV2 extends AbstractFixedCostOperationV2 {
    */
   public EqOperationV2(final GasCalculator gasCalculator) {
     super(0x14, "EQ", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+  }
+
+  @Override
+  public OperationResult executeFixedCostOperation(final MessageFrame frame) {
+    return staticOperation(frame);
   }
 
   /**
@@ -44,9 +59,9 @@ public class EqOperationV2 extends AbstractFixedCostOperationV2 {
    * @param frame the message frame
    * @return the operation result
    */
-  @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame) {
-    if (!frame.stackHasItemsV2(2)) return underflowResponse;
+  public static OperationResult staticOperation(final MessageFrame frame) {
+    if (frame.getRemainingGas() < 3) return EQ_OUT_OF_GAS;
+    if (!frame.stackHasItemsV2(2)) return EQ_UNDERFLOW;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int aOffset = (top - 1) << 2;
@@ -58,6 +73,6 @@ public class EqOperationV2 extends AbstractFixedCostOperationV2 {
             && stack[aOffset + 3] == stack[bOffset + 3];
     pushLong(equal ? 1L : 0L, stack, top - 2);
     frame.setTopV2(top - 1);
-    return successResponse;
+    return EQ_SUCCESS;
   }
 }

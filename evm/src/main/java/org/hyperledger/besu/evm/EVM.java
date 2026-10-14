@@ -94,6 +94,7 @@ import org.hyperledger.besu.evm.v2.operation.CountLeadingZerosOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DivOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DupNOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DupOperationV2;
+import org.hyperledger.besu.evm.v2.operation.EqOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExchangeOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExpOperationV2;
 import org.hyperledger.besu.evm.v2.operation.GtOperationV2;
@@ -542,6 +543,7 @@ public class EVM {
               case 0x11 -> GtOperationV2.staticOperation(frame);
               case 0x12 -> SLtOperationV2.staticOperation(frame);
               case 0x13 -> SGtOperationV2.staticOperation(frame);
+              case 0x14 -> EqOperationV2.staticOperation(frame);
               case 0x15 -> IsZeroOperationV2.staticOperation(frame);
               case 0x16 -> AndOperationV2.staticOperation(frame);
               case 0x17 -> OrOperationV2.staticOperation(frame);
