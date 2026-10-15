@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -211,7 +211,7 @@ public class BonsaiArchiveWorldStateProviderTest {
     // allowing non-historical queries to find it via worldStateCacheManager.
     final var tx = worldStateStorage.getComposedWorldStateStorage().startTransaction();
     tx.put(
-        TRIE_BRANCH_STORAGE,
+        PATRICIA_TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_HASH_KEY,
         chainHeadHeader.getHash().getBytes().toArrayUnsafe());
     tx.commit();

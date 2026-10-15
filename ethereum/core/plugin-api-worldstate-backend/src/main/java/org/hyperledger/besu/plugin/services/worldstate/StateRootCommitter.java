@@ -27,6 +27,15 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 public interface StateRootCommitter {
 
   /**
+   * Which trie branch this committer reads and writes.
+   *
+   * @return the trie branch type, Patricia by default
+   */
+  default TrieBranchType getTrieBranchType() {
+    return TrieBranchType.PATRICIA;
+  }
+
+  /**
    * Compute the state root and any deferred storage writes for the current world state.
    *
    * @param worldState the world state being persisted
@@ -62,6 +71,11 @@ public interface StateRootCommitter {
       @Override
       public void cancel() {
         delegate.cancel();
+      }
+
+      @Override
+      public TrieBranchType getTrieBranchType() {
+        return delegate.getTrieBranchType();
       }
     };
   }

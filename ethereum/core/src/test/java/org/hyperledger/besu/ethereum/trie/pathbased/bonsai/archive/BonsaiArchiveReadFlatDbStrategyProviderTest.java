@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.FlatDbStrategyProvider.FLAT_DB_MODE;
 
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -48,7 +48,7 @@ public class BonsaiArchiveReadFlatDbStrategyProviderTest {
         new InMemoryKeyValueStorageProvider()
             .getStorageBySegmentIdentifiers(
                 List.of(
-                    TRIE_BRANCH_STORAGE,
+                    PATRICIA_TRIE_BRANCH_STORAGE,
                     ACCOUNT_INFO_STATE,
                     CODE_STORAGE,
                     ACCOUNT_STORAGE_STORAGE));
@@ -67,14 +67,15 @@ public class BonsaiArchiveReadFlatDbStrategyProviderTest {
         new InMemoryKeyValueStorageProvider()
             .getStorageBySegmentIdentifiers(
                 List.of(
-                    TRIE_BRANCH_STORAGE,
+                    PATRICIA_TRIE_BRANCH_STORAGE,
                     ACCOUNT_INFO_STATE,
                     CODE_STORAGE,
                     ACCOUNT_STORAGE_STORAGE));
 
     // Write FULL mode to the DB
     final var tx = storage.startTransaction();
-    tx.put(TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
+    tx.put(
+        PATRICIA_TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     tx.commit();
 
     final BonsaiArchiveReadFlatDbStrategyProvider provider =

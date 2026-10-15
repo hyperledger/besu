@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE_ARCHIVE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -49,7 +49,7 @@ class BonsaiArchiveReadWorldStateStorageCoordinatorTest {
   void setUp() {
     archiveStorage =
         new SegmentedInMemoryKeyValueStorage(
-            List.of(TRIE_BRANCH_STORAGE, TRIE_BRANCH_STORAGE_ARCHIVE));
+            List.of(PATRICIA_TRIE_BRANCH_STORAGE, TRIE_BRANCH_STORAGE_ARCHIVE));
     final ArchiveNodeHistoryStore historyStore = new ArchiveNodeHistoryStore(archiveStorage);
     historyReader = new ArchiveHistoryReader(historyStore);
     keyValueStorage =

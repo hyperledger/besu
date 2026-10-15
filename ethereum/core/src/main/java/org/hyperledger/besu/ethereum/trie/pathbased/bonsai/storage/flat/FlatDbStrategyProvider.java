@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code.AccountHashCodeStorageStrategy;
@@ -127,12 +127,14 @@ public abstract class FlatDbStrategyProvider {
     final FlatDbMode requestedFlatDbMode = getRequestedFlatDbMode(dataStorageConfiguration);
 
     final var existingTrieData =
-        composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
+        composedWorldStateStorage
+            .get(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
+            .isPresent();
 
     var flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
-                .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
+                .get(PATRICIA_TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
                 .orElseGet(
                     () -> {
@@ -146,7 +148,9 @@ public abstract class FlatDbStrategyProvider {
                       // persist this config in the db
                       var setDbModeTx = composedWorldStateStorage.startTransaction();
                       setDbModeTx.put(
-                          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, flatDbModeVal.toArrayUnsafe());
+                          PATRICIA_TRIE_BRANCH_STORAGE,
+                          FLAT_DB_MODE,
+                          flatDbModeVal.toArrayUnsafe());
                       setDbModeTx.commit();
 
                       return flatDbModeVal;
