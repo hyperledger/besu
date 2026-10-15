@@ -58,7 +58,8 @@ public class ExecutionContextTestFixture {
       final ProtocolSchedule protocolSchedule,
       final KeyValueStorage blockchainKeyValueStorage,
       final KeyValueStorage variablesKeyValueStorage,
-      final Optional<DataStorageFormat> dataStorageFormat) {
+      final Optional<DataStorageFormat> dataStorageFormat,
+      final BonsaiCodeCache codeCache) {
     final GenesisState genesisState =
         GenesisState.fromConfig(genesisConfig, protocolSchedule, new BonsaiCodeCache());
     this.genesis = genesisState.getBlock();
@@ -75,7 +76,7 @@ public class ExecutionContextTestFixture {
             new NoOpMetricsSystem(),
             0);
     if (dataStorageFormat.isPresent() && dataStorageFormat.get().equals(DataStorageFormat.BONSAI))
-      this.stateArchive = createBonsaiInMemoryWorldStateArchive(blockchain);
+      this.stateArchive = createBonsaiInMemoryWorldStateArchive(blockchain, codeCache);
     else this.stateArchive = createInMemoryWorldStateArchive();
     this.protocolSchedule = protocolSchedule;
     this.protocolContext =
@@ -129,6 +130,7 @@ public class ExecutionContextTestFixture {
     private KeyValueStorage blockchainKeyValueStorage;
     private ProtocolSchedule protocolSchedule;
     private Optional<DataStorageFormat> dataStorageFormat = Optional.empty();
+    private BonsaiCodeCache codeCache = new BonsaiCodeCache();
 
     public Builder(final GenesisConfig genesisConfig) {
       this.genesisConfig = genesisConfig;
@@ -151,6 +153,11 @@ public class ExecutionContextTestFixture {
 
     public Builder dataStorageFormat(final DataStorageFormat dataStorageFormat) {
       this.dataStorageFormat = Optional.of(dataStorageFormat);
+      return this;
+    }
+
+    public Builder codeCache(final BonsaiCodeCache codeCache) {
+      this.codeCache = codeCache;
       return this;
     }
 
@@ -182,7 +189,8 @@ public class ExecutionContextTestFixture {
           protocolSchedule,
           blockchainKeyValueStorage,
           variablesKeyValueStorage,
-          dataStorageFormat);
+          dataStorageFormat,
+          codeCache);
     }
   }
 }
