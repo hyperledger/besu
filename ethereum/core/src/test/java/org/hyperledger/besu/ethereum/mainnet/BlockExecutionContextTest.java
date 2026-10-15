@@ -171,24 +171,27 @@ class BlockExecutionContextTest {
     final BlockAccessListFactory blockAccessListFactory = new BlockAccessListFactory();
     when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
 
-    assertThat(context.getBlockAccessListFactory().get(protocolSpec))
+    assertThat(context.getBlockAccessListFactory(protocolSpec))
         .containsSame(blockAccessListFactory);
   }
 
   @Test
-  void blockAccessListFactoryIsKeptAndCopiedByToBuilder() {
-    final BlockExecutionContext.BlockAccessListFactoryProvider provider =
-        spec -> Optional.of(new BlockAccessListFactory());
+  void blockAccessListFactoryProviderIsKeptAndCopiedByToBuilder() {
+    // The fork defines no block access list factory (the mocked spec returns empty).
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = new BlockAccessListFactory();
     final BlockExecutionContext context =
         BlockExecutionContext.builder()
             .protocolContext(protocolContext)
             .worldState(worldState)
             .block(block)
             .blockAccessList(Optional.empty())
-            .blockAccessListFactory(provider)
+            .blockAccessListFactoryProvider(spec -> Optional.of(blockAccessListFactory))
             .build();
 
-    assertThat(context.getBlockAccessListFactory()).isSameAs(provider);
-    assertThat(context.toBuilder().build().getBlockAccessListFactory()).isSameAs(provider);
+    assertThat(context.getBlockAccessListFactory(protocolSpec))
+        .containsSame(blockAccessListFactory);
+    assertThat(context.toBuilder().build().getBlockAccessListFactory(protocolSpec))
+        .containsSame(blockAccessListFactory);
   }
 }

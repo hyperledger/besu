@@ -173,7 +173,7 @@ abstract class AbstractBlockProcessorTest {
             .worldState(worldState)
             .block(testBlockBuilder(emptyList()))
             .blockAccessList(Optional.empty())
-            .blockAccessListFactory(spec -> Optional.of(blockAccessListFactory))
+            .blockAccessListFactoryProvider(spec -> Optional.of(blockAccessListFactory))
             .build());
 
     verify(blockAccessListFactory).newBlockAccessListBuilder();

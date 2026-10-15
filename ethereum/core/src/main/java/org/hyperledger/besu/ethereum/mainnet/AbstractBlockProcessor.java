@@ -193,8 +193,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final Optional<BlockAccessListBuilder> blockAccessListBuilder =
         context
-            .getBlockAccessListFactory()
-            .get(protocolSpec)
+            .getBlockAccessListFactory(protocolSpec)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     Optional<ParallelBlockTransactionProcessor> parallelProcessor = Optional.empty();
