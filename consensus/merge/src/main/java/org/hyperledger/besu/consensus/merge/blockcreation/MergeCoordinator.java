@@ -66,6 +66,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -100,6 +101,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
 
   private final Map<PayloadIdentifier, BlockCreationTask> blockCreationTasks =
       new ConcurrentHashMap<>();
+
+  private final AtomicReference<Hash> finalizedHashAfterBackwardSync = new AtomicReference<>();
+  private final AtomicReference<CompletableFuture<Void>> backwardSyncWithFinalizedUpdate =
+      new AtomicReference<>();
 
   /**
    * Instantiates a new Merge coordinator.
@@ -627,9 +632,13 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .log();
     } else if (mergeContext.isInitialSyncDone()) {
       backwardSyncContext.maybeUpdateTargetHeight(headHash);
-      backwardSyncContext
-          .syncBackwardsUntil(headHash)
-          .thenRun(() -> updateFinalized(finalizedHash));
+      finalizedHashAfterBackwardSync.set(finalizedHash);
+      final CompletableFuture<Void> session = backwardSyncContext.syncBackwardsUntil(headHash);
+      // all calls during a session share its future, so one callback applies the latest finalized
+      if (backwardSyncWithFinalizedUpdate.getAndSet(session) != session) {
+        session.thenRun(
+            () -> updateFinalized(Objects.requireNonNull(finalizedHashAfterBackwardSync.get())));
+      }
     }
     return maybeHeadHeader;
   }
@@ -665,9 +674,10 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
                   .log();
               mergeContext.setFinalized(finalizedHeader);
             },
+            // a session can end without the head it was started for, e.g. when no peer serves it
             () ->
-                LOG.warn(
-                    "Internal error, backward sync completed but failed to import finalized block {}",
+                LOG.debug(
+                    "Finalized block {} is not on the chain after backward sync, a later forkchoice update will set it",
                     finalizedHash));
   }
 
@@ -783,6 +793,15 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   private boolean setNewHead(final MutableBlockchain blockchain, final BlockHeader newHead) {
+    // moved even when the chain head is already there: backward sync appends its blocks without
+    // the head world state lock, so a fork choice in between can leave the two at different blocks
+    if (!moveWorldStateTo(newHead)) {
+      LOG.atDebug()
+          .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
+          .addArgument(newHead::toLogString)
+          .log();
+      return false;
+    }
 
     if (newHead.getHash().equals(blockchain.getChainHeadHash())) {
       LOG.atDebug()
@@ -792,27 +811,20 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       return true;
     }
 
-    if (moveWorldStateTo(newHead)) {
-      if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
-        LOG.atDebug()
-            .setMessage(
-                "Forwarding chain head to the block {} saved from a previous newPayload invocation")
-            .addArgument(newHead::toLogString)
-            .log();
-        return blockchain.forwardToBlock(newHead);
-      } else {
-        LOG.atDebug()
-            .setMessage("New head {} is a chain reorg, rewind chain head to it")
-            .addArgument(newHead::toLogString)
-            .log();
-        return blockchain.rewindToBlock(newHead.getHash());
-      }
+    if (newHead.getParentHash().equals(blockchain.getChainHeadHash())) {
+      LOG.atDebug()
+          .setMessage(
+              "Forwarding chain head to the block {} saved from a previous newPayload invocation")
+          .addArgument(newHead::toLogString)
+          .log();
+      return blockchain.forwardToBlock(newHead);
+    } else {
+      LOG.atDebug()
+          .setMessage("New head {} is a chain reorg, rewind chain head to it")
+          .addArgument(newHead::toLogString)
+          .log();
+      return blockchain.rewindToBlock(newHead.getHash());
     }
-    LOG.atDebug()
-        .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")
-        .addArgument(newHead::toLogString)
-        .log();
-    return false;
   }
 
   private boolean moveWorldStateTo(final BlockHeader newHead) {

@@ -29,6 +29,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -199,6 +200,57 @@ class BonsaiWorldStateCacheManagerTest {
     Mockito.verify(storage, Mockito.never()).subscribe(Mockito.any());
   }
 
+  @Test
+  void headWorldStateIsCachedUnderTheBlockOfItsSnapshot() {
+    final BonsaiWorldStateKeyValueStorage rootStorage =
+        Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
+    final BonsaiWorldStateKeyValueStorage headSnapshot =
+        Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
+    // the head moved to block 2 right after the snapshot of block 1 was taken
+    Mockito.when(headSnapshot.getWorldStateBlockHash())
+        .thenReturn(Optional.of(headers[1].getBlockHash()));
+    Mockito.when(rootStorage.getWorldStateBlockHash())
+        .thenReturn(Optional.of(headers[2].getBlockHash()));
+    final TestCacheManager headCacheManager =
+        new TestCacheManager(rootStorage, new ConcurrentHashMap<>(), headSnapshot);
+
+    assertThat(
+            headCacheManager.getHeadWorldState(
+                blockHash ->
+                    Arrays.stream(headers)
+                        .filter(header -> header.getBlockHash().equals(blockHash))
+                        .findFirst()
+                        .map(org.hyperledger.besu.plugin.data.BlockHeader.class::cast)))
+        .isPresent();
+
+    assertThat(headCacheManager.contains(headers[2].getBlockHash())).isFalse();
+    assertThat(headCacheManager.getStorageByRootHash(headers[1].getStateRoot()))
+        .containsSame(headSnapshot);
+  }
+
+  @Test
+  void headSnapshotIsClosedWhenTheHeaderLookupFails() throws Exception {
+    final BonsaiWorldStateKeyValueStorage headSnapshot =
+        Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
+    Mockito.when(headSnapshot.getWorldStateBlockHash())
+        .thenReturn(Optional.of(headers[1].getBlockHash()));
+    final TestCacheManager headCacheManager =
+        new TestCacheManager(
+            Mockito.mock(BonsaiWorldStateKeyValueStorage.class),
+            new ConcurrentHashMap<>(),
+            headSnapshot);
+
+    assertThatThrownBy(
+            () ->
+                headCacheManager.getHeadWorldState(
+                    blockHash -> {
+                      throw new IllegalStateException("storage closed");
+                    }))
+        .isInstanceOf(IllegalStateException.class);
+
+    Mockito.verify(headSnapshot).close();
+  }
+
   private static BonsaiWorldStateKeyValueStorage unreadableStorage() {
     final BonsaiWorldStateKeyValueStorage storage =
         Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
@@ -222,15 +274,25 @@ class BonsaiWorldStateCacheManagerTest {
   private static class TestCacheManager extends PathBasedWorldStateCacheManager {
     final List<StoredRootAndBlockHash> createdWith = new ArrayList<>();
 
+    private final BonsaiWorldStateKeyValueStorage snapshotStorage;
+
     TestCacheManager(
         final BonsaiWorldStateKeyValueStorage storage,
         final Map<Hash, BonsaiCachedWorldStateView> map) {
+      this(storage, map, storage);
+    }
+
+    TestCacheManager(
+        final BonsaiWorldStateKeyValueStorage storage,
+        final Map<Hash, BonsaiCachedWorldStateView> map,
+        final BonsaiWorldStateKeyValueStorage snapshotStorage) {
       super(
           null,
           storage,
           map,
           EvmConfiguration.DEFAULT,
           WorldStateConfig.createStatefulConfigWithTrie());
+      this.snapshotStorage = snapshotStorage;
     }
 
     @Override
@@ -238,7 +300,7 @@ class BonsaiWorldStateCacheManagerTest {
         final PathBasedWorldStateProvider archive,
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
         final EvmConfiguration evmConfiguration) {
-      throw new UnsupportedOperationException();
+      return Mockito.mock(PathBasedWorldState.class);
     }
 
     @Override
@@ -260,7 +322,7 @@ class BonsaiWorldStateCacheManagerTest {
     @Override
     public BonsaiWorldStateKeyValueStorage createSnapshotKeyValueStorage(
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage) {
-      return worldStateKeyValueStorage;
+      return snapshotStorage;
     }
   }
 }
