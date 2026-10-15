@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
 
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -26,7 +27,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
  * <p>Each 256-bit word is stored as four longs: index 0 = most significant 64 bits, index 3 = least
  * significant 64 bits.
  */
-public class EqOperationV2 extends AbstractFixedCostOperationV2 {
+public class EqOperationV2 extends AbstractOperationV2 {
 
   private static final OperationResult EQ_SUCCESS = new OperationResult(3, null);
 
@@ -43,11 +44,11 @@ public class EqOperationV2 extends AbstractFixedCostOperationV2 {
    * @param gasCalculator the gas calculator
    */
   public EqOperationV2(final GasCalculator gasCalculator) {
-    super(0x14, "EQ", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+    super(0x14, "EQ", 2, 1, gasCalculator);
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame) {
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
     return staticOperation(frame);
   }
 
