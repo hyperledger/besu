@@ -66,7 +66,11 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
    */
   private final @Nullable LayeredKeyValueStorage parentLayer;
 
-  /** The first non-layered storage below this layer, where lookups end when no layer has a key. */
+  /**
+   * The first non-layered storage below this layer, where lookups end when no layer has a key.
+   * Layers cannot be closed on their own, so its closed state is the closed state of the whole
+   * chain.
+   */
   private final SegmentedKeyValueStorage baseStorage;
 
   /**
