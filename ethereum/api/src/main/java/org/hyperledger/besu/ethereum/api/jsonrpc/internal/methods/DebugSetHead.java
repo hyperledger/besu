@@ -126,23 +126,22 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
         while (currentHead.isPresent()
             && !target.getStateRoot().equals(currentHead.get().getStateRoot())) {
           long delta = currentHead.get().getNumber() - target.getNumber();
+          // do we need to move forward or backward?
+          long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
 
-          if (maxTrieLogsToRollAtOnce < Math.abs(delta)) {
-            // do we need to move forward or backward?
-            long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
+          // Add distanceToMove to the current block number to get the interim target header. The
+          // world state can be persisted above the chain head, where there is no canonical block
+          var interimHead =
+              maxTrieLogsToRollAtOnce < Math.abs(delta)
+                  ? blockchain.getBlockHeader(currentHead.get().getNumber() + distanceToMove)
+                  : Optional.<BlockHeader>empty();
 
-            // Add distanceToMove to the current block number to get the interim target header
-            var interimHead =
-                blockchain.getBlockHeader(currentHead.get().getNumber() + distanceToMove);
-
-            interimHead.ifPresent(
-                it -> {
-                  blockchain.rewindToBlock(it.getBlockHash());
-                  archive.getWorldState(withBlockHeaderAndUpdateNodeHead(it));
-                  LOG.info("incrementally rolled worldstate to {}", it.toLogString());
-                });
+          if (interimHead.isPresent()) {
+            final BlockHeader interim = interimHead.get();
+            blockchain.rewindToBlock(interim.getBlockHash());
+            archive.getWorldState(withBlockHeaderAndUpdateNodeHead(interim));
+            LOG.info("incrementally rolled worldstate to {}", interim.toLogString());
             currentHead = interimHead;
-
           } else {
             blockchain.rewindToBlock(target.getBlockHash());
             archive.getWorldState(withBlockHeaderAndUpdateNodeHead(target));

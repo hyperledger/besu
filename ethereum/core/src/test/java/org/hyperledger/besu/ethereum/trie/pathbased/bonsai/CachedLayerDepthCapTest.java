@@ -57,7 +57,8 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
     final List<Block> imported = importWithoutForkChoice(chainHead, 20);
 
     assertThat(blockchain.getChainHeadHash()).isEqualTo(chainHead.getHash());
-    assertThat(archive.isHeadWorldStateMovedByDepthCap()).isTrue();
+    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isTrue();
+    assertThat(archive.isHeadWorldStateCappedAbove(imported.getFirst().getHash())).isFalse();
     final BlockHeader persisted =
         blockchain
             .getBlockHeader(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash().get())
@@ -85,7 +86,8 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
   @Test
   void forkChoiceMovesTheCappedWorldStateToTheImportedTip() {
     archive.setMaxCachedLayerDepth(MAX_DEPTH);
-    final List<Block> imported = importWithoutForkChoice(blockchain.getChainHeadHeader(), 20);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    final List<Block> imported = importWithoutForkChoice(chainHead, 20);
     final BlockHeader tip = imported.getLast().getHeader();
 
     assertThat(
@@ -93,7 +95,7 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
                 .getWorldState(withBlockHeaderAndUpdateNodeHead(tip))
                 .map(MutableWorldState::rootHash))
         .contains(tip.getStateRoot());
-    assertThat(archive.isHeadWorldStateMovedByDepthCap()).isFalse();
+    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isFalse();
     assertThat(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash())
         .contains(tip.getHash());
   }
@@ -108,8 +110,58 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
     assertThat(archive.getWorldStateCacheManager().contains(chainHead.getHash())).isTrue();
   }
 
+  @Test
+  void branchForkingBelowTheChainHeadIsNotCapped() {
+    archive.setMaxCachedLayerDepth(MAX_DEPTH);
+    final List<Block> canonical = extendCanonicalChain(4);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    nextNonce = canonical.get(1).getHeader().getNumber();
+
+    importWithoutForkChoice(canonical.get(1).getHeader(), 20);
+
+    assertThat(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash())
+        .contains(chainHead.getHash());
+    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isFalse();
+  }
+
+  @Test
+  void failedCapLeavesTheHeadWorldStateUsable() {
+    archive.setMaxCachedLayerDepth(MAX_DEPTH);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    final List<Block> imported = importWithoutForkChoice(chainHead, MAX_DEPTH);
+    // the cap cannot roll the head world state past this block
+    archive.getWorldStateKeyValueStorage().pruneTrieLog(imported.get(1).getHash());
+
+    final List<Block> more = importWithoutForkChoice(imported.getLast().getHeader(), MAX_DEPTH * 3);
+
+    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isFalse();
+    assertThat(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash())
+        .contains(chainHead.getHash());
+    assertThat(
+            archive
+                .getWorldState(withBlockHeaderAndNoUpdateNodeHead(more.getLast().getHeader()))
+                .map(MutableWorldState::rootHash))
+        .contains(more.getLast().getHeader().getStateRoot());
+    assertThat(
+            archive
+                .getWorldState(withBlockHeaderAndUpdateNodeHead(imported.getFirst().getHeader()))
+                .map(MutableWorldState::rootHash))
+        .contains(imported.getFirst().getHeader().getStateRoot());
+  }
+
   private int cachedLayerDepth(final BlockHeader blockHeader) {
     return archive.getWorldStateCacheManager().getCachedLayerDepth(blockHeader);
+  }
+
+  /** Appends blocks to the chain head on the head world state, as a fork choice to each would. */
+  private List<Block> extendCanonicalChain(final int count) {
+    final List<Block> blocks = new ArrayList<>();
+    for (int i = 0; i < count; i++) {
+      final Block block = nextBlock(blockchain.getChainHeadHeader());
+      assertThat(executeBlock(archive.getWorldState(), block).isSuccessful()).isTrue();
+      blocks.add(block);
+    }
+    return blocks;
   }
 
   /** Imports blocks the way a payload is, each on the previous one, without moving the head. */

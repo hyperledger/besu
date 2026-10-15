@@ -147,6 +147,21 @@ public class DebugSetHeadTest extends AbstractJsonRpcHttpServiceTest {
   }
 
   @Test
+  public void movesWorldStatePersistedAboveTheChainHead() {
+    var chainTip = blockchain.getChainHead().getBlockHeader();
+    var blockTwo = getBlockHeaderForHashOrNumber("0x02").orElseThrow();
+    // only the chain head moves back, so the world state stays above it, where no block is
+    // canonical
+    debugSetHead.response(debugSetHead("0x01", Optional.of(FALSE)));
+    assertThat(archive.getWorldState().rootHash()).isEqualTo(chainTip.getStateRoot());
+
+    debugSetHead.response(debugSetHead(blockTwo.getHash().toHexString(), Optional.of(TRUE)));
+
+    assertThat(blockchain.getChainHead().getBlockHeader()).isEqualTo(blockTwo);
+    assertThat(archive.getWorldState().rootHash()).isEqualTo(blockTwo.getStateRoot());
+  }
+
+  @Test
   public void assertNullWhenBlockNotFound() {
     var chainTip = blockchain.getChainHead().getBlockHeader();
 

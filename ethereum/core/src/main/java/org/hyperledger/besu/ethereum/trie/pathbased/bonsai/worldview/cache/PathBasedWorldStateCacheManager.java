@@ -151,28 +151,6 @@ public abstract class PathBasedWorldStateCacheManager implements StorageSubscrib
         .orElse(0);
   }
 
-  /**
-   * Drops the cached world states that are in-memory layers, keeping the database snapshots and the
-   * world state of the chain head.
-   */
-  public synchronized void dropCachedLayers() {
-    final Hash chainHeadHash = archive.getChainHeadHash();
-    cachedWorldStatesByHash.values().stream()
-        .filter(
-            cached ->
-                cached.getWorldStateStorage() instanceof BonsaiWorldStateLayerStorage
-                    && !cached.getBlockHash().equals(chainHeadHash))
-        .toList()
-        .forEach(
-            cached -> {
-              cachedWorldStatesByHash.remove(cached.getBlockHash());
-              // empty blocks can share the state root of their parent
-              stateRootToBlockHeaderCache.remove(
-                  cached.getBlockHeader().getStateRoot(), cached.getBlockHeader());
-              cached.close();
-            });
-  }
-
   public Optional<PathBasedWorldState> getWorldState(final Hash blockHash) {
     if (cachedWorldStatesByHash.containsKey(blockHash)) {
       // return a new worldstate using worldstate storage and an isolated copy of the updater

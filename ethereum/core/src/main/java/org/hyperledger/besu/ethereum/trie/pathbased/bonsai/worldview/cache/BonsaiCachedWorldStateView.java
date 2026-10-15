@@ -47,10 +47,6 @@ public class BonsaiCachedWorldStateView implements StorageSubscriber {
     return blockHeader.getBlockHash();
   }
 
-  public BlockHeader getBlockHeader() {
-    return blockHeader;
-  }
-
   public synchronized void close() {
     worldStateKeyValueStorage.unSubscribe(this.worldViewSubscriberId);
     try {

@@ -71,7 +71,10 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   // every block imported without a fork choice is a layer on its parent's, and a read that misses
   // walks all of them
   private int maxCachedLayerDepth = 64;
-  private volatile boolean headWorldStateMovedByDepthCap = false;
+  // a cap that failed or did not apply is tried again only once as many layers again are added
+  private volatile int nextCapDepth = maxCachedLayerDepth;
+  // the chain head when the depth cap last moved the head world state, null after any other move
+  private volatile Hash chainHeadBelowCappedWorldState = null;
   protected final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
   // Configuration that will be shared by all instances of world state at their creation
@@ -231,7 +234,8 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     // a failure here keeps the chain head from moving, so it must be visible at the default level
     return withHeadWorldStateLock(
         () -> {
-          headWorldStateMovedByDepthCap = false;
+          chainHeadBelowCappedWorldState = null;
+          nextCapDepth = maxCachedLayerDepth;
           return rollFullWorldStateToBlockHash(headWorldState, blockHash, Level.WARN)
               .map(MutableWorldState.class::cast);
         });
@@ -239,46 +243,84 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
 
   @Override
   public void capCachedLayerDepth(final BlockHeader blockHeader) {
-    final int depth = worldStateCacheManager.getCachedLayerDepth(blockHeader);
-    if (depth <= maxCachedLayerDepth) {
+    if (worldStateCacheManager.getCachedLayerDepth(blockHeader) <= nextCapDepth) {
       return;
     }
     withHeadWorldStateLock(
         () -> {
+          // the head world state may have moved while this waited for the lock
+          final int depth = worldStateCacheManager.getCachedLayerDepth(blockHeader);
+          if (depth <= nextCapDepth
+              || headWorldState.blockHash().equals(blockHeader.getBlockHash())) {
+            return null;
+          }
+          final BlockHeader chainHead = blockchain.getChainHeadHeader();
+          // on a branch that forks below the chain head, every fork choice to the canonical chain
+          // would roll the world state back over the fork point
+          if (!descendsFromChainHead(blockHeader, chainHead)) {
+            nextCapDepth = depth + maxCachedLayerDepth;
+            return null;
+          }
           try {
-            // the cached world state of the block becomes a snapshot of the persisted one, so
-            // the layers below it are no longer needed
+            // the cached world state of the block becomes a snapshot of the persisted one
             if (rollFullWorldStateToBlockHash(
                     headWorldState, blockHeader.getBlockHash(), Level.WARN)
                 .isPresent()) {
-              worldStateCacheManager.dropCachedLayers();
-              headWorldStateMovedByDepthCap = true;
+              nextCapDepth = maxCachedLayerDepth;
+              chainHeadBelowCappedWorldState = chainHead.getBlockHash();
               LOG.atInfo()
                   .setMessage(
                       "Persisted the world state at block {}, ahead of the chain head, to bound the {} in-memory layers of blocks imported without a fork choice")
                   .addArgument(blockHeader::toLogString)
                   .addArgument(depth)
                   .log();
+              return null;
             }
           } catch (final RuntimeException e) {
-            // the block is still imported on top of the layers, so this is not fatal
+            // a roll that throws can leave part of its changes in the head world state
+            ((PathBasedWorldStateUpdateAccumulator<?>) headWorldState.updater()).reset();
             LOG.warn(
                 "Failed to persist the world state at block {} to bound its in-memory layers",
                 blockHeader.toLogString(),
                 e);
           }
+          // the block is still imported on top of the layers
+          nextCapDepth = depth + maxCachedLayerDepth;
           return null;
         });
   }
 
+  private boolean descendsFromChainHead(
+      final BlockHeader blockHeader, final BlockHeader chainHead) {
+    // a block the cap persisted under the same chain head is a closer ancestor to walk to
+    final BlockHeader ancestor =
+        chainHead.getBlockHash().equals(chainHeadBelowCappedWorldState)
+            ? blockchain
+                .getBlockHeader(headWorldState.blockHash())
+                .map(BlockHeader.class::cast)
+                .orElse(chainHead)
+            : chainHead;
+    BlockHeader current = blockHeader;
+    while (current.getNumber() > ancestor.getNumber()) {
+      final Optional<BlockHeader> parent =
+          blockchain.getBlockHeader(current.getParentHash()).map(BlockHeader.class::cast);
+      if (parent.isEmpty()) {
+        return false;
+      }
+      current = parent.get();
+    }
+    return current.getBlockHash().equals(ancestor.getBlockHash());
+  }
+
   @Override
-  public boolean isHeadWorldStateMovedByDepthCap() {
-    return headWorldStateMovedByDepthCap;
+  public boolean isHeadWorldStateCappedAbove(final Hash chainHeadHash) {
+    return chainHeadHash.equals(chainHeadBelowCappedWorldState);
   }
 
   @VisibleForTesting
   public void setMaxCachedLayerDepth(final int maxCachedLayerDepth) {
     this.maxCachedLayerDepth = maxCachedLayerDepth;
+    this.nextCapDepth = maxCachedLayerDepth;
   }
 
   /**
@@ -472,7 +514,8 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public void resetArchiveStateTo(final BlockHeader blockHeader) {
     headWorldStateLock.lock();
     try {
-      headWorldStateMovedByDepthCap = false;
+      chainHeadBelowCappedWorldState = null;
+      nextCapDepth = maxCachedLayerDepth;
       headWorldState.resetWorldStateTo(blockHeader);
       this.worldStateCacheManager.reset();
       this.worldStateCacheManager.addCachedLayer(

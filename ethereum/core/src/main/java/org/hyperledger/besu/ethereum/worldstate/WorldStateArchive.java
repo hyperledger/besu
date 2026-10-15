@@ -88,12 +88,14 @@ public interface WorldStateArchive extends Closeable {
   default void capCachedLayerDepth(final BlockHeader blockHeader) {}
 
   /**
-   * Whether the head world state was last moved by {@link #capCachedLayerDepth(BlockHeader)}, so it
-   * is at a block imported after the chain head instead of at the chain head.
+   * Whether {@link #capCachedLayerDepth(BlockHeader)} last moved the head world state, while the
+   * chain head was the given block, to a block imported on top of it.
    *
-   * @return true if the depth cap moved the head world state since the last head move
+   * @param chainHeadHash the chain head
+   * @return true if the depth cap moved the head world state ahead of this chain head and nothing
+   *     else moved it since
    */
-  default boolean isHeadWorldStateMovedByDepthCap() {
+  default boolean isHeadWorldStateCappedAbove(final Hash chainHeadHash) {
     return false;
   }
 

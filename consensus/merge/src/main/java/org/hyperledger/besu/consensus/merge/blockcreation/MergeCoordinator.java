@@ -802,7 +802,9 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     // same head would otherwise undo on each call
     final boolean keepCappedWorldState =
         newHead.getHash().equals(blockchain.getChainHeadHash())
-            && protocolContext.getWorldStateArchive().isHeadWorldStateMovedByDepthCap();
+            && protocolContext
+                .getWorldStateArchive()
+                .isHeadWorldStateCappedAbove(newHead.getHash());
     if (!keepCappedWorldState && !moveWorldStateTo(newHead)) {
       LOG.atDebug()
           .setMessage("Failed to move the worldstate forward to hash {}, not moving chain head")

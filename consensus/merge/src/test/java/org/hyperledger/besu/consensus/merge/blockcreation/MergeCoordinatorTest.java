@@ -1635,7 +1635,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new Block(block1Header, BlockBody.empty()), Optional.empty(), terminalHeader.getHash());
 
     final WorldStateArchive cappedArchive = mock(WorldStateArchive.class);
-    when(cappedArchive.isHeadWorldStateMovedByDepthCap()).thenReturn(true);
+    when(cappedArchive.isHeadWorldStateCappedAbove(block1Header.getHash())).thenReturn(true);
 
     final ForkchoiceResult result =
         coordinatorWith(cappedArchive)
