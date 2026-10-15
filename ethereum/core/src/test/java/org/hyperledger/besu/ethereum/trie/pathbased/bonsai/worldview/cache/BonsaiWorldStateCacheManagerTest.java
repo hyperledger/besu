@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.PathBasedWorldState.StoredRootAndBlockHash;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.WorldStateConfig;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -163,6 +165,45 @@ class BonsaiWorldStateCacheManagerTest {
     assertThat(cached.worldStateStorage()).isSameAs(after);
     assertThat(cached.rootAndBlockHash().rootHash()).contains(headers[2].getStateRoot().getBytes());
     assertThat(cached.rootAndBlockHash().blockHash()).contains(headers[2].getBlockHash());
+  }
+
+  @Test
+  void aReplacementStorageThatCannotBeReadIsClosedAndTheCurrentOneKept() throws Exception {
+    final BonsaiWorldStateKeyValueStorage before = storageAt(headers[1]);
+    Mockito.when(before.subscribe(Mockito.any())).thenReturn(7L);
+    final BonsaiCachedWorldStateView view = new BonsaiCachedWorldStateView(headers[1], before);
+    final BonsaiWorldStateKeyValueStorage after = unreadableStorage();
+
+    assertThatThrownBy(() -> view.updateWorldStateStorage(after))
+        .isInstanceOf(StorageException.class);
+
+    Mockito.verify(after).close();
+    Mockito.verify(after, Mockito.never()).subscribe(Mockito.any());
+    Mockito.verify(before, Mockito.never()).unSubscribe(Mockito.anyLong());
+    assertThat(view.getWorldStateStorage()).isSameAs(before);
+
+    // The view still holds its subscription to the current storage, and releases it on close.
+    view.close();
+    Mockito.verify(before).unSubscribe(7L);
+    Mockito.verify(before).close();
+  }
+
+  @Test
+  void aStorageThatCannotBeReadWhenCachingIsClosed() throws Exception {
+    final BonsaiWorldStateKeyValueStorage storage = unreadableStorage();
+
+    assertThatThrownBy(() -> new BonsaiCachedWorldStateView(headers[1], storage))
+        .isInstanceOf(StorageException.class);
+
+    Mockito.verify(storage).close();
+    Mockito.verify(storage, Mockito.never()).subscribe(Mockito.any());
+  }
+
+  private static BonsaiWorldStateKeyValueStorage unreadableStorage() {
+    final BonsaiWorldStateKeyValueStorage storage =
+        Mockito.mock(BonsaiWorldStateKeyValueStorage.class);
+    Mockito.when(storage.getWorldStateRootHash()).thenThrow(new StorageException("read failed"));
+    return storage;
   }
 
   private static BonsaiWorldStateKeyValueStorage storageAt(final BlockHeader header) {

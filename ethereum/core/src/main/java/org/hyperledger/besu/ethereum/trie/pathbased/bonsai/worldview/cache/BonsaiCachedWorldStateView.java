@@ -43,8 +43,22 @@ public class BonsaiCachedWorldStateView implements StorageSubscriber {
   public BonsaiCachedWorldStateView(
       final BlockHeader blockHeader, final BonsaiWorldStateKeyValueStorage worldView) {
     this.blockHeader = blockHeader;
-    this.cachedStorage = CachedStorage.of(worldView);
+    this.cachedStorage = readOrClose(worldView);
     this.worldViewSubscriberId = worldView.subscribe(this);
+  }
+
+  /** Reads the root and block hash of a storage given to this view, closing it if that fails. */
+  private static CachedStorage readOrClose(final BonsaiWorldStateKeyValueStorage storage) {
+    try {
+      return CachedStorage.of(storage);
+    } catch (final RuntimeException e) {
+      try {
+        storage.close();
+      } catch (final Exception closeException) {
+        e.addSuppressed(closeException);
+      }
+      throw e;
+    }
   }
 
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
@@ -77,10 +91,12 @@ public class BonsaiCachedWorldStateView implements StorageSubscriber {
 
   public synchronized void updateWorldStateStorage(
       final BonsaiWorldStateKeyValueStorage newWorldStateStorage) {
-    long newSubscriberId = newWorldStateStorage.subscribe(this);
+    // Read before touching the subscriptions, so a failed read leaves the current storage in place.
+    final CachedStorage newCachedStorage = readOrClose(newWorldStateStorage);
+    final long newSubscriberId = newWorldStateStorage.subscribe(this);
     final BonsaiWorldStateKeyValueStorage oldWorldStateStorage = cachedStorage.worldStateStorage();
     oldWorldStateStorage.unSubscribe(this.worldViewSubscriberId);
-    this.cachedStorage = CachedStorage.of(newWorldStateStorage);
+    this.cachedStorage = newCachedStorage;
     this.worldViewSubscriberId = newSubscriberId;
     try {
       oldWorldStateStorage.close();
