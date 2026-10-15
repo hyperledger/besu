@@ -60,6 +60,7 @@ import org.hyperledger.besu.consensus.qbft.adaptor.QbftFinalStateImpl;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftProtocolScheduleAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorModeTransitionLoggerAdaptor;
 import org.hyperledger.besu.consensus.qbft.adaptor.QbftValidatorProviderAdaptor;
+import org.hyperledger.besu.consensus.qbft.adaptor.ValidatedBlockCache;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.core.payload.MessageFactory;
 import org.hyperledger.besu.consensus.qbft.core.statemachine.QbftBlockHeightManagerFactory;
@@ -96,6 +97,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
+import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -112,6 +114,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,6 +130,12 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
   private BftConfigOptions bftConfigOptions;
   private QbftExtraDataCodec qbftExtraDataCodec;
   private BftBlockInterface bftBlockInterface;
+
+  /**
+   * Shared by block creation, validation and import, and consulted by the synchronizer so that
+   * blocks the QBFT round claimed are not imported a second time from NewBlock announcements.
+   */
+  private final ValidatedBlockCache validatedBlockCache = new ValidatedBlockCache();
 
   /** Default Constructor. */
   public QbftBesuControllerBuilder() {}
@@ -208,7 +217,7 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
     final Address localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final BftProtocolSchedule bftProtocolSchedule = (BftProtocolSchedule) protocolSchedule;
     QbftProtocolSchedule qbftProtocolSchedule =
-        new QbftProtocolScheduleAdaptor(bftProtocolSchedule, protocolContext);
+        new QbftProtocolScheduleAdaptor(bftProtocolSchedule, protocolContext, validatedBlockCache);
     final QbftBlockCreatorFactory blockCreatorFactory =
         new QbftBlockCreatorFactory(
             transactionPool,
@@ -263,7 +272,8 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
                     Duration.ofSeconds(qbftConfig.getRequestTimeoutSeconds())),
                 bftExecutors),
             blockTimer,
-            new QbftBlockCreatorFactoryAdaptor(blockCreatorFactory, qbftExtraDataCodec),
+            new QbftBlockCreatorFactoryAdaptor(
+                blockCreatorFactory, qbftExtraDataCodec, validatedBlockCache),
             clock);
 
     registerEmptyBlockPeriodMetrics(metricsSystem, blockTimer);
@@ -356,6 +366,19 @@ public class QbftBesuControllerBuilder extends BesuControllerBuilder {
             });
 
     return miningCoordinator;
+  }
+
+  @Override
+  protected void configureSynchronizer(final DefaultSynchronizer synchronizer) {
+    // leave blocks the QBFT round claimed to the round, and import them from the network if the
+    // round releases them without importing them
+    synchronizer.setConsensusOwnedBlockPredicate(validatedBlockCache::isOwnedByConsensus);
+    validatedBlockCache.setReleaseListener(synchronizer::onConsensusOwnershipReleased);
+  }
+
+  @VisibleForTesting
+  ValidatedBlockCache getValidatedBlockCache() {
+    return validatedBlockCache;
   }
 
   @Override
