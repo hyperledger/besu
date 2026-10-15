@@ -97,9 +97,24 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
   }
 
   public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain, final BonsaiCodeCache codeCache) {
+    return createBonsaiInMemoryWorldStateArchive(
+        blockchain, EvmConfiguration.DEFAULT, null, codeCache);
+  }
+
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
       final Blockchain blockchain,
       final EvmConfiguration evmConfiguration,
       final ServiceManager serviceManager) {
+    return createBonsaiInMemoryWorldStateArchive(
+        blockchain, evmConfiguration, serviceManager, new BonsaiCodeCache());
+  }
+
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain,
+      final EvmConfiguration evmConfiguration,
+      final ServiceManager serviceManager,
+      final BonsaiCodeCache codeCache) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
@@ -113,7 +128,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
         bonsaiCachedMerkleTrieLoader,
         serviceManager,
         evmConfiguration,
-        new BonsaiCodeCache());
+        codeCache);
   }
 
   public static MutableWorldState createInMemoryWorldState() {
