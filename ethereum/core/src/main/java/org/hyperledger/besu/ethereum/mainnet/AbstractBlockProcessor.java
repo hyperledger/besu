@@ -192,8 +192,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
             .timed(blockProcessingMetrics.stateRootCalculationTimer());
 
     final Optional<BlockAccessListBuilder> blockAccessListBuilder =
-        protocolSpec
-            .getBlockAccessListFactory()
+        context
+            .getBlockAccessListFactory(protocolSpec)
             .map(BlockAccessListFactory::newBlockAccessListBuilder);
 
     Optional<ParallelBlockTransactionProcessor> parallelProcessor = Optional.empty();
