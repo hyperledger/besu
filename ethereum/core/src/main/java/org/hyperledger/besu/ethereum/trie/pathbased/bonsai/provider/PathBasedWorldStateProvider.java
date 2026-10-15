@@ -71,10 +71,10 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   // every block imported without a fork choice is a layer on its parent's, and a read that misses
   // walks all of them
   private int maxCachedLayerDepth = 64;
-  // a cap that failed or did not apply is tried again only once as many layers again are added
-  private volatile int nextCapDepth = maxCachedLayerDepth;
-  // the chain head when the depth cap last moved the head world state, null after any other move
-  private volatile Hash chainHeadBelowCappedWorldState = null;
+  // a branch the cap failed on or did not apply to is tried again only once as many layers again
+  // are added on top of it
+  private volatile CapBackoff capBackoff = null;
+  private volatile Ancestry lastHeadWorldStateAncestry = null;
   protected final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected EvmConfiguration evmConfiguration;
   // Configuration that will be shared by all instances of world state at their creation
@@ -234,8 +234,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
     // a failure here keeps the chain head from moving, so it must be visible at the default level
     return withHeadWorldStateLock(
         () -> {
-          chainHeadBelowCappedWorldState = null;
-          nextCapDepth = maxCachedLayerDepth;
+          capBackoff = null;
           return rollFullWorldStateToBlockHash(headWorldState, blockHash, Level.WARN)
               .map(MutableWorldState.class::cast);
         });
@@ -243,14 +242,14 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
 
   @Override
   public void capCachedLayerDepth(final BlockHeader blockHeader) {
-    if (worldStateCacheManager.getCachedLayerDepth(blockHeader) <= nextCapDepth) {
+    final int depth = worldStateCacheManager.getCachedLayerDepth(blockHeader);
+    if (depth <= maxCachedLayerDepth || isBackingOff(blockHeader, depth)) {
       return;
     }
     withHeadWorldStateLock(
         () -> {
           // the head world state may have moved while this waited for the lock
-          final int depth = worldStateCacheManager.getCachedLayerDepth(blockHeader);
-          if (depth <= nextCapDepth
+          if (worldStateCacheManager.getCachedLayerDepth(blockHeader) <= maxCachedLayerDepth
               || headWorldState.blockHash().equals(blockHeader.getBlockHash())) {
             return null;
           }
@@ -258,7 +257,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
           // on a branch that forks below the chain head, every fork choice to the canonical chain
           // would roll the world state back over the fork point
           if (!descendsFromChainHead(blockHeader, chainHead)) {
-            nextCapDepth = depth + maxCachedLayerDepth;
+            capBackoff = new CapBackoff(blockHeader.getBlockHash(), depth + maxCachedLayerDepth);
             return null;
           }
           try {
@@ -266,11 +265,10 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
             if (rollFullWorldStateToBlockHash(
                     headWorldState, blockHeader.getBlockHash(), Level.WARN)
                 .isPresent()) {
-              nextCapDepth = maxCachedLayerDepth;
-              chainHeadBelowCappedWorldState = chainHead.getBlockHash();
+              capBackoff = null;
               LOG.atInfo()
                   .setMessage(
-                      "Persisted the world state at block {}, ahead of the chain head, to bound the {} in-memory layers of blocks imported without a fork choice")
+                      "Persisted the world state at block {} to bound the {} in-memory layers of blocks imported without a fork choice")
                   .addArgument(blockHeader::toLogString)
                   .addArgument(depth)
                   .log();
@@ -285,21 +283,35 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
                 e);
           }
           // the block is still imported on top of the layers
-          nextCapDepth = depth + maxCachedLayerDepth;
+          capBackoff = new CapBackoff(blockHeader.getBlockHash(), depth + maxCachedLayerDepth);
           return null;
         });
   }
 
+  private boolean isBackingOff(final BlockHeader blockHeader, final int depth) {
+    final CapBackoff backoff = capBackoff;
+    if (backoff == null || !blockHeader.getParentHash().equals(backoff.tip())) {
+      return false;
+    }
+    if (depth > backoff.retryDepth()) {
+      return false;
+    }
+    capBackoff = new CapBackoff(blockHeader.getBlockHash(), backoff.retryDepth());
+    return true;
+  }
+
   private boolean descendsFromChainHead(
       final BlockHeader blockHeader, final BlockHeader chainHead) {
-    // a block the cap persisted under the same chain head is a closer ancestor to walk to
-    final BlockHeader ancestor =
-        chainHead.getBlockHash().equals(chainHeadBelowCappedWorldState)
-            ? blockchain
+    // the block the world state is persisted at is a closer ancestor to walk to first
+    return (isHeadWorldStateAbove(chainHead)
+            && blockchain
                 .getBlockHeader(headWorldState.blockHash())
-                .map(BlockHeader.class::cast)
-                .orElse(chainHead)
-            : chainHead;
+                .map(persisted -> descendsFrom(blockHeader, persisted))
+                .orElse(false))
+        || descendsFrom(blockHeader, chainHead);
+  }
+
+  private boolean descendsFrom(final BlockHeader blockHeader, final BlockHeader ancestor) {
     BlockHeader current = blockHeader;
     while (current.getNumber() > ancestor.getNumber()) {
       final Optional<BlockHeader> parent =
@@ -313,14 +325,35 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   }
 
   @Override
-  public boolean isHeadWorldStateCappedAbove(final Hash chainHeadHash) {
-    return chainHeadHash.equals(chainHeadBelowCappedWorldState);
+  public boolean isHeadWorldStateAbove(final BlockHeader blockHeader) {
+    final Hash headBlockHash = headWorldState.blockHash();
+    if (headBlockHash.equals(blockHeader.getBlockHash())) {
+      return false;
+    }
+    // asked on every fork choice to an unchanged head, while the world state moves only once per
+    // cap
+    final Ancestry last = lastHeadWorldStateAncestry;
+    if (last != null
+        && last.descendant().equals(headBlockHash)
+        && last.ancestor().equals(blockHeader.getBlockHash())) {
+      return last.descends();
+    }
+    final boolean descends =
+        blockchain
+            .getBlockHeader(headBlockHash)
+            .map(headHeader -> descendsFrom(headHeader, blockHeader))
+            .orElse(false);
+    lastHeadWorldStateAncestry = new Ancestry(headBlockHash, blockHeader.getBlockHash(), descends);
+    return descends;
   }
+
+  private record CapBackoff(Hash tip, int retryDepth) {}
+
+  private record Ancestry(Hash descendant, Hash ancestor, boolean descends) {}
 
   @VisibleForTesting
   public void setMaxCachedLayerDepth(final int maxCachedLayerDepth) {
     this.maxCachedLayerDepth = maxCachedLayerDepth;
-    this.nextCapDepth = maxCachedLayerDepth;
   }
 
   /**
@@ -514,8 +547,7 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
   public void resetArchiveStateTo(final BlockHeader blockHeader) {
     headWorldStateLock.lock();
     try {
-      chainHeadBelowCappedWorldState = null;
-      nextCapDepth = maxCachedLayerDepth;
+      capBackoff = null;
       headWorldState.resetWorldStateTo(blockHeader);
       this.worldStateCacheManager.reset();
       this.worldStateCacheManager.addCachedLayer(

@@ -29,6 +29,7 @@ import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -117,6 +118,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -1635,7 +1637,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         new Block(block1Header, BlockBody.empty()), Optional.empty(), terminalHeader.getHash());
 
     final WorldStateArchive cappedArchive = mock(WorldStateArchive.class);
-    when(cappedArchive.isHeadWorldStateCappedAbove(block1Header.getHash())).thenReturn(true);
+    when(cappedArchive.isHeadWorldStateAbove(block1Header)).thenReturn(true);
 
     final ForkchoiceResult result =
         coordinatorWith(cappedArchive)
@@ -1656,7 +1658,11 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     final WorldStateArchive cappingArchive = mock(WorldStateArchive.class);
     coordinatorWith(cappingArchive).rememberBlock(new Block(block1Header, BlockBody.empty()));
 
-    verify(cappingArchive).capCachedLayerDepth(terminalHeader);
+    final InOrder capThenImport = inOrder(cappingArchive);
+    capThenImport.verify(cappingArchive).capCachedLayerDepth(terminalHeader);
+    capThenImport
+        .verify(cappingArchive)
+        .getWorldState(any(org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.class));
   }
 
   private MergeCoordinator coordinatorWith(final WorldStateArchive archive) {

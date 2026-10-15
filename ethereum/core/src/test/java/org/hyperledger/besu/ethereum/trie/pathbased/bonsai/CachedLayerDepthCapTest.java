@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.wit
 import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.withBlockHeaderAndUpdateNodeHead;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -57,8 +58,8 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
     final List<Block> imported = importWithoutForkChoice(chainHead, 20);
 
     assertThat(blockchain.getChainHeadHash()).isEqualTo(chainHead.getHash());
-    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isTrue();
-    assertThat(archive.isHeadWorldStateCappedAbove(imported.getFirst().getHash())).isFalse();
+    assertThat(archive.isHeadWorldStateAbove(chainHead)).isTrue();
+    assertThat(archive.isHeadWorldStateAbove(imported.getLast().getHeader())).isFalse();
     final BlockHeader persisted =
         blockchain
             .getBlockHeader(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash().get())
@@ -95,7 +96,6 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
                 .getWorldState(withBlockHeaderAndUpdateNodeHead(tip))
                 .map(MutableWorldState::rootHash))
         .contains(tip.getStateRoot());
-    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isFalse();
     assertThat(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash())
         .contains(tip.getHash());
   }
@@ -121,7 +121,38 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
 
     assertThat(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash())
         .contains(chainHead.getHash());
-    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isFalse();
+    assertThat(archive.isHeadWorldStateAbove(chainHead)).isFalse();
+  }
+
+  @Test
+  void branchForkingAboveTheChainHeadIsCapped() {
+    archive.setMaxCachedLayerDepth(MAX_DEPTH);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    final List<Block> first = importWithoutForkChoice(chainHead, 20);
+    // a branch off the imported blocks, below where the cap last persisted the world state
+    final BlockHeader forkPoint = first.get(3).getHeader();
+    nextNonce = forkPoint.getNumber();
+
+    final List<Block> second = importWithoutForkChoice(forkPoint, 20);
+
+    final Hash persisted = archive.getWorldStateKeyValueStorage().getWorldStateBlockHash().get();
+    assertThat(second.stream().map(Block::getHash)).contains(persisted);
+  }
+
+  @Test
+  void branchTheCapSkippedDoesNotDelayTheCapOfAnother() {
+    archive.setMaxCachedLayerDepth(MAX_DEPTH);
+    final List<Block> canonical = extendCanonicalChain(4);
+    final BlockHeader chainHead = blockchain.getChainHeadHeader();
+    final long chainHeadNonce = nextNonce;
+    nextNonce = canonical.get(1).getHeader().getNumber();
+    importWithoutForkChoice(canonical.get(1).getHeader(), 20);
+    nextNonce = chainHeadNonce;
+
+    final List<Block> synced = importWithoutForkChoice(chainHead, 3 * MAX_DEPTH);
+
+    final Hash persisted = archive.getWorldStateKeyValueStorage().getWorldStateBlockHash().get();
+    assertThat(synced.stream().map(Block::getHash)).contains(persisted);
   }
 
   @Test
@@ -134,7 +165,6 @@ public class CachedLayerDepthCapTest extends AbstractIsolationTests {
 
     final List<Block> more = importWithoutForkChoice(imported.getLast().getHeader(), MAX_DEPTH * 3);
 
-    assertThat(archive.isHeadWorldStateCappedAbove(chainHead.getHash())).isFalse();
     assertThat(archive.getWorldStateKeyValueStorage().getWorldStateBlockHash())
         .contains(chainHead.getHash());
     assertThat(

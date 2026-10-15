@@ -129,11 +129,9 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
           // do we need to move forward or backward?
           long distanceToMove = (delta > 0) ? -maxTrieLogsToRollAtOnce : maxTrieLogsToRollAtOnce;
 
-          // Add distanceToMove to the current block number to get the interim target header. The
-          // world state can be persisted above the chain head, where there is no canonical block
           var interimHead =
               maxTrieLogsToRollAtOnce < Math.abs(delta)
-                  ? blockchain.getBlockHeader(currentHead.get().getNumber() + distanceToMove)
+                  ? interimHeader(blockchain, currentHead.get(), distanceToMove)
                   : Optional.<BlockHeader>empty();
 
           if (interimHead.isPresent()) {
@@ -156,6 +154,20 @@ public class DebugSetHead extends AbstractBlockParameterOrBlockHashMethod {
       LOG.error("Failed to incrementally roll blockchain to " + target.toLogString(), ex);
       return false;
     }
+  }
+
+  private static Optional<BlockHeader> interimHeader(
+      final MutableBlockchain blockchain, final BlockHeader current, final long distanceToMove) {
+    if (distanceToMove > 0) {
+      return blockchain.getBlockHeader(current.getNumber() + distanceToMove);
+    }
+    // the world state can be persisted above the chain head, where no block is canonical, so it
+    // steps back along its own ancestors
+    Optional<BlockHeader> header = Optional.of(current);
+    for (long step = 0; step < -distanceToMove && header.isPresent(); step++) {
+      header = blockchain.getBlockHeader(header.get().getParentHash());
+    }
+    return header;
   }
 
   private Optional<Boolean> shouldMoveWorldstate(final JsonRpcRequestContext request) {
