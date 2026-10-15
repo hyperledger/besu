@@ -19,7 +19,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.trie.common.TrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.MptStorageRootStrategy;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.StorageRootStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.Consumer;
@@ -86,7 +89,21 @@ public class BonsaiWorldStateUpdateAccumulator
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
-    return new BonsaiAccount(context, address, stateTrieAccount, mutable, codeCache);
+    // trie logs from a plugin factory may hold other account values
+    final StorageRootStrategy storageRootStrategy =
+        stateTrieAccount instanceof TrieAccountValue trieAccountValue
+            ? trieAccountValue.storageRootStrategy()
+            : new MptStorageRootStrategy(stateTrieAccount.getStorageRoot());
+    return new BonsaiAccount(
+        context,
+        address,
+        address.addressHash(),
+        stateTrieAccount.getNonce(),
+        stateTrieAccount.getBalance(),
+        storageRootStrategy,
+        stateTrieAccount.getCodeHash(),
+        mutable,
+        codeCache);
   }
 
   @Override
@@ -100,7 +117,15 @@ public class BonsaiWorldStateUpdateAccumulator
       final Hash codeHash,
       final boolean mutable) {
     return new BonsaiAccount(
-        context, address, addressHash, nonce, balance, storageRoot, codeHash, mutable, codeCache);
+        context,
+        address,
+        addressHash,
+        nonce,
+        balance,
+        new MptStorageRootStrategy(storageRoot),
+        codeHash,
+        mutable,
+        codeCache);
   }
 
   @Override

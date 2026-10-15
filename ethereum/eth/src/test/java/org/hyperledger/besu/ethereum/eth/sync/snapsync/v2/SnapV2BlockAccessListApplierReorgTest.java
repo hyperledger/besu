@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.DownloadedAccountRangeTra
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.DownloadedStorageRangeTracker;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderException;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -174,7 +174,7 @@ class SnapV2BlockAccessListApplierReorgTest {
         .commit();
 
     assertThat(readBalance(ALICE)).isEqualTo(Wei.of(80));
-    final PmtStateTrieAccountValue grace = readAccount(GRACE);
+    final PatriciaTrieAccountValue grace = readAccount(GRACE);
     assertThat(grace.getBalance()).isEqualTo(Wei.of(50));
     assertThat(grace.getNonce()).isZero();
     assertThat(grace.getCodeHash()).isEqualTo(Hash.EMPTY);
@@ -425,12 +425,12 @@ class SnapV2BlockAccessListApplierReorgTest {
         .commit();
 
     // Alice: nonce applied, balance (untouched by the canonical BAL) preserved.
-    final PmtStateTrieAccountValue alice = readAccount(ALICE);
+    final PatriciaTrieAccountValue alice = readAccount(ALICE);
     assertThat(alice.getNonce()).isEqualTo(7L);
     assertThat(alice.getBalance()).isEqualTo(Wei.of(50));
 
     // Charlie: code stored and code hash updated (the "deployed on both forks" case).
-    final PmtStateTrieAccountValue charlie = readAccount(CHARLIE);
+    final PatriciaTrieAccountValue charlie = readAccount(CHARLIE);
     assertThat(charlie.getCodeHash()).isEqualTo(Hash.hash(code));
     assertThat(readCode(CHARLIE)).hasValue(code);
   }
@@ -556,8 +556,8 @@ class SnapV2BlockAccessListApplierReorgTest {
 
   private void seedAccount(final Address address, final Wei balance) {
     final WorldStateKeyValueStorage.Updater updater = coordinator.updater();
-    final PmtStateTrieAccountValue account =
-        new PmtStateTrieAccountValue(0L, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    final PatriciaTrieAccountValue account =
+        new PatriciaTrieAccountValue(0L, balance, Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
     final Bytes encoded = RLP.encode(account::writeTo);
     applyForStrategy(
         updater,
@@ -581,8 +581,8 @@ class SnapV2BlockAccessListApplierReorgTest {
     return readAccount(address).getBalance();
   }
 
-  private PmtStateTrieAccountValue readAccount(final Address address) {
-    return PmtStateTrieAccountValue.readFrom(RLP.input(readAccountBytes(address).orElseThrow()));
+  private PatriciaTrieAccountValue readAccount(final Address address) {
+    return PatriciaTrieAccountValue.readFrom(RLP.input(readAccountBytes(address).orElseThrow()));
   }
 
   private boolean accountExists(final Address address) {
@@ -605,7 +605,7 @@ class SnapV2BlockAccessListApplierReorgTest {
   }
 
   private Optional<Bytes> readCode(final Address address) {
-    final PmtStateTrieAccountValue account = readAccount(address);
+    final PatriciaTrieAccountValue account = readAccount(address);
     return coordinator.applyForStrategy(
         bonsai -> bonsai.getCode(account.getCodeHash(), address.addressHash()).map(Code::getBytes),
         forest -> Optional.<Bytes>empty());
