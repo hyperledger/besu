@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 import static org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration.DEFAULT_MAX_LAYERS_TO_LOAD;
@@ -271,7 +271,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database. In FULL mode resetOnResync is a no-op, so clear the flat
@@ -304,7 +304,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -355,7 +355,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -387,7 +387,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
     updater
         .getWorldStateTransaction()
-        .put(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, trie.getRootHash().toArrayUnsafe());
     updater.commit();
 
     // remove flat database
@@ -918,7 +918,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     final Bytes32 rootHashKey = Bytes32.fromHexString("0x01");
     updater
         .getWorldStateTransaction()
-        .put(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, rootHashKey.toArrayUnsafe());
     updater.commit();
     assertThat(storage.isWorldStateAvailable(rootHashKey, Hash.EMPTY)).isTrue();
   }
@@ -963,7 +963,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
     assertThat(
             storage
                 .getComposedWorldStateStorage()
-                .get(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
+                .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
                 .map(Bytes::wrap))
         .contains(rootHash);
     // the accessors without a branch read the Patricia branch
@@ -1111,7 +1111,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
       final SegmentedKeyValueStorage storage, final long blockNumber) {
     SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     tx.put(
-        PATRICIA_TRIE_BRANCH_STORAGE,
+        TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();

@@ -17,7 +17,6 @@ package org.hyperledger.besu.plugin.services.storage.rocksdb.segmented;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -335,59 +334,6 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     } catch (StorageException e) {
       assertThat(e.getMessage()).contains("Unhandled column families");
     }
-  }
-
-  @Test
-  public void patriciaTrieBranchStorageIsTheTrieBranchStorageOfExistingDbs(
-      @TempDir final Path testPath) throws Exception {
-    // the trie branch segment as databases created before its rename know it
-    final SegmentIdentifier trieBranchStorage =
-        new SegmentIdentifier() {
-          @Override
-          public String getName() {
-            return "TRIE_BRANCH_STORAGE";
-          }
-
-          @Override
-          public byte[] getId() {
-            return new byte[] {9};
-          }
-
-          @Override
-          public boolean containsStaticData() {
-            return false;
-          }
-
-          @Override
-          public boolean isEligibleToHighSpecFlag() {
-            return true;
-          }
-        };
-    final byte[] rootKey = "worldRoot".getBytes(StandardCharsets.UTF_8);
-    final byte[] blockHashKey = "worldBlockHash".getBytes(StandardCharsets.UTF_8);
-    final List<SegmentIdentifier> before = List.of(TestSegment.DEFAULT, trieBranchStorage);
-    final List<SegmentIdentifier> after =
-        List.of(TestSegment.DEFAULT, PATRICIA_TRIE_BRANCH_STORAGE);
-
-    // a database written before the rename opens after it
-    SegmentedKeyValueStorage store = createSegmentedStore(testPath, before, List.of());
-    SegmentedKeyValueStorageTransaction tx = store.startTransaction();
-    tx.put(trieBranchStorage, rootKey, bytesOf(1));
-    tx.commit();
-    store.close();
-
-    store = createSegmentedStore(testPath, after, List.of());
-    assertThat(store.get(PATRICIA_TRIE_BRANCH_STORAGE, rootKey)).contains(bytesOf(1));
-    tx = store.startTransaction();
-    tx.put(PATRICIA_TRIE_BRANCH_STORAGE, blockHashKey, bytesOf(2));
-    tx.commit();
-    store.close();
-
-    // and a database written after it still opens before it
-    store = createSegmentedStore(testPath, before, List.of());
-    assertThat(store.get(trieBranchStorage, rootKey)).contains(bytesOf(1));
-    assertThat(store.get(trieBranchStorage, blockHashKey)).contains(bytesOf(2));
-    store.close();
   }
 
   @Test

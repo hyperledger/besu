@@ -37,9 +37,8 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), false, true, false),
   CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE)),
   ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), false, true, false),
-  // formerly TRIE_BRANCH_STORAGE, under the same id
-  PATRICIA_TRIE_BRANCH_STORAGE(
-      new byte[] {9}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), false, true, false),
+  // holds the Patricia trie branch
+  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), false, true, false),
   TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, X_BONSAI_ARCHIVE), true, false, true),
   ACCOUNT_INFO_STATE_ARCHIVE(
       "ACCOUNT_INFO_STATE_ARCHIVE", EnumSet.of(X_BONSAI_ARCHIVE), true, false, true, true),

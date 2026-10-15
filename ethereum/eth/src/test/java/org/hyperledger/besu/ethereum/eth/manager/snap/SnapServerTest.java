@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -854,7 +854,7 @@ public class SnapServerTest {
       final SegmentedKeyValueStorage storage, final long blockNumber) {
     SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     tx.put(
-        PATRICIA_TRIE_BRANCH_STORAGE,
+        TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();

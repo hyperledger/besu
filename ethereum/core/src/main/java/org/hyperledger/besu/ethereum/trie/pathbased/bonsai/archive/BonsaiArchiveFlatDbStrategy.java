@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_ARCHIVE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -61,8 +61,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
     // For Bonsai archive get the flat DB context to use for writing archive entries.
     // If WORLD_BLOCK_NUMBER_KEY doesn't exist, this is genesis (block 0), use suffix 0.
     // Otherwise, we're processing block N+1, so use worldBlockNumber + 1 as the suffix.
-    Optional<byte[]> archiveContext =
-        storage.get(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
+    Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
         return Optional.of(
@@ -83,8 +82,7 @@ public class BonsaiArchiveFlatDbStrategy extends BonsaiFullFlatDbStrategy {
   private Optional<BonsaiArchiveContext> getStateArchiveContextForRead(
       final SegmentedKeyValueStorage storage) {
     // For Bonsai archive get the flat DB context to use for reading archive entries
-    Optional<byte[]> archiveContext =
-        storage.get(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
+    Optional<byte[]> archiveContext = storage.get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY);
     if (archiveContext.isPresent()) {
       try {
         return Optional.of(

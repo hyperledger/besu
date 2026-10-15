@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_ARCHIVE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -211,7 +211,7 @@ public class BonsaiArchiveFlatDbStrategyTest {
   private void setWorldBlockNumber(final long blockNumber) {
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     tx.put(
-        PATRICIA_TRIE_BRANCH_STORAGE,
+        TRIE_BRANCH_STORAGE,
         WORLD_BLOCK_NUMBER_KEY,
         Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
     tx.commit();

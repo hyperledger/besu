@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -136,7 +136,7 @@ public class ArchiveTrieNodeStrategy
 
   private static long readBlockNumber(final SegmentedKeyValueStorage storage) {
     return storage
-        .get(PATRICIA_TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY)
+        .get(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY)
         .map(b -> Bytes.wrap(b).toLong() + 1L)
         .orElse(0L);
   }

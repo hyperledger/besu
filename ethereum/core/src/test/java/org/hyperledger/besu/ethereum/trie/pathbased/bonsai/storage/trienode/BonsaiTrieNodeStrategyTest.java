@@ -30,8 +30,7 @@ import org.junit.jupiter.api.Test;
 
 class BonsaiTrieNodeStrategyTest {
   private final SegmentedKeyValueStorage storage =
-      new SegmentedInMemoryKeyValueStorage(
-          List.of(KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE));
+      new SegmentedInMemoryKeyValueStorage(List.of(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE));
   private final BonsaiTrieNodeStrategy strategy = new BonsaiTrieNodeStrategy();
 
   private static Bytes32 hash(final Bytes value) {
@@ -47,9 +46,7 @@ class BonsaiTrieNodeStrategyTest {
     tx.commit();
     assertThat(strategy.getTrieNode(storage, location, hash(node))).contains(node);
     // on-disk key is the bare location (format-compatible with legacy bonsai)
-    assertThat(
-            storage.get(
-                KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE, location.toArrayUnsafe()))
+    assertThat(storage.get(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE, location.toArrayUnsafe()))
         .isPresent();
   }
 

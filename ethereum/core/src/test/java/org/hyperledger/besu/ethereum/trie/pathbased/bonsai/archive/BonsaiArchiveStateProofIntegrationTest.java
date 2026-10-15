@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE_ARCHIVE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration.Unstable.DEFAULT_BONSAI_ARCHIVE_DEEP_CHECKPOINT_INTERVAL;
@@ -62,7 +62,7 @@ class BonsaiArchiveStateProofIntegrationTest {
   void setUp() {
     storage =
         new SegmentedInMemoryKeyValueStorage(
-            List.of(PATRICIA_TRIE_BRANCH_STORAGE, TRIE_BRANCH_STORAGE_ARCHIVE));
+            List.of(TRIE_BRANCH_STORAGE, TRIE_BRANCH_STORAGE_ARCHIVE));
     final ArchiveCoverageTracker coverageTracker = new ArchiveCoverageTracker(storage);
     final ArchiveNodeHistoryStore historyStore = new ArchiveNodeHistoryStore(storage);
     final BonsaiTrieNodeStrategy baseStrategy = new BonsaiTrieNodeStrategy();
@@ -145,9 +145,7 @@ class BonsaiArchiveStateProofIntegrationTest {
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     archiveStrategy.putTrieNode(storage, tx, location, hash(node), node);
     tx.put(
-        PATRICIA_TRIE_BRANCH_STORAGE,
-        WORLD_BLOCK_NUMBER_KEY,
-        Bytes.ofUnsignedLong(block).toArrayUnsafe());
+        TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(block).toArrayUnsafe());
     archiveStrategy.onBeforeCommit(storage, tx);
     tx.commit();
   }
@@ -317,10 +315,7 @@ class BonsaiArchiveStateProofIntegrationTest {
 
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     archiveStrategy.removeTrieNode(storage, tx, location);
-    tx.put(
-        PATRICIA_TRIE_BRANCH_STORAGE,
-        WORLD_BLOCK_NUMBER_KEY,
-        Bytes.ofUnsignedLong(1L).toArrayUnsafe());
+    tx.put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(1L).toArrayUnsafe());
     archiveStrategy.onBeforeCommit(storage, tx);
     tx.commit();
 
@@ -353,9 +348,7 @@ class BonsaiArchiveStateProofIntegrationTest {
             storage, tx, TrieNodeKey.of(accountB, location), hash(bV0), bV0);
       }
       tx.put(
-          PATRICIA_TRIE_BRANCH_STORAGE,
-          WORLD_BLOCK_NUMBER_KEY,
-          Bytes.ofUnsignedLong(block).toArrayUnsafe());
+          TRIE_BRANCH_STORAGE, WORLD_BLOCK_NUMBER_KEY, Bytes.ofUnsignedLong(block).toArrayUnsafe());
       archiveStrategy.onBeforeCommit(storage, tx);
       tx.commit();
     }

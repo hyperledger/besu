@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.PATRICIA_TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -110,10 +110,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     this.composedWorldStateStorage =
         provider.getStorageBySegmentIdentifiers(
             List.of(
-                ACCOUNT_INFO_STATE,
-                CODE_STORAGE,
-                ACCOUNT_STORAGE_STORAGE,
-                PATRICIA_TRIE_BRANCH_STORAGE));
+                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
     this.trieLogStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
     this.flatDbStrategyProvider =
@@ -283,7 +280,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
 
   public void clearTrie() {
     subscribers.forEach(StorageSubscriber::onClearTrie);
-    composedWorldStateStorage.clear(PATRICIA_TRIE_BRANCH_STORAGE);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
   }
 
   public boolean pruneTrieLog(final Hash blockHash) {
@@ -444,9 +441,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
    * @return the node, or empty if it is missing
    */
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return composedWorldStateStorage
-        .get(PATRICIA_TRIE_BRANCH_STORAGE, key.toArrayUnsafe())
-        .map(Bytes::wrap);
+    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
@@ -479,7 +474,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
   public void clear() {
     subscribers.forEach(StorageSubscriber::onClearStorage);
     getFlatDbStrategy().clearAll(composedWorldStateStorage);
-    composedWorldStateStorage.clear(PATRICIA_TRIE_BRANCH_STORAGE);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
     trieLogStorage.clear();
     clearCrossBlockCache();
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
