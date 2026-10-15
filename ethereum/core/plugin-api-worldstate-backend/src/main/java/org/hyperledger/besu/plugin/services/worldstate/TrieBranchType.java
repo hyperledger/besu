@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services.worldstate;
 
-/** Identifies which trie implementation's branch nodes are read or written. */
+/**
+ * A trie branch of the world state. For now only its root, block hash and block number are stored
+ * apart, the trie nodes still go to the Patricia branch.
+ */
 public enum TrieBranchType {
   /** The Merkle Patricia trie. */
   PATRICIA,
