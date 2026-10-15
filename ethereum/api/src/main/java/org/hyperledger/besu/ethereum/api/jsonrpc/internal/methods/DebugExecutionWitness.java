@@ -30,10 +30,11 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiExecutionWitnessBuilder;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 
 import java.util.Map;
 import java.util.Optional;
@@ -100,68 +101,62 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
     // The parent block must be present in order to re-execute the block against its parent state.
     final Block block = maybeBlock.get();
     final BlockHeader blockHeader = block.getHeader();
-    if (blockchain.getBlockHeader(blockHeader.getParentHash()).isEmpty()) {
+
+    final Optional<BlockHeader> parentHeader =
+        blockchain.getBlockHeader(blockHeader.getParentHash());
+    if (parentHeader.isEmpty()) {
       return new JsonRpcErrorResponse(reqId, RpcErrorType.BLOCK_NOT_FOUND);
     }
+    final WorldStateQueryParams worldStateQueryParams =
+        WorldStateQueryParams.newBuilder()
+            .withBlockHeader(parentHeader.get())
+            .withShouldWorldStateUpdateHead(false)
+            .build();
 
-    // Re-execute the block against its parent state. Validation is skipped (NONE/NONE) because the
-    // block is already imported. Re-execution is what yields the two things the witness needs and
-    // the database does not hold: the block access list, from which the codes are derived, and the
-    // ancestors the BLOCKHASH lookup resolved. Both arrive on BlockProcessingOutputs.
-    // shouldPersist=false keeps the world state unchanged; shouldRecordBadBlock=false suppresses
-    // bad-block storage for what is known to be a valid, imported block.
-    final BlockProcessingResult result =
-        protocolSchedule
-            .getByBlockHeader(blockHeader)
-            .getBlockValidator()
-            .validateAndProcessBlock(
-                protocolContext,
-                block,
-                HeaderValidationMode.NONE,
-                HeaderValidationMode.NONE,
-                Optional.empty(),
-                false,
-                false);
+    try (final var worldState =
+        protocolContext.getWorldStateArchive().getWorldState(worldStateQueryParams).orElse(null)) {
 
-    if (!result.isSuccessful()) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
-    }
+      // Re-execute against the parent state to collect the BAL and BLOCKHASH ancestors required for
+      // the witness.
+      final BlockProcessingResult result =
+          protocolSchedule
+              .getByBlockHeader(blockHeader)
+              .getBlockProcessor()
+              .processBlock(
+                  BlockExecutionContext.builder()
+                      .protocolContext(protocolContext)
+                      .worldState(worldState)
+                      .block(block)
+                      .blockAccessList(Optional.empty())
+                      .build());
 
-    final BonsaiExecutionWitnessBuilder.Witness witness;
-    try {
+      if (!result.isSuccessful() || result.getYield().isEmpty()) {
+        return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
+      }
+      final BlockProcessingOutputs outputs = result.getYield().get();
+      final BonsaiExecutionWitnessBuilder.Witness witness;
       // The block access list is required for witness generation
       final BlockAccessList blockAccessList =
-          result
-              .getYield()
-              .flatMap(BlockProcessingOutputs::getBlockAccessList)
+          outputs
+              .getBlockAccessList()
               .orElseThrow(
                   () ->
                       new IllegalStateException(
                           "block access list is required for witness generation but was absent for block "
                               + blockHeader.getHash()));
-
-      final Map<Long, Hash> accessedAncestors =
-          result
-              .getYield()
-              .map(BlockProcessingOutputs::getAccessedAncestors)
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "block processing produced no yield for block " + blockHeader.getHash()));
-
+      final Map<Long, Hash> accessedAncestors = outputs.getAccessedAncestors();
       final BonsaiExecutionWitnessBuilder witnessBuilder =
           new BonsaiExecutionWitnessBuilder(
               getBlockchainQueries().getWorldStateArchive(), blockchain);
       witness = witnessBuilder.buildWitness(blockHeader, blockAccessList, accessedAncestors);
-    } catch (final IllegalStateException e) {
-      LOG.error("Failed to build execution witness for block {}", blockHeader.getHash(), e);
+      if (witness.state().isEmpty()) {
+        LOG.error("Empty witness state for block {}", blockHeader.getHash());
+        return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
+      }
+      return new ExecutionWitnessResult(witness.state(), witness.codes(), witness.headers());
+    } catch (Exception ex) {
+      LOG.error("Failed to build execution witness for block {}", blockHeader.getHash(), ex);
       return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
     }
-
-    if (witness.state().isEmpty()) {
-      LOG.error("Empty witness state for block {}", blockHeader.getHash());
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
-    }
-    return new ExecutionWitnessResult(witness.state(), witness.codes(), witness.headers());
   }
 }
