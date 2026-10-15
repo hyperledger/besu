@@ -83,9 +83,4 @@ public class DelegateCallOperationV2 extends AbstractCallOperationV2 {
   public long gasAvailableForChildCall(final MessageFrame frame) {
     return gasCalculator().gasAvailableForChildCall(frame, gas(frame), false);
   }
-
-  @Override
-  protected boolean isDelegate() {
-    return true;
-  }
 }
