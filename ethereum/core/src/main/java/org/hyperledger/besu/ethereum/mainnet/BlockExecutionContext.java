@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
@@ -49,6 +50,7 @@ public class BlockExecutionContext {
   @Nullable private final BlockAccessList blockAccessList;
   private final boolean sequentialExecutionRequested;
   @Nullable private final BlockAwareOperationTracer blockTracer;
+  private final BlockAccessListFactoryProvider blockAccessListFactory;
 
   private BlockExecutionContext(final Builder builder) {
     this.protocolContext = builder.protocolContext;
@@ -57,6 +59,7 @@ public class BlockExecutionContext {
     this.blockAccessList = builder.blockAccessList;
     this.sequentialExecutionRequested = builder.sequentialExecutionRequested;
     this.blockTracer = builder.blockTracer;
+    this.blockAccessListFactory = builder.blockAccessListFactory;
   }
 
   /**
@@ -127,11 +130,22 @@ public class BlockExecutionContext {
             .worldState(worldState)
             .block(block)
             .blockAccessList(getBlockAccessList())
-            .sequentialExecutionRequested(sequentialExecutionRequested);
+            .sequentialExecutionRequested(sequentialExecutionRequested)
+            .blockAccessListFactory(blockAccessListFactory);
     if (blockTracer != null) {
       builder.blockTracer(blockTracer);
     }
     return builder;
+  }
+
+  /**
+   * Returns the provider of the block access list factory the block is processed with.
+   *
+   * @return the block access list factory provider, {@link
+   *     BlockAccessListFactoryProvider#FROM_PROTOCOL_SPEC} by default
+   */
+  public BlockAccessListFactoryProvider getBlockAccessListFactory() {
+    return blockAccessListFactory;
   }
 
   /**
@@ -141,6 +155,26 @@ public class BlockExecutionContext {
    */
   public static Builder builder() {
     return new Builder();
+  }
+
+  /**
+   * Provides the block access list factory a block is processed with, given the block's protocol
+   * spec. A block with no factory is processed without a block access list.
+   */
+  @FunctionalInterface
+  public interface BlockAccessListFactoryProvider {
+
+    /** The block access list factory of the block's fork, if it defines one. */
+    BlockAccessListFactoryProvider FROM_PROTOCOL_SPEC = ProtocolSpec::getBlockAccessListFactory;
+
+    /**
+     * Returns the block access list factory to process a block of {@code protocolSpec} with.
+     *
+     * @param protocolSpec the protocol spec of the block
+     * @return the block access list factory, or empty to process the block without a block access
+     *     list
+     */
+    Optional<BlockAccessListFactory> get(ProtocolSpec protocolSpec);
   }
 
   /** Builder for {@link BlockExecutionContext}. */
@@ -153,6 +187,8 @@ public class BlockExecutionContext {
     private boolean blockAccessListSet = false;
     private boolean sequentialExecutionRequested = false;
     @Nullable private BlockAwareOperationTracer blockTracer = null;
+    private BlockAccessListFactoryProvider blockAccessListFactory =
+        BlockAccessListFactoryProvider.FROM_PROTOCOL_SPEC;
 
     /**
      * Sets the protocol context (required).
@@ -228,6 +264,21 @@ public class BlockExecutionContext {
      */
     public Builder blockTracer(final BlockAwareOperationTracer blockTracer) {
       this.blockTracer = Objects.requireNonNull(blockTracer, "blockTracer");
+      return this;
+    }
+
+    /**
+     * Sets the provider of the block access list factory the block is processed with (optional,
+     * {@link BlockAccessListFactoryProvider#FROM_PROTOCOL_SPEC} by default), for instance to build
+     * a block access list for a fork that defines none.
+     *
+     * @param blockAccessListFactory the block access list factory provider
+     * @return this builder
+     */
+    public Builder blockAccessListFactory(
+        final BlockAccessListFactoryProvider blockAccessListFactory) {
+      this.blockAccessListFactory =
+          Objects.requireNonNull(blockAccessListFactory, "blockAccessListFactory");
       return this;
     }
 

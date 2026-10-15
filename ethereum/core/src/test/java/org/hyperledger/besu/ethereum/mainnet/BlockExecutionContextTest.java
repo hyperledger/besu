@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
@@ -153,5 +154,36 @@ class BlockExecutionContextTest {
     assertThat(sequential.isSequentialExecutionRequested()).isTrue();
     assertThat(sequential.toBuilder().build().isSequentialExecutionRequested()).isTrue();
     assertThat(context.isSequentialExecutionRequested()).isFalse();
+  }
+
+  @Test
+  void blockAccessListFactoryIsTheForksByDefault() {
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .build();
+
+    assertThat(context.getBlockAccessListFactory())
+        .isSameAs(BlockExecutionContext.BlockAccessListFactoryProvider.FROM_PROTOCOL_SPEC);
+  }
+
+  @Test
+  void blockAccessListFactoryIsKeptAndCopiedByToBuilder() {
+    final BlockExecutionContext.BlockAccessListFactoryProvider provider =
+        spec -> Optional.of(new BlockAccessListFactory());
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .blockAccessListFactory(provider)
+            .build();
+
+    assertThat(context.getBlockAccessListFactory()).isSameAs(provider);
+    assertThat(context.toBuilder().build().getBlockAccessListFactory()).isSameAs(provider);
   }
 }

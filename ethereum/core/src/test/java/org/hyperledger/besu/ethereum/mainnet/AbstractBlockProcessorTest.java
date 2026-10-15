@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
@@ -158,6 +160,23 @@ abstract class AbstractBlockProcessorTest {
             .build());
 
     verify(importTracer).traceStartBlock(any(), any(BlockHeader.class), any(Address.class));
+  }
+
+  @Test
+  void blockAccessListFactoryFromContextIsUsedWhenTheForkHasNone() {
+    // The fork defines no block access list factory (the mocked spec returns empty).
+    final BlockAccessListFactory blockAccessListFactory = spy(new BlockAccessListFactory());
+
+    blockProcessor.processBlock(
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .blockAccessListFactory(spec -> Optional.of(blockAccessListFactory))
+            .build());
+
+    verify(blockAccessListFactory).newBlockAccessListBuilder();
   }
 
   @Test
