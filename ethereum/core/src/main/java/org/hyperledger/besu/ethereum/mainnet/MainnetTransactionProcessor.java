@@ -324,10 +324,21 @@ public class MainnetTransactionProcessor {
             maybeCodeDelegationProcessor.get().process(delegationUpdater, transaction);
         eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         if (stateGasCalc.isActive()) {
-          // Defer the commit so a preparation out-of-gas can roll the delegations back.
+          // Defer the commit so a preparation out-of-gas can roll the delegations back. The
+          // authorities reach the block access list as chargeCodeDelegationAccesses replays them.
           delegationAccesses = codeDelegationResult.authorityAccesses();
           deferredDelegationUpdater = delegationUpdater;
         } else {
+          // As in delegationTargetCode: with no top-frame charge to replay, record the authorities
+          // where they are loaded, skipped ones included. The block access list and state gas both
+          // activate with Amsterdam, so block processing never has a tracker here; this only runs
+          // when debug_executionWitness collects a synthetic block access list to build the witness
+          // for a pre-Amsterdam block.
+          accessLocationTracker.ifPresent(
+              tracker ->
+                  codeDelegationResult
+                      .authorityAccesses()
+                      .forEach(access -> tracker.addTouchedAccount(access.authority())));
           // The intrinsic already validated the charge, so there is nothing left to fail.
           codeDelegationRefund =
               gasCalculator.calculateDelegateCodeGasRefund(
