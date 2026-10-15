@@ -18,8 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -344,6 +347,38 @@ public class LayeredKeyValueStorageTest {
   }
 
   /**
+   * isClosed() on an open chain must check the base storage directly rather than walking the
+   * parents: get() calls it at every layer, so a walk made each key miss O(N²) in the chain depth.
+   * A chain deep enough to overflow the stack if isClosed() recursed asserts it does not.
+   */
+  @Test
+  void isClosedOnOpenDeepChainChecksBaseStorageDirectly() {
+    LayeredKeyValueStorage top = layeredKeyValueStorage;
+    for (int i = 0; i < 100_000; i++) {
+      top = new LayeredKeyValueStorage(top);
+    }
+    when(parentStorage.isClosed()).thenReturn(false);
+
+    assertFalse(top.isClosed());
+    verify(parentStorage, times(1)).isClosed();
+  }
+
+  @Test
+  void isClosedUsesOverrideOfSubclassParent() {
+    final LayeredKeyValueStorage closedSubclass =
+        new LayeredKeyValueStorage(parentStorage) {
+          @Override
+          public boolean isClosed() {
+            return true;
+          }
+        };
+    final LayeredKeyValueStorage top =
+        new LayeredKeyValueStorage(new LayeredKeyValueStorage(closedSubclass));
+
+    assertTrue(top.isClosed());
+  }
+
+  /**
    * Tests that the stream method correctly handles a parent layer and a current layer where the
    * current layer overrides the parent layer.
    */
@@ -377,5 +412,125 @@ public class LayeredKeyValueStorageTest {
     assertArrayEquals(value2, resultList.get(1).getValue());
     assertArrayEquals(key3, resultList.get(2).getKey());
     assertArrayEquals(value3, resultList.get(2).getValue());
+  }
+
+  @Test
+  void shouldMultigetFromLayerAndParentInInputOrder() {
+    byte[] key1 = {1};
+    byte[] key2 = {2};
+    byte[] key3 = {3};
+    byte[] parentValue1 = {10};
+    byte[] layerValue2 = {20};
+
+    when(parentStorage.multiget(segmentId, List.of(key1, key3)))
+        .thenReturn(List.of(Optional.of(parentValue1), Optional.empty()));
+
+    var hashValueStore = createSegmentMap();
+    hashValueStore.get(segmentId).put(Bytes.wrap(key2), Optional.of(layerValue2));
+    layeredKeyValueStorage = new LayeredKeyValueStorage(hashValueStore, parentStorage);
+
+    final List<Optional<byte[]>> result =
+        layeredKeyValueStorage.multiget(segmentId, List.of(key1, key2, key3));
+
+    assertEquals(3, result.size());
+    assertTrue(result.get(0).isPresent());
+    assertArrayEquals(parentValue1, result.get(0).get());
+    assertTrue(result.get(1).isPresent());
+    assertArrayEquals(layerValue2, result.get(1).get());
+    assertTrue(result.get(2).isEmpty());
+  }
+
+  @Test
+  void shouldNotDelegateLocalMultigetTombstonesToParent() {
+    byte[] key1 = {1};
+    byte[] key2 = {2};
+    byte[] parentValue2 = {20};
+
+    when(parentStorage.multiget(segmentId, List.of(key2)))
+        .thenReturn(List.of(Optional.of(parentValue2)));
+
+    var hashValueStore = createSegmentMap();
+    hashValueStore.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
+    layeredKeyValueStorage = new LayeredKeyValueStorage(hashValueStore, parentStorage);
+
+    final List<Optional<byte[]>> result =
+        layeredKeyValueStorage.multiget(segmentId, List.of(key1, key2));
+
+    assertEquals(2, result.size());
+    assertTrue(result.get(0).isEmpty());
+    assertTrue(result.get(1).isPresent());
+    assertArrayEquals(parentValue2, result.get(1).get());
+    verify(parentStorage).multiget(segmentId, List.of(key2));
+  }
+
+  @Test
+  void shouldDefaultMultigetDelegateToGetForEachInputKey() {
+    final SegmentedKeyValueStorage storage =
+        mock(SegmentedKeyValueStorage.class, CALLS_REAL_METHODS);
+    byte[] key1 = {1};
+    byte[] key2 = {2};
+    byte[] value1 = {10};
+
+    doReturn(Optional.of(value1)).when(storage).get(segmentId, key1);
+    doReturn(Optional.empty()).when(storage).get(segmentId, key2);
+
+    final List<Optional<byte[]>> result = storage.multiget(segmentId, List.of(key1, key2, key1));
+
+    assertEquals(3, result.size());
+    assertTrue(result.get(0).isPresent());
+    assertArrayEquals(value1, result.get(0).get());
+    assertTrue(result.get(1).isEmpty());
+    assertTrue(result.get(2).isPresent());
+    assertArrayEquals(value1, result.get(2).get());
+    verify(storage, times(2)).get(segmentId, key1);
+    verify(storage).get(segmentId, key2);
+  }
+
+  @Test
+  void shouldPreserveDuplicateMultigetKeysWhenDelegatingToParent() {
+    byte[] key1 = {1};
+    byte[] key2 = {2};
+    byte[] parentValue1 = {10};
+    byte[] layerValue2 = {20};
+
+    when(parentStorage.multiget(segmentId, List.of(key1, key1)))
+        .thenReturn(List.of(Optional.of(parentValue1), Optional.of(parentValue1)));
+
+    var hashValueStore = createSegmentMap();
+    hashValueStore.get(segmentId).put(Bytes.wrap(key2), Optional.of(layerValue2));
+    layeredKeyValueStorage = new LayeredKeyValueStorage(hashValueStore, parentStorage);
+
+    final List<Optional<byte[]>> result =
+        layeredKeyValueStorage.multiget(segmentId, List.of(key1, key2, key1));
+
+    assertEquals(3, result.size());
+    assertArrayEquals(parentValue1, result.get(0).orElseThrow());
+    assertArrayEquals(layerValue2, result.get(1).orElseThrow());
+    assertArrayEquals(parentValue1, result.get(2).orElseThrow());
+    verify(parentStorage).multiget(segmentId, List.of(key1, key1));
+  }
+
+  @Test
+  void shouldNotDelegateParentLayerTombstonesDuringMultiget() {
+    byte[] key1 = {1};
+    byte[] key2 = {2};
+    byte[] parentValue2 = {20};
+
+    when(parentStorage.multiget(segmentId, List.of(key2)))
+        .thenReturn(List.of(Optional.of(parentValue2)));
+
+    var parentLayerMap = createSegmentMap();
+    parentLayerMap.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
+    layeredKeyValueStorage =
+        new LayeredKeyValueStorage(
+            new ConcurrentHashMap<>(), new LayeredKeyValueStorage(parentLayerMap, parentStorage));
+
+    final List<Optional<byte[]>> result =
+        layeredKeyValueStorage.multiget(segmentId, List.of(key1, key2));
+
+    assertEquals(2, result.size());
+    assertTrue(result.get(0).isEmpty());
+    assertArrayEquals(parentValue2, result.get(1).orElseThrow());
+    verify(parentStorage).multiget(segmentId, List.of(key2));
   }
 }

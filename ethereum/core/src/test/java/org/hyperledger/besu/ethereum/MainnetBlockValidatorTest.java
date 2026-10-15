@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams.wit
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -41,6 +43,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
@@ -57,6 +60,11 @@ import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -65,6 +73,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 public class MainnetBlockValidatorTest {
@@ -77,6 +86,7 @@ public class MainnetBlockValidatorTest {
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final WorldStateArchive worldStateArchive = mock(WorldStateArchive.class);
   private final MutableWorldState worldState = mock(MutableWorldState.class);
+  private final ReentrantLock headWorldStateLock = new ReentrantLock();
   private final BadBlockManager badBlockManager =
       chainUtil.getProtocolContext().getBadBlockManager();
   private final BlockProcessor blockProcessor = mock(BlockProcessor.class);
@@ -97,9 +107,22 @@ public class MainnetBlockValidatorTest {
 
   public static Stream<Arguments> getBlockProcessingErrors() {
     return Stream.of(
-        Arguments.of("StorageException", new StorageException("Database closed")),
-        Arguments.of("MerkleTrieException", new MerkleTrieException("Missing trie node")),
-        Arguments.of("RuntimeException", new RuntimeException("Oops")));
+        Arguments.of("StorageException", new StorageException("Database closed"), false),
+        Arguments.of("MerkleTrieException", new MerkleTrieException("Missing trie node"), false),
+        Arguments.of(
+            "wrapped StorageException",
+            new RuntimeException(new StorageException("Database closed")),
+            false),
+        Arguments.of(
+            "interrupted",
+            new IllegalStateException("Interrupted", new InterruptedException()),
+            false),
+        Arguments.of("cancelled", new CancellationException("Cancelled"), false),
+        Arguments.of(
+            "rejected by a shut down executor",
+            new RuntimeException(new RejectedExecutionException("Shutting down")),
+            false),
+        Arguments.of("RuntimeException", new RuntimeException("Oops"), true));
   }
 
   @BeforeEach
@@ -114,20 +137,53 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(worldStateArchive.getWorldState(any())).thenReturn(Optional.of(worldState));
     when(worldStateArchive.getWorldState()).thenReturn(worldState);
+    when(worldStateArchive.withHeadWorldStateLock(any()))
+        .thenAnswer(
+            invocation -> {
+              headWorldStateLock.lock();
+              try {
+                return invocation.<Supplier<?>>getArgument(0).get();
+              } finally {
+                headWorldStateLock.unlock();
+              }
+            });
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(true);
     when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any())).thenReturn(true);
     when(blockAccessListValidator.validate(any(), any(), anyInt())).thenReturn(true);
-    when(blockProcessor.processBlock(
-            eq(protocolContext), any(), any(), any(), eq(Optional.empty())))
-        .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(
-            eq(protocolContext), any(), any(), any(), eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(Optional.empty())))
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();
+  }
+
+  @ParameterizedTest(name = "shouldUpdateHead={0}")
+  @ValueSource(booleans = {true, false})
+  public void validateAndProcessBlock_holdsHeadWorldStateLockOnlyWhenUpdatingHead(
+      final boolean shouldUpdateHead) {
+    final AtomicBoolean heldWhileProcessing = new AtomicBoolean();
+    when(blockProcessor.processBlock(contextWith(Optional.empty())))
+        .thenAnswer(
+            invocation -> {
+              heldWhileProcessing.set(headWorldStateLock.isHeldByCurrentThread());
+              return new BlockProcessingResult(Optional.empty(), false);
+            });
+
+    final BlockProcessingResult result =
+        mainnetFrontierBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.FULL,
+            HeaderValidationMode.FULL,
+            Optional.empty(),
+            shouldUpdateHead,
+            true);
+
+    assertThat(result.isSuccessful()).isTrue();
+    assertThat(heldWhileProcessing.get()).isEqualTo(shouldUpdateHead);
+    assertThat(headWorldStateLock.isLocked()).isFalse();
   }
 
   @Test
@@ -167,6 +223,24 @@ public class MainnetBlockValidatorTest {
 
     assertThat(result.isSuccessful()).isTrue();
     assertNoBadBlocks();
+  }
+
+  @Test
+  public void validateAndProcessBlock_onSuccessForgetsAStaleBadBlockEntry() {
+    badBlockManager.addBadHeader(
+        block.getHeader(), BadBlockCause.fromValidationFailure("transient failure"));
+    badBlockManager.addLatestValidHash(block.getHash(), blockParent.getHash());
+
+    BlockProcessingResult result =
+        mainnetFrontierBlockValidator.validateAndProcessBlock(
+            protocolContext,
+            block,
+            HeaderValidationMode.DETACHED_ONLY,
+            HeaderValidationMode.DETACHED_ONLY);
+
+    assertThat(result.isSuccessful()).isTrue();
+    assertThat(badBlockManager.isBadBlock(block.getHash())).isFalse();
+    assertThat(badBlockManager.getLatestValidHash(block.getHash())).isEmpty();
   }
 
   @Test
@@ -211,7 +285,7 @@ public class MainnetBlockValidatorTest {
                     List.of())));
     final Optional<BlockAccessList> optionalBal = Optional.of(bal);
     when(blockAccessListValidator.validate(eq(optionalBal), any(), anyInt())).thenReturn(true);
-    when(blockProcessor.processBlock(eq(protocolContext), any(), any(), any(), eq(optionalBal)))
+    when(blockProcessor.processBlock(contextWith(optionalBal)))
         .thenReturn(new BlockProcessingResult(Optional.empty(), false));
 
     BlockProcessingResult result =
@@ -225,6 +299,7 @@ public class MainnetBlockValidatorTest {
 
     assertThat(result.isSuccessful()).isTrue();
     assertNoBadBlocks();
+    verify(blockProcessor).processBlock(contextWith(block, optionalBal));
   }
 
   @Test
@@ -249,7 +324,7 @@ public class MainnetBlockValidatorTest {
 
     assertValidationFailed(result, "provided gas insufficient");
     verify(blockAccessListValidator, never()).validate(any(), any(), anyInt());
-    verify(blockProcessor, never()).processBlock(eq(protocolContext), any(), any(), any(), eq(bal));
+    verify(blockProcessor, never()).processBlock(any(BlockExecutionContext.class));
     assertThat(badBlockManager.getBadBlocks()).containsExactly(blockWithOversizedTransaction);
   }
 
@@ -339,12 +414,7 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenProcessBlockFails() {
-    when(blockProcessor.processBlock(
-            eq(protocolContext),
-            eq(blockchain),
-            any(MutableWorldState.class),
-            eq(block),
-            eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(block, Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -382,12 +452,7 @@ public class MainnetBlockValidatorTest {
       final String caseName, final Exception storageException) {
     doThrow(storageException)
         .when(blockProcessor)
-        .processBlock(
-            eq(protocolContext),
-            eq(blockchain),
-            any(MutableWorldState.class),
-            eq(block),
-            eq(Optional.empty()));
+        .processBlock(contextWith(block, Optional.empty()));
 
     BlockProcessingResult result =
         mainnetFrontierBlockValidator.validateAndProcessBlock(
@@ -423,15 +488,10 @@ public class MainnetBlockValidatorTest {
   @ParameterizedTest(name = "[{index}] {0}")
   @MethodSource("getBlockProcessingErrors")
   public void validateAndProcessBlock_whenProcessBlockYieldsExceptionalResult(
-      final String caseName, final Exception cause) {
+      final String caseName, final Exception cause, final boolean recordedAsBad) {
     final BlockProcessingResult exceptionalResult =
         new BlockProcessingResult(Optional.empty(), cause);
-    when(blockProcessor.processBlock(
-            eq(protocolContext),
-            eq(blockchain),
-            any(MutableWorldState.class),
-            eq(block),
-            eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(block, Optional.empty())))
         .thenReturn(exceptionalResult);
 
     BlockProcessingResult result =
@@ -442,17 +502,17 @@ public class MainnetBlockValidatorTest {
             HeaderValidationMode.DETACHED_ONLY);
 
     assertValidationFailedExceptionally(result, cause);
-    assertNoBadBlocks();
+    // only a fault of this node leaves the block unrecorded
+    if (recordedAsBad) {
+      assertBadBlockIsTracked(block);
+    } else {
+      assertNoBadBlocks();
+    }
   }
 
   @Test
   public void validateAndProcessBlock_withShouldRecordBadBlockFalse() {
-    when(blockProcessor.processBlock(
-            eq(protocolContext),
-            eq(blockchain),
-            any(MutableWorldState.class),
-            eq(block),
-            eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(block, Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -471,12 +531,7 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_withShouldRecordBadBlockTrue() {
-    when(blockProcessor.processBlock(
-            eq(protocolContext),
-            eq(blockchain),
-            any(MutableWorldState.class),
-            eq(block),
-            eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(block, Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -495,12 +550,7 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_withShouldRecordBadBlockNotSet() {
-    when(blockProcessor.processBlock(
-            eq(protocolContext),
-            eq(blockchain),
-            any(MutableWorldState.class),
-            eq(block),
-            eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(block, Optional.empty())))
         .thenReturn(BlockProcessingResult.FAILED);
 
     BlockProcessingResult result =
@@ -651,8 +701,7 @@ public class MainnetBlockValidatorTest {
     when(protocolContext.getWorldStateArchive()).thenReturn(blockchainSetupUtil.getWorldArchive());
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockProcessor.processBlock(
-            eq(protocolContext), any(), any(), any(), eq(Optional.empty())))
+    when(blockProcessor.processBlock(contextWith(Optional.empty())))
         .thenReturn(successfulProcessingResult);
     when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(true);
@@ -671,5 +720,25 @@ public class MainnetBlockValidatorTest {
 
     assertThat(result.isSuccessful()).isTrue();
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
+  }
+
+  /** Matches a context for {@code protocolContext} with {@code blockAccessList}, for any block. */
+  private BlockExecutionContext contextWith(final Optional<BlockAccessList> blockAccessList) {
+    return argThat(
+        context ->
+            context != null
+                && context.getProtocolContext() == protocolContext
+                && context.getBlockAccessList().equals(blockAccessList));
+  }
+
+  /** Matches a context for {@code protocolContext}, {@code block} and {@code blockAccessList}. */
+  private BlockExecutionContext contextWith(
+      final Block block, final Optional<BlockAccessList> blockAccessList) {
+    return argThat(
+        context ->
+            context != null
+                && context.getProtocolContext() == protocolContext
+                && context.getBlock().equals(block)
+                && context.getBlockAccessList().equals(blockAccessList));
   }
 }
