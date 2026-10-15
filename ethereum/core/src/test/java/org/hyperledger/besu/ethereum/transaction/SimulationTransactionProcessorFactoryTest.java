@@ -210,6 +210,61 @@ public class SimulationTransactionProcessorFactoryTest {
         .contains(ORIGINAL_ADDRESS_2);
   }
 
+  @Test
+  void shouldRemovePrecompileWhenCodeOverrideSetWithoutMovePrecompileToAddress() {
+    StateOverrideMap stateOverrideMap = new StateOverrideMap();
+    stateOverrideMap.put(
+        originalPrecompileAddress, new StateOverride.Builder().withCode("0x60006000fd").build());
+
+    MainnetTransactionProcessor processor =
+        factory.getTransactionProcessor(null, Optional.of(stateOverrideMap));
+    Set<Address> precompileAddresses = processor.getMessageCallProcessor().getPrecompileAddresses();
+
+    assertThat(precompileAddresses).doesNotContain(originalPrecompileAddress);
+  }
+
+  @Test
+  void shouldKeepOtherPrecompilesWhenOneIsRemovedByCodeOverride() {
+    PrecompileContractRegistry twoPrecompileRegistry = new PrecompileContractRegistry();
+    twoPrecompileRegistry.put(ORIGINAL_ADDRESS_1, originalPrecompiledContract);
+    twoPrecompileRegistry.put(ORIGINAL_ADDRESS_2, originalPrecompiledContract);
+
+    Set<Address> result =
+        overridePrecompileAddresses(twoPrecompileRegistry, Map.of(), Set.of(ORIGINAL_ADDRESS_1))
+            .getPrecompileAddresses();
+
+    assertThat(result).containsExactly(ORIGINAL_ADDRESS_2);
+  }
+
+  @Test
+  void shouldNotErrorWhenCodeOverrideIsOnNonPrecompileAddress() {
+    StateOverrideMap stateOverrideMap = new StateOverrideMap();
+    stateOverrideMap.put(
+        NON_EXISTENT_ADDRESS, new StateOverride.Builder().withCode("0x60006000fd").build());
+
+    MainnetTransactionProcessor processor =
+        factory.getTransactionProcessor(null, Optional.of(stateOverrideMap));
+    Set<Address> precompileAddresses = processor.getMessageCallProcessor().getPrecompileAddresses();
+
+    assertThat(precompileAddresses).containsExactly(originalPrecompileAddress);
+  }
+
+  @Test
+  void shouldRemovePrecompileAndMoveAnotherInTheSameOverrideMap() {
+    PrecompileContractRegistry twoPrecompileRegistry = new PrecompileContractRegistry();
+    twoPrecompileRegistry.put(originalPrecompileAddress, mock(PrecompiledContract.class));
+    twoPrecompileRegistry.put(newPrecompileAddress, mock(PrecompiledContract.class));
+
+    Set<Address> result =
+        overridePrecompileAddresses(
+                twoPrecompileRegistry,
+                Map.of(newPrecompileAddress, OVERRIDE_ADDRESS),
+                Set.of(originalPrecompileAddress))
+            .getPrecompileAddresses();
+
+    assertThat(result).containsExactly(OVERRIDE_ADDRESS);
+  }
+
   private Function<PrecompileContractRegistry, PrecompileContractRegistry> createSupplier(
       final Map<Address, Address> overrides) {
     return (originalRegistry) -> overridePrecompileAddresses(originalRegistry, overrides);
