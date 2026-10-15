@@ -329,11 +329,10 @@ public class MainnetTransactionProcessor {
           delegationAccesses = codeDelegationResult.authorityAccesses();
           deferredDelegationUpdater = delegationUpdater;
         } else {
-          // As in delegationTargetCode: with no top-frame charge to replay, record the authorities
-          // where they are loaded, skipped ones included. The block access list and state gas both
-          // activate with Amsterdam, so block processing never has a tracker here; this only runs
-          // when debug_executionWitness collects a synthetic block access list to build the witness
-          // for a pre-Amsterdam block.
+          // Only reached when a block access list is tracked while state gas is disabled. Block
+          // processing never does this, since both arrive with Amsterdam; it happens only when a
+          // block access list is collected artificially for an earlier block. No top-frame charge
+          // replays the authorizations here, so record every authority now.
           accessLocationTracker.ifPresent(
               tracker ->
                   codeDelegationResult
