@@ -257,7 +257,8 @@ public class BlockExecutionContext {
      * fork's own by default), for instance to build a block access list for a fork that defines
      * none.
      *
-     * @param blockAccessListFactoryProvider the block access list factory provider
+     * @param blockAccessListFactoryProvider the block access list factory provider; it must return
+     *     a non-null {@link Optional}, empty for no block access list
      * @return this builder
      */
     public Builder blockAccessListFactoryProvider(
