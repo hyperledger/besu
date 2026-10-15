@@ -115,16 +115,37 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
       final EvmConfiguration evmConfiguration,
       final ServiceManager serviceManager,
       final BonsaiCodeCache codeCache) {
+    return createBonsaiInMemoryWorldStateArchive(
+        blockchain,
+        evmConfiguration,
+        serviceManager,
+        codeCache,
+        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+  }
+
+  public static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain,
+      final BonsaiCodeCache codeCache,
+      final DataStorageConfiguration dataStorageConfiguration) {
+    return createBonsaiInMemoryWorldStateArchive(
+        blockchain, EvmConfiguration.DEFAULT, null, codeCache, dataStorageConfiguration);
+  }
+
+  private static BonsaiWorldStateProvider createBonsaiInMemoryWorldStateArchive(
+      final Blockchain blockchain,
+      final EvmConfiguration evmConfiguration,
+      final ServiceManager serviceManager,
+      final BonsaiCodeCache codeCache,
+      final DataStorageConfiguration dataStorageConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     return new BonsaiWorldStateProvider(
         (BonsaiWorldStateKeyValueStorage)
-            inMemoryKeyValueStorageProvider.createWorldStateStorage(
-                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+            inMemoryKeyValueStorageProvider.createWorldStateStorage(dataStorageConfiguration),
         blockchain,
-        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG.getExtraStorageConfiguration(),
+        dataStorageConfiguration.getExtraStorageConfiguration(),
         bonsaiCachedMerkleTrieLoader,
         serviceManager,
         evmConfiguration,
