@@ -60,6 +60,7 @@ import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.plugin.services.worldstate.TrieBranchType;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -939,6 +940,35 @@ public class BonsaiWorldStateKeyValueStorageTest {
     updater.commit();
 
     assertThat(storage.isWorldStateAvailable(Bytes32.wrap(nodeHashKey), Hash.EMPTY)).isTrue();
+  }
+
+  @ParameterizedTest
+  @MethodSource("flatDbMode")
+  void saveWorldState_storesTheRootAndBlockHashInThePatriciaBranch(final FlatDbMode flatDbMode) {
+    setUp(flatDbMode);
+
+    final Hash blockHash = Hash.wrap(Bytes32.fromHexString("0x01"));
+    final Bytes32 rootHash = Bytes32.fromHexString("0x02");
+    final Bytes rootNode = Bytes.fromHexString("0x03");
+
+    storage
+        .updater()
+        .saveWorldState(TrieBranchType.PATRICIA, blockHash.getBytes(), rootHash, rootNode)
+        .commit();
+
+    assertThat(storage.getWorldStateRootHash(TrieBranchType.PATRICIA)).contains(rootHash);
+    assertThat(storage.getWorldStateBlockHash(TrieBranchType.PATRICIA)).contains(blockHash);
+    assertThat(storage.isWorldStateAvailable(TrieBranchType.PATRICIA, rootHash, Hash.EMPTY))
+        .isTrue();
+    assertThat(
+            storage
+                .getComposedWorldStateStorage()
+                .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
+                .map(Bytes::wrap))
+        .contains(rootHash);
+    // the accessors without a branch read the Patricia branch
+    assertThat(storage.getWorldStateRootHash()).contains(rootHash);
+    assertThat(storage.getWorldStateBlockHash()).contains(blockHash);
   }
 
   private BonsaiWorldStateKeyValueStorage emptyStorage() {
