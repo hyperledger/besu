@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -166,8 +167,12 @@ class BlockExecutionContextTest {
             .blockAccessList(Optional.empty())
             .build();
 
-    assertThat(context.getBlockAccessListFactory())
-        .isSameAs(BlockExecutionContext.BlockAccessListFactoryProvider.FROM_PROTOCOL_SPEC);
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = new BlockAccessListFactory();
+    when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
+
+    assertThat(context.getBlockAccessListFactory().get(protocolSpec))
+        .containsSame(blockAccessListFactory);
   }
 
   @Test

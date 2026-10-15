@@ -141,8 +141,7 @@ public class BlockExecutionContext {
   /**
    * Returns the provider of the block access list factory the block is processed with.
    *
-   * @return the block access list factory provider, {@link
-   *     BlockAccessListFactoryProvider#FROM_PROTOCOL_SPEC} by default
+   * @return the block access list factory provider, the fork's own by default
    */
   public BlockAccessListFactoryProvider getBlockAccessListFactory() {
     return blockAccessListFactory;
@@ -163,9 +162,6 @@ public class BlockExecutionContext {
    */
   @FunctionalInterface
   public interface BlockAccessListFactoryProvider {
-
-    /** The block access list factory of the block's fork, if it defines one. */
-    BlockAccessListFactoryProvider FROM_PROTOCOL_SPEC = ProtocolSpec::getBlockAccessListFactory;
 
     /**
      * Returns the block access list factory to process a block of {@code protocolSpec} with.
@@ -188,7 +184,7 @@ public class BlockExecutionContext {
     private boolean sequentialExecutionRequested = false;
     @Nullable private BlockAwareOperationTracer blockTracer = null;
     private BlockAccessListFactoryProvider blockAccessListFactory =
-        BlockAccessListFactoryProvider.FROM_PROTOCOL_SPEC;
+        ProtocolSpec::getBlockAccessListFactory;
 
     /**
      * Sets the protocol context (required).
@@ -268,9 +264,9 @@ public class BlockExecutionContext {
     }
 
     /**
-     * Sets the provider of the block access list factory the block is processed with (optional,
-     * {@link BlockAccessListFactoryProvider#FROM_PROTOCOL_SPEC} by default), for instance to build
-     * a block access list for a fork that defines none.
+     * Sets the provider of the block access list factory the block is processed with (optional, the
+     * fork's own by default), for instance to build a block access list for a fork that defines
+     * none.
      *
      * @param blockAccessListFactory the block access list factory provider
      * @return this builder
