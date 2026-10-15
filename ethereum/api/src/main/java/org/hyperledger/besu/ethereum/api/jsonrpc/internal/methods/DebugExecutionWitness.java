@@ -32,7 +32,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiExecutionWitnessBuilder;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 
@@ -116,19 +118,29 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
     try (final var worldState =
         protocolContext.getWorldStateArchive().getWorldState(worldStateQueryParams).orElse(null)) {
 
+      final BlockExecutionContext.Builder blockExecutionContextBuilder =
+          BlockExecutionContext.builder()
+              .protocolContext(protocolContext)
+              .worldState(worldState)
+              .block(block)
+              .blockAccessList(Optional.empty());
+
+      ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
+
+      // The block access list factory is required for witness generation,
+      // so we override the protocol spec's default the protocol spec does not provide one.
+      if (protocolSpec.getBlockAccessListFactory().isEmpty()) {
+        blockExecutionContextBuilder.blockAccessListFactoryProvider(
+            spec -> Optional.of(new BlockAccessListFactory()));
+      }
+
       // Re-execute against the parent state to collect the BAL and BLOCKHASH ancestors required for
       // the witness.
       final BlockProcessingResult result =
           protocolSchedule
               .getByBlockHeader(blockHeader)
               .getBlockProcessor()
-              .processBlock(
-                  BlockExecutionContext.builder()
-                      .protocolContext(protocolContext)
-                      .worldState(worldState)
-                      .block(block)
-                      .blockAccessList(Optional.empty())
-                      .build());
+              .processBlock(blockExecutionContextBuilder.build());
 
       if (!result.isSuccessful() || result.getYield().isEmpty()) {
         return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
