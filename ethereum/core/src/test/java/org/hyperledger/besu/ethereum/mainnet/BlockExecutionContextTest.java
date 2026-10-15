@@ -158,7 +158,7 @@ class BlockExecutionContextTest {
   }
 
   @Test
-  void blockAccessListFactoryIsTheForksByDefault() {
+  void blockAccessListFactoryDefaultsToProtocolSpec() {
     final BlockExecutionContext context =
         BlockExecutionContext.builder()
             .protocolContext(protocolContext)
