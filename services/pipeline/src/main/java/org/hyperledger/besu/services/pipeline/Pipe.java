@@ -147,14 +147,24 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
 
   @Override
   public void put(final T value) {
-    while (isOpen()) {
-      try {
-        if (queue.offer(value, 1, TimeUnit.SECONDS)) {
-          inputCounter.inc();
-          return;
+    boolean interrupted = false;
+    try {
+      while (isOpen()) {
+        try {
+          if (queue.offer(value, 1, TimeUnit.SECONDS)) {
+            inputCounter.inc();
+            return;
+          }
+        } catch (final InterruptedException e) {
+          LOG.trace("Interrupted while waiting to add to output to pipe {}", pipeName);
+          interrupted = true;
         }
-      } catch (final InterruptedException e) {
-        LOG.trace("Interrupted while waiting to add to output to pipe {}", pipeName);
+      }
+    } finally {
+      // The interrupt may be meant for the caller, e.g. an async stage is interrupted when one of
+      // its operations completes, so it stops waiting for input and outputs the result.
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
     }
   }
