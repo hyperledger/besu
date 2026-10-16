@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -29,19 +30,22 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.StateRootCommitterFactory;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.StateGasCostCalculator;
+import org.hyperledger.besu.plugin.ServiceManager;
+import org.hyperledger.besu.plugin.services.BlockImportTracerProvider;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.List;
@@ -58,6 +62,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 abstract class AbstractBlockProcessorTest {
 
   @Mock private ProtocolContext protocolContext;
+  @Mock private MutableBlockchain blockchain;
   @Mock private MainnetTransactionProcessor transactionProcessor;
   @Mock private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   @Mock private ProtocolSchedule protocolSchedule;
@@ -65,12 +70,12 @@ abstract class AbstractBlockProcessorTest {
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
   @Mock private BlockRewardProcessor blockRewardProcessor;
 
-  final Blockchain blockchain = new ReferenceTestBlockchain();
   final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
   private TestBlockProcessor blockProcessor;
 
   @BeforeEach
   void baseSetup() {
+    lenient().when(protocolContext.getBlockchain()).thenReturn(blockchain);
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     // Reject at the reward step so processBlock stops right after withdrawals; these tests only
     // care about withdrawal handling, not the BAL / state-root steps that follow.
@@ -97,7 +102,12 @@ abstract class AbstractBlockProcessorTest {
   void withProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
@@ -105,8 +115,68 @@ abstract class AbstractBlockProcessorTest {
   void withNoProcessorAndEmptyWithdrawals_WithdrawalsAreNotProcessed() {
     when(protocolSpec.getWithdrawalsProcessor()).thenReturn(Optional.empty());
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(emptyList()));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
+  }
+
+  @Test
+  void blockTracerFromContextIsUsedInsteadOfBlockImportTracer() {
+    final BlockAwareOperationTracer blockTracer = mock(BlockAwareOperationTracer.class);
+
+    blockProcessor.processBlock(
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .sequentialExecutionRequested(true)
+            .blockTracer(blockTracer)
+            .build());
+
+    verify(blockTracer).traceStartBlock(any(), any(BlockHeader.class), any(Address.class));
+    verify(protocolContext, never()).getPluginServiceManager();
+  }
+
+  @Test
+  void blockImportTracerIsUsedWithoutBlockTracerInContext() {
+    final BlockAwareOperationTracer importTracer = mock(BlockAwareOperationTracer.class);
+    final ServiceManager serviceManager = mock(ServiceManager.class);
+    final BlockImportTracerProvider provider = header -> importTracer;
+    when(protocolContext.getPluginServiceManager()).thenReturn(serviceManager);
+    when(serviceManager.getService(BlockImportTracerProvider.class))
+        .thenReturn(Optional.of(provider));
+
+    blockProcessor.processBlock(
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .build());
+
+    verify(importTracer).traceStartBlock(any(), any(BlockHeader.class), any(Address.class));
+  }
+
+  @Test
+  void blockAccessListFactoryFromContextIsUsedWhenTheForkHasNone() {
+    // The fork defines no block access list factory (the mocked spec returns empty).
+    final BlockAccessListFactory blockAccessListFactory = spy(new BlockAccessListFactory());
+
+    blockProcessor.processBlock(
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(emptyList()))
+            .blockAccessList(Optional.empty())
+            .blockAccessListFactoryProvider(spec -> Optional.of(blockAccessListFactory))
+            .build());
+
+    verify(blockAccessListFactory).newBlockAccessListBuilder();
   }
 
   @Test
@@ -115,7 +185,12 @@ abstract class AbstractBlockProcessorTest {
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(withdrawals))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any(), any(), any());
   }
 
@@ -126,7 +201,12 @@ abstract class AbstractBlockProcessorTest {
     final List<Withdrawal> withdrawals =
         List.of(new Withdrawal(UInt64.ONE, UInt64.ONE, Address.fromHexString("0x1"), GWei.ONE));
     blockProcessor.processBlock(
-        protocolContext, blockchain, worldState, testBlockBuilder(withdrawals));
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(testBlockBuilder(withdrawals))
+            .blockAccessList(Optional.empty())
+            .build());
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any(), any(), any());
   }
 
