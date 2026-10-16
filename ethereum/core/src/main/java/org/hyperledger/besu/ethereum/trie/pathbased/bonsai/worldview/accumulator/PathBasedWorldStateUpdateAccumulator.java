@@ -636,6 +636,9 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
       final Supplier<Bytes> loader = Suppliers.memoize(() -> loadCode(address, codeHash));
       codeValue = BonsaiValue.withLazy(loader, loader);
       onCodeValueLoaded(address, codeValue);
+      // a storage fault, not empty code; checked before recording so a retry reads the code
+      // again. Asserted so that nodes without -ea skip the check.
+      assert MerkleTrieException.checkCodeFound(address, codeHash, codeValue.getUpdated() != null);
       codeToUpdate.put(address, codeValue);
     }
     return Optional.ofNullable(codeValue.getUpdated())

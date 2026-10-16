@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
@@ -98,22 +97,18 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
 
   /**
    * Parallel execution on the calling thread, without block-level fallback: when parallel
-   * processing produces a wrong state root, the result is returned as-is rather than silently
-   * falling back to sequential.
+   * processing fails, the failure is returned rather than silently falling back to sequential.
    */
   protected BlockProcessor createParallelProcessor(final ExecutionContextTestFixture ctx) {
     final ProtocolSpec spec =
         ctx.getProtocolSchedule()
             .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
-    return new MainnetParallelBlockProcessor(
+    return new NoFallbackParallelBlockProcessor(
         spec.getTransactionProcessor(),
         spec.getTransactionReceiptFactory(),
         BlockHeader::getCoinbase,
         ctx.getProtocolSchedule(),
-        getBalConfiguration(),
-        new NoOpMetricsSystem(),
-        Runnable::run,
-        Optional.empty());
+        getBalConfiguration());
   }
 
   // ==================== Block Construction ====================
