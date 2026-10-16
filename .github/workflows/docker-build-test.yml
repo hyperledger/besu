@@ -62,6 +62,8 @@ jobs:
             rm -rf build/docker-besu/besu
             mv build/docker-besu/besu-* build/docker-besu/besu
             cp docker/Dockerfile docker/pyroscope.properties build/docker-besu/
+            curl -fsSL --retry 5 --retry-all-errors -o build/docker-besu/pyroscope.jar \
+              https://github.com/grafana/pyroscope-java/releases/download/v2.6.0/pyroscope.jar
           elif [[ -n "${{ inputs.version }}" ]]; then
             # No pre-built artifact: compile and stage via Gradle with an explicit release version so the distribution carries the correct version string in its metadata.
             ./gradlew --no-daemon -Prelease.releaseVersion=${{ inputs.version }} -Pversion=${{ inputs.version }} distDockerCopy

@@ -1224,8 +1224,41 @@ tasks.register("dockerDistUntar") {
   }
 }
 
+def pyroscopeJarUrl = "https://github.com/grafana/pyroscope-java/releases/download/v2.6.0/pyroscope.jar"
+
+// Downloaded here rather than with a Dockerfile ADD, which cannot retry GitHub's occasional 500s
+task downloadPyroscopeJar {
+  def outputJar = file("build/docker-besu/pyroscope.jar")
+  outputs.file(outputJar)
+
+  doLast {
+    if (outputJar.length() > 0) {
+      return
+    }
+    outputJar.parentFile.mkdirs()
+    def partJar = file("${outputJar}.part")
+    def attempts = 5
+    for (int attempt = 1; ; attempt++) {
+      try {
+        URI.create(pyroscopeJarUrl).toURL().withInputStream { input ->
+          partJar.withOutputStream { output -> output << input }
+        }
+        break
+      } catch (IOException e) {
+        if (attempt == attempts) {
+          throw e
+        }
+        logger.warn("Pyroscope download failed (attempt ${attempt}/${attempts}): ${e.message}")
+        sleep(2000L * attempt)
+      }
+    }
+    // Only a complete download takes the final name, so a failed one is not reused
+    partJar.renameTo(outputJar)
+  }
+}
+
 task distDockerCopy {
-  dependsOn dockerDistUntar
+  dependsOn dockerDistUntar, downloadPyroscopeJar
   inputs.dir("build/docker-besu/")
   def dockerBuildDir = "build/docker-besu/"
 
