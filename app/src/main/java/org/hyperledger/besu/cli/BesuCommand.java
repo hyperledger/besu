@@ -2319,6 +2319,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return keyValueStorageProvider(keyValueStorageName);
   }
 
+  /**
+   * Get the storage provider of the data path without building the controller, so that nothing that
+   * runs when the node starts, such as trie log pruning, touches the database.
+   *
+   * @return the storage provider
+   */
+  public StorageProvider getStorageProviderWithoutController() {
+    pluginCommonConfiguration.init(
+        dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration());
+    return keyValueStorageProvider(keyValueStorageName);
+  }
+
   // SnapServer.start() serves only from Bonsai full flat or archive storage; advertising snap in
   // the ENR on other storage would list a node that answers every snap request empty.
   private boolean canServeSnap() {
