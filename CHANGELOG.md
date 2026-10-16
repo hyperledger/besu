@@ -31,7 +31,6 @@
 - `--rpc-tx-feecap` will treat a value of 0 as limiting fees to 0. Today it treats 0 as "do not cap fees". To achieve similar behaviour set it to a suitably large value to effectively prevent any fee capping.
 
 ### Bug fixes
-- `--ethstats` connections no longer drop after a few seconds. Since 26.8.1 the ethstats WebSocket client was closed by the garbage collector, so the node disconnected at the next GC, reconnected and showed as offline on the ethstats dashboard most of the time. [#11589](https://github.com/besu-eth/besu/pull/11589)
 - `evmtool t8n-server` keeps serving requests again. Since `evmtool` began exiting with the subcommand's exit code, the server process exited right after printing `Transition server listening on`, so filling tests with Besu as the transition tool failed. A server that cannot bind its port now exits with a non-zero code instead of 0. [#11555](https://github.com/besu-eth/besu/pull/11555)
 - DNS-discovered dual-stack peers now respect `--p2p-ipv6-outbound-enabled` when choosing the connection address. [#11422](https://github.com/besu-eth/besu/issues/11422)
 - The layered transaction pool no longer logs an `IndexOutOfBoundsException` when a sender's pending transactions are reconciled against an account nonce that leaves them `--tx-pool-max-future-by-sender` or more nonces ahead, as on a node that has fallen behind the chain head. Those transactions are now dropped during the reconciliation, as a new transaction that far ahead would be. [#11501](https://github.com/besu-eth/besu/issues/11501)
@@ -81,6 +80,7 @@
 - Snap sync no longer stalls when a download completes while the pipeline stage is handing on another result. [#11514](https://github.com/besu-eth/besu/pull/11514)
 - Fix incorrect sync status reporting. `eth_syncing` now reports progress during snap sync (previously it reported "not syncing" for the whole snap sync), with `highestBlock` taken from the best-chain height (the latest `engine_newPayload` head under PoS). The ethstats `syncing` field and `BackwardSyncContext.isSyncing()` no longer report the inverse of the actual state. `/readiness` no longer reports ready while the world state download, trie heal or flat database heal is still in progress. A backward sync session that completed synchronously is no longer reused by later calls. [#11260](https://github.com/besu-eth/besu/issues/11260)
 - With assertions enabled (`-ea`), a contract whose code cannot be read no longer runs as empty code; the read fails as a local error, so no block is marked invalid for it. [#11456](https://github.com/besu-eth/besu/pull/11456)
+- `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)

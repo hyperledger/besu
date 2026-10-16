@@ -107,11 +107,11 @@ public class EthStatsService {
   private final WebSocketClientOptions webSocketClientOptions;
   private final WebSocketConnectOptions webSocketConnectOptions;
 
-  private @Nullable ScheduledFuture<?> reportScheduler;
-  private @Nullable WebSocket webSocket;
+  private volatile @Nullable ScheduledFuture<?> reportScheduler;
+  private volatile @Nullable WebSocket webSocket;
   // Vert.x 5 closes a WebSocketClient (and its connections) once it is garbage collected, so the
   // client must stay strongly reachable for as long as its connection is in use.
-  private @Nullable WebSocketClient webSocketClient;
+  private volatile @Nullable WebSocketClient webSocketClient;
   private @Nullable EnodeURL enodeURL;
   private long pingTimestamp;
 

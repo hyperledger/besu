@@ -114,7 +114,9 @@ public class EthStatsServiceConnectionTest {
               p2PNetwork);
 
       ethStatsService.start();
-      helloReceived.get(10, TimeUnit.SECONDS);
+      assertThat(helloReceived)
+          .as("hello received before the connection closed")
+          .succeedsWithin(Duration.ofSeconds(10));
 
       // Vert.x closes WebSocket clients that become unreachable, so a GC must not drop the
       // connection while the service still uses it.
