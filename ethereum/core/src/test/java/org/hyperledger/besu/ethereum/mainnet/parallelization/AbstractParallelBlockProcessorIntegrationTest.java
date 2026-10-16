@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
@@ -42,7 +43,6 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.BalanceChange;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
@@ -97,22 +97,18 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
 
   /**
    * Parallel execution on the calling thread, without block-level fallback: when parallel
-   * processing produces a wrong state root, the result is returned as-is rather than silently
-   * falling back to sequential.
+   * processing fails, the failure is returned rather than silently falling back to sequential.
    */
   protected BlockProcessor createParallelProcessor(final ExecutionContextTestFixture ctx) {
     final ProtocolSpec spec =
         ctx.getProtocolSchedule()
             .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
-    return new MainnetParallelBlockProcessor(
+    return new NoFallbackParallelBlockProcessor(
         spec.getTransactionProcessor(),
         spec.getTransactionReceiptFactory(),
         BlockHeader::getCoinbase,
         ctx.getProtocolSchedule(),
-        getBalConfiguration(),
-        new NoOpMetricsSystem(),
-        Runnable::run,
-        Optional.empty());
+        getBalConfiguration());
   }
 
   // ==================== Block Construction ====================
@@ -197,7 +193,13 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final Block block = createBlock(ctx, parentHeader, Hash.ZERO, baseFee, coinbase, txs);
     final BlockProcessor processor = createSequentialProcessor(ctx);
     final BlockProcessingResult result =
-        processor.processBlock(ctx.getProtocolContext(), ctx.getBlockchain(), ws, block);
+        processor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(ctx.getProtocolContext())
+                .worldState(ws)
+                .block(block)
+                .blockAccessList(Optional.empty())
+                .build());
 
     if (result.isSuccessful()) {
       return ws.rootHash();
@@ -241,7 +243,13 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final Block block = createBlock(ctx, parent, stateRoot, baseFee, MINING_BENEFICIARY);
     final BlockProcessor processor = createSequentialProcessor(ctx);
     final BlockProcessingResult result =
-        processor.processBlock(ctx.getProtocolContext(), ctx.getBlockchain(), ws, block);
+        processor.processBlock(
+            BlockExecutionContext.builder()
+                .protocolContext(ctx.getProtocolContext())
+                .worldState(ws)
+                .block(block)
+                .blockAccessList(Optional.empty())
+                .build());
     assertTrue(
         result.isSuccessful(),
         "Empty block advance failed: " + result.errorMessage.orElse("(no message)"));
@@ -278,7 +286,12 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final BlockProcessor seqProcessor = createSequentialProcessor(seqCtx);
     final BlockProcessingResult seqResult =
         seqProcessor.processBlock(
-            seqCtx.getProtocolContext(), seqCtx.getBlockchain(), seqWs, seqBlock);
+            BlockExecutionContext.builder()
+                .protocolContext(seqCtx.getProtocolContext())
+                .worldState(seqWs)
+                .block(seqBlock)
+                .blockAccessList(Optional.empty())
+                .build());
     assertTrue(
         seqResult.isSuccessful(),
         "Sequential processing failed: " + seqResult.errorMessage.orElse("(no message)"));
@@ -296,7 +309,12 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final BlockProcessor parProcessor = createParallelProcessor(parCtx);
     final BlockProcessingResult parResult =
         parProcessor.processBlock(
-            parCtx.getProtocolContext(), parCtx.getBlockchain(), parWs, parBlock);
+            BlockExecutionContext.builder()
+                .protocolContext(parCtx.getProtocolContext())
+                .worldState(parWs)
+                .block(parBlock)
+                .blockAccessList(Optional.empty())
+                .build());
     assertTrue(
         parResult.isSuccessful(),
         getVariantName()
@@ -372,7 +390,12 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final BlockProcessor seqProcessor = createSequentialProcessor(seqCtx);
     final BlockProcessingResult seqResult =
         seqProcessor.processBlock(
-            seqCtx.getProtocolContext(), seqCtx.getBlockchain(), seqWs, block);
+            BlockExecutionContext.builder()
+                .protocolContext(seqCtx.getProtocolContext())
+                .worldState(seqWs)
+                .block(block)
+                .blockAccessList(Optional.empty())
+                .build());
     assertTrue(
         seqResult.isSuccessful(),
         "Sequential processing failed: " + seqResult.errorMessage.orElse("(no message)"));
@@ -384,7 +407,12 @@ public abstract class AbstractParallelBlockProcessorIntegrationTest {
     final BlockProcessor parProcessor = createParallelProcessor(parCtx);
     final BlockProcessingResult parResult =
         parProcessor.processBlock(
-            parCtx.getProtocolContext(), parCtx.getBlockchain(), parWs, parBlock);
+            BlockExecutionContext.builder()
+                .protocolContext(parCtx.getProtocolContext())
+                .worldState(parWs)
+                .block(parBlock)
+                .blockAccessList(Optional.empty())
+                .build());
     assertTrue(
         parResult.isSuccessful(),
         getVariantName()
