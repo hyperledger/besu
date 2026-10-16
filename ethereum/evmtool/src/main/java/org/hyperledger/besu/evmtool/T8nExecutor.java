@@ -569,7 +569,8 @@ public class T8nExecutor {
       try {
         processedRequests = rpc.process(requestContext, Optional.empty());
       } catch (RuntimeException re) {
-        resultObject.put("blockException", re.getMessage());
+        resultObject.put(
+            "blockException", requireNonNullElse(re.getMessage(), re.getClass().getSimpleName()));
         processedRequests = List.of();
       }
       Hash requestsHash = BodyValidation.requestsHash(processedRequests);
