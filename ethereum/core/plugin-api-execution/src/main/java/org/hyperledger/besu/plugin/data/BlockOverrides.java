@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.parameters.UnsignedLongParameter;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -40,6 +41,7 @@ public class BlockOverrides {
   private final Optional<Bytes> extraData;
   private final Optional<Bytes32> mixHashOrPrevRandao;
   private final Optional<Function<Long, Hash>> blockHashLookup;
+  private final Optional<List<Withdrawal>> withdrawals;
   private final Optional<Bytes32> parentBeaconBlockRoot;
 
   /**
@@ -56,6 +58,7 @@ public class BlockOverrides {
    * @param difficulty the optional difficulty
    * @param extraData the optional extra data
    * @param mixHashOrPrevRandao the optional mix hash or previous Randao
+   * @param withdrawals the optional withdrawals
    * @param parentBeaconBlockRoot the optional parent beacon block root
    */
   public BlockOverrides(
@@ -70,6 +73,7 @@ public class BlockOverrides {
       final Optional<BigInteger> difficulty,
       final Optional<Bytes> extraData,
       final Optional<String> mixHashOrPrevRandao,
+      final Optional<List<Withdrawal>> withdrawals,
       final Optional<String> parentBeaconBlockRoot) {
     this.timestamp = timestamp.map(UnsignedLongParameter::getValue);
     this.blockNumber = blockNumber.map(UnsignedLongParameter::getValue);
@@ -83,6 +87,7 @@ public class BlockOverrides {
     this.extraData = extraData;
     this.mixHashOrPrevRandao = mixHashOrPrevRandao.map(Bytes32::fromHexString);
     this.blockHashLookup = Optional.empty();
+    this.withdrawals = withdrawals;
     this.parentBeaconBlockRoot = parentBeaconBlockRoot.map(Bytes32::fromHexString);
   }
 
@@ -103,6 +108,7 @@ public class BlockOverrides {
     this.difficulty = Optional.ofNullable(builder.difficulty);
     this.extraData = Optional.ofNullable(builder.extraData);
     this.mixHashOrPrevRandao = Optional.ofNullable(builder.mixHashOrPrevRandao);
+    this.withdrawals = Optional.ofNullable(builder.withdrawals);
     this.blockHashLookup = Optional.ofNullable(builder.blockHashLookup);
     this.parentBeaconBlockRoot = Optional.ofNullable(builder.parentBeaconBlockRoot);
   }
@@ -123,6 +129,15 @@ public class BlockOverrides {
    */
   public Optional<Hash> getBlockHash() {
     return blockHash;
+  }
+
+  /**
+   * Gets the withdrawals.
+   *
+   * @return the optional withdrawals
+   */
+  public Optional<List<Withdrawal>> getWithdrawals() {
+    return withdrawals;
   }
 
   /**
@@ -265,6 +280,7 @@ public class BlockOverrides {
     private Bytes extraData;
     private Bytes32 mixHashOrPrevRandao;
     private Function<Long, Hash> blockHashLookup;
+    private List<Withdrawal> withdrawals;
     private Bytes32 parentBeaconBlockRoot;
 
     /** Constructs a new Builder instance. */
@@ -377,6 +393,17 @@ public class BlockOverrides {
      */
     public Builder extraData(final Bytes extraData) {
       this.extraData = extraData;
+      return this;
+    }
+
+    /**
+     * Sets the withdrawals.
+     *
+     * @param withdrawals the withdrawals to set
+     * @return the builder instance
+     */
+    public Builder withdrawals(final List<Withdrawal> withdrawals) {
+      this.withdrawals = withdrawals;
       return this;
     }
 
