@@ -57,9 +57,9 @@ import org.mockito.quality.Strictness;
 /**
  * Integration tests for ongoing archive proof sync.
  *
- * <p>Uses {@code ControllableRoller} (a test subclass that stubs out {@code captureRange}) to
+ * <p>Uses {@code ControllableReplayer} (a test subclass that stubs out {@code captureRange}) to
  * verify: cursor persistence across restarts, single-catch-up coverage of multi-block gaps, reorg
- * safety (frontier constraint prevents above-frontier capture), and the Phase-A → Phase-B handoff
+ * safety (target constraint prevents above-target capture), and the Phase-A → Phase-B handoff
  * cursor seed.
  */
 @ExtendWith(MockitoExtension.class)
@@ -78,7 +78,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   private SegmentedInMemoryKeyValueStorage archiveStorage;
   private MutableBlockchain blockchain;
   private BlockDataGenerator blockDataGenerator;
-  private final List<ArchiveTrieNodeFrontierRoller> rollers = new ArrayList<>();
+  private final List<ArchiveTrieNodeReplayer> replayers = new ArrayList<>();
 
   @BeforeEach
   void setUp() {
@@ -91,7 +91,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   @AfterEach
   void tearDown() {
-    rollers.forEach(
+    replayers.forEach(
         r -> {
           try {
             r.close();
@@ -102,152 +102,153 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   }
 
   /**
-   * A roller catches up over a multi-block gap in a single run when the frontier is large enough.
-   * Verifies that {@code captureRange(0, frontier)} is called and cursor reaches the frontier.
+   * A replayer catches up over a multi-block gap in a single run when the target is large enough.
+   * Verifies that {@code captureRange(0, target)} is called and cursor reaches the target.
    */
   @Test
-  void rollerCatchesUpEntireFrontierGapInOneRun() throws Exception {
-    appendBlocks(10); // head=10, frontier = 10-3 = 7
-    final ControllableRoller roller = createControllableRoller();
-    roller.startOngoing(0L);
+  void replayerCatchesUpEntireTargetGapInOneRun() throws Exception {
+    appendBlocks(10); // head=10, target = 10-3+1 = 8
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.start(0L);
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(7L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(8L));
   }
 
   /**
-   * After a crash and restart (new roller instance over same storage), the roller resumes from the
-   * persisted cursor rather than from the Phase-A handoff value passed to startOngoing().
+   * After a crash and restart (new replayer instance over same storage), the replayer resumes from
+   * the persisted cursor rather than from the Phase-A handoff value passed to start().
    */
   @Test
   void restartResumesFromPersistedCursorNotInitialHandoff() throws Exception {
-    appendBlocks(10); // head=10, frontier=7
-    final ControllableRoller firstRoller = createControllableRoller();
-    firstRoller.startOngoing(0L);
+    appendBlocks(10); // head=10, target=8
+    final ControllableReplayer firstReplayer = createControllableReplayer();
+    firstReplayer.start(0L);
 
-    // Wait for first roller to capture to frontier=7
+    // Wait for first replayer to capture to target=8
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(firstRoller.cursor.get()).isEqualTo(7L));
-    firstRoller.close();
+        .untilAsserted(() -> assertThat(firstReplayer.cursor.get()).isEqualTo(8L));
+    firstReplayer.close();
 
     // Simulate 3 more blocks arriving before the restart
-    appendBlocks(3); // head=13, frontier=10
+    appendBlocks(3); // head=13, target=11
 
-    // Second roller: startOngoing(0) — but persisted cursor = 7, so cursor = max(0, 7) = 7
-    final ControllableRoller secondRoller = createControllableRoller();
-    secondRoller.startOngoing(0L);
-    assertThat(secondRoller.cursor.get()).isEqualTo(7L);
+    // Second replayer: start(0) — but persisted cursor = 8, so cursor = max(0, 8) = 8
+    final ControllableReplayer secondReplayer = createControllableReplayer();
+    secondReplayer.start(0L);
+    assertThat(secondReplayer.cursor.get()).isEqualTo(8L);
 
-    // It then catches up from 7 to 10
+    // It then catches up from 8 to 11
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(secondRoller.cursor.get()).isEqualTo(10L));
+        .untilAsserted(() -> assertThat(secondReplayer.cursor.get()).isEqualTo(11L));
   }
 
   /**
-   * Phase-A handoff: if Phase A captured up to block H, the roller seeds cursor from H (not 0),
+   * Phase-A handoff: if Phase A captured up to block H, the replayer seeds cursor from H (not 0),
    * avoiding re-archiving blocks Phase A already wrote.
    */
   @Test
   void phaseAHandoffCursorSeedsPhaseBCorrectly() throws Exception {
-    appendBlocks(10); // head=10, frontier=7
-    final ControllableRoller roller = createControllableRoller();
+    appendBlocks(10); // head=10, target=8
+    final ControllableReplayer replayer = createControllableReplayer();
 
     // Simulate Phase A having archived up to block 5
-    roller.startOngoing(5L);
-    assertThat(roller.cursor.get()).isEqualTo(5L);
+    replayer.start(5L);
+    assertThat(replayer.cursor.get()).isEqualTo(5L);
 
-    // Phase B should catch up from 5 to 7 (not from 0)
+    // Phase B should catch up from 5 to 8 (not from 0)
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(7L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(8L));
   }
 
   /**
-   * When the frontier advances repeatedly as new heads arrive, the roller eventually processes all
-   * blocks up to the new frontier. The single-flight guard ensures this happens via re-arm (not via
+   * When the target advances repeatedly as new heads arrive, the replayer eventually processes all
+   * blocks up to the new target. The single-flight guard ensures this happens via re-arm (not via
    * concurrent catch-ups).
    */
   @Test
-  void frontierAdvanceDrivesOngoingCatchUps() throws Exception {
-    appendBlocks(5); // head=5, frontier=2
-    final ControllableRoller roller = createControllableRoller();
-    roller.startOngoing(0L);
+  void targetAdvanceDrivesOngoingCatchUps() throws Exception {
+    appendBlocks(5); // head=5, target=3
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.start(0L);
 
-    // Wait to reach the initial frontier
+    // Wait to reach the initial target
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(2L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(3L));
 
-    // Add more blocks, advancing frontier to 4, then 6
-    appendBlocks(2); // head=7, frontier=4
+    // Add more blocks, advancing target to 5, then 7
+    appendBlocks(2); // head=7, target=5
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(4L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(5L));
 
-    appendBlocks(2); // head=9, frontier=6
+    appendBlocks(2); // head=9, target=7
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(6L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(7L));
   }
 
   /**
-   * The roller never captures blocks above the frontier. When a reorg event fires for a block above
-   * the finality horizon, the frontier (head − maxLayers) does not change enough to pull in
-   * non-final blocks, and no capture happens above the frontier.
+   * The replayer never captures blocks above the target. When a reorg event fires for a block above
+   * the finality horizon, the target (head − maxLayers) does not change enough to pull in non-final
+   * blocks, and no capture happens above the target.
    */
   @Test
-  void captureNeverExceedsOngoingFrontier() throws Exception {
-    appendBlocks(4); // head=4, frontier = 4-3 = 1
-    final ControllableRoller roller = createControllableRoller();
-    roller.startOngoing(0L);
+  void captureNeverExceedsReplayTarget() throws Exception {
+    appendBlocks(4); // head=4, target = 4-3+1 = 2
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.start(0L);
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(1L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(2L));
 
     // A non-canonical fork block fires (block observer sees non-canonical event)
-    // The observer checks isNewCanonicalHead() → false, so ongoingTarget stays at 1
-    assertThat(roller.ongoingTarget.get()).isEqualTo(1L);
-    assertThat(roller.cursor.get()).isEqualTo(1L);
+    // The observer checks isNewCanonicalHead() → false, so replayTarget stays at 2
+    assertThat(replayer.replayTarget.get()).isEqualTo(2L);
+    assertThat(replayer.cursor.get()).isEqualTo(2L);
   }
 
   /**
-   * After close, the roller ignores subsequent block-added events and does not advance the cursor.
+   * After close, the replayer ignores subsequent block-added events and does not advance the
+   * cursor.
    */
   @Test
-  void rollerDoesNotAdvanceAfterClose() throws Exception {
-    appendBlocks(5); // head=5, frontier=2
+  void replayerDoesNotAdvanceAfterClose() throws Exception {
+    appendBlocks(5); // head=5, target=2
     final PausedCapture paused = new PausedCapture();
-    final ControllableRoller roller =
-        createControllableRoller(Executors.newScheduledThreadPool(1), paused);
-    roller.startOngoing(0L);
+    final ControllableReplayer replayer =
+        createControllableReplayer(Executors.newScheduledThreadPool(1), paused);
+    replayer.start(0L);
 
     paused.awaitStart(); // paused mid-capture
     paused.release();
 
-    roller.close();
+    replayer.close();
 
     // After close, adding blocks should not trigger new catch-ups
     appendBlocks(5);
     // Wait a moment and verify cursor hasn't advanced past what was in-flight
     Thread.sleep(200);
-    assertThat(roller.blockObserverId).isEqualTo(OptionalLong.empty());
+    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
   }
 
   // --- helpers ---
 
-  private ControllableRoller createControllableRoller() {
-    return createControllableRoller(Executors.newScheduledThreadPool(1), null);
+  private ControllableReplayer createControllableReplayer() {
+    return createControllableReplayer(Executors.newScheduledThreadPool(1), null);
   }
 
-  private ControllableRoller createControllableRoller(
+  private ControllableReplayer createControllableReplayer(
       final ScheduledExecutorService executor, final PausedCapture paused) {
-    // ControllableRoller persists its cursor advances to archiveStorage so restart tests work
-    final ControllableRoller roller =
-        new ControllableRoller(
+    // ControllableReplayer persists its cursor advances to archiveStorage so restart tests work
+    final ControllableReplayer replayer =
+        new ControllableReplayer(
             worldStateStorage,
             worldStateProvider,
             trieLogManager,
@@ -258,8 +259,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
             DEEP_INTERVAL,
             paused,
             archiveStorage);
-    rollers.add(roller);
-    return roller;
+    replayers.add(replayer);
+    return replayer;
   }
 
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -285,16 +286,16 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   // --- test doubles ---
 
   /**
-   * A roller that stubs captureRange: updates cursor and persists it to real storage so restart
+   * A replayer that stubs captureRange: updates cursor and persists it to real storage so restart
    * tests can verify durability.
    */
-  static class ControllableRoller extends ArchiveTrieNodeFrontierRoller {
+  static class ControllableReplayer extends ArchiveTrieNodeReplayer {
 
     final AtomicInteger captureRangeCalls = new AtomicInteger();
     private final PausedCapture paused;
     private final SegmentedInMemoryKeyValueStorage persistStorage;
 
-    ControllableRoller(
+    ControllableReplayer(
         final BonsaiWorldStateKeyValueStorage worldStateStorage,
         final BonsaiWorldStateProvider worldStateProvider,
         final TrieLogManager trieLogManager,

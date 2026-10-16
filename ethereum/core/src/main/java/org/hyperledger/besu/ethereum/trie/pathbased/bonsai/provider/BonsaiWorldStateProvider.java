@@ -107,9 +107,9 @@ public class BonsaiWorldStateProvider extends PathBasedWorldStateProvider {
 
   /**
    * Builds a fresh, unfrozen, trie-enabled world state over the supplied storage. Used by the
-   * archive frontier roller to roll a snapshot forward and {@code persist()} per block so trie-node
-   * writes are emitted for capture. Mirrors head construction but takes an explicit (snapshot)
-   * storage and never freezes.
+   * archive trie-node replayer to roll a snapshot forward and {@code persist()} per block so
+   * trie-node writes are emitted for capture. Mirrors head construction but takes an explicit
+   * (snapshot) storage and never freezes.
    */
   public BonsaiWorldState newTrieEnabledWorldState(final BonsaiWorldStateKeyValueStorage storage) {
     return new BonsaiWorldState(

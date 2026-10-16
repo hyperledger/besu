@@ -99,12 +99,12 @@ public class ArchiveTrieNodeStrategy
   }
 
   /**
-   * Like {@link #createArchiveStrategy} but for the frontier roller: capture is always on (the
-   * roller only ever processes final blocks) and the caller drives archive-write routing via {@link
-   * ArchiveTrieNodeWriter#setArchiveWriteTransaction}. Reads (diff base / coverage) still use the
-   * supplied canonical storage.
+   * Like {@link #createArchiveStrategy} but for the trie-node replayer: capture is always on (the
+   * replayer only ever processes final blocks) and the caller drives archive-write routing via
+   * {@link ArchiveTrieNodeWriter#setArchiveWriteTransaction}. Reads (diff base / coverage) still
+   * use the supplied canonical storage.
    */
-  public static ArchiveTrieNodeStrategy createRollerStrategy(
+  public static ArchiveTrieNodeStrategy createReplayerStrategy(
       final SegmentedKeyValueStorage canonicalLiveStorage,
       final ExecutorService trieCapturePool,
       final int shallowCheckpointInterval,
@@ -123,7 +123,7 @@ public class ArchiveTrieNodeStrategy
     return strategy;
   }
 
-  /** Returns the underlying writer so the roller can call {@code setArchiveWriteTransaction}. */
+  /** Returns the underlying writer so the replayer can call {@code setArchiveWriteTransaction}. */
   public ArchiveTrieNodeWriter getTrieNodeWriter() {
     return trieNodeWriter;
   }

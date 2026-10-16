@@ -15,9 +15,10 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeFrontierRoller;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeReplayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -80,16 +81,15 @@ public final class BonsaiArchiveFactory {
         Executors.newScheduledThreadPool(1, namedThreads("archive-migrator"));
     executors.add(migrationExecutor);
 
-    Optional<ArchiveTrieNodeStrategy> trieNodeStrategy = Optional.empty();
-    Optional<ArchiveTrieNodeFrontierRoller> roller = Optional.empty();
+    Optional<BonsaiArchiveService.ProofCapture> proofCapture = Optional.empty();
     if (unstable.getBonsaiArchiveStateProofsEnabled()) {
       final ExecutorService trieCapturePool =
           Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture"));
-      final ScheduledExecutorService rollerExecutor =
-          Executors.newScheduledThreadPool(1, namedThreads("archive-trienode-roller"));
-      final ExecutorService rollerCapturePool =
-          Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-roller"));
-      executors.addAll(List.of(trieCapturePool, rollerExecutor, rollerCapturePool));
+      final ScheduledExecutorService replayerExecutor =
+          Executors.newScheduledThreadPool(1, namedThreads("archive-trienode-replayer"));
+      final ExecutorService replayerCapturePool =
+          Executors.newFixedThreadPool(captureParallelism, namedThreads("trie-capture-replayer"));
+      executors.addAll(List.of(trieCapturePool, replayerExecutor, replayerCapturePool));
       final ArchiveTrieNodeStrategy strategy =
           ArchiveTrieNodeStrategy.createArchiveStrategy(
               worldStateStorage.getComposedWorldStateStorage(),
@@ -98,28 +98,32 @@ public final class BonsaiArchiveFactory {
               unstable.getBonsaiArchiveDeepCheckpointInterval());
       worldStateStorage.setTrieNodeStrategy(strategy);
       LOG.info("Bonsai archive proofs enabled (--Xbonsai-archive-state-proofs-enabled)");
-      trieNodeStrategy = Optional.of(strategy);
-      roller =
+      proofCapture =
           Optional.of(
-              new ArchiveTrieNodeFrontierRoller(
-                  worldStateStorage,
-                  provider,
-                  provider.getTrieLogManager(),
-                  blockchain,
-                  rollerExecutor,
-                  rollerCapturePool,
-                  unstable.getBonsaiArchiveShallowCheckpointInterval(),
-                  unstable.getBonsaiArchiveDeepCheckpointInterval()));
+              new BonsaiArchiveService.ProofCapture(
+                  strategy,
+                  new ArchiveTrieNodeReplayer(
+                      worldStateStorage,
+                      provider,
+                      provider.getTrieLogManager(),
+                      blockchain,
+                      replayerExecutor,
+                      replayerCapturePool,
+                      unstable.getBonsaiArchiveShallowCheckpointInterval(),
+                      unstable.getBonsaiArchiveDeepCheckpointInterval())));
     }
+
+    final BonsaiFlatDbToArchiveMigrator migrator =
+        new BonsaiFlatDbToArchiveMigrator(
+            worldStateStorage,
+            provider.getTrieLogManager(),
+            blockchain,
+            migrationExecutor,
+            metricsSystem,
+            new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy()));
+    provider.setArchiveMigrationProgressSupplier(migrator::getMigratedBlockNumber);
+
     return new BonsaiArchiveService(
-        provider,
-        worldStateStorage,
-        blockchain,
-        metricsSystem,
-        extraStorage.getMaxLayersToLoad(),
-        trieNodeStrategy,
-        roller,
-        migrationExecutor,
-        executors);
+        worldStateStorage, migrator, extraStorage.getMaxLayersToLoad(), proofCapture, executors);
   }
 }

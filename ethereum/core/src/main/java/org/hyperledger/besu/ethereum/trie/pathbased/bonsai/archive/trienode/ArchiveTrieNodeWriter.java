@@ -71,9 +71,9 @@ public class ArchiveTrieNodeWriter implements Closeable {
   private volatile long lastArchivedBlock = -1L;
 
   /**
-   * When non-null (roller mode), archive-history and coverage writes go here instead of the persist
-   * transaction, so a snapshot recompute's base writes can be discarded while archive writes reach
-   * canonical storage.
+   * When non-null (replayer mode), archive-history and coverage writes go here instead of the
+   * persist transaction, so a snapshot recompute's base writes can be discarded while archive
+   * writes reach canonical storage.
    */
   private volatile SegmentedKeyValueStorageTransaction archiveWriteTransactionOverride;
 

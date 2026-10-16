@@ -286,6 +286,16 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     return subscribers.subscribe(sub);
   }
 
+  /**
+   * Whether this storage has been closed, without the access warning of the snapshot storage's
+   * guarded reads.
+   *
+   * @return true once closed
+   */
+  public boolean isClosed() {
+    return isClosed.get();
+  }
+
   public synchronized void unSubscribe(final long id) {
     subscribers.unsubscribe(id);
     try {

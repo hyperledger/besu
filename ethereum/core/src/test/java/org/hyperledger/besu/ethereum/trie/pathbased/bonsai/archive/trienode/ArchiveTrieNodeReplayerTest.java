@@ -65,7 +65,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class ArchiveTrieNodeFrontierRollerTest {
+class ArchiveTrieNodeReplayerTest {
 
   private static final long AWAIT_SECONDS = 5L;
   private static final int SHALLOW_INTERVAL = 128;
@@ -76,7 +76,7 @@ class ArchiveTrieNodeFrontierRollerTest {
   @Mock private TrieLogManager trieLogManager;
 
   // Used by real-captureRange tests only (retention-gap coverage).
-  @Mock private BonsaiWorldState rollerWorldState;
+  @Mock private BonsaiWorldState replayerWorldState;
 
   @SuppressWarnings("rawtypes")
   @Mock
@@ -87,7 +87,7 @@ class ArchiveTrieNodeFrontierRollerTest {
   private SegmentedInMemoryKeyValueStorage archiveStorage;
   private MutableBlockchain blockchain;
   private BlockDataGenerator blockDataGenerator;
-  private final List<ArchiveTrieNodeFrontierRoller> rollers = new ArrayList<>();
+  private final List<ArchiveTrieNodeReplayer> replayers = new ArrayList<>();
 
   @BeforeEach
   void setUp() {
@@ -100,7 +100,7 @@ class ArchiveTrieNodeFrontierRollerTest {
 
   @AfterEach
   void tearDown() {
-    rollers.forEach(
+    replayers.forEach(
         r -> {
           try {
             r.close();
@@ -114,8 +114,8 @@ class ArchiveTrieNodeFrontierRollerTest {
 
   @Test
   void loadPersistedCursorReturnsEmptyWhenKeyAbsent() {
-    final ControllableRoller roller = createControllableRoller();
-    assertThat(roller.loadPersistedCursor()).isEqualTo(OptionalLong.empty());
+    final ControllableReplayer replayer = createControllableReplayer();
+    assertThat(replayer.loadPersistedCursor()).isEqualTo(OptionalLong.empty());
   }
 
   @Test
@@ -123,76 +123,76 @@ class ArchiveTrieNodeFrontierRollerTest {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     tx.put(
         TRIE_BRANCH_STORAGE_ARCHIVE,
-        ArchiveTrieNodeFrontierRoller.ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
+        ArchiveTrieNodeReplayer.ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
         Bytes.ofUnsignedLong(7L).toArrayUnsafe());
     tx.commit();
 
-    final ControllableRoller roller = createControllableRoller();
-    assertThat(roller.loadPersistedCursor()).hasValue(7L);
+    final ControllableReplayer replayer = createControllableReplayer();
+    assertThat(replayer.loadPersistedCursor()).hasValue(7L);
   }
 
-  // --- startOngoing cursor seeding ---
+  // --- start cursor seeding ---
 
   @Test
-  void startOngoingPrefersPersisteedCursorWhenHigher() {
+  void startPrefersPersisteedCursorWhenHigher() {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     tx.put(
         TRIE_BRANCH_STORAGE_ARCHIVE,
-        ArchiveTrieNodeFrontierRoller.ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
+        ArchiveTrieNodeReplayer.ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
         Bytes.ofUnsignedLong(5L).toArrayUnsafe());
     tx.commit();
 
-    appendBlocks(10); // head=10, frontier=9
-    final ControllableRoller roller = createControllableRoller();
-    roller.startOngoing(3L); // initial=3, persisted=5 → cursor=max(3,5)=5
-    assertThat(roller.cursor.get()).isEqualTo(5L);
+    appendBlocks(10); // head=10, target=9
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.start(3L); // initial=3, persisted=5 → cursor=max(3,5)=5
+    assertThat(replayer.cursor.get()).isEqualTo(5L);
   }
 
   @Test
-  void startOngoingPrefersInitialCursorWhenHigher() {
+  void startPrefersInitialCursorWhenHigher() {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     tx.put(
         TRIE_BRANCH_STORAGE_ARCHIVE,
-        ArchiveTrieNodeFrontierRoller.ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
+        ArchiveTrieNodeReplayer.ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
         Bytes.ofUnsignedLong(2L).toArrayUnsafe());
     tx.commit();
 
-    appendBlocks(10); // head=10, frontier=9
-    final ControllableRoller roller = createControllableRoller();
-    roller.startOngoing(5L); // initial=5, persisted=2 → cursor=max(5,2)=5
-    assertThat(roller.cursor.get()).isEqualTo(5L);
+    appendBlocks(10); // head=10, target=9
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.start(5L); // initial=5, persisted=2 → cursor=max(5,2)=5
+    assertThat(replayer.cursor.get()).isEqualTo(5L);
   }
 
   // --- block observer registration ---
 
   @Test
-  void startOngoingRegistersBlockObserver() {
+  void startRegistersBlockObserver() {
     appendBlocks(3); // head=3
-    final ControllableRoller roller = createControllableRoller();
-    assertThat(roller.blockObserverId).isEqualTo(OptionalLong.empty());
+    final ControllableReplayer replayer = createControllableReplayer();
+    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
 
-    roller.startOngoing(0L);
-    assertThat(roller.blockObserverId).isNotEqualTo(OptionalLong.empty());
+    replayer.start(0L);
+    assertThat(replayer.blockObserverId).isNotEqualTo(OptionalLong.empty());
   }
 
   @Test
   void closeRemovesBlockObserverAndClearsId() {
     appendBlocks(3);
-    final ControllableRoller roller = createControllableRoller();
-    roller.startOngoing(0L);
-    assertThat(roller.blockObserverId).isNotEqualTo(OptionalLong.empty());
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.start(0L);
+    assertThat(replayer.blockObserverId).isNotEqualTo(OptionalLong.empty());
 
-    roller.close();
-    assertThat(roller.blockObserverId).isEqualTo(OptionalLong.empty());
+    replayer.close();
+    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
   }
 
   @Test
-  void startOngoingAfterCloseIsNoOp() {
-    final ControllableRoller roller = createControllableRoller();
-    roller.close();
+  void startAfterCloseIsNoOp() {
+    final ControllableReplayer replayer = createControllableReplayer();
+    replayer.close();
 
-    roller.startOngoing(0L);
-    assertThat(roller.blockObserverId).isEqualTo(OptionalLong.empty());
+    replayer.start(0L);
+    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
   }
 
   // --- single-flight coalescing ---
@@ -200,20 +200,20 @@ class ArchiveTrieNodeFrontierRollerTest {
   @Test
   void singleFlightGuardPreventsConcurrentCatchUps() throws Exception {
     final ScheduledExecutorService spyExecutor = spy(Executors.newScheduledThreadPool(1));
-    appendBlocks(2); // head=2, frontier=1
+    appendBlocks(2); // head=2, target=2
     final PausedCapture paused = new PausedCapture();
-    final ControllableRoller roller = createControllableRoller(spyExecutor, paused);
-    roller.startOngoing(0L);
+    final ControllableReplayer replayer = createControllableReplayer(spyExecutor, paused);
+    replayer.start(0L);
 
     paused.awaitStart();
-    assertThat(roller.catchUpRunning.get()).isTrue();
+    assertThat(replayer.catchUpRunning.get()).isTrue();
 
-    // Burst of head events while catch-up is paused — each bumps ongoingTarget, CAS rejects
+    // Burst of head events while catch-up is paused — each bumps replayTarget, CAS rejects
     // additional submissions
     appendBlocks(10);
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.ongoingTarget.get()).isEqualTo(11L));
+        .untilAsserted(() -> assertThat(replayer.replayTarget.get()).isEqualTo(12L));
 
     // Only one submission despite 10+ head events
     verify(spyExecutor, times(1)).submit(any(Runnable.class));
@@ -222,58 +222,59 @@ class ArchiveTrieNodeFrontierRollerTest {
     paused.release();
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(11L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(12L));
   }
 
-  // --- re-arm after frontier advance during run ---
+  // --- re-arm after target advance during run ---
 
   @Test
-  void catchUpReArmsWhenFrontierAdvancedDuringRun() throws Exception {
-    appendBlocks(3); // head=3, frontier=2
+  void catchUpReArmsWhenTargetAdvancedDuringRun() throws Exception {
+    appendBlocks(3); // head=3, target=3
     final PausedCapture paused = new PausedCapture();
-    final ControllableRoller roller =
-        createControllableRoller(Executors.newScheduledThreadPool(1), paused);
-    roller.startOngoing(0L);
+    final ControllableReplayer replayer =
+        createControllableReplayer(Executors.newScheduledThreadPool(1), paused);
+    replayer.start(0L);
 
-    paused.awaitStart(); // first captureRange(0, 2) running
+    paused.awaitStart(); // first captureRange(0, 3) running
 
-    // Advance frontier while paused
-    appendBlocks(2); // head=5, frontier=4
+    // Advance target while paused
+    appendBlocks(2); // head=5, target=5
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.ongoingTarget.get()).isEqualTo(4L));
+        .untilAsserted(() -> assertThat(replayer.replayTarget.get()).isEqualTo(5L));
 
-    paused.release(); // first run sets cursor=2, then re-arms
+    paused.release(); // first run sets cursor=3, then re-arms
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(roller.cursor.get()).isEqualTo(4L));
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(5L));
   }
 
   // --- retention-gap advance in the real captureRange ---
   //
-  // These tests exercise the actual captureRange / ensureRollerState path (not ControllableRoller).
+  // These tests exercise the actual captureRange / ensureReplayerState path (not
+  // ControllableReplayer).
   // They cover the off-by-one fix: when cursor < head - maxLayers the retention-gap branch must
-  // advance the cursor AND fall through to position rollerState (previously it returned early,
-  // leaving rollerState null and causing the roller to spin without archiving anything).
+  // advance the cursor AND fall through to position replayerState (previously it returned early,
+  // leaving replayerState null and causing the replayer to spin without archiving anything).
 
   @Test
   @SuppressWarnings("unchecked")
   void captureRangeAdvancesCursorAndPositionsStateWhenBeyondRetention() {
     // maxLayers=1 (setUp), 3 blocks → head=3, oldestReachable=2, target=2
     // captureRange(0, 2): cursor 0 < 2 → advance cursor to 2, position state at block 2.
-    // Loop is empty (effectiveFrom == toInclusive=2), but rollerState is ready for next call.
+    // Loop is empty (effectiveFrom == toInclusive=2), but replayerState is ready for next call.
     appendBlocks(3);
     final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
     when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
-    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(rollerWorldState);
-    when(rollerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
 
-    final ArchiveTrieNodeFrontierRoller roller = createRealRoller();
-    roller.cursor.set(0L);
-    roller.captureRange(0L, 2L);
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(0L);
+    replayer.captureRange(0L, 2L);
 
-    assertThat(roller.cursor.get()).isEqualTo(2L);
-    assertThat(roller.rollerStatePosition).isEqualTo(2L);
+    assertThat(replayer.cursor.get()).isEqualTo(2L);
+    assertThat(replayer.replayerStatePosition).isEqualTo(2L);
   }
 
   @Test
@@ -283,29 +284,104 @@ class ArchiveTrieNodeFrontierRollerTest {
     appendBlocks(3);
     final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
     when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
-    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(rollerWorldState);
-    when(rollerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
 
-    final ArchiveTrieNodeFrontierRoller roller = createRealRoller();
-    roller.cursor.set(0L);
-    roller.captureRange(0L, 2L); // retention-gap advance, state positioned at 2
-    roller.captureRange(2L, 3L); // reuses state, rolls forward to 3
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(0L);
+    replayer.captureRange(0L, 2L); // retention-gap advance, state positioned at 2
+    replayer.captureRange(2L, 3L); // reuses state, rolls forward to 3
 
-    assertThat(roller.cursor.get()).isEqualTo(3L);
+    assertThat(replayer.cursor.get()).isEqualTo(3L);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void coldStartAtTargetBoundaryArchivesNextBlock() {
+    // maxLayers=1, head=3: the block before the replay target (3) is 2 = head - maxLayers, so a
+    // cold replayer can position there and must archive block 3 rather than skip it.
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(2L);
+    replayer.captureRange(2L, 3L);
+
+    assertThat(replayer.cursor.get()).isEqualTo(3L);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void rebuildsReplayerStateWithoutSkippingBlocksWhenLayerWasClosed() throws Exception {
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(0L);
+    replayer.captureRange(0L, 2L); // retention-gap advance, state positioned at 2
+    replayer.replayerLayer.close(); // what a flat-DB mode switch does to the layer
+
+    replayer.captureRange(2L, 3L);
+
+    assertThat(replayer.cursor.get()).isEqualTo(3L);
+    verify(worldStateProvider, times(2)).newTrieEnabledWorldState(any());
+  }
+
+  // --- replay target ---
+
+  @Test
+  void replayTargetUsesFinalizedBlockWhenPresent() {
+    appendBlocks(5);
+    blockchain.setFinalized(blockchain.getBlockHeader(2L).get().getHash());
+
+    assertThat(createRealReplayer().computeReplayTarget()).isEqualTo(2L);
+  }
+
+  @Test
+  void replayTargetFallsBackToHeadMinusMaxLayersPlusOne() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
+    appendBlocks(10);
+
+    assertThat(createRealReplayer().computeReplayTarget()).isEqualTo(8L);
+  }
+
+  @Test
+  void replayTargetLeavesBlockBeforeTargetInsideRetentionWindow() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
+    appendBlocks(10);
+
+    final long target = createRealReplayer().computeReplayTarget();
+
+    // A cold replayer positions at target - 1 by rolling back head - (target - 1) layers.
+    assertThat(10L - (target - 1)).isLessThanOrEqualTo(3L);
+  }
+
+  @Test
+  void replayTargetClampsToZeroOnShortChain() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(512L);
+    appendBlocks(3);
+
+    assertThat(createRealReplayer().computeReplayTarget()).isEqualTo(0L);
   }
 
   // --- helpers ---
 
-  private ControllableRoller createControllableRoller() {
-    return createControllableRoller(Executors.newScheduledThreadPool(1), null);
+  private ControllableReplayer createControllableReplayer() {
+    return createControllableReplayer(Executors.newScheduledThreadPool(1), null);
   }
 
   /**
-   * Creates a real (non-overriding) roller for tests that need to exercise {@code captureRange}.
+   * Creates a real (non-overriding) replayer for tests that need to exercise {@code captureRange}.
    */
-  private ArchiveTrieNodeFrontierRoller createRealRoller() {
-    final ArchiveTrieNodeFrontierRoller roller =
-        new ArchiveTrieNodeFrontierRoller(
+  private ArchiveTrieNodeReplayer createRealReplayer() {
+    final ArchiveTrieNodeReplayer replayer =
+        new ArchiveTrieNodeReplayer(
             worldStateStorage,
             worldStateProvider,
             trieLogManager,
@@ -314,14 +390,14 @@ class ArchiveTrieNodeFrontierRollerTest {
             Executors.newFixedThreadPool(2),
             SHALLOW_INTERVAL,
             DEEP_INTERVAL);
-    rollers.add(roller);
-    return roller;
+    replayers.add(replayer);
+    return replayer;
   }
 
-  private ControllableRoller createControllableRoller(
+  private ControllableReplayer createControllableReplayer(
       final ScheduledExecutorService executor, final PausedCapture paused) {
-    final ControllableRoller roller =
-        new ControllableRoller(
+    final ControllableReplayer replayer =
+        new ControllableReplayer(
             worldStateStorage,
             worldStateProvider,
             trieLogManager,
@@ -331,8 +407,8 @@ class ArchiveTrieNodeFrontierRollerTest {
             SHALLOW_INTERVAL,
             DEEP_INTERVAL,
             paused);
-    rollers.add(roller);
-    return roller;
+    replayers.add(replayer);
+    return replayer;
   }
 
   private MutableBlockchain createInMemoryBlockchain(final Block genesisBlock) {
@@ -358,16 +434,16 @@ class ArchiveTrieNodeFrontierRollerTest {
   // --- test doubles ---
 
   /**
-   * A roller subclass that overrides {@code captureRange} so tests focus on scheduling / cursor
+   * A replayer subclass that overrides {@code captureRange} so tests focus on scheduling / cursor
    * behaviour without requiring a real world-state stack. Each call advances the cursor to {@code
    * toInclusive}, optionally pausing first (for concurrency tests).
    */
-  static class ControllableRoller extends ArchiveTrieNodeFrontierRoller {
+  static class ControllableReplayer extends ArchiveTrieNodeReplayer {
 
     final AtomicInteger captureRangeCalls = new AtomicInteger();
     private final PausedCapture paused;
 
-    ControllableRoller(
+    ControllableReplayer(
         final BonsaiWorldStateKeyValueStorage worldStateStorage,
         final BonsaiWorldStateProvider worldStateProvider,
         final TrieLogManager trieLogManager,

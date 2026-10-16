@@ -14,20 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive;
 
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeFrontierRoller;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeReplayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -36,43 +32,35 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Lifecycle handle for the Bonsai archive's background components: trie-node capture, the flat-DB
- * archive migrator and, when archive proofs are enabled, the trie-node frontier roller. Built by
- * {@link BonsaiArchiveFactory}.
+ * archive migrator and, when archive proofs are enabled, the trie-node replayer. Built by {@link
+ * BonsaiArchiveFactory}.
  */
 public final class BonsaiArchiveService implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiArchiveService.class);
 
-  private final BonsaiArchiveWorldStateProvider provider;
+  /**
+   * The trie-node capture strategy and replayer that exist only when archive proofs are enabled.
+   */
+  record ProofCapture(ArchiveTrieNodeStrategy strategy, ArchiveTrieNodeReplayer replayer) {}
+
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
-  private final Blockchain blockchain;
-  private final MetricsSystem metricsSystem;
+  private final BonsaiFlatDbToArchiveMigrator migrator;
   private final long maxLayersToLoad;
-  private final Optional<ArchiveTrieNodeStrategy> trieNodeStrategy;
-  private final Optional<ArchiveTrieNodeFrontierRoller> roller;
+  private final Optional<ProofCapture> proofCapture;
   private final List<ExecutorService> executors;
-  private final ScheduledExecutorService migrationExecutor;
   private final AtomicBoolean started = new AtomicBoolean(false);
-  private volatile BonsaiFlatDbToArchiveMigrator migrator;
 
   BonsaiArchiveService(
-      final BonsaiArchiveWorldStateProvider provider,
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
-      final Blockchain blockchain,
-      final MetricsSystem metricsSystem,
+      final BonsaiFlatDbToArchiveMigrator migrator,
       final long maxLayersToLoad,
-      final Optional<ArchiveTrieNodeStrategy> trieNodeStrategy,
-      final Optional<ArchiveTrieNodeFrontierRoller> roller,
-      final ScheduledExecutorService migrationExecutor,
+      final Optional<ProofCapture> proofCapture,
       final List<ExecutorService> executors) {
-    this.provider = provider;
     this.worldStateStorage = worldStateStorage;
-    this.blockchain = blockchain;
-    this.metricsSystem = metricsSystem;
+    this.migrator = migrator;
     this.maxLayersToLoad = maxLayersToLoad;
-    this.trieNodeStrategy = trieNodeStrategy;
-    this.roller = roller;
-    this.migrationExecutor = migrationExecutor;
+    this.proofCapture = proofCapture;
     this.executors = List.copyOf(executors);
   }
 
@@ -86,45 +74,34 @@ public final class BonsaiArchiveService implements Closeable {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("Bonsai archive already started");
     }
-    trieNodeStrategy.ifPresent(
-        strategy -> {
-          strategy.setHasChainEstimate(() -> synchronizer.getBestPeerChainHead().isPresent());
-          synchronizer.subscribeInSync(strategy, maxLayersToLoad);
-          roller.ifPresent(r -> startRoller(synchronizer, strategy, r));
+    proofCapture.ifPresent(
+        capture -> {
+          capture
+              .strategy()
+              .setHasChainEstimate(() -> synchronizer.getBestPeerChainHead().isPresent());
+          synchronizer.subscribeInSync(capture.strategy(), maxLayersToLoad);
+          startReplayer(synchronizer, capture);
         });
     startMigration(synchronizer);
   }
 
-  private void startRoller(
-      final Synchronizer synchronizer,
-      final ArchiveTrieNodeStrategy strategy,
-      final ArchiveTrieNodeFrontierRoller frontierRoller) {
-    final AtomicBoolean rollerStarted = new AtomicBoolean(false);
+  private void startReplayer(final Synchronizer synchronizer, final ProofCapture capture) {
+    final AtomicBoolean replayerStarted = new AtomicBoolean(false);
     synchronizer.subscribeInSync(
         inSync -> {
           if (inSync
               && synchronizer.getBestPeerChainHead().isPresent()
-              && rollerStarted.compareAndSet(false, true)) {
-            LOG.info("Node is in sync, starting archive trie-node frontier roller");
-            frontierRoller.startOngoing(
-                Math.max(0L, strategy.getTrieNodeWriter().lastArchivedBlock()));
+              && replayerStarted.compareAndSet(false, true)) {
+            LOG.info("Node is in sync, starting archive trie-node replayer");
+            capture
+                .replayer()
+                .start(Math.max(0L, capture.strategy().getTrieNodeWriter().lastArchivedBlock()));
           }
         },
         maxLayersToLoad);
   }
 
   private void startMigration(final Synchronizer synchronizer) {
-    final BonsaiFlatDbToArchiveMigrator archiveMigrator =
-        new BonsaiFlatDbToArchiveMigrator(
-            worldStateStorage,
-            provider.getTrieLogManager(),
-            blockchain,
-            migrationExecutor,
-            metricsSystem,
-            new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy()));
-    provider.setArchiveMigrationProgressSupplier(archiveMigrator::getMigratedBlockNumber);
-    migrator = archiveMigrator;
-
     final FlatDbMode flatDbMode = worldStateStorage.getFlatDbMode();
     if (flatDbMode == FlatDbMode.FULL || flatDbMode == FlatDbMode.PARTIAL) {
       final AtomicBoolean migrationStarted = new AtomicBoolean(false);
@@ -135,7 +112,7 @@ public final class BonsaiArchiveService implements Closeable {
                 if (inSync && migrationStarted.compareAndSet(false, true)) {
                   synchronizer.unsubscribeInSync(syncSubscriptionId.get());
                   LOG.info("Node is in sync, starting Bonsai archive migration");
-                  archiveMigrator
+                  migrator
                       .migrate()
                       .exceptionally(
                           error -> {
@@ -149,21 +126,19 @@ public final class BonsaiArchiveService implements Closeable {
               0));
     } else {
       // Already in ARCHIVE mode (restart after migration): register ongoing migration
-      archiveMigrator.startOngoingMigration();
+      migrator.startOngoingMigration();
     }
   }
 
   /** Stops background work and shuts down executors. Must run before the storage closes. */
   @Override
   public void close() {
-    // Roller and migrator first so in-flight callbacks finish before storage closes, then the
+    // Replayer and migrator first so in-flight callbacks finish before storage closes, then the
     // capture strategy (drains the trie-capture pool). shutdownNow afterwards is idempotent and
     // covers components that were never started.
-    roller.ifPresent(ArchiveTrieNodeFrontierRoller::close);
-    if (migrator != null) {
-      migrator.close();
-    }
-    trieNodeStrategy.ifPresent(ArchiveTrieNodeStrategy::close);
+    proofCapture.ifPresent(capture -> capture.replayer().close());
+    migrator.close();
+    proofCapture.ifPresent(capture -> capture.strategy().close());
     for (final ExecutorService executor : executors) {
       executor.shutdownNow();
     }
