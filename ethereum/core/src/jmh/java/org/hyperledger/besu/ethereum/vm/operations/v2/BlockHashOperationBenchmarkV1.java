@@ -14,41 +14,31 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
+import org.hyperledger.besu.ethereum.vm.operations.GasCostBenchmark;
+import org.hyperledger.besu.ethereum.vm.operations.UnaryOperationBenchmark;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.infra.BenchmarkParams;
 
-@State(Scope.Thread)
+// Same warmup as the V2 benchmark, so V1 and V2 results are comparable.
 @Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.SECONDS)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@BenchmarkMode(Mode.AverageTime)
-public class BlockHashOperationBenchmarkV1 {
+public class BlockHashOperationBenchmarkV1 extends UnaryOperationBenchmark
+    implements GasCostBenchmark {
 
   @Param public BlockHashOperationBenchmarkV2.Scenario scenario;
 
   private BlockHashOperation operation;
-  private MessageFrame frame;
-  private Bytes32[] requestedBlockPool;
-  private int poolIndex;
 
-  @Setup
-  public void setup() {
+  @Override
+  public void setUp() {
     operation = new BlockHashOperation(new PetersburgGasCalculator());
     final BlockHashBenchmarkChain chain = BlockHashBenchmarkChain.create();
     frame =
@@ -57,16 +47,19 @@ public class BlockHashOperationBenchmarkV1 {
             .blockValues(chain.currentHeader())
             .blockHashLookup(chain.blockHashLookup())
             .build();
-    requestedBlockPool =
-        BenchmarkHelperV2.toBytes32Pool(BlockHashOperationBenchmarkV2.requestedBlockPool(scenario));
-    poolIndex = 0;
+    aPool =
+        BenchmarkHelperV2.toBytes32Pool(
+            BlockHashOperationBenchmarkV2.requestedBlockPool(scenario, getSampleSize()));
+    index = 0;
   }
 
-  @Benchmark
-  public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(requestedBlockPool[poolIndex]);
-    blackhole.consume(operation.execute(frame, null));
-    frame.popStackItem();
-    poolIndex = (poolIndex + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
+  @Override
+  protected Operation.OperationResult invoke(final MessageFrame frame) {
+    return operation.execute(frame, null);
+  }
+
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator gasCalculator) {
+    return gasCalculator.getBlockHashOperationGasCost();
   }
 }

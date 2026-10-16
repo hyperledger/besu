@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
+import org.hyperledger.besu.ethereum.vm.operations.GasCostBenchmark;
+import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.v2.operation.NumberOperationV2;
 
 import java.util.concurrent.TimeUnit;
@@ -29,6 +32,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.Blackhole;
 
 @State(Scope.Thread)
@@ -36,33 +40,44 @@ import org.openjdk.jmh.infra.Blackhole;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
-public class NumberOperationBenchmarkV2 {
+public class NumberOperationBenchmarkV2 implements GasCostBenchmark {
 
   private NumberOperationV2 operation;
   private MessageFrame frame;
+  private SimpleBlockValues blockValues;
+  private long[] numberPool;
+  private int index;
 
   @Setup
   public void setup() {
     operation = new NumberOperationV2(new BerlinGasCalculator());
-    final BenchmarkHelperV2.MutableBlockValues blockValues =
-        new BenchmarkHelperV2.MutableBlockValues();
-    blockValues.number = randomNumber();
+    blockValues = new SimpleBlockValues();
     frame = BenchmarkHelperV2.messageCallFrameBuilder().blockValues(blockValues).build();
+    numberPool = numberPool();
+    index = 0;
   }
 
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator gasCalculator) {
+    return gasCalculator.getBaseTierGasCost();
+  }
+
+  @Override
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
+    blockValues.setNumber(numberPool[index]);
     blackhole.consume(operation.execute(frame, null));
     frame.setTopV2(0);
+    index = (index + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
   }
 
   /**
-   * Returns the seeded random number used by this benchmark and its V1 counterpart. It is read from
-   * a field rather than returned as a literal, so the JIT cannot fold it into a constant.
+   * Creates the seeded pool of block numbers. Shared with the V1 benchmark so both see the same
+   * inputs.
    *
-   * @return the number
+   * @return the pool
    */
-  static long randomNumber() {
-    return BenchmarkHelperV2.randomLong(0, 1L << 32);
+  static long[] numberPool() {
+    return BenchmarkHelperV2.randomLongPool(0, 1L << 32);
   }
 }

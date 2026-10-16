@@ -15,43 +15,33 @@
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.ethereum.vm.operations.GasCostBenchmark;
+import org.hyperledger.besu.ethereum.vm.operations.UnaryOperationBenchmark;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.BlobHashOperation;
+import org.hyperledger.besu.evm.operation.Operation;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.infra.BenchmarkParams;
 
-@State(Scope.Thread)
+// Same warmup as the V2 benchmark, so V1 and V2 results are comparable.
 @Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.SECONDS)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@BenchmarkMode(Mode.AverageTime)
-public class BlobHashOperationBenchmarkV1 {
+public class BlobHashOperationBenchmarkV1 extends UnaryOperationBenchmark
+    implements GasCostBenchmark {
 
   @Param public BlobHashOperationBenchmarkV2.Scenario scenario;
 
   private BlobHashOperation operation;
-  private MessageFrame frame;
-  private Bytes32[] blobIndexPool;
-  private int poolIndex;
 
-  @Setup
-  public void setup() {
+  @Override
+  public void setUp() {
     operation = new BlobHashOperation(new CancunGasCalculator());
     final Optional<List<VersionedHash>> versionedHashes =
         scenario == BlobHashOperationBenchmarkV2.Scenario.NO_BLOBS
@@ -62,16 +52,19 @@ public class BlobHashOperationBenchmarkV1 {
             .enableEvmV2(false)
             .versionedHashes(versionedHashes)
             .build();
-    blobIndexPool =
-        BenchmarkHelperV2.toBytes32Pool(BlobHashOperationBenchmarkV2.blobIndexPool(scenario));
-    poolIndex = 0;
+    aPool =
+        BenchmarkHelperV2.toBytes32Pool(
+            BlobHashOperationBenchmarkV2.blobIndexPool(scenario, getSampleSize()));
+    index = 0;
   }
 
-  @Benchmark
-  public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(blobIndexPool[poolIndex]);
-    blackhole.consume(operation.execute(frame, null));
-    frame.popStackItem();
-    poolIndex = (poolIndex + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
+  @Override
+  protected Operation.OperationResult invoke(final MessageFrame frame) {
+    return operation.execute(frame, null);
+  }
+
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator gasCalculator) {
+    return gasCalculator.getVeryLowTierGasCost();
   }
 }

@@ -15,34 +15,23 @@
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
+import org.hyperledger.besu.ethereum.vm.operations.GasCostBenchmark;
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.v2.operation.BlobHashOperationV2;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
-import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.infra.BenchmarkParams;
 
-@State(Scope.Thread)
-@Warmup(iterations = 3, time = 1, timeUnit = TimeUnit.SECONDS)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
-@BenchmarkMode(Mode.AverageTime)
-public class BlobHashOperationBenchmarkV2 {
+public class BlobHashOperationBenchmarkV2 extends UnaryOperationBenchmarkV2
+    implements GasCostBenchmark {
 
   static final List<VersionedHash> VERSIONED_HASHES =
       List.of(
@@ -73,26 +62,25 @@ public class BlobHashOperationBenchmarkV2 {
   @Param public Scenario scenario;
 
   private BlobHashOperationV2 operation;
-  private MessageFrame frame;
-  private UInt256[] blobIndexPool;
-  private int poolIndex;
 
-  @Setup
-  public void setup() {
+  @Override
+  public void setUp() {
     operation = new BlobHashOperationV2(new CancunGasCalculator());
     final Optional<List<VersionedHash>> versionedHashes =
         scenario == Scenario.NO_BLOBS ? Optional.empty() : Optional.of(VERSIONED_HASHES);
     frame = BenchmarkHelperV2.messageCallFrameBuilder().versionedHashes(versionedHashes).build();
-    blobIndexPool = blobIndexPool(scenario);
-    poolIndex = 0;
+    aPool = blobIndexPool(scenario, SAMPLE_SIZE);
+    index = 0;
   }
 
-  @Benchmark
-  public void executeOperation(final Blackhole blackhole) {
-    BenchmarkHelperV2.pushUInt256(frame, blobIndexPool[poolIndex]);
-    blackhole.consume(operation.execute(frame, null));
-    frame.setTopV2(0);
-    poolIndex = (poolIndex + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
+  @Override
+  protected Operation.OperationResult invoke(final MessageFrame frame) {
+    return operation.execute(frame, null);
+  }
+
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator gasCalculator) {
+    return gasCalculator.getVeryLowTierGasCost();
   }
 
   /**
@@ -100,17 +88,18 @@ public class BlobHashOperationBenchmarkV2 {
    * see the same inputs.
    *
    * @param scenario the scenario
+   * @param size the pool size
    * @return the pool of blob indexes
    */
-  static UInt256[] blobIndexPool(final Scenario scenario) {
+  static UInt256[] blobIndexPool(final Scenario scenario, final int size) {
     final Random random = new Random(BenchmarkHelperV2.SEED);
-    final int size = VERSIONED_HASHES.size();
-    final UInt256[] pool = new UInt256[BenchmarkHelperV2.SAMPLE_SIZE];
+    final int hashCount = VERSIONED_HASHES.size();
+    final UInt256[] pool = new UInt256[size];
     for (int i = 0; i < pool.length; i++) {
       pool[i] =
           switch (scenario) {
-            case VALID, NO_BLOBS -> UInt256.fromLong(random.nextInt(size));
-            case OUT_OF_BOUNDS -> UInt256.fromLong(random.nextInt(size, Integer.MAX_VALUE));
+            case VALID, NO_BLOBS -> UInt256.fromLong(random.nextInt(hashCount));
+            case OUT_OF_BOUNDS -> UInt256.fromLong(random.nextInt(hashCount, Integer.MAX_VALUE));
             case TOO_LARGE ->
                 new UInt256(
                     random.nextLong(),

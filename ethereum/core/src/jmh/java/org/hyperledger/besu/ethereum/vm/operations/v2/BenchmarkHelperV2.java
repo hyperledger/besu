@@ -78,14 +78,19 @@ public class BenchmarkHelperV2 {
   }
 
   /**
-   * Returns a seeded random long in {@code [origin, bound)}.
+   * Creates a pool of {@link #SAMPLE_SIZE} seeded random longs in {@code [origin, bound)}.
    *
    * @param origin the lowest value (inclusive)
    * @param bound the upper bound (exclusive)
-   * @return the value
+   * @return the pool
    */
-  static long randomLong(final long origin, final long bound) {
-    return new Random(SEED).nextLong(origin, bound);
+  static long[] randomLongPool(final long origin, final long bound) {
+    final Random random = new Random(SEED);
+    final long[] pool = new long[SAMPLE_SIZE];
+    for (int i = 0; i < pool.length; i++) {
+      pool[i] = random.nextLong(origin, bound);
+    }
+    return pool;
   }
 
   /**
@@ -100,25 +105,6 @@ public class BenchmarkHelperV2 {
       result[i] = Bytes32.wrap(pool[i].toBytesBE());
     }
     return result;
-  }
-
-  /**
-   * {@link BlockValues} whose number and timestamp are read from fields set by the benchmark, so
-   * the JIT cannot fold them into constants as it can a literal returned from an inlined method.
-   */
-  static final class MutableBlockValues implements BlockValues {
-    long number;
-    long timestamp;
-
-    @Override
-    public long getNumber() {
-      return number;
-    }
-
-    @Override
-    public long getTimestamp() {
-      return timestamp;
-    }
   }
 
   /**

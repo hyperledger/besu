@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
+import org.hyperledger.besu.ethereum.vm.operations.GasCostBenchmark;
+import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.NumberOperation;
 
 import java.util.concurrent.TimeUnit;
@@ -29,6 +32,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.Blackhole;
 
 @State(Scope.Thread)
@@ -36,27 +40,38 @@ import org.openjdk.jmh.infra.Blackhole;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
-public class NumberOperationBenchmarkV1 {
+public class NumberOperationBenchmarkV1 implements GasCostBenchmark {
 
   private NumberOperation operation;
   private MessageFrame frame;
+  private SimpleBlockValues blockValues;
+  private long[] numberPool;
+  private int index;
 
   @Setup
   public void setup() {
     operation = new NumberOperation(new BerlinGasCalculator());
-    final BenchmarkHelperV2.MutableBlockValues blockValues =
-        new BenchmarkHelperV2.MutableBlockValues();
-    blockValues.number = NumberOperationBenchmarkV2.randomNumber();
+    blockValues = new SimpleBlockValues();
     frame =
         BenchmarkHelperV2.messageCallFrameBuilder()
             .enableEvmV2(false)
             .blockValues(blockValues)
             .build();
+    numberPool = NumberOperationBenchmarkV2.numberPool();
+    index = 0;
   }
 
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator gasCalculator) {
+    return gasCalculator.getBaseTierGasCost();
+  }
+
+  @Override
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
+    blockValues.setNumber(numberPool[index]);
     blackhole.consume(operation.execute(frame, null));
     frame.popStackItem();
+    index = (index + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
   }
 }
