@@ -54,11 +54,12 @@ public class PopOperationBenchmarkV2 implements GasCostBenchmark {
   }
 
   @Override
-  public long getGasCost(BenchmarkParams params, GasCalculator calc) {
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
     return new PopOperationV2(calc).getGasCost();
   }
 
   @Benchmark
+  @Override
   public void executeOperation(final Blackhole blackhole) {
     blackhole.consume(PopOperationV2.staticOperation(frame));
 

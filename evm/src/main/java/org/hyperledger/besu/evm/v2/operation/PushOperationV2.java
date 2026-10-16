@@ -143,7 +143,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   }
 
   /**
-   * Generic multi limb version of PUSH opcode, can execute PUSH0-32, but it should only be used for
+   * Generic multi limb version of PUSH opcode, can execute PUSH1-32, but it should only be used for
    * multiple long limbs because of performance.
    */
   public static class MultiLimb extends PushOperationV2 {

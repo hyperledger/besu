@@ -61,7 +61,7 @@ public class Push0OperationBenchmark extends PushOperationBenchmarkBase {
   }
 
   @Override
-  public long getGasCost(BenchmarkParams params, GasCalculator calc) {
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
     return new Push0Operation(calc).getGasCost();
   }
 }

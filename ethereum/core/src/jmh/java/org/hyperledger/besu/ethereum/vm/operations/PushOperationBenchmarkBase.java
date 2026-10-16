@@ -61,8 +61,8 @@ public abstract class PushOperationBenchmarkBase implements GasCostBenchmark {
   private MessageFrame frame;
   private byte[] code;
   private int[] pcPool;
-  protected int[] pushSizePool;
-  protected int index;
+  private int[] pushSizePool;
+  private int index;
 
   protected abstract Position getPc();
 
@@ -118,6 +118,7 @@ public abstract class PushOperationBenchmarkBase implements GasCostBenchmark {
   }
 
   @Benchmark
+  @Override
   public void executeOperation(final Blackhole blackhole) {
     blackhole.consume(invoke(frame, code, pcPool[index], pushSizePool[index]));
 

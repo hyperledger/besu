@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm.operations;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.PopOperation;
 
 import java.util.Random;
@@ -30,6 +31,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.Blackhole;
 
 /**
@@ -41,7 +43,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
-public class PopOperationBenchmark {
+public class PopOperationBenchmark implements GasCostBenchmark {
   private static final int SAMPLE_SIZE = 30_000;
 
   private MessageFrame frame;
@@ -60,7 +62,13 @@ public class PopOperationBenchmark {
     }
   }
 
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
+    return new PopOperation(calc).getGasCost();
+  }
+
   @Benchmark
+  @Override
   public void executeOperation(final Blackhole blackhole) {
     frame.pushStackItem(popPool[index]);
     blackhole.consume(PopOperation.staticOperation(frame));

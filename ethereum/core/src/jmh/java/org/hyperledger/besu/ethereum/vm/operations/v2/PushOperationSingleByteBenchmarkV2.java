@@ -59,7 +59,13 @@ public class PushOperationSingleByteBenchmarkV2 extends PushOperationBenchmarkBa
   }
 
   @Override
-  public long getGasCost(BenchmarkParams params, GasCalculator calc) {
-    return new PushOperationV2.SingleByte(pushSizePool[index], calc).getGasCost();
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
+    final int size;
+    try {
+      size = Integer.parseInt(params.getParam("pushSize"));
+    } catch (NumberFormatException e) {
+      throw new UnsupportedOperationException();
+    }
+    return new PushOperationV2.SingleByte(size, calc).getGasCost();
   }
 }

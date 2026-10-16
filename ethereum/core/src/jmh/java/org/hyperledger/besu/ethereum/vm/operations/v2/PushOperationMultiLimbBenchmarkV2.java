@@ -58,7 +58,8 @@ public class PushOperationMultiLimbBenchmarkV2 extends PushOperationBenchmarkBas
   }
 
   @Override
-  public long getGasCost(BenchmarkParams params, GasCalculator calc) {
-    return new PushOperationV2.MultiLimb(pushSizePool[index], calc).getGasCost();
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
+    // cost is the same throughout
+    return new PushOperationV2.MultiLimb(32, calc).getGasCost();
   }
 }

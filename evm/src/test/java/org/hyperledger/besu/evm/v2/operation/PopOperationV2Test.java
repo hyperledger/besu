@@ -62,7 +62,7 @@ public class PopOperationV2Test {
 
   @Test
   void popStackSingleValue() {
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
     PopOperationV2.staticOperation(frame);
 
     assertThat(frame.stackTopV2()).isEqualTo(0);
@@ -70,9 +70,9 @@ public class PopOperationV2Test {
 
   @Test
   void popStackValues() {
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x02}, 0, 1);
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x03}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x02}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x03}, 0, 1);
     PopOperationV2.staticOperation(frame);
 
     assertThat(frame.stackTopV2()).isEqualTo(2);

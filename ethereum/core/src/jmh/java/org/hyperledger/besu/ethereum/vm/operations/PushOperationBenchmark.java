@@ -61,7 +61,8 @@ public class PushOperationBenchmark extends PushOperationBenchmarkBase {
   }
 
   @Override
-  public long getGasCost(BenchmarkParams params, GasCalculator calc) {
-    return new PushOperation(pushSizePool[index], calc).getGasCost();
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
+    // cost is the same throughout
+    return new PushOperation(32, calc).getGasCost();
   }
 }
