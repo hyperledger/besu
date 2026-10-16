@@ -62,6 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketClient;
@@ -245,6 +246,51 @@ public class EthStatsServiceTest {
 
     ethStatsService.start();
     verify(vertx, times(2)).createWebSocketClient(any(WebSocketClientOptions.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldNotReconnectWhenConnectionClosesAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    ethStatsService.start();
+    final ArgumentCaptor<Handler<Void>> closeHandlerCaptor = ArgumentCaptor.forClass(Handler.class);
+    verify(webSocket).closeHandler(closeHandlerCaptor.capture());
+    ethStatsService.stop();
+    closeHandlerCaptor.getValue().handle(null);
+
+    verify(ethScheduler, never()).scheduleFutureTask(any(Runnable.class), any(Duration.class));
+    verify(vertx, times(1)).createWebSocketClient(any(WebSocketClientOptions.class));
+  }
+
+  @Test
+  public void shouldNotReconnectWhenPendingConnectFailsAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    final Promise<WebSocket> pendingConnect = Promise.promise();
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class)))
+        .thenReturn(pendingConnect.future());
+
+    ethStatsService.start();
+    ethStatsService.stop();
+    pendingConnect.fail(new RuntimeException("client closed"));
+
+    verify(ethScheduler, never()).scheduleFutureTask(any(Runnable.class), any(Duration.class));
+  }
+
+  @Test
+  public void shouldNotRunScheduledReconnectAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class)))
+        .thenReturn(Future.failedFuture(new RuntimeException("connection refused")));
+
+    ethStatsService.start();
+    final ArgumentCaptor<Runnable> retryCaptor = ArgumentCaptor.forClass(Runnable.class);
+    verify(ethScheduler).scheduleFutureTask(retryCaptor.capture(), any(Duration.class));
+    ethStatsService.stop();
+    retryCaptor.getValue().run();
+
+    verify(webSocketClient, times(1)).connect(any(WebSocketConnectOptions.class));
+    verify(vertx, times(1)).createWebSocketClient(any(WebSocketClientOptions.class));
   }
 
   @Test
