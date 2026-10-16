@@ -73,6 +73,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
+import io.vertx.core.http.WebSocketClient;
 import io.vertx.core.http.WebSocketClientOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.net.PemTrustOptions;
@@ -106,8 +107,11 @@ public class EthStatsService {
   private final WebSocketClientOptions webSocketClientOptions;
   private final WebSocketConnectOptions webSocketConnectOptions;
 
-  private @Nullable ScheduledFuture<?> reportScheduler;
-  private @Nullable WebSocket webSocket;
+  private volatile @Nullable ScheduledFuture<?> reportScheduler;
+  private volatile @Nullable WebSocket webSocket;
+  // Vert.x 5 closes a WebSocketClient (and its connections) once it is garbage collected, so the
+  // client must stay strongly reachable for as long as its connection is in use.
+  private volatile @Nullable WebSocketClient webSocketClient;
   private @Nullable EnodeURL enodeURL;
   private long pingTimestamp;
 
@@ -188,8 +192,9 @@ public class EthStatsService {
     LOG.debug("Connecting to EthStats: {}", getEthStatsURI());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
-      vertx
-          .createWebSocketClient(webSocketClientOptions)
+      final WebSocketClient client = vertx.createWebSocketClient(webSocketClientOptions);
+      webSocketClient = client;
+      client
           .connect(webSocketConnectOptions)
           .onComplete(
               event -> {
@@ -258,6 +263,10 @@ public class EthStatsService {
   public void stop() {
     if (webSocket != null && !webSocket.isClosed()) {
       webSocket.close();
+    }
+    if (webSocketClient != null) {
+      webSocketClient.close();
+      webSocketClient = null;
     }
     if (reportScheduler != null) {
       reportScheduler.cancel(true);
