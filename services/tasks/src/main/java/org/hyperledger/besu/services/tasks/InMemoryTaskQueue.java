@@ -75,11 +75,6 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
     internalQueue.clear();
   }
 
-  /** Clear internal queue. */
-  public void clearInternalQueue() {
-    internalQueue.clear();
-  }
-
   @Override
   public synchronized boolean allTasksCompleted() {
     assertNotClosed();
