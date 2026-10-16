@@ -248,7 +248,8 @@ public final class AscendingCollapsePatriciaTrie {
             Bytes.EMPTY,
             keyUnder(location, (byte) 0x0f),
             0,
-            fromRoot(location, node)));
+            // as built from the root, like a prepared top: an extension the nibbles above cut
+            location.isEmpty() ? node : nodeFactory.createExtension(location, node)));
   }
 
   /** Returns the number of keys inserted since construction. */
@@ -277,17 +278,6 @@ public final class AscendingCollapsePatriciaTrie {
     return previousPath == null
         ? null
         : previousPath.slice(0, previousPath.commonPrefixLength(path) + 1);
-  }
-
-  // a node known at its location, as built from the root like a prepared top
-  private Node<Bytes> fromRoot(final Bytes location, final Node<Bytes> node) {
-    if (location.isEmpty()) {
-      return node;
-    }
-    if (node instanceof LeafNode || node instanceof ExtensionNode) {
-      return node.replacePath(Bytes.concatenate(location, node.getPath()));
-    }
-    return nodeFactory.createExtension(location, node);
   }
 
   // the lowest or the highest key under a location

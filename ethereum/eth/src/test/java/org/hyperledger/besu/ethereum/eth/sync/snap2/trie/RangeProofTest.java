@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.snap2.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
@@ -80,9 +82,12 @@ class RangeProofTest {
 
   @Test
   void acceptsTheWholeTrieWithoutProof() {
-    final RangeProof.Result result = verify(Bytes32.ZERO, entries, List.of());
+    final Map<Bytes, Bytes> nodes = new HashMap<>();
+    final RangeProof.Result result = verify(Bytes32.ZERO, entries, List.of(), storing(nodes));
+
     assertThat(result.valid()).isTrue();
     assertThat(result.hasMore()).isFalse();
+    assertStored(nodes, root, entries);
   }
 
   @Test
@@ -94,9 +99,16 @@ class RangeProofTest {
   @Test
   void acceptsAnEmptyRangeAfterTheLastKey() {
     final Bytes32 origin = keyAfter(entries.lastKey());
-    final RangeProof.Result result = verify(origin, new TreeMap<>(), proof(origin, origin));
+    final List<Bytes> proof = proof(origin, origin);
+    final List<Bytes> handed = new ArrayList<>();
+    final RangeProof.Result result =
+        verify(origin, new TreeMap<>(), proof, (location, hash, node) -> handed.add(node));
+
     assertThat(result.valid()).isTrue();
     assertThat(result.hasMore()).isFalse();
+    // it rebuilds only nodes of the proof
+    assertThat(handed).isNotEmpty();
+    assertThat(proof).containsAll(handed);
   }
 
   @Test
@@ -110,6 +122,7 @@ class RangeProofTest {
     final Bytes32 origin = entries.firstKey();
     final TreeMap<Bytes32, Bytes> slice = new TreeMap<>(firstEntriesFrom(origin, 30));
     final List<Bytes> proof = proof(origin, slice.lastKey());
+    assertThat(verify(origin, slice, proof).valid()).isTrue();
     slice.remove(new ArrayList<>(slice.keySet()).get(10));
 
     assertThat(verify(origin, slice, proof).valid()).isFalse();
@@ -120,19 +133,22 @@ class RangeProofTest {
     final Bytes32 origin = entries.higherKey(entries.firstKey());
     final Bytes32 requested = keyBefore(origin);
     final TreeMap<Bytes32, Bytes> slice = new TreeMap<>(firstEntriesFrom(origin, 20));
+    final List<Bytes> proof = proof(requested, slice.lastKey());
+    assertThat(verify(requested, slice, proof).valid()).isTrue();
     slice.remove(origin);
 
-    assertThat(verify(requested, slice, proof(requested, slice.lastKey())).valid()).isFalse();
+    assertThat(verify(requested, slice, proof).valid()).isFalse();
   }
 
   @Test
   void rejectsAModifiedValue() {
     final Bytes32 origin = entries.firstKey();
     final TreeMap<Bytes32, Bytes> slice = new TreeMap<>(firstEntriesFrom(origin, 30));
-    final Bytes32 victim = new ArrayList<>(slice.keySet()).get(5);
-    slice.put(victim, Bytes.of(1, 2, 3));
+    final List<Bytes> proof = proof(origin, slice.lastKey());
+    assertThat(verify(origin, slice, proof).valid()).isTrue();
+    slice.put(new ArrayList<>(slice.keySet()).get(5), Bytes.of(1, 2, 3));
 
-    assertThat(verify(origin, slice, proof(origin, slice.lastKey())).valid()).isFalse();
+    assertThat(verify(origin, slice, proof).valid()).isFalse();
   }
 
   @Test
@@ -140,6 +156,7 @@ class RangeProofTest {
     final Bytes32 origin = entries.firstKey();
     final TreeMap<Bytes32, Bytes> slice = new TreeMap<>(firstEntriesFrom(origin, 30));
     final List<Bytes> proof = proof(origin, slice.lastKey());
+    assertThat(verify(origin, slice, proof).valid()).isTrue();
     slice.put(keyAfter(new ArrayList<>(slice.keySet()).get(3)), Bytes.of(9));
 
     assertThat(verify(origin, slice, proof).valid()).isFalse();
@@ -150,6 +167,7 @@ class RangeProofTest {
     final Bytes32 origin = entries.firstKey();
     final NavigableMap<Bytes32, Bytes> slice = firstEntriesFrom(origin, 30);
     final List<Bytes> proof = proof(origin, slice.lastKey());
+    assertThat(verify(origin, slice, proof).valid()).isTrue();
     proof.removeLast();
 
     assertThat(verify(origin, slice, proof).valid()).isFalse();
@@ -159,7 +177,10 @@ class RangeProofTest {
   void rejectsKeysBeforeOrigin() {
     final Bytes32 origin = new ArrayList<>(entries.keySet()).get(10);
     final NavigableMap<Bytes32, Bytes> slice = firstEntriesFrom(entries.firstKey(), 30);
-    assertThat(verify(origin, slice, proof(origin, slice.lastKey())).valid()).isFalse();
+    final List<Bytes> proof = proof(origin, slice.lastKey());
+    assertThat(verify(origin, slice.tailMap(origin, true), proof).valid()).isTrue();
+
+    assertThat(verify(origin, slice, proof).valid()).isFalse();
   }
 
   @Test
@@ -181,27 +202,31 @@ class RangeProofTest {
     assertThat(result.hasMore()).isFalse();
   }
 
-  @Test
-  void handsEveryNodeOfAWholeTrie() {
-    final Map<Bytes, Bytes> nodes = new HashMap<>();
-
-    assertThat(verify(Bytes32.ZERO, entries, List.of(), storing(nodes)).valid()).isTrue();
-
-    assertStored(nodes, root, entries);
-  }
-
-  // the ranges of one root, verified in any order, give every node of its trie
+  // the ranges of one root, verified in any order, give every node of its trie, inlined or not
   @Test
   void handsEveryNodeOfATrieOverItsRanges() {
-    for (final long seed : new long[] {2, 3, 5, 7, 11}) {
+    for (final long seed : new long[] {2, 3, 5, 7, 11, 13, 17, 19}) {
       final Map<Bytes, Bytes> nodes = new HashMap<>();
       final Random random = new Random(seed);
+      final boolean clustered = seed > 11;
       final NavigableMap<Bytes32, Bytes> slots =
-          randomEntries(random, 300 + random.nextInt(2000), 40);
+          clustered
+              ? clusteredEntries(random)
+              : randomEntries(random, 300 + random.nextInt(2000), 40);
       final SimpleMerklePatriciaTrie<Bytes32, Bytes> other =
           new SimpleMerklePatriciaTrie<>(Function.identity());
       slots.forEach(other::put);
       final List<Map.Entry<Bytes32, NavigableMap<Bytes32, Bytes>>> ranges = split(random, slots);
+      if (clustered) {
+        // some ranges end inside a cluster, so their proofs meet inlined nodes
+        assertThat(ranges)
+            .anyMatch(
+                range -> {
+                  final Bytes32 next = slots.higherKey(range.getValue().lastKey());
+                  return next != null
+                      && next.slice(0, 31).equals(range.getValue().lastKey().slice(0, 31));
+                });
+      }
       Collections.shuffle(ranges, random);
 
       for (final Map.Entry<Bytes32, NavigableMap<Bytes32, Bytes>> range : ranges) {
@@ -222,15 +247,30 @@ class RangeProofTest {
   }
 
   @Test
-  void handsTheEdgeNodesOfAnEmptyRangeAtMost() {
-    final Bytes32 origin = keyAfter(entries.lastKey());
-    final List<Bytes> handed = new ArrayList<>();
+  void rejectsAMalformedInlinedNode() {
+    // a root whose first child is an inlined list of three items, which no trie node is
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeRaw(Bytes.fromHexString("0xc3010203"));
+    for (int i = 1; i < 16; i++) {
+      if (i == 5) {
+        out.writeBytes(Bytes32.ZERO);
+      } else {
+        out.writeNull();
+      }
+    }
+    out.writeNull();
+    out.endList();
+    final Bytes rootNode = out.encoded();
 
-    assertThat(
-            verify(origin, new TreeMap<>(), proof(origin, origin), (l, h, node) -> handed.add(node))
-                .valid())
-        .isTrue();
-    assertThat(handed).hasSizeLessThanOrEqualTo(proof(origin, origin).size());
+    final RangeProof.Result result =
+        RangeProof.verify(
+            Bytes32.wrap(Hash.hash(rootNode).getBytes()),
+            Bytes32.fromHexString("0x10" + "00".repeat(31)),
+            List.of(),
+            List.of(),
+            List.of(rootNode));
+    assertThat(result.valid()).isFalse();
   }
 
   // consecutive ranges as peers serve them, cut at random keys, keyed by their origin
@@ -318,6 +358,20 @@ class RangeProofTest {
 
   private static Bytes32 keyAfter(final Bytes32 key) {
     return RangeManager.incrementBytes32(key).orElseThrow();
+  }
+
+  // random slots plus clusters sharing their first 31 bytes, with 1-byte values: the deepest nodes
+  // of a cluster are inlined in their parent
+  private static NavigableMap<Bytes32, Bytes> clusteredEntries(final Random random) {
+    final NavigableMap<Bytes32, Bytes> entries = randomEntries(random, 50, 40);
+    for (int cluster = 0; cluster < 40; cluster++) {
+      final byte[] key = Bytes32.random(random).toArray();
+      for (int i = 2 + random.nextInt(8); i > 0; i--) {
+        key[31] = (byte) random.nextInt(256);
+        entries.put(Bytes32.wrap(key.clone()), Bytes.of(1 + random.nextInt(0x7f)));
+      }
+    }
+    return entries;
   }
 
   private static NavigableMap<Bytes32, Bytes> randomEntries(
