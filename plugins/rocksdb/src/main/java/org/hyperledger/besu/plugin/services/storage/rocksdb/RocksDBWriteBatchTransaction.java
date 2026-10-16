@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright contributors to Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,8 +28,9 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 
 /**
- * A transaction committed as one write batch. Unlike a {@link RocksDBTransaction}, its writes are
- * not checked for conflicts with concurrent ones, so it only suits writers that never conflict.
+ * A transaction committed as one write batch, for writers that never conflict. On an optimistic
+ * transaction database its writes skip the conflict checks of a {@link RocksDBTransaction}; a
+ * pessimistic one still locks their keys at commit, waiting for those a transaction holds.
  */
 public class RocksDBWriteBatchTransaction implements SegmentedKeyValueStorageTransaction {
   private final Function<SegmentIdentifier, ColumnFamilyHandle> columnFamilyMapper;

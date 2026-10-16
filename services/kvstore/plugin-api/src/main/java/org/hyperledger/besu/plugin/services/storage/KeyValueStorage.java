@@ -138,9 +138,10 @@ public interface KeyValueStorage extends Closeable {
   KeyValueStorageTransaction startTransaction() throws StorageException;
 
   /**
-   * Begins a transaction committed as one write batch, without checking its writes for conflicts
-   * with concurrent ones, for writers that never conflict. Storage without conflict checks falls
-   * back to {@link #startTransaction()}.
+   * Begins a transaction committed as one write batch, for writers that never conflict: it skips
+   * the conflict checks of an optimistic transaction. Storage that locks keys, such as a
+   * pessimistic RocksDB transaction database, still locks them at commit. Storage without such
+   * checks falls back to {@link #startTransaction()}.
    *
    * @return transaction to sequence key-value operations.
    * @throws StorageException problem encountered when starting a new transaction.

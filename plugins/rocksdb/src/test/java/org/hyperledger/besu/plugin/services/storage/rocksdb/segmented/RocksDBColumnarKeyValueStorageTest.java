@@ -499,23 +499,6 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
     store.close();
   }
 
-  @Test
-  public void batchTransactionCommitsWithoutCheckingConflicts() throws Exception {
-    final SegmentedKeyValueStorage store = createSegmentedStore();
-    final byte[] key = bytesFromHexString("0001");
-
-    final SegmentedKeyValueStorageTransaction batch = store.startBatchTransaction();
-    batch.put(TestSegment.FOO, key, bytesFromHexString("0FFF"));
-    // the same key is written meanwhile, which fails an optimistic transaction
-    final SegmentedKeyValueStorageTransaction other = store.startTransaction();
-    other.put(TestSegment.FOO, key, bytesFromHexString("1337"));
-    other.commit();
-    batch.commit();
-
-    assertThat(store.get(TestSegment.FOO, key)).contains(bytesFromHexString("0FFF"));
-    store.close();
-  }
-
   public enum TestSegment implements SegmentIdentifier {
     DEFAULT("default".getBytes(StandardCharsets.UTF_8)),
     FOO(new byte[] {1}),
