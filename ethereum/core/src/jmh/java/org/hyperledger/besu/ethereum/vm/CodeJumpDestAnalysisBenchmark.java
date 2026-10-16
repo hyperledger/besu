@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntSupplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -83,11 +84,14 @@ public class CodeJumpDestAnalysisBenchmark {
    * <p>MIXED: arithmetic, small pushes and a JUMPDEST every 32 bytes, closer to compiled output.
    *
    * <p>RANDOM_*: bytes drawn uniformly from the listed opcodes. Every byte is a new, unpredictable
-   * decision for an analysis that branches on the opcode. STOP_JUMPDEST_PUSH1 and JUMPDEST_PUSH1
-   * are the bodies of the jump destination analysis benchmarks in ethereum/execution-specs#3631.
+   * decision for an analysis that branches on the opcode.
    *
    * <p>RANDOM_TWELVE_PUSH1_PER_CHUNK: RANDOM_STOP_JUMPDEST with twelve PUSH1 in every 64 bytes, at
    * random positions.
+   *
+   * <p>RANDOM_PUSH1_COUNT_PER_CHUNK: as RANDOM_TWELVE_PUSH1_PER_CHUNK, but with a random number of
+   * PUSH1 from 0 to 24 in each 64 bytes, so that an analysis choosing its path by the number of
+   * PUSH cannot predict the choice.
    *
    * <p>SOLIDITY_13K: a real compiled Solidity contract from a devnet, 13,199 bytes with 2,378 PUSH
    * and 465 JUMPDEST instructions. The same bytes are analysed on every invocation, so an analysis
@@ -110,6 +114,7 @@ public class CodeJumpDestAnalysisBenchmark {
     "RANDOM_ADD_JUMPDEST_PUSH1_TO_PUSH4",
     "RANDOM_BYTES",
     "RANDOM_TWELVE_PUSH1_PER_CHUNK",
+    "RANDOM_PUSH1_COUNT_PER_CHUNK",
     "SOLIDITY_13K",
     "SOLIDITY_OPCODE_MIX",
     "SMALL"
@@ -145,6 +150,7 @@ public class CodeJumpDestAnalysisBenchmark {
       "RANDOM_ADD_JUMPDEST_PUSH1_TO_PUSH4",
       "RANDOM_BYTES",
       "RANDOM_TWELVE_PUSH1_PER_CHUNK",
+      "RANDOM_PUSH1_COUNT_PER_CHUNK",
       "SOLIDITY_13K",
       "SOLIDITY_OPCODE_MIX",
       "SMALL"
@@ -181,7 +187,8 @@ public class CodeJumpDestAnalysisBenchmark {
         random.nextBytes(code);
         yield code;
       }
-      case "RANDOM_TWELVE_PUSH1_PER_CHUNK" -> pushesPerChunk(random, 12);
+      case "RANDOM_TWELVE_PUSH1_PER_CHUNK" -> pushesPerChunk(random, () -> 12);
+      case "RANDOM_PUSH1_COUNT_PER_CHUNK" -> pushesPerChunk(random, () -> random.nextInt(25));
       case "SOLIDITY_13K" -> solidityContract();
       case "SOLIDITY_OPCODE_MIX" -> opcodeMix(random, solidityContract());
       case "SMALL" -> mixed(256);
@@ -261,9 +268,10 @@ public class CodeJumpDestAnalysisBenchmark {
   }
 
   /**
-   * Random STOP and JUMPDEST, with the given number of PUSH1 per 64 bytes at random even offsets.
+   * Random STOP and JUMPDEST, with as many PUSH1 per 64 bytes as {@code pushes} gives, at random
+   * even offsets.
    */
-  private static byte[] pushesPerChunk(final Random random, final int pushes) {
+  private static byte[] pushesPerChunk(final Random random, final IntSupplier pushes) {
     final byte[] code = randomOf(random, STOP, JUMPDEST);
     final int[] offsets = new int[32];
     for (int chunkStart = 0; chunkStart + 64 <= code.length; chunkStart += 64) {
@@ -276,7 +284,8 @@ public class CodeJumpDestAnalysisBenchmark {
         offsets[i] = offsets[j];
         offsets[j] = swap;
       }
-      for (int i = 0; i < pushes; i++) {
+      final int count = pushes.getAsInt();
+      for (int i = 0; i < count; i++) {
         code[chunkStart + offsets[i]] = (byte) PUSH1;
       }
     }
