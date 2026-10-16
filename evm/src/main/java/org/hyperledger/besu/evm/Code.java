@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.PushOperation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -62,13 +63,12 @@ public class Code {
 
   private static final long HIGH_BITS = 0x8080808080808080L;
   private static final long LOW_BITS = 0x7f7f7f7f7f7f7f7fL;
-  private static final long JUMPDEST_BYTES = 0x5b5b5b5b5b5b5b5bL;
+  private static final long JUMPDEST_BYTES = JumpDestOperation.OPCODE * 0x0101010101010101L;
   private static final long GATHER_HIGH_BITS = 0x0002040810204081L;
 
   /**
-   * The chunks with at most this many PUSH opcodes are analysed by walking their PUSHes. Each PUSH
-   * costs about as much as walking five bytes, so up to here the PUSH walk costs no more than the
-   * byte walk, and above it the byte walk is taken.
+   * Each PUSH costs the PUSH walk about as much as five bytes cost the byte walk, so up to this
+   * many per chunk the PUSH walk is never the more expensive one.
    */
   private static final int MAX_PUSHES_TO_WALK = 12;
 
@@ -80,7 +80,10 @@ public class Code {
 
   static {
     for (int opcode = 0; opcode < 256; opcode++) {
-      final int length = opcode >= 0x60 && opcode <= 0x7f ? opcode - 0x5e : 1;
+      final int length =
+          opcode > PushOperation.PUSH_BASE && opcode <= PushOperation.PUSH_MAX
+              ? opcode - PushOperation.PUSH_BASE + 1
+              : 1;
       OPCODE_INFO[opcode] = length | (opcode == JumpDestOperation.OPCODE ? 1 << 8 : 0);
     }
   }
@@ -256,18 +259,10 @@ public class Code {
    * bytecode. The bitmap is organized in 64-byte chunks, each represented as a `long` (64 bits).
    * This is used for efficiently validating dynamic jumps (`JUMP`, `JUMPI`) at runtime.
    *
-   * <p>No step branches on an individual opcode. A branch per opcode mispredicts on every byte of
-   * code that mixes opcodes at random, several times the cost of the analysis itself, and the code
-   * is chosen by whoever deploys it. Instead each 64-byte chunk takes one of two paths, chosen by
-   * the number of PUSH opcodes among its bytes:
-   *
-   * <ul>
-   *   <li>Up to {@link #MAX_PUSHES_TO_WALK}: {@link #walkPushes} steps from PUSH to PUSH, masking
-   *       their immediate data out of the chunk's JUMPDEST bytes. A chunk without PUSH, as in code
-   *       made of one-byte opcodes, takes no step at all.
-   *   <li>More: {@link #walkChunk} walks the chunk byte by byte, at a cost that does not depend on
-   *       the bytes.
-   * </ul>
+   * <p>The code is chosen by whoever deploys it, and a branch on each opcode mispredicts on every
+   * byte of code that mixes opcodes at random, at several times the cost of the analysis itself. So
+   * the only branches that depend on the bytes are the choice of path for each 64-byte chunk and
+   * the exit of the loop over its PUSH opcodes, at most two mispredictions per chunk.
    *
    * <p>A change to the bitmask this returns for any code needs a new {@link
    * #JUMP_DEST_ANALYSIS_VERSION}.
@@ -295,9 +290,8 @@ public class Code {
   }
 
   /**
-   * Marks the JUMPDESTs of one full chunk by stepping from PUSH to PUSH. The lowest PUSH byte that
-   * is not immediate data is an instruction, so masking its data and repeating finds exactly the
-   * chunk's PUSH instructions.
+   * Marks the JUMPDESTs of one full chunk by stepping from PUSH to PUSH, so that a chunk without
+   * PUSH costs no step at all.
    *
    * @return the number of PUSH data bytes that continue into the next chunk
    */
@@ -310,7 +304,8 @@ public class Code {
     final int chunkStart = chunk << 6;
     long pushData = (1L << pushDataRemaining) - 1;
     long instructions = pushes & ~pushData;
-    int carry = 0;
+    int lastDataEnd = 0;
+    // The lowest PUSH byte that is not immediate data is an instruction
     while (instructions != 0) {
       final int position = Long.numberOfTrailingZeros(instructions);
       final int dataLength = (code[chunkStart + position] & 0x1f) + 1;
@@ -318,27 +313,27 @@ public class Code {
       final long data = (((1L << dataLength) - 1) << position) << 1;
       pushData |= data;
       instructions &= ~data & (instructions - 1);
-      carry = Math.max(0, position + dataLength - 63);
+      lastDataEnd = position + dataLength;
     }
     bitmap[chunk] = chunkJumpDests(code, chunkStart) & ~pushData;
-    return carry;
+    return Math.max(0, lastDataEnd - 63);
   }
 
   /**
-   * Marks the JUMPDESTs of one chunk, visiting every byte and carrying {@code next}, the number of
-   * PUSH data bytes still to come minus one. It is negative exactly at an instruction, and its sign
-   * both selects the JUMPDEST bit and picks the next value, so no step branches on the opcode.
+   * Marks the JUMPDESTs of one chunk byte by byte, without branching on the opcode, so that its
+   * cost does not depend on the bytes.
    *
    * @return the number of PUSH data bytes that continue into the next chunk
    */
   private static int walkChunk(
       final byte[] code, final long[] bitmap, final int chunk, final int pushDataRemaining) {
     final int chunkStart = chunk << 6;
-    final int chunkEnd = Math.min(chunkStart + 64, code.length);
+    final int chunkLength = Math.min(64, code.length - chunkStart);
+    // The number of PUSH data bytes still to come minus one, negative exactly at an instruction
     int next = pushDataRemaining - 1;
     long jumpDests = 0L;
-    for (int i = chunkStart; i < chunkEnd; i++) {
-      final int info = OPCODE_INFO[code[i] & 0xff];
+    for (int i = 0; i < chunkLength; i++) {
+      final int info = OPCODE_INFO[code[chunkStart + i] & 0xff];
       final int isInstruction = next >> 31;
       jumpDests |= (long) ((info >>> 8) & isInstruction) << i;
       next = next + (isInstruction & (info & 0xff)) - 1;
@@ -352,7 +347,7 @@ public class Code {
     long pushes = 0L;
     for (int word = 0; word < 8; word++) {
       final long bytes = (long) LITTLE_ENDIAN_LONG.get(code, chunkStart + (word << 3));
-      // The high bit of each byte whose top three bits are 011
+      // The high bit of each byte whose top three bits are 011, which are exactly PUSH1-PUSH32
       final long matches = ~bytes & (bytes << 1) & (bytes << 2) & HIGH_BITS;
       pushes |= ((matches * GATHER_HIGH_BITS) >>> 56) << (word << 3);
     }
