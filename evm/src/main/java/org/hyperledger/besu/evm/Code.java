@@ -328,13 +328,14 @@ public class Code {
   private static int walkChunk(
       final byte[] code, final long[] bitmap, final int chunk, final int pushDataRemaining) {
     final int chunkStart = chunk << 6;
-    final int chunkLength = Math.min(64, code.length - chunkStart);
+    final int chunkEnd = Math.min(chunkStart + 64, code.length);
     // The number of PUSH data bytes still to come minus one, negative exactly at an instruction
     int next = pushDataRemaining - 1;
     long jumpDests = 0L;
-    for (int i = 0; i < chunkLength; i++) {
-      final int info = OPCODE_INFO[code[chunkStart + i] & 0xff];
+    for (int i = chunkStart; i < chunkEnd; i++) {
+      final int info = OPCODE_INFO[code[i] & 0xff];
       final int isInstruction = next >> 31;
+      // A long shift uses only the low six bits of i, which are its offset in the chunk
       jumpDests |= (long) ((info >>> 8) & isInstruction) << i;
       next = next + (isInstruction & (info & 0xff)) - 1;
     }
