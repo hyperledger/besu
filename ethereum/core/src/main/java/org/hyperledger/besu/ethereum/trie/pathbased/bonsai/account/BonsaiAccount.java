@@ -241,12 +241,12 @@ public class BonsaiAccount implements MutableAccount, AccountValue {
     }
 
     // cache miss get the code from the disk, set it and put it in the cache
-    final Optional<Bytes> byteCode = context.getCode(address, codeHash);
+    final Optional<Code> loadedCode = context.getCode(address, codeHash);
     // a storage fault, not empty code: it must neither run nor be cached, and block import must
     // report it as a local failure rather than an invalid block. Asserted so that nodes without
     // -ea skip the check.
-    assert MerkleTrieException.checkCodeFound(address, codeHash, byteCode.isPresent());
-    code = new Code(byteCode.orElse(Bytes.EMPTY), codeHash);
+    assert MerkleTrieException.checkCodeFound(address, codeHash, loadedCode.isPresent());
+    code = loadedCode.orElseGet(() -> new Code(Bytes.EMPTY, codeHash));
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
 
     return code;

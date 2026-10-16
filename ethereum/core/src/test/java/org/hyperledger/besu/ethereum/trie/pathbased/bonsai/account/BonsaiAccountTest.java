@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.Optional;
@@ -91,7 +92,7 @@ public class BonsaiAccountTest {
   void unreadableCodeShouldThrowAndNotBeCached() {
     final BonsaiCodeCache codeCache = new BonsaiCodeCache();
     final Hash codeHash = Hash.hash(Bytes.fromHexString("0x5b00"));
-    final BonsaiAccount account = accountWithUnreadableCode(codeHash, codeCache);
+    final BonsaiAccount account = contract(unreadableWorldView(), codeHash, codeCache);
 
     assertThatThrownBy(account::getOrCreateCachedCode).isInstanceOf(MerkleTrieException.class);
     assertThatThrownBy(account::getCode).isInstanceOf(MerkleTrieException.class);
@@ -105,21 +106,50 @@ public class BonsaiAccountTest {
 
     assertThatThrownBy(
             () ->
-                new UpdateTrackingAccount<>(accountWithUnreadableCode(codeHash, codeCache))
+                new UpdateTrackingAccount<>(contract(unreadableWorldView(), codeHash, codeCache))
                     .getOrCreateCachedCode())
         .isInstanceOf(MerkleTrieException.class);
     assertThat(codeCache.getIfPresent(codeHash)).isNull();
   }
 
-  private static BonsaiAccount accountWithUnreadableCode(
-      final Hash codeHash, final BonsaiCodeCache codeCache) {
+  @Test
+  void unreadableCodeShouldNotPoisonSharedCodeCache() {
+    final BonsaiCodeCache codeCache = new BonsaiCodeCache();
+    final Bytes bytecode = Bytes.fromHexString("0x5b00");
+    final Hash codeHash = Hash.hash(bytecode);
+
+    // a world state closed under a block creation thread that is still executing returns no code
+    final BonsaiWorldView closedWorldView = unreadableWorldView();
+    assertThatThrownBy(() -> contract(closedWorldView, codeHash, codeCache).getOrCreateCachedCode())
+        .isInstanceOf(MerkleTrieException.class);
+    assertThat(codeCache.getIfPresent(codeHash)).isNull();
+    assertThatThrownBy(
+            () ->
+                new UpdateTrackingAccount<>(contract(closedWorldView, codeHash, codeCache))
+                    .getOrCreateCachedCode())
+        .isInstanceOf(MerkleTrieException.class);
+    assertThat(codeCache.getIfPresent(codeHash)).isNull();
+
+    // block import on a live world state must still execute the real code
+    final BonsaiWorldView liveWorldView = mock(BonsaiWorldView.class);
+    when(liveWorldView.getCode(any(), any())).thenReturn(Optional.of(new Code(bytecode, codeHash)));
+    assertThat(contract(liveWorldView, codeHash, codeCache).getOrCreateCachedCode().getBytes())
+        .isEqualTo(bytecode);
+  }
+
+  private static BonsaiWorldView unreadableWorldView() {
     // a closed world state, or one that lost the code, finds no code for the account's code hash
     final BonsaiWorldView worldView = mock(BonsaiWorldView.class);
     when(worldView.getCode(any(), any())).thenReturn(Optional.empty());
+    return worldView;
+  }
+
+  private static BonsaiAccount contract(
+      final BonsaiWorldView worldView, final Hash codeHash, final BonsaiCodeCache codeCache) {
     return new BonsaiAccount(
         worldView,
         Address.ZERO,
-        Address.ZERO.addressHash(),
+        Hash.hash(Address.ZERO.getBytes()),
         0,
         Wei.ZERO,
         Hash.EMPTY_TRIE_HASH,

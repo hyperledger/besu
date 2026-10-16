@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
@@ -89,16 +88,22 @@ import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.v2.operation.AddModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.AddOperationV2;
+import org.hyperledger.besu.evm.v2.operation.AndOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DivOperationV2;
+import org.hyperledger.besu.evm.v2.operation.DupOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.MulModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.MulOperationV2;
+import org.hyperledger.besu.evm.v2.operation.NotOperationV2;
+import org.hyperledger.besu.evm.v2.operation.OrOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SDivOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SarOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ShlOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ShrOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SubOperationV2;
+import org.hyperledger.besu.evm.v2.operation.SwapOperationV2;
+import org.hyperledger.besu.evm.v2.operation.XorOperationV2;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -244,6 +249,9 @@ public class EVM {
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     Operation[] operationArray = operations.getOperations();
+    // A node that builds blocks also runs this loop with the interruptible selection tracer, so the
+    // tracer call sites are not monomorphic; skip them entirely when tracing is disabled.
+    final boolean tracingEnabled = operationTracer.isEnabled();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
       int opcode;
@@ -256,7 +264,9 @@ public class EVM {
         currentOperation = endOfScriptStop;
       }
       frame.setCurrentOperation(currentOperation);
-      operationTracer.tracePreExecution(frame);
+      if (tracingEnabled) {
+        operationTracer.tracePreExecution(frame);
+      }
 
       OperationResult result;
       try {
@@ -460,7 +470,9 @@ public class EVM {
         final int opSize = result.getPcIncrement();
         frame.setPC(currentPC + opSize);
       }
-      operationTracer.tracePostExecution(frame, result);
+      if (tracingEnabled) {
+        operationTracer.tracePostExecution(frame, result);
+      }
     }
   }
 
@@ -502,6 +514,10 @@ public class EVM {
               case 0x07 -> SModOperationV2.staticOperation(frame);
               case 0x08 -> AddModOperationV2.staticOperation(frame);
               case 0x09 -> MulModOperationV2.staticOperation(frame);
+              case 0x16 -> AndOperationV2.staticOperation(frame);
+              case 0x17 -> OrOperationV2.staticOperation(frame);
+              case 0x18 -> XorOperationV2.staticOperation(frame);
+              case 0x19 -> NotOperationV2.staticOperation(frame);
               case 0x1b ->
                   enableConstantinople
                       ? ShlOperationV2.staticOperation(frame)
@@ -514,6 +530,40 @@ public class EVM {
                   enableConstantinople
                       ? SarOperationV2.staticOperation(frame)
                       : InvalidOperation.invalidOperationResult(opcode);
+              case 0x80, // DUP1-16
+                  0x81,
+                  0x82,
+                  0x83,
+                  0x84,
+                  0x85,
+                  0x86,
+                  0x87,
+                  0x88,
+                  0x89,
+                  0x8a,
+                  0x8b,
+                  0x8c,
+                  0x8d,
+                  0x8e,
+                  0x8f ->
+                  DupOperationV2.staticOperation(frame, opcode - DupOperationV2.DUP_BASE);
+              case 0x90, // SWAP1-16
+                  0x91,
+                  0x92,
+                  0x93,
+                  0x94,
+                  0x95,
+                  0x96,
+                  0x97,
+                  0x98,
+                  0x99,
+                  0x9a,
+                  0x9b,
+                  0x9c,
+                  0x9d,
+                  0x9e,
+                  0x9f ->
+                  SwapOperationV2.staticOperation(frame, opcode - SwapOperationV2.SWAP_BASE);
               // TODO EVMv2: implement remaining opcodes in v2; until then fall through to v1
               default -> {
                 frame.setCurrentOperation(currentOperation);
@@ -569,7 +619,9 @@ public class EVM {
    * @return the code instance with the cached jump destination
    */
   public Code getOrCreateCachedJumpDest(final Hash codeHash, final Bytes codeBytes) {
-    checkNotNull(codeHash);
+    if (Hash.EMPTY.getBytes().equals(codeHash.getBytes())) {
+      return Code.EMPTY_CODE;
+    }
 
     Code result = jumpDestOnlyCodeCache.getIfPresent(codeHash);
     if (result == null) {
