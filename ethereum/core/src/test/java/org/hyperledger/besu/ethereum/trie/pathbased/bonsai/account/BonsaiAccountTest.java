@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,8 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.common.MptStorageRootStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldView;
@@ -48,7 +51,7 @@ public class BonsaiAccountTest {
             Hash.hash(Address.ZERO.getBytes()),
             0,
             Wei.ONE,
-            Hash.EMPTY_TRIE_HASH,
+            new MptStorageRootStrategy(Hash.EMPTY_TRIE_HASH),
             Hash.EMPTY,
             true,
             new BonsaiCodeCache());
@@ -76,7 +79,7 @@ public class BonsaiAccountTest {
             Hash.hash(Address.ZERO.getBytes()),
             0,
             Wei.ONE,
-            Hash.EMPTY_TRIE_HASH,
+            new MptStorageRootStrategy(Hash.EMPTY_TRIE_HASH),
             Hash.EMPTY,
             true,
             new BonsaiCodeCache());
@@ -87,18 +90,69 @@ public class BonsaiAccountTest {
   }
 
   @Test
+  void unreadableCodeShouldThrowAndNotBeCached() {
+    final BonsaiCodeCache codeCache = new BonsaiCodeCache();
+    final Hash codeHash = Hash.hash(Bytes.fromHexString("0x5b00"));
+    final BonsaiAccount account = contract(unreadableWorldView(), codeHash, codeCache);
+
+    assertThatThrownBy(account::getOrCreateCachedCode).isInstanceOf(MerkleTrieException.class);
+    assertThatThrownBy(account::getCode).isInstanceOf(MerkleTrieException.class);
+    assertThat(codeCache.getIfPresent(codeHash)).isNull();
+  }
+
+  @Test
+  void unreadableCodeShouldThrowThroughUpdateTrackingAccountAndNotBeCached() {
+    final BonsaiCodeCache codeCache = new BonsaiCodeCache();
+    final Hash codeHash = Hash.hash(Bytes.fromHexString("0x5b00"));
+
+    assertThatThrownBy(
+            () ->
+                new UpdateTrackingAccount<>(contract(unreadableWorldView(), codeHash, codeCache))
+                    .getOrCreateCachedCode())
+        .isInstanceOf(MerkleTrieException.class);
+    assertThat(codeCache.getIfPresent(codeHash)).isNull();
+  }
+
+  @Test
+  void mptAccountDelegatesToMptStorageRootStrategy() {
+    final Hash storageRoot = Hash.hash(Bytes.of(1, 2, 3));
+    final BonsaiAccount account =
+        new BonsaiAccount(
+            bonsaiWorldState,
+            Address.ZERO,
+            Hash.hash(Address.ZERO.getBytes()),
+            1L,
+            Wei.ONE,
+            new MptStorageRootStrategy(storageRoot),
+            Hash.EMPTY,
+            true,
+            new BonsaiCodeCache());
+
+    assertThat(account.getStorageRoot()).isEqualTo(storageRoot);
+
+    // setStorageRoot updates the held root (used by the state root committers)
+    final Hash patched = Hash.hash(Bytes.of(4, 5, 6));
+    account.setStorageRoot(patched);
+    assertThat(account.getStorageRoot()).isEqualTo(patched);
+    assertThat(account.getStorageRootStrategy().getStorageRoot()).isEqualTo(patched);
+  }
+
+  @Test
   void unreadableCodeShouldNotPoisonSharedCodeCache() {
     final BonsaiCodeCache codeCache = new BonsaiCodeCache();
     final Bytes bytecode = Bytes.fromHexString("0x5b00");
     final Hash codeHash = Hash.hash(bytecode);
 
     // a world state closed under a block creation thread that is still executing returns no code
-    final BonsaiWorldView closedWorldView = mock(BonsaiWorldView.class);
-    when(closedWorldView.getCode(any(), any())).thenReturn(Optional.empty());
-    contract(closedWorldView, codeHash, codeCache).getOrCreateCachedCode();
+    final BonsaiWorldView closedWorldView = unreadableWorldView();
+    assertThatThrownBy(() -> contract(closedWorldView, codeHash, codeCache).getOrCreateCachedCode())
+        .isInstanceOf(MerkleTrieException.class);
     assertThat(codeCache.getIfPresent(codeHash)).isNull();
-    new UpdateTrackingAccount<>(contract(closedWorldView, codeHash, codeCache))
-        .getOrCreateCachedCode();
+    assertThatThrownBy(
+            () ->
+                new UpdateTrackingAccount<>(contract(closedWorldView, codeHash, codeCache))
+                    .getOrCreateCachedCode())
+        .isInstanceOf(MerkleTrieException.class);
     assertThat(codeCache.getIfPresent(codeHash)).isNull();
 
     // block import on a live world state must still execute the real code
@@ -106,6 +160,13 @@ public class BonsaiAccountTest {
     when(liveWorldView.getCode(any(), any())).thenReturn(Optional.of(new Code(bytecode, codeHash)));
     assertThat(contract(liveWorldView, codeHash, codeCache).getOrCreateCachedCode().getBytes())
         .isEqualTo(bytecode);
+  }
+
+  private static BonsaiWorldView unreadableWorldView() {
+    // a closed world state, or one that lost the code, finds no code for the account's code hash
+    final BonsaiWorldView worldView = mock(BonsaiWorldView.class);
+    when(worldView.getCode(any(), any())).thenReturn(Optional.empty());
+    return worldView;
   }
 
   private static BonsaiAccount contract(
@@ -116,7 +177,7 @@ public class BonsaiAccountTest {
         Hash.hash(Address.ZERO.getBytes()),
         0,
         Wei.ZERO,
-        Hash.EMPTY_TRIE_HASH,
+        new MptStorageRootStrategy(Hash.EMPTY_TRIE_HASH),
         codeHash,
         false,
         codeCache);
