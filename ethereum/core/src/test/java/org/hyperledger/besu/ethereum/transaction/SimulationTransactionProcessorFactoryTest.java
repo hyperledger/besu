@@ -65,18 +65,19 @@ public class SimulationTransactionProcessorFactoryTest {
   private final Address newPrecompileAddress = Address.fromHexString("0x2");
   private final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+  private MainnetTransactionProcessor baseTransactionProcessor;
 
   @BeforeEach
   void setUp() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     PrecompileContractRegistry precompileContractRegistry = new PrecompileContractRegistry();
     precompileContractRegistry.put(originalPrecompileAddress, mock(PrecompiledContract.class));
-    MainnetTransactionProcessor mainnetTransactionProcessor =
+    baseTransactionProcessor =
         MainnetTransactionProcessor.builder()
             .messageCallProcessor(
                 new MessageCallProcessor(mock(EVM.class), precompileContractRegistry))
             .build();
-    when(protocolSpec.getTransactionProcessor()).thenReturn(mainnetTransactionProcessor);
+    when(protocolSpec.getTransactionProcessor()).thenReturn(baseTransactionProcessor);
     factory = new SimulationTransactionProcessorFactory(protocolSchedule);
 
     originalPrecompiledContract = mock(PrecompiledContract.class);
@@ -237,7 +238,7 @@ public class SimulationTransactionProcessorFactoryTest {
   }
 
   @Test
-  void shouldNotErrorWhenCodeOverrideIsOnNonPrecompileAddress() {
+  void shouldReturnBaseProcessorWhenCodeOverrideIsOnNonPrecompileAddress() {
     StateOverrideMap stateOverrideMap = new StateOverrideMap();
     stateOverrideMap.put(
         NON_EXISTENT_ADDRESS, new StateOverride.Builder().withCode("0x60006000fd").build());
@@ -247,6 +248,7 @@ public class SimulationTransactionProcessorFactoryTest {
     Set<Address> precompileAddresses = processor.getMessageCallProcessor().getPrecompileAddresses();
 
     assertThat(precompileAddresses).containsExactly(originalPrecompileAddress);
+    assertThat(processor).isSameAs(baseTransactionProcessor);
   }
 
   @Test

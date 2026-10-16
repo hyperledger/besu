@@ -60,7 +60,9 @@ public class SimulationTransactionProcessorFactory {
         maybeStateOverrides.map(this::extractPrecompileAddressOverrides).orElse(Map.of());
 
     Set<Address> precompileCodeOverrides =
-        maybeStateOverrides.map(this::extractPrecompileCodeOverrides).orElse(Set.of());
+        maybeStateOverrides
+            .map(overrides -> extractPrecompileCodeOverrides(overrides, baseProcessor))
+            .orElse(Set.of());
 
     return createProcessor(baseProcessor, precompileOverrides, precompileCodeOverrides);
   }
@@ -75,18 +77,27 @@ public class SimulationTransactionProcessorFactory {
   }
 
   /**
-   * Returns addresses that set {@code code} without {@code movePrecompileToAddress}. When such an
-   * address is a precompile, the precompile must be removed from the simulation registry so that
-   * the overriding code in the world state runs instead.
+   * Returns the precompile addresses that set {@code code} without {@code movePrecompileToAddress}.
+   * These precompiles must be removed from the simulation registry so that the overriding code in
+   * the world state runs instead. Code overrides on other addresses are left out, so they keep the
+   * unmodified transaction processor.
    */
-  private Set<Address> extractPrecompileCodeOverrides(final StateOverrideMap stateOverrides) {
-    return stateOverrides.entrySet().stream()
-        .filter(
-            entry ->
-                entry.getValue().getCode().isPresent()
-                    && entry.getValue().getMovePrecompileToAddress().isEmpty())
-        .map(Map.Entry::getKey)
-        .collect(Collectors.toSet());
+  private Set<Address> extractPrecompileCodeOverrides(
+      final StateOverrideMap stateOverrides, final MainnetTransactionProcessor baseProcessor) {
+    final Set<Address> codeOverrides =
+        stateOverrides.entrySet().stream()
+            .filter(
+                entry ->
+                    entry.getValue().getCode().isPresent()
+                        && entry.getValue().getMovePrecompileToAddress().isEmpty())
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+    if (codeOverrides.isEmpty()) {
+      return Set.of();
+    }
+    final Set<Address> precompileAddresses =
+        baseProcessor.getMessageCallProcessor().getPrecompileAddresses();
+    return codeOverrides.stream().filter(precompileAddresses::contains).collect(Collectors.toSet());
   }
 
   private MainnetTransactionProcessor createProcessor(
