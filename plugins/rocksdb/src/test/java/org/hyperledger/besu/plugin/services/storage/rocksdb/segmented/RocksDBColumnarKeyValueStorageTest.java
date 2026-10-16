@@ -57,9 +57,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.LogFile;
-import org.rocksdb.RocksDBException;
 
 public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValueStorageTest {
 
@@ -517,110 +514,6 @@ public abstract class RocksDBColumnarKeyValueStorageTest extends AbstractKeyValu
 
     assertThat(store.get(TestSegment.FOO, key)).contains(bytesFromHexString("0FFF"));
     store.close();
-  }
-
-  @Test
-  public void unloggedBatchSkipsTheWriteAheadLog() throws Exception {
-    final RocksDBColumnarKeyValueStorage store =
-        (RocksDBColumnarKeyValueStorage) createSegmentedStore();
-    final long empty = walBytes(store);
-
-    final SegmentedKeyValueStorageTransaction unlogged = store.startUnloggedBatchTransaction();
-    unlogged.put(TestSegment.FOO, bytesFromHexString("0001"), new byte[64 * 1024]);
-    unlogged.commit();
-    assertThat(walBytes(store)).isEqualTo(empty);
-
-    final SegmentedKeyValueStorageTransaction logged = store.startBatchTransaction();
-    logged.put(TestSegment.FOO, bytesFromHexString("0002"), new byte[64 * 1024]);
-    logged.commit();
-    assertThat(walBytes(store)).isGreaterThan(empty);
-    assertThat(store.get(TestSegment.FOO, bytesFromHexString("0001"))).isPresent();
-    store.close();
-  }
-
-  @Test
-  public void flushWritesTheMemtablesToDisk() throws Exception {
-    final RocksDBColumnarKeyValueStorage store =
-        (RocksDBColumnarKeyValueStorage) createSegmentedStore();
-    final SegmentedKeyValueStorageTransaction tx = store.startUnloggedBatchTransaction();
-    tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF"));
-    tx.commit();
-    final ColumnFamilyHandle foo = store.safeColumnHandle(TestSegment.FOO);
-    assertThat(store.getDB().getProperty(foo, "rocksdb.num-entries-active-mem-table"))
-        .isEqualTo("1");
-
-    store.flush();
-
-    assertThat(store.getDB().getProperty(foo, "rocksdb.num-entries-active-mem-table"))
-        .isEqualTo("0");
-    assertThat(store.get(TestSegment.FOO, bytesFromHexString("0001")))
-        .contains(bytesFromHexString("0FFF"));
-    store.close();
-  }
-
-  @Test
-  public void flushOfASegmentLeavesTheOtherMemtablesAlone() throws Exception {
-    final RocksDBColumnarKeyValueStorage store =
-        (RocksDBColumnarKeyValueStorage) createSegmentedStore();
-    final SegmentedKeyValueStorageTransaction tx = store.startUnloggedBatchTransaction();
-    tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF"));
-    tx.put(TestSegment.BAR, bytesFromHexString("0002"), bytesFromHexString("0FFF"));
-    tx.commit();
-
-    store.flush(TestSegment.FOO);
-
-    assertThat(memtableEntries(store, TestSegment.FOO)).isEqualTo("0");
-    assertThat(memtableEntries(store, TestSegment.BAR)).isEqualTo("1");
-    assertThat(store.get(TestSegment.FOO, bytesFromHexString("0001")))
-        .contains(bytesFromHexString("0FFF"));
-    store.close();
-  }
-
-  private static String memtableEntries(
-      final RocksDBColumnarKeyValueStorage store, final SegmentIdentifier segment)
-      throws Exception {
-    return store
-        .getDB()
-        .getProperty(store.safeColumnHandle(segment), "rocksdb.num-entries-active-mem-table");
-  }
-
-  @Test
-  public void unloggedWritesSurviveAFlushAndAReopen(@TempDir final Path path) throws Exception {
-    final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, TestSegment.FOO);
-    final SegmentedKeyValueStorage store = createSegmentedStore(path, segments, List.of());
-    final SegmentedKeyValueStorageTransaction tx = store.startUnloggedBatchTransaction();
-    tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF"));
-    tx.commit();
-    store.flush();
-    store.close();
-
-    final SegmentedKeyValueStorage reopened = createSegmentedStore(path, segments, List.of());
-    assertThat(reopened.get(TestSegment.FOO, bytesFromHexString("0001")))
-        .contains(bytesFromHexString("0FFF"));
-    reopened.close();
-  }
-
-  @Test
-  public void unloggedWritesToAClearedSegmentSurviveAFlushAndAReopen(@TempDir final Path path)
-      throws Exception {
-    final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, TestSegment.FOO);
-    final SegmentedKeyValueStorage store = createSegmentedStore(path, segments, List.of());
-    // a clear replaces the column family and closes its former handle
-    store.clear(TestSegment.FOO);
-    final SegmentedKeyValueStorageTransaction tx = store.startUnloggedBatchTransaction();
-    tx.put(TestSegment.FOO, bytesFromHexString("0001"), bytesFromHexString("0FFF"));
-    tx.commit();
-    store.flush();
-    store.close();
-
-    final SegmentedKeyValueStorage reopened = createSegmentedStore(path, segments, List.of());
-    assertThat(reopened.get(TestSegment.FOO, bytesFromHexString("0001")))
-        .contains(bytesFromHexString("0FFF"));
-    reopened.close();
-  }
-
-  private static long walBytes(final RocksDBColumnarKeyValueStorage store) throws RocksDBException {
-    return store.getDB().getSortedWalFiles().stream().mapToLong(LogFile::sizeFileBytes).sum();
   }
 
   public enum TestSegment implements SegmentIdentifier {

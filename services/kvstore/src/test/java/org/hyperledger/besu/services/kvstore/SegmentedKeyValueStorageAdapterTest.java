@@ -43,23 +43,6 @@ public class SegmentedKeyValueStorageAdapterTest {
     assertThat(segmented.get(Segment.FOO, new byte[] {1}).map(Bytes::wrap)).contains(Bytes.of(2));
   }
 
-  @Test
-  public void writesUnloggedBatchTransactionsToItsSegment() {
-    final KeyValueStorageTransaction transaction = adapter.startUnloggedBatchTransaction();
-    transaction.put(new byte[] {1}, new byte[] {2});
-    transaction.commit();
-
-    assertThat(segmented.calls).first().isEqualTo("unlogged");
-    assertThat(segmented.get(Segment.FOO, new byte[] {1}).map(Bytes::wrap)).contains(Bytes.of(2));
-  }
-
-  @Test
-  public void flushesItsSegmentOnly() {
-    adapter.flush();
-
-    assertThat(segmented.calls).containsExactly("flush FOO");
-  }
-
   // records the transactions the adapter starts
   private static final class RecordingStorage extends SegmentedInMemoryKeyValueStorage {
     private final List<String> calls = new ArrayList<>();
@@ -68,22 +51,6 @@ public class SegmentedKeyValueStorageAdapterTest {
     public SegmentedKeyValueStorageTransaction startBatchTransaction() {
       calls.add("batch");
       return super.startBatchTransaction();
-    }
-
-    @Override
-    public SegmentedKeyValueStorageTransaction startUnloggedBatchTransaction() {
-      calls.add("unlogged");
-      return super.startUnloggedBatchTransaction();
-    }
-
-    @Override
-    public void flush() {
-      calls.add("flush");
-    }
-
-    @Override
-    public void flush(final SegmentIdentifier segment) {
-      calls.add("flush " + segment.getName());
     }
   }
 

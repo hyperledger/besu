@@ -68,7 +68,6 @@ import org.rocksdb.CompressionType;
 import org.rocksdb.ConfigOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
-import org.rocksdb.FlushOptions;
 import org.rocksdb.LRUCache;
 import org.rocksdb.LiveFileMetaData;
 import org.rocksdb.Options;
@@ -96,6 +95,9 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
   /** Max total size of all WAL file, after which a flush is triggered */
   protected static final long WAL_MAX_TOTAL_SIZE = 1_073_741_824L;
+
+  /** Expected size of a single WAL file, to determine how many WAL files to keep around */
+  protected static final long EXPECTED_WAL_FILE_SIZE = 67_108_864L;
 
   /** RocksDb number of log files to keep on disk */
   private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 7;
@@ -341,8 +343,7 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
         .setKeepLogFileNum(NUMBER_OF_LOG_FILES_TO_KEEP)
         .setEnv(Env.getDefault().setBackgroundThreads(configuration.getBackgroundThreadCount()))
         .setMaxTotalWalSize(WAL_MAX_TOTAL_SIZE)
-        // no recycled log files, which RocksDB forbids with writes that skip the log
-        .setRecycleLogFileNum(0);
+        .setRecycleLogFileNum(WAL_MAX_TOTAL_SIZE / EXPECTED_WAL_FILE_SIZE);
   }
 
   /**
@@ -722,51 +723,13 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   // writes that never conflict skip the conflict checks of a transaction
   @Override
   public SegmentedKeyValueStorageTransaction startBatchTransaction() throws StorageException {
-    return batchTransaction(false);
-  }
-
-  @Override
-  public SegmentedKeyValueStorageTransaction startUnloggedBatchTransaction()
-      throws StorageException {
-    return batchTransaction(true);
-  }
-
-  private SegmentedKeyValueStorageTransaction batchTransaction(final boolean unlogged) {
     throwIfClosed();
     final WriteOptions writeOptions = new WriteOptions();
     writeOptions.setIgnoreMissingColumnFamilies(true);
-    writeOptions.setDisableWAL(unlogged);
     return new SegmentedKeyValueStorageTransactionValidatorDecorator(
         new RocksDBWriteBatchTransaction(
             this::safeColumnHandle, getDB(), writeOptions, getMetrics()),
         this.closed::get);
-  }
-
-  // writes every memtable to disk, so that writes that skipped the log survive a crash
-  @Override
-  public void flush() throws StorageException {
-    throwIfClosed();
-    // the current handles, as a clear replaces the handle of its segment
-    final List<ColumnFamilyHandle> handles =
-        getColumnHandlesBySegmentIdentifier().values().stream()
-            .map(RocksDbSegmentIdentifier::get)
-            .toList();
-    try (final FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
-      getDB().flush(flushOptions, handles);
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
-  }
-
-  // writes the memtable of one segment to disk, leaving the others to fill up as usual
-  @Override
-  public void flush(final SegmentIdentifier segment) throws StorageException {
-    throwIfClosed();
-    try (final FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
-      getDB().flush(flushOptions, safeColumnHandle(segment));
-    } catch (final RocksDBException e) {
-      throw new StorageException(e);
-    }
   }
 
   void throwIfClosed() {

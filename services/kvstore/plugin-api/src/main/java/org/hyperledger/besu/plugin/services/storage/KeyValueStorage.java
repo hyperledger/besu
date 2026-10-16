@@ -150,26 +150,6 @@ public interface KeyValueStorage extends Closeable {
   }
 
   /**
-   * Begins a batch transaction whose writes skip the write-ahead log: a crash before the next
-   * {@link #flush()} loses them. Storage without a write-ahead log falls back to {@link
-   * #startBatchTransaction()}.
-   *
-   * @return transaction to sequence key-value operations.
-   * @throws StorageException problem encountered when starting a new transaction.
-   */
-  default KeyValueStorageTransaction startUnloggedBatchTransaction() throws StorageException {
-    return startBatchTransaction();
-  }
-
-  /**
-   * Persists the writes still held in memory by this storage, including those that skipped the
-   * write-ahead log.
-   *
-   * @throws StorageException problem encountered when flushing.
-   */
-  default void flush() throws StorageException {}
-
-  /**
    * Return Whether the underlying storage is closed.
    *
    * @return boolean indicating whether the storage is closed.
