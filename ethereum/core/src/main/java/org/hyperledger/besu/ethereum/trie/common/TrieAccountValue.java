@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.trie.common;
 
 import org.hyperledger.besu.datatypes.AccountValue;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.StorageRootStrategy;
 
 /**
  * An {@link AccountValue} that knows the {@link StorageRootStrategy} reproducing its own RLP shape.

@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account;
+package org.hyperledger.besu.ethereum.trie.common;
 
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Hash;
@@ -20,8 +20,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /**
- * Owns the storage root of a {@link BonsaiAccount} and its field in the account RLP, which depend
- * on the trie format.
+ * Owns the storage root of an account and its field in the account RLP, which depend on the trie
+ * format.
  */
 public interface StorageRootStrategy {
 

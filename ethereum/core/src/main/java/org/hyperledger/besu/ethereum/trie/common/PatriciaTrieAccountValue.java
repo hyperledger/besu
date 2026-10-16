@@ -20,8 +20,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.MptStorageRootStrategy;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.StorageRootStrategy;
 
 import java.util.Objects;
 

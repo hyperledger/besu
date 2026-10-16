@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.common.MptStorageRootStrategy;
+import org.hyperledger.besu.ethereum.trie.common.StorageRootStrategy;
 import org.hyperledger.besu.ethereum.trie.common.TrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldView;
 import org.hyperledger.besu.evm.Code;
@@ -159,7 +161,7 @@ public class BonsaiAccount implements MutableAccount, TrieAccountValue {
   }
 
   /** Returns the {@link StorageRootStrategy} held by this account. */
-  public StorageRootStrategy getStorageRootStrategy() {
+  StorageRootStrategy getStorageRootStrategy() {
     return storageRootStrategy;
   }
 
