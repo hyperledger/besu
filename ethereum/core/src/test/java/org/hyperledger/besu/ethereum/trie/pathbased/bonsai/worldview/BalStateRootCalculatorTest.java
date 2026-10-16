@@ -34,7 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.S
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.StorageChange;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListAccountLookup;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalStateRootCommitter;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.DefaultStateRootCommitter;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.patricia.DefaultPatriciaStateRootCommitter;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -282,7 +282,7 @@ class BalStateRootCalculatorTest {
           (BonsaiWorldStateUpdateAccumulator) worldState.updater();
       accumulatorConsumer.accept(accumulator);
       accumulator.commit();
-      return new DefaultStateRootCommitter().compute(worldState, null, accumulator).root();
+      return new DefaultPatriciaStateRootCommitter().compute(worldState, null, accumulator).root();
     } finally {
       worldState.close();
     }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.patricia.DefaultPatriciaStateRootCommitter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -30,7 +31,7 @@ class StateRootCommitterTest {
 
   @Test
   void committersUseThePatriciaBranchByDefault() {
-    assertThat(new DefaultStateRootCommitter().getTrieBranchType())
+    assertThat(new DefaultPatriciaStateRootCommitter().getTrieBranchType())
         .isEqualTo(TrieBranchType.PATRICIA);
   }
 
