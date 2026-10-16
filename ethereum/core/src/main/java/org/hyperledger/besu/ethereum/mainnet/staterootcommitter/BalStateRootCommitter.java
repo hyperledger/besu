@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListAccountLookup;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListOverlay;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.BlockProcessingExecutors;
-import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.patricia.PatriciaBalEngine;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiWorldStateUpdateAccumulator;
@@ -75,14 +74,6 @@ public final class BalStateRootCommitter implements StateRootCommitter {
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
   // Assigned by start(); null until then. start() must be called before compute()/cancel().
   private CompletableFuture<Result> backgroundComputation;
-
-  public BalStateRootCommitter(
-      final ProtocolContext protocolContext,
-      final BlockHeader blockHeader,
-      final BlockAccessListAccountLookup accountLookup,
-      final boolean storageFrozen) {
-    this(protocolContext, blockHeader, accountLookup, storageFrozen, PatriciaBalEngine.INSTANCE);
-  }
 
   public BalStateRootCommitter(
       final ProtocolContext protocolContext,

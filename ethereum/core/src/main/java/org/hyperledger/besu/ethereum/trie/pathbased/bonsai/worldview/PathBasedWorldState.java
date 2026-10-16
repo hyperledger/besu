@@ -187,8 +187,8 @@ public abstract class PathBasedWorldState
     return accumulator;
   }
 
-  public WorldStateConfig getWorldStateConfig() {
-    return worldStateConfig;
+  public boolean isParallelStateRootComputationEnabled() {
+    return worldStateConfig.isParallelStateRootComputationEnabled();
   }
 
   public boolean isTrieDisabled() {

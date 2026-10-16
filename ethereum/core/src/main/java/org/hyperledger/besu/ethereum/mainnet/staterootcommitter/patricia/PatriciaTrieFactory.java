@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.trie.NoOpMerkleTrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.ParallelStoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
@@ -41,7 +40,7 @@ public final class PatriciaTrieFactory {
   /** Account state trie rooted at the current world state root. */
   public static MerkleTrie<Bytes, Bytes> createAccountStateTrie(final BonsaiWorldState worldState) {
     return createTrie(
-        worldState.getWorldStateConfig(),
+        worldState,
         (location, hash) ->
             worldState
                 .getBonsaiCachedMerkleTrieLoader()
@@ -54,7 +53,7 @@ public final class PatriciaTrieFactory {
   public static MerkleTrie<Bytes, Bytes> createStorageTrie(
       final BonsaiWorldState worldState, final Hash accountHash, final Hash storageRoot) {
     return createTrie(
-        worldState.getWorldStateConfig(),
+        worldState,
         (location, key) ->
             worldState
                 .getBonsaiCachedMerkleTrieLoader()
@@ -69,7 +68,7 @@ public final class PatriciaTrieFactory {
       final BonsaiWorldState worldState, final Address address, final Hash rootHash) {
     final MerkleTrie<Bytes, Bytes> storageTrie =
         createTrie(
-            worldState.getWorldStateConfig(),
+            worldState,
             (location, key) ->
                 worldState
                     .getWorldStateStorage()
@@ -79,15 +78,25 @@ public final class PatriciaTrieFactory {
     return storageTrie.entriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
   }
 
+  /** Sequential trie for the per-transaction frontier roots, too small for the parallel trie. */
+  public static MerkleTrie<Bytes, Bytes> createFrontierTrie(
+      final BonsaiWorldState worldState, final NodeLoader nodeLoader, final Bytes32 rootHash) {
+    if (worldState.isTrieDisabled()) {
+      return new NoOpMerkleTrie<>();
+    }
+    return new StoredMerklePatriciaTrie<>(
+        nodeLoader, rootHash, Function.identity(), Function.identity());
+  }
+
   private static MerkleTrie<Bytes, Bytes> createTrie(
-      final WorldStateConfig worldStateConfig,
+      final BonsaiWorldState worldState,
       final NodeLoader nodeLoader,
       final Bytes32 rootHash,
       final ForkJoinPool forkJoinPool) {
-    if (worldStateConfig.isTrieDisabled()) {
+    if (worldState.isTrieDisabled()) {
       return new NoOpMerkleTrie<>();
     }
-    if (worldStateConfig.isParallelStateRootComputationEnabled()) {
+    if (worldState.isParallelStateRootComputationEnabled()) {
       return new ParallelStoredMerklePatriciaTrie<>(
           nodeLoader, rootHash, Function.identity(), Function.identity(), forkJoinPool);
     }

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList.S
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListAccountLookup;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.BalStateRootCommitter;
 import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.patricia.DefaultPatriciaStateRootCommitter;
+import org.hyperledger.besu.ethereum.mainnet.staterootcommitter.patricia.PatriciaBalEngine;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -305,7 +306,11 @@ class BalStateRootCalculatorTest {
     try {
       final BalStateRootCommitter committer =
           new BalStateRootCommitter(
-                  protocolContext, blockHeader, BlockAccessListAccountLookup.of(bal), false)
+                  protocolContext,
+                  blockHeader,
+                  BlockAccessListAccountLookup.of(bal),
+                  false,
+                  PatriciaBalEngine.INSTANCE)
               .start();
       return committer.compute(worldState, null, worldState.updater()).root();
     } finally {

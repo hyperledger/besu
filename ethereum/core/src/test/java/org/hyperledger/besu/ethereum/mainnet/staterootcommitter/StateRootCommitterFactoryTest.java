@@ -44,6 +44,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.worldstate.StateRootCommitter;
+import org.hyperledger.besu.plugin.services.worldstate.TrieBranchType;
 
 import java.util.List;
 import java.util.Optional;
@@ -133,6 +134,7 @@ class StateRootCommitterFactoryTest {
                 protocolContext, blockHeader, Optional.of(bal), worldState.isStorageFrozen());
 
         assertThat(committer).isInstanceOf(BalStateRootCommitter.class);
+        assertThat(committer.getTrieBranchType()).isEqualTo(TrieBranchType.PATRICIA);
       }
     }
 

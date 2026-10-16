@@ -64,8 +64,7 @@ class BonsaiWorldStateTest {
     when(bonsaiWorldState.isStorageFrozen()).thenReturn(false);
     // a disabled trie is a no-op trie, so only the code writes reach the updater
     when(bonsaiWorldState.getWorldStateRootHash()).thenReturn(Hash.wrap(Bytes32.ZERO));
-    when(bonsaiWorldState.getWorldStateConfig())
-        .thenReturn(WorldStateConfig.newBuilder().trieDisabled(true).build());
+    when(bonsaiWorldState.isTrieDisabled()).thenReturn(true);
 
     committer.compute(bonsaiWorldState, null, accumulator).applyTo(bonsaiUpdater);
   }
