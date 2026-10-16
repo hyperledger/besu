@@ -33,11 +33,13 @@ import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.StoredNode;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.WorldStateKeyValueStorage;
 
@@ -108,7 +110,7 @@ class SnapV2BlockAccessListApplierReorgCorrectionTest {
         .applyReorgCorrections(
             plan, fetched, fullAccountRange(), new DownloadedStorageRangeTracker());
 
-    final PmtStateTrieAccountValue carol = readAccount(CAROL);
+    final PatriciaTrieAccountValue carol = readAccount(CAROL);
     assertThat(carol.getCodeHash()).isEqualTo(Hash.hash(CAROL_CODE_W));
     assertThat(readCode(CAROL, Hash.hash(CAROL_CODE_W))).hasValue(CAROL_CODE_W);
   }
@@ -174,8 +176,8 @@ class SnapV2BlockAccessListApplierReorgCorrectionTest {
     final ReorgPlan plan =
         planWithDivergedAccounts(
             Set.of(), Map.of(FRANK.addressHash(), Set.of(ReorgBlockchainBuilder.slotHash(S1))));
-    final PmtStateTrieAccountValue canonicalFrank =
-        new PmtStateTrieAccountValue(0L, Wei.of(200), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    final PatriciaTrieAccountValue canonicalFrank =
+        new PatriciaTrieAccountValue(0L, Wei.of(200), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
     final FetchedReorgState fetched =
         new FetchedReorgState(
             Map.of(FRANK.addressHash(), Optional.of(canonicalFrank)),
@@ -232,14 +234,14 @@ class SnapV2BlockAccessListApplierReorgCorrectionTest {
     applyForStrategy(
         updater,
         bonsai -> {
-          bonsai.putAccountStorageTrieNode(accountHash, Bytes.EMPTY, rootHash, rootRlp);
-          bonsai.putAccountStorageTrieNode(accountHash, Bytes.of((byte) 0), leafHash, leafRlp);
+          bonsai.putTrieNode(TrieNodeKey.of(accountHash, Bytes.EMPTY), rootHash, rootRlp);
+          bonsai.putTrieNode(TrieNodeKey.of(accountHash, Bytes.of((byte) 0)), leafHash, leafRlp);
           // child at nibble 1 deliberately NOT persisted
         },
         forest -> {});
 
-    final PmtStateTrieAccountValue carolAccount =
-        new PmtStateTrieAccountValue(0L, Wei.of(50), Hash.wrap(rootHash), Hash.EMPTY);
+    final PatriciaTrieAccountValue carolAccount =
+        new PatriciaTrieAccountValue(0L, Wei.of(50), Hash.wrap(rootHash), Hash.EMPTY);
     final Bytes encodedAccount = RLP.encode(carolAccount::writeTo);
     applyForStrategy(
         updater, bonsai -> bonsai.putAccountInfoState(accountHash, encodedAccount), forest -> {});
@@ -296,8 +298,8 @@ class SnapV2BlockAccessListApplierReorgCorrectionTest {
     return new ReorgPlan(ancestor, oldPivot, newPivot, divergedAccounts, divergedSlotsByAccount);
   }
 
-  private static PmtStateTrieAccountValue accountValue(final Wei balance, final Hash codeHash) {
-    return new PmtStateTrieAccountValue(0L, balance, Hash.EMPTY_TRIE_HASH, codeHash);
+  private static PatriciaTrieAccountValue accountValue(final Wei balance, final Hash codeHash) {
+    return new PatriciaTrieAccountValue(0L, balance, Hash.EMPTY_TRIE_HASH, codeHash);
   }
 
   private void seedAccount(final Address address, final Wei balance, final Hash codeHash) {
@@ -319,8 +321,8 @@ class SnapV2BlockAccessListApplierReorgCorrectionTest {
     updater.commit();
   }
 
-  private PmtStateTrieAccountValue readAccount(final Address address) {
-    return PmtStateTrieAccountValue.readFrom(
+  private PatriciaTrieAccountValue readAccount(final Address address) {
+    return PatriciaTrieAccountValue.readFrom(
         RLP.input(
             coordinator
                 .applyForStrategy(
@@ -331,7 +333,7 @@ class SnapV2BlockAccessListApplierReorgCorrectionTest {
 
   private Optional<Bytes> readCode(final Address address, final Hash codeHash) {
     return coordinator.applyForStrategy(
-        bonsai -> bonsai.getCode(codeHash, address.addressHash()),
+        bonsai -> bonsai.getCode(codeHash, address.addressHash()).map(Code::getBytes),
         forest -> Optional.<Bytes>empty());
   }
 

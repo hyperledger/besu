@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfigurat
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.ImmutableSnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
+import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -78,14 +79,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   // Regular (stable) flag
   private static final String SNAP_SERVER_ENABLED_FLAG = "--snapsync-server-enabled";
   private static final String SNAP2_ENABLED_FLAG = "--Xsnap2-enabled";
+  private static final String SNAP2_REQUEST_PARALLELISM_FLAG = "--Xsnap2-request-parallelism";
 
   private static final String SNAP_PIVOT_BLOCK_WINDOW_VALIDITY_FLAG =
       "--Xsnapsync-synchronizer-pivot-block-window-validity";
   private static final String SNAP_PIVOT_BLOCK_CHECK_INTERVAL_MILLIS_FLAG =
       "--Xsnapsync-synchronizer-pivot-block-check-interval-millis";
-  private static final String SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG =
-      "--Xsnapsync-synchronizer-pivot-block-distance-before-caching";
-
   private static final String SNAP_STORAGE_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-storage-count-per-request";
   private static final String SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG =
@@ -246,7 +245,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       hidden = true,
       paramLabel = "<INTEGER>",
       description =
-          "Number of concurrent requests to use when downloading fast sync world state (default: ${DEFAULT-VALUE})")
+          "Number of concurrent requests per snap/1 world state download pipeline (default: ${DEFAULT-VALUE})")
   private int worldStateRequestParallelism =
       SynchronizerConfiguration.DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
 
@@ -322,21 +321,6 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private long snapsyncPivotBlockCheckIntervalMillis =
       SnapSyncConfiguration.DEFAULT_PIVOT_CHECK_INTERVAL_MILLIS;
 
-  /**
-   * @deprecated No longer used. Accepted for backwards compatibility. The flag will be removed in a
-   *     future release.
-   */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("unused")
-  @CommandLine.Option(
-      names = SNAP_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING_FLAG,
-      hidden = true,
-      paramLabel = "<INTEGER>",
-      description =
-          "Deprecated, no-op. Pivot caching is driven by the engine newPayload header cache.")
-  private int snapsyncPivotBlockDistanceBeforeCaching =
-      SnapSyncConfiguration.DEFAULT_PIVOT_BLOCK_DISTANCE_BEFORE_CACHING;
-
   @CommandLine.Option(
       names = SNAP_STORAGE_COUNT_PER_REQUEST_FLAG,
       hidden = true,
@@ -396,6 +380,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       description =
           "Enable advertising the snap/2 protocol capability. (default: ${DEFAULT-VALUE})")
   private Boolean snap2Enabled = SnapSyncConfiguration.DEFAULT_SNAP2_ENABLED;
+
+  @CommandLine.Option(
+      names = {SNAP2_REQUEST_PARALLELISM_FLAG},
+      hidden = true,
+      paramLabel = "<INTEGER>",
+      description =
+          "Number of concurrent requests per snap/2 world state download pipeline (default: ${DEFAULT-VALUE})")
+  private PositiveNumber snap2RequestParallelism =
+      PositiveNumber.fromInt(SnapSyncConfiguration.DEFAULT_SNAP2_REQUEST_PARALLELISM);
 
   @CommandLine.Option(
       names = SNAP_SERVER_MAX_CONCURRENT_REQUESTS_PER_PEER_FLAG,
@@ -565,6 +558,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     options.snap2Enabled = config.getSnapSyncConfiguration().isSnap2Enabled();
+    options.snap2RequestParallelism =
+        PositiveNumber.fromInt(config.getSnapSyncConfiguration().getSnap2RequestParallelism());
     options.snapsyncServerMaxConcurrentRequestsPerPeer =
         config.getSnapSyncConfiguration().getMaxConcurrentSnapRequestsPerPeer();
     options.snapsyncServerMaxConcurrentRequests =
@@ -614,6 +609,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isSnapServerEnabled(snapsyncServerEnabled)
             .isSnap2Enabled(snap2Enabled)
+            .snap2RequestParallelism(snap2RequestParallelism.getValue())
             .maxConcurrentSnapRequestsPerPeer(snapsyncServerMaxConcurrentRequestsPerPeer)
             .maxConcurrentSnapRequestsGlobal(snapsyncServerMaxConcurrentRequests)
             .isSnapSyncTransactionIndexingEnabled(snapTransactionIndexingEnabled)
@@ -690,6 +686,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             OptionParser.format(snapsyncServerEnabled),
             SNAP2_ENABLED_FLAG,
             OptionParser.format(snap2Enabled),
+            SNAP2_REQUEST_PARALLELISM_FLAG,
+            OptionParser.format(snap2RequestParallelism.getValue()),
             SNAP_SERVER_MAX_CONCURRENT_REQUESTS_PER_PEER_FLAG,
             OptionParser.format(snapsyncServerMaxConcurrentRequestsPerPeer),
             SNAP_SERVER_MAX_CONCURRENT_REQUESTS_FLAG,

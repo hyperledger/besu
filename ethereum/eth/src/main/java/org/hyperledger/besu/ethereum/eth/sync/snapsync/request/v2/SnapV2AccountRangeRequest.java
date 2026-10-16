@@ -33,7 +33,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.v2.SnapV2DataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -89,7 +89,7 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
         (location, hash, value) -> {
           applyForStrategy(
               updater,
-              onBonsai -> onBonsai.putAccountStateTrieNode(location, hash, value),
+              onBonsai -> onBonsai.putTrieNode(location, hash, value),
               onForest -> onForest.putAccountStateTrieNode(hash, value));
           nbNodesSaved.getAndIncrement();
         };
@@ -195,8 +195,8 @@ public class SnapV2AccountRangeRequest extends SnapV2DataRequest {
     // proof verification; only generate children for in-range accounts.
     for (Map.Entry<Bytes32, Bytes> account :
         taskElement.keys().subMap(startKeyHash, true, endKeyHash, true).entrySet()) {
-      final PmtStateTrieAccountValue accountValue =
-          PmtStateTrieAccountValue.readFrom(RLP.input(account.getValue()));
+      final PatriciaTrieAccountValue accountValue =
+          PatriciaTrieAccountValue.readFrom(RLP.input(account.getValue()));
       if (!accountValue.getStorageRoot().equals(Hash.EMPTY_TRIE_HASH)) {
         childRequests.add(
             new SnapV2StorageRangeRequest(

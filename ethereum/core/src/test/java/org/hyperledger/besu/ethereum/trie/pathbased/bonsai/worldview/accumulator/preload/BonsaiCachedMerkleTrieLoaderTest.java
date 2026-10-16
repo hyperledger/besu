@@ -25,8 +25,9 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -98,13 +99,13 @@ class BonsaiCachedMerkleTrieLoaderTest {
   @Test
   void shouldAddStorageNodesInCacheDuringPreload() {
     final Hash hashAccountZero = accounts.get(0).addressHash();
-    final PmtStateTrieAccountValue stateTrieAccountValue =
-        PmtStateTrieAccountValue.readFrom(
+    final PatriciaTrieAccountValue stateTrieAccountValue =
+        PatriciaTrieAccountValue.readFrom(
             RLP.input(trie.get(hashAccountZero.getBytes()).orElseThrow()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (Bytes location, Bytes32 hash) ->
-                inMemoryWorldState.getAccountStorageTrieNode(hashAccountZero, location, hash),
+                inMemoryWorldState.getTrieNode(TrieNodeKey.of(hashAccountZero, location), hash),
             Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());
@@ -159,13 +160,13 @@ class BonsaiCachedMerkleTrieLoaderTest {
   @Test
   void shouldFallbackWhenStorageNodesIsNotInCache() {
     final Hash hashAccountZero = accounts.get(0).addressHash();
-    final PmtStateTrieAccountValue stateTrieAccountValue =
-        PmtStateTrieAccountValue.readFrom(
+    final PatriciaTrieAccountValue stateTrieAccountValue =
+        PatriciaTrieAccountValue.readFrom(
             RLP.input(trie.get(hashAccountZero.getBytes()).orElseThrow()));
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (Bytes location, Bytes32 hash) ->
-                inMemoryWorldState.getAccountStorageTrieNode(hashAccountZero, location, hash),
+                inMemoryWorldState.getTrieNode(TrieNodeKey.of(hashAccountZero, location), hash),
             Bytes32.wrap(stateTrieAccountValue.getStorageRoot().getBytes()),
             Function.identity(),
             Function.identity());

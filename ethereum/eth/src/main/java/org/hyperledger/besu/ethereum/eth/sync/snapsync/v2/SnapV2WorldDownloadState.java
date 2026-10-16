@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.common.StateRootMismatchException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -352,9 +352,10 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
             ? "running for " + ((System.currentTimeMillis() - pivotCatchupStartMillis) / 1000) + "s"
             : "idle";
     LOG.info(
-        "snap/2 world state download in progress: pivot={}, ranges completed={}, pending={}, "
+        "snap/2 world state download in progress: {}%, pivot={}, ranges completed={}, pending={}, "
             + "queued=[acc={}, stor={}, bigStor={}, code={}], in-flight={}, pivot-catchup={}, "
             + "peers={}",
+        metricsManager.getPercentageProgress(),
         snapSyncState.getPivotBlockHeader().map(BlockHeader::getNumber).orElse(-1L),
         accountRangeTracker.completedRangeCount(),
         accountRangeTracker.pendingRangeCount(),
@@ -798,7 +799,7 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
         .map(
             b ->
                 Bytes32.wrap(
-                    PmtStateTrieAccountValue.readFrom(RLP.input(b)).getStorageRoot().getBytes()))
+                    PatriciaTrieAccountValue.readFrom(RLP.input(b)).getStorageRoot().getBytes()))
         .orElseThrow(
             () ->
                 new WorldStateDownloaderException(
@@ -850,8 +851,8 @@ public class SnapV2WorldDownloadState extends WorldDownloadState<SnapDataRequest
                           "Account data missing for account %s at pivot %s",
                           accountHash, pivotHeader.getNumber(), null);
                     }
-                    final PmtStateTrieAccountValue accountValue =
-                        PmtStateTrieAccountValue.readFrom(RLP.input(accountData));
+                    final PatriciaTrieAccountValue accountValue =
+                        PatriciaTrieAccountValue.readFrom(RLP.input(accountData));
                     results.put(
                         accountHash, Bytes32.wrap(accountValue.getStorageRoot().getBytes()));
                     return null;
