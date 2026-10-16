@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
@@ -44,35 +43,17 @@ public final class SyncStorageFixture {
 
   /** Storage format under test. */
   public enum Format {
-    BONSAI,
-    FOREST
+    BONSAI
   }
 
   /** A sync storage with direct access to its backing world state storage. */
-  public record Storages(
-      SyncStateStorage sync,
-      BonsaiWorldStateKeyValueStorage bonsai,
-      ForestWorldStateKeyValueStorage forest) {
-
-    /** Opens the stored account trie, reading nodes back the way the format does. */
-    public MerkleTrie<Bytes32, Bytes> accountTrie(final Bytes32 root) {
-      return new StoredMerklePatriciaTrie<>(
-          (location, hash) ->
-              bonsai != null
-                  ? bonsai.getTrieNode(location, hash)
-                  : forest.getAccountStateTrieNode(hash),
-          root,
-          Function.identity(),
-          Function.identity());
-    }
+  public record Storages(SyncStateStorage sync, BonsaiWorldStateKeyValueStorage bonsai) {
 
     /** Opens a stored storage trie. */
     public MerkleTrie<Bytes32, Bytes> storageTrie(final Bytes32 accountHash, final Bytes32 root) {
       return new StoredMerklePatriciaTrie<>(
           (location, hash) ->
-              bonsai != null
-                  ? bonsai.getTrieNode(TrieNodeKey.of(Hash.wrap(accountHash), location), hash)
-                  : forest.getAccountStorageTrieNode(hash),
+              bonsai.getTrieNode(TrieNodeKey.of(Hash.wrap(accountHash), location), hash),
           root,
           Function.identity(),
           Function.identity());
@@ -81,16 +62,14 @@ public final class SyncStorageFixture {
 
   public static Storages create(final Format format) {
     final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
-    if (format == Format.BONSAI) {
-      final BonsaiWorldStateKeyValueStorage bonsai =
-          (BonsaiWorldStateKeyValueStorage)
-              provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
-      return new Storages(new BonsaiSyncStateStorage(bonsai), bonsai, null);
-    }
-    final ForestWorldStateKeyValueStorage forest =
-        (ForestWorldStateKeyValueStorage)
-            provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG);
-    return new Storages(new ForestSyncStateStorage(forest, provider), null, forest);
+    return switch (format) {
+      case BONSAI -> {
+        final BonsaiWorldStateKeyValueStorage bonsai =
+            (BonsaiWorldStateKeyValueStorage)
+                provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+        yield new Storages(new BonsaiSyncStateStorage(bonsai), bonsai);
+      }
+    };
   }
 
   /**

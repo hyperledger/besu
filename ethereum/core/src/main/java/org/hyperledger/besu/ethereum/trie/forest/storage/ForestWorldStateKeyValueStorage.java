@@ -87,11 +87,6 @@ public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
 
-  /** Returns an updater committed as one write batch, for writes that never conflict. */
-  public Updater batchUpdater() {
-    return new Updater(lock, keyValueStorage.startBatchTransaction(), nodeAddedListeners);
-  }
-
   public long prune(final Predicate<byte[]> inUseCheck) {
     final AtomicInteger prunedKeys = new AtomicInteger(0);
     try (final Stream<byte[]> entry = keyValueStorage.streamKeys()) {

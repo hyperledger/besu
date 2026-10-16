@@ -3009,9 +3009,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         && !dataStorageConfiguration.getHistoryExpiryPruneEnabled()) {
       rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE);
     }
-    // only the SNAP2 sync stages flat state on Forest
-    rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.SNAPSYNC_FLAT_ACCOUNTS);
-    rocksDBPlugin.addIgnorableSegmentIdentifier(KeyValueSegmentIdentifier.SNAPSYNC_FLAT_STORAGE);
   }
 
   private void validateAndResolveCheckpointRelatedConfig() {

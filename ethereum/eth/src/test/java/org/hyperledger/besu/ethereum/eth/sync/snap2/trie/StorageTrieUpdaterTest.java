@@ -26,17 +26,21 @@ import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.Format;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.Storages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.World;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
@@ -151,11 +155,11 @@ class StorageTrieUpdaterTest {
     world.writeFlat(storages.sync());
     final Bytes32 root = world.storageRoot(account);
     final SyncStateStorage.TrieWriter writer = storages.sync().trieWriter();
-    final AscendingTrie trie =
-        new AscendingTrie(
-            (location, hash, node) -> writer.storageNode(account, location, hash, node));
-    world.storageLeaves(account).forEach(trie::addLeaf);
-    trie.rootHash();
+    final StoredMerklePatriciaTrie<Bytes32, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) -> Optional.empty(), Function.identity(), Function.identity());
+    world.storageLeaves(account).forEach(trie::put);
+    trie.commit((location, hash, node) -> writer.storageNode(account, location, hash, node));
     writer.commit();
     final SyncStateStorage.Batch batch = storages.sync().batch();
     batch.putAccount(account, Accounts.encode(world.account(account)));
