@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.DownloadedAccountRangeTra
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.DownloadedStorageRangeTracker;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -330,7 +330,7 @@ class SnapV2ReorgHealerRecoveryTest {
     // recomputed from the partial local trie (which still lacks sp2). No world-state root
     // equality is asserted here: the local storage stays incomplete until sp2's chunk arrives
     // via the ongoing download.
-    final PmtStateTrieAccountValue canonicalPete = readAccount(canonicalCoordinator, PETE);
+    final PatriciaTrieAccountValue canonicalPete = readAccount(canonicalCoordinator, PETE);
     assertThat(readAccount(PETE).getStorageRoot()).isEqualTo(canonicalPete.getStorageRoot());
     assertThat(result.deletedAccounts()).isEmpty();
     assertThat(result.correctedStorageRoots())
@@ -485,13 +485,13 @@ class SnapV2ReorgHealerRecoveryTest {
     return tracker;
   }
 
-  private PmtStateTrieAccountValue readAccount(final Address address) {
+  private PatriciaTrieAccountValue readAccount(final Address address) {
     return readAccount(localCoordinator, address);
   }
 
-  private static PmtStateTrieAccountValue readAccount(
+  private static PatriciaTrieAccountValue readAccount(
       final WorldStateStorageCoordinator coordinator, final Address address) {
-    return PmtStateTrieAccountValue.readFrom(
+    return PatriciaTrieAccountValue.readFrom(
         RLP.input(readAccountBytes(coordinator, address).orElseThrow()));
   }
 
@@ -516,7 +516,7 @@ class SnapV2ReorgHealerRecoveryTest {
   }
 
   private Optional<Bytes> readCode(final Address address) {
-    final PmtStateTrieAccountValue account = readAccount(address);
+    final PatriciaTrieAccountValue account = readAccount(address);
     return localCoordinator.applyForStrategy(
         bonsai -> bonsai.getCode(account.getCodeHash(), address.addressHash()).map(Code::getBytes),
         forest -> Optional.<Bytes>empty());

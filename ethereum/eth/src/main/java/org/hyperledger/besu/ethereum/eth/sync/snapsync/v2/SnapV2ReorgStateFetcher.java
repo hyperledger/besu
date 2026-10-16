@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloaderExc
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -133,13 +133,13 @@ public class SnapV2ReorgStateFetcher {
    * account. An account absent at the pivot maps to {@link Optional#empty()} (proven by the range
    * proof).
    */
-  public CompletableFuture<Map<Hash, Optional<PmtStateTrieAccountValue>>> fetchAccounts(
+  public CompletableFuture<Map<Hash, Optional<PatriciaTrieAccountValue>>> fetchAccounts(
       final Set<Hash> accountHashes, final BlockHeader pivotBlockHeader) {
     if (accountHashes.isEmpty()) {
       return CompletableFuture.completedFuture(Map.of());
     }
 
-    final ConcurrentHashMap<Hash, Optional<PmtStateTrieAccountValue>> results =
+    final ConcurrentHashMap<Hash, Optional<PatriciaTrieAccountValue>> results =
         new ConcurrentHashMap<>();
     final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -237,7 +237,7 @@ public class SnapV2ReorgStateFetcher {
             });
   }
 
-  private Optional<PmtStateTrieAccountValue> decodeVerifiedAccount(
+  private Optional<PatriciaTrieAccountValue> decodeVerifiedAccount(
       final AccountRangeMessage.AccountRangeData response,
       final Bytes32 startKey,
       final Bytes32 endKey,
@@ -257,7 +257,7 @@ public class SnapV2ReorgStateFetcher {
     if (accountData == null) {
       return Optional.empty();
     }
-    return Optional.of(PmtStateTrieAccountValue.readFrom(RLP.input(accountData)));
+    return Optional.of(PatriciaTrieAccountValue.readFrom(RLP.input(accountData)));
   }
 
   private Optional<UInt256> decodeVerifiedSlot(
