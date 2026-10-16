@@ -15,10 +15,12 @@
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.v2.operation.PushOperationV2;
 
 import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.infra.BenchmarkParams;
 
 public class PushOperationMultiLimbBenchmarkV2 extends PushOperationBenchmarkBaseV2 {
   @Param({"9", "14", "20", "32", "RANDOM"})
@@ -53,5 +55,10 @@ public class PushOperationMultiLimbBenchmarkV2 extends PushOperationBenchmarkBas
   protected Operation.OperationResult invoke(
       final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
     return PushOperationV2.MultiLimb.staticOperation(frame, code, pc, pushSize);
+  }
+
+  @Override
+  public long getGasCost(BenchmarkParams params, GasCalculator calc) {
+    return new PushOperationV2.MultiLimb(pushSizePool[index], calc).getGasCost();
   }
 }

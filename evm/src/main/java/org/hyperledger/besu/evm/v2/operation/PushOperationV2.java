@@ -23,7 +23,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   /** The constant PUSH_BASE. */
   public static final int PUSH_BASE = 0x5F;
 
-  private final int length;
+  protected final int length;
 
   /** The Push operation success result. */
   private static final OperationResult push0Success = new OperationResult(2, null);
@@ -48,7 +48,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   }
 
   /** Optimized version of PUSH opcode for PUSH0 and PUSH1 only. */
-  public class SingleByte extends PushOperationV2 {
+  public static class SingleByte extends PushOperationV2 {
 
     /**
      * Instantiates a new Push operation.
@@ -93,7 +93,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   }
 
   /** Optimized version for PUSH opcode for PUSH2 to PUSH8. */
-  public class SingleLimb extends PushOperationV2 {
+  public static class SingleLimb extends PushOperationV2 {
 
     /**
      * Instantiates a new Push operation.
@@ -146,7 +146,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
    * Generic multi limb version of PUSH opcode, can execute PUSH0-32, but it should only be used for
    * multiple long limbs because of performance.
    */
-  public class MultiLimb extends PushOperationV2 {
+  public static class MultiLimb extends PushOperationV2 {
 
     /**
      * Instantiates a new Push operation.

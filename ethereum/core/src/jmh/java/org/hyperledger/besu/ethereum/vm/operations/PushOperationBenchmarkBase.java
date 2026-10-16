@@ -37,7 +37,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
-public abstract class PushOperationBenchmarkBase {
+public abstract class PushOperationBenchmarkBase implements GasCostBenchmark {
   private static final int SAMPLE_SIZE = 30_000;
   private static final int SMALL_CODE_SIZE = 64;
   private static final int LARGE_CODE_SIZE = 24_576;
@@ -61,8 +61,8 @@ public abstract class PushOperationBenchmarkBase {
   private MessageFrame frame;
   private byte[] code;
   private int[] pcPool;
-  private int[] pushSizePool;
-  private int index;
+  protected int[] pushSizePool;
+  protected int index;
 
   protected abstract Position getPc();
 
