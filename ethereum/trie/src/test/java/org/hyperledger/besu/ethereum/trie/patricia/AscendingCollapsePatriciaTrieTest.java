@@ -12,15 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snap2.trie;
+package org.hyperledger.besu.ethereum.trie.patricia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
-import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,18 +36,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-class AscendingTrieTest {
+class AscendingCollapsePatriciaTrieTest {
 
   @Test
   void emptyTrieHasEmptyRoot() {
-    assertThat(new AscendingTrie(null).rootHash()).isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
+    assertThat(new AscendingCollapsePatriciaTrie().rootHash())
+        .isEqualTo(MerkleTrie.EMPTY_TRIE_NODE_HASH);
   }
 
   @ParameterizedTest
   @ValueSource(ints = {1, 2, 3, 17, 256, 1000, 5000})
   void rootMatchesReferenceTrie(final int size) {
     final NavigableMap<Bytes32, Bytes> entries = randomEntries(new Random(size), size, 40);
-    assertThat(stackRoot(entries)).isEqualTo(referenceRoot(entries));
+    assertThat(ascendingRoot(entries)).isEqualTo(referenceRoot(entries));
   }
 
   @Test
@@ -65,14 +64,14 @@ class AscendingTrieTest {
       if (i % 3 == 0) {
         key[30] = (byte) (key[30] ^ 0x01);
       }
-      entries.put(Bytes32.wrap(key), Bytes.of(i % 0x7f));
+      entries.put(Bytes32.wrap(key), Bytes.of(i % 0x7f + 1));
     }
-    assertThat(stackRoot(entries)).isEqualTo(referenceRoot(entries));
+    assertThat(ascendingRoot(entries)).isEqualTo(referenceRoot(entries));
   }
 
   @ParameterizedTest
   @ValueSource(ints = {1, 2, 50, 3000})
-  void emittedNodesMatchStoredTrieCommit(final int size) {
+  void handsTheNodesAStoredTrieCommits(final int size) {
     final NavigableMap<Bytes32, Bytes> entries = randomEntries(new Random(31L * size), size, 60);
     final Map<Bytes, Bytes> stored = new HashMap<>();
     final StoredMerklePatriciaTrie<Bytes32, Bytes> trie =
@@ -81,14 +80,13 @@ class AscendingTrieTest {
     entries.forEach(trie::put);
     trie.commit((location, hash, value) -> stored.put(location, value));
 
-    final Map<Bytes, Bytes> emitted = new HashMap<>();
-    final AscendingTrie stackTrie =
-        new AscendingTrie((location, hash, rlp) -> emitted.put(location, rlp));
-    entries.forEach(stackTrie::addLeaf);
-    final Bytes32 root = stackTrie.rootHash();
+    final Map<Bytes, Bytes> handed = new HashMap<>();
+    final AscendingCollapsePatriciaTrie ascending =
+        new AscendingCollapsePatriciaTrie((location, hash, node) -> handed.put(location, node));
+    entries.forEach(ascending::insert);
 
-    assertThat(root).isEqualTo(trie.getRootHash());
-    assertThat(emitted).isEqualTo(stored);
+    assertThat(ascending.rootHash()).isEqualTo(trie.getRootHash());
+    assertThat(handed).isEqualTo(stored);
   }
 
   @ParameterizedTest
@@ -96,31 +94,31 @@ class AscendingTrieTest {
   void partitionedBuildMatchesSingleBuild(final int size) {
     final NavigableMap<Bytes32, Bytes> entries = randomEntries(new Random(99L + size), size, 50);
     final Map<Bytes, Bytes> single = new HashMap<>();
-    final AscendingTrie full =
-        new AscendingTrie((location, hash, rlp) -> single.put(location, rlp));
-    entries.forEach(full::addLeaf);
+    final AscendingCollapsePatriciaTrie full =
+        new AscendingCollapsePatriciaTrie((location, hash, node) -> single.put(location, node));
+    entries.forEach(full::insert);
     final Bytes32 expectedRoot = full.rootHash();
 
-    // partition on the first byte, as the world state builder does
+    // one partition per first byte
     final Map<Bytes, Bytes> partitioned = new HashMap<>();
-    final NodeUpdater sink = (location, hash, rlp) -> partitioned.put(location, rlp);
-    final List<AscendingTrie.Item> items = new ArrayList<>();
+    final NodeUpdater sink = (location, hash, node) -> partitioned.put(location, node);
+    final List<AscendingCollapsePatriciaTrie.Partition> partitions = new ArrayList<>();
     for (int prefix = 0; prefix < 256; prefix++) {
-      final AscendingTrie part = new AscendingTrie(sink);
+      final AscendingCollapsePatriciaTrie part = new AscendingCollapsePatriciaTrie(sink);
       final int p = prefix;
       entries.forEach(
           (key, value) -> {
             if ((key.get(0) & 0xff) == p) {
-              part.addLeaf(key, value);
+              part.insert(key, value);
             }
           });
-      final AscendingTrie.Item item = part.finishAsItem();
-      if (item != null) {
-        items.add(item);
+      final AscendingCollapsePatriciaTrie.Partition partition = part.finishAsPartition();
+      if (partition != null) {
+        partitions.add(partition);
       }
     }
-    final AscendingTrie top = new AscendingTrie(sink);
-    items.forEach(top::addItem);
+    final AscendingCollapsePatriciaTrie top = new AscendingCollapsePatriciaTrie(sink);
+    partitions.forEach(top::insertPartition);
 
     assertThat(top.rootHash()).isEqualTo(expectedRoot);
     assertThat(partitioned).isEqualTo(single);
@@ -128,15 +126,26 @@ class AscendingTrieTest {
 
   @Test
   void rejectsUnorderedKeys() {
-    final AscendingTrie trie = new AscendingTrie(null);
-    trie.addLeaf(Bytes32.fromHexString("0x02"), Bytes.of(1));
-    assertThatThrownBy(() -> trie.addLeaf(Bytes32.fromHexString("0x01"), Bytes.of(1)))
+    final AscendingCollapsePatriciaTrie trie = new AscendingCollapsePatriciaTrie();
+    trie.insert(Bytes32.fromHexString("0x02"), Bytes.of(1));
+    assertThatThrownBy(() -> trie.insert(Bytes32.fromHexString("0x01"), Bytes.of(1)))
         .isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> trie.addLeaf(Bytes32.fromHexString("0x02"), Bytes.of(1)))
+    assertThatThrownBy(() -> trie.insert(Bytes32.fromHexString("0x02"), Bytes.of(1)))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  static NavigableMap<Bytes32, Bytes> randomEntries(
+  @Test
+  void countsTheLeavesAndRejectsEmptyValues() {
+    final AscendingCollapsePatriciaTrie trie = new AscendingCollapsePatriciaTrie();
+    trie.insert(Bytes32.fromHexString("0x01"), Bytes.of(1));
+    trie.insert(Bytes32.fromHexString("0x02"), Bytes.of(2));
+
+    assertThat(trie.insertCount()).isEqualTo(2);
+    assertThatThrownBy(() -> trie.insert(Bytes32.fromHexString("0x03"), Bytes.EMPTY))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  private static NavigableMap<Bytes32, Bytes> randomEntries(
       final Random random, final int size, final int maxValueSize) {
     final TreeMap<Bytes32, Bytes> entries = new TreeMap<>();
     while (entries.size() < size) {
@@ -149,16 +158,16 @@ class AscendingTrieTest {
     return entries;
   }
 
-  static Bytes32 referenceRoot(final Map<Bytes32, Bytes> entries) {
+  private static Bytes32 referenceRoot(final Map<Bytes32, Bytes> entries) {
     final SimpleMerklePatriciaTrie<Bytes32, Bytes> trie =
         new SimpleMerklePatriciaTrie<>(Function.identity());
     entries.forEach(trie::put);
     return trie.getRootHash();
   }
 
-  private static Bytes32 stackRoot(final NavigableMap<Bytes32, Bytes> entries) {
-    final AscendingTrie trie = new AscendingTrie(null);
-    entries.forEach(trie::addLeaf);
+  private static Bytes32 ascendingRoot(final NavigableMap<Bytes32, Bytes> entries) {
+    final AscendingCollapsePatriciaTrie trie = new AscendingCollapsePatriciaTrie();
+    entries.forEach(trie::insert);
     return trie.rootHash();
   }
 }

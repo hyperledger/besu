@@ -50,7 +50,7 @@ class RangeProofTest {
 
   @BeforeEach
   void setUp() {
-    entries = AscendingTrieTest.randomEntries(new Random(42), 500, 40);
+    entries = randomEntries(new Random(42), 500, 40);
     trie = new SimpleMerklePatriciaTrie<>(Function.identity());
     entries.forEach(trie::put);
     root = trie.getRootHash();
@@ -197,7 +197,7 @@ class RangeProofTest {
       final Map<Bytes, Bytes> nodes = new HashMap<>();
       final Random random = new Random(seed);
       final NavigableMap<Bytes32, Bytes> slots =
-          AscendingTrieTest.randomEntries(random, 300 + random.nextInt(2000), 40);
+          randomEntries(random, 300 + random.nextInt(2000), 40);
       final SimpleMerklePatriciaTrie<Bytes32, Bytes> other =
           new SimpleMerklePatriciaTrie<>(Function.identity());
       slots.forEach(other::put);
@@ -318,5 +318,18 @@ class RangeProofTest {
 
   private static Bytes32 keyAfter(final Bytes32 key) {
     return RangeManager.incrementBytes32(key).orElseThrow();
+  }
+
+  private static NavigableMap<Bytes32, Bytes> randomEntries(
+      final Random random, final int size, final int maxValueSize) {
+    final TreeMap<Bytes32, Bytes> entries = new TreeMap<>();
+    while (entries.size() < size) {
+      final byte[] key = new byte[32];
+      random.nextBytes(key);
+      final byte[] value = new byte[1 + random.nextInt(maxValueSize)];
+      random.nextBytes(value);
+      entries.put(Bytes32.wrap(key), Bytes.wrap(value));
+    }
+    return entries;
   }
 }

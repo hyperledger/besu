@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snap2.trie;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.patricia.AscendingCollapsePatriciaTrie;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,24 +93,24 @@ public final class RangeProof {
       }
       final Map<Bytes32, Bytes> nodes = new HashMap<>(proof.size() * 2);
       for (final Bytes node : proof) {
-        nodes.put(NodeEncoding.keccak(node), node);
+        nodes.put(keccak(node), node);
       }
       final Walker walker =
           new Walker(
               nodes,
               origin.toArrayUnsafe(),
               (keys.isEmpty() ? RangeManager.MAX_RANGE : keys.getLast()).toArrayUnsafe());
-      walker.visit(NodeEncoding.hashRef(rootHash), Bytes.EMPTY);
+      walker.visit(hashRef(rootHash), Bytes.EMPTY);
 
-      final AscendingTrie trie = new AscendingTrie(sink);
+      final AscendingCollapsePatriciaTrie trie = trie(sink);
       for (final Sealed sealed : walker.left) {
-        trie.addSealed(sealed.location(), sealed.ref());
+        trie.insertSealed(sealed.location(), sealed.ref());
       }
       for (int i = 0; i < keys.size(); i++) {
-        trie.addLeaf(keys.get(i), values.get(i));
+        trie.insert(keys.get(i), values.get(i));
       }
       for (final Sealed sealed : walker.right) {
-        trie.addSealed(sealed.location(), sealed.ref());
+        trie.insertSealed(sealed.location(), sealed.ref());
       }
       return trie.rootHash().equals(rootHash)
           ? new Result(true, !walker.right.isEmpty())
@@ -121,11 +123,33 @@ public final class RangeProof {
   // the root of a trie holding exactly the given sorted leaves
   private static Bytes32 computeRoot(
       final List<Bytes32> keys, final List<Bytes> values, final NodeUpdater sink) {
-    final AscendingTrie trie = new AscendingTrie(sink);
+    final AscendingCollapsePatriciaTrie trie = trie(sink);
     for (int i = 0; i < keys.size(); i++) {
-      trie.addLeaf(keys.get(i), values.get(i));
+      trie.insert(keys.get(i), values.get(i));
     }
     return trie.rootHash();
+  }
+
+  private static AscendingCollapsePatriciaTrie trie(final NodeUpdater sink) {
+    return sink == null
+        ? new AscendingCollapsePatriciaTrie()
+        : new AscendingCollapsePatriciaTrie(sink);
+  }
+
+  private static Bytes32 keccak(final Bytes node) {
+    return Bytes32.wrap(Hash.hash(node).getBytes());
+  }
+
+  private static Bytes hashRef(final Bytes32 hash) {
+    return RLP.encodeOne(hash);
+  }
+
+  private static boolean isHashRef(final Bytes ref) {
+    return ref.size() == 33 && ref.get(0) == (byte) 0xa0;
+  }
+
+  private static int nibble(final byte[] key, final int index) {
+    return (key[index >>> 1] >>> ((index & 1) == 0 ? 4 : 0)) & 0x0f;
   }
 
   private static boolean isSortedFrom(final Bytes32 origin, final List<Bytes32> keys) {
@@ -228,10 +252,10 @@ public final class RangeProof {
     }
 
     private Bytes resolve(final Bytes ref) {
-      if (!NodeEncoding.isHashRef(ref)) {
+      if (!isHashRef(ref)) {
         return ref;
       }
-      final Bytes node = nodes.get(NodeEncoding.refHash(ref));
+      final Bytes node = nodes.get(Bytes32.wrap(ref.slice(1)));
       if (node == null) {
         throw new IllegalArgumentException("missing proof node");
       }
@@ -252,7 +276,7 @@ public final class RangeProof {
 
     private static int compare(final Bytes location, final byte[] key) {
       for (int i = 0; i < location.size(); i++) {
-        final int diff = (location.get(i) & 0x0f) - NodeEncoding.nibble(key, i);
+        final int diff = (location.get(i) & 0x0f) - nibble(key, i);
         if (diff != 0) {
           return diff;
         }
@@ -271,7 +295,7 @@ public final class RangeProof {
       if (value.size() != 32) {
         throw new IllegalArgumentException("invalid child reference");
       }
-      return NodeEncoding.hashRef(Bytes32.wrap(value));
+      return hashRef(Bytes32.wrap(value));
     }
   }
 }
