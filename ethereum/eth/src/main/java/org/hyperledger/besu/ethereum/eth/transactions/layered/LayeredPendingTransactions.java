@@ -215,7 +215,18 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW_RECONCILED));
+      if (newNonceDistance >= poolConfig.getMaxFutureBySender()) {
+        // re-added txs skip the nonce checks done for new ones, so drop them here
+        LOG.atTrace()
+            .setMessage(
+                "Drop {} reconciled transaction(s) of sender {}, too much in the future since current sender nonce is {}")
+            .addArgument(reAddTxs::size)
+            .addArgument(sender)
+            .addArgument(stateSenderNonce)
+            .log();
+      } else {
+        reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW_RECONCILED));
+      }
     }
 
     LOG.atDebug()
@@ -306,27 +317,42 @@ public class LayeredPendingTransactions implements PendingTransactions {
         ethScheduler.scheduleServiceTask(
             () -> {
               synchronized (this) {
-                prioritizedTransactions.remove(evaluatedPendingTx, INVALIDATED);
-                logInvalidTransaction(evaluatedPendingTx, result);
-                LOG.atTrace()
-                    .setMessage("Transaction {} removed by block selection")
-                    .addArgument(evaluatedPendingTx::toTraceLog)
-                    .log();
+                getPooledInstance(evaluatedPendingTx)
+                    .ifPresent(
+                        pooledTx -> {
+                          prioritizedTransactions.remove(pooledTx, INVALIDATED);
+                          logInvalidTransaction(pooledTx, result);
+                          LOG.atTrace()
+                              .setMessage("Transaction {} removed by block selection")
+                              .addArgument(pooledTx::toTraceLog)
+                              .log();
+                        });
               }
             });
       } else if (result.penalize()) {
         ethScheduler.scheduleServiceTask(
             () -> {
               synchronized (this) {
-                prioritizedTransactions.penalize(evaluatedPendingTx, result);
-                LOG.atTrace()
-                    .setMessage("Transaction {} penalized by block selection")
-                    .addArgument(evaluatedPendingTx::toTraceLog)
-                    .log();
+                getPooledInstance(evaluatedPendingTx)
+                    .ifPresent(
+                        pooledTx -> {
+                          prioritizedTransactions.penalize(pooledTx, result);
+                          LOG.atTrace()
+                              .setMessage("Transaction {} penalized by block selection")
+                              .addArgument(pooledTx::toTraceLog)
+                              .log();
+                        });
               }
             });
       }
     }
+  }
+
+  // selection runs without the lock, so the evaluated instance could have been replaced, removed
+  // or re-added since, while the layers must only be updated with the instances they index
+  private Optional<PendingTransaction> getPooledInstance(
+      final PendingTransaction evaluatedPendingTx) {
+    return prioritizedTransactions.getByHash(evaluatedPendingTx.getHash());
   }
 
   @Override
