@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Breaking Changes
+- `eth_call`, `eth_estimateGas`, `eth_createAccessList`, `trace_call` and `trace_callMany` now reject a call that sets `maxFeePerBlobGas` without blob versioned hashes, or that sets an empty `blobVersionedHashes` list, with `Invalid blob count` (`-32602`) at every fork. Previously a `maxFeePerBlobGas` without hashes was accepted and the call ran without blobs, and a `maxFeePerBlobGas` of 0 also set the blob base fee the call saw to 0. An empty list failed with `Internal error` (`-32603`). Each call in a `trace_callMany` bundle gets the same rule. `debug_traceCall` and `eth_simulateV1` reject only an empty `blobVersionedHashes` list, and still accept a `maxFeePerBlobGas` without hashes. [#11556](https://github.com/besu-eth/besu/pull/11556)
 - `--Xsnapsync-synchronizer-pivot-block-distance-before-caching` has been removed; it was deprecated as a no-op since 26.6.1. [#11499](https://github.com/besu-eth/besu/pull/11499)
 - The default discovery mode is now `BOTH`: nodes run DiscV4 and DiscV5 concurrently unless `--discovery-mode=V4` or `--discovery-mode=V5` selects a single protocol. [#11344](https://github.com/besu-eth/besu/pull/11344)
 - `trace_call` and `trace_callMany` now select transaction validation as `eth_call` does, including its `strict` flag. Unless `strict` is `true`, a call whose `gasPrice`, `maxFeePerGas` and `maxPriorityFeePerGas` are all zero or omitted runs with `GASPRICE` and `BASEFEE` 0 and pays no execution gas fees. Previously such a call was rejected as underpriced at a block with a base fee, or, with its fees omitted, was charged at the base fee. Calls that `eth_call` validates and charges are still validated and charged, each call in a `trace_callMany` bundle is priced on its own, and, as in `eth_call`, a nonce above the sender's is accepted. A `trace_call` that fails validation now returns the reason, such as `Gas price below current base fee` (`-32009`), instead of `Internal error`. [#11404](https://github.com/besu-eth/besu/pull/11404)
@@ -32,6 +33,7 @@
 ### Bug fixes
 - `evmtool t8n-server` keeps serving requests again. Since `evmtool` began exiting with the subcommand's exit code, the server process exited right after printing `Transition server listening on`, so filling tests with Besu as the transition tool failed. A server that cannot bind its port now exits with a non-zero code instead of 0. [#11555](https://github.com/besu-eth/besu/pull/11555)
 - DNS-discovered dual-stack peers now respect `--p2p-ipv6-outbound-enabled` when choosing the connection address. [#11422](https://github.com/besu-eth/besu/issues/11422)
+- The layered transaction pool no longer logs an `IndexOutOfBoundsException` when a sender's pending transactions are reconciled against an account nonce that leaves them `--tx-pool-max-future-by-sender` or more nonces ahead, as on a node that has fallen behind the chain head. Those transactions are now dropped during the reconciliation, as a new transaction that far ahead would be. [#11501](https://github.com/besu-eth/besu/issues/11501)
 - Block propagation no longer repeatedly re-requests an announced block that is already saved as pending while waiting for its parent. The repeated header and body requests could use up the announcing peer's request capacity and starve the parent request, leaving a node that connects well behind the chain head stuck at its starting block. [#11517](https://github.com/besu-eth/besu/issues/11517)
 - `admin_logsRemoveCache` now returns an error when any log bloom cache segment could not be deleted, instead of reporting `Cache Removed` after a partial deletion. [#11067](https://github.com/besu-eth/besu/issues/11067)
 - `txparse --corpus-file` now closes the corpus file stream after processing instead of leaking the underlying file descriptor (it previously suppressed the `StreamResourceLeak` warning rather than releasing the resource). [#11423](https://github.com/besu-eth/besu/pull/11423)
@@ -76,6 +78,7 @@
 - Snap sync now restarts instead of staying idle when one of its world state download pipelines fails. [#11515](https://github.com/besu-eth/besu/pull/11515)
 - Snap sync no longer downloads the storage and code of an account twice when an account range response goes past the end of the range. [#11516](https://github.com/besu-eth/besu/pull/11516)
 - Snap sync no longer stalls when a download completes while the pipeline stage is handing on another result. [#11514](https://github.com/besu-eth/besu/pull/11514)
+- Fix incorrect sync status reporting. `eth_syncing` now reports progress during snap sync (previously it reported "not syncing" for the whole snap sync), with `highestBlock` taken from the best-chain height (the latest `engine_newPayload` head under PoS). The ethstats `syncing` field and `BackwardSyncContext.isSyncing()` no longer report the inverse of the actual state. `/readiness` no longer reports ready while the world state download, trie heal or flat database heal is still in progress. A backward sync session that completed synchronously is no longer reused by later calls. [#11260](https://github.com/besu-eth/besu/issues/11260)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
@@ -93,6 +96,7 @@
 - Schedule the Amsterdam fork on Hoodi at timestamp `1793036568` (Mon, 26 Oct 2026, 17:42:48 UTC). [#11531](https://github.com/besu-eth/besu/pull/11531)
 - The EVM no longer calls the operation tracer for every operation when tracing is disabled.
 - New `besu storage revert-code-format` subcommand reverts the contract code storage and the database metadata, so that a database upgraded to store the jump destination analysis can be opened by an older Besu version again; Besu logs how to run it after the upgrade. [#11364](https://github.com/besu-eth/besu/pull/11364)
+- EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
 
 ## 26.9.0
 
@@ -150,6 +154,7 @@ opportunity to upgrade.
 - Backward sync no longer re-executes a block already known as bad, and a bad-block entry for a block found on the chain is forgotten together with the descendants marked on its account. [#11373](https://github.com/besu-eth/besu/pull/11373)
 
 ### Additions and Improvements
+- Add `debug_getModifiedAccountsByNumber` and `debug_getModifiedAccountsByHash` JSON-RPC methods. [#11323](https://github.com/besu-eth/besu/pull/11323)
 - Plugin API: the `BesuEvents` event families move onto the feature services that own them. `BlockchainService` gains `subscribeBlockPropagated`, `subscribeBlockAdded`, `subscribeBlockReorg`, `subscribeLogs` and `subscribeBadBlock`; `TransactionPoolService` gains `subscribeTransactionAdded` and `subscribeTransactionDropped`; `SynchronizationService` gains `subscribeSyncStatus` and `subscribeInitialSyncCompletion`. Each returns a `Subscription` whose `close()` unsubscribes that one listener, replacing the `long` id and paired `remove*` method, so an id can no longer be handed to the wrong family's remover, and initial sync completion becomes unsubscribable for the first time. The listener interfaces keep their signatures and move out of `BesuEvents` into an `spi` package in each module. `BesuEvents` keeps working unchanged and is deprecated. [#11283](https://github.com/besu-eth/besu/pull/11283)
 - Implement native `callTracer` execution tracing, reducing memory use for `debug_trace*`. [#11077](https://github.com/besu-eth/besu/pull/11077)
 - Implement native `4byteTracer` execution tracing, reducing memory use for `debug_trace*`. [#11271](https://github.com/besu-eth/besu/pull/11271)
