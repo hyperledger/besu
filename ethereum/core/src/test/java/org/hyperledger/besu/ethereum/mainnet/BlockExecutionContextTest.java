@@ -17,10 +17,13 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
+import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.Optional;
@@ -87,6 +90,51 @@ class BlockExecutionContextTest {
   }
 
   @Test
+  void blockTracerRequiresSequentialExecution() {
+    final BlockExecutionContext.Builder builder =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .blockTracer(mock(BlockAwareOperationTracer.class));
+
+    assertThatThrownBy(builder::build)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("blockTracer requires sequential execution");
+  }
+
+  @Test
+  void blockTracerIsKeptWithSequentialExecution() {
+    final BlockAwareOperationTracer blockTracer = mock(BlockAwareOperationTracer.class);
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .sequentialExecutionRequested(true)
+            .blockTracer(blockTracer)
+            .build();
+
+    assertThat(context.getBlockTracer()).containsSame(blockTracer);
+    assertThat(context.toBuilder().build().getBlockTracer()).containsSame(blockTracer);
+  }
+
+  @Test
+  void blockTracerIsEmptyByDefault() {
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .build();
+
+    assertThat(context.getBlockTracer()).isEmpty();
+  }
+
+  @Test
   void toBuilderCopiesAllFields() {
     final BlockAccessList blockAccessList = mock(BlockAccessList.class);
     final BlockExecutionContext context =
@@ -107,5 +155,43 @@ class BlockExecutionContextTest {
     assertThat(sequential.isSequentialExecutionRequested()).isTrue();
     assertThat(sequential.toBuilder().build().isSequentialExecutionRequested()).isTrue();
     assertThat(context.isSequentialExecutionRequested()).isFalse();
+  }
+
+  @Test
+  void blockAccessListFactoryDefaultsToProtocolSpec() {
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .build();
+
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = new BlockAccessListFactory();
+    when(protocolSpec.getBlockAccessListFactory()).thenReturn(Optional.of(blockAccessListFactory));
+
+    assertThat(context.getBlockAccessListFactory(protocolSpec))
+        .containsSame(blockAccessListFactory);
+  }
+
+  @Test
+  void blockAccessListFactoryProviderIsKeptAndCopiedByToBuilder() {
+    // The fork defines no block access list factory (the mocked spec returns empty).
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    final BlockAccessListFactory blockAccessListFactory = new BlockAccessListFactory();
+    final BlockExecutionContext context =
+        BlockExecutionContext.builder()
+            .protocolContext(protocolContext)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(Optional.empty())
+            .blockAccessListFactoryProvider(spec -> Optional.of(blockAccessListFactory))
+            .build();
+
+    assertThat(context.getBlockAccessListFactory(protocolSpec))
+        .containsSame(blockAccessListFactory);
+    assertThat(context.toBuilder().build().getBlockAccessListFactory(protocolSpec))
+        .containsSame(blockAccessListFactory);
   }
 }
