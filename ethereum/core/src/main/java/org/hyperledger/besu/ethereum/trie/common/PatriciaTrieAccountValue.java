@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.common;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -27,16 +26,42 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** Represents the raw values associated with an account in the world state patricia merkle trie. */
-public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
-    implements AccountValue {
+public class PatriciaTrieAccountValue implements TrieAccountValue {
 
+  protected final long nonce;
+  protected final Wei balance;
   protected final Hash storageRoot;
+  protected final Hash codeHash;
 
-  public PmtStateTrieAccountValue(
+  public PatriciaTrieAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-    super(nonce, balance, codeHash);
+    checkNotNull(balance, "balance cannot be null");
     checkNotNull(storageRoot, "storageRoot cannot be null");
+    checkNotNull(codeHash, "codeHash cannot be null");
+    this.nonce = nonce;
+    this.balance = balance;
     this.storageRoot = storageRoot;
+    this.codeHash = codeHash;
+  }
+
+  /**
+   * The account nonce, that is the number of transactions sent from that account.
+   *
+   * @return the account nonce.
+   */
+  @Override
+  public long getNonce() {
+    return nonce;
+  }
+
+  /**
+   * The available balance of that account.
+   *
+   * @return the balance, in Wei, of the account.
+   */
+  @Override
+  public Wei getBalance() {
+    return balance;
   }
 
   /**
@@ -49,11 +74,26 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
     return storageRoot;
   }
 
+  /**
+   * The hash of the EVM bytecode associated with this account.
+   *
+   * @return the hash of the account code (which may be {@link Hash#EMPTY}).
+   */
+  @Override
+  public Hash getCodeHash() {
+    return codeHash;
+  }
+
+  @Override
+  public StorageRootStrategy storageRootStrategy() {
+    return new MptStorageRootStrategy(storageRoot);
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    PmtStateTrieAccountValue that = (PmtStateTrieAccountValue) o;
+    PatriciaTrieAccountValue that = (PatriciaTrieAccountValue) o;
     return nonce == that.nonce
         && Objects.equals(balance, that.balance)
         && Objects.equals(storageRoot, that.storageRoot)
@@ -76,7 +116,7 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
     out.endList();
   }
 
-  public static PmtStateTrieAccountValue readFrom(final RLPInput in) {
+  public static PatriciaTrieAccountValue readFrom(final RLPInput in) {
     in.enterList();
 
     final long nonce = in.readLongScalar();
@@ -97,7 +137,7 @@ public class PmtStateTrieAccountValue extends AbstractStateTrieAccountValue
     }
     in.leaveList();
 
-    return new PmtStateTrieAccountValue(
+    return new PatriciaTrieAccountValue(
         nonce, balance, Hash.wrap(storageRoot), Hash.wrap(codeHash));
   }
 }
