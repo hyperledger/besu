@@ -58,6 +58,51 @@ public class BlockOverrides {
    * @param difficulty the optional difficulty
    * @param extraData the optional extra data
    * @param mixHashOrPrevRandao the optional mix hash or previous Randao
+   * @param parentBeaconBlockRoot the optional parent beacon block root
+   */
+  public BlockOverrides(
+      final Optional<UnsignedLongParameter> timestamp,
+      final Optional<UnsignedLongParameter> blockNumber,
+      final Optional<Hash> blockHash,
+      final Optional<UnsignedLongParameter> gasLimit,
+      final Optional<Address> feeRecipient,
+      final Optional<Wei> baseFeePerGas,
+      final Optional<Wei> blobBaseFee,
+      final Optional<Hash> stateRoot,
+      final Optional<BigInteger> difficulty,
+      final Optional<Bytes> extraData,
+      final Optional<String> mixHashOrPrevRandao,
+      final Optional<String> parentBeaconBlockRoot) {
+    this(
+        timestamp,
+        blockNumber,
+        blockHash,
+        gasLimit,
+        feeRecipient,
+        baseFeePerGas,
+        blobBaseFee,
+        stateRoot,
+        difficulty,
+        extraData,
+        mixHashOrPrevRandao,
+        Optional.empty(),
+        parentBeaconBlockRoot);
+  }
+
+  /**
+   * Constructs a new BlockOverrides instance.
+   *
+   * @param timestamp the optional timestamp
+   * @param blockNumber the optional block number
+   * @param blockHash the optional block hash
+   * @param gasLimit the optional gas limit
+   * @param feeRecipient the optional fee recipient
+   * @param baseFeePerGas the optional base fee per gas
+   * @param blobBaseFee the optional blob base fee
+   * @param stateRoot the optional state root
+   * @param difficulty the optional difficulty
+   * @param extraData the optional extra data
+   * @param mixHashOrPrevRandao the optional mix hash or previous Randao
    * @param withdrawals the optional withdrawals
    * @param parentBeaconBlockRoot the optional parent beacon block root
    */
