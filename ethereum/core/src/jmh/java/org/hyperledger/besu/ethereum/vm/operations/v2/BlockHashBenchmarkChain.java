@@ -31,13 +31,16 @@ import java.util.Optional;
 
 /**
  * Builds an in-memory header chain and a {@link BlockchainBasedBlockHashLookup} for BLOCKHASH JMH
- * fixtures. Parent-hash lookups hit the lookup cache; deeper hashes walk headers via the mocked
- * {@link Blockchain}.
+ * fixtures. The parent hash is cached up front; the first lookup of a deeper block walks headers
+ * via the mocked {@link Blockchain} and caches them, so after warmup every lookup in the window is
+ * a cache hit.
  */
 final class BlockHashBenchmarkChain {
 
   static final long CURRENT_BLOCK = 1_000;
-  static final long VALID_BLOCK = CURRENT_BLOCK - 1;
+
+  /** BLOCKHASH lookback window, the {@link BlockHashLookup} default. */
+  static final long LOOKBACK = 256;
 
   private final BlockHeader currentHeader;
   private final BlockHashLookup blockHashLookup;

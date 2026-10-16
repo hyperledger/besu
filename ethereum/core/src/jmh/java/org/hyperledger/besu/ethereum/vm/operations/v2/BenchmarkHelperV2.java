@@ -18,23 +18,25 @@ import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.UInt256;
-import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.tuweni.bytes.Bytes32;
 
 public class BenchmarkHelperV2 {
+  /** Number of pre-generated inputs a benchmark cycles through. */
+  static final int SAMPLE_SIZE = 30_000;
+
+  /** Seed for input pools, so the V1 and V2 benchmarks of an opcode see the same inputs. */
+  static final long SEED = 42L;
+
   /**
    * Creates a minimal {@link MessageFrame} suitable for opcode benchmarks.
    *
@@ -43,40 +45,26 @@ public class BenchmarkHelperV2 {
    * @return a message-call frame ready to use in benchmark setup
    */
   public static MessageFrame createMessageCallFrame() {
-    return createMessageCallFrame(mock(BlockValues.class));
+    return messageCallFrameBuilder().build();
   }
 
-  static MessageFrame createMessageCallFrame(final BlockValues blockValues) {
-    return createMessageCallFrame(blockValues, (__, ___) -> Hash.ZERO, Optional.empty());
-  }
-
-  static MessageFrame createMessageCallFrame(
-      final BlockValues blockValues, final Optional<List<VersionedHash>> versionedHashes) {
-    return createMessageCallFrame(blockValues, (__, ___) -> Hash.ZERO, versionedHashes);
-  }
-
-  static MessageFrame createMessageCallFrame(
-      final BlockValues blockValues,
-      final BlockHashLookup blockHashLookup,
-      final Optional<List<VersionedHash>> versionedHashes) {
-    return createMessageCallFrame(true, blockValues, blockHashLookup, versionedHashes);
-  }
-
-  static MessageFrame createMessageCallFrame(
-      final boolean enableEvmV2,
-      final BlockValues blockValues,
-      final BlockHashLookup blockHashLookup,
-      final Optional<List<VersionedHash>> versionedHashes) {
+  /**
+   * Returns a {@link MessageFrame.Builder} pre-populated with the defaults of {@link
+   * #createMessageCallFrame()}. Benchmarks override only what they need, such as block values, the
+   * block hash lookup, versioned hashes or the EVM version, before calling {@code build()}.
+   *
+   * @return a pre-populated message-call frame builder
+   */
+  static MessageFrame.Builder messageCallFrameBuilder() {
     return MessageFrame.builder()
-        .enableEvmV2(enableEvmV2)
+        .enableEvmV2(true)
         .worldUpdater(mock(WorldUpdater.class))
         .originator(Address.ZERO)
         .gasPrice(Wei.ONE)
         .blobGasPrice(Wei.ONE)
-        .blockValues(blockValues)
+        .blockValues(mock(BlockValues.class))
         .miningBeneficiary(Address.ZERO)
-        .blockHashLookup(blockHashLookup)
-        .versionedHashes(versionedHashes)
+        .blockHashLookup((__, ___) -> Hash.ZERO)
         .type(MessageFrame.Type.MESSAGE_CALL)
         .initialGas(Long.MAX_VALUE)
         .address(Address.ZERO)
@@ -86,8 +74,51 @@ public class BenchmarkHelperV2 {
         .value(Wei.ZERO)
         .apparentValue(Wei.ZERO)
         .code(Code.EMPTY_CODE)
-        .completer(__ -> {})
-        .build();
+        .completer(__ -> {});
+  }
+
+  /**
+   * Returns a seeded random long in {@code [origin, bound)}.
+   *
+   * @param origin the lowest value (inclusive)
+   * @param bound the upper bound (exclusive)
+   * @return the value
+   */
+  static long randomLong(final long origin, final long bound) {
+    return new Random(SEED).nextLong(origin, bound);
+  }
+
+  /**
+   * Converts a pool of UInt256 values to the {@link Bytes32} form used by the V1 benchmarks.
+   *
+   * @param pool the UInt256 pool
+   * @return the same values as Bytes32
+   */
+  static Bytes32[] toBytes32Pool(final UInt256[] pool) {
+    final Bytes32[] result = new Bytes32[pool.length];
+    for (int i = 0; i < pool.length; i++) {
+      result[i] = Bytes32.wrap(pool[i].toBytesBE());
+    }
+    return result;
+  }
+
+  /**
+   * {@link BlockValues} whose number and timestamp are read from fields set by the benchmark, so
+   * the JIT cannot fold them into constants as it can a literal returned from an inlined method.
+   */
+  static final class MutableBlockValues implements BlockValues {
+    long number;
+    long timestamp;
+
+    @Override
+    public long getNumber() {
+      return number;
+    }
+
+    @Override
+    public long getTimestamp() {
+      return timestamp;
+    }
   }
 
   /**

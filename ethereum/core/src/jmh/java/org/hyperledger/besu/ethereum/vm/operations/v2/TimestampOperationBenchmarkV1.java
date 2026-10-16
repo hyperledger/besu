@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -47,16 +44,14 @@ public class TimestampOperationBenchmarkV1 {
   @Setup
   public void setup() {
     operation = new TimestampOperation(new BerlinGasCalculator());
-    final BlockValues blockValues =
-        new BlockValues() {
-          @Override
-          public long getTimestamp() {
-            return 1_753_802_400L;
-          }
-        };
+    final BenchmarkHelperV2.MutableBlockValues blockValues =
+        new BenchmarkHelperV2.MutableBlockValues();
+    blockValues.timestamp = TimestampOperationBenchmarkV2.randomTimestamp();
     frame =
-        BenchmarkHelperV2.createMessageCallFrame(
-            false, blockValues, (__, ___) -> Hash.ZERO, Optional.empty());
+        BenchmarkHelperV2.messageCallFrameBuilder()
+            .enableEvmV2(false)
+            .blockValues(blockValues)
+            .build();
   }
 
   @Benchmark

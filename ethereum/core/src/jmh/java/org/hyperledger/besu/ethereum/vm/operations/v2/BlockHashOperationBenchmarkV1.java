@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
-import static org.hyperledger.besu.ethereum.vm.operations.v2.BlockHashBenchmarkChain.CURRENT_BLOCK;
-import static org.hyperledger.besu.ethereum.vm.operations.v2.BlockHashBenchmarkChain.VALID_BLOCK;
-
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -49,28 +44,29 @@ public class BlockHashOperationBenchmarkV1 {
 
   private BlockHashOperation operation;
   private MessageFrame frame;
-  private Bytes32 requestedBlock;
+  private Bytes32[] requestedBlockPool;
+  private int poolIndex;
 
   @Setup
   public void setup() {
     operation = new BlockHashOperation(new PetersburgGasCalculator());
     final BlockHashBenchmarkChain chain = BlockHashBenchmarkChain.create();
     frame =
-        BenchmarkHelperV2.createMessageCallFrame(
-            false, chain.currentHeader(), chain.blockHashLookup(), Optional.empty());
-    requestedBlock =
-        switch (scenario) {
-          case VALID -> Bytes32.leftPad(Bytes.ofUnsignedLong(VALID_BLOCK));
-          case CURRENT -> Bytes32.leftPad(Bytes.ofUnsignedLong(CURRENT_BLOCK));
-          case OUTSIDE_LOOKBACK -> Bytes32.leftPad(Bytes.ofUnsignedLong(CURRENT_BLOCK - 257));
-          case TOO_LARGE -> Bytes32.fromHexString("0x010000000000000000");
-        };
+        BenchmarkHelperV2.messageCallFrameBuilder()
+            .enableEvmV2(false)
+            .blockValues(chain.currentHeader())
+            .blockHashLookup(chain.blockHashLookup())
+            .build();
+    requestedBlockPool =
+        BenchmarkHelperV2.toBytes32Pool(BlockHashOperationBenchmarkV2.requestedBlockPool(scenario));
+    poolIndex = 0;
   }
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(requestedBlock);
+    frame.pushStackItem(requestedBlockPool[poolIndex]);
     blackhole.consume(operation.execute(frame, null));
     frame.popStackItem();
+    poolIndex = (poolIndex + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
   }
 }

@@ -135,6 +135,11 @@ final class StackUtil {
   /**
    * Writes a 32-byte hash value as four big-endian limbs at the given stack slot.
    *
+   * <p>Deliberately separate from {@link #pushBytes32}: it gives BLOCKHASH and BLOBHASH their own
+   * {@code toArrayUnsafe()} call site, so the JIT's type profile for it is not shared with other
+   * callers. When other callers pass several {@code Bytes} implementations to a shared helper, the
+   * call can no longer be inlined, which made BLOBHASH about 28% slower in JMH (see PR #10962).
+   *
    * @param hash the hash value to write
    * @param stack the flat limb array
    * @param top the slot index to write to

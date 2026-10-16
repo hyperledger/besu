@@ -14,13 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.operation.NumberOperation;
 
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -47,16 +44,14 @@ public class NumberOperationBenchmarkV1 {
   @Setup
   public void setup() {
     operation = new NumberOperation(new BerlinGasCalculator());
-    final BlockValues blockValues =
-        new BlockValues() {
-          @Override
-          public long getNumber() {
-            return 21_000_000L;
-          }
-        };
+    final BenchmarkHelperV2.MutableBlockValues blockValues =
+        new BenchmarkHelperV2.MutableBlockValues();
+    blockValues.number = NumberOperationBenchmarkV2.randomNumber();
     frame =
-        BenchmarkHelperV2.createMessageCallFrame(
-            false, blockValues, (__, ___) -> Hash.ZERO, Optional.empty());
+        BenchmarkHelperV2.messageCallFrameBuilder()
+            .enableEvmV2(false)
+            .blockValues(blockValues)
+            .build();
   }
 
   @Benchmark

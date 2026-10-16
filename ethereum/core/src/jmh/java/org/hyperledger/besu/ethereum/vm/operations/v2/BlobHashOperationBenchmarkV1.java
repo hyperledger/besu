@@ -14,9 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.operation.BlobHashOperation;
@@ -49,7 +47,8 @@ public class BlobHashOperationBenchmarkV1 {
 
   private BlobHashOperation operation;
   private MessageFrame frame;
-  private Bytes32 index;
+  private Bytes32[] blobIndexPool;
+  private int poolIndex;
 
   @Setup
   public void setup() {
@@ -59,22 +58,20 @@ public class BlobHashOperationBenchmarkV1 {
             ? Optional.empty()
             : Optional.of(BlobHashOperationBenchmarkV2.VERSIONED_HASHES);
     frame =
-        BenchmarkHelperV2.createMessageCallFrame(
-            false, new BlockValues() {}, (__, ___) -> Hash.ZERO, versionedHashes);
-    index =
-        switch (scenario) {
-          case VALID -> Bytes32.ZERO;
-          case MAX_VALID -> Bytes32.fromHexString("0x05");
-          case NO_BLOBS -> Bytes32.ZERO;
-          case OUT_OF_BOUNDS -> Bytes32.fromHexString("0x06");
-          case TOO_LARGE -> Bytes32.fromHexString("0x010000000000000000");
-        };
+        BenchmarkHelperV2.messageCallFrameBuilder()
+            .enableEvmV2(false)
+            .versionedHashes(versionedHashes)
+            .build();
+    blobIndexPool =
+        BenchmarkHelperV2.toBytes32Pool(BlobHashOperationBenchmarkV2.blobIndexPool(scenario));
+    poolIndex = 0;
   }
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    frame.pushStackItem(index);
+    frame.pushStackItem(blobIndexPool[poolIndex]);
     blackhole.consume(operation.execute(frame, null));
     frame.popStackItem();
+    poolIndex = (poolIndex + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
   }
 }

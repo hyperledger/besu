@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.v2.operation.NumberOperationV2;
@@ -45,19 +44,25 @@ public class NumberOperationBenchmarkV2 {
   @Setup
   public void setup() {
     operation = new NumberOperationV2(new BerlinGasCalculator());
-    final BlockValues blockValues =
-        new BlockValues() {
-          @Override
-          public long getNumber() {
-            return 21_000_000L;
-          }
-        };
-    frame = BenchmarkHelperV2.createMessageCallFrame(blockValues);
+    final BenchmarkHelperV2.MutableBlockValues blockValues =
+        new BenchmarkHelperV2.MutableBlockValues();
+    blockValues.number = randomNumber();
+    frame = BenchmarkHelperV2.messageCallFrameBuilder().blockValues(blockValues).build();
   }
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
     blackhole.consume(operation.execute(frame, null));
     frame.setTopV2(0);
+  }
+
+  /**
+   * Returns the seeded random number used by this benchmark and its V1 counterpart. It is read from
+   * a field rather than returned as a literal, so the JIT cannot fold it into a constant.
+   *
+   * @return the number
+   */
+  static long randomNumber() {
+    return BenchmarkHelperV2.randomLong(0, 1L << 32);
   }
 }

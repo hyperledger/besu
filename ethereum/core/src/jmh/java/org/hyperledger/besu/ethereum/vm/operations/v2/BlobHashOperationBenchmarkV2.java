@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.vm.operations.v2;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.UInt256;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.v2.operation.BlobHashOperationV2;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -60,10 +60,13 @@ public class BlobHashOperationBenchmarkV2 {
               "0x01cafebabeb0b0facedeadbeefbeef0001cafebabeb0b0facedeadbeefbeef05"));
 
   public enum Scenario {
+    /** Random index of an existing versioned hash. */
     VALID,
-    MAX_VALID,
+    /** Random index that fits in an int but is past the last versioned hash. */
     OUT_OF_BOUNDS,
+    /** Random index with a non-zero upper limb. */
     TOO_LARGE,
+    /** Random in-range index, but the transaction has no versioned hashes. */
     NO_BLOBS
   }
 
@@ -71,28 +74,51 @@ public class BlobHashOperationBenchmarkV2 {
 
   private BlobHashOperationV2 operation;
   private MessageFrame frame;
-  private UInt256 index;
+  private UInt256[] blobIndexPool;
+  private int poolIndex;
 
   @Setup
   public void setup() {
     operation = new BlobHashOperationV2(new CancunGasCalculator());
     final Optional<List<VersionedHash>> versionedHashes =
         scenario == Scenario.NO_BLOBS ? Optional.empty() : Optional.of(VERSIONED_HASHES);
-    frame = BenchmarkHelperV2.createMessageCallFrame(new BlockValues() {}, versionedHashes);
-    index =
-        switch (scenario) {
-          case VALID -> UInt256.ZERO;
-          case MAX_VALID -> new UInt256(0, 0, 0, 5);
-          case NO_BLOBS -> UInt256.ZERO;
-          case OUT_OF_BOUNDS -> new UInt256(0, 0, 0, 6);
-          case TOO_LARGE -> new UInt256(1, 0, 0, 0);
-        };
+    frame = BenchmarkHelperV2.messageCallFrameBuilder().versionedHashes(versionedHashes).build();
+    blobIndexPool = blobIndexPool(scenario);
+    poolIndex = 0;
   }
 
   @Benchmark
   public void executeOperation(final Blackhole blackhole) {
-    BenchmarkHelperV2.pushUInt256(frame, index);
+    BenchmarkHelperV2.pushUInt256(frame, blobIndexPool[poolIndex]);
     blackhole.consume(operation.execute(frame, null));
     frame.setTopV2(0);
+    poolIndex = (poolIndex + 1) % BenchmarkHelperV2.SAMPLE_SIZE;
+  }
+
+  /**
+   * Creates the seeded pool of blob indexes for a scenario. Shared with the V1 benchmark so both
+   * see the same inputs.
+   *
+   * @param scenario the scenario
+   * @return the pool of blob indexes
+   */
+  static UInt256[] blobIndexPool(final Scenario scenario) {
+    final Random random = new Random(BenchmarkHelperV2.SEED);
+    final int size = VERSIONED_HASHES.size();
+    final UInt256[] pool = new UInt256[BenchmarkHelperV2.SAMPLE_SIZE];
+    for (int i = 0; i < pool.length; i++) {
+      pool[i] =
+          switch (scenario) {
+            case VALID, NO_BLOBS -> UInt256.fromLong(random.nextInt(size));
+            case OUT_OF_BOUNDS -> UInt256.fromLong(random.nextInt(size, Integer.MAX_VALUE));
+            case TOO_LARGE ->
+                new UInt256(
+                    random.nextLong(),
+                    random.nextLong(),
+                    random.nextLong() | 1L,
+                    random.nextLong());
+          };
+    }
+    return pool;
   }
 }
