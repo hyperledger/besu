@@ -17,11 +17,13 @@ package org.hyperledger.besu.ethereum.mainnet;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
+import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
@@ -49,6 +51,8 @@ public class BlockExecutionContext {
   @Nullable private final BlockAccessList blockAccessList;
   private final boolean sequentialExecutionRequested;
   @Nullable private final BlockAwareOperationTracer blockTracer;
+  private final Function<ProtocolSpec, Optional<BlockAccessListFactory>>
+      blockAccessListFactoryProvider;
 
   private BlockExecutionContext(final Builder builder) {
     this.protocolContext = builder.protocolContext;
@@ -57,6 +61,7 @@ public class BlockExecutionContext {
     this.blockAccessList = builder.blockAccessList;
     this.sequentialExecutionRequested = builder.sequentialExecutionRequested;
     this.blockTracer = builder.blockTracer;
+    this.blockAccessListFactoryProvider = builder.blockAccessListFactoryProvider;
   }
 
   /**
@@ -127,11 +132,25 @@ public class BlockExecutionContext {
             .worldState(worldState)
             .block(block)
             .blockAccessList(getBlockAccessList())
-            .sequentialExecutionRequested(sequentialExecutionRequested);
+            .sequentialExecutionRequested(sequentialExecutionRequested)
+            .blockAccessListFactoryProvider(blockAccessListFactoryProvider);
     if (blockTracer != null) {
       builder.blockTracer(blockTracer);
     }
     return builder;
+  }
+
+  /**
+   * Returns the block access list factory the block is processed with: the fork's own, unless a
+   * provider was set.
+   *
+   * @param protocolSpec the protocol spec of the block
+   * @return the block access list factory, or empty to process the block without a block access
+   *     list
+   */
+  public Optional<BlockAccessListFactory> getBlockAccessListFactory(
+      final ProtocolSpec protocolSpec) {
+    return blockAccessListFactoryProvider.apply(protocolSpec);
   }
 
   /**
@@ -153,6 +172,8 @@ public class BlockExecutionContext {
     private boolean blockAccessListSet = false;
     private boolean sequentialExecutionRequested = false;
     @Nullable private BlockAwareOperationTracer blockTracer = null;
+    private Function<ProtocolSpec, Optional<BlockAccessListFactory>>
+        blockAccessListFactoryProvider = ProtocolSpec::getBlockAccessListFactory;
 
     /**
      * Sets the protocol context (required).
@@ -228,6 +249,23 @@ public class BlockExecutionContext {
      */
     public Builder blockTracer(final BlockAwareOperationTracer blockTracer) {
       this.blockTracer = Objects.requireNonNull(blockTracer, "blockTracer");
+      return this;
+    }
+
+    /**
+     * Sets the provider of the block access list factory the block is processed with (optional, the
+     * fork's own by default), for instance to build a block access list for a fork that defines
+     * none.
+     *
+     * @param blockAccessListFactoryProvider the block access list factory provider; it must return
+     *     a non-null {@link Optional}, empty for no block access list
+     * @return this builder
+     */
+    public Builder blockAccessListFactoryProvider(
+        final Function<ProtocolSpec, Optional<BlockAccessListFactory>>
+            blockAccessListFactoryProvider) {
+      this.blockAccessListFactoryProvider =
+          Objects.requireNonNull(blockAccessListFactoryProvider, "blockAccessListFactoryProvider");
       return this;
     }
 
