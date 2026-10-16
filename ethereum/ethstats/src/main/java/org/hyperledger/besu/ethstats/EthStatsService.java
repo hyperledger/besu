@@ -110,7 +110,8 @@ public class EthStatsService {
   private volatile @Nullable ScheduledFuture<?> reportScheduler;
   private volatile @Nullable WebSocket webSocket;
   // Vert.x 5 closes a WebSocketClient (and its connections) once it is garbage collected, so the
-  // client must stay strongly reachable for as long as its connection is in use.
+  // client must stay strongly reachable for as long as its connection is in use. Reconnects reuse
+  // it because Vert.x holds on to every client it creates until Vert.x itself is closed.
   private volatile @Nullable WebSocketClient webSocketClient;
   private @Nullable EnodeURL enodeURL;
   private long pingTimestamp;
@@ -192,8 +193,11 @@ public class EthStatsService {
     LOG.debug("Connecting to EthStats: {}", getEthStatsURI());
     try {
       enodeURL = p2PNetwork.getLocalEnode().orElseThrow();
-      final WebSocketClient client = vertx.createWebSocketClient(webSocketClientOptions);
-      webSocketClient = client;
+      WebSocketClient client = webSocketClient;
+      if (client == null) {
+        client = vertx.createWebSocketClient(webSocketClientOptions);
+        webSocketClient = client;
+      }
       client
           .connect(webSocketConnectOptions)
           .onComplete(
@@ -261,12 +265,18 @@ public class EthStatsService {
 
   /** Ends the current web socket connection, observers and schedulers */
   public void stop() {
+    disconnect();
+    final WebSocketClient client = webSocketClient;
+    if (client != null) {
+      client.close();
+      webSocketClient = null;
+    }
+  }
+
+  /** Ends the current web socket connection and schedulers, keeping the client for a reconnect. */
+  private void disconnect() {
     if (webSocket != null && !webSocket.isClosed()) {
       webSocket.close();
-    }
-    if (webSocketClient != null) {
-      webSocketClient.close();
-      webSocketClient = null;
     }
     if (reportScheduler != null) {
       reportScheduler.cancel(true);
@@ -276,7 +286,7 @@ public class EthStatsService {
   /** Ends the current connection and restart a new one. */
   private void retryConnect() {
     if (retryInProgress.getAndSet(true) == FALSE) {
-      stop();
+      disconnect();
       updateSSLProtocol(); // switch from ssl:true to ssl:false and vice-versa
       LOG.info("Attempting to reconnect to ethstats server in approximately 10 seconds.");
       protocolManager
