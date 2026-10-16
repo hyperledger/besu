@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.patricia;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.ethereum.trie.CompactEncoding.bytesToPath;
 
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -23,7 +23,8 @@ import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.NullNode;
 import org.hyperledger.besu.ethereum.trie.StoredNode;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -32,230 +33,272 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 
 /**
- * Merkle Patricia trie built from 32-byte keys inserted in strictly ascending order. Only its right
- * edge stays in memory: a subtree is built once no later key can reach it, handed to the sink at
- * its nibble path when referenced by hash, then collapsed to a {@link StoredNode} hash stub. It
- * also takes subtrees known only by their reference, and partial builds of a key range, to assemble
- * range proofs and partitioned builds.
+ * Streaming Merkle Patricia trie for strictly ascending bulk inserts.
+ *
+ * <p>Each insert runs {@link AscendingCollapsePutVisitor} on the root: the subtree the key finishes
+ * is handed to the sink and replaced by a {@link StoredNode} stub, so live memory is the rightmost
+ * path. Keys MUST arrive in strictly ascending order (typically {@code keccak256(address)} / {@code
+ * keccak256(slotKey)}).
+ *
+ * <p>{@link #prepare} builds and hashes a complete subtree (every key under a nibble prefix) from
+ * any thread; {@link #insert(Subtree)} attaches it, hashing only its top node. {@link
+ * #insertSealed} attaches a subtree known only by its reference, as range proofs give them.
  */
 public final class AscendingCollapsePatriciaTrie {
 
-  private static final int KEY_NIBBLES = 64;
   private static final NodeUpdater NO_SINK = (location, hash, node) -> {};
 
   /**
-   * What the build of a key range leaves, to insert into the trie of the whole key space.
-   *
-   * @param path the nibble path of a key in the range
-   * @param depth the depth of the subtree root, the key length for a leaf
-   * @param value the value of a leaf, null for a subtree
-   * @param node the subtree root, null for a leaf
+   * Keys prepared off the inserting thread: their subtree is built and hashed below its top node.
    */
-  public record Partition(Bytes path, int depth, Bytes value, Node<Bytes> node) {}
+  public static final class Subtree {
+    private final Bytes firstKey;
+    private final Bytes firstValue;
+    private final Bytes lastKey;
+    private final int size;
+    private final Node<Bytes> top;
+
+    private Subtree(
+        final Bytes firstKey,
+        final Bytes firstValue,
+        final Bytes lastKey,
+        final int size,
+        final Node<Bytes> top) {
+      this.firstKey = firstKey;
+      this.firstValue = firstValue;
+      this.lastKey = lastKey;
+      this.size = size;
+      this.top = top;
+    }
+
+    /**
+     * The top node attached {@code depth} nibbles down: built from the root, its path is cut by the
+     * nibbles above it.
+     */
+    private Node<Bytes> at(final int depth) {
+      if (depth == 0) {
+        return top;
+      }
+      if (depth > top.getPath().size()
+          || top instanceof BranchNode
+          || (top instanceof LeafNode && depth == top.getPath().size())) {
+        throw new IllegalArgumentException("prepared keys do not form a complete subtree");
+      }
+      return top.replacePath(top.getPath().slice(depth));
+    }
+  }
 
   private final DefaultNodeFactory<Bytes> nodeFactory =
       new DefaultNodeFactory<>(Function.identity());
   private final NodeUpdater sink;
-  private final int[] frameDepth = new int[KEY_NIBBLES];
-
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  private final Node<Bytes>[][] frameChildren = new Node[KEY_NIBBLES][16];
-
-  private int frames;
-  private long insertCount;
-
-  // the right-most element, not yet attached to its parent: a leaf, a subtree or a sealed subtree
+  private Node<Bytes> root = NullNode.instance();
+  private Bytes lastKey;
   private Bytes lastPath;
-  private Bytes leafValue;
-  private Node<Bytes> subtree;
-  private int subtreeDepth;
+  private long insertCount;
   private boolean sealed;
 
-  /** Creates an empty trie that only computes its root. */
+  /** Creates a trie that only computes its root hash. */
   public AscendingCollapsePatriciaTrie() {
     this(NO_SINK);
   }
 
   /**
-   * Creates an empty trie.
+   * Creates a trie that hands its nodes to a sink.
    *
-   * @param sink receives each node referenced by hash at its nibble path, children before parents,
-   *     and the root
+   * @param sink receives each hash-referenced node at its location, children before parents, then
+   *     the root; it must accept calls from the threads that {@link #prepare}
    */
   public AscendingCollapsePatriciaTrie(final NodeUpdater sink) {
     this.sink = sink;
   }
 
   /**
-   * Inserts a leaf.
+   * Inserts {@code (key, value)} in strictly ascending key order.
    *
-   * @param key the 32-byte key, greater than every key inserted before
-   * @param value the leaf value
+   * @throws IllegalArgumentException if order is violated or value is empty
+   * @throws IllegalStateException if the trie has already been sealed
    */
   public void insert(final Bytes key, final Bytes value) {
-    checkArgument(key.size() == 32, "keys must have 32 bytes");
-    checkArgument(!value.isEmpty(), "Patricia trie rejects empty values");
-    put(CompactEncoding.bytesToPath(key), KEY_NIBBLES, value, null, false);
+    if (sealed) {
+      throw new IllegalStateException("ascending Patricia trie already sealed");
+    }
+    if (value == null || value.isEmpty()) {
+      throw new IllegalArgumentException("Patricia trie rejects empty values");
+    }
+    if (lastKey != null && key.compareTo(lastKey) <= 0) {
+      throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
+    }
+    final Bytes path = bytesToPath(key);
+    final Bytes finished = finished(lastPath, path);
+    lastKey = key;
+    lastPath = path;
     insertCount++;
+    root = root.accept(new AscendingCollapsePutVisitor(nodeFactory, value, finished, sink), path);
   }
 
-  /** Returns the number of leaves inserted. */
+  /**
+   * Builds and hashes {@code keys} (strictly ascending, with their {@code values}) as a subtree to
+   * {@link #insert(Subtree)} later. Thread-safe: it reads no state of this trie. The keys must be
+   * every key the trie will hold under their common nibble prefix.
+   *
+   * @param keys the keys, strictly ascending
+   * @param values their non-empty values
+   * @return the subtree to insert
+   * @throws IllegalArgumentException if the keys are empty or out of order, or a value is empty
+   */
+  public Subtree prepare(final List<Bytes> keys, final List<Bytes> values) {
+    if (keys.isEmpty() || keys.size() != values.size()) {
+      throw new IllegalArgumentException("prepare needs as many values as keys, at least one");
+    }
+    Node<Bytes> top = NullNode.instance();
+    Bytes previous = null;
+    Bytes previousPath = null;
+    for (int i = 0; i < keys.size(); i++) {
+      final Bytes key = keys.get(i);
+      final Bytes value = values.get(i);
+      if (value == null || value.isEmpty()) {
+        throw new IllegalArgumentException("Patricia trie rejects empty values");
+      }
+      if (previous != null && key.compareTo(previous) <= 0) {
+        throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
+      }
+      final Bytes path = bytesToPath(key);
+      top =
+          top.accept(
+              new AscendingCollapsePutVisitor(
+                  nodeFactory, value, finished(previousPath, path), sink),
+              path);
+      previous = key;
+      previousPath = path;
+    }
+    return new Subtree(
+        keys.getFirst(), values.getFirst(), previous, keys.size(), collapsed(top, Bytes.EMPTY));
+  }
+
+  /** {@code top} with the children of its branch handed to the sink and replaced by stubs. */
+  private Node<Bytes> collapsed(final Node<Bytes> top, final Bytes location) {
+    if (top instanceof ExtensionNode<Bytes> extension) {
+      return nodeFactory.createExtension(
+          extension.getPath(),
+          collapsed(extension.getChild(), Bytes.concatenate(location, extension.getPath())));
+    }
+    if (top instanceof BranchNode<Bytes> branch) {
+      final List<Node<Bytes>> children = new ArrayList<>(branch.maxChild());
+      for (int i = 0; i < branch.maxChild(); i++) {
+        children.add(
+            AscendingCollapsePutVisitor.collapse(
+                nodeFactory,
+                sink,
+                branch.child((byte) i),
+                Bytes.concatenate(location, Bytes.of(i))));
+      }
+      return nodeFactory.createBranch(children, branch.getValue());
+    }
+    return top;
+  }
+
+  /**
+   * Attaches a {@link #prepare prepared} subtree; its keys count as inserted.
+   *
+   * @param subtree prepared by this trie
+   * @throws IllegalArgumentException if its keys are not after every key inserted so far, or do not
+   *     form a complete subtree
+   * @throws IllegalStateException if the trie has already been sealed
+   */
+  public void insert(final Subtree subtree) {
+    if (sealed) {
+      throw new IllegalStateException("ascending Patricia trie already sealed");
+    }
+    if (lastKey != null && subtree.firstKey.compareTo(lastKey) <= 0) {
+      throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
+    }
+    final Bytes path = bytesToPath(subtree.firstKey);
+    final Bytes finished = finished(lastPath, path);
+    root =
+        root.accept(
+            new AscendingCollapsePutVisitor(
+                nodeFactory,
+                subtree.firstValue,
+                Optional.of(below -> subtree.at(path.size() - below.size())),
+                finished,
+                sink),
+            path);
+    lastKey = subtree.lastKey;
+    lastPath = bytesToPath(subtree.lastKey);
+    insertCount += subtree.size;
+  }
+
+  /**
+   * Attaches a subtree known only by its reference, after every key inserted so far. Its keys do
+   * not count as inserted.
+   *
+   * @param location the nibble path of the subtree root
+   * @param ref the reference its parent branch holds: a hash reference or an inlined node
+   * @throws IllegalArgumentException if it is not after every key inserted so far
+   * @throws IllegalStateException if the trie has already been sealed
+   */
+  public void insertSealed(final Bytes location, final Bytes ref) {
+    final Node<Bytes> node =
+        ref.size() == 33 && ref.get(0) == (byte) 0xa0
+            ? new StoredNode<>(nodeFactory, location, Bytes32.wrap(ref.slice(1)))
+            : TrieNodeDecoder.decode(location, ref);
+    insert(
+        new Subtree(
+            keyUnder(location, (byte) 0),
+            Bytes.EMPTY,
+            keyUnder(location, (byte) 0x0f),
+            0,
+            fromRoot(location, node)));
+  }
+
+  /** Returns the number of keys inserted since construction. */
   public long insertCount() {
     return insertCount;
   }
 
   /**
-   * Inserts a subtree known only by its reference.
+   * Seals the trie and returns its root hash. Further {@link #insert} calls are rejected.
    *
-   * @param location the nibble path of the subtree root
-   * @param ref the reference its parent branch holds: a hash reference or an inlined node
-   */
-  public void insertSealed(final Bytes location, final Bytes ref) {
-    final Node<Bytes> node =
-        isHashRef(ref)
-            ? new StoredNode<>(nodeFactory, location, Bytes32.wrap(ref.slice(1)))
-            : TrieNodeDecoder.decode(location, ref);
-    put(padded(location), location.size(), null, node, true);
-  }
-
-  /** Inserts what {@link #finishAsPartition()} left on a key range. */
-  public void insertPartition(final Partition partition) {
-    put(partition.path(), partition.depth(), partition.value(), partition.node(), false);
-  }
-
-  /**
-   * Finishes the build of a key range and returns what is left to insert into the whole trie, or
-   * null if nothing was inserted. The nodes below it have been handed to the sink.
-   */
-  public Partition finishAsPartition() {
-    if (lastPath == null) {
-      return null;
-    }
-    popFramesDeeperThan(-1);
-    if (sealed) {
-      throw new IllegalStateException("a partition cannot end with a sealed subtree");
-    }
-    return new Partition(
-        lastPath, leafValue != null ? KEY_NIBBLES : subtreeDepth, leafValue, subtree);
-  }
-
-  /**
-   * Finishes the trie and returns its root hash. The root node is always handed to the sink.
+   * <p>Only the rightmost path is still unhashed, so this is O(depth). The sink gets that path,
+   * then the root even when it is small enough to be inlined.
    *
-   * @return the root hash
+   * @return merkle root of the sealed trie (the empty trie hash when empty)
    */
   public Bytes32 rootHash() {
-    if (lastPath == null) {
-      return MerkleTrie.EMPTY_TRIE_NODE_HASH;
+    if (!sealed && !(root instanceof NullNode || root instanceof StoredNode)) {
+      AscendingCollapsePutVisitor.commit(sink, root, Bytes.EMPTY);
     }
-    popFramesDeeperThan(-1);
-    final Node<Bytes> root;
-    if (leafValue != null) {
-      root = nodeFactory.createLeaf(lastPath, leafValue);
-    } else if (subtreeDepth > 0) {
-      if (sealed) {
-        throw new IllegalStateException("a sealed subtree needs a parent branch");
-      }
-      root = nodeFactory.createExtension(lastPath.slice(0, subtreeDepth), subtree);
-    } else if (sealed || subtree instanceof StoredNode) {
-      // the root itself, known by reference or already handed at the root location
-      return subtree.getHash();
-    } else {
-      root = subtree;
-    }
-    final Bytes32 hash = root.getHash();
-    sink.store(Bytes.EMPTY, hash, root.getEncodedBytes());
-    return hash;
+    sealed = true;
+    return root instanceof NullNode ? MerkleTrie.EMPTY_TRIE_NODE_HASH : root.getHash();
   }
 
-  private void put(
-      final Bytes path,
-      final int depth,
-      final Bytes value,
-      final Node<Bytes> node,
-      final boolean isSealed) {
-    if (lastPath != null) {
-      if (lastPath.compareTo(path) >= 0) {
-        throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
-      }
-      final int split = lastPath.commonPrefixLength(path);
-      if (split >= depth || (leafValue == null && split >= subtreeDepth)) {
-        throw new IllegalArgumentException("overlapping subtrees");
-      }
-      popFramesDeeperThan(split);
-      attachPending(split);
-    }
-    lastPath = path;
-    leafValue = value;
-    subtree = node;
-    subtreeDepth = depth;
-    sealed = isSealed;
+  // where the subtree holding the previous key starts, one nibble below where the paths split
+  private static Bytes finished(final Bytes previousPath, final Bytes path) {
+    return previousPath == null
+        ? null
+        : previousPath.slice(0, previousPath.commonPrefixLength(path) + 1);
   }
 
-  private void attachPending(final int depth) {
-    if (frames == 0 || frameDepth[frames - 1] != depth) {
-      frameDepth[frames++] = depth;
-    }
-    frameChildren[frames - 1][lastPath.get(depth)] = pendingNode(depth + 1);
-  }
-
-  // builds the branches no later key can reach, the deepest first
-  private void popFramesDeeperThan(final int depth) {
-    while (frames > 0 && frameDepth[frames - 1] > depth) {
-      final int d = frameDepth[frames - 1];
-      final Node<Bytes>[] children = frameChildren[frames - 1];
-      children[lastPath.get(d)] = pendingNode(d + 1);
-      final Node<Bytes>[] branch = Arrays.copyOf(children, 16);
-      for (int i = 0; i < 16; i++) {
-        if (branch[i] == null) {
-          branch[i] = NullNode.instance();
-        }
-      }
-      Arrays.fill(children, null);
-      frames--;
-      subtree = collapse(nodeFactory.createBranch(Arrays.asList(branch), Optional.empty()), d);
-      subtreeDepth = d;
-      leafValue = null;
-      sealed = false;
-    }
-  }
-
-  // the pending element as the child attached at the given depth
-  private Node<Bytes> pendingNode(final int depth) {
-    if (leafValue != null) {
-      return collapse(nodeFactory.createLeaf(lastPath.slice(depth), leafValue), depth);
-    }
-    if (subtreeDepth == depth) {
-      return subtree;
-    }
-    if (sealed) {
-      throw new IllegalStateException("a sealed subtree must hang under a branch");
-    }
-    return collapse(
-        nodeFactory.createExtension(lastPath.slice(depth, subtreeDepth - depth), subtree), depth);
-  }
-
-  // hands a node referenced by hash to the sink and keeps only its hash
-  private Node<Bytes> collapse(final Node<Bytes> node, final int depth) {
-    if (!node.isReferencedByHash()) {
+  // a node known at its location, as built from the root like a prepared top
+  private Node<Bytes> fromRoot(final Bytes location, final Node<Bytes> node) {
+    if (location.isEmpty()) {
       return node;
     }
-    final Bytes location = lastPath.slice(0, depth);
-    final Bytes32 hash = node.getHash();
-    sink.store(location, hash, node.getEncodedBytes());
-    return new StoredNode<>(nodeFactory, location, hash);
+    if (node instanceof LeafNode || node instanceof ExtensionNode) {
+      return node.replacePath(Bytes.concatenate(location, node.getPath()));
+    }
+    return nodeFactory.createExtension(location, node);
   }
 
-  // the nibble path of the lowest key under a location, as a leaf path
-  private static Bytes padded(final Bytes location) {
-    checkArgument(location.size() < KEY_NIBBLES, "a sealed subtree is not a leaf");
-    final MutableBytes path = MutableBytes.create(KEY_NIBBLES + 1);
+  // the lowest or the highest key under a location
+  private static Bytes keyUnder(final Bytes location, final byte fill) {
+    if (location.size() > 64) {
+      throw new IllegalArgumentException("a sealed subtree cannot sit below a key");
+    }
+    final MutableBytes path = MutableBytes.create(65);
+    path.fill(fill);
     path.set(0, location);
-    path.set(KEY_NIBBLES, CompactEncoding.LEAF_TERMINATOR);
-    return path;
-  }
-
-  private static boolean isHashRef(final Bytes ref) {
-    return ref.size() == 33 && ref.get(0) == (byte) 0xa0;
+    path.set(64, CompactEncoding.LEAF_TERMINATOR);
+    return CompactEncoding.pathToBytes(path);
   }
 }
