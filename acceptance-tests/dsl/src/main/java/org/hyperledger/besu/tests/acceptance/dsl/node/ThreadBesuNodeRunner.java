@@ -80,6 +80,8 @@ import org.hyperledger.besu.plugin.CoreConfiguration;
 import org.hyperledger.besu.plugin.rpc.RpcConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.health.LivenessCheckPlugin;
+import org.hyperledger.besu.plugin.services.health.ReadinessCheckPlugin;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
 import org.hyperledger.besu.plugin.storage.StorageConfiguration;
@@ -441,19 +443,18 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
-    KeyValueStorageFactory provideKeyValueStorageFactory() {
-      return toProvide
-          .getStorageFactory()
-          .orElse(new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
-    }
-
-    @Provides
     @Singleton
     MetricCategoryRegistryImpl provideMetricCategoryRegistry(
         final BesuPluginContextImpl besuPluginContext) {
       return new MetricCategoryRegistryImpl(besuPluginContext::isRegistering);
     }
   }
+
+  /**
+   * Produced once the plugins have defined their options and registered, with the storage service
+   * they registered their factories with; what needs the registrations depends on it.
+   */
+  record PluginsRegistered(StorageServiceImpl storageService) {}
 
   @Module
   public static class ThreadBesuNodeRunnerModule {
@@ -525,20 +526,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final KeyValueStorageProvider storageProvider,
         final MiningConfiguration miningConfiguration,
         final ApiConfiguration apiConfiguration,
-        final StorageServiceImpl storageService,
-        final SecurityModuleServiceImpl securityModuleService,
-        final RpcEndpointRegistryImpl rpcEndpointRegistry,
-        final HealthCheckServiceImpl healthCheckService,
-        final BesuConfigurationImpl commonPluginConfiguration,
-        final PermissioningServiceImpl permissioningService,
-        final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
-        final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
-        final TransactionValidatorServiceImpl transactionValidatorServiceImpl,
-        final MetricsConfiguration metricsConfiguration,
-        final MetricCategoryRegistryImpl metricCategoryRegistry,
-        final @Named("ExtraCLIOptions") List<String> extraCLIOptions,
-        final @Named("RequestedPlugins") List<String> requestedPlugins,
-        final BesuPluginContextImpl besuPluginContext,
         final DataStorageConfiguration dataStorageConfiguration) {
 
       builder
@@ -554,21 +541,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .miningParameters(miningConfiguration)
           .randomPeerPriority(false)
           .apiConfiguration(apiConfiguration);
-      loadPluginContext(
-          storageService,
-          securityModuleService,
-          rpcEndpointRegistry,
-          healthCheckService,
-          commonPluginConfiguration,
-          permissioningService,
-          transactionSelectionServiceImpl,
-          transactionPoolValidatorServiceImpl,
-          transactionValidatorServiceImpl,
-          metricsConfiguration,
-          metricCategoryRegistry,
-          extraCLIOptions,
-          requestedPlugins,
-          besuPluginContext);
       return builder.build();
     }
 
@@ -594,7 +566,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       return new BesuPluginContextImpl();
     }
 
-    public void loadPluginContext(
+    /**
+     * Runs the define-options and registration phases, the same way and in the same order as {@code
+     * BesuCommand}: the built-in plugins first, then the plugins of the plugins directory.
+     */
+    @Provides
+    @Singleton
+    public PluginsRegistered providePluginsRegistered(
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
         final RpcEndpointRegistryImpl rpcEndpointRegistry,
@@ -641,41 +619,49 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         pluginsPath = Path.of(pluginDir);
       }
 
+      besuPluginContext.addBuiltInPlugin(new RocksDBPlugin());
+      besuPluginContext.addBuiltInPlugin(new InMemoryStoragePlugin());
+      besuPluginContext.addBuiltInPlugin(new LivenessCheckPlugin());
+      besuPluginContext.addBuiltInPlugin(new ReadinessCheckPlugin());
       besuPluginContext.initialize(
           ImmutablePluginConfiguration.builder()
               .pluginsDir(pluginsPath)
               .requestedPluginsInfo(requestedPlugins.stream().map(PluginInfo::new).toList())
               .build());
-      // same phases and order as BesuCommand: the built-in storage plugin defines and registers
-      // before external plugins, so they can build on its factory in register()
-      final RocksDBPlugin rocksDBPlugin = new RocksDBPlugin();
-      rocksDBPlugin.defineOptions(picoCLIOptions);
       besuPluginContext.defineOptions(picoCLIOptions);
       picoCLIOptions.optionsDefinitionCompleted();
       commandLine.parseArgs(extraCLIOptions.toArray(new String[0]));
       besuPluginContext.beginRegistration();
-      rocksDBPlugin.register(besuPluginContext.registrationContextFor(rocksDBPlugin));
       besuPluginContext.registerPlugins();
       besuPluginContext.endRegistration();
+      return new PluginsRegistered(storageService);
     }
 
+    /**
+     * The storage provider of the node, built on the factory the built-in storage plugins
+     * registered with the context's storage service: the in-memory one unless the node asks for
+     * another by name.
+     */
     @Provides
     public KeyValueStorageProvider provideKeyValueStorageProvider(
         final BesuConfigurationImpl commonPluginConfiguration,
         final MetricsSystem metricsSystem,
-        final KeyValueStorageFactory keyValueStorageFactory) {
-
-      final StorageServiceImpl storageService = new StorageServiceImpl();
-      final KeyValueStorageFactory storageFactory = keyValueStorageFactory;
-      storageService.registerKeyValueStorage(storageFactory);
-      final KeyValueStorageProvider storageProvider =
-          new KeyValueStorageProviderBuilder()
-              .withStorageFactory(storageFactory)
-              .withCommonConfiguration(commonPluginConfiguration)
-              .withMetricsSystem(metricsSystem)
-              .build();
-
-      return storageProvider;
+        final BesuNode node,
+        final PluginsRegistered pluginsRegistered) {
+      final String storageName = node.getStorageImplementation().orElse("memory");
+      final KeyValueStorageFactory storageFactory =
+          pluginsRegistered
+              .storageService()
+              .getByName(storageName)
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "No KeyValueStorageFactory found for key: " + storageName));
+      return new KeyValueStorageProviderBuilder()
+          .withStorageFactory(storageFactory)
+          .withCommonConfiguration(commonPluginConfiguration)
+          .withMetricsSystem(metricsSystem)
+          .build();
     }
 
     @Provides
