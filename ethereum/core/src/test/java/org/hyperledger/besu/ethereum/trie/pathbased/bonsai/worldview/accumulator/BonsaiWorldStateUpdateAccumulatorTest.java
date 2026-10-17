@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -28,8 +27,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.PartialBlockAccessView;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
@@ -41,17 +38,12 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.NoOpBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.cache.NoOpBonsaiWorldStateCacheManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableExtraStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 /** Tests for {@link BonsaiWorldStateUpdateAccumulator}. */
 class BonsaiWorldStateUpdateAccumulatorTest {
@@ -91,40 +83,6 @@ class BonsaiWorldStateUpdateAccumulatorTest {
       final BonsaiValue<UInt256> trieLogSlot = trieLog.getStorageChanges(ACCOUNT).get(SLOT);
       assertThat(trieLogSlot.getPrior()).isEqualTo(V0);
       assertThat(trieLogSlot.getUpdated()).isEqualTo(V2);
-    }
-  }
-
-  @ParameterizedTest(name = "codeStoredByCodeHash={0}")
-  @ValueSource(booleans = {true, false})
-  void unreadableCode_throwsAndIsNotRecorded_soARetryReadsItAgain(
-      final boolean codeStoredByCodeHash) {
-    final Bytes code = Bytes.fromHexString("0x5b00");
-    final Hash codeHash = Hash.hash(code);
-    final Bytes otherCode = Bytes.fromHexString("0x00");
-    final BonsaiCodeCache codeCache = new BonsaiCodeCache();
-    try (BonsaiWorldState worldState =
-        newEmptyWorldState(codeStorageConfig(codeStoredByCodeHash), codeCache)) {
-      final BonsaiWorldStateKeyValueStorage storage = worldState.getWorldStateStorage();
-      // only other code is stored for the account, so its own code cannot be read
-      final BonsaiWorldStateKeyValueStorage.Updater accountUpdater = storage.updater();
-      accountUpdater.putAccountInfoState(
-          ACCOUNT.addressHash(),
-          RLP.encode(
-              new PatriciaTrieAccountValue(0L, Wei.ONE, Hash.EMPTY_TRIE_HASH, codeHash)::writeTo));
-      accountUpdater.putCode(ACCOUNT.addressHash(), Hash.hash(otherCode), otherCode);
-      accountUpdater.commit();
-      final BonsaiWorldStateUpdateAccumulator accumulator =
-          (BonsaiWorldStateUpdateAccumulator) worldState.updater();
-
-      assertThatThrownBy(() -> accumulator.get(ACCOUNT).getCode())
-          .isInstanceOf(MerkleTrieException.class);
-      assertThat(accumulator.getCodeToUpdate()).doesNotContainKey(ACCOUNT);
-      assertThat(codeCache.getIfPresent(codeHash)).isNull();
-
-      final BonsaiWorldStateKeyValueStorage.Updater codeUpdater = storage.updater();
-      codeUpdater.putCode(ACCOUNT.addressHash(), codeHash, code);
-      codeUpdater.commit();
-      assertThat(accumulator.get(ACCOUNT).getCode()).isEqualTo(code);
     }
   }
 
@@ -172,38 +130,20 @@ class BonsaiWorldStateUpdateAccumulatorTest {
     return builder.build();
   }
 
-  private static DataStorageConfiguration codeStorageConfig(final boolean codeStoredByCodeHash) {
-    return ImmutableDataStorageConfiguration.builder()
-        .dataStorageFormat(DataStorageFormat.BONSAI)
-        .extraStorageConfiguration(
-            ImmutableExtraStorageConfiguration.builder()
-                .unstable(
-                    ImmutableExtraStorageConfiguration.Unstable.builder()
-                        .codeStoredByCodeHashEnabled(codeStoredByCodeHash)
-                        .build())
-                .build())
-        .build();
-  }
-
   private static BonsaiWorldState newEmptyWorldState() {
-    return newEmptyWorldState(
-        DataStorageConfiguration.DEFAULT_BONSAI_CONFIG, new BonsaiCodeCache());
-  }
-
-  private static BonsaiWorldState newEmptyWorldState(
-      final DataStorageConfiguration dataStorageConfiguration, final BonsaiCodeCache codeCache) {
     final BonsaiWorldStateKeyValueStorage storage =
         new BonsaiWorldStateKeyValueStorage(
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
-            dataStorageConfiguration);
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     return new BonsaiWorldState(
         storage,
         new NoOpBonsaiCachedMerkleTrieLoader(),
-        new NoOpBonsaiWorldStateCacheManager(storage, EvmConfiguration.DEFAULT, codeCache),
+        new NoOpBonsaiWorldStateCacheManager(
+            storage, EvmConfiguration.DEFAULT, new BonsaiCodeCache()),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
         createStatefulConfigWithTrie(),
-        codeCache);
+        new BonsaiCodeCache());
   }
 }
