@@ -17,11 +17,13 @@ package org.hyperledger.besu.tests.acceptance.plugins;
 import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.RegistrationContext;
 import org.hyperledger.besu.plugin.StartContext;
+import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.storage.StorageConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.stream.Collectors;
 
 import com.google.auto.service.AutoService;
 import org.slf4j.Logger;
@@ -42,20 +44,27 @@ public class TestStorageConfigurationPlugin implements BesuPlugin {
   public void start(final StartContext context) {
     LOG.info("Starting TestStorageConfigurationPlugin");
     final var storageConfiguration = context.getBesuService(StorageConfiguration.class);
-    writeStoragePath(storageConfiguration.getStoragePath().toString());
+    writeCallbackFile(
+        "storageConfiguration.storagePath", storageConfiguration.getStoragePath().toString());
+    writeCallbackFile(
+        "storageConfiguration.ignorableSegments",
+        storageConfiguration.getIgnorableSegments().stream()
+            .map(SegmentIdentifier::getName)
+            .collect(Collectors.joining(",")));
   }
 
   @Override
   public void stop() {}
 
-  private void writeStoragePath(final String storagePath) {
+  private void writeCallbackFile(final String name, final String content) {
     try {
-      final File callbackFile = new File(callbackDir, "storageConfiguration.storagePath");
+      final File callbackFile = new File(callbackDir, name);
       if (!callbackFile.getParentFile().exists()) {
         callbackFile.getParentFile().mkdirs();
         callbackFile.getParentFile().deleteOnExit();
       }
-      Files.writeString(callbackFile.toPath(), storagePath);
+      // one line even when the content is empty, so the test's wait for the file sees it
+      Files.writeString(callbackFile.toPath(), content + System.lineSeparator());
       callbackFile.deleteOnExit();
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);

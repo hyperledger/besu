@@ -78,8 +78,11 @@
 - Snap sync now restarts instead of staying idle when one of its world state download pipelines fails. [#11515](https://github.com/besu-eth/besu/pull/11515)
 - Snap sync no longer downloads the storage and code of an account twice when an account range response goes past the end of the range. [#11516](https://github.com/besu-eth/besu/pull/11516)
 - Snap sync no longer stalls when a download completes while the pipeline stage is handing on another result. [#11514](https://github.com/besu-eth/besu/pull/11514)
+- `KeyValueStorageProvider.close()` now closes the storage instances it handed out; it previously closed none of them, so a Forest node never closed its database cleanly at shutdown. [#11641](https://github.com/besu-eth/besu/pull/11641)
+- The Ephemery restart stops the plugins before registering them again, so the built-in readiness check no longer adds a sync status listener on every cycle, and the storage provider is rebuilt for the new cycle instead of reusing the previous one. [#11641](https://github.com/besu-eth/besu/pull/11641)
 
 ### Additions and Improvements
+- Plugin API: Besu's built-in plugins (RocksDB, in-memory storage, liveness, readiness) go through the plugin lifecycle like external plugins, ahead of them in every phase, and now appear in `--version`, the startup summary (in a `Built-in plugins` block) and `plugins_reloadPluginConfig`. A built-in failure fails startup regardless of `--plugin-continue-on-error`. A plugin that unregisters `/liveness` or `/readiness` now removes the built-in default rather than finding nothing. `BesuPlugin.configurationOverviewLines()` lets a plugin provide lines, printed under its name, for the configuration overview logged at startup; `StorageConfiguration.getIgnorableSegments()` lists the segments the node does not use, which a storage factory need not create. [#11641](https://github.com/besu-eth/besu/pull/11641)
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
 - Update Jackson to 2.21.6 to address CVE `CVE-2026-68497` [#11396](https://github.com/besu-eth/besu/pull/11396)
 - Update Jackson to 2.21.7 to address CVE `CVE-2026-91777` [#11503](https://github.com/besu-eth/besu/pull/11503)

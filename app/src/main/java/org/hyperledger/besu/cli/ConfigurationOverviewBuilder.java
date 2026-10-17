@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli;
 import org.hyperledger.besu.ethereum.chain.ChainDataPruner.ChainPruningStrategy;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.util.BesuVersionUtils;
 import org.hyperledger.besu.util.log.FramedLogMessage;
@@ -57,7 +56,6 @@ public class ConfigurationOverviewBuilder {
   private Integer enginePort;
   private Collection<String> engineApis;
   private String engineJwtFilePath;
-  private boolean isHighSpec = false;
   private boolean isLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
@@ -69,18 +67,16 @@ public class ConfigurationOverviewBuilder {
   private boolean evmV2 = false;
   private Map<String, String> environment;
   private BesuPluginContextImpl besuPluginContext;
+  private Map<String, List<String>> pluginConfigurationOverview = Map.of();
   private boolean isHistoryExpiryPruneEnabled = false;
   private boolean isParallelTxProcessingEnabled = false;
   private ChainPruningStrategy chainPruningStrategy = ChainPruningStrategy.NONE;
   private Long chainPruningBlocksRetained;
   private Long chainPruningBalsRetained;
 
-  private RocksDBCLIOptions.BlobDBSettings blobDBSettings;
   private Long targetGasLimit;
   private Integer maxBlobsPerTransaction;
   private Integer maxBlobsPerBlock;
-  private Integer rocksDbMaxOpenFiles;
-  private boolean rocksDbMaxOpenFilesExplicitlySet;
   private static final String SNAP_SYNC_MODE = "SNAP";
 
   /**
@@ -225,16 +221,6 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
-   * Sets high spec enabled.
-   *
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setHighSpecEnabled() {
-    isHighSpec = true;
-    return this;
-  }
-
-  /**
    * Sets limit trie logs enabled
    *
    * @return the builder
@@ -358,6 +344,18 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets the configuration overview lines the plugins provide, by plugin name
+   *
+   * @param pluginConfigurationOverview the lines each plugin provides, in plugin order
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setPluginConfigurationOverview(
+      final Map<String, List<String>> pluginConfigurationOverview) {
+    this.pluginConfigurationOverview = pluginConfigurationOverview;
+    return this;
+  }
+
+  /**
    * set the plugin context
    *
    * @param besuPluginContext the plugin context
@@ -378,18 +376,6 @@ public class ConfigurationOverviewBuilder {
   public ConfigurationOverviewBuilder setHistoryExpiryPruneEnabled(
       final boolean isHistoryExpiryPruneEnabled) {
     this.isHistoryExpiryPruneEnabled = isHistoryExpiryPruneEnabled;
-    return this;
-  }
-
-  /**
-   * Sets the blob db settings.
-   *
-   * @param blobDBSettings the blob db settings
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setBlobDBSettings(
-      final RocksDBCLIOptions.BlobDBSettings blobDBSettings) {
-    this.blobDBSettings = blobDBSettings;
     return this;
   }
 
@@ -436,20 +422,6 @@ public class ConfigurationOverviewBuilder {
    */
   public ConfigurationOverviewBuilder setMaxBlobsPerBlock(final Integer maxBlobsPerBlock) {
     this.maxBlobsPerBlock = maxBlobsPerBlock;
-    return this;
-  }
-
-  /**
-   * Sets the RocksDB max open files value and whether it was explicitly set via CLI.
-   *
-   * @param maxOpenFiles the max open files value
-   * @param explicitlySet true if the value was set via CLI, false if derived from available memory
-   * @return the builder
-   */
-  public ConfigurationOverviewBuilder setRocksDbMaxOpenFiles(
-      final int maxOpenFiles, final boolean explicitlySet) {
-    this.rocksDbMaxOpenFiles = maxOpenFiles;
-    this.rocksDbMaxOpenFilesExplicitlySet = explicitlySet;
     return this;
   }
 
@@ -520,15 +492,6 @@ public class ConfigurationOverviewBuilder {
 
     if (dataStorage != null) {
       lines.add("Data storage: " + dataStorage);
-    }
-
-    if (rocksDbMaxOpenFiles != null) {
-      lines.add(
-          "RocksDB max open files: "
-              + rocksDbMaxOpenFiles
-              + (rocksDbMaxOpenFilesExplicitlySet
-                  ? " (set)"
-                  : " (derived from available resources)"));
     }
 
     if (syncMode != null) {
@@ -612,32 +575,8 @@ public class ConfigurationOverviewBuilder {
       lines.add(chainPruningString.toString());
     }
 
-    if (isHighSpec) {
-      lines.add("Experimental high spec configuration enabled");
-    }
-
     if (isHistoryExpiryPruneEnabled) {
       lines.add("History expiry prune enabled");
-    }
-
-    if (blobDBSettings != null && blobDBSettings.isBlockchainGarbageCollectionEnabled()) {
-      lines.add("Experimental BlobDB BLOCKCHAIN Garbage Collection enabled");
-    }
-    if (hasCustomBlobDBSettings()) {
-      final StringBuilder blobDBString = new StringBuilder();
-      blobDBString.append("Experimental BlobDB GC ");
-      if (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()) {
-        blobDBString
-            .append("age cutoff: ")
-            .append(blobDBSettings.blobGarbageCollectionAgeCutoff().get())
-            .append("; ");
-      }
-      if (blobDBSettings.blobGarbageCollectionForceThreshold().isPresent()) {
-        blobDBString
-            .append("force threshold: ")
-            .append(blobDBSettings.blobGarbageCollectionForceThreshold().get());
-      }
-      lines.add(blobDBString.toString());
     }
 
     if (targetGasLimit != null) {
@@ -651,6 +590,13 @@ public class ConfigurationOverviewBuilder {
     if (maxBlobsPerBlock != null) {
       lines.add("Max Blobs Per Block (builder): " + maxBlobsPerBlock);
     }
+
+    pluginConfigurationOverview.forEach(
+        (pluginName, pluginLines) -> {
+          lines.add("");
+          lines.add(pluginName + ":");
+          lines.addAll(pluginLines);
+        });
 
     lines.add("");
     lines.add("Host:");
@@ -680,12 +626,6 @@ public class ConfigurationOverviewBuilder {
     }
 
     return lines;
-  }
-
-  private boolean hasCustomBlobDBSettings() {
-    return blobDBSettings != null
-        && (blobDBSettings.blobGarbageCollectionAgeCutoff().isPresent()
-            || blobDBSettings.blobGarbageCollectionForceThreshold().isPresent());
   }
 
   private void detectJemalloc(final List<String> lines) {
