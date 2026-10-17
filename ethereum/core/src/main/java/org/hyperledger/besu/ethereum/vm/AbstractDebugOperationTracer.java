@@ -88,6 +88,13 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
   @Override
   public void tracePreExecution(final MessageFrame frame) {
     final Operation currentOperation = frame.getCurrentOperation();
+    if (options.traceStorage()
+        && "SLOAD".equals(currentOperation.getName())
+        && frame.stackSize() > 0) {
+      preExecutionStorageKey = Optional.of(UInt256.fromBytes(frame.getStackItem(0)));
+    } else {
+      preExecutionStorageKey = Optional.empty();
+    }
     traceOpcode = shouldTraceOpcode(currentOperation);
     if (!traceOpcode) {
       return;
@@ -96,13 +103,6 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
     gasRemaining = frame.getRemainingGas();
     pc = frame.getPC();
     depth = frame.getDepth();
-    if (options.traceStorage()
-        && "SLOAD".equals(currentOperation.getName())
-        && frame.stackSize() > 0) {
-      preExecutionStorageKey = Optional.of(UInt256.fromBytes(frame.getStackItem(0)));
-    } else {
-      preExecutionStorageKey = Optional.empty();
-    }
     capturePreExecutionState(frame);
   }
 
@@ -147,11 +147,13 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
   }
 
   /**
-   * Records the slot touched by a successful SLOAD or SSTORE and returns a copy of all slots the
-   * current contract accessed so far in the transaction. Returns {@link Optional#empty()} for all
-   * other opcodes, per the execution-apis opcode tracer spec.
+   * Records the slot touched by a successful SLOAD or SSTORE and returns the live map of all slots
+   * the current contract accessed so far in the transaction. Returns {@link Optional#empty()} for
+   * all other opcodes, per the execution-apis opcode tracer spec. Subclasses call it for every
+   * operation, traced or not, so that the map also holds slots of filtered-out opcodes, and copy
+   * the map only for a step they emit and keep.
    */
-  protected Optional<Map<UInt256, UInt256>> captureStorage(
+  protected Optional<Map<UInt256, UInt256>> recordStorage(
       final MessageFrame frame,
       final Operation currentOperation,
       final OperationResult operationResult) {
@@ -176,7 +178,7 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
     final Map<UInt256, UInt256> storage =
         accessedStorage.computeIfAbsent(frame.getRecipientAddress(), a -> new TreeMap<>());
     storage.put(key, value);
-    return Optional.of(new TreeMap<>(storage));
+    return Optional.of(storage);
   }
 
   protected void resetStorage() {

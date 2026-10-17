@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -90,12 +91,15 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
           TraceFrame.from(lastTraceFrame).setGasRemainingPostExecution(gasRemaining).build();
       traceFrames.add(updatedLast);
     }
+    final Optional<Map<UInt256, UInt256>> accessedStorage =
+        recordStorage(frame, currentOperation, operationResult);
     if (limitReached || !traceOpcode) {
       return;
     }
 
     final Optional<Map<UInt256, UInt256>> storage =
-        captureStorage(frame, currentOperation, operationResult);
+        accessedStorage.<Map<UInt256, UInt256>>map(TreeMap::new);
+
     final Optional<Map<Address, Wei>> maybeRefunds =
         frame.getRefunds().isEmpty() ? Optional.empty() : Optional.of(frame.getRefunds());
     final long thisGasCost = computeGasCost(currentOperation, operationResult, frame);

@@ -88,10 +88,12 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
+    final Operation currentOperation = frame.getCurrentOperation();
+    final Map<UInt256, UInt256> storage =
+        recordStorage(frame, currentOperation, operationResult).orElse(null);
     if (!traceOpcode) {
       return;
     }
-    final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
     if (isSyntheticEmptyCodeStop(
         currentOperation.isVirtualOperation(), opcode, frame.getCode().getSize())) {
@@ -114,7 +116,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         depth,
         preExecutionStack.orElse(null),
         preExecutionMemory,
-        captureStorage(frame, currentOperation, operationResult).orElse(null),
+        storage,
         frame,
         haltReason,
         revertReason);

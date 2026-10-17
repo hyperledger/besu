@@ -38,6 +38,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -280,6 +281,34 @@ class DebugOperationTracerTest {
     assertThat(frames.get(0).getStorage()).contains(Map.of(sstoreKey, sstoreValue));
     assertThat(frames.get(1).getStorage()).isEmpty();
     assertThat(frames.get(2).getStorage())
+        .contains(Map.of(sstoreKey, sstoreValue, sloadKey, SLOAD_RETURNED_VALUE));
+  }
+
+  @Test
+  void shouldIncludeSlotsOfFilteredOutOpcodesInStorageSnapshot() {
+    final MessageFrame frame = validMessageFrame();
+    final UInt256 sstoreKey = UInt256.fromHexString("0x01");
+    final UInt256 sstoreValue = UInt256.fromHexString("0xdeadbeef");
+    final UInt256 sloadKey = UInt256.fromHexString("0x02");
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(
+            OpCodeTracerConfigBuilder.createFrom(OpCodeTracerConfig.DEFAULT)
+                .traceStorage(true)
+                .traceMemory(false)
+                .traceStack(false)
+                .traceOpcodes(Set.of("SLOAD"))
+                .build(),
+            false);
+
+    frame.pushStackItem(sstoreValue);
+    frame.pushStackItem(sstoreKey);
+    traceFrame(frame, tracer, SSTORE_OPERATION);
+    frame.pushStackItem(sloadKey);
+    traceFrame(frame, tracer, SLOAD_OPERATION);
+
+    final TraceFrame traceFrame = getOnlyTraceFrame(tracer);
+    assertThat(traceFrame.getOpcode()).isEqualTo("SLOAD");
+    assertThat(traceFrame.getStorage())
         .contains(Map.of(sstoreKey, sstoreValue, sloadKey, SLOAD_RETURNED_VALUE));
   }
 
