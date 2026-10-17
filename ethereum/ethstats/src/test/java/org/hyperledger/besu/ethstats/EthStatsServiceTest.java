@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,6 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.WebSocket;
 import io.vertx.core.http.WebSocketClient;
@@ -211,6 +213,84 @@ public class EthStatsServiceTest {
     verify(webSocket, times(1)).writeTextMessage(anyString());
 
     verify(ethScheduler, times(1)).scheduleFutureTask(any(Runnable.class), any(Duration.class));
+  }
+
+  @Test
+  public void shouldReuseWebSocketClientWhenReconnecting() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class)))
+        .thenReturn(Future.failedFuture(new RuntimeException("connection refused")));
+
+    // Vert.x keeps a reference to every client it creates until it is closed itself, so creating a
+    // client per reconnect grows the heap for as long as the ethstats server is unreachable.
+    ethStatsService.start();
+    final ArgumentCaptor<Runnable> retryCaptor = ArgumentCaptor.forClass(Runnable.class);
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      verify(ethScheduler, times(attempt))
+          .scheduleFutureTask(retryCaptor.capture(), any(Duration.class));
+      retryCaptor.getValue().run();
+    }
+
+    verify(webSocketClient, times(4)).connect(any(WebSocketConnectOptions.class));
+    verify(vertx, times(1)).createWebSocketClient(any(WebSocketClientOptions.class));
+    verify(webSocketClient, never()).close();
+  }
+
+  @Test
+  public void shouldCreateNewWebSocketClientWhenStartedAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    ethStatsService.start();
+    ethStatsService.stop();
+    verify(webSocketClient, times(1)).close();
+
+    ethStatsService.start();
+    verify(vertx, times(2)).createWebSocketClient(any(WebSocketClientOptions.class));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void shouldNotReconnectWhenConnectionClosesAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+
+    ethStatsService.start();
+    final ArgumentCaptor<Handler<Void>> closeHandlerCaptor = ArgumentCaptor.forClass(Handler.class);
+    verify(webSocket).closeHandler(closeHandlerCaptor.capture());
+    ethStatsService.stop();
+    closeHandlerCaptor.getValue().handle(null);
+
+    verify(ethScheduler, never()).scheduleFutureTask(any(Runnable.class), any(Duration.class));
+    verify(vertx, times(1)).createWebSocketClient(any(WebSocketClientOptions.class));
+  }
+
+  @Test
+  public void shouldNotReconnectWhenPendingConnectFailsAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    final Promise<WebSocket> pendingConnect = Promise.promise();
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class)))
+        .thenReturn(pendingConnect.future());
+
+    ethStatsService.start();
+    ethStatsService.stop();
+    pendingConnect.fail(new RuntimeException("client closed"));
+
+    verify(ethScheduler, never()).scheduleFutureTask(any(Runnable.class), any(Duration.class));
+  }
+
+  @Test
+  public void shouldNotRunScheduledReconnectAfterStop() {
+    when(p2PNetwork.getLocalEnode()).thenReturn(Optional.of(node));
+    when(webSocketClient.connect(any(WebSocketConnectOptions.class)))
+        .thenReturn(Future.failedFuture(new RuntimeException("connection refused")));
+
+    ethStatsService.start();
+    final ArgumentCaptor<Runnable> retryCaptor = ArgumentCaptor.forClass(Runnable.class);
+    verify(ethScheduler).scheduleFutureTask(retryCaptor.capture(), any(Duration.class));
+    ethStatsService.stop();
+    retryCaptor.getValue().run();
+
+    verify(webSocketClient, times(1)).connect(any(WebSocketConnectOptions.class));
+    verify(vertx, times(1)).createWebSocketClient(any(WebSocketClientOptions.class));
   }
 
   @Test

@@ -24,7 +24,7 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.cache.FlatDbCacheManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.cache.VersionedFlatDbCacheManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.flat.BonsaiFlatDbStrategy;
@@ -362,7 +362,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
             getAccount(accountHash)
                 .map(
                     b ->
-                        PmtStateTrieAccountValue.readFrom(
+                        PatriciaTrieAccountValue.readFrom(
                                 org.hyperledger.besu.ethereum.rlp.RLP.input(b))
                             .getStorageRoot()),
         accountHash,
