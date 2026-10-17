@@ -108,7 +108,10 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
   private List<BesuPlugin> detectedPlugins = new ArrayList<>();
   private List<String> requestedPlugins = new ArrayList<>();
 
-  /** Plugins that completed {@code defineOptions()}, in load order. */
+  /** Plugins supplied by Besu itself, ahead of the discovered ones in every phase. */
+  private final List<BesuPlugin> builtInPlugins = new ArrayList<>();
+
+  /** Plugins that completed {@code defineOptions()}, built-ins first, then in load order. */
   private final List<BesuPlugin> loadedPlugins = new ArrayList<>();
 
   private final List<BesuPlugin> registeredPlugins = new ArrayList<>();
@@ -291,6 +294,46 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
   }
 
   /**
+   * Adds a plugin that ships inside Besu. Built-in plugins go through the same phases as the
+   * discovered plugins and ahead of them in every phase, so a discovered plugin finds what they
+   * registered. They are not subject to the plugin selection options or to the verifier, and a
+   * built-in failure fails startup regardless of {@code --plugin-continue-on-error}.
+   *
+   * @param plugin the plugin, added once, before the plugins define their options
+   */
+  public void addBuiltInPlugin(final BesuPlugin plugin) {
+    checkState(
+        state == Lifecycle.UNINITIALIZED || state == Lifecycle.INITIALIZED,
+        "Built-in plugins must be added before the plugins define their options, not in state %s",
+        state);
+    checkArgument(
+        !builtInPlugins.contains(plugin), "Built-in plugin %s is already added", plugin.getName());
+    builtInPlugins.add(plugin);
+  }
+
+  private boolean isBuiltIn(final BesuPlugin plugin) {
+    return builtInPlugins.contains(plugin);
+  }
+
+  /**
+   * Whether a lifecycle failure of the given plugin is logged and the plugin dropped rather than
+   * failing startup: only when the operator chose to continue on plugin errors, and never for a
+   * built-in plugin.
+   */
+  private boolean continuesOnFailureOf(final BesuPlugin plugin) {
+    return config.isContinueOnPluginError() && !isBuiltIn(plugin);
+  }
+
+  /**
+   * The failure message of a fatal failure, saying why the continue-on-error flag did not apply.
+   */
+  private String fatalFailure(final String failure, final BesuPlugin plugin) {
+    return config.isContinueOnPluginError() && isBuiltIn(plugin)
+        ? failure + "; a built-in plugin failure is fatal regardless of --plugin-continue-on-error"
+        : failure;
+  }
+
+  /**
    * Initializes the plugin context with the provided {@link PluginConfiguration}.
    *
    * @param config the plugin configuration
@@ -306,8 +349,8 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
 
   /**
    * Discovers, verifies and instantiates the plugins selected by the {@link PluginConfiguration},
-   * then calls {@link BesuPlugin#defineOptions(PicoCLIOptions)} on each. Runs before the command
-   * line is parsed.
+   * then calls {@link BesuPlugin#defineOptions(PicoCLIOptions)} on each, the built-in plugins
+   * first. Runs before the command line is parsed.
    *
    * @param picoCLIOptions the option registry handed to each plugin
    * @throws IllegalStateException if the context is not in the INITIALIZED state.
@@ -320,7 +363,9 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
         state);
     state = Lifecycle.DEFINING_OPTIONS;
 
-    for (final BesuPlugin plugin : loadPlugins()) {
+    final List<BesuPlugin> plugins = new ArrayList<>(builtInPlugins);
+    plugins.addAll(loadPlugins());
+    for (final BesuPlugin plugin : plugins) {
       try {
         plugin.defineOptions(picoCLIOptions);
         pluginVersions.put(plugin.getName(), plugin.getVersion());
@@ -330,10 +375,10 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
         }
       } catch (final Exception | LinkageError e) {
         final String failure = failureMessage("defining options of", plugin, e);
-        if (config.isContinueOnPluginError()) {
+        if (continuesOnFailureOf(plugin)) {
           LOG.error("{}, register, start and stop will not be called.", failure, e);
         } else {
-          throw new RuntimeException(failure, e);
+          throw new RuntimeException(fatalFailure(failure, plugin), e);
         }
       }
     }
@@ -507,7 +552,7 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
             "Plugin " + plugin.getClass().getName() + ": " + unrecoverable.get().getMessage(), e);
       }
       final String failure = failureMessage("registering", plugin, e);
-      if (config.isContinueOnPluginError()) {
+      if (continuesOnFailureOf(plugin)) {
         LOG.error("{}, start and stop will not be called.", failure, e);
         // recorded when its options were defined; a plugin that is not registered is not listed
         pluginVersions.remove(plugin.getName());
@@ -515,7 +560,7 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
         // publish the same type, and no one is handed a service of a plugin that never starts
         pluginServices.values().removeIf(entry -> entry.provider() == plugin);
       } else {
-        throw new RuntimeException(failure, e);
+        throw new RuntimeException(fatalFailure(failure, plugin), e);
       }
       return false;
     }
@@ -547,11 +592,11 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
               "Plugin " + plugin.getClass().getName() + ": " + unrecoverable.get().getMessage(), e);
         }
         final String failure = failureMessage("starting", plugin, e);
-        if (config.isContinueOnPluginError()) {
+        if (continuesOnFailureOf(plugin)) {
           LOG.error("{}, stop will not be called.", failure, e);
           pluginsIterator.remove();
         } else {
-          throw new RuntimeException(failure, e);
+          throw new RuntimeException(fatalFailure(failure, plugin), e);
         }
       }
     }
@@ -583,11 +628,11 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
               "Plugin " + plugin.getClass().getName() + ": " + unrecoverable.get().getMessage(), e);
         }
         final String failure = failureMessage("calling `afterMainLoop` on", plugin, e);
-        if (config.isContinueOnPluginError()) {
+        if (continuesOnFailureOf(plugin)) {
           LOG.error("{}, stop will not be called.", failure, e);
           pluginsIterator.remove();
         } else {
-          throw new RuntimeException(failure, e);
+          throw new RuntimeException(fatalFailure(failure, plugin), e);
         }
       }
     }
@@ -601,17 +646,7 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
         Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
         state);
     state = Lifecycle.STOPPING;
-
-    for (final BesuPlugin plugin : registeredPlugins) {
-      try {
-        plugin.stop();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Stopped plugin of type {}.", plugin.getClass().getName());
-        }
-      } catch (final Exception e) {
-        LOG.error("Error stopping plugin of type " + plugin.getClass().getName(), e);
-      }
-    }
+    stopRegisteredPlugins();
 
     // Close the plugin classloader to release file handles
     if (pluginClassLoader != null) {
@@ -625,6 +660,19 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
 
     LOG.debug("Plugin shutdown complete.");
     state = Lifecycle.STOPPED;
+  }
+
+  private void stopRegisteredPlugins() {
+    for (final BesuPlugin plugin : registeredPlugins) {
+      try {
+        plugin.stop();
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Stopped plugin of type {}.", plugin.getClass().getName());
+        }
+      } catch (final Exception e) {
+        LOG.error("Error stopping plugin of type " + plugin.getClass().getName(), e);
+      }
+    }
   }
 
   private static URL pathToURIOrNull(final Path p) {
@@ -702,48 +750,79 @@ public class BesuPluginContextImpl implements PluginVersionsProvider {
    * @return A list of strings, each representing a line in the summary log.
    */
   public List<String> getPluginsSummaryLog() {
-    List<String> summary = new ArrayList<>();
+    final List<String> summary = new ArrayList<>();
     summary.add("Plugin Registration Summary:");
 
-    // Log registered plugins with their names and versions
-    if (registeredPlugins.isEmpty()) {
-      summary.add("No plugins have been registered.");
-    } else {
-      summary.add("Registered Plugins:");
-      registeredPlugins.forEach(
-          plugin ->
-              summary.add(
-                  String.format(
-                      " - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion())));
+    final List<BesuPlugin> registeredBuiltIns =
+        registeredPlugins.stream().filter(this::isBuiltIn).toList();
+    if (!registeredBuiltIns.isEmpty()) {
+      summary.add("Built-in plugins:");
+      registeredBuiltIns.forEach(plugin -> summary.add(summaryLine(plugin)));
     }
 
-    // Identify and log detected but not registered (skipped) plugins
-    List<BesuPlugin> skippedPlugins =
-        detectedPlugins.stream().filter(plugin -> !registeredPlugins.contains(plugin)).toList();
+    // the plugins from the plugins directory, counted against what the directory held
+    final List<BesuPlugin> registeredExternalPlugins =
+        registeredPlugins.stream().filter(plugin -> !isBuiltIn(plugin)).toList();
+    if (registeredExternalPlugins.isEmpty()) {
+      summary.add("No external plugins have been registered.");
+    } else {
+      summary.add("Registered Plugins:");
+      registeredExternalPlugins.forEach(plugin -> summary.add(summaryLine(plugin)));
+    }
 
+    final List<BesuPlugin> skippedPlugins =
+        detectedPlugins.stream().filter(plugin -> !registeredPlugins.contains(plugin)).toList();
     if (!skippedPlugins.isEmpty()) {
       summary.add("Detected but not registered:");
-      skippedPlugins.forEach(
-          plugin ->
-              summary.add(
-                  String.format(
-                      " - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion())));
+      skippedPlugins.forEach(plugin -> summary.add(summaryLine(plugin)));
     }
     summary.add(
         String.format(
             "TOTAL = %d of %d plugins successfully registered.",
-            registeredPlugins.size(), detectedPlugins.size()));
+            registeredExternalPlugins.size(), detectedPlugins.size()));
 
     return summary;
   }
 
+  private static String summaryLine(final BesuPlugin plugin) {
+    return String.format(" - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion());
+  }
+
   /**
-   * Rewinds to the options-defined state so the Ephemery restart can register the same plugin
-   * instances again, without re-parsing the command line. The services plugins published in the
-   * previous cycle are dropped, so the second registration pass starts from the same empty set the
-   * first one did.
+   * The configuration overview lines of every registered plugin, by plugin name, in registration
+   * order. Plugins with nothing to show are left out.
+   *
+   * @return the lines to print under each plugin's name
+   */
+  public Map<String, List<String>> getConfigurationOverviewLines() {
+    final Map<String, List<String>> overview = new LinkedHashMap<>();
+    for (final BesuPlugin plugin : registeredPlugins) {
+      try {
+        final List<String> lines = plugin.configurationOverviewLines();
+        if (!lines.isEmpty()) {
+          overview.put(plugin.getName(), List.copyOf(lines));
+        }
+      } catch (final Exception | LinkageError e) {
+        final String failure = failureMessage("reading the configuration overview of", plugin, e);
+        if (continuesOnFailureOf(plugin)) {
+          LOG.error("{}, its lines are left out.", failure, e);
+        } else {
+          throw new RuntimeException(fatalFailure(failure, plugin), e);
+        }
+      }
+    }
+    return overview;
+  }
+
+  /**
+   * Stops every registered plugin and rewinds to the options-defined state, so the Ephemery restart
+   * can register the same plugin instances again without re-parsing the command line. The services
+   * plugins published in the previous cycle are dropped, so the second registration pass starts
+   * from the same empty set the first one did. Unlike {@link #stopPlugins()} this keeps the plugin
+   * class loader open, since the same plugins run again.
    */
   public void resetState() {
+    stopRegisteredPlugins();
     pluginServices.clear();
     state = Lifecycle.OPTIONS_DEFINED;
   }
