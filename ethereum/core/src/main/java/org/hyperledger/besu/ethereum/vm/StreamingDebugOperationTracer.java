@@ -20,7 +20,10 @@ import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 
+import java.util.Map;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * An {@link AbstractDebugOperationTracer} that streams trace data directly to a {@link FrameWriter}
@@ -42,6 +45,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         long gasCost,
         int depth,
         Bytes[] preExecutionStack,
+        Bytes preExecutionMemory,
+        Map<UInt256, UInt256> storage,
         MessageFrame frame,
         ExceptionalHaltReason haltReason,
         Bytes revertReason);
@@ -50,6 +55,7 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
   private final FrameWriter frameWriter;
   private boolean hasEmittedFrame = false;
   private int stepCount = 0;
+  private Bytes preExecutionMemory;
 
   /**
    * Creates a streaming operation tracer.
@@ -74,6 +80,10 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
       return;
     }
     stepCount++;
+    preExecutionMemory =
+        options.traceMemory() && frame.memoryWordSize() > 0
+            ? frame.readMemory(0, frame.memoryWordSize() * 32L)
+            : null;
   }
 
   @Override
@@ -103,6 +113,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
         thisGasCost,
         depth,
         preExecutionStack.orElse(null),
+        preExecutionMemory,
+        captureStorage(frame, currentOperation, operationResult).orElse(null),
         frame,
         haltReason,
         revertReason);
@@ -121,6 +133,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
           frame.getRemainingGas(),
           0L,
           frame.getDepth(),
+          null,
+          null,
           null,
           frame,
           null,
