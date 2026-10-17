@@ -35,6 +35,8 @@ public class StreamingDebugOperationTracer extends AbstractDebugOperationTracer 
 
   /**
    * Functional interface for zero-allocation streaming of trace data directly from a MessageFrame.
+   * The {@code storage} map is the tracer's live map and is valid only during the call; copy it to
+   * retain it.
    */
   @FunctionalInterface
   public interface FrameWriter {
