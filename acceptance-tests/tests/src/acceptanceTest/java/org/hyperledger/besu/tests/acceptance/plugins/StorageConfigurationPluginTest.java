@@ -51,4 +51,32 @@ public class StorageConfigurationPluginTest extends AcceptanceTestBase {
     assertThat(Path.of(reportedStoragePath).toRealPath())
         .isEqualTo(node.homeDirectory().resolve("database").toRealPath());
   }
+
+  @Test
+  public void storageConfigurationServiceListsNoIgnorableSegmentWhileTheChainPrunerRuns()
+      throws IOException {
+    final Path ignorableSegmentsFile =
+        node.homeDirectory().resolve("plugins/storageConfiguration.ignorableSegments");
+    waitForFile(ignorableSegmentsFile);
+
+    assertThat(Files.readString(ignorableSegmentsFile).trim()).isEmpty();
+  }
+
+  @Test
+  public void storageConfigurationServiceListsTheChainPrunerStateAsIgnorableWhenNothingPrunes()
+      throws Exception {
+    final BesuNode noPruningNode =
+        besu.create(
+            new BesuNodeConfigurationBuilder()
+                .name("node2")
+                .plugins(List.of("testPlugins"))
+                .extraCLIOptions(List.of("--Xchain-pruning-enabled=NONE"))
+                .build());
+    cluster.addNode(noPruningNode);
+    final Path ignorableSegmentsFile =
+        noPruningNode.homeDirectory().resolve("plugins/storageConfiguration.ignorableSegments");
+    waitForFile(ignorableSegmentsFile);
+
+    assertThat(Files.readString(ignorableSegmentsFile).trim()).isEqualTo("CHAIN_PRUNER_STATE");
+  }
 }
