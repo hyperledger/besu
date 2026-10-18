@@ -32,32 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 /** Represents EVM code associated with an account. */
 public class Code {
 
-  /** The constant EMPTY_CODE. */
-  public static final Code EMPTY_CODE = new Code(Bytes.EMPTY);
-
-  /**
-   * The version of the jump destination analysis. Bitmasks are stored next to the code they were
-   * computed from, so this has to change whenever the bitmask of any code does.
-   */
-  public static final int JUMP_DEST_ANALYSIS_VERSION = 1;
-
-  /** The bytes representing the code. */
-  private final Bytes bytes;
-
-  /** The hash of the code, needed for accessing metadata about the bytecode */
-  private Hash codeHash;
-
-  private final int size;
-
-  /**
-   * Bit mask for jump destinations, used to optimize JUMP/JUMPI operations.
-   *
-   * <p>Volatile because it is computed on the first JUMP while the same instance may already be in
-   * use by other threads, through the code caches and parallel transaction execution. Without it, a
-   * thread could see the array before its contents and reject a valid jump destination.
-   */
-  private volatile long[] jumpDestBitMask = null;
-
+  // Declared before EMPTY_CODE, so that they are initialised before any Code is built
   private static final VarHandle LITTLE_ENDIAN_LONG =
       MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
@@ -87,6 +62,32 @@ public class Code {
       OPCODE_INFO[opcode] = length | (opcode == JumpDestOperation.OPCODE ? 1 << 8 : 0);
     }
   }
+
+  /** The constant EMPTY_CODE. */
+  public static final Code EMPTY_CODE = new Code(Bytes.EMPTY);
+
+  /**
+   * The version of the jump destination analysis. Bitmasks are stored next to the code they were
+   * computed from, so this has to change whenever the bitmask of any code does.
+   */
+  public static final int JUMP_DEST_ANALYSIS_VERSION = 1;
+
+  /** The bytes representing the code. */
+  private final Bytes bytes;
+
+  /** The hash of the code, needed for accessing metadata about the bytecode */
+  private Hash codeHash;
+
+  private final int size;
+
+  /**
+   * Bit mask for jump destinations, used to optimize JUMP/JUMPI operations.
+   *
+   * <p>Volatile because it is computed on the first JUMP while the same instance may already be in
+   * use by other threads, through the code caches and parallel transaction execution. Without it, a
+   * thread could see the array before its contents and reject a valid jump destination.
+   */
+  private volatile long[] jumpDestBitMask = null;
 
   /**
    * Public constructor.
