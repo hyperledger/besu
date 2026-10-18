@@ -89,6 +89,12 @@ public class CodeJumpDestAnalysisBenchmark {
    * <p>RANDOM_TWELVE_PUSH1_PER_CHUNK: RANDOM_STOP_JUMPDEST with twelve PUSH1 in every 64 bytes, at
    * random positions.
    *
+   * <p>RANDOM_THIRTEEN_PUSH1_PER_CHUNK: as RANDOM_TWELVE_PUSH1_PER_CHUNK, with thirteen.
+   *
+   * <p>PUSH32_TEXT: `PUSH32 <text>; PUSH1 0x40; MSTORE` repeated, with random lowercase letters as
+   * text, as for revert reasons. Each letter is a byte from 0x60 to 0x7f, the range of
+   * PUSH1-PUSH32.
+   *
    * <p>RANDOM_PUSH1_COUNT_PER_CHUNK: as RANDOM_TWELVE_PUSH1_PER_CHUNK, but with a random number of
    * PUSH1 from 0 to 24 in each 64 bytes, so that an analysis choosing its path by the number of
    * PUSH cannot predict the choice.
@@ -115,6 +121,8 @@ public class CodeJumpDestAnalysisBenchmark {
     "RANDOM_BYTES",
     "RANDOM_TWELVE_PUSH1_PER_CHUNK",
     "RANDOM_PUSH1_COUNT_PER_CHUNK",
+    "RANDOM_THIRTEEN_PUSH1_PER_CHUNK",
+    "PUSH32_TEXT",
     "SOLIDITY_13K",
     "SOLIDITY_OPCODE_MIX",
     "SMALL"
@@ -151,6 +159,8 @@ public class CodeJumpDestAnalysisBenchmark {
       "RANDOM_BYTES",
       "RANDOM_TWELVE_PUSH1_PER_CHUNK",
       "RANDOM_PUSH1_COUNT_PER_CHUNK",
+      "RANDOM_THIRTEEN_PUSH1_PER_CHUNK",
+      "PUSH32_TEXT",
       "SOLIDITY_13K",
       "SOLIDITY_OPCODE_MIX",
       "SMALL"
@@ -189,6 +199,8 @@ public class CodeJumpDestAnalysisBenchmark {
       }
       case "RANDOM_TWELVE_PUSH1_PER_CHUNK" -> pushesPerChunk(random, () -> 12);
       case "RANDOM_PUSH1_COUNT_PER_CHUNK" -> pushesPerChunk(random, () -> random.nextInt(25));
+      case "RANDOM_THIRTEEN_PUSH1_PER_CHUNK" -> pushesPerChunk(random, () -> 13);
+      case "PUSH32_TEXT" -> pushText(random);
       case "SOLIDITY_13K" -> solidityContract();
       case "SOLIDITY_OPCODE_MIX" -> opcodeMix(random, solidityContract());
       case "SMALL" -> mixed(256);
@@ -288,6 +300,25 @@ public class CodeJumpDestAnalysisBenchmark {
       for (int i = 0; i < count; i++) {
         code[chunkStart + offsets[i]] = (byte) PUSH1;
       }
+    }
+    return code;
+  }
+
+  /** `PUSH32 <32 random lowercase letters>; PUSH1 0x40; MSTORE` repeated. */
+  private static byte[] pushText(final Random random) {
+    final byte[] code = new byte[MAX_CODE_SIZE_MAINNET];
+    int i = 0;
+    while (i + 36 <= code.length) {
+      code[i++] = (byte) PUSH32;
+      for (int j = 0; j < 32; j++) {
+        code[i++] = (byte) ('a' + random.nextInt(26));
+      }
+      code[i++] = (byte) PUSH1;
+      code[i++] = 0x40;
+      code[i++] = 0x52;
+    }
+    while (i < code.length) {
+      code[i++] = (byte) JUMPDEST;
     }
     return code;
   }
