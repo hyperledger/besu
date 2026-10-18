@@ -277,9 +277,10 @@ public class Code {
     final int fullChunks = length >> 6;
     int pushDataRemaining = 0;
     for (int chunk = 0; chunk < fullChunks; chunk++) {
-      final long pushes = chunkPushes(rawCode, chunk << 6);
+      final long pushDataCarried = (1L << pushDataRemaining) - 1;
+      final long pushes = chunkPushes(rawCode, chunk << 6) & ~pushDataCarried;
       if (Long.bitCount(pushes) <= MAX_PUSHES_TO_WALK) {
-        pushDataRemaining = walkPushes(rawCode, bitmap, chunk, pushes, pushDataRemaining);
+        pushDataRemaining = walkPushes(rawCode, bitmap, chunk, pushes, pushDataCarried);
       } else {
         pushDataRemaining = walkChunk(rawCode, bitmap, chunk, pushDataRemaining);
       }
@@ -301,10 +302,10 @@ public class Code {
       final long[] bitmap,
       final int chunk,
       final long pushes,
-      final int pushDataRemaining) {
+      final long pushDataCarried) {
     final int chunkStart = chunk << 6;
-    long pushData = (1L << pushDataRemaining) - 1;
-    long instructions = pushes & ~pushData;
+    long pushData = pushDataCarried;
+    long instructions = pushes;
     int lastDataEnd = 0;
     // The lowest PUSH byte that is not immediate data is an instruction
     while (instructions != 0) {
