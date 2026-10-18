@@ -397,7 +397,14 @@ public class TransactionPool implements BlockAddedObserver {
    * @param action the action to run after the pending block added events
    */
   public void runAfterBlockAddedEventsProcessed(final Runnable action) {
-    blockAddedEventOrderedProcessor.submit(action);
+    blockAddedEventOrderedProcessor.submit(
+        () -> {
+          try {
+            action.run();
+          } catch (final Throwable t) {
+            LOG.warn("Failed to run post-block-added action", t);
+          }
+        });
   }
 
   private void processBlockAddedEvent(final BlockAddedEvent e) {

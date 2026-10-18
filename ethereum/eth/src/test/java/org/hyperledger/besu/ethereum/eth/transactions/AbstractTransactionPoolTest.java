@@ -169,6 +169,35 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   }
 
   @Test
+  public void throwingActionDoesNotPreventSubsequentBlockAddedEventsOrActions() {
+    givenTransactionIsValid(transaction0);
+    givenTransactionIsValid(transaction1);
+
+    addAndAssertRemoteTransactionsValid(transaction0);
+    addAndAssertRemoteTransactionsValid(transaction1);
+
+    final DeterministicEthScheduler ethScheduler =
+        (DeterministicEthScheduler) ethContext.getScheduler();
+    ethScheduler.disableAutoRun();
+
+    transactionPool.runAfterBlockAddedEventsProcessed(
+        () -> {
+          throw new RuntimeException("boom");
+        });
+    appendBlock(transaction0);
+
+    final AtomicInteger countSeenBySecondAction = new AtomicInteger(-1);
+    transactionPool.runAfterBlockAddedEventsProcessed(
+        () -> countSeenBySecondAction.set(transactionPool.count()));
+
+    ethScheduler.runPendingFutures();
+
+    assertThat(countSeenBySecondAction).hasValue(1);
+    assertTransactionNotPending(transaction0);
+    assertTransactionPending(transaction1);
+  }
+
+  @Test
   public void shouldRemoveMultipleTransactionsAddedInOneBlock() {
     givenTransactionIsValid(transaction0);
     givenTransactionIsValid(transaction1);
