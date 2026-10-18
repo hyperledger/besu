@@ -14,8 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.config.BlobSchedule;
+import org.hyperledger.besu.config.BlobScheduleOptions;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.milestones.MilestoneDefinition;
@@ -42,6 +45,16 @@ import org.slf4j.LoggerFactory;
 public class ProtocolScheduleBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProtocolScheduleBuilder.class);
+
+  private static final Map<HardforkId, Function<BlobScheduleOptions, Optional<BlobSchedule>>>
+      BLOB_PARAMETER_ONLY_FORKS =
+          Map.of(
+              MainnetHardforkId.BPO1, BlobScheduleOptions::getBpo1,
+              MainnetHardforkId.BPO2, BlobScheduleOptions::getBpo2,
+              MainnetHardforkId.BPO3, BlobScheduleOptions::getBpo3,
+              MainnetHardforkId.BPO4, BlobScheduleOptions::getBpo4,
+              MainnetHardforkId.BPO5, BlobScheduleOptions::getBpo5);
+
   private final GenesisConfigOptions config;
   private final Optional<BigInteger> defaultChainId;
   private final ProtocolSpecAdapters protocolSpecAdapters;
@@ -203,29 +216,120 @@ public class ProtocolScheduleBuilder {
 
   private List<BuilderMapEntry> createMilestones(final MainnetProtocolSpecFactory specFactory) {
 
+    final List<MilestoneDefinition> definitions =
+        MilestoneDefinitions.createMilestoneDefinitions(specFactory, config);
     long lastForkBlock = 0;
+    // BPO forks only change the blob schedule. They are ordered after the forks listed before them
+    // and among themselves, but not against the forks listed after them, such as Amsterdam.
+    long lastBlobParameterOnlyForkBlock = 0;
     final List<Optional<BuilderMapEntry>> milestones = new ArrayList<>();
     final List<MilestoneDefinition> pendingDefinitions = new ArrayList<>();
-    for (MilestoneDefinition milestoneDefinition :
-        MilestoneDefinitions.createMilestoneDefinitions(specFactory, config)) {
+    for (MilestoneDefinition milestoneDefinition : definitions) {
       if (milestoneDefinition.blockNumberOrTimestamp().isPresent()) {
         pendingDefinitions.add(milestoneDefinition);
 
         final long thisForkBlock = milestoneDefinition.blockNumberOrTimestamp().getAsLong();
+        final boolean isBlobParameterOnlyFork =
+            isBlobParameterOnlyFork(milestoneDefinition.hardforkId());
+        final long referenceForkBlock =
+            isBlobParameterOnlyFork
+                ? Math.max(lastForkBlock, lastBlobParameterOnlyForkBlock)
+                : lastForkBlock;
+        final boolean activatesOtherForks =
+            pendingDefinitions.stream().anyMatch(d -> !isBlobParameterOnlyFork(d.hardforkId()));
         for (final MilestoneDefinition pendingDefinition : pendingDefinitions) {
           validateForkOrder(
               pendingDefinition.hardforkId().name(),
               pendingDefinition.blockNumberOrTimestamp(),
-              lastForkBlock);
+              referenceForkBlock);
           milestones.add(createMilestone(pendingDefinition, thisForkBlock));
         }
         pendingDefinitions.clear();
-        lastForkBlock = thisForkBlock;
+        if (isBlobParameterOnlyFork) {
+          lastBlobParameterOnlyForkBlock = thisForkBlock;
+        }
+        if (activatesOtherForks) {
+          lastForkBlock = thisForkBlock;
+        }
       } else {
         pendingDefinitions.add(milestoneDefinition);
       }
     }
-    return milestones.stream().flatMap(Optional::stream).toList();
+    return applyBlobParameterOnlyForks(
+        definitions, milestones.stream().flatMap(Optional::stream).toList());
+  }
+
+  /**
+   * Builds each timestamp milestone with the blob schedule of the latest BPO fork active at its
+   * activation time, and builds a BPO fork that activates at or after a later listed fork, such as
+   * Amsterdam, on the rules of that fork.
+   */
+  private List<BuilderMapEntry> applyBlobParameterOnlyForks(
+      final List<MilestoneDefinition> definitions, final List<BuilderMapEntry> milestones) {
+    final Map<HardforkId, MilestoneDefinition> definitionsByFork =
+        definitions.stream()
+            .collect(Collectors.toMap(MilestoneDefinition::hardforkId, Function.identity()));
+    final List<MilestoneDefinition> activatedBlobParameterOnlyForks =
+        definitions.stream()
+            .filter(d -> isBlobParameterOnlyFork(d.hardforkId()))
+            .filter(d -> d.blockNumberOrTimestamp().isPresent())
+            .toList();
+    if (activatedBlobParameterOnlyForks.isEmpty()) {
+      return milestones;
+    }
+
+    final List<BuilderMapEntry> result = new ArrayList<>(milestones);
+    for (int i = 0; i < result.size(); i++) {
+      final BuilderMapEntry milestone = result.get(i);
+      if (milestone.milestoneType() != MilestoneType.TIMESTAMP) {
+        continue;
+      }
+      final long timestamp = milestone.blockIdentifier();
+      final List<BuilderMapEntry> laterMilestones =
+          result.subList(i + 1, result.size()).stream()
+              .filter(m -> m.milestoneType() == MilestoneType.TIMESTAMP)
+              .toList();
+      ProtocolSpecBuilder builder = milestone.builder();
+      // A BPO fork that a later listed fork at the same timestamp does not override takes the
+      // rules of the latest later listed fork active at its timestamp, if there is one.
+      if (activatedBlobParameterOnlyForks.contains(definitionsByFork.get(milestone.hardforkId()))
+          && laterMilestones.stream().noneMatch(m -> m.blockIdentifier() == timestamp)) {
+        final Optional<BuilderMapEntry> rulesMilestone =
+            laterMilestones.stream()
+                .filter(m -> !isBlobParameterOnlyFork(m.hardforkId()))
+                .filter(m -> m.blockIdentifier() <= timestamp)
+                .reduce((first, second) -> second);
+        if (rulesMilestone.isPresent()) {
+          builder =
+              definitionsByFork
+                  .get(rulesMilestone.get().hardforkId())
+                  .specBuilder()
+                  .get()
+                  .hardforkId(milestone.hardforkId());
+        }
+      }
+      for (final MilestoneDefinition blobParameterOnlyFork : activatedBlobParameterOnlyForks) {
+        if (blobParameterOnlyFork.blockNumberOrTimestamp().getAsLong() <= timestamp) {
+          config
+              .getBlobScheduleOptions()
+              .flatMap(BLOB_PARAMETER_ONLY_FORKS.get(blobParameterOnlyFork.hardforkId()))
+              .ifPresent(builder::blobSchedule);
+        }
+      }
+      result.set(
+          i,
+          new BuilderMapEntry(
+              milestone.hardforkId(),
+              milestone.milestoneType(),
+              timestamp,
+              builder,
+              milestone.modifier()));
+    }
+    return result;
+  }
+
+  private static boolean isBlobParameterOnlyFork(final HardforkId hardforkId) {
+    return BLOB_PARAMETER_ONLY_FORKS.containsKey(hardforkId);
   }
 
   private Optional<BuilderMapEntry> createMilestone(

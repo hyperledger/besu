@@ -1186,8 +1186,10 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
+    // BPO blob schedules are applied by the protocol schedule at their activation time, so that a
+    // BPO fork can activate before or after Amsterdam.
     final ProtocolSpecBuilder amsterdamSpecBuilder =
-        bpo5Definition(
+        osakaDefinition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,

@@ -14,8 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.ARROW_GLACIER;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BOGOTA;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO2;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO3;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BPO4;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BYZANTIUM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CONSTANTINOPLE;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.DAO_RECOVERY_INIT;
@@ -32,17 +37,24 @@ import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.TANGER
 
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.JsonUtil;
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BlobFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestContractAddresses;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -249,6 +261,164 @@ public class MainnetProtocolScheduleTest {
               RequestContractAddresses.DEFAULT_CONSOLIDATION_REQUEST_CONTRACT_ADDRESS
                   .toHexString());
     }
+  }
+
+  @Test
+  public void bpoForkCanActivateBeforeAmsterdamWithoutAmsterdam() {
+    final ProtocolSchedule schedule = bpoSchedule(Map.of("bpo3Time", 15000L));
+
+    assertSpec(schedule, 0, BPO2, false, BPO2_SCHEDULE);
+    assertSpec(schedule, 15000, BPO3, false, BPO3_SCHEDULE);
+  }
+
+  @Test
+  public void bpoForkAtAmsterdamTimestampUsesAmsterdamRules() {
+    final ProtocolSchedule schedule = bpoSchedule(Map.of("amsterdamTime", 0L, "bpo3Time", 0L));
+
+    assertSpec(schedule, 0, AMSTERDAM, true, BPO3_SCHEDULE);
+    assertSpec(schedule, 15000, AMSTERDAM, true, BPO3_SCHEDULE);
+  }
+
+  @Test
+  public void bpoForkCanActivateAfterAmsterdam() {
+    final ProtocolSchedule schedule = bpoSchedule(Map.of("amsterdamTime", 0L, "bpo3Time", 15000L));
+
+    assertSpec(schedule, 0, AMSTERDAM, true, BPO2_SCHEDULE);
+    assertSpec(schedule, 14999, AMSTERDAM, true, BPO2_SCHEDULE);
+    assertSpec(schedule, 15000, BPO3, true, BPO3_SCHEDULE);
+  }
+
+  @Test
+  public void amsterdamBeforeAnyBpoForkUsesOsakaBlobSchedule() {
+    final ProtocolSchedule schedule =
+        bpoSchedule(Map.of("amsterdamTime", 0L, "bpo1Time", 15000L, "bpo2Time", 15000L));
+
+    assertSpec(schedule, 0, AMSTERDAM, true, OSAKA_SCHEDULE);
+    assertSpec(schedule, 15000, BPO2, true, BPO2_SCHEDULE);
+  }
+
+  @Test
+  public void laterBpoForkCanActivateAfterAmsterdam() {
+    final ProtocolSchedule schedule =
+        bpoSchedule(Map.of("amsterdamTime", 0L, "bpo3Time", 0L, "bpo4Time", 15000L));
+
+    assertSpec(schedule, 0, AMSTERDAM, true, BPO3_SCHEDULE);
+    assertSpec(schedule, 15000, BPO4, true, BPO4_SCHEDULE);
+  }
+
+  @Test
+  public void bpoForkCanActivateAfterBogota() {
+    final ProtocolSchedule schedule =
+        bpoSchedule(Map.of("amsterdamTime", 0L, "bogotaTime", 10000L, "bpo3Time", 15000L));
+
+    assertSpec(schedule, 10000, BOGOTA, true, BPO2_SCHEDULE);
+    assertSpec(schedule, 15000, BPO3, true, BPO3_SCHEDULE);
+    Assertions.assertThat(schedule.getByBlockHeader(header(15000)).getEvm().getEvmVersion())
+        .isEqualTo(EvmSpecVersion.BOGOTA);
+  }
+
+  @Test
+  public void bpoForkBeforeOsakaFails() {
+    Assertions.assertThatThrownBy(() -> bpoSchedule(Map.of("osakaTime", 15000L)))
+        .hasMessage(
+            "Genesis Config Error: 'BPO1' is scheduled for milestone 0 but it must be on or after milestone 15000.");
+  }
+
+  @Test
+  public void bpoForkBeforePreviousBpoForkFails() {
+    Assertions.assertThatThrownBy(
+            () -> bpoSchedule(Map.of("amsterdamTime", 0L, "bpo3Time", 15000L, "bpo4Time", 0L)))
+        .hasMessage(
+            "Genesis Config Error: 'BPO4' is scheduled for milestone 0 but it must be on or after milestone 15000.");
+  }
+
+  @Test
+  public void bogotaBeforeAmsterdamFails() {
+    Assertions.assertThatThrownBy(
+            () -> bpoSchedule(Map.of("amsterdamTime", 15000L, "bogotaTime", 0L)))
+        .hasMessage(
+            "Genesis Config Error: 'BOGOTA' is scheduled for milestone 0 but it must be on or after milestone 15000.");
+  }
+
+  /**
+   * Builds a schedule with every fork through Osaka, BPO1 and BPO2 at genesis, as Hive does, with
+   * the given fork times added or replaced.
+   */
+  private static ProtocolSchedule bpoSchedule(final Map<String, Long> forkTimes) {
+    final String json =
+        """
+        {
+          "config": {
+            "chainId": 1,
+            "homesteadBlock": 0,
+            "eip150Block": 0,
+            "eip158Block": 0,
+            "byzantiumBlock": 0,
+            "constantinopleBlock": 0,
+            "petersburgBlock": 0,
+            "istanbulBlock": 0,
+            "berlinBlock": 0,
+            "londonBlock": 0,
+            "terminalTotalDifficulty": 0,
+            "shanghaiTime": 0,
+            "cancunTime": 0,
+            "pragueTime": 0,
+            "osakaTime": 0,
+            "bpo1Time": 0,
+            "bpo2Time": 0,
+            "depositContractAddress": "0x00000000219ab540356cBB839Cbe05303d7705Fa",
+            "blobSchedule": {
+              "cancun": { "target": 3, "max": 6, "baseFeeUpdateFraction": 3338477 },
+              "prague": { "target": 6, "max": 9, "baseFeeUpdateFraction": 5007716 },
+              "osaka": { "target": 6, "max": 9, "baseFeeUpdateFraction": 5007716 },
+              "bpo1": { "target": 10, "max": 15, "baseFeeUpdateFraction": 8346193 },
+              "bpo2": { "target": 14, "max": 21, "baseFeeUpdateFraction": 11684671 },
+              "bpo3": { "target": 21, "max": 32, "baseFeeUpdateFraction": 20609697 },
+              "bpo4": { "target": 28, "max": 42, "baseFeeUpdateFraction": 26000000 }
+            }
+          }
+        }
+        """;
+    final ObjectNode genesis = JsonUtil.objectNodeFromString(json);
+    forkTimes.forEach(((ObjectNode) genesis.get("config"))::put);
+    return MainnetProtocolSchedule.fromConfig(
+        GenesisConfig.fromConfig(genesis).getConfigOptions(),
+        EvmConfiguration.DEFAULT,
+        MiningConfiguration.MINING_DISABLED,
+        new BadBlockManager(),
+        false,
+        BalConfiguration.DEFAULT,
+        new NoOpMetricsSystem());
+  }
+
+  private static final int[] OSAKA_SCHEDULE = {6, 9, 5007716};
+  private static final int[] BPO2_SCHEDULE = {14, 21, 11684671};
+  private static final int[] BPO3_SCHEDULE = {21, 32, 20609697};
+  private static final int[] BPO4_SCHEDULE = {28, 42, 26000000};
+
+  private static void assertSpec(
+      final ProtocolSchedule schedule,
+      final long timestamp,
+      final HardforkId hardforkId,
+      final boolean amsterdamRules,
+      final int[] blobSchedule) {
+    final ProtocolSpec spec = schedule.getByBlockHeader(header(timestamp));
+    final long blobGasPerBlob = spec.getGasCalculator().getBlobGasPerBlob();
+    Assertions.assertThat(spec.getHardforkId()).isEqualTo(hardforkId);
+    Assertions.assertThat(spec.isSlotNumberRequired()).isEqualTo(amsterdamRules);
+    Assertions.assertThat(spec.getBlockAccessListFactory().isPresent()).isEqualTo(amsterdamRules);
+    Assertions.assertThat(
+            ((CancunTargetingGasLimitCalculator) spec.getGasLimitCalculator())
+                .getTargetBlobGasPerBlock())
+        .isEqualTo(blobSchedule[0] * blobGasPerBlob);
+    Assertions.assertThat(spec.getGasLimitCalculator().currentBlobGasLimit())
+        .isEqualTo(blobSchedule[1] * blobGasPerBlob);
+    Assertions.assertThat(((BlobFeeMarket) spec.getFeeMarket()).getBaseFeeUpdateFraction())
+        .isEqualTo(BigInteger.valueOf(blobSchedule[2]));
+  }
+
+  private static BlockHeader header(final long timestamp) {
+    return new BlockHeaderTestFixture().number(1L).timestamp(timestamp).buildHeader();
   }
 
   private BlockHeader blockHeader(final long number) {

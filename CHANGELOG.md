@@ -103,6 +103,7 @@
 - New `besu storage revert-code-format` subcommand reverts the contract code storage and the database metadata, so that a database upgraded to store the jump destination analysis can be opened by an older Besu version again; Besu logs how to run it after the upgrade. [#11364](https://github.com/besu-eth/besu/pull/11364)
 - EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
 - Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
+- A BPO fork (`bpo1Time` to `bpo5Time`) can now activate before or after Amsterdam or Bogota. It must still activate on or after Osaka and the BPO forks before it. Blocks follow the rules of the latest of Osaka, Amsterdam and Bogota, with the blob schedule of the latest BPO fork active at their timestamp. [#11646](https://github.com/besu-eth/besu/pull/11646)
 
 ## 26.9.0
 
