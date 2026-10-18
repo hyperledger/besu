@@ -491,7 +491,7 @@ dependencies {
     )
   zkevmTarConfig(
     group: 'ethereum', name: 'execution-specs-zkevm',
-    version: 'tests-zkevm@v21.0.0', classifier: 'fixtures_zkevm', ext: 'tar.gz'
+    version: 'tests-zkevm@v21.0.5', classifier: 'fixtures_zkevm', ext: 'tar.gz'
     )
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
