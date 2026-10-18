@@ -201,7 +201,7 @@ public class Code {
   private synchronized long[] initJumpDestBitMask() {
     long[] bitMask = jumpDestBitMask;
     if (bitMask == null) {
-      bitMask = calculateJumpDestBitMask();
+      bitMask = calculateJumpDestBitMask(bytes.toArrayUnsafe());
       jumpDestBitMask = bitMask;
     }
     return bitMask;
@@ -245,14 +245,14 @@ public class Code {
   }
 
   /**
-   * Computes the jump destination bitmask of the given code without keeping a {@link Code} for it,
+   * Computes the jump destination bitmask of the given code without building a {@link Code} for it,
    * so that it can be stored next to the code and set with {@link #setJumpDestBitMask} later.
    *
    * @param byteCode The byte representation of the code.
    * @return the bitmask, one bit per code byte
    */
   public static long[] jumpDestBitMaskOf(final Bytes byteCode) {
-    return new Code(byteCode).calculateJumpDestBitMask();
+    return calculateJumpDestBitMask(byteCode.toArrayUnsafe());
   }
 
   /**
@@ -268,10 +268,10 @@ public class Code {
    * <p>A change to the bitmask this returns for any code needs a new {@link
    * #JUMP_DEST_ANALYSIS_VERSION}.
    *
+   * @param rawCode the code, which is not modified
    * @return the jump destination bitmask
    */
-  long[] calculateJumpDestBitMask() {
-    final byte[] rawCode = getBytes().toArrayUnsafe();
+  static long[] calculateJumpDestBitMask(final byte[] rawCode) {
     final int length = rawCode.length;
     final long[] bitmap = new long[(length >> 6) + 1];
     final int fullChunks = length >> 6;

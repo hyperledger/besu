@@ -158,7 +158,7 @@ class CodeJumpDestBitMaskTest {
   }
 
   private static void assertMatchesReference(final byte[] bytes) {
-    final long[] actual = new Code(Bytes.wrap(bytes)).calculateJumpDestBitMask();
+    final long[] actual = Code.calculateJumpDestBitMask(bytes);
 
     assertThat(actual).isEqualTo(referenceBitMask(bytes));
   }
