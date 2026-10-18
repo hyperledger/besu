@@ -102,6 +102,7 @@
 - The EVM no longer calls the operation tracer for every operation when tracing is disabled.
 - New `besu storage revert-code-format` subcommand reverts the contract code storage and the database metadata, so that a database upgraded to store the jump destination analysis can be opened by an older Besu version again; Besu logs how to run it after the upgrade. [#11364](https://github.com/besu-eth/besu/pull/11364)
 - EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
+- With `--snapsync-server-enabled` on Bonsai full flat or archive storage, the local ENR now carries the `snap` entry, so DNS discovery lists that select snap servers can include Besu nodes. The entry lists the served snap versions: `[1, 2]` with `--Xsnap2-enabled`, otherwise `[]` (snap/1 only), as proposed for EIP-8189 in ethereum/EIPs#12493. [#11565](https://github.com/besu-eth/besu/pull/11565)
 
 ## 26.9.0
 
