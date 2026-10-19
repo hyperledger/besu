@@ -178,8 +178,7 @@ public final class OperationsV2 {
     }
     return switch (operation) {
       case null -> null;
-      // stack-less, so the v1 operation runs on a v2 frame as it is
-      case InvalidOperation invalid -> invalid;
+      case InvalidOperation invalid -> new InvalidOperationV2(invalid.getOpcode(), gasCalculator);
       // executed by the interpreter loop itself
       case StopOperation ignored -> null;
       case AddOperation ignored -> null;

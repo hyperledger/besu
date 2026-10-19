@@ -68,7 +68,8 @@ class OperationsV2Test {
 
     for (int opcode = 0; opcode < 256; opcode++) {
       if (v1[opcode] instanceof InvalidOperation) {
-        assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isSameAs(v1[opcode]);
+        assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isInstanceOf(InvalidOperationV2.class);
+        assertThat(v2[opcode].getOpcode()).isEqualTo(v1[opcode].getOpcode());
       } else if (v2[opcode] != null) {
         assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isInstanceOf(AbstractOperationV2.class);
         assertThat(v2[opcode].getOpcode()).isEqualTo(opcode);
@@ -98,7 +99,7 @@ class OperationsV2Test {
   @Test
   void hasPayOnlyWhereTheForkRegistersIt() {
     assertThat(operationsV2(MainnetEVMs.amsterdam(EvmConfiguration.DEFAULT))[0xfc])
-        .isInstanceOf(InvalidOperation.class);
+        .isInstanceOf(InvalidOperationV2.class);
     assertThat(operationsV2(MainnetEVMs.futureEips(EvmConfiguration.DEFAULT))[0xfc])
         .isInstanceOf(PayOperationV2.class);
   }

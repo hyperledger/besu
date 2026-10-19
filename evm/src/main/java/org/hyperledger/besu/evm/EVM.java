@@ -99,7 +99,9 @@ import org.hyperledger.besu.evm.v2.operation.ExchangeOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExpOperationV2;
 import org.hyperledger.besu.evm.v2.operation.GtOperationV2;
 import org.hyperledger.besu.evm.v2.operation.HaltedStackV2;
+import org.hyperledger.besu.evm.v2.operation.InvalidOperationV2;
 import org.hyperledger.besu.evm.v2.operation.IsZeroOperationV2;
+import org.hyperledger.besu.evm.v2.operation.JumpDestOperationV2;
 import org.hyperledger.besu.evm.v2.operation.JumpOperationV2;
 import org.hyperledger.besu.evm.v2.operation.JumpiOperationV2;
 import org.hyperledger.besu.evm.v2.operation.LtOperationV2;
@@ -119,6 +121,7 @@ import org.hyperledger.besu.evm.v2.operation.SarOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ShlOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ShrOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SignExtendOperationV2;
+import org.hyperledger.besu.evm.v2.operation.StopOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SubOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SwapNOperationV2;
 import org.hyperledger.besu.evm.v2.operation.SwapOperationV2;
@@ -526,7 +529,7 @@ public class EVM {
       try {
         result =
             switch (opcode) {
-              case 0x00 -> StopOperation.staticOperation(frame);
+              case 0x00 -> StopOperationV2.staticOperation(frame);
               case 0x01 -> AddOperationV2.staticOperation(frame);
               case 0x02 -> MulOperationV2.staticOperation(frame);
               case 0x03 -> SubOperationV2.staticOperation(frame);
@@ -538,7 +541,7 @@ public class EVM {
               case 0x09 -> MulModOperationV2.staticOperation(frame);
               case 0x0a -> ExpOperationV2.staticOperation(frame, gasCalculator);
               case 0x0b -> SignExtendOperationV2.staticOperation(frame);
-              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperation.invalidOperationResult(opcode);
+              case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperationV2.invalidOperationResult(opcode);
               case 0x10 -> LtOperationV2.staticOperation(frame);
               case 0x11 -> GtOperationV2.staticOperation(frame);
               case 0x12 -> SLtOperationV2.staticOperation(frame);
@@ -553,27 +556,27 @@ public class EVM {
               case 0x1b ->
                   enableConstantinople
                       ? ShlOperationV2.staticOperation(frame)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0x1c ->
                   enableConstantinople
                       ? ShrOperationV2.staticOperation(frame)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0x1d ->
                   enableConstantinople
                       ? SarOperationV2.staticOperation(frame)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0x1e ->
                   enableOsaka
                       ? CountLeadingZerosOperationV2.staticOperation(frame)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0x50 -> PopOperationV2.staticOperation(frame);
               case 0x56 -> JumpOperationV2.staticOperation(frame);
               case 0x57 -> JumpiOperationV2.staticOperation(frame);
-              case 0x5b -> JumpDestOperation.JUMPDEST_SUCCESS;
+              case 0x5b -> JumpDestOperationV2.JUMPDEST_SUCCESS;
               case 0x5F -> // PUSH0
                   enableShanghai
                       ? PushOperationV2.SingleByte.staticOperation(frame, code, pc, 0)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0x60 -> // PUSH1
                   PushOperationV2.SingleByte.staticOperation(frame, code, pc, 1);
               case 0x61, // PUSH2-8
@@ -646,15 +649,15 @@ public class EVM {
               case 0xe6 -> // DUPN (EIP-8024)
                   enableAmsterdam
                       ? DupNOperationV2.staticOperation(frame, code, pc)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0xe7 -> // SWAPN (EIP-8024)
                   enableAmsterdam
                       ? SwapNOperationV2.staticOperation(frame, code, pc)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               case 0xe8 -> // EXCHANGE (EIP-8024)
                   enableAmsterdam
                       ? ExchangeOperationV2.staticOperation(frame, code, pc)
-                      : InvalidOperation.invalidOperationResult(opcode);
+                      : InvalidOperationV2.invalidOperationResult(opcode);
               default -> operationsV2[opcode].execute(frame, this);
             };
       } catch (final OverflowException oe) {
