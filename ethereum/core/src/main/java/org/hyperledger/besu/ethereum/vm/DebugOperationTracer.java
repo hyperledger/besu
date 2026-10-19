@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.TraceFrame;
+import org.hyperledger.besu.evm.tracing.TracedStack;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -70,8 +71,8 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
     if (traceOpcode
         && options.traceStorage()
         && "SLOAD".equals(operationName)
-        && frame.stackSize() > 0) {
-      preExecutionStorageKey = Optional.of(UInt256.fromBytes(frame.getStackItem(0)));
+        && TracedStack.size(frame) > 0) {
+      preExecutionStorageKey = Optional.of(UInt256.fromBytes(TracedStack.item(frame, 0)));
     } else {
       preExecutionStorageKey = Optional.empty();
     }
@@ -291,10 +292,10 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
       // after SLOAD executes the loaded value sits at the top of the stack.
       return preExecutionStorageKey.flatMap(
           key -> {
-            if (frame.stackSize() == 0) {
+            if (TracedStack.size(frame) == 0) {
               return Optional.empty();
             }
-            final UInt256 loadedValue = UInt256.fromBytes(frame.getStackItem(0));
+            final UInt256 loadedValue = UInt256.fromBytes(TracedStack.item(frame, 0));
             final Map<UInt256, UInt256> map = new TreeMap<>();
             map.put(key, loadedValue);
             return Optional.of(map);

@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracedStack;
 import org.hyperledger.besu.evm.v2.ProgramRun.Fork;
 import org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -117,10 +118,10 @@ class FullStackV1V2DifferentialTest {
                     result.getGasCost(),
                     result.getHaltReason(),
                     frame.getRemainingGas(),
-                    frame.stackSize(),
-                    frame.stackSize() == 0
+                    TracedStack.size(frame),
+                    TracedStack.size(frame) == 0
                         ? "none"
-                        : Bytes.wrap(Bytes32.leftPad(frame.getStackItem(0)).toArray())
+                        : Bytes.wrap(Bytes32.leftPad(TracedStack.item(frame, 0)).toArray())
                             .toShortHexString()));
           }
         });

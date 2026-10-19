@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracedStack;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
@@ -395,8 +396,8 @@ final class ProgramRun {
   /** The frame's stack, top first, from whichever interpreter ran it. */
   private static List<String> stack(final MessageFrame frame) {
     final List<String> items = new ArrayList<>();
-    for (int i = 0; i < frame.stackSize(); i++) {
-      items.add(Bytes32.leftPad(frame.getStackItem(i)).toUnprefixedHexString());
+    for (int i = 0; i < TracedStack.size(frame); i++) {
+      items.add(Bytes32.leftPad(TracedStack.item(frame, i)).toUnprefixedHexString());
     }
     return items;
   }
@@ -435,8 +436,9 @@ final class ProgramRun {
 
     private static List<String> tracedStack(final MessageFrame frame) {
       final List<String> items = new ArrayList<>();
-      for (int i = 0; i < frame.stackSize(); i++) {
-        items.add(Bytes.wrap(Bytes32.leftPad(frame.getStackItem(i)).toArray()).toShortHexString());
+      for (int i = 0; i < TracedStack.size(frame); i++) {
+        items.add(
+            Bytes.wrap(Bytes32.leftPad(TracedStack.item(frame, i)).toArray()).toShortHexString());
       }
       return items;
     }

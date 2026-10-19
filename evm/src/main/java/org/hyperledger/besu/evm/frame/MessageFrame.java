@@ -219,8 +219,7 @@ public class MessageFrame {
   private long gasRemaining;
   private int pc;
   private final Memory memory = new Memory();
-  // null on a frame EVM v2 runs, which only uses the v2 stack. The stack accessors tracers use
-  // check this field, which v1 reads anyway, rather than the v2 stack, to keep v1 as fast.
+  // null on a frame EVM v2 runs, which only uses the v2 stack
   private OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
@@ -450,24 +449,18 @@ public class MessageFrame {
   }
 
   /**
-   * Returns the item at the specified offset in the stack, from the v2 stack when EVM v2 runs the
-   * frame, so that tracers see the same stack on both interpreters.
+   * Returns the item at the specified offset in the stack.
    *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
    */
   public Bytes getStackItem(final int offset) {
-    if (stack == null) {
-      return stackItemV2(offset);
-    }
     return stack.get(offset);
   }
 
   /**
    * Removes the item at the top of the stack.
-   *
-   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
    *
    * @return the item at the top of the stack
    * @throws UnderflowException if the stack is empty
@@ -479,8 +472,6 @@ public class MessageFrame {
   /**
    * Removes the corresponding number of items from the top of the stack.
    *
-   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
-   *
    * @param n The number of items to pop off the stack
    */
   public void popStackItems(final int n) {
@@ -489,8 +480,6 @@ public class MessageFrame {
 
   /**
    * Pushes the corresponding item onto the top of the stack
-   *
-   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
    *
    * @param value The value to push onto the stack.
    */
@@ -501,8 +490,6 @@ public class MessageFrame {
   /**
    * Sets the stack item at the specified offset from the top of the stack to the value
    *
-   * <p>Writes the v1 stack only. A frame run by EVM v2 keeps its stack in {@link #stackDataV2()}.
-   *
    * @param offset The item's position relative to the top of the stack
    * @param value The value to set the stack item to
    * @throws IllegalStateException if the stack is too small
@@ -512,14 +499,11 @@ public class MessageFrame {
   }
 
   /**
-   * Return the current stack size, of the v2 stack when EVM v2 runs the frame.
+   * Return the current stack size.
    *
    * @return The current stack size
    */
   public int stackSize() {
-    if (stack == null) {
-      return stackTopV2;
-    }
     return stack.size();
   }
 
@@ -538,7 +522,26 @@ public class MessageFrame {
     }
   }
 
-  private Bytes stackItemV2(final int offset) {
+  /**
+   * Returns whether EVM v2 runs the frame, and so whether its stack is the v2 stack rather than the
+   * one {@link #getStackItem} and {@link #stackSize} read.
+   *
+   * @return true if the frame has a v2 stack
+   */
+  public boolean runsOnEvmV2() {
+    return stackDataV2 != null;
+  }
+
+  /**
+   * Returns the item at the specified offset in the v2 stack, for tracers. Repeated reads of an
+   * unchanged item return the same object, so that tracers snapshotting the stack every step share
+   * items, as they do on v1.
+   *
+   * @param offset the item's position relative to the top of the stack
+   * @return the item at the specified offset in the stack
+   * @throws UnderflowException if the offset is out of range
+   */
+  public Bytes stackItemV2(final int offset) {
     if (offset < 0 || offset >= stackTopV2) {
       throw new UnderflowException();
     }

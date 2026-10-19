@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OpCodeTracerConfigBuilder.OpCodeTracerConfig;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracedStack;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -130,9 +131,9 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
     if (!options.traceStack()) {
       return Optional.empty();
     }
-    final Bytes[] stackContents = new Bytes[frame.stackSize()];
+    final Bytes[] stackContents = new Bytes[TracedStack.size(frame)];
     for (int i = 0; i < stackContents.length; i++) {
-      stackContents[i] = frame.getStackItem(stackContents.length - i - 1);
+      stackContents[i] = TracedStack.item(frame, stackContents.length - i - 1);
     }
     return Optional.of(stackContents);
   }

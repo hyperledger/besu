@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.TracedStack;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -112,8 +113,8 @@ class TracedExecutionV2Test {
                       .toShortHexString());
             }
             final List<String> seen = new ArrayList<>();
-            for (int i = 0; i < frame.stackSize(); i++) {
-              seen.add(Bytes32.leftPad(frame.getStackItem(i)).toShortHexString());
+            for (int i = 0; i < TracedStack.size(frame); i++) {
+              seen.add(Bytes32.leftPad(TracedStack.item(frame, i)).toShortHexString());
             }
             if (!seen.equals(v2)) {
               mismatches.add(frame.getCurrentOperation().getName() + ": " + seen + " vs " + v2);
@@ -135,9 +136,9 @@ class TracedExecutionV2Test {
         new OperationTracer() {
           @Override
           public void tracePreExecution(final MessageFrame frame) {
-            final Bytes[] items = new Bytes[frame.stackSize()];
+            final Bytes[] items = new Bytes[TracedStack.size(frame)];
             for (int i = 0; i < items.length; i++) {
-              items[i] = frame.getStackItem(items.length - i - 1);
+              items[i] = TracedStack.item(frame, items.length - i - 1);
             }
             snapshots.add(items);
           }
@@ -214,15 +215,15 @@ class TracedExecutionV2Test {
 
     evm.runToHalt(frame, OperationTracer.NO_TRACING);
 
-    assertThat(frame.stackSize()).isEqualTo(1);
-    assertThat(frame.getStackItem(0)).isEqualTo(Bytes32.leftPad(Bytes.of(3)));
-    assertThatThrownBy(() -> frame.getStackItem(1)).isInstanceOf(UnderflowException.class);
+    assertThat(TracedStack.size(frame)).isEqualTo(1);
+    assertThat(TracedStack.item(frame, 0)).isEqualTo(Bytes32.leftPad(Bytes.of(3)));
+    assertThatThrownBy(() -> TracedStack.item(frame, 1)).isInstanceOf(UnderflowException.class);
   }
 
   private static String stack(final MessageFrame frame) {
     final List<String> items = new ArrayList<>();
-    for (int i = 0; i < frame.stackSize(); i++) {
-      items.add(Bytes32.leftPad(frame.getStackItem(i)).toBigInteger().toString());
+    for (int i = 0; i < TracedStack.size(frame); i++) {
+      items.add(Bytes32.leftPad(TracedStack.item(frame, i)).toBigInteger().toString());
     }
     return items.toString();
   }
