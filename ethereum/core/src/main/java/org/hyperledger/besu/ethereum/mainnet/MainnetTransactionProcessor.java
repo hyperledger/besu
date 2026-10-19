@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.MissingCodeException;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -324,10 +325,20 @@ public class MainnetTransactionProcessor {
             maybeCodeDelegationProcessor.get().process(delegationUpdater, transaction);
         eip2930WarmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         if (stateGasCalc.isActive()) {
-          // Defer the commit so a preparation out-of-gas can roll the delegations back.
+          // Defer the commit so a preparation out-of-gas can roll the delegations back. The
+          // authorities reach the block access list as chargeCodeDelegationAccesses replays them.
           delegationAccesses = codeDelegationResult.authorityAccesses();
           deferredDelegationUpdater = delegationUpdater;
         } else {
+          // Only reached when a block access list is tracked while state gas is disabled. Block
+          // processing never does this, since both arrive with Amsterdam; it happens only when a
+          // block access list is collected artificially for an earlier block. No top-frame charge
+          // replays the authorizations here, so record every authority now.
+          accessLocationTracker.ifPresent(
+              tracker ->
+                  codeDelegationResult
+                      .authorityAccesses()
+                      .forEach(access -> tracker.addTouchedAccount(access.authority())));
           // The intrinsic already validated the charge, so there is nothing left to fail.
           codeDelegationRefund =
               gasCalculator.calculateDelegateCodeGasRefund(
@@ -681,7 +692,8 @@ public class MainnetTransactionProcessor {
         failedResult.setExecutionGasUsedForBlock(gasResult.executionGas());
         return failedResult;
       }
-    } catch (final MerkleTrieException re) {
+    } catch (final MerkleTrieException | MissingCodeException re) {
+      // a fault of the local storage, the transaction itself is not invalid
       operationTracer.traceEndTransaction(
           worldState.updater(),
           transaction,
