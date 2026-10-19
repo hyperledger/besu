@@ -305,6 +305,34 @@ class RequestSchedulerTest {
   }
 
   @Test
+  void backsOffOnceForTheTimeoutsOfRequestsSentTogether() throws Exception {
+    newScheduler(TIMEOUT, 4, clock::get);
+    loop.hold();
+    final CompletableFuture<RequestSender.Response<List<BlockHeader>>> first =
+        scheduler.submit(headers(1, 1));
+    final CompletableFuture<RequestSender.Response<List<BlockHeader>>> second =
+        scheduler.submit(headers(2, 1));
+    await().until(() -> loop.heldCount() == 2);
+
+    // both time out a second after they went out, and their late answers give the slots back
+    clock.addAndGet(TimeUnit.SECONDS.toNanos(1));
+    loop.release();
+    assertFailure(() -> first.get(5, TimeUnit.SECONDS), Reason.TIMEOUT);
+    assertFailure(() -> second.get(5, TimeUnit.SECONDS), Reason.TIMEOUT);
+    peer.respond(RespondingEthPeer.blockchainResponder(blockchain));
+
+    // a single back-off of a second, not one per timeout
+    clock.addAndGet(TimeUnit.MILLISECONDS.toNanos(1_500));
+    final CompletableFuture<RequestSender.Response<List<BlockHeader>>> next =
+        scheduler.submit(headers(3, 1));
+    await().until(peer::hasOutstandingRequests);
+    peer.respond(RespondingEthPeer.blockchainResponder(blockchain));
+    assertThat(next.get(5, TimeUnit.SECONDS).value())
+        .extracting(BlockHeader::getNumber)
+        .containsExactly(3L);
+  }
+
+  @Test
   void failsARequestWhoseCodeThrowsWithoutHoldingTheOthers() throws Exception {
     final IllegalStateException bug = new IllegalStateException("bug");
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> broken =

@@ -694,7 +694,7 @@ public final class RequestScheduler implements RequestSender {
       final Attempt<?> attempt, final Outcome outcome, final int size, final long elapsedMillis) {
     final Lane lane = attempt.lane;
     lane.inFlight--;
-    lane.record(outcome, nanoTime.getAsLong());
+    lane.record(outcome, attempt.startedAt, nanoTime.getAsLong());
     measure(lane, attempt.name, outcome, size, elapsedMillis);
     if (outcome == Outcome.SUCCESS) {
       attempt.peer.consecutiveTimeouts = 0;
@@ -735,8 +735,7 @@ public final class RequestScheduler implements RequestSender {
     final Lane lane = attempt.lane;
     lane.inFlight--;
     lane.abandoned++;
-    lane.shrink();
-    lane.record(Outcome.TIMEOUT, nanoTime.getAsLong());
+    lane.record(Outcome.TIMEOUT, attempt.startedAt, nanoTime.getAsLong());
     measure(lane, attempt.name, Outcome.TIMEOUT, 0, timeout.toMillis());
     state.consecutiveTimeouts++;
     countRequest(attempt.name, Outcome.TIMEOUT);
@@ -925,6 +924,8 @@ public final class RequestScheduler implements RequestSender {
     private int abandoned;
     private int consecutiveFailures;
     private long backoffUntil;
+    // when a failure last backed off the lane
+    private long failedAt = Long.MIN_VALUE;
 
     private Lane(final int max) {
       this.max = Math.max(1, max);
@@ -946,7 +947,7 @@ public final class RequestScheduler implements RequestSender {
       return inFlight + Math.min(free, Math.max(0, room));
     }
 
-    private void record(final Outcome outcome, final long now) {
+    private void record(final Outcome outcome, final long sentAt, final long now) {
       switch (outcome) {
         case SUCCESS -> {
           consecutiveFailures = 0;
@@ -955,11 +956,19 @@ public final class RequestScheduler implements RequestSender {
         // a peer missing some data serves the rest, and an error may be ours: the request alone
         // moves to another peer
         case EMPTY, ERROR -> {}
-        default -> backoff(now);
+        default -> fail(outcome, sentAt, now);
       }
     }
 
-    private void backoff(final long now) {
+    // requests in flight together fail together: their burst backs off and shrinks the lane once
+    private void fail(final Outcome outcome, final long sentAt, final long now) {
+      if (sentAt < failedAt) {
+        return;
+      }
+      failedAt = now;
+      if (outcome == Outcome.TIMEOUT) {
+        shrink();
+      }
       consecutiveFailures++;
       final long seconds =
           Math.min(MAX_BACKOFF_SECONDS, 1L << Math.min(consecutiveFailures - 1, 5));
