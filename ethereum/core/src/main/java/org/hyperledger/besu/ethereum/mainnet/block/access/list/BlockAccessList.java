@@ -205,13 +205,12 @@ public record BlockAccessList(List<AccountChanges> accountChanges, Optional<Byte
     }
 
     public AccountBuilder getOrCreateAccountBuilder(final Address address) {
-      AccountBuilder accountBuilder = accountChangesBuilders.get(address);
-      if (accountBuilder == null) {
-        accountBuilder = new AccountBuilder(this, address);
-        accountChangesBuilders.put(address, accountBuilder);
-        itemCount++;
-      }
-      return accountBuilder;
+      return accountChangesBuilders.computeIfAbsent(
+          address,
+          a -> {
+            itemCount++;
+            return new AccountBuilder(this, a);
+          });
     }
 
     public void apply(
@@ -431,12 +430,13 @@ public record BlockAccessList(List<AccountChanges> accountChanges, Optional<Byte
       }
 
       void addStorageWrite(final StorageSlotKey slot, final long txIndex, final UInt256 value) {
-        List<StorageChange> changes = slotWrites.get(slot);
-        if (changes == null) {
-          changes = new ArrayList<>();
-          slotWrites.put(slot, changes);
-          owner.itemCount++;
-        }
+        final List<StorageChange> changes =
+            slotWrites.computeIfAbsent(
+                slot,
+                __ -> {
+                  owner.itemCount++;
+                  return new ArrayList<>();
+                });
         if (slotReads.remove(slot)) {
           owner.itemCount--;
         }
