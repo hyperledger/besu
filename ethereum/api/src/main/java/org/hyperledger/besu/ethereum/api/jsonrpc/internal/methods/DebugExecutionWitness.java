@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -47,7 +49,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implements {@code debug_executionWitness}: reconstructs the EIP-8025 execution witness for a
- * previously-imported block by re-executing it against the persisted parent world state.
+ * previously-imported block by re-executing it against the persisted parent world state. Only
+ * blocks from Osaka on are supported.
  */
 public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMethod {
 
@@ -56,6 +59,7 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
+  private final Optional<Long> osakaTimestamp;
 
   public DebugExecutionWitness(
       final BlockchainQueries blockchainQueries,
@@ -65,6 +69,7 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     blockchain = getBlockchainQueries().getBlockchain();
+    osakaTimestamp = protocolSchedule.milestoneFor(OSAKA);
   }
 
   @Override
@@ -89,7 +94,8 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
    * {@link BonsaiExecutionWitnessBuilder}. Returns a {@link
    * org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.ExecutionWitnessResult} on success,
    * or a {@link org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse}
-   * if the block or parent is missing, re-execution fails, or the witness is empty.
+   * if the block or parent is missing, the block predates Osaka, re-execution fails, or the witness
+   * is empty.
    */
   @Override
   protected Object resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
@@ -101,10 +107,13 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
       return new JsonRpcErrorResponse(reqId, RpcErrorType.BLOCK_NOT_FOUND);
     }
 
-    // The parent block must be present in order to re-execute the block against its parent state.
     final Block block = maybeBlock.get();
     final BlockHeader blockHeader = block.getHeader();
+    if (!isWitnessSupported(blockHeader)) {
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.UNSUPPORTED_FORK);
+    }
 
+    // The parent block must be present in order to re-execute the block against its parent state.
     final Optional<BlockHeader> parentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());
     if (parentHeader.isEmpty()) {
@@ -189,5 +198,18 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
     return protocolSpec
         .getBlockAccessListFactory()
         .or(() -> Optional.of(new BlockAccessListFactory()));
+  }
+
+  /**
+   * Returns whether this method serves a witness for {@code blockHeader}: only blocks from Osaka on
+   * are supported, so a chain that does not schedule Osaka has none.
+   *
+   * @param blockHeader the header of the block
+   * @return {@code true} if the block's timestamp is at or after Osaka's activation
+   */
+  private boolean isWitnessSupported(final BlockHeader blockHeader) {
+    // The timestamp is a uint64 carried in a long, so it is compared unsigned.
+    return osakaTimestamp.isPresent()
+        && Long.compareUnsigned(blockHeader.getTimestamp(), osakaTimestamp.get()) >= 0;
   }
 }
