@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.v2.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BytesHolder;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.UInt256;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -47,7 +48,7 @@ final class StackUtil {
    * @param stack the flat limb array (4 longs per 256-bit word)
    * @param top the slot index to write to
    */
-  static void pushZero(final long[] stack, final int top) {
+  static void setZero(final long[] stack, final int top) {
     final int offset = top << 2;
     stack[offset] = 0;
     stack[offset + 1] = 0;
@@ -62,7 +63,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushWei(final Wei wei, final long[] stack, final int top) {
+  static void setWei(final Wei wei, final long[] stack, final int top) {
     // TODO EVMv2 store this representation at Wei object construction time when switching from v2
     // to v1
     int offset = top << 2;
@@ -82,12 +83,27 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushLong(final long value, final long[] stack, final int top) {
+  static void setLong(final long value, final long[] stack, final int top) {
     final int offset = top << 2;
     stack[offset] = 0L;
     stack[offset + 1] = 0L;
     stack[offset + 2] = 0L;
     stack[offset + 3] = value;
+  }
+
+  /**
+   * Writes a {@code UInt256} big-endian value at the given stack slot.
+   *
+   * @param value the UInt256 value to write
+   * @param stack the flat limb array
+   * @param top the slot index to write to
+   */
+  static void setUInt256(final UInt256 value, final long[] stack, final int top) {
+    final int offset = top << 2;
+    stack[offset] = value.u3();
+    stack[offset + 1] = value.u2();
+    stack[offset + 2] = value.u1();
+    stack[offset + 3] = value.u0();
   }
 
   /**
@@ -99,7 +115,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushAddress(final Address address, final long[] stack, final int top) {
+  static void setAddress(final Address address, final long[] stack, final int top) {
     final int offset = top << 2;
     final byte[] b = address.getBytes().toArrayUnsafe();
     stack[offset] = 0L;
@@ -116,7 +132,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushBytes32(final @Nullable Bytes32 value, final long[] stack, final int top) {
+  static void setBytes32(final @Nullable Bytes32 value, final long[] stack, final int top) {
     final int offset = top << 2;
     if (value == null) {
       stack[offset] = 0L;
@@ -135,7 +151,7 @@ final class StackUtil {
   /**
    * Writes a 32-byte hash value as four big-endian limbs at the given stack slot.
    *
-   * <p>Deliberately separate from {@link #pushBytes32}: it gives BLOCKHASH and BLOBHASH their own
+   * <p>Deliberately separate from {@link #setBytes32}: it gives BLOCKHASH and BLOBHASH their own
    * {@code toArrayUnsafe()} call site, so the JIT's type profile for it is not shared with other
    * callers. When other callers pass several {@code Bytes} implementations to a shared helper, the
    * call can no longer be inlined, which made BLOBHASH about 28% slower in JMH (see PR #10962).
@@ -144,7 +160,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushHash(final BytesHolder hash, final long[] stack, final int top) {
+  static void setHash(final BytesHolder hash, final long[] stack, final int top) {
     final int offset = top << 2;
     final byte[] b = hash.getBytes().toArrayUnsafe();
     stack[offset] = (long) LONG_BE.get(b, 0);
