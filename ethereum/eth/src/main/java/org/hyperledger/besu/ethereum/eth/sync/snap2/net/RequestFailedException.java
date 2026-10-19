@@ -23,7 +23,7 @@ public final class RequestFailedException extends RuntimeException {
 
   /** Why the attempt failed. */
   public enum Reason {
-    /** No connected peer could take the request in time. */
+    /** No connected peer could serve the request in time, or only peers that failed it. */
     NO_PEER,
     /** The peer did not answer in time. */
     TIMEOUT,

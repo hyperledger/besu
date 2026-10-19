@@ -45,7 +45,10 @@ public interface RequestSender {
     return submit(request, Set.of());
   }
 
-  /** Sends a request until a peer answers it correctly, switching peer after each failure. */
+  /**
+   * Sends a request until a peer answers it correctly, switching peer after each failure, and
+   * starting over with every peer after a pause once all those that serve it failed it.
+   */
   <T> CompletableFuture<Response<T>> submitWithRetries(SyncRequest<T> request, int attempts);
 
   /** Sends a request the sync cannot do without, with the default number of attempts. */
@@ -61,7 +64,7 @@ public interface RequestSender {
     return 0;
   }
 
-  /** Returns the request capacity of the usable peers of a protocol. */
+  /** Returns the requests the usable peers of a protocol take now, those in flight included. */
   int capacity(Protocol protocol);
 
   /** Returns the executor for CPU work that follows a response. */

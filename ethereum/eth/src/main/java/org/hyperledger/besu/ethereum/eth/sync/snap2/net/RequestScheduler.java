@@ -60,6 +60,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.LongSupplier;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -68,13 +69,18 @@ import org.slf4j.LoggerFactory;
 /**
  * Sends the sync requests to the peers, most urgent first, each to the fastest peer with capacity
  * left. A peer has one lane per protocol whose capacity grows with answers and halves on timeouts;
- * a timed out request keeps its slot until its late answer or one more timeout.
+ * a timed out request keeps its slot until its late answer or one more timeout. One request of each
+ * peer is always left to the other downloads.
  */
 public final class RequestScheduler implements RequestSender {
 
   private static final Logger LOG = LoggerFactory.getLogger(RequestScheduler.class);
-  private static final double INITIAL_THROUGHPUT = 64; // bytes per millisecond
+  // the rate guessed for a request type no peer answered yet: 64 bytes per millisecond
+  private static final double INITIAL_BYTES = 64_000;
+  private static final double INITIAL_MILLIS = 1_000;
   private static final int INITIAL_LANE_LIMIT = 2;
+  // the other downloads only pick a peer below this many outstanding requests
+  private static final int PEER_REQUEST_LIMIT = EthPeer.MAX_OUTSTANDING_REQUESTS - 1;
   private static final int MAX_BACKOFF_SECONDS = 30;
   private static final int CONSECUTIVE_TIMEOUTS_BEFORE_DISCONNECT = 12;
   private static final long RETRY_PAUSE_MILLIS = 1_000;
@@ -101,6 +107,13 @@ public final class RequestScheduler implements RequestSender {
     private final String label = name().toLowerCase(Locale.ROOT);
   }
 
+  /** Which connected peers serve a request, busy or not. */
+  private enum Servers {
+    NONE,
+    EXCLUDED,
+    AVAILABLE
+  }
+
   private final EthPeers ethPeers;
   private final Duration timeout;
   private final Duration queueTimeout;
@@ -118,14 +131,15 @@ public final class RequestScheduler implements RequestSender {
           Comparator.<Pending<?>>comparingInt(p -> p.request.priority().ordinal())
               .thenComparingLong(p -> p.sequence));
   private final Map<EthPeer, PeerState> peers = new HashMap<>();
+  // what the peers answered lately per request type, the guess for a peer not asked yet
+  private final Map<String, Rate> typicalRates = new HashMap<>();
   // every request not yet answered, failed when the scheduler stops
   private final Set<CompletableFuture<?>> outstanding = ConcurrentHashMap.newKeySet();
   // every attempt whose stream is open, closed when the scheduler stops
   private final Set<Attempt<?>> open = ConcurrentHashMap.newKeySet();
   private long sequence;
   private final long connectSubscription;
-  private volatile int snapCapacity;
-  private volatile int ethCapacity;
+  private volatile Map<Protocol, Integer> capacities = Map.of();
   private volatile int snapInFlight;
   private volatile int ethInFlight;
   private volatile int queued;
@@ -205,8 +219,8 @@ public final class RequestScheduler implements RequestSender {
             "snap2_request_capacity",
             "Requests the peers currently accept from the SNAP2 sync, by protocol",
             "protocol");
-    capacity.labels(() -> snapCapacity, "snap");
-    capacity.labels(() -> ethCapacity, "eth");
+    capacity.labels(() -> capacities.getOrDefault(Protocol.SNAP, 0), "snap");
+    capacity.labels(() -> capacities.getOrDefault(Protocol.ETH, 0), "eth");
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "snap2_requests_queued",
@@ -224,7 +238,12 @@ public final class RequestScheduler implements RequestSender {
   @Override
   public <T> CompletableFuture<RequestSender.Response<T>> submit(
       final SyncRequest<T> request, final Set<EthPeer> excluded) {
-    final Pending<T> pending = new Pending<>(request, new HashSet<>(excluded));
+    return enqueue(request, excluded, false);
+  }
+
+  private <T> CompletableFuture<RequestSender.Response<T>> enqueue(
+      final SyncRequest<T> request, final Set<EthPeer> excluded, final boolean retry) {
+    final Pending<T> pending = new Pending<>(request, new HashSet<>(excluded), retry);
     track(pending.future);
 
     // tracked first, so that a concurrent stop either fails it or is seen here
@@ -233,7 +252,7 @@ public final class RequestScheduler implements RequestSender {
             && execute(
                 () -> {
                   pending.sequence = sequence++;
-                  pending.queuedAt = nanoTime.getAsLong();
+                  pending.waitingSince = nanoTime.getAsLong();
                   queue.add(pending);
                   dispatchSoon();
                 });
@@ -263,7 +282,7 @@ public final class RequestScheduler implements RequestSender {
       final Set<EthPeer> excluded,
       final int attemptsLeft,
       final CompletableFuture<RequestSender.Response<T>> result) {
-    submit(request, excluded)
+    enqueue(request, excluded, true)
         .whenComplete(
             (response, error) -> {
               if (error == null) {
@@ -283,7 +302,7 @@ public final class RequestScheduler implements RequestSender {
               }
 
               if (failure.reason() == NO_PEER) {
-                // every peer may have been tried, start over after a pause
+                // every peer that serves it failed it, start over after a pause
                 excluded.clear();
                 if (schedule(
                         () -> attempt(request, excluded, attemptsLeft - 1, result),
@@ -300,27 +319,22 @@ public final class RequestScheduler implements RequestSender {
 
   @Override
   public int peerCount(final Protocol protocol) {
-    return (int)
-        ethPeers
-            .streamAvailablePeers()
-            .map(EthPeerImmutableAttributes::ethPeer)
-            .filter(peer -> speaks(peer, protocol))
-            .count();
+    return (int) validatedPeers().filter(peer -> speaks(peer, protocol)).count();
   }
 
   @Override
   public long bestPeerHeight() {
-    return ethPeers
-        .streamAvailablePeers()
-        .mapToLong(peer -> peer.ethPeer().chainState().getEstimatedHeight())
+    return validatedPeers()
+        .mapToLong(peer -> peer.chainState().getEstimatedHeight())
         .max()
         .orElse(0);
   }
 
   @Override
   public int capacity(final Protocol protocol) {
-    final int adapted = protocol == Protocol.SNAP ? snapCapacity : ethCapacity;
-    return adapted > 0 ? adapted : peerCount(protocol) * INITIAL_LANE_LIMIT;
+    final Integer adapted = capacities.get(protocol);
+    // before the first dispatch, what new lanes take
+    return adapted != null ? adapted : peerCount(protocol) * INITIAL_LANE_LIMIT;
   }
 
   /** Stops dispatching, fails every request not yet answered and closes their streams. */
@@ -384,6 +398,14 @@ public final class RequestScheduler implements RequestSender {
     }
   }
 
+  // the peers a dispatch may use
+  private Stream<EthPeer> validatedPeers() {
+    return ethPeers
+        .streamAvailablePeers()
+        .filter(EthPeerImmutableAttributes::isFullyValidated)
+        .map(EthPeerImmutableAttributes::ethPeer);
+  }
+
   private void dispatch() {
     if (stopped) {
       return;
@@ -392,15 +414,13 @@ public final class RequestScheduler implements RequestSender {
     final long now = nanoTime.getAsLong();
     peers.values().removeIf(state -> state.peer.isDisconnected());
     final List<PeerState> candidates = new ArrayList<>();
-    ethPeers
-        .streamAvailablePeers()
-        .map(EthPeerImmutableAttributes::ethPeer)
-        .filter(EthPeer::isFullyValidated)
-        .forEach(peer -> candidates.add(peers.computeIfAbsent(peer, this::newPeerState)));
-    updateCapacities(candidates);
-    if (queue.isEmpty()) {
-      return;
-    }
+    validatedPeers()
+        .forEach(
+            peer -> {
+              final PeerState state = peers.computeIfAbsent(peer, this::newPeerState);
+              state.room = PEER_REQUEST_LIMIT - peer.outstandingRequests();
+              candidates.add(state);
+            });
 
     final List<Pending<?>> deferred = new ArrayList<>();
     try {
@@ -420,6 +440,7 @@ public final class RequestScheduler implements RequestSender {
       }
     } finally {
       queue.addAll(deferred);
+      updateCapacities(candidates, now);
     }
   }
 
@@ -432,37 +453,53 @@ public final class RequestScheduler implements RequestSender {
     final PeerState peer = select(pending, candidates, now);
     if (peer != null) {
       send(pending, peer);
-    } else if (now - pending.queuedAt > queueTimeout.toNanos()) {
-      countRequest(pending.request.name(), Outcome.NO_PEER);
-      pending.future.completeExceptionally(
-          failure(NO_PEER, null, "no peer could serve " + pending.request.name()));
-    } else {
-      deferred.add(pending);
+      return;
     }
+
+    final boolean expired = now - pending.waitingSince > queueTimeout.toNanos();
+    final boolean retried = pending.retry && !pending.excluded.isEmpty();
+    if (expired || retried) {
+      final Servers servers = servers(pending, candidates);
+      if (servers == Servers.AVAILABLE) {
+        // busy peers serve it: it waits for them
+        pending.waitingSince = now;
+      } else if (expired || servers == Servers.EXCLUDED) {
+        // the retries start over at once when every peer that serves it failed it
+        countRequest(pending.request.name(), Outcome.NO_PEER);
+        pending.future.completeExceptionally(
+            failure(NO_PEER, null, "no peer could serve " + pending.request.name()));
+        return;
+      }
+    }
+    deferred.add(pending);
   }
 
   private PeerState newPeerState(final EthPeer peer) {
     return new PeerState(peer, maxSnapRequestsPerPeer, maxEthRequestsPerPeer);
   }
 
-  // requests the state and chain downloads may keep in flight, from the adapted lane limits
-  private void updateCapacities(final List<PeerState> candidates) {
-    int snap = 0;
+  // requests the downloads may keep in flight: those in flight and those the lanes still take
+  private void updateCapacities(final List<PeerState> candidates, final long now) {
     int eth = 0;
-    int snapBusy = 0;
+    int snap = 0;
+    int snap2 = 0;
     int ethBusy = 0;
+    int snapBusy = 0;
     for (final PeerState state : candidates) {
-      eth += state.eth.slots();
+      final int snapLane = state.snap.capacity(now, state.room);
+      eth += state.eth.capacity(now, state.room);
+      if (speaks(state.peer, Protocol.SNAP)) {
+        snap += snapLane;
+      }
+      if (speaks(state.peer, Protocol.SNAP2)) {
+        snap2 += snapLane;
+      }
       ethBusy += state.eth.inFlight;
       snapBusy += state.snap.inFlight;
-      if (speaks(state.peer, Protocol.SNAP)) {
-        snap += state.snap.slots();
-      }
     }
-    snapCapacity = snap;
-    ethCapacity = eth;
-    snapInFlight = snapBusy;
+    capacities = Map.of(Protocol.ETH, eth, Protocol.SNAP, snap, Protocol.SNAP2, snap2);
     ethInFlight = ethBusy;
+    snapInFlight = snapBusy;
     queued = queue.size();
   }
 
@@ -470,6 +507,7 @@ public final class RequestScheduler implements RequestSender {
       final Pending<?> pending, final List<PeerState> candidates, final long now) {
     PeerState best = null;
     double bestScore = -1;
+    final String name = pending.request.name();
     final long minimumHeight = pending.request.minimumPeerHeight();
     for (final PeerState state : candidates) {
       final Protocol protocol = pending.request.protocolFor(state.peer);
@@ -478,7 +516,7 @@ public final class RequestScheduler implements RequestSender {
         continue;
       }
       final double score =
-          lane.throughput
+          rate(lane, name).perMilli()
               / (lane.inFlight + 1)
               * (behind(state.peer, minimumHeight) ? BEHIND_PENALTY : 1);
       if (score > bestScore) {
@@ -495,11 +533,29 @@ public final class RequestScheduler implements RequestSender {
       final Protocol protocol,
       final Pending<?> pending,
       final long now) {
-    return !state.peer.isDisconnected()
+    return state.room > 0
+        && !state.peer.isDisconnected()
         && lane.isOpen(now)
         && !pending.excluded.contains(state.peer)
         && speaks(state.peer, protocol)
         && pending.request.canServe(state.peer);
+  }
+
+  private static Servers servers(final Pending<?> pending, final List<PeerState> candidates) {
+    boolean excluded = false;
+    for (final PeerState state : candidates) {
+      final EthPeer peer = state.peer;
+      if (peer.isDisconnected()
+          || !speaks(peer, pending.request.protocolFor(peer))
+          || !pending.request.canServe(peer)) {
+        continue;
+      }
+      if (!pending.excluded.contains(peer)) {
+        return Servers.AVAILABLE;
+      }
+      excluded = true;
+    }
+    return excluded ? Servers.EXCLUDED : Servers.NONE;
   }
 
   private <T> void send(final Pending<T> pending, final PeerState state) {
@@ -527,6 +583,7 @@ public final class RequestScheduler implements RequestSender {
 
     final Lane lane = state.lane(protocol);
     lane.inFlight++;
+    state.room--;
     final Attempt<T> attempt = new Attempt<>(pending, state, lane, name, stream, sentAt);
     open.add(attempt);
     // tracked first, so that a concurrent stop either closes the stream or is seen here
@@ -637,7 +694,8 @@ public final class RequestScheduler implements RequestSender {
       final Attempt<?> attempt, final Outcome outcome, final int size, final long elapsedMillis) {
     final Lane lane = attempt.lane;
     lane.inFlight--;
-    lane.record(outcome, size, elapsedMillis, nanoTime.getAsLong());
+    lane.record(outcome, nanoTime.getAsLong());
+    measure(lane, attempt.name, outcome, size, elapsedMillis);
     if (outcome == Outcome.SUCCESS) {
       attempt.peer.consecutiveTimeouts = 0;
     }
@@ -678,7 +736,8 @@ public final class RequestScheduler implements RequestSender {
     lane.inFlight--;
     lane.abandoned++;
     lane.shrink();
-    lane.record(Outcome.TIMEOUT, 0, timeout.toMillis(), nanoTime.getAsLong());
+    lane.record(Outcome.TIMEOUT, nanoTime.getAsLong());
+    measure(lane, attempt.name, Outcome.TIMEOUT, 0, timeout.toMillis());
     state.consecutiveTimeouts++;
     countRequest(attempt.name, Outcome.TIMEOUT);
 
@@ -700,6 +759,30 @@ public final class RequestScheduler implements RequestSender {
       attempt.stream.close();
       dispatchSoon();
     }
+  }
+
+  // every answer counts with its time, only a useful one with its bytes
+  private void measure(
+      final Lane lane,
+      final String request,
+      final Outcome outcome,
+      final int size,
+      final long elapsedMillis) {
+    final int bytes = outcome == Outcome.SUCCESS ? size : 0;
+    lane.rates.computeIfAbsent(request, r -> typicalRate(r).copy()).add(bytes, elapsedMillis);
+    if (outcome == Outcome.SUCCESS) {
+      typicalRate(request).add(size, elapsedMillis);
+    }
+  }
+
+  // the rate of a peer for a request type, what the peers answered lately if it was never asked
+  private Rate rate(final Lane lane, final String request) {
+    final Rate rate = lane.rates.get(request);
+    return rate != null ? rate : typicalRate(request);
+  }
+
+  private Rate typicalRate(final String request) {
+    return typicalRates.computeIfAbsent(request, r -> new Rate(INITIAL_BYTES, INITIAL_MILLIS));
   }
 
   private void punish(
@@ -724,13 +807,17 @@ public final class RequestScheduler implements RequestSender {
     return height > 0 && height < minimumHeight;
   }
 
-  // range requests are the same in snap/1 and snap/2, so any snap peer serves them
   private static boolean speaks(final EthPeer peer, final Protocol protocol) {
-    return protocol == Protocol.ETH || SnapProtocol.isAgreed(peer.getAgreedCapabilities());
+    return switch (protocol) {
+      case ETH -> true;
+      // range requests are the same in snap/1 and snap/2, so any snap peer serves them
+      case SNAP -> SnapProtocol.isAgreed(peer.getAgreedCapabilities());
+      case SNAP2 -> peer.getAgreedCapabilities().contains(SnapProtocol.SNAP2);
+    };
   }
 
   private static String protocolName(final Protocol protocol) {
-    return protocol == Protocol.SNAP ? SnapProtocol.NAME : EthProtocol.NAME;
+    return protocol == Protocol.ETH ? EthProtocol.NAME : SnapProtocol.NAME;
   }
 
   private static RequestFailedException failure(
@@ -745,13 +832,17 @@ public final class RequestScheduler implements RequestSender {
   private static final class Pending<T> {
     private final SyncRequest<T> request;
     private final Set<EthPeer> excluded;
+    private final boolean retry;
     private final CompletableFuture<RequestSender.Response<T>> future = new CompletableFuture<>();
     private long sequence;
-    private long queuedAt;
+    // when it was queued, or last found waiting for a busy peer
+    private long waitingSince;
 
-    private Pending(final SyncRequest<T> request, final Set<EthPeer> excluded) {
+    private Pending(
+        final SyncRequest<T> request, final Set<EthPeer> excluded, final boolean retry) {
       this.request = request;
       this.excluded = excluded;
+      this.retry = retry;
     }
   }
 
@@ -795,15 +886,43 @@ public final class RequestScheduler implements RequestSender {
   }
 
   /**
+   * Bytes and milliseconds of the recent answers of one request type, decayed alike: a timeout or
+   * an empty answer weighs as the time it took.
+   */
+  private static final class Rate {
+    private double bytes;
+    private double millis;
+
+    private Rate(final double bytes, final double millis) {
+      this.bytes = bytes;
+      this.millis = millis;
+    }
+
+    private Rate copy() {
+      return new Rate(bytes, millis);
+    }
+
+    private double perMilli() {
+      return bytes / millis;
+    }
+
+    private void add(final int size, final long elapsedMillis) {
+      bytes = 0.8 * bytes + 0.2 * size;
+      millis = 0.8 * millis + 0.2 * elapsedMillis;
+    }
+  }
+
+  /**
    * Requests of one protocol to one peer, with an adaptive limit. A peer serving one protocol badly
    * keeps serving the other.
    */
   private static final class Lane {
     private final int max;
+    // per request type, so that small answers compare with small answers
+    private final Map<String, Rate> rates = new HashMap<>();
     private double limit;
     private int inFlight;
     private int abandoned;
-    private double throughput = INITIAL_THROUGHPUT;
     private int consecutiveFailures;
     private long backoffUntil;
 
@@ -821,21 +940,22 @@ public final class RequestScheduler implements RequestSender {
       return backoffUntil <= now && inFlight + abandoned < slots();
     }
 
-    private void record(
-        final Outcome outcome, final int size, final long elapsedMillis, final long now) {
+    // the requests in flight, and those it takes now within the room the peer leaves
+    private int capacity(final long now, final int room) {
+      final int free = backoffUntil > now ? 0 : Math.max(0, slots() - inFlight - abandoned);
+      return inFlight + Math.min(free, Math.max(0, room));
+    }
+
+    private void record(final Outcome outcome, final long now) {
       switch (outcome) {
         case SUCCESS -> {
           consecutiveFailures = 0;
-          throughput = 0.8 * throughput + 0.2 * ((double) size / elapsedMillis);
           grow();
         }
         // a peer missing some data serves the rest, and an error may be ours: the request alone
         // moves to another peer
-        case EMPTY, ERROR -> throughput *= 0.9;
-        default -> {
-          throughput *= 0.7;
-          backoff(now);
-        }
+        case EMPTY, ERROR -> {}
+        default -> backoff(now);
       }
     }
 
@@ -863,6 +983,8 @@ public final class RequestScheduler implements RequestSender {
     private final Lane snap;
     private final Lane eth;
     private int consecutiveTimeouts;
+    // requests it takes before the other downloads would find it busy, set at each dispatch
+    private int room;
 
     private PeerState(final EthPeer peer, final int maxSnap, final int maxEth) {
       this.peer = peer;
@@ -871,7 +993,7 @@ public final class RequestScheduler implements RequestSender {
     }
 
     private Lane lane(final Protocol protocol) {
-      return protocol == Protocol.SNAP ? snap : eth;
+      return protocol == Protocol.ETH ? eth : snap;
     }
   }
 }

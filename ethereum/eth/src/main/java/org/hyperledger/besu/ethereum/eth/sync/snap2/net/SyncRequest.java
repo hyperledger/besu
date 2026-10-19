@@ -30,7 +30,10 @@ public interface SyncRequest<T> {
   /** Protocol a request is sent on. */
   enum Protocol {
     ETH,
-    SNAP
+    /** Any snap version: the range requests are the same in snap/1 and snap/2. */
+    SNAP,
+    /** Only snap/2, as the block access lists; on the snap lane of a peer. */
+    SNAP2
   }
 
   /** Dispatch priority, most urgent first. */
