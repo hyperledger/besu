@@ -185,19 +185,24 @@ public class EngineJsonRpcServiceLimitConnectionsTest {
     final int resets = 5;
     for (int i = 0; i < resets; i++) {
       AbortiveWebSocketClient.handshakeSendAndReset(uri.getHost(), uri.getPort(), request);
-    }
-
-    final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-    while (metricsSystem.getGaugeValue("active_engine_connection_count") != 0) {
-      if (System.nanoTime() > deadline) {
-        break;
-      }
-      Thread.sleep(50);
+      // Release is async (Vert.x event loop). MAX_CONNECTIONS is only 2, so firing the next
+      // handshake before the previous release lands legitimately gets it rejected
+      // (connection closed pre-upgrade -> "empty handshake response"). Wait for the
+      // counter to drain before the next reset.
+      awaitActiveConnectionCountZero();
     }
 
     assertThat(metricsSystem.getGaugeValue("active_engine_connection_count"))
         .as("abrupt Engine WS reset must not leak active_engine_connection_count")
         .isEqualTo(0);
+  }
+
+  private void awaitActiveConnectionCountZero() throws InterruptedException {
+    final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+    while (metricsSystem.getGaugeValue("active_engine_connection_count") != 0
+        && System.nanoTime() <= deadline) {
+      Thread.sleep(50);
+    }
   }
 
   private Request readinessRequest() {

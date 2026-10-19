@@ -187,14 +187,13 @@ public class WebSocketServiceTest {
     for (int i = 0; i < resets; i++) {
       AbortiveWebSocketClient.handshakeSendAndReset(
           websocketConfiguration.getHost(), websocketConfiguration.getPort(), request);
-    }
-
-    final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-    while (metricsSystem.getGaugeValue("active_ws_connection_count") != 0) {
-      if (System.nanoTime() > deadline) {
-        break;
+      // Release is async (Vert.x event loop); wait for the counter to drain before the
+      // next handshake so a lagging release cannot get it rejected at the limit.
+      final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+      while (metricsSystem.getGaugeValue("active_ws_connection_count") != 0
+          && System.nanoTime() <= deadline) {
+        Thread.sleep(50);
       }
-      Thread.sleep(50);
     }
 
     assertThat(metricsSystem.getGaugeValue("active_ws_connection_count"))
