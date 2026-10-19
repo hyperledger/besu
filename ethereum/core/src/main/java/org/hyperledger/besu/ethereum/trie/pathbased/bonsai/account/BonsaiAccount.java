@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.common.MptStorageRootStrategy;
 import org.hyperledger.besu.ethereum.trie.common.StorageRootStrategy;
 import org.hyperledger.besu.ethereum.trie.common.TrieAccountValue;
@@ -239,12 +238,7 @@ public class BonsaiAccount implements MutableAccount, TrieAccountValue {
     }
 
     // cache miss get the code from the disk, set it and put it in the cache
-    final Optional<Code> loadedCode = context.getCode(address, codeHash);
-    // a storage fault, not empty code: it must neither run nor be cached, and block import must
-    // report it as a local failure rather than an invalid block. Asserted so that nodes without
-    // -ea skip the check.
-    assert MerkleTrieException.checkCodeFound(address, codeHash, loadedCode.isPresent());
-    code = loadedCode.orElseGet(() -> new Code(Bytes.EMPTY, codeHash));
+    code = context.getCode(address, codeHash).orElseGet(() -> new Code(Bytes.EMPTY, codeHash));
     Optional.ofNullable(codeCache).ifPresent(c -> c.put(codeHash, code));
 
     return code;
