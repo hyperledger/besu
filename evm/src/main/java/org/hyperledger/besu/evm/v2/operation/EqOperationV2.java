@@ -32,7 +32,9 @@ public class EqOperationV2 extends AbstractOperationV2 {
   private static final OperationResult EQ_SUCCESS = new OperationResult(3, null);
 
   // v1 runs EQ through its fixed-cost operation, which checks the gas before it touches the stack
-  // and charges the cost on a stack underflow, and traces show both
+  // and charges the cost on a stack underflow, and traces show both. The v2 loop calls
+  // staticOperation directly, so the gas check has to be in it, and the shared UNDERFLOW_RESPONSE
+  // charges nothing.
   private static final OperationResult EQ_OUT_OF_GAS =
       new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_GAS);
   private static final OperationResult EQ_UNDERFLOW =

@@ -34,6 +34,8 @@ public class DupNOperationV2 extends AbstractFixedCostOperationV2 {
   private static final OperationResult DUPN_SUCCESS = new OperationResult(3, null, 2);
   private static final OperationResult INVALID_IMMEDIATE =
       new OperationResult(3, ExceptionalHaltReason.INVALID_OPERATION, 2);
+  // v1's underflow result charges the cost, unlike the shared UNDERFLOW_RESPONSE, and traces
+  // show it
   private static final OperationResult DUPN_UNDERFLOW =
       new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS, 2);
   private static final OperationResult DUPN_OVERFLOW =
