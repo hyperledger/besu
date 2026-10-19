@@ -31,6 +31,7 @@
 - `--rpc-tx-feecap` will treat a value of 0 as limiting fees to 0. Today it treats 0 as "do not cap fees". To achieve similar behaviour set it to a suitably large value to effectively prevent any fee capping.
 
 ### Bug fixes
+- `eth_simulateV1` with Bonsai storage now applies a `state` override to the account's whole storage, so slots the override does not list read as zero, as with `eth_call` and Forest storage. Previously slots already stored on chain kept their values. Block processing had the same fault: after a transaction cleared an account's storage, for example by creating a contract at that address, a later transaction in the block could read a slot's old value, and that value was written back to state. [#11522](https://github.com/besu-eth/besu/issues/11522)
 - Receipts received from a peer carrying a transaction type byte that no type defines are now rejected on decode, on both the EIP-2718 and eth/69 paths.
 - `evmtool t8n-server` keeps serving requests again. Since `evmtool` began exiting with the subcommand's exit code, the server process exited right after printing `Transition server listening on`, so filling tests with Besu as the transition tool failed. A server that cannot bind its port now exits with a non-zero code instead of 0. [#11555](https://github.com/besu-eth/besu/pull/11555)
 - DNS-discovered dual-stack peers now respect `--p2p-ipv6-outbound-enabled` when choosing the connection address. [#11422](https://github.com/besu-eth/besu/issues/11422)
