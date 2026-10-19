@@ -16,8 +16,6 @@ package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -27,18 +25,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
  * <p>Each 256-bit word is stored as four longs: index 0 = most significant 64 bits, index 3 = least
  * significant 64 bits.
  */
-public class EqOperationV2 extends AbstractOperationV2 {
-
-  private static final OperationResult EQ_SUCCESS = new OperationResult(3, null);
-
-  // v1 runs EQ through its fixed-cost operation, which checks the gas before it touches the stack
-  // and charges the cost on a stack underflow, and traces show both. The v2 loop calls
-  // staticOperation directly, so the gas check has to be in it, and the shared UNDERFLOW_RESPONSE
-  // charges nothing.
-  private static final OperationResult EQ_OUT_OF_GAS =
-      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_GAS);
-  private static final OperationResult EQ_UNDERFLOW =
-      new OperationResult(3, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+public final class EqOperationV2 extends AbstractFixedCostOperationV2 {
 
   /**
    * Instantiates a new Eq operation.
@@ -46,12 +33,7 @@ public class EqOperationV2 extends AbstractOperationV2 {
    * @param gasCalculator the gas calculator
    */
   public EqOperationV2(final GasCalculator gasCalculator) {
-    super(0x14, "EQ", 2, 1, gasCalculator);
-  }
-
-  @Override
-  public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    return staticOperation(frame);
+    super(0x14, "EQ", 2, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   /**
@@ -62,9 +44,11 @@ public class EqOperationV2 extends AbstractOperationV2 {
    * @param frame the message frame
    * @return the operation result
    */
-  public static OperationResult staticOperation(final MessageFrame frame) {
-    if (frame.getRemainingGas() < 3) return EQ_OUT_OF_GAS;
-    if (!frame.stackHasItemsV2(2)) return EQ_UNDERFLOW;
+  @Override
+  public OperationResult executeFixedCostOperation(final MessageFrame frame) {
+    // v1 charges the cost on a stack underflow of EQ, unlike the shared UNDERFLOW_RESPONSE, and
+    // traces show it
+    if (!frame.stackHasItemsV2(2)) return underflowResponse;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int aOffset = (top - 1) << 2;
@@ -76,6 +60,6 @@ public class EqOperationV2 extends AbstractOperationV2 {
             && stack[aOffset + 3] == stack[bOffset + 3];
     setLong(equal ? 1L : 0L, stack, top - 2);
     frame.setTopV2(top - 1);
-    return EQ_SUCCESS;
+    return successResponse;
   }
 }
