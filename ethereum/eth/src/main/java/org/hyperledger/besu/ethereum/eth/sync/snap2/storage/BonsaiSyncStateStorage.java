@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
 
@@ -71,24 +70,41 @@ public final class BonsaiSyncStateStorage extends AbstractSyncStateStorage {
     return flat.containsKey(CODE_STORAGE, codeHash.toArrayUnsafe());
   }
 
-  @Override
-  protected Bytes storedSlot(final Bytes32 value) {
-    return value;
-  }
-
+  // the writes of Bonsai's own updater, through its flat database strategy
   @Override
   public Batch batch() {
-    final SegmentedKeyValueStorageTransaction tx = flat.startBatchTransaction();
-    return new FlatBatch(tx) {
+    final BonsaiWorldStateKeyValueStorage.Updater updater = newUpdater();
+    return new Batch() {
+      @Override
+      public void putAccount(final Bytes32 accountHash, final Bytes account) {
+        updater.putAccountInfoState(Hash.wrap(accountHash), account);
+      }
+
+      @Override
+      public void removeAccount(final Bytes32 accountHash) {
+        updater.removeAccountInfoState(Hash.wrap(accountHash));
+      }
+
+      @Override
+      public void putStorage(
+          final Bytes32 accountHash, final Bytes32 slotHash, final Bytes32 value) {
+        updater.putStorageValueBySlotHash(Hash.wrap(accountHash), Hash.wrap(slotHash), value);
+      }
+
+      @Override
+      public void removeStorage(final Bytes32 accountHash, final Bytes32 slotHash) {
+        updater.removeStorageValueBySlotHash(Hash.wrap(accountHash), Hash.wrap(slotHash));
+      }
+
       // stored by code hash, which prepareForSync requires
       @Override
       public void putCode(final Bytes32 codeHash, final Bytes code) {
-        bonsai.getFlatDbStrategy().putFlatCode(flat, tx, Hash.ZERO, Hash.wrap(codeHash), code);
+        updater.putCode(Hash.ZERO, Hash.wrap(codeHash), code);
       }
 
       @Override
       public void commit() {
-        tx.commit();
+        updater.commitComposedOnly();
       }
     };
   }

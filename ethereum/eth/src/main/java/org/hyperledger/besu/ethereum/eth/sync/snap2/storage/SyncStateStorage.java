@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snap2.storage;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -42,9 +41,6 @@ public interface SyncStateStorage {
    * order. Slots of a missing account are visited too, after the previous account.
    */
   void scan(Bytes32 from, Bytes32 to, ScanVisitor visitor);
-
-  /** Visits the slots stored for an account in key order, with their stored values. */
-  void forEachSlotValue(Bytes32 accountHash, BiConsumer<Bytes32, Bytes> slots);
 
   /**
    * Returns whether the storage trie of an account with this root is completely written, by its

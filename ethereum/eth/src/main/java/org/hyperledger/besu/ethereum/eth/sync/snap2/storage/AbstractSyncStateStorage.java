@@ -17,13 +17,11 @@ package org.hyperledger.besu.ethereum.eth.sync.snap2.storage;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Iterators;
@@ -77,19 +75,6 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
         }
       }
       visitSlots(slots.iterator, ONES, true, visitor);
-    }
-  }
-
-  @Override
-  public void forEachSlotValue(final Bytes32 accountHash, final BiConsumer<Bytes32, Bytes> slots) {
-    final byte[] prefix = accountHash.toArrayUnsafe();
-    try (Stream<Pair<byte[], byte[]>> stream =
-        flat.streamFromKey(storageSegment, concat(prefix, ZEROS), concat(prefix, ONES))) {
-      stream.forEach(
-          slot ->
-              slots.accept(
-                  Bytes32.wrap(Arrays.copyOfRange(slot.getKey(), 32, 64)),
-                  Bytes.wrap(slot.getValue())));
     }
   }
 
@@ -170,42 +155,6 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
           Bytes32.wrap(Arrays.copyOfRange(key, 32, 64)),
           Bytes.wrap(slot.getValue()));
     }
-  }
-
-  /** Returns a slot value as the format stores it. */
-  protected abstract Bytes storedSlot(Bytes32 value);
-
-  /** The accounts and slots of a batch, written to the flat segments. */
-  protected abstract class FlatBatch implements Batch {
-    private final SegmentedKeyValueStorageTransaction tx;
-
-    protected FlatBatch(final SegmentedKeyValueStorageTransaction tx) {
-      this.tx = tx;
-    }
-
-    @Override
-    public void putAccount(final Bytes32 accountHash, final Bytes account) {
-      tx.put(accountSegment, accountHash.toArrayUnsafe(), account.toArrayUnsafe());
-    }
-
-    @Override
-    public void removeAccount(final Bytes32 accountHash) {
-      tx.remove(accountSegment, accountHash.toArrayUnsafe());
-    }
-
-    @Override
-    public void putStorage(final Bytes32 accountHash, final Bytes32 slotHash, final Bytes32 value) {
-      tx.put(storageSegment, slotKey(accountHash, slotHash), storedSlot(value).toArrayUnsafe());
-    }
-
-    @Override
-    public void removeStorage(final Bytes32 accountHash, final Bytes32 slotHash) {
-      tx.remove(storageSegment, slotKey(accountHash, slotHash));
-    }
-  }
-
-  protected static byte[] slotKey(final Bytes32 accountHash, final Bytes32 slotHash) {
-    return concat(accountHash.toArrayUnsafe(), slotHash.toArrayUnsafe());
   }
 
   private static byte[] concat(final byte[] a, final byte[] b) {

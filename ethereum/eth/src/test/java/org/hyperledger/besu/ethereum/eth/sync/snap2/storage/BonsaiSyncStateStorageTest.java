@@ -36,9 +36,7 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -111,21 +109,6 @@ class BonsaiSyncStateStorageTest {
             "slot 35/02=02");
   }
 
-  @Test
-  void forEachSlotValueVisitsOnlyTheSlotsOfTheAccount() {
-    final SyncStateStorage.Batch batch = storage.batch();
-    batch.putStorage(FIRST, key(0x02), value(2));
-    batch.putStorage(FIRST, key(0x01), value(1));
-    batch.putStorage(SECOND, key(0x01), value(9));
-    batch.commit();
-
-    final Map<Bytes32, Bytes> slots = new LinkedHashMap<>();
-    storage.forEachSlotValue(FIRST, slots::put);
-
-    assertThat(slots)
-        .containsExactly(Map.entry(key(0x01), value(1)), Map.entry(key(0x02), value(2)));
-  }
-
   // more slots than one delete batch holds
   @Test
   void deleteStorageRemovesEverySlotOfTheAccountOnly() {
@@ -138,12 +121,8 @@ class BonsaiSyncStateStorageTest {
 
     storage.deleteStorage(FIRST);
 
-    final List<Bytes32> first = new ArrayList<>();
-    storage.forEachSlotValue(FIRST, (slot, value) -> first.add(slot));
-    final List<Bytes32> second = new ArrayList<>();
-    storage.forEachSlotValue(SECOND, (slot, value) -> second.add(slot));
-    assertThat(first).isEmpty();
-    assertThat(second).containsExactly(key(0x01));
+    assertThat(slotsOf(FIRST)).isEmpty();
+    assertThat(slotsOf(SECOND)).containsExactly(key(0x01));
   }
 
   @Test
@@ -158,10 +137,8 @@ class BonsaiSyncStateStorageTest {
     removal.removeStorage(FIRST, key(0x01));
     removal.commit();
 
-    final List<Bytes32> slots = new ArrayList<>();
-    storage.forEachSlotValue(FIRST, (slot, value) -> slots.add(slot));
     assertThat(storage.getAccount(FIRST)).isEmpty();
-    assertThat(slots).isEmpty();
+    assertThat(slotsOf(FIRST)).isEmpty();
   }
 
   @Test
@@ -278,6 +255,26 @@ class BonsaiSyncStateStorageTest {
     new BonsaiSyncStateStorage(partial).completeSync();
 
     assertThat(partial.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
+  }
+
+  // the slots stored for an account, by a scan of its key alone
+  private List<Bytes32> slotsOf(final Bytes32 account) {
+    final List<Bytes32> slots = new ArrayList<>();
+    storage.scan(
+        account,
+        account,
+        new SyncStateStorage.ScanVisitor() {
+          @Override
+          public boolean onAccount(final Bytes32 accountHash, final Bytes value) {
+            return true;
+          }
+
+          @Override
+          public void onSlot(final Bytes32 accountHash, final Bytes32 slotHash, final Bytes value) {
+            slots.add(slotHash);
+          }
+        });
+    return slots;
   }
 
   private static BonsaiWorldStateKeyValueStorage bonsai(final DataStorageConfiguration config) {
