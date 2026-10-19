@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
@@ -69,9 +70,7 @@ class OperationsV2Test {
       if (v1[opcode] instanceof InvalidOperation) {
         assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isSameAs(v1[opcode]);
       } else if (v2[opcode] != null) {
-        assertThat(v2[opcode].getClass().getPackage())
-            .as("opcode 0x%02x", opcode)
-            .isEqualTo(OperationsV2.class.getPackage());
+        assertThat(v2[opcode]).as("opcode 0x%02x", opcode).isInstanceOf(AbstractOperationV2.class);
         assertThat(v2[opcode].getOpcode()).isEqualTo(opcode);
         assertThat(v2[opcode].getName()).isEqualTo(v1[opcode].getName());
       }
@@ -116,7 +115,7 @@ class OperationsV2Test {
           }
         };
 
-    assertThatThrownBy(() -> OperationsV2.of(operations, gasCalculator))
+    assertThatThrownBy(() -> OperationsV2.of(operations, gasCalculator, EvmSpecVersion.FRONTIER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("CUSTOM");
   }
@@ -127,7 +126,7 @@ class OperationsV2Test {
     final Operation[] operations = new Operation[256];
     operations[0xf0] = new CreateOperation(gasCalculator) {};
 
-    assertThatThrownBy(() -> OperationsV2.of(operations, gasCalculator))
+    assertThatThrownBy(() -> OperationsV2.of(operations, gasCalculator, EvmSpecVersion.FRONTIER))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("CREATE");
   }
@@ -137,6 +136,6 @@ class OperationsV2Test {
   }
 
   private static Operation[] operationsV2(final EVM evm) {
-    return OperationsV2.of(evm.getOperationsUnsafe(), evm.getGasCalculator());
+    return OperationsV2.of(evm.getOperationsUnsafe(), evm.getGasCalculator(), evm.getEvmVersion());
   }
 }

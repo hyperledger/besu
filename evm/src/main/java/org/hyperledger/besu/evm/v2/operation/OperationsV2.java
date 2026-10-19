@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.log.EIP7708TransferLogEmitter;
+import org.hyperledger.besu.evm.log.TransferLogEmitter;
 import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddModOperationOptimized;
 import org.hyperledger.besu.evm.operation.AddOperation;
@@ -143,19 +146,26 @@ public final class OperationsV2 {
    *
    * @param operations the operations the fork registers, indexed by opcode
    * @param gasCalculator the gas calculator of the fork
+   * @param evmSpecVersion the fork
    * @return the v2 operations, indexed by opcode; null where the interpreter loop executes the
    *     opcode itself, or where the fork registers no operation
    * @throws IllegalArgumentException if the fork registers an operation without a v2 version
    */
-  public static Operation[] of(final Operation[] operations, final GasCalculator gasCalculator) {
+  public static Operation[] of(
+      final Operation[] operations,
+      final GasCalculator gasCalculator,
+      final EvmSpecVersion evmSpecVersion) {
     final Operation[] operationsV2 = new Operation[256];
     for (int opcode = 0; opcode < operationsV2.length; opcode++) {
-      operationsV2[opcode] = v2Version(operations[opcode], gasCalculator);
+      operationsV2[opcode] = v2Version(operations[opcode], gasCalculator, evmSpecVersion);
     }
     return operationsV2;
   }
 
-  private static Operation v2Version(final Operation operation, final GasCalculator gasCalculator) {
+  private static Operation v2Version(
+      final Operation operation,
+      final GasCalculator gasCalculator,
+      final EvmSpecVersion evmSpecVersion) {
     // the patterns below also match subclasses, which can change what the v1 operation does
     if (operation != null
         && !Modifier.isAbstract(operation.getClass().getSuperclass().getModifiers())) {
@@ -279,7 +289,15 @@ public final class OperationsV2 {
       case StaticCallOperation ignored -> new StaticCallOperationV2(gasCalculator);
       case RevertOperation ignored -> new RevertOperationV2(gasCalculator);
       case PayOperation ignored -> new PayOperationV2(gasCalculator);
-      case SelfDestructOperation selfDestruct -> new SelfDestructOperationV2(selfDestruct);
+      // the v1 operation does not expose its settings, so they follow the forks that introduced
+      // them
+      case SelfDestructOperation ignored ->
+          new SelfDestructOperationV2(
+              gasCalculator,
+              EvmSpecVersion.CANCUN.ordinal() <= evmSpecVersion.ordinal(),
+              EvmSpecVersion.AMSTERDAM.ordinal() <= evmSpecVersion.ordinal()
+                  ? EIP7708TransferLogEmitter.INSTANCE
+                  : TransferLogEmitter.NOOP);
       default ->
           throw new IllegalArgumentException(
               "EVM v2 has no version of operation " + operation.getName());

@@ -187,7 +187,7 @@ public class EVM {
 
     operationsV2 =
         evmConfiguration.enableEvmV2()
-            ? OperationsV2.of(operations.getOperations(), gasCalculator)
+            ? OperationsV2.of(operations.getOperations(), gasCalculator, evmSpecVersion)
             : null;
   }
 
