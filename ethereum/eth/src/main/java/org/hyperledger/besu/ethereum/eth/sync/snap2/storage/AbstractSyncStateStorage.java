@@ -209,9 +209,6 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
   }
 
   private static byte[] concat(final byte[] a, final byte[] b) {
-    final byte[] out = new byte[a.length + b.length];
-    System.arraycopy(a, 0, out, 0, a.length);
-    System.arraycopy(b, 0, out, a.length, b.length);
-    return out;
+    return com.google.common.primitives.Bytes.concat(a, b);
   }
 }

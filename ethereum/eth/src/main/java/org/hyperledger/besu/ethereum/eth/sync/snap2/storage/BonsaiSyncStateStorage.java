@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
+import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
@@ -34,6 +35,29 @@ import org.apache.tuweni.bytes.Bytes32;
 
 /** Sync storage writing straight into the Bonsai flat database and trie node store. */
 public final class BonsaiSyncStateStorage extends AbstractSyncStateStorage {
+
+  // the sync writes no trie log, so its updaters get a transaction that holds nothing to release
+  private static final KeyValueStorageTransaction NO_TRIE_LOG =
+      new KeyValueStorageTransaction() {
+        @Override
+        public void put(final byte[] key, final byte[] value) {
+          throw new UnsupportedOperationException("the sync writes no trie log");
+        }
+
+        @Override
+        public void remove(final byte[] key) {
+          throw new UnsupportedOperationException("the sync writes no trie log");
+        }
+
+        @Override
+        public void commit() {}
+
+        @Override
+        public void rollback() {}
+
+        @Override
+        public void close() {}
+      };
 
   private final BonsaiWorldStateKeyValueStorage bonsai;
 
@@ -150,8 +174,10 @@ public final class BonsaiSyncStateStorage extends AbstractSyncStateStorage {
   @Override
   public void prepareForSync() {
     if (!bonsai.getFlatDbStrategy().isCodeByCodeHash()) {
+      // the database decides, not the flag, once it holds code
       throw new IllegalStateException(
-          "SNAP2 sync needs Bonsai to store bytecode by code hash (--Xbonsai-code-using-code-hash-enabled)");
+          "SNAP2 sync needs Bonsai to store bytecode by code hash, but this database stores it by"
+              + " account: delete it, with --Xbonsai-code-using-code-hash-enabled left to true");
     }
     bonsai.clear();
   }
@@ -168,7 +194,7 @@ public final class BonsaiSyncStateStorage extends AbstractSyncStateStorage {
   private BonsaiWorldStateKeyValueStorage.Updater newUpdater() {
     return new BonsaiWorldStateKeyValueStorage.Updater(
         flat.startBatchTransaction(),
-        bonsai.getTrieLogStorage().startBatchTransaction(),
+        NO_TRIE_LOG,
         bonsai.getFlatDbStrategy(),
         flat,
         bonsai.getTrieNodeStrategy());

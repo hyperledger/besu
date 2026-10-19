@@ -46,7 +46,10 @@ public interface SyncStateStorage {
   /** Visits the slots stored for an account in key order, with their stored values. */
   void forEachSlotValue(Bytes32 accountHash, BiConsumer<Bytes32, Bytes> slots);
 
-  /** Returns whether the storage trie of an account with this root is completely written. */
+  /**
+   * Returns whether the storage trie of an account with this root is completely written, by its
+   * root node: true only for a root the account still has, a failed update may leave the old one.
+   */
   boolean hasStorageTrie(Bytes32 accountHash, Bytes32 storageRoot);
 
   /** Returns a node of the storage trie of an account, by its location and hash. */
