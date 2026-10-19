@@ -20,6 +20,7 @@ import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_ecdsa_recoverable_signature;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_ecdsa_signature;
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.secp256k1_pubkey;
+import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1JNI;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -51,6 +52,7 @@ public class SECP256K1 extends AbstractSECP256 {
   private static final Logger LOG = LoggerFactory.getLogger(SECP256K1.class);
 
   private boolean useNative;
+  private boolean useNativeEcdh;
 
   /** The constant CURVE_NAME. */
   public static final String CURVE_NAME = "secp256k1";
@@ -66,6 +68,7 @@ public class SECP256K1 extends AbstractSECP256 {
   @Override
   public void disableNative() {
     useNative = false;
+    useNativeEcdh = false;
   }
 
   /**
@@ -80,6 +83,12 @@ public class SECP256K1 extends AbstractSECP256 {
     } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
       LOG.info("Native secp256k1 not available - {}", e.getMessage());
       useNative = false;
+    }
+    try {
+      useNativeEcdh = useNative && LibSecp256k1JNI.ENABLED;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+      LOG.info("Native secp256k1 ECDH not available - {}", e.getMessage());
+      useNativeEcdh = false;
     }
     return useNative;
   }
@@ -154,8 +163,46 @@ public class SECP256K1 extends AbstractSECP256 {
   }
 
   @Override
+  public Bytes32 calculateECDHKeyAgreement(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
+    final byte[] sharedPoint = useNativeEcdh ? calculateECDHNative(privKey, theirPubKey) : null;
+    if (sharedPoint == null) {
+      return super.calculateECDHKeyAgreement(privKey, theirPubKey);
+    }
+    return Bytes32.wrap(sharedPoint, 1);
+  }
+
+  @Override
+  public Bytes calculateECDHKeyAgreementCompressed(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
+    final byte[] sharedPoint = useNativeEcdh ? calculateECDHNative(privKey, theirPubKey) : null;
+    if (sharedPoint == null) {
+      return super.calculateECDHKeyAgreementCompressed(privKey, theirPubKey);
+    }
+    return Bytes.wrap(sharedPoint);
+  }
+
+  @Override
   public String getCurveName() {
     return CURVE_NAME;
+  }
+
+  /**
+   * Returns the compressed shared point, or null if the native library rejects the keys. Rejected
+   * keys go to the BouncyCastle path, so that invalid input fails with the same exceptions.
+   */
+  private byte @Nullable [] calculateECDHNative(
+      final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
+    if (privKey == null || theirPubKey == null) {
+      return null;
+    }
+    final byte[] sharedPoint = new byte[33];
+    if (LibSecp256k1JNI.secp256k1_ecdh_jni(
+            theirPubKey.getEncoded(), privKey.getEncoded(), sharedPoint)
+        != 0) {
+      return null;
+    }
+    return sharedPoint;
   }
 
   private SECPSignature signNative(final Bytes32 dataHash, final KeyPair keyPair) {
