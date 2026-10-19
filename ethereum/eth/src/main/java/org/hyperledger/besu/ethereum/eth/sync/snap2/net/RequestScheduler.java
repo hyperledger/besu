@@ -128,7 +128,7 @@ public final class RequestScheduler implements RequestSender {
 
   private final PriorityQueue<Pending<?>> queue =
       new PriorityQueue<>(
-          Comparator.<Pending<?>>comparingInt(p -> p.request.priority().ordinal())
+          Comparator.<Pending<?>>comparingInt(p -> p.request.priority().rank())
               .thenComparingLong(p -> p.sequence));
   private final Map<EthPeer, PeerState> peers = new HashMap<>();
   // what the peers answered lately per request type, the guess for a peer not asked yet
@@ -292,9 +292,12 @@ public final class RequestScheduler implements RequestSender {
 
               final RequestFailedException failure =
                   RequestFailedException.from(error).orElse(null);
+              // a retry that only found the peers it left out sent nothing: no attempt used
+              final boolean leftOut =
+                  failure != null && failure.reason() == NO_PEER && !excluded.isEmpty();
               // an error of the request itself would fail again on any peer
               if (failure == null
-                  || attemptsLeft <= 1
+                  || (attemptsLeft <= 1 && !leftOut)
                   || failure.reason() == STOPPED
                   || result.isDone()) {
                 result.completeExceptionally(failure != null ? failure : error);
@@ -304,9 +307,8 @@ public final class RequestScheduler implements RequestSender {
               if (failure.reason() == NO_PEER) {
                 // every peer that serves it failed it, start over after a pause
                 excluded.clear();
-                if (schedule(
-                        () -> attempt(request, excluded, attemptsLeft - 1, result),
-                        RETRY_PAUSE_MILLIS)
+                final int left = leftOut ? attemptsLeft : attemptsLeft - 1;
+                if (schedule(() -> attempt(request, excluded, left, result), RETRY_PAUSE_MILLIS)
                     == null) {
                   result.completeExceptionally(stoppedFailure());
                 }
@@ -760,13 +762,16 @@ public final class RequestScheduler implements RequestSender {
     }
   }
 
-  // every answer counts with its time, only a useful one with its bytes
+  // every answer counts with its time, only a useful one with its bytes; an error may be ours
   private void measure(
       final Lane lane,
       final String request,
       final Outcome outcome,
       final int size,
       final long elapsedMillis) {
+    if (outcome == Outcome.ERROR) {
+      return;
+    }
     final int bytes = outcome == Outcome.SUCCESS ? size : 0;
     lane.rates.computeIfAbsent(request, r -> typicalRate(r).copy()).add(bytes, elapsedMillis);
     if (outcome == Outcome.SUCCESS) {
@@ -944,7 +949,7 @@ public final class RequestScheduler implements RequestSender {
     // the requests in flight, and those it takes now within the room the peer leaves
     private int capacity(final long now, final int room) {
       final int free = backoffUntil > now ? 0 : Math.max(0, slots() - inFlight - abandoned);
-      return inFlight + Math.min(free, Math.max(0, room));
+      return inFlight + Math.clamp(room, 0, free);
     }
 
     private void record(final Outcome outcome, final long sentAt, final long now) {

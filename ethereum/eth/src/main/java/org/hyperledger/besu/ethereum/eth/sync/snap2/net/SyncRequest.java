@@ -39,11 +39,22 @@ public interface SyncRequest<T> {
   /** Dispatch priority, most urgent first. */
   enum Priority {
     /** Block access lists and headers that block a pivot move. */
-    PIVOT,
+    PIVOT(0),
     /** World state ranges and bytecodes. */
-    STATE,
+    STATE(1),
     /** Block headers below the pivot, which the bodies wait for. */
-    HEADERS
+    HEADERS(2);
+
+    private final int rank;
+
+    Priority(final int rank) {
+      this.rank = rank;
+    }
+
+    /** Returns the rank of the priority, the lowest dispatched first. */
+    public int rank() {
+      return rank;
+    }
   }
 
   Protocol protocol();

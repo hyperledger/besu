@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snap2.net;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.InvalidPeerTaskResponseException;
@@ -58,6 +61,11 @@ public final class PeerTaskRequest<T> implements SyncRequest<T> {
     this.name = name;
     this.minimumPeerHeight = minimumPeerHeight;
     this.template = tasks.get();
+    // sent on eth, as every peer task
+    checkArgument(
+        EthProtocol.NAME.equals(template.getSubProtocol().getName()),
+        "%s is not an eth task",
+        name);
   }
 
   @Override

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.core.SyncBlock;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
+import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.PeerTaskValidationResponse;
@@ -82,11 +83,22 @@ class PeerTaskRequestTest {
                     .contains(DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS));
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  void refusesATaskOfAnotherProtocol() {
+    final PeerTask<String> task = mock(PeerTask.class);
+    when(task.getSubProtocol()).thenReturn(SnapProtocol.get());
+
+    assertThatThrownBy(() -> new PeerTaskRequest<>(() -> task, Priority.HEADERS, "task"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   // a task whose response decodes to a result the task then validates as given
   @SuppressWarnings("unchecked")
   private static PeerTaskRequest<String> requestValidatedAs(
       final PeerTaskValidationResponse validation) throws Exception {
     final PeerTask<String> task = mock(PeerTask.class);
+    when(task.getSubProtocol()).thenReturn(EthProtocol.get());
     when(task.processResponse(any(), any())).thenReturn("result");
     when(task.validateResult("result")).thenReturn(validation);
     final PeerTaskRequest<String> request =
