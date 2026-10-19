@@ -21,6 +21,7 @@ import static org.awaitility.Awaitility.await;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestBuilder;
 import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
@@ -28,6 +29,7 @@ import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPee
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.messages.BlockHeadersMessage;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockHeadersMessage;
+import org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestFailedException.Reason;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SyncRequest.Priority;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -41,7 +43,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,10 +56,17 @@ import org.junit.jupiter.api.Timeout;
 @Timeout(30)
 class RequestSchedulerTest {
 
+  private static final Duration TIMEOUT = Duration.ofMillis(500);
+
   private MutableBlockchain blockchain;
   private ProtocolSchedule protocolSchedule;
+  private EthProtocolManager ethProtocolManager;
+  private EthPeers ethPeers;
   private RespondingEthPeer peer;
+  private TestLoop loop;
   private RequestScheduler scheduler;
+  // a clock that only moves when a test moves it
+  private final AtomicLong clock = new AtomicLong();
 
   @BeforeEach
   void setUp() {
@@ -62,23 +74,10 @@ class RequestSchedulerTest {
     setup.importFirstBlocks(10);
     blockchain = setup.getBlockchain();
     protocolSchedule = setup.getProtocolSchedule();
-    final EthProtocolManager ethProtocolManager =
-        EthProtocolManagerTestBuilder.builder().setBlockchain(blockchain).build();
-    peer =
-        RespondingEthPeer.builder()
-            .ethProtocolManager(ethProtocolManager)
-            .chainHeadHash(blockchain.getChainHeadHash())
-            .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
-            .estimatedHeight(blockchain.getChainHeadBlockNumber())
-            .build();
-    scheduler =
-        new RequestScheduler(
-            ethProtocolManager.ethContext().getEthPeers(),
-            new NoOpMetricsSystem(),
-            Duration.ofMillis(500),
-            4,
-            4,
-            2);
+    ethProtocolManager = EthProtocolManagerTestBuilder.builder().setBlockchain(blockchain).build();
+    ethPeers = ethProtocolManager.ethContext().getEthPeers();
+    peer = newPeer();
+    scheduler = newScheduler(TIMEOUT, 4, System::nanoTime);
   }
 
   @AfterEach
@@ -101,11 +100,13 @@ class RequestSchedulerTest {
 
   @Test
   void absorbsAResponseThatArrivesAfterTheTimeout() throws Exception {
+    // the request is abandoned one timeout after it timed out: held, it waits for the test
+    loop.hold();
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> late =
         scheduler.submit(headers(1, 2));
-    assertThatThrownBy(() -> late.get(5, TimeUnit.SECONDS))
-        .isInstanceOf(ExecutionException.class)
-        .hasCauseInstanceOf(RequestFailedException.class);
+    await().until(() -> loop.heldCount() == 1);
+    loop.release();
+    assertFailure(() -> late.get(5, TimeUnit.SECONDS), Reason.TIMEOUT);
 
     // the late response is absorbed, not counted as the answer to an unknown request
     final int score = peer.getEthPeer().getReputation().getScore();
@@ -128,9 +129,7 @@ class RequestSchedulerTest {
   void givesBackTheSlotOfARequestNeverAnswered() throws Exception {
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> lost =
         scheduler.submit(headers(1, 2));
-    assertThatThrownBy(() -> lost.get(5, TimeUnit.SECONDS))
-        .isInstanceOf(ExecutionException.class)
-        .hasCauseInstanceOf(RequestFailedException.class);
+    assertFailure(() -> lost.get(5, TimeUnit.SECONDS), Reason.TIMEOUT);
     // the peer drops it without ever answering
     peer.respond((capability, ethPeer, message) -> Optional.empty());
 
@@ -164,26 +163,20 @@ class RequestSchedulerTest {
 
   @Test
   void keepsAskingAPeerThatHadNothingForAnEarlierRequest() throws Exception {
+    // the clock stands still: a back-off would hold the peer for ever
+    newScheduler(TIMEOUT, 4, clock::get);
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> pruned =
         scheduler.submit(headers(1, 2));
     await().until(peer::hasOutstandingRequests);
     peer.respond(
         (capability, ethPeer, message) -> Optional.of(BlockHeadersMessage.create(List.of())));
-    assertThatThrownBy(() -> pruned.get(5, TimeUnit.SECONDS))
-        .isInstanceOf(ExecutionException.class)
-        .cause()
-        .isInstanceOfSatisfying(
-            RequestFailedException.class,
-            failure -> assertThat(failure.reason()).isEqualTo(RequestFailedException.Reason.EMPTY));
+    assertFailure(() -> pruned.get(5, TimeUnit.SECONDS), Reason.EMPTY);
 
     // once the empty answer is recorded, the peer is asked again right away, not after a back-off
     Thread.sleep(200);
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> next =
         scheduler.submit(headers(3, 2));
-    // a back-off would hold it for a second
-    await()
-        .atMost(Duration.ofMillis(500))
-        .until(() -> nextRequestedHeader().equals(OptionalLong.of(3)));
+    await().until(() -> nextRequestedHeader().equals(OptionalLong.of(3)));
     peer.respondWhileOtherThreadsWork(
         RespondingEthPeer.blockchainResponder(blockchain), () -> !next.isDone());
     assertThat(next.get(5, TimeUnit.SECONDS).value())
@@ -196,13 +189,7 @@ class RequestSchedulerTest {
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> response =
         scheduler.submit(headers(1, 2), Set.of(peer.getEthPeer()));
 
-    assertThatThrownBy(() -> response.get(10, TimeUnit.SECONDS))
-        .isInstanceOf(ExecutionException.class)
-        .cause()
-        .isInstanceOfSatisfying(
-            RequestFailedException.class,
-            failure ->
-                assertThat(failure.reason()).isEqualTo(RequestFailedException.Reason.NO_PEER));
+    assertFailure(() -> response.get(10, TimeUnit.SECONDS), Reason.NO_PEER);
     assertThat(peer.hasOutstandingRequests()).isFalse();
   }
 
@@ -229,14 +216,39 @@ class RequestSchedulerTest {
         scheduler.submitWithRetries(headers(1, 2), 2);
 
     // the peer never answers: a timeout, then no peer left to try
-    assertThatThrownBy(() -> response.get(10, TimeUnit.SECONDS))
+    assertFailure(() -> response.get(10, TimeUnit.SECONDS), Reason.NO_PEER);
+    assertThat(peer.streamPendingOutgoingRequests()).hasSize(1);
+  }
+
+  private static void assertFailure(final ThrowingCallable call, final Reason reason) {
+    assertThatThrownBy(call)
         .isInstanceOf(ExecutionException.class)
         .cause()
         .isInstanceOfSatisfying(
             RequestFailedException.class,
-            failure ->
-                assertThat(failure.reason()).isEqualTo(RequestFailedException.Reason.NO_PEER));
-    assertThat(peer.streamPendingOutgoingRequests()).hasSize(1);
+            failure -> assertThat(failure.reason()).isEqualTo(reason));
+  }
+
+  // replaces the scheduler of the test
+  private RequestScheduler newScheduler(
+      final Duration timeout, final int maxEthRequests, final LongSupplier nanoTime) {
+    if (scheduler != null) {
+      scheduler.stop();
+    }
+    loop = new TestLoop();
+    scheduler =
+        new RequestScheduler(
+            ethPeers, new NoOpMetricsSystem(), timeout, 4, maxEthRequests, 2, loop, nanoTime);
+    return scheduler;
+  }
+
+  private RespondingEthPeer newPeer() {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .chainHeadHash(blockchain.getChainHeadHash())
+        .totalDifficulty(blockchain.getChainHead().getTotalDifficulty())
+        .estimatedHeight(blockchain.getChainHeadBlockNumber())
+        .build();
   }
 
   private OptionalLong nextRequestedHeader() {

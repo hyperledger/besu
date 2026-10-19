@@ -59,7 +59,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongSupplier;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +107,7 @@ public final class RequestScheduler implements RequestSender {
   private final int maxEthRequestsPerPeer;
   private final ScheduledExecutorService loop;
   private final ExecutorService workers;
+  private final LongSupplier nanoTime;
   private final LabelledMetric<Counter> requestCounter;
   private final LabelledMetric<Counter> responseBytes;
   private final LabelledMetric<Counter> responseMillis;
@@ -134,14 +137,35 @@ public final class RequestScheduler implements RequestSender {
       final int maxSnapRequestsPerPeer,
       final int maxEthRequestsPerPeer,
       final int workerThreads) {
+    this(
+        ethPeers,
+        metricsSystem,
+        timeout,
+        maxSnapRequestsPerPeer,
+        maxEthRequestsPerPeer,
+        workerThreads,
+        Executors.newSingleThreadScheduledExecutor(
+            Thread.ofPlatform().name("snap2-scheduler").daemon().factory()),
+        System::nanoTime);
+  }
+
+  @VisibleForTesting
+  RequestScheduler(
+      final EthPeers ethPeers,
+      final MetricsSystem metricsSystem,
+      final Duration timeout,
+      final int maxSnapRequestsPerPeer,
+      final int maxEthRequestsPerPeer,
+      final int workerThreads,
+      final ScheduledExecutorService loop,
+      final LongSupplier nanoTime) {
     this.ethPeers = ethPeers;
     this.timeout = timeout;
     this.queueTimeout = timeout.multipliedBy(6);
     this.maxSnapRequestsPerPeer = maxSnapRequestsPerPeer;
     this.maxEthRequestsPerPeer = maxEthRequestsPerPeer;
-    this.loop =
-        Executors.newSingleThreadScheduledExecutor(
-            Thread.ofPlatform().name("snap2-scheduler").daemon().factory());
+    this.loop = loop;
+    this.nanoTime = nanoTime;
     this.workers =
         Executors.newFixedThreadPool(
             workerThreads, Thread.ofPlatform().name("snap2-worker-", 0).daemon().factory());
@@ -208,7 +232,7 @@ public final class RequestScheduler implements RequestSender {
     execute(
         () -> {
           pending.sequence = sequence++;
-          pending.queuedAt = System.nanoTime();
+          pending.queuedAt = nanoTime.getAsLong();
           queue.add(pending);
           dispatchSoon();
         });
@@ -336,7 +360,7 @@ public final class RequestScheduler implements RequestSender {
     if (stopped) {
       return;
     }
-    final long now = System.nanoTime();
+    final long now = nanoTime.getAsLong();
     final List<PeerState> candidates = new ArrayList<>();
     ethPeers
         .streamAvailablePeers()
@@ -445,7 +469,7 @@ public final class RequestScheduler implements RequestSender {
       LOG.debug("Failed to send {} to {}", request.name(), peer.getLoggableId(), e);
     }
     if (stream == null) {
-      state.lane(protocol).backoff(System.nanoTime());
+      state.lane(protocol).backoff(nanoTime.getAsLong());
       // the loop thread owns the excluded peers once submitted
       pending.excluded.add(peer);
       queue.add(pending);
@@ -453,7 +477,7 @@ public final class RequestScheduler implements RequestSender {
     }
     final Lane lane = state.lane(protocol);
     lane.inFlight++;
-    final Attempt<T> attempt = new Attempt<>(pending, state, lane, stream, System.nanoTime());
+    final Attempt<T> attempt = new Attempt<>(pending, state, lane, stream, nanoTime.getAsLong());
     attempt.timeoutTask =
         loop.schedule(() -> onTimeout(attempt), timeout.toMillis(), TimeUnit.MILLISECONDS);
     stream.then(
@@ -485,7 +509,7 @@ public final class RequestScheduler implements RequestSender {
       timeoutTask.cancel(false);
     }
     final long elapsedMillis =
-        Math.max(1, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attempt.startedAt));
+        Math.max(1, TimeUnit.NANOSECONDS.toMillis(nanoTime.getAsLong() - attempt.startedAt));
     final int size = message.getSize();
     try {
       workers.execute(
@@ -541,7 +565,7 @@ public final class RequestScheduler implements RequestSender {
   private void recordAnswer(
       final Attempt<?> attempt, final Outcome outcome, final int size, final long elapsedMillis) {
     attempt.lane.inFlight--;
-    attempt.lane.record(outcome, size, elapsedMillis, System.nanoTime());
+    attempt.lane.record(outcome, size, elapsedMillis, nanoTime.getAsLong());
     if (outcome == Outcome.SUCCESS) {
       attempt.peer.consecutiveTimeouts = 0;
     }
@@ -579,7 +603,7 @@ public final class RequestScheduler implements RequestSender {
     attempt.lane.inFlight--;
     attempt.lane.abandoned++;
     attempt.lane.shrink();
-    attempt.lane.record(Outcome.TIMEOUT, 0, timeout.toMillis(), System.nanoTime());
+    attempt.lane.record(Outcome.TIMEOUT, 0, timeout.toMillis(), nanoTime.getAsLong());
     state.consecutiveTimeouts++;
     countRequest(attempt.pending.request, Outcome.TIMEOUT);
     attempt.pending.future.completeExceptionally(
