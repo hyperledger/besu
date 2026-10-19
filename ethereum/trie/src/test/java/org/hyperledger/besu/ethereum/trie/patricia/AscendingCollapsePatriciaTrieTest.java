@@ -38,10 +38,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -161,31 +157,30 @@ class AscendingCollapsePatriciaTrieTest {
             "sealed below an extension");
   }
 
+  // prepare reads no state of the trie: the last groups are prepared before the first insert, last
+  // first, and the others while the trie holds the groups before them
   @Test
-  void preparedPrefixGroupsMatchPlainInserts() throws Exception {
+  void preparedPrefixGroupsMatchPlainInserts() {
     final List<Bytes> keys = hashedKeys(3000);
     final Map<Bytes, Bytes> expected = storedNodes(keys);
-    final ExecutorService threads = Executors.newFixedThreadPool(4);
-    try {
-      for (int nibbles = 1; nibbles <= 4; nibbles++) {
-        final Map<Bytes, Bytes> handed = new ConcurrentHashMap<>();
-        final AscendingCollapsePatriciaTrie trie =
-            new AscendingCollapsePatriciaTrie(onceEach(handed));
-        final List<Future<AscendingCollapsePatriciaTrie.Subtree>> prepared = new ArrayList<>();
-        for (final List<Bytes> group : prefixGroups(keys, nibbles)) {
-          prepared.add(threads.submit(() -> trie.prepare(group, values(group))));
-        }
-        for (final Future<AscendingCollapsePatriciaTrie.Subtree> subtree : prepared) {
-          trie.insert(subtree.get());
-        }
-        assertThat(trie.insertCount()).isEqualTo(keys.size());
-        assertThat(trie.rootHash())
-            .as("groups on %d nibble(s)", nibbles)
-            .isEqualTo(plainRoot(keys));
-        assertThat(handed).as("groups on %d nibble(s)", nibbles).isEqualTo(expected);
+    for (int nibbles = 1; nibbles <= 4; nibbles++) {
+      final Map<Bytes, Bytes> handed = new HashMap<>();
+      final AscendingCollapsePatriciaTrie trie =
+          new AscendingCollapsePatriciaTrie(onceEach(handed));
+      final List<List<Bytes>> groups = prefixGroups(keys, nibbles);
+      final int half = groups.size() / 2;
+      final List<AscendingCollapsePatriciaTrie.Subtree> later = new ArrayList<>();
+      for (final List<Bytes> group : groups.subList(half, groups.size()).reversed()) {
+        later.addFirst(trie.prepare(group, values(group)));
       }
-    } finally {
-      threads.shutdownNow();
+      for (final List<Bytes> group : groups.subList(0, half)) {
+        trie.insert(trie.prepare(group, values(group)));
+      }
+      later.forEach(trie::insert);
+
+      assertThat(trie.insertCount()).isEqualTo(keys.size());
+      assertThat(trie.rootHash()).as("groups on %d nibble(s)", nibbles).isEqualTo(plainRoot(keys));
+      assertThat(handed).as("groups on %d nibble(s)", nibbles).isEqualTo(expected);
     }
   }
 
