@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushHash;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setHash;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setZero;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -51,9 +51,9 @@ public class BlobHashOperationV2 extends AbstractFixedCostOperationV2 {
         && index >= 0
         && versionedHashes != null
         && index < versionedHashes.size()) {
-      pushHash(versionedHashes.get((int) index), stack, top - 1);
+      setHash(versionedHashes.get((int) index), stack, top - 1);
     } else {
-      pushZero(stack, top - 1);
+      setZero(stack, top - 1);
     }
     return successResponse;
   }
