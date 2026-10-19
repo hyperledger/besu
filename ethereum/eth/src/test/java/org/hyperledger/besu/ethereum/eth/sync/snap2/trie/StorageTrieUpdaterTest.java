@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.F
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.Storages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture.World;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,20 +37,22 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-@Timeout(60)
+/** Runs without workers: every update is applied on the test thread, by finish or applyNext. */
 class StorageTrieUpdaterTest {
+
+  private static final int NO_BUDGET = Integer.MAX_VALUE;
 
   private Storages storages = SyncStorageFixture.create(Format.BONSAI);
 
@@ -60,8 +63,7 @@ class StorageTrieUpdaterTest {
     final World world = SyncStorageFixture.randomWorld(new Random(8), 80);
     final Bytes32 account = largestStorage(world);
     final Bytes32 root = downloaded(world, account);
-    final StorageTrieUpdater updater =
-        new StorageTrieUpdater(storages.sync(), StorageTrieUpdaterTest::noMoves, hash -> false, 2);
+    final StorageTrieUpdater updater = updater(storages.sync(), NO_BUDGET);
 
     updater.changed(account, Hash.wrap(root), move(world, account, 1));
     updater.finish();
@@ -76,54 +78,124 @@ class StorageTrieUpdaterTest {
     final World world = SyncStorageFixture.randomWorld(new Random(11), 80);
     final Bytes32 account = largestStorage(world);
     final Bytes32 root = downloaded(world, account);
-    final StorageTrieUpdater updater =
-        new StorageTrieUpdater(storages.sync(), StorageTrieUpdaterTest::noMoves, hash -> false, 2);
-
+    final StorageTrieUpdater updater = updater(storages.sync(), NO_BUDGET);
     final Map<Bytes32, UInt256> first = move(world, account, 1);
     final Map<Bytes32, UInt256> second = move(world, account, 2);
+
     updater.changed(account, Hash.wrap(root), first);
     updater.changed(account, Accounts.UNKNOWN_STORAGE_ROOT, second);
+
     final Set<Bytes32> changedSlots = new HashSet<>(first.keySet());
     changedSlots.addAll(second.keySet());
-    assertThat(updater.updated()).isZero();
+    assertThat(updater.applyNext()).as("within the budget, updates wait for the end").isFalse();
     assertThat(updater.pendingStorages()).isOne();
     assertThat(updater.pendingSlots()).isEqualTo(changedSlots.size());
     updater.finish();
-
     assertThat(updater.updated()).isOne();
     assertStorageTrie(world, account);
   }
 
-  // past the memory budget an update starts at once, and the next move waits for its root
+  @Test
+  void startsAnUpdatePastTheMemoryBudget() {
+    final World world = SyncStorageFixture.randomWorld(new Random(12), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
+    final Map<Bytes32, UInt256> changes = move(world, account, 1);
+    final StorageTrieUpdater updater = updater(storages.sync(), changes.size() - 1);
+
+    updater.changed(account, Hash.wrap(root), changes);
+
+    assertThat(updater.applyNext()).isTrue();
+    assertThat(updater.pendingStorages()).isZero();
+    assertThat(updater.updated()).isOne();
+    assertStorageTrie(world, account);
+  }
+
+  // a move during an update records the next one, which starts from the root the first gives
   @Test
   void appliesTheMovesOfAStorageOneAfterTheOther() {
     final World world = SyncStorageFixture.randomWorld(new Random(9), 80);
     final Bytes32 account = largestStorage(world);
     final Bytes32 root = downloaded(world, account);
-    final SyncStateStorage storage = spy(storages.sync());
-    final CountDownLatch reading = new CountDownLatch(1);
-    final CountDownLatch moved = new CountDownLatch(1);
-    doAnswer(
-            invocation -> {
-              // the first update reads its trie once the second move is recorded
-              reading.countDown();
-              Uninterruptibles.awaitUninterruptibly(moved);
-              return invocation.callRealMethod();
-            })
-        .when(storage)
-        .storageTrieNode(any(), any(), any());
+    final AtomicReference<StorageTrieUpdater> updater = new AtomicReference<>();
+    final AtomicBoolean startedTwice = new AtomicBoolean();
+    updater.set(updater(movingDuringTheFirstRead(world, account, updater, false, startedTwice), 0));
+
+    updater.get().changed(account, Hash.wrap(root), move(world, account, 1));
+    assertThat(updater.get().applyNext()).isTrue();
+
+    assertThat(startedTwice).as("one update of a storage at a time").isFalse();
+    assertThat(updater.get().updated()).isOne();
+    assertThat(updater.get().pendingStorages()).isOne();
+    // the next update is still to come
+    assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
+    updater.get().finish();
+    assertThat(updater.get().updated()).isEqualTo(2);
+    assertStorageTrie(world, account);
+  }
+
+  // the move during the failed update has no root to start from, the final build makes it
+  @Test
+  void skipsTheNextUpdateOfAStorageWhoseUpdateFailed() {
+    final World world = SyncStorageFixture.randomWorld(new Random(13), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
+    final AtomicReference<StorageTrieUpdater> updater = new AtomicReference<>();
+    updater.set(
+        updater(movingDuringTheFirstRead(world, account, updater, true, new AtomicBoolean()), 0));
+
+    updater.get().changed(account, Hash.wrap(root), move(world, account, 1));
+    assertThat(updater.get().applyNext()).isTrue();
+    assertThat(updater.get().pendingStorages()).isOne();
+    updater.get().finish();
+
+    assertThat(updater.get().updated()).isZero();
+    assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
+  }
+
+  @Test
+  void leavesTheRootUnknownOnceTheSyncStopped() {
+    final World world = SyncStorageFixture.randomWorld(new Random(14), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
     final StorageTrieUpdater updater =
-        new StorageTrieUpdater(storage, StorageTrieUpdaterTest::noMoves, hash -> false, 2, 0);
+        new StorageTrieUpdater(storages.sync(), action -> false, hash -> false, 0, NO_BUDGET);
 
     updater.changed(account, Hash.wrap(root), move(world, account, 1));
-    Uninterruptibles.awaitUninterruptibly(reading);
-    // the account has an unknown root until the first update gives it
-    updater.changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
-    moved.countDown();
     updater.finish();
 
-    assertThat(updater.updated()).isEqualTo(2);
-    assertStorageTrie(world, account);
+    assertThat(updater.updated()).isZero();
+    assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
+  }
+
+  @Test
+  void ignoresAStorageLeftToTheFinalBuild() {
+    final World world = SyncStorageFixture.randomWorld(new Random(15), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
+    final Predicate<Bytes32> leftToTheFinalBuild = account::equals;
+    final StorageTrieUpdater updater =
+        new StorageTrieUpdater(
+            storages.sync(), StorageTrieUpdaterTest::noMoves, leftToTheFinalBuild, 0, NO_BUDGET);
+
+    updater.changed(account, Hash.wrap(root), move(world, account, 1));
+
+    assertThat(updater.pendingStorages()).isZero();
+    updater.finish();
+    assertThat(updater.updated()).isZero();
+  }
+
+  // an unknown root with no update to wait for has no trie to change
+  @Test
+  void ignoresAMoveOnAnUnknownRoot() {
+    final World world = SyncStorageFixture.randomWorld(new Random(16), 80);
+    final Bytes32 account = largestStorage(world);
+    downloaded(world, account);
+    final StorageTrieUpdater updater = updater(storages.sync(), NO_BUDGET);
+
+    updater.changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 1));
+
+    assertThat(updater.pendingStorages()).isZero();
   }
 
   @Test
@@ -131,8 +203,7 @@ class StorageTrieUpdaterTest {
     final World world = SyncStorageFixture.randomWorld(new Random(10), 80);
     final Bytes32 account = largestStorage(world);
     world.writeFlat(storages.sync());
-    final StorageTrieUpdater updater =
-        new StorageTrieUpdater(storages.sync(), StorageTrieUpdaterTest::noMoves, hash -> false, 1);
+    final StorageTrieUpdater updater = updater(storages.sync(), NO_BUDGET);
 
     updater.changed(account, Hash.wrap(world.storageRoot(account)), move(world, account, 1));
     // a second move finds the root unknown
@@ -141,6 +212,73 @@ class StorageTrieUpdaterTest {
 
     assertThat(updater.updated()).isZero();
     assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
+  }
+
+  @Test
+  void dropsTheChangesWaitingOnStop() {
+    final World world = SyncStorageFixture.randomWorld(new Random(17), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
+    final StorageTrieUpdater updater = updater(storages.sync(), NO_BUDGET);
+    updater.changed(account, Hash.wrap(root), move(world, account, 1));
+
+    updater.stop();
+    updater.changed(account, Hash.wrap(root), move(world, account, 2));
+
+    assertThat(updater.pendingStorages()).isZero();
+    assertThat(updater.pendingSlots()).isZero();
+    assertThat(updater.applyNext()).isFalse();
+    assertThat(updater.updated()).isZero();
+  }
+
+  @Test
+  void writesNoRootForAnAccountAMoveRemoved() {
+    final World world = SyncStorageFixture.randomWorld(new Random(18), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
+    final StorageTrieUpdater updater = updater(storages.sync(), NO_BUDGET);
+    updater.changed(account, Hash.wrap(root), move(world, account, 1));
+    final SyncStateStorage.Batch batch = storages.sync().batch();
+    batch.removeAccount(account);
+    batch.commit();
+
+    updater.finish();
+
+    assertThat(updater.updated()).isOne();
+    assertThat(storages.sync().getAccount(account)).isEmpty();
+  }
+
+  private StorageTrieUpdater updater(final SyncStateStorage storage, final int budget) {
+    return new StorageTrieUpdater(
+        storage, StorageTrieUpdaterTest::noMoves, hash -> false, 0, budget);
+  }
+
+  // the first trie read of an update records a second move, as a move during the update does
+  private SyncStateStorage movingDuringTheFirstRead(
+      final World world,
+      final Bytes32 account,
+      final AtomicReference<StorageTrieUpdater> updater,
+      final boolean thenFail,
+      final AtomicBoolean startedTwice) {
+    final SyncStateStorage storage = spy(storages.sync());
+    final AtomicBoolean moved = new AtomicBoolean();
+    doAnswer(
+            invocation -> {
+              if (moved.compareAndSet(false, true)) {
+                // the account has an unknown root until the first update gives it
+                updater
+                    .get()
+                    .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
+                startedTwice.set(updater.get().applyNext());
+                if (thenFail) {
+                  throw new StorageException("disk failure");
+                }
+              }
+              return invocation.callRealMethod();
+            })
+        .when(storage)
+        .storageTrieNode(any(), any(), any());
+    return storage;
   }
 
   private static Bytes32 largestStorage(final World world) {

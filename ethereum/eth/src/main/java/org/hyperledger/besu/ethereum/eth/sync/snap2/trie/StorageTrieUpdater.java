@@ -109,7 +109,9 @@ public final class StorageTrieUpdater {
     this.maxPendingSlots = maxPendingSlots;
     this.workers =
         Executors.newFixedThreadPool(
-            threads, Thread.ofPlatform().name("snap2-storage-trie-", 0).daemon().factory());
+            // a pool takes at least one thread, which only starts with a worker
+            Math.max(1, threads),
+            Thread.ofPlatform().name("snap2-storage-trie-", 0).daemon().factory());
     for (int i = 0; i < threads; i++) {
       workers.execute(this::run);
     }
@@ -164,7 +166,7 @@ public final class StorageTrieUpdater {
     return pendingSlots;
   }
 
-  /** Applies the changes still waiting, then stops. */
+  /** Applies the changes still waiting, on this thread too, then stops. */
   public void finish() {
     synchronized (this) {
       if (!pending.isEmpty()) {
@@ -172,19 +174,23 @@ public final class StorageTrieUpdater {
       }
       finishing = true;
       notifyAll();
-      while (!stopped && (!pending.isEmpty() || !inProgress.isEmpty())) {
-        try {
-          wait();
-        } catch (final InterruptedException e) {
-          Thread.currentThread().interrupt();
-          break;
-        }
+    }
+    final SyncStateStorage.TrieWriter writer = storage.trieWriter();
+    try {
+      Update update;
+      while ((update = next(true)) != null && apply(update, writer)) {
+        // the caller applies updates beside the workers, so finishing needs none
       }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
     stop();
   }
 
-  /** Stops, once the updates in progress wrote what they changed. */
+  /**
+   * Stops, once the updates in progress wrote what they changed. A worker may be waiting in {@code
+   * withoutMoves}, so the caller must not hold what it waits for.
+   */
   public void stop() {
     synchronized (this) {
       stopped = true;
@@ -202,44 +208,80 @@ public final class StorageTrieUpdater {
     }
   }
 
+  /** Applies on this thread an update that can start, returns whether there was one. */
+  @VisibleForTesting
+  boolean applyNext() {
+    final Update update;
+    synchronized (this) {
+      update = stopped ? null : ready();
+    }
+    if (update == null) {
+      return false;
+    }
+    apply(update, storage.trieWriter());
+    return true;
+  }
+
   private void run() {
     final SyncStateStorage.TrieWriter writer = storage.trieWriter();
     try {
-      for (Update update = next(); update != null; update = next()) {
-        try {
-          process(update, writer);
-        } catch (final CancellationException e) {
-          return;
-        } catch (final RuntimeException e) {
-          writer.abort();
-          LOG.debug(
-              "Storage trie of {} left to the final build: {}", update.account, e.getMessage());
-        } finally {
-          release(update.account);
-        }
+      Update update;
+      while ((update = next(false)) != null && apply(update, writer)) {
+        // applied, take the next one
       }
     } catch (final InterruptedException e) {
       // stopped while waiting
     }
   }
 
-  // the next update to apply, in key order, never of an account a worker is on; null once stopped
-  private synchronized Update next() throws InterruptedException {
+  // the next update to apply; null once stopped, or once none is left when draining
+  private synchronized Update next(final boolean draining) throws InterruptedException {
     while (!stopped) {
-      if (finishing || pendingSlots > maxPendingSlots) {
-        for (final Iterator<Update> updates = pending.values().iterator(); updates.hasNext(); ) {
-          final Update update = updates.next();
-          if (!inProgress.contains(update.account)) {
-            updates.remove();
-            pendingSlots -= update.changes.size();
-            inProgress.add(update.account);
-            return update;
-          }
-        }
+      final Update update = ready();
+      if (update != null) {
+        return update;
+      }
+      if (draining && pending.isEmpty() && inProgress.isEmpty()) {
+        return null;
       }
       wait();
     }
     return null;
+  }
+
+  // takes, in key order, the first update of an account no one is on, once updates may start
+  private Update ready() {
+    if (finishing || pendingSlots > maxPendingSlots) {
+      for (final Iterator<Update> updates = pending.values().iterator(); updates.hasNext(); ) {
+        final Update update = updates.next();
+        if (!inProgress.contains(update.account)) {
+          updates.remove();
+          pendingSlots -= update.changes.size();
+          inProgress.add(update.account);
+          return update;
+        }
+      }
+    }
+    return null;
+  }
+
+  // applies an update, returns false once the updates stopped
+  private boolean apply(final Update update, final SyncStateStorage.TrieWriter writer) {
+    try {
+      process(update, writer);
+      return true;
+    } catch (final CancellationException e) {
+      return false;
+    } catch (final RuntimeException e) {
+      writer.abort();
+      LOG.info(
+          "SNAP2 left the storage trie of {} to the final build: {}",
+          update.account,
+          e.getMessage());
+      return true;
+    } finally {
+      release(update.account);
+    }
   }
 
   private synchronized void release(final Bytes32 account) {
@@ -253,8 +295,8 @@ public final class StorageTrieUpdater {
       return;
     }
     final Bytes32 root = change(update, writer);
-    updated.incrementAndGet();
     publish(update.account, root);
+    updated.incrementAndGet();
   }
 
   private boolean hasTrie(final Bytes32 accountHash, final Bytes32 root) {
