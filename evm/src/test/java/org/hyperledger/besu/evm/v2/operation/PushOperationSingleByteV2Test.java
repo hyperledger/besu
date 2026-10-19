@@ -89,7 +89,7 @@ public class PushOperationSingleByteV2Test {
   @Test
   void push0OntoFullStackOverflows() {
     final byte[] code = new byte[2];
-    while (frame.ensureStackCapacityV2(1)) {
+    while (frame.stackHasSpaceV2(1)) {
       frame.setTopV2(frame.stackTopV2() + 1);
     }
     final int top = frame.stackTopV2();
@@ -181,7 +181,7 @@ public class PushOperationSingleByteV2Test {
   @Test
   void push1OntoFullStackOverflows() {
     final byte[] code = {0x00, 0x01};
-    while (frame.ensureStackCapacityV2(1)) {
+    while (frame.stackHasSpaceV2(1)) {
       frame.setTopV2(frame.stackTopV2() + 1);
     }
     final int top = frame.stackTopV2();

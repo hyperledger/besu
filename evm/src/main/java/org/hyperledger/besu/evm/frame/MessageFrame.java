@@ -35,7 +35,6 @@ import org.hyperledger.besu.evm.v2.operation.StackUtil;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -200,9 +199,6 @@ public class MessageFrame {
   /** The constant DEFAULT_MAX_STACK_SIZE. */
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
-  // Most frames stay far below the maximum, and a frame allocates its stack on every call.
-  private static final int INITIAL_STACK_CAPACITY_V2 = 32;
-
   // Global data fields.
   private final WorldUpdater worldUpdater;
 
@@ -296,10 +292,7 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = enableEvmV2 ? null : new OperandStack(txValues.maxStackSize());
-    this.stackDataV2 =
-        enableEvmV2
-            ? new long[Math.min(INITIAL_STACK_CAPACITY_V2, txValues.maxStackSize()) << 2]
-            : null;
+    this.stackDataV2 = enableEvmV2 ? new long[txValues.maxStackSize() * 4] : null;
     this.stackTopV2 = 0;
     this.stackMaxSizeV2 = txValues.maxStackSize();
     this.pc = 0;
@@ -520,7 +513,7 @@ public class MessageFrame {
    */
   public void ensureStackV2() {
     if (stackDataV2 == null) {
-      stackDataV2 = new long[Math.min(INITIAL_STACK_CAPACITY_V2, stackMaxSizeV2) << 2];
+      stackDataV2 = new long[stackMaxSizeV2 * 4];
       stack = null;
     }
   }
@@ -550,9 +543,7 @@ public class MessageFrame {
     }
     final int slot = stackTopV2 - 1 - offset;
     if (stackViewV2 == null) {
-      stackViewV2 = new Bytes32[stackDataV2.length >> 2];
-    } else if (stackViewV2.length < stackDataV2.length >> 2) {
-      stackViewV2 = Arrays.copyOf(stackViewV2, stackDataV2.length >> 2);
+      stackViewV2 = new Bytes32[stackMaxSizeV2];
     }
     final Bytes32 cached = stackViewV2[slot];
     if (cached != null && StackUtil.wordEquals(cached, stackDataV2, stackTopV2, offset)) {
@@ -601,25 +592,13 @@ public class MessageFrame {
   }
 
   /**
-   * Makes room for {@code n} more items, growing the backing array when the items fit the maximum
-   * stack size but not the array. Growing replaces the array, so a caller that pushes reads {@link
-   * #stackDataV2()} after this call.
+   * Returns true if the stack has space for {@code n} more items.
    *
    * @param n the number of additional items
-   * @return true if the stack can accommodate n more items, false if they exceed the maximum size
+   * @return true if the stack can accommodate n more items
    */
-  public boolean ensureStackCapacityV2(final int n) {
-    final int needed = stackTopV2 + n;
-    return needed <= stackDataV2.length >> 2 || growStackV2(needed);
-  }
-
-  private boolean growStackV2(final int needed) {
-    if (needed > stackMaxSizeV2) {
-      return false;
-    }
-    final int capacity = Math.min(stackMaxSizeV2, Math.max(needed, (stackDataV2.length >> 2) * 2));
-    stackDataV2 = Arrays.copyOf(stackDataV2, capacity << 2);
-    return true;
+  public boolean stackHasSpaceV2(final int n) {
+    return stackTopV2 + n <= stackMaxSizeV2;
   }
 
   // ---------------------------------------------------------------------------

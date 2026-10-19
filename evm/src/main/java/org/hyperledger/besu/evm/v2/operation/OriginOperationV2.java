@@ -33,7 +33,7 @@ public class OriginOperationV2 extends AbstractFixedCostOperationV2 {
 
   @Override
   public OperationResult executeFixedCostOperation(final MessageFrame frame) {
-    if (!frame.ensureStackCapacityV2(1)) return overflowResponse;
+    if (!frame.stackHasSpaceV2(1)) return overflowResponse;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     setAddress(frame.getOriginatorAddress(), stack, top);

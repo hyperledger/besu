@@ -78,7 +78,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
      */
     public static OperationResult staticOperation(
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
-      if (!frame.ensureStackCapacityV2(1)) return OVERFLOW_RESPONSE;
+      if (!frame.stackHasSpaceV2(1)) return OVERFLOW_RESPONSE;
       long u0 = 0;
       final int start = pc + 1;
       if (pushSize != 0 && start < code.length) {
@@ -123,7 +123,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
      */
     public static OperationResult staticOperation(
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
-      if (!frame.ensureStackCapacityV2(1)) return OVERFLOW_RESPONSE;
+      if (!frame.stackHasSpaceV2(1)) return OVERFLOW_RESPONSE;
       final int start = pc + 1;
       final int end = start + pushSize;
       long u0 = UInt256.getLongBE(code, start, Math.min(end, code.length));
@@ -176,7 +176,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
      */
     public static OperationResult staticOperation(
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
-      if (!frame.ensureStackCapacityV2(1)) return OVERFLOW_RESPONSE;
+      if (!frame.stackHasSpaceV2(1)) return OVERFLOW_RESPONSE;
       final int start = pc + 1;
       final int end = start + pushSize;
       UInt256 pushValue;
