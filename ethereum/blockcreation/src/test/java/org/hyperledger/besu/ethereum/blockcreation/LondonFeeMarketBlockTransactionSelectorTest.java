@@ -100,7 +100,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             blockchain::getChainHeadHeader,
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
 
     final TransactionPool transactionPool =
         new TransactionPool(

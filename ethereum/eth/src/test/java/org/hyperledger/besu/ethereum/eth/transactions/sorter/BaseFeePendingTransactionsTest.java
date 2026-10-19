@@ -36,7 +36,7 @@ public class BaseFeePendingTransactionsTest extends AbstractPendingTransactionsT
         clock.orElse(TestClock.system(ZoneId.systemDefault())),
         metricsSystem,
         AbstractPendingTransactionsTestBase::mockBlockHeader,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   private static final Random randomizeTxType = new Random();

@@ -42,11 +42,11 @@ public abstract class AbstractLayeredTransactionPoolTest extends AbstractTransac
     final TransactionsLayer sparseLayer =
         new SparseTransactions(
             poolConfig,
-            new EndLayer(txPoolMetrics, transactionEventNotifier),
+            new EndLayer(txPoolMetrics, transactionEventNotifier.newEmitter()),
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     final TransactionsLayer readyLayer =
         new ReadyTransactions(
             poolConfig,
@@ -54,7 +54,7 @@ public abstract class AbstractLayeredTransactionPoolTest extends AbstractTransac
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     return new LayeredPendingTransactions(
         protocolContext,
         poolConfig,

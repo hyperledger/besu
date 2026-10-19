@@ -66,7 +66,7 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
         TestClock.system(ZoneId.systemDefault()),
         metricsSystem,
         protocolContext.getBlockchain()::getChainHeadHeader,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   @Override
@@ -110,6 +110,26 @@ public class BlobV1TransactionPoolTest extends AbstractTransactionPoolTestBase {
 
     expectedBlobProofBundles.forEach(
         bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isEqualTo(bq));
+  }
+
+  @Test
+  public void shouldNotMapBlobsOfTransactionsAddedToThePendingTransactionsOfADisabledPool() {
+    final PendingTransactions disabledPendingTransactions = lastCreatedPendingTransactions;
+    transactionPool.setDisabled();
+
+    // a late add to the pending transactions instance that was discarded when disabling the pool
+    assertThat(
+            disabledPendingTransactions.addTransaction(
+                new PendingTransaction.Remote(transactionWithBlobs), Optional.empty()))
+        .isEqualTo(TransactionAddedResult.ADDED);
+    transactionPool.setEnabled();
+
+    transactionWithBlobs
+        .getBlobsWithCommitments()
+        .get()
+        .getBlobProofBundles()
+        .forEach(
+            bq -> assertThat(transactionPool.getBlobProofBundle(bq.getVersionedHash())).isNull());
   }
 
   @Test

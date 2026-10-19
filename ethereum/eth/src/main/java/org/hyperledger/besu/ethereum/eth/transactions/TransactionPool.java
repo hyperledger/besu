@@ -118,6 +118,7 @@ public class TransactionPool implements BlockAddedObserver {
   private final TransactionPoolMetrics metrics;
   private final TransactionPoolConfiguration configuration;
   private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
+  private final Object enableDisableLock = new Object();
   private final TransactionEventNotifier eventNotifier;
   private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
@@ -370,6 +371,11 @@ public class TransactionPool implements BlockAddedObserver {
     return eventNotifier.subscribePendingTransactionAddedAsync(listener);
   }
 
+  public long subscribePendingTransactionsAsync(
+      final PendingTransactionAddedListener listener, final String listenerName) {
+    return eventNotifier.subscribePendingTransactionAddedAsync(listener, listenerName);
+  }
+
   public void unsubscribePendingTransactions(final long id) {
     eventNotifier.unsubscribePendingTransactionAdded(id);
   }
@@ -380,6 +386,11 @@ public class TransactionPool implements BlockAddedObserver {
 
   public long subscribeDroppedTransactionsAsync(final PendingTransactionDroppedListener listener) {
     return eventNotifier.subscribePendingTransactionDroppedAsync(listener);
+  }
+
+  public long subscribeDroppedTransactionsAsync(
+      final PendingTransactionDroppedListener listener, final String listenerName) {
+    return eventNotifier.subscribePendingTransactionDroppedAsync(listener, listenerName);
   }
 
   public void unsubscribeDroppedTransactions(final long id) {
@@ -733,23 +744,24 @@ public class TransactionPool implements BlockAddedObserver {
   }
 
   public CompletableFuture<Void> setEnabled() {
-    if (!isEnabled()) {
-      logStart(configuration, getChainHeadBlockHeader());
-      eventNotifier.enable();
-      pendingTransactions = pendingTransactionsSupplier.get();
-      isPoolEnabled.set(true);
-      subscribeConnectId =
-          OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
-      return saveRestoreManager
-          .loadFromDisk()
-          .whenComplete(
-              (_, t) -> {
-                if (t != null) {
-                  LOG.error("Error while restoring transaction pool from disk", t);
-                }
-              });
+    synchronized (enableDisableLock) {
+      if (!isEnabled()) {
+        logStart(configuration, getChainHeadBlockHeader());
+        pendingTransactions = pendingTransactionsSupplier.get();
+        isPoolEnabled.set(true);
+        subscribeConnectId =
+            OptionalLong.of(ethContext.getEthPeers().subscribeConnect(this::handleConnect));
+        return saveRestoreManager
+            .loadFromDisk()
+            .whenComplete(
+                (_, t) -> {
+                  if (t != null) {
+                    LOG.error("Error while restoring transaction pool from disk", t);
+                  }
+                });
+      }
+      return CompletableFuture.completedFuture(null);
     }
-    return CompletableFuture.completedFuture(null);
   }
 
   /**
@@ -768,31 +780,29 @@ public class TransactionPool implements BlockAddedObserver {
    * @return a {@link CompletableFuture} that completes once the save-to-disk operation finishes
    */
   public CompletableFuture<Void> setDisabled() {
-    if (isEnabled()) {
-      isPoolEnabled.set(false);
-      subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
-      final Duration disableNotifierTimeout = Duration.ofSeconds(1);
-      if (!eventNotifier.awaitDisabled(disableNotifierTimeout)) {
-        LOG.warn(
-            "Async transaction listeners still processing a notification after {}, "
-                + "if you are running any plugin, verify that it is not processing transaction notifications too slowly",
-            disableNotifierTimeout);
+    synchronized (enableDisableLock) {
+      if (isEnabled()) {
+        isPoolEnabled.set(false);
+        subscribeConnectId.ifPresent(ethContext.getEthPeers()::unsubscribeConnect);
+        // ignore any further event from the current pending transactions instance, including the
+        // async notifications not yet delivered, so the blob map is not modified after clearing it
+        eventNotifier.invalidateEmitters();
+        mapOfBlobsInTransactionPool.clear();
+        final CompletableFuture<Void> saveOperation =
+            saveRestoreManager
+                .saveToDisk(pendingTransactions)
+                .whenComplete(
+                    (_, t) -> {
+                      if (t != null) {
+                        LOG.error("Error while saving transaction pool to disk", t);
+                      }
+                    });
+        pendingTransactions = new DisabledPendingTransactions();
+        logStop();
+        return saveOperation;
       }
-      mapOfBlobsInTransactionPool.clear();
-      final CompletableFuture<Void> saveOperation =
-          saveRestoreManager
-              .saveToDisk(pendingTransactions)
-              .whenComplete(
-                  (_, t) -> {
-                    if (t != null) {
-                      LOG.error("Error while saving transaction pool to disk", t);
-                    }
-                  });
-      pendingTransactions = new DisabledPendingTransactions();
-      logStop();
-      return saveOperation;
+      return CompletableFuture.completedFuture(null);
     }
-    return CompletableFuture.completedFuture(null);
   }
 
   private void mapBlobsOnTransactionAdded(final Transaction transaction) {

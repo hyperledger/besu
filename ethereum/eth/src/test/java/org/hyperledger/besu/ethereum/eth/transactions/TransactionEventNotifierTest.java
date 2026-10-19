@@ -76,12 +76,13 @@ public class TransactionEventNotifierTest {
   @Test
   public void addedListenersAreNotified() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final var otherAddedListener = mock(PendingTransactionAddedListener.class);
     notifier.subscribePendingTransactionAdded(addedListener);
     notifier.subscribePendingTransactionAdded(otherAddedListener);
     notifier.subscribePendingTransactionDropped(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
 
     verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
     verify(otherAddedListener).onTransactionAdded(pendingTx0.getTransaction());
@@ -91,12 +92,13 @@ public class TransactionEventNotifierTest {
   @Test
   public void droppedListenersAreNotifiedWithTheRemovalReason() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final var otherDroppedListener = mock(PendingTransactionDroppedListener.class);
     notifier.subscribePendingTransactionAdded(addedListener);
     notifier.subscribePendingTransactionDropped(droppedListener);
     notifier.subscribePendingTransactionDropped(otherDroppedListener);
 
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
 
     verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
     verify(otherDroppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
@@ -106,13 +108,14 @@ public class TransactionEventNotifierTest {
   @Test
   public void addedListenerIsNotNotifiedAfterUnsubscribe() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final long id = notifier.subscribePendingTransactionAdded(addedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
     verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
 
     notifier.unsubscribePendingTransactionAdded(id);
-    notifier.notifyPendingTransactionAdded(pendingTx1);
+    emitter.notifyPendingTransactionAdded(pendingTx1);
 
     verifyNoMoreInteractions(addedListener);
   }
@@ -120,13 +123,14 @@ public class TransactionEventNotifierTest {
   @Test
   public void droppedListenerIsNotNotifiedAfterUnsubscribe() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final long id = notifier.subscribePendingTransactionDropped(droppedListener);
 
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
     verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
 
     notifier.unsubscribePendingTransactionDropped(id);
-    notifier.notifyPendingTransactionDropped(pendingTx1, DROPPED);
+    emitter.notifyPendingTransactionDropped(pendingTx1, DROPPED);
 
     verifyNoMoreInteractions(droppedListener);
   }
@@ -134,12 +138,13 @@ public class TransactionEventNotifierTest {
   @Test
   public void unsubscribingAnAddedListenerDoesNotAffectDroppedListeners() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final long addedId = notifier.subscribePendingTransactionAdded(addedListener);
     notifier.subscribePendingTransactionDropped(droppedListener);
 
     notifier.unsubscribePendingTransactionAdded(addedId);
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
 
     verifyNoInteractions(addedListener);
     verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
@@ -149,11 +154,12 @@ public class TransactionEventNotifierTest {
   public void syncListenersAreNotifiedOnTheCallerThread() {
     deterministicEthScheduler.disableAutoRun();
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     notifier.subscribePendingTransactionAdded(addedListener);
     notifier.subscribePendingTransactionDropped(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx1, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx1, DROPPED);
 
     final InOrder inOrder = inOrder(addedListener, droppedListener);
     inOrder.verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
@@ -167,11 +173,12 @@ public class TransactionEventNotifierTest {
   public void asyncListenersAreNotNotifiedOnTheCallerThread() {
     deterministicEthScheduler.disableAutoRun();
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     notifier.subscribePendingTransactionAddedAsync(addedListener);
     notifier.subscribePendingTransactionDroppedAsync(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx1, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx1, DROPPED);
 
     // nothing delivered until the services executor runs the queued work
     verifyNoInteractions(addedListener, droppedListener);
@@ -189,6 +196,7 @@ public class TransactionEventNotifierTest {
   public void syncAndAsyncListenersAreNotifiedOfTheSameEvents() {
     deterministicEthScheduler.disableAutoRun();
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final var asyncAddedListener = mock(PendingTransactionAddedListener.class);
     final var asyncDroppedListener = mock(PendingTransactionDroppedListener.class);
     notifier.subscribePendingTransactionAddedAsync(asyncAddedListener);
@@ -196,9 +204,9 @@ public class TransactionEventNotifierTest {
     notifier.subscribePendingTransactionDroppedAsync(asyncDroppedListener);
     notifier.subscribePendingTransactionDropped(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, REPLACED);
-    notifier.notifyPendingTransactionAdded(pendingTx1);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, REPLACED);
+    emitter.notifyPendingTransactionAdded(pendingTx1);
 
     final InOrder syncInOrder = inOrder(addedListener, droppedListener);
     syncInOrder.verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
@@ -221,18 +229,19 @@ public class TransactionEventNotifierTest {
   @Test
   public void asyncListenersAreNotNotifiedAfterUnsubscribe() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final long addedId = notifier.subscribePendingTransactionAddedAsync(addedListener);
     final long droppedId = notifier.subscribePendingTransactionDroppedAsync(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
     verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
     verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
 
     notifier.unsubscribePendingTransactionAdded(addedId);
     notifier.unsubscribePendingTransactionDropped(droppedId);
-    notifier.notifyPendingTransactionAdded(pendingTx1);
-    notifier.notifyPendingTransactionDropped(pendingTx1, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx1);
+    emitter.notifyPendingTransactionDropped(pendingTx1, DROPPED);
 
     verifyNoMoreInteractions(addedListener, droppedListener);
   }
@@ -240,6 +249,7 @@ public class TransactionEventNotifierTest {
   @Test
   public void unsubscribingAnAsyncListenerDoesNotUnsubscribeSyncListeners() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final var asyncAddedListener = mock(PendingTransactionAddedListener.class);
     final var asyncDroppedListener = mock(PendingTransactionDroppedListener.class);
     final long syncAddedId = notifier.subscribePendingTransactionAdded(addedListener);
@@ -253,8 +263,8 @@ public class TransactionEventNotifierTest {
 
     notifier.unsubscribePendingTransactionAdded(asyncAddedId);
     notifier.unsubscribePendingTransactionDropped(asyncDroppedId);
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
 
     verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
     verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
@@ -264,6 +274,7 @@ public class TransactionEventNotifierTest {
   @Test
   public void unsubscribingASyncListenerDoesNotUnsubscribeAsyncListeners() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final var asyncAddedListener = mock(PendingTransactionAddedListener.class);
     final var asyncDroppedListener = mock(PendingTransactionDroppedListener.class);
     final long syncAddedId = notifier.subscribePendingTransactionAdded(addedListener);
@@ -273,8 +284,8 @@ public class TransactionEventNotifierTest {
 
     notifier.unsubscribePendingTransactionAdded(syncAddedId);
     notifier.unsubscribePendingTransactionDropped(syncDroppedId);
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
 
     verify(asyncAddedListener).onTransactionAdded(pendingTx0.getTransaction());
     verify(asyncDroppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
@@ -282,39 +293,108 @@ public class TransactionEventNotifierTest {
   }
 
   @Test
-  public void asyncListenersAreNotNotifiedWhileDisabled() {
+  public void invalidatedEmittersDoNotNotifySyncAndAsyncListeners() {
     deterministicEthScheduler.disableAutoRun();
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
+    final var otherEmitter = notifier.newEmitter();
     final var asyncAddedListener = mock(PendingTransactionAddedListener.class);
+    final var asyncDroppedListener = mock(PendingTransactionDroppedListener.class);
     notifier.subscribePendingTransactionAdded(addedListener);
+    notifier.subscribePendingTransactionDropped(droppedListener);
     notifier.subscribePendingTransactionAddedAsync(asyncAddedListener);
+    notifier.subscribePendingTransactionDroppedAsync(asyncDroppedListener);
     final PendingTransaction pendingTx2 = createPendingTransaction(2);
 
-    // queued before disabling, then dropped
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    assertThat(notifier.awaitDisabled(Duration.ofSeconds(1))).isTrue();
-    // ignored while disabled
-    notifier.notifyPendingTransactionAdded(pendingTx1);
+    // notified before the invalidation, async notification still queued
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
+
+    notifier.invalidateEmitters();
+
+    // the queued async notification is skipped
     deterministicEthScheduler.runPendingFutures();
     verifyNoInteractions(asyncAddedListener);
 
-    notifier.enable();
-    notifier.notifyPendingTransactionAdded(pendingTx2);
+    // events from the invalidated emitters are ignored
+    emitter.notifyPendingTransactionAdded(pendingTx1);
+    otherEmitter.notifyPendingTransactionDropped(pendingTx1, DROPPED);
     deterministicEthScheduler.runPendingFutures();
-    verify(asyncAddedListener).onTransactionAdded(pendingTx2.getTransaction());
-    verifyNoMoreInteractions(asyncAddedListener);
+    verifyNoMoreInteractions(addedListener);
+    verifyNoInteractions(droppedListener, asyncAddedListener, asyncDroppedListener);
 
-    // sync listeners are not affected
-    final InOrder inOrder = inOrder(addedListener);
-    inOrder.verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
-    inOrder.verify(addedListener).onTransactionAdded(pendingTx1.getTransaction());
-    inOrder.verify(addedListener).onTransactionAdded(pendingTx2.getTransaction());
-    inOrder.verifyNoMoreInteractions();
+    // a new emitter is valid
+    final var newEmitter = notifier.newEmitter();
+    newEmitter.notifyPendingTransactionAdded(pendingTx2);
+    newEmitter.notifyPendingTransactionDropped(pendingTx2, DROPPED);
+    deterministicEthScheduler.runPendingFutures();
+    verify(addedListener).onTransactionAdded(pendingTx2.getTransaction());
+    verify(droppedListener).onTransactionDropped(pendingTx2.getTransaction(), DROPPED);
+    verify(asyncAddedListener).onTransactionAdded(pendingTx2.getTransaction());
+    verify(asyncDroppedListener).onTransactionDropped(pendingTx2.getTransaction(), DROPPED);
+    verifyNoMoreInteractions(
+        addedListener, droppedListener, asyncAddedListener, asyncDroppedListener);
+  }
+
+  @Test
+  public void invalidateEmittersWaitsForTheSyncNotificationInProgress()
+      throws InterruptedException {
+    final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
+    final CountDownLatch notificationStarted = new CountDownLatch(1);
+    final CountDownLatch releaseNotification = new CountDownLatch(1);
+    notifier.subscribePendingTransactionAdded(
+        tx -> {
+          notificationStarted.countDown();
+          awaitLatch(releaseNotification);
+        });
+
+    final Thread notifying = new Thread(() -> emitter.notifyPendingTransactionAdded(pendingTx0));
+    notifying.start();
+    notificationStarted.await();
+
+    final Thread invalidating = new Thread(notifier::invalidateEmitters);
+    invalidating.start();
+    invalidating.join(200);
+    assertThat(invalidating.isAlive()).isTrue();
+
+    releaseNotification.countDown();
+    invalidating.join(AWAIT_TIMEOUT.toMillis());
+    assertThat(invalidating.isAlive()).isFalse();
+    notifying.join(AWAIT_TIMEOUT.toMillis());
+  }
+
+  @Test
+  public void invalidateEmittersDoesNotWaitForTheAsyncNotificationInProgress()
+      throws InterruptedException {
+    realEthScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
+    final var notifier = new TransactionEventNotifier(realEthScheduler);
+    final var emitter = notifier.newEmitter();
+    final CountDownLatch notificationStarted = new CountDownLatch(1);
+    final CountDownLatch releaseNotification = new CountDownLatch(1);
+    notifier.subscribePendingTransactionAddedAsync(
+        tx -> {
+          notificationStarted.countDown();
+          awaitLatch(releaseNotification);
+        });
+
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    notificationStarted.await();
+
+    try {
+      final Thread invalidating = new Thread(notifier::invalidateEmitters);
+      invalidating.start();
+      invalidating.join(AWAIT_TIMEOUT.toMillis());
+      assertThat(invalidating.isAlive()).isFalse();
+    } finally {
+      releaseNotification.countDown();
+    }
   }
 
   @Test
   public void failingSyncListenerDoesNotPreventOtherListenersAndDoesNotPropagate() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     notifier.subscribePendingTransactionAdded(
         tx -> {
           throw new IllegalStateException("listener failure");
@@ -326,8 +406,8 @@ public class TransactionEventNotifierTest {
         });
     notifier.subscribePendingTransactionDropped(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, DROPPED);
 
     verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
     verify(droppedListener).onTransactionDropped(pendingTx0.getTransaction(), DROPPED);
@@ -336,6 +416,7 @@ public class TransactionEventNotifierTest {
   @Test
   public void failingAsyncListenerDoesNotPreventOtherNotifications() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     final List<Transaction> failingListenerCalls = new ArrayList<>();
     notifier.subscribePendingTransactionAddedAsync(
         tx -> {
@@ -344,8 +425,8 @@ public class TransactionEventNotifierTest {
         });
     notifier.subscribePendingTransactionAddedAsync(addedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionAdded(pendingTx1);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionAdded(pendingTx1);
 
     assertThat(failingListenerCalls)
         .containsExactly(pendingTx0.getTransaction(), pendingTx1.getTransaction());
@@ -357,13 +438,14 @@ public class TransactionEventNotifierTest {
   @Test
   public void addedAndDroppedNotificationsAreDeliveredInSubmissionOrder() {
     final var notifier = new TransactionEventNotifier(deterministicEthScheduler);
+    final var emitter = notifier.newEmitter();
     notifier.subscribePendingTransactionAdded(addedListener);
     notifier.subscribePendingTransactionDropped(droppedListener);
 
-    notifier.notifyPendingTransactionAdded(pendingTx0);
-    notifier.notifyPendingTransactionDropped(pendingTx0, REPLACED);
-    notifier.notifyPendingTransactionAdded(pendingTx1);
-    notifier.notifyPendingTransactionDropped(pendingTx1, DROPPED);
+    emitter.notifyPendingTransactionAdded(pendingTx0);
+    emitter.notifyPendingTransactionDropped(pendingTx0, REPLACED);
+    emitter.notifyPendingTransactionAdded(pendingTx1);
+    emitter.notifyPendingTransactionDropped(pendingTx1, DROPPED);
 
     final InOrder inOrder = inOrder(addedListener, droppedListener);
     inOrder.verify(addedListener).onTransactionAdded(pendingTx0.getTransaction());
@@ -377,6 +459,7 @@ public class TransactionEventNotifierTest {
   public void asyncNotificationsAreDeliveredInSubmissionOrderWithRealScheduler() {
     realEthScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
     final var notifier = new TransactionEventNotifier(realEthScheduler);
+    final var emitter = notifier.newEmitter();
 
     final int numOfTxs = 200;
     final List<PendingTransaction> pendingTxs =
@@ -394,10 +477,10 @@ public class TransactionEventNotifierTest {
 
     final List<String> expectedEvents = new ArrayList<>(numOfTxs * 2);
     for (final PendingTransaction pendingTx : pendingTxs) {
-      notifier.notifyPendingTransactionAdded(pendingTx);
+      emitter.notifyPendingTransactionAdded(pendingTx);
       expectedEvents.add("added:" + pendingTx.getNonce());
       if (pendingTx.getNonce() % 3 == 0) {
-        notifier.notifyPendingTransactionDropped(pendingTx, DROPPED);
+        emitter.notifyPendingTransactionDropped(pendingTx, DROPPED);
         expectedEvents.add("dropped:" + pendingTx.getNonce());
       }
     }
@@ -411,6 +494,7 @@ public class TransactionEventNotifierTest {
       throws InterruptedException {
     realEthScheduler = new EthScheduler(1, 1, 1, new NoOpMetricsSystem());
     final var notifier = new TransactionEventNotifier(realEthScheduler);
+    final var emitter = notifier.newEmitter();
 
     final int numOfProducers = 4;
     final int numOfTxsPerProducer = 100;
@@ -449,7 +533,7 @@ public class TransactionEventNotifierTest {
                           } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                           }
-                          txs.forEach(notifier::notifyPendingTransactionAdded);
+                          txs.forEach(emitter::notifyPendingTransactionAdded);
                         }))
             .toList();
     producers.forEach(Thread::start);
@@ -469,6 +553,14 @@ public class TransactionEventNotifierTest {
           .describedAs("notifications of producer %d", p)
           .containsExactlyElementsOf(
               txsByProducer.get(p).stream().map(PendingTransaction::getTransaction).toList());
+    }
+  }
+
+  private static void awaitLatch(final CountDownLatch latch) {
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
     }
   }
 

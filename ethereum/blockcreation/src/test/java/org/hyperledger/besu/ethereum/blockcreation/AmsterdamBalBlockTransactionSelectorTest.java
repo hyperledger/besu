@@ -234,7 +234,7 @@ class AmsterdamBalBlockTransactionSelectorTest {
             TestClock.system(ZoneId.systemDefault()),
             metricsSystem,
             blockchain::getChainHeadHeader,
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
 
     return new TransactionPool(
         () -> pendingTransactions,

@@ -54,8 +54,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache,
-      final TransactionEventNotifier eventNotifier) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache, eventNotifier);
+      final TransactionEventNotifier.Emitter eventEmitter) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache, eventEmitter);
   }
 
   @Override

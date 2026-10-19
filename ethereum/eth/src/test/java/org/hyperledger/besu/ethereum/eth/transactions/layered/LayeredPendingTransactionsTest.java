@@ -143,7 +143,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
                 .shouldReplace(t1, t2, mockBlockHeader());
 
     final EvictCollectorLayer evictCollector =
-        new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier);
+        new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier.newEmitter());
 
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
@@ -152,7 +152,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
@@ -161,7 +161,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
 
     final BaseFeePrioritizedTransactions prioritizedTransactions =
         new BaseFeePrioritizedTransactions(
@@ -174,7 +174,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
             new BlobCache(),
             MiningConfiguration.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE),
             senderBalanceChecker,
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     return new CreatedLayers(
         prioritizedTransactions,
         readyTransactions,

@@ -600,6 +600,31 @@ public abstract class AbstractTransactionPoolTest extends AbstractTransactionPoo
   }
 
   @Test
+  public void eventsFromThePendingTransactionsOfADisabledPoolAreNotNotified() {
+    final Transaction transaction = createTransaction(0, Wei.of(50));
+
+    final PendingTransactionDroppedListener droppedListener =
+        mock(PendingTransactionDroppedListener.class);
+    final PendingTransactionAddedListener asyncListener =
+        mock(PendingTransactionAddedListener.class);
+    transactionPool.subscribePendingTransactions(listener);
+    transactionPool.subscribeDroppedTransactions(droppedListener);
+    transactionPool.subscribePendingTransactionsAsync(asyncListener);
+
+    final PendingTransactions disabledPendingTransactions = lastCreatedPendingTransactions;
+    transactionPool.setDisabled();
+
+    // a late add to the pending transactions instance that was discarded when disabling the pool
+    assertThat(
+            disabledPendingTransactions.addTransaction(
+                new PendingTransaction.Remote(transaction), Optional.empty()))
+        .isEqualTo(TransactionAddedResult.ADDED);
+    transactionPool.setEnabled();
+
+    verifyNoInteractions(listener, droppedListener, asyncListener);
+  }
+
+  @Test
   public void unsubscribingAsyncListenersDoesNotUnsubscribeInternalListeners() {
     final Transaction transaction0a = createTransaction(0, Wei.of(50));
     final Transaction transaction0b = createTransaction(0, Wei.of(100));

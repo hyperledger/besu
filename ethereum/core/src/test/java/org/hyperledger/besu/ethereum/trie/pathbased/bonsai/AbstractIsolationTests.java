@@ -187,13 +187,13 @@ public abstract class AbstractIsolationTests {
             poolConfiguration,
             new GasPricePrioritizedTransactions(
                 poolConfiguration,
-                new EndLayer(txPoolMetrics, transactionEventNotifier),
+                new EndLayer(txPoolMetrics, transactionEventNotifier.newEmitter()),
                 txPoolMetrics,
                 transactionReplacementTester,
                 new BlobCache(),
                 MiningConfiguration.newDefault(),
                 senderBalanceChecker,
-                transactionEventNotifier),
+                transactionEventNotifier.newEmitter()),
             ethScheduler);
 
     transactionPool =

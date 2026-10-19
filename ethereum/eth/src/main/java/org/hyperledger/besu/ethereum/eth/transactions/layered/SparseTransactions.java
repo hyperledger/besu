@@ -74,8 +74,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache,
-      final TransactionEventNotifier eventNotifier) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache, eventNotifier);
+      final TransactionEventNotifier.Emitter eventEmitter) {
+    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache, eventEmitter);
     orderByGap = new ArrayList<>(poolConfig.getMaxFutureBySender());
     IntStream.range(0, poolConfig.getMaxFutureBySender())
         .forEach(i -> orderByGap.add(new SendersByPriority()));

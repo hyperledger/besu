@@ -74,7 +74,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         new BlobCache(),
         miningConfiguration,
         senderBalanceChecker,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   @Override

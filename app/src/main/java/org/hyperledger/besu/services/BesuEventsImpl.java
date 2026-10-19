@@ -124,7 +124,8 @@ public class BesuEventsImpl implements BesuEvents {
 
   @Override
   public long addTransactionAddedListener(final TransactionAddedListener listener) {
-    return transactionPool.subscribePendingTransactionsAsync(listener::onTransactionAdded);
+    return transactionPool.subscribePendingTransactionsAsync(
+        listener::onTransactionAdded, listener.getClass().getName());
   }
 
   @Override
@@ -137,7 +138,8 @@ public class BesuEventsImpl implements BesuEvents {
       final TransactionDroppedListener transactionDroppedListener) {
     return transactionPool.subscribeDroppedTransactionsAsync(
         (transaction, reason) ->
-            transactionDroppedListener.onTransactionDropped(transaction, reason.label()));
+            transactionDroppedListener.onTransactionDropped(transaction, reason.label()),
+        transactionDroppedListener.getClass().getName());
   }
 
   @Override

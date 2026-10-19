@@ -54,7 +54,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
         new BlobCache(),
         miningConfiguration,
         senderBalanceChecker,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   @Override

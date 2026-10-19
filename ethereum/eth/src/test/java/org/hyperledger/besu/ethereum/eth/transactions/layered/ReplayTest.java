@@ -278,7 +278,7 @@ public class ReplayTest {
       final TransactionPoolMetrics txPoolMetrics,
       final BaseFeeMarket baseFeeMarket) {
     final EvictCollectorLayer evictCollector =
-        new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier);
+        new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier.newEmitter());
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> txReplacementTester =
         (tx1, tx2) -> transactionReplacementTester(poolConfig, tx1, tx2);
     final SparseTransactions sparseTransactions =
@@ -288,7 +288,7 @@ public class ReplayTest {
             txPoolMetrics,
             txReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
@@ -297,7 +297,7 @@ public class ReplayTest {
             txPoolMetrics,
             txReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         () -> currBlockHeader,
@@ -308,7 +308,7 @@ public class ReplayTest {
         new BlobCache(),
         miningConfiguration,
         senderBalanceChecker,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   // ToDo: commented since not always working, needs fix

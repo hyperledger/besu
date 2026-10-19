@@ -112,7 +112,7 @@ public class EthGetFilterChangesIntegrationTest {
             TestClock.fixed(),
             metricsSystem,
             blockchain::getChainHeadHeader,
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     final ProtocolContext protocolContext = executionContext.getProtocolContext();
 
     EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);

@@ -90,11 +90,11 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
     final TransactionsLayer sparseLayer =
         new SparseTransactions(
             poolConfig,
-            new EndLayer(txPoolMetrics, transactionEventNotifier),
+            new EndLayer(txPoolMetrics, transactionEventNotifier.newEmitter()),
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     final TransactionsLayer readyLayer =
         new ReadyTransactions(
             poolConfig,
@@ -102,7 +102,7 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache(),
-            transactionEventNotifier);
+            transactionEventNotifier.newEmitter());
     return new LayeredPendingTransactions(
         protocolContext,
         poolConfig,
@@ -116,7 +116,7 @@ public class TransactionPoolSaveRestoreTest extends AbstractTransactionPoolTestB
             new BlobCache(),
             MiningConfiguration.newDefault(),
             senderBalanceChecker,
-            transactionEventNotifier),
+            transactionEventNotifier.newEmitter()),
         ethScheduler);
   }
 

@@ -27,8 +27,8 @@ public class EvictCollectorLayer extends EndLayer {
   final List<PendingTransaction> evictedTxs = new ArrayList<>();
 
   public EvictCollectorLayer(
-      final TransactionPoolMetrics metrics, final TransactionEventNotifier eventNotifier) {
-    super(metrics, eventNotifier);
+      final TransactionPoolMetrics metrics, final TransactionEventNotifier.Emitter eventEmitter) {
+    super(metrics, eventEmitter);
   }
 
   @Override

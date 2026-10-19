@@ -14,47 +14,64 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Notifies the listeners of the transactions added to and dropped from the pending transactions.
  * Listeners are notified synchronously on the caller thread, unless subscribed with the async
  * variants.
+ *
+ * <p>Events are notified through an {@link Emitter}, created for each pending transactions
+ * instance. When the pending transactions instance is discarded, {@link #invalidateEmitters()}
+ * ensures that the events it could still notify, and the async notifications not yet delivered, are
+ * ignored.
  */
 public class TransactionEventNotifier {
-  private final Subscribers<PendingTransactionAddedListener> onAddedListeners =
-      Subscribers.create(true);
-  private final Subscribers<PendingTransactionDroppedListener> onDroppedListeners =
-      Subscribers.create(true);
+  private static final Logger LOG = LoggerFactory.getLogger(TransactionEventNotifier.class);
+
+  private final Subscribers<AddedDispatcher> onAddedListeners = Subscribers.create(true);
+  private final Subscribers<DroppedDispatcher> onDroppedListeners = Subscribers.create(true);
   private final EthScheduler.OrderedProcessor<Runnable> orderedProcessor;
+  private final ReadWriteLock generationLock = new ReentrantReadWriteLock();
+  private final AtomicLong currentGeneration = new AtomicLong();
 
   public TransactionEventNotifier(final EthScheduler ethScheduler) {
     this.orderedProcessor = ethScheduler.createOrderedProcessor(Runnable::run);
   }
 
   /**
-   * Notify the listeners that a transaction has been added.
+   * Create an emitter to notify the events of a pending transactions instance. The emitter is valid
+   * until {@link #invalidateEmitters()} is called.
    *
-   * @param pendingTransaction the added transaction
+   * @return a new emitter
    */
-  public void notifyPendingTransactionAdded(final PendingTransaction pendingTransaction) {
-    onAddedListeners.forEach(
-        listener -> listener.onTransactionAdded(pendingTransaction.getTransaction()));
+  public Emitter newEmitter() {
+    return new Emitter(currentGeneration.get());
   }
 
   /**
-   * Notify the listeners that a transaction has been dropped.
-   *
-   * @param pendingTransaction the dropped transaction
-   * @param reason the reason the transaction has been dropped
+   * Invalidate all the emitters created so far, so their events are no longer notified, including
+   * the async notifications already queued but not yet delivered. This waits for the sync
+   * notifications in progress to complete, but not for the async ones.
    */
-  public void notifyPendingTransactionDropped(
-      final PendingTransaction pendingTransaction, final RemovalReason reason) {
-    onDroppedListeners.forEach(
-        listener -> listener.onTransactionDropped(pendingTransaction.getTransaction(), reason));
+  public void invalidateEmitters() {
+    final Lock writeLock = generationLock.writeLock();
+    writeLock.lock();
+    try {
+      currentGeneration.incrementAndGet();
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -64,7 +81,8 @@ public class TransactionEventNotifier {
    * @return the id to use to unsubscribe the listener
    */
   public long subscribePendingTransactionAdded(final PendingTransactionAddedListener listener) {
-    return onAddedListeners.subscribe(listener);
+    return onAddedListeners.subscribe(
+        (generation, transaction) -> listener.onTransactionAdded(transaction));
   }
 
   /**
@@ -74,7 +92,8 @@ public class TransactionEventNotifier {
    * @return the id to use to unsubscribe the listener
    */
   public long subscribePendingTransactionDropped(final PendingTransactionDroppedListener listener) {
-    return onDroppedListeners.subscribe(listener);
+    return onDroppedListeners.subscribe(
+        (generation, transaction, reason) -> listener.onTransactionDropped(transaction, reason));
   }
 
   /**
@@ -86,8 +105,26 @@ public class TransactionEventNotifier {
    */
   public long subscribePendingTransactionAddedAsync(
       final PendingTransactionAddedListener listener) {
+    return subscribePendingTransactionAddedAsync(listener, listener.getClass().getName());
+  }
+
+  /**
+   * Subscribe a listener that is notified on a services thread instead of the caller thread. Async
+   * listeners receive the events in the same order they are notified.
+   *
+   * @param listener the listener
+   * @param listenerName the name used to identify the listener in the logs
+   * @return the id to use to unsubscribe the listener
+   */
+  public long subscribePendingTransactionAddedAsync(
+      final PendingTransactionAddedListener listener, final String listenerName) {
     return onAddedListeners.subscribe(
-        transaction -> orderedProcessor.submit(() -> listener.onTransactionAdded(transaction)));
+        (generation, transaction) ->
+            notifyAsync(
+                generation,
+                listenerName,
+                transaction,
+                () -> listener.onTransactionAdded(transaction)));
   }
 
   /**
@@ -99,9 +136,26 @@ public class TransactionEventNotifier {
    */
   public long subscribePendingTransactionDroppedAsync(
       final PendingTransactionDroppedListener listener) {
+    return subscribePendingTransactionDroppedAsync(listener, listener.getClass().getName());
+  }
+
+  /**
+   * Subscribe a listener that is notified on a services thread instead of the caller thread. Async
+   * listeners receive the events in the same order they are notified.
+   *
+   * @param listener the listener
+   * @param listenerName the name used to identify the listener in the logs
+   * @return the id to use to unsubscribe the listener
+   */
+  public long subscribePendingTransactionDroppedAsync(
+      final PendingTransactionDroppedListener listener, final String listenerName) {
     return onDroppedListeners.subscribe(
-        (transaction, reason) ->
-            orderedProcessor.submit(() -> listener.onTransactionDropped(transaction, reason)));
+        (generation, transaction, reason) ->
+            notifyAsync(
+                generation,
+                listenerName,
+                transaction,
+                () -> listener.onTransactionDropped(transaction, reason)));
   }
 
   /**
@@ -122,20 +176,89 @@ public class TransactionEventNotifier {
     onDroppedListeners.unsubscribe(id);
   }
 
-  /**
-   * Stop notifying async listeners, dropping the notifications not yet delivered, and wait for the
-   * one in progress, if any, to complete. Sync listeners are not affected.
-   *
-   * @param timeout the maximum time to wait for the notification in progress to complete
-   * @return {@code true} if no async notification is in progress, {@code false} if the timeout was
-   *     reached or the wait was interrupted
-   */
-  public boolean awaitDisabled(final Duration timeout) {
-    return orderedProcessor.awaitDrainedAndDisabled(timeout);
+  private void notifyAsync(
+      final long generation,
+      final String listenerName,
+      final Transaction transaction,
+      final Runnable notification) {
+    orderedProcessor.submit(
+        () -> {
+          // skip the notification if its emitter has been invalidated in the meantime
+          if (generation == currentGeneration.get()) {
+            try {
+              notification.run();
+            } catch (final VirtualMachineError e) {
+              throw e;
+            } catch (final Throwable t) {
+              LOG.warn(
+                  "Async transaction listener {} failed to process the notification for transaction {}: {}",
+                  listenerName,
+                  transaction.getHash(),
+                  t.toString());
+              LOG.debug("Async transaction listener {} failure stack trace", listenerName, t);
+            }
+          }
+        });
   }
 
-  /** Start notifying async listeners again, after they were disabled. */
-  public void enable() {
-    orderedProcessor.enable();
+  /**
+   * Notifies the events of a pending transactions instance, until {@link #invalidateEmitters()} is
+   * called.
+   */
+  public final class Emitter {
+    private final long generation;
+
+    private Emitter(final long generation) {
+      this.generation = generation;
+    }
+
+    /**
+     * Notify the listeners that a transaction has been added.
+     *
+     * @param pendingTransaction the added transaction
+     */
+    public void notifyPendingTransactionAdded(final PendingTransaction pendingTransaction) {
+      final Lock readLock = generationLock.readLock();
+      readLock.lock();
+      try {
+        if (generation == currentGeneration.get()) {
+          onAddedListeners.forEach(
+              dispatcher -> dispatcher.dispatch(generation, pendingTransaction.getTransaction()));
+        }
+      } finally {
+        readLock.unlock();
+      }
+    }
+
+    /**
+     * Notify the listeners that a transaction has been dropped.
+     *
+     * @param pendingTransaction the dropped transaction
+     * @param reason the reason the transaction has been dropped
+     */
+    public void notifyPendingTransactionDropped(
+        final PendingTransaction pendingTransaction, final RemovalReason reason) {
+      final Lock readLock = generationLock.readLock();
+      readLock.lock();
+      try {
+        if (generation == currentGeneration.get()) {
+          onDroppedListeners.forEach(
+              dispatcher ->
+                  dispatcher.dispatch(generation, pendingTransaction.getTransaction(), reason));
+        }
+      } finally {
+        readLock.unlock();
+      }
+    }
+  }
+
+  @FunctionalInterface
+  private interface AddedDispatcher {
+    void dispatch(long generation, Transaction transaction);
+  }
+
+  @FunctionalInterface
+  private interface DroppedDispatcher {
+    void dispatch(long generation, Transaction transaction, RemovalReason reason);
   }
 }

@@ -50,7 +50,7 @@ public class LayeredTransactionPoolBaseFeeTest extends AbstractLayeredTransactio
         new BlobCache(),
         MiningConfiguration.newDefault(),
         senderBalanceChecker,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   @Override

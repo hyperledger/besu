@@ -56,14 +56,14 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
           transactionReplacementTester,
       final BlobCache blobCache,
       final MiningConfiguration miningConfiguration,
-      final TransactionEventNotifier eventNotifier) {
+      final TransactionEventNotifier.Emitter eventEmitter) {
     super(
         poolConfig,
         prioritizedTransactions,
         transactionReplacementTester,
         metrics,
         blobCache,
-        eventNotifier);
+        eventEmitter);
     this.orderByFee = new TreeSet<>(this::compareByFee);
     this.miningConfiguration = miningConfiguration;
     getAndLogMinPriorityFeePerGas();

@@ -92,7 +92,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler;
   protected final Supplier<BlockHeader> chainHeadHeaderSupplier;
-  private final TransactionEventNotifier eventNotifier;
+  private final TransactionEventNotifier.Emitter eventEmitter;
   private final BlobCache blobCache;
 
   public AbstractPendingTransactionsSorter(
@@ -100,12 +100,12 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       final Clock clock,
       final MetricsSystem metricsSystem,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
-      final TransactionEventNotifier eventNotifier) {
+      final TransactionEventNotifier.Emitter eventEmitter) {
     this.poolConfig = poolConfig;
     this.pendingTransactions = new ConcurrentHashMap<>(poolConfig.getTxPoolMaxSize());
     this.clock = clock;
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
-    this.eventNotifier = eventNotifier;
+    this.eventEmitter = eventEmitter;
     this.transactionReplacementHandler =
         new TransactionPoolReplacementHandler(
             poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
@@ -196,7 +196,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
   void removeTransaction(
       final PendingTransaction pendingTransaction, final SequencedRemovalReason reason) {
     removeTransaction(pendingTransaction.getTransaction(), false);
-    eventNotifier.notifyPendingTransactionDropped(pendingTransaction, reason);
+    eventEmitter.notifyPendingTransactionDropped(pendingTransaction, reason);
   }
 
   @Override
@@ -477,7 +477,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         evictLessPriorityTransactions();
       }
     }
-    eventNotifier.notifyPendingTransactionAdded(pendingTransaction);
+    eventEmitter.notifyPendingTransactionAdded(pendingTransaction);
     return ADDED;
   }
 

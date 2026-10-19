@@ -47,7 +47,7 @@ public class LayeredTransactionPoolGasPriceTest extends AbstractLayeredTransacti
         new BlobCache(),
         MiningConfiguration.newDefault(),
         senderBalanceChecker,
-        transactionEventNotifier);
+        transactionEventNotifier.newEmitter());
   }
 
   @Override

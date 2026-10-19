@@ -47,7 +47,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       new EnumMap<>(Map.of(TransactionType.BLOB, 2));
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   protected final EvictCollectorLayer evictCollector =
-      new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier);
+      new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier.newEmitter());
   protected final MiningConfiguration miningConfiguration =
       MiningConfiguration.newDefault()
           .setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE)

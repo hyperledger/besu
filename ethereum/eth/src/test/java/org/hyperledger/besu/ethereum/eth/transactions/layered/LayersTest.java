@@ -1563,7 +1563,7 @@ public class LayersTest extends BaseTransactionPoolTest {
       final EthScheduler ethScheduler = new DeterministicEthScheduler();
       final TransactionEventNotifier transactionEventNotifier =
           new TransactionEventNotifier(ethScheduler);
-      this.dropped = new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier);
+      this.dropped = new EvictCollectorLayer(txPoolMetrics, transactionEventNotifier.newEmitter());
       this.sparse =
           new SparseTransactions(
               poolConfig,
@@ -1571,7 +1571,7 @@ public class LayersTest extends BaseTransactionPoolTest {
               txPoolMetrics,
               (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
               new BlobCache(),
-              transactionEventNotifier);
+              transactionEventNotifier.newEmitter());
 
       this.ready =
           new ReadyTransactions(
@@ -1580,7 +1580,7 @@ public class LayersTest extends BaseTransactionPoolTest {
               txPoolMetrics,
               (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
               new BlobCache(),
-              transactionEventNotifier);
+              transactionEventNotifier.newEmitter());
 
       this.prio =
           new BaseFeePrioritizedTransactions(
@@ -1593,7 +1593,7 @@ public class LayersTest extends BaseTransactionPoolTest {
               new BlobCache(),
               MiningConfiguration.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE),
               senderBalanceChecker,
-              transactionEventNotifier);
+              transactionEventNotifier.newEmitter());
 
       final ProtocolContext protocolContext = mock(ProtocolContext.class);
       when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);

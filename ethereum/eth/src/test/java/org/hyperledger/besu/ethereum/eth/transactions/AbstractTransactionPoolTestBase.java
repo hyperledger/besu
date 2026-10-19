@@ -146,6 +146,8 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
   private ExecutionContextTestFixture executionContext;
   protected ProtocolContext protocolContext;
   protected TransactionPool transactionPool;
+  // the pending transactions instance created when the transaction pool was last enabled
+  protected PendingTransactions lastCreatedPendingTransactions;
   protected long blockGasLimit;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
@@ -281,7 +283,9 @@ public abstract class AbstractTransactionPoolTestBase extends TrustedSetupClassL
 
     final TransactionPool txPool =
         new TransactionPool(
-            () -> createPendingTransactions(poolConfig, transactionReplacementTester),
+            () ->
+                lastCreatedPendingTransactions =
+                    createPendingTransactions(poolConfig, transactionReplacementTester),
             protocolSchedule,
             protocolContext,
             transactionBroadcaster,
