@@ -44,10 +44,10 @@ public class TLoadOperationV2 extends AbstractOperationV2 {
     }
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
-    final Bytes32 slot = readBytes32At(stack, top, 0);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
+    final Bytes32 slot = readBytes32At(stack, top, 0);
     pushBytes(frame.getTransientStorageValue(frame.getRecipientAddress(), slot), stack, top - 1);
     return new OperationResult(cost, null);
   }
