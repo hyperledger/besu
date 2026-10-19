@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.proof;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -87,6 +89,33 @@ public class WorldStateProofProviderTest {
         worldStateProofProvider.getAccountProof(Hash.EMPTY, blockHash, address, new ArrayList<>());
 
     assertThat(accountProof).isEmpty();
+  }
+
+  @Test
+  public void getProofWhenAnotherWorldStateIsStoredAndTrieLogExists() {
+    final MerkleTrie<Bytes32, Bytes> worldStateTrie = emptyWorldStateTrie();
+    final PatriciaTrieAccountValue accountValue =
+        new PatriciaTrieAccountValue(1L, Wei.of(2L), Hash.EMPTY_TRIE_HASH, Hash.EMPTY);
+    worldStateTrie.put(
+        Bytes32.wrap(address.addressHash().getBytes()), RLP.encode(accountValue::writeTo));
+
+    final BonsaiWorldStateKeyValueStorage.Updater updater = worldStateKeyValueStorage.updater();
+    commitWorldStateTrie(worldStateTrie, updater);
+    // The stored root is another one, but a trie log leads to this block.
+    updater
+        .getWorldStateTransaction()
+        .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, Hash.ZERO.getBytes().toArrayUnsafe());
+    updater
+        .getTrieLogStorageTransaction()
+        .put(blockHash.getBytes().toArrayUnsafe(), Bytes.of(1).toArrayUnsafe());
+    updater.commit();
+
+    final Optional<WorldStateProof> accountProof =
+        worldStateProofProvider.getAccountProof(
+            Hash.wrap(worldStateTrie.getRootHash()), blockHash, address, new ArrayList<>());
+
+    assertThat(accountProof).isPresent();
+    assertThat(accountProof.get().getStateTrieAccountValue()).contains(accountValue);
   }
 
   @Test
