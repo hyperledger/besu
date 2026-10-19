@@ -23,9 +23,7 @@ public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
   /** The constant PUSH_BASE. */
   public static final int PUSH_BASE = 0x5F;
 
-  /**
-   * Size of the push, e.g. PUSH1, PUSH23, PUSH32
-   */
+  /** Size of the push, e.g. PUSH1, PUSH23, PUSH32 */
   protected final int length;
 
   /** The Push operation success result. */
