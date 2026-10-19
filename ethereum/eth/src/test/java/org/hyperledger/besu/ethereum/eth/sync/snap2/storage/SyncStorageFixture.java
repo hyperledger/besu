@@ -72,10 +72,7 @@ public final class SyncStorageFixture {
     };
   }
 
-  /**
-   * A flat world state keyed by hash, as the download writes it, for the trie build; {@link
-   * org.hyperledger.besu.ethereum.eth.sync.snap2.TestWorld} is the one that changes block by block.
-   */
+  /** A flat world state keyed by hash, as the download writes it. */
   public static final class World {
     public final TreeMap<Bytes32, PatriciaTrieAccountValue> accounts = new TreeMap<>();
     public final TreeMap<Bytes32, TreeMap<Bytes32, UInt256>> storage = new TreeMap<>();
@@ -99,21 +96,6 @@ public final class SyncStorageFixture {
           account.getBalance(),
           Hash.wrap(storageRoot(accountHash)),
           account.getCodeHash());
-    }
-
-    /** Returns the state root. */
-    public Bytes32 root() {
-      final SimpleMerklePatriciaTrie<Bytes32, Bytes> trie =
-          new SimpleMerklePatriciaTrie<>(Function.identity());
-      accounts.keySet().forEach(hash -> trie.put(hash, Accounts.encode(account(hash))));
-      return trie.getRootHash();
-    }
-
-    /** Returns the leaf values of the account trie. */
-    public NavigableMap<Bytes32, Bytes> accountLeaves() {
-      final TreeMap<Bytes32, Bytes> out = new TreeMap<>();
-      accounts.keySet().forEach(hash -> out.put(hash, Accounts.encode(account(hash))));
-      return out;
     }
 
     /** Returns the leaf values of a storage trie. */
