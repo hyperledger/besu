@@ -22,7 +22,7 @@ import org.apache.tuweni.bytes.Bytes;
 /**
  * Reads the operand stack of a frame for tracers, from whichever stack the interpreter running the
  * frame uses. {@link MessageFrame#getStackItem} and {@link MessageFrame#stackSize} only read the
- * EVM v1 stack.
+ * EVM v1 stack, and throw a {@link NullPointerException} on a frame EVM v2 runs, which has none.
  */
 public final class TracedStack {
 

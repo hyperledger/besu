@@ -451,9 +451,13 @@ public class MessageFrame {
   /**
    * Returns the item at the specified offset in the stack.
    *
+   * <p>Reads the EVM v1 stack only. A tracer reads the stack of a frame EVM v2 runs through {@link
+   * org.hyperledger.besu.evm.tracing.TracedStack}.
+   *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
+   * @throws NullPointerException if EVM v2 runs the frame, which has no EVM v1 stack
    */
   public Bytes getStackItem(final int offset) {
     return stack.get(offset);
@@ -501,7 +505,11 @@ public class MessageFrame {
   /**
    * Return the current stack size.
    *
+   * <p>Reads the EVM v1 stack only. A tracer reads the stack of a frame EVM v2 runs through {@link
+   * org.hyperledger.besu.evm.tracing.TracedStack}.
+   *
    * @return The current stack size
+   * @throws NullPointerException if EVM v2 runs the frame, which has no EVM v1 stack
    */
   public int stackSize() {
     return stack.size();
