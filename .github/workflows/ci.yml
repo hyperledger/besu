@@ -7,9 +7,10 @@ on:
   pull_request:
     branches:
       - main
-      - release-*
+      - release*
       - performance
       - '*-devnet-*'
+      - plugin-api-refactor
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -250,6 +251,9 @@ jobs:
     with:
       assemble_run_id: ${{ github.run_id }}
       cache_scope: ci-pr-build
+      # Only main writes the BuildKit cache; PRs read it, so per-PR layers no longer
+      # churn the shared 10 GB repo cache budget.
+      write_cache: ${{ github.ref == 'refs/heads/main' }}
 
   # only fires on merge to main, so 'develop' is kept up to date
   dockerPublish:
