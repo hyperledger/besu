@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.vm.operations.v2;
 
+import org.hyperledger.besu.ethereum.vm.operations.GasCostBenchmark;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.v2.operation.PopOperationV2;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -29,6 +31,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
+import org.openjdk.jmh.infra.BenchmarkParams;
 import org.openjdk.jmh.infra.Blackhole;
 
 /**
@@ -40,18 +43,23 @@ import org.openjdk.jmh.infra.Blackhole;
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
-public class PopOperationBenchmarkV2 {
+public class PopOperationBenchmarkV2 implements GasCostBenchmark {
 
   private MessageFrame frame;
 
   @Setup
   public void setUp() {
     frame = BenchmarkHelperV2.createMessageCallFrame();
-    BenchmarkHelperV2.pushUInt256(
-        frame, BenchmarkHelperV2.randomUInt256Value(ThreadLocalRandom.current()));
+    BenchmarkHelperV2.pushUInt256(frame, BenchmarkHelperV2.randomUInt256Value(new Random(435L)));
+  }
+
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
+    return new PopOperationV2(calc).getGasCost();
   }
 
   @Benchmark
+  @Override
   public void executeOperation(final Blackhole blackhole) {
     blackhole.consume(PopOperationV2.staticOperation(frame));
 

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -68,7 +68,7 @@ public class CountLeadingZerosOperationV2 extends AbstractFixedCostOperationV2 {
       // numberOfLeadingZeros(0) is 64, which makes a zero word 256
       leadingZeros = 192 + Long.numberOfLeadingZeros(stack[offset + 3]);
     }
-    pushLong(leadingZeros, stack, top - 1);
+    setLong(leadingZeros, stack, top - 1);
     return CLZ_SUCCESS;
   }
 }

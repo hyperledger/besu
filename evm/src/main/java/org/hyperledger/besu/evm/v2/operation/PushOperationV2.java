@@ -14,59 +14,58 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.fromBytesBE;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.getLongBE;
-
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.OverflowException;
-import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-/**
- * The PUSH0-32 operations. The interpreter runs them inline, so they exist only as static methods
- * and the fork's operation table has no instance of them.
- */
-public final class PushOperationV2 {
+/** The Push operation. */
+public abstract class PushOperationV2 extends AbstractFixedCostOperationV2 {
+  /** The constant PUSH_BASE. */
+  public static final int PUSH_BASE = 0x5F;
+
+  /** Size of the push, e.g. PUSH1, PUSH23, PUSH32 */
+  protected final int length;
+
   /** The Push operation success result. */
-  private static final OperationResult pushSuccess = new OperationResult(3, null);
-
-  /** The PUSH0 operation success result, at the base tier cost. */
   private static final OperationResult push0Success = new OperationResult(2, null);
 
-  private PushOperationV2() {}
+  private static final OperationResult pushSuccess = new OperationResult(3, null);
 
-  private static void pushUInt256ToStack(final MessageFrame frame, final UInt256 pushValue) {
-    if (!frame.ensureStackCapacityV2(1)) {
-      throw new OverflowException();
-    }
-    final long[] stack = frame.stackDataV2();
-    final int top = frame.stackTopV2();
-    final int offset = top << 2;
-    stack[offset] = pushValue.u3();
-    stack[offset + 1] = pushValue.u2();
-    stack[offset + 2] = pushValue.u1();
-    stack[offset + 3] = pushValue.u0();
-    frame.setTopV2(top + 1);
-  }
-
-  private static void pushLongToStack(final MessageFrame frame, final long u0) {
-    if (!frame.ensureStackCapacityV2(1)) {
-      throw new OverflowException();
-    }
-    final long[] stack = frame.stackDataV2();
-    final int top = frame.stackTopV2();
-    final int offset = top << 2;
-    stack[offset] = 0;
-    stack[offset + 1] = 0;
-    stack[offset + 2] = 0;
-    stack[offset + 3] = u0;
-    frame.setTopV2(top + 1);
+  /**
+   * Instantiates a new Push operation.
+   *
+   * @param length the length
+   * @param gasCalculator the gas calculator
+   */
+  public PushOperationV2(final int length, final GasCalculator gasCalculator) {
+    super(
+        PUSH_BASE + length,
+        "PUSH" + length,
+        0,
+        1,
+        gasCalculator,
+        length == 0 ? gasCalculator.getBaseTierGasCost() : gasCalculator.getVeryLowTierGasCost());
+    this.length = length;
   }
 
   /** Optimized version of PUSH opcode for PUSH0 and PUSH1 only. */
-  public static final class SingleByte {
+  public static class SingleByte extends PushOperationV2 {
 
-    private SingleByte() {}
+    /**
+     * Instantiates a new Push operation.
+     *
+     * @param length the length
+     * @param gasCalculator the gas calculator
+     */
+    public SingleByte(final int length, final GasCalculator gasCalculator) {
+      super(length, gasCalculator);
+    }
+
+    @Override
+    public OperationResult executeFixedCostOperation(final MessageFrame frame) {
+      final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+      return staticOperation(frame, code, frame.getPC(), length);
+    }
 
     /**
      * Performs Push operation statically.
@@ -79,22 +78,39 @@ public final class PushOperationV2 {
      */
     public static OperationResult staticOperation(
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+      if (!frame.ensureStackCapacityV2(1)) return OVERFLOW_RESPONSE;
       long u0 = 0;
       final int start = pc + 1;
       if (pushSize != 0 && start < code.length) {
         u0 = code[start] & 0xFFL;
       }
 
-      pushLongToStack(frame, u0);
+      final int top = frame.stackTopV2();
+      StackUtil.setLong(u0, frame.stackDataV2(), top);
+      frame.setTopV2(top + 1);
       frame.setPC(pc + pushSize);
       return pushSize == 0 ? push0Success : pushSuccess;
     }
   }
 
   /** Optimized version for PUSH opcode for PUSH2 to PUSH8. */
-  public static final class SingleLimb {
+  public static class SingleLimb extends PushOperationV2 {
 
-    private SingleLimb() {}
+    /**
+     * Instantiates a new Push operation.
+     *
+     * @param length the length
+     * @param gasCalculator the gas calculator
+     */
+    public SingleLimb(final int length, final GasCalculator gasCalculator) {
+      super(length, gasCalculator);
+    }
+
+    @Override
+    public OperationResult executeFixedCostOperation(final MessageFrame frame) {
+      final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+      return staticOperation(frame, code, frame.getPC(), length);
+    }
 
     /**
      * Performs Push operation statically.
@@ -107,9 +123,10 @@ public final class PushOperationV2 {
      */
     public static OperationResult staticOperation(
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+      if (!frame.ensureStackCapacityV2(1)) return OVERFLOW_RESPONSE;
       final int start = pc + 1;
       final int end = start + pushSize;
-      long u0 = getLongBE(code, start, Math.min(end, code.length));
+      long u0 = UInt256.getLongBE(code, start, Math.min(end, code.length));
 
       // Slow-path - when push is truncated and zeros need to be appended
       if (end > code.length) {
@@ -118,19 +135,35 @@ public final class PushOperationV2 {
         u0 <<= shift;
       }
 
-      pushLongToStack(frame, u0);
+      final int top = frame.stackTopV2();
+      StackUtil.setLong(u0, frame.stackDataV2(), top);
+      frame.setTopV2(top + 1);
       frame.setPC(pc + pushSize);
       return pushSuccess;
     }
   }
 
   /**
-   * Generic multi limb version of PUSH opcode, can execute PUSH0-32, but it should only be used for
+   * Generic multi limb version of PUSH opcode, can execute PUSH1-32, but it should only be used for
    * multiple long limbs because of performance.
    */
-  public static final class MultiLimb {
+  public static class MultiLimb extends PushOperationV2 {
 
-    private MultiLimb() {}
+    /**
+     * Instantiates a new Push operation.
+     *
+     * @param length the length
+     * @param gasCalculator the gas calculator
+     */
+    public MultiLimb(final int length, final GasCalculator gasCalculator) {
+      super(length, gasCalculator);
+    }
+
+    @Override
+    public OperationResult executeFixedCostOperation(final MessageFrame frame) {
+      final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+      return staticOperation(frame, code, frame.getPC(), length);
+    }
 
     /**
      * Performs Push operation statically.
@@ -143,17 +176,25 @@ public final class PushOperationV2 {
      */
     public static OperationResult staticOperation(
         final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
+      if (!frame.ensureStackCapacityV2(1)) return OVERFLOW_RESPONSE;
       final int start = pc + 1;
       final int end = start + pushSize;
-      final int remainingSize = Math.min(end, code.length) - start;
-      UInt256 pushValue = fromBytesBE(code, start, remainingSize);
-
-      // Slow-path - when push is truncated and zeros need to be appended
-      if (end > code.length) {
+      UInt256 pushValue;
+      if (end <= code.length) {
+        pushValue =
+            pushSize % 8 == 0
+                ? UInt256.fromBytesBEWholeLimbs(code, start, pushSize)
+                : UInt256.fromBytesBE(code, start, pushSize);
+      } else {
+        // Slow-path - when push is truncated and zeros need to be appended
+        final int remainingSize = code.length - start;
+        pushValue = UInt256.fromBytesBE(code, start, remainingSize);
         pushValue = pushValue.shiftLeft((pushSize - remainingSize) * 8);
       }
 
-      pushUInt256ToStack(frame, pushValue);
+      final int top = frame.stackTopV2();
+      StackUtil.setUInt256(pushValue, frame.stackDataV2(), top);
+      frame.setTopV2(top + 1);
       frame.setPC(pc + pushSize);
       return pushSuccess;
     }

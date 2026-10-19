@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushAddress;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readWeiAt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setAddress;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setZero;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -87,9 +87,9 @@ public abstract class AbstractCreateOperationV2 extends AbstractCreateOperation 
   protected void popArgumentsAndPushResult(final MessageFrame frame, final Address createdAddress) {
     final int resultSlot = frame.stackTopV2() - getStackItemsConsumed();
     if (createdAddress == null) {
-      pushZero(frame.stackDataV2(), resultSlot);
+      setZero(frame.stackDataV2(), resultSlot);
     } else {
-      pushAddress(createdAddress, frame.stackDataV2(), resultSlot);
+      setAddress(createdAddress, frame.stackDataV2(), resultSlot);
     }
     frame.setTopV2(resultSlot + 1);
   }

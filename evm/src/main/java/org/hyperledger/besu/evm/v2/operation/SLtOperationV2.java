@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.compareSigned;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -57,7 +57,7 @@ public class SLtOperationV2 extends AbstractFixedCostOperationV2 {
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final boolean lessThan = compareSigned(stack, (top - 1) << 2, (top - 2) << 2) < 0;
-    pushLong(lessThan ? 1L : 0L, stack, top - 2);
+    setLong(lessThan ? 1L : 0L, stack, top - 2);
     frame.setTopV2(top - 1);
     return SLT_SUCCESS;
   }

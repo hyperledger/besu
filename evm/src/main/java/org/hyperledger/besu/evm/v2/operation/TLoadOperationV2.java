@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushBytes;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readBytes32At;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setBytes;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -48,7 +48,7 @@ public class TLoadOperationV2 extends AbstractOperationV2 {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Bytes32 slot = readBytes32At(stack, top, 0);
-    pushBytes(frame.getTransientStorageValue(frame.getRecipientAddress(), slot), stack, top - 1);
+    setBytes(frame.getTransientStorageValue(frame.getRecipientAddress(), slot), stack, top - 1);
     return new OperationResult(cost, null);
   }
 }

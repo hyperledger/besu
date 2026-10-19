@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
@@ -64,7 +64,7 @@ public class ExtCodeSizeOperationV2 extends AbstractOperationV2 {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
     final Account account = getAccount(address, frame);
-    pushLong(account == null ? 0L : account.getCode().size(), stack, top - 1);
+    setLong(account == null ? 0L : account.getCode().size(), stack, top - 1);
     return new OperationResult(cost, null);
   }
 }

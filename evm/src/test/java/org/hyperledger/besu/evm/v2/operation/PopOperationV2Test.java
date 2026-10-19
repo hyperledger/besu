@@ -15,8 +15,8 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.v2.operation.AbstractOperationV2.UNDERFLOW_RESPONSE;
 import static org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2.getV2StackItem;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.UInt256;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2;
@@ -59,12 +58,12 @@ public class PopOperationV2Test {
 
   @Test
   void popStackEmpty() {
-    assertThrows(UnderflowException.class, () -> PopOperationV2.staticOperation(frame));
+    assertThat(PopOperationV2.staticOperation(frame)).isEqualTo(UNDERFLOW_RESPONSE);
   }
 
   @Test
   void popStackSingleValue() {
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
     PopOperationV2.staticOperation(frame);
 
     assertThat(frame.stackTopV2()).isEqualTo(0);
@@ -72,9 +71,9 @@ public class PopOperationV2Test {
 
   @Test
   void popStackValues() {
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x02}, 0, 1);
-    PushOperationV2.MultiLimb.staticOperation(frame, new byte[] {0x00, 0x03}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x01}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x02}, 0, 1);
+    PushOperationV2.SingleByte.staticOperation(frame, new byte[] {0x00, 0x03}, 0, 1);
     PopOperationV2.staticOperation(frame);
 
     assertThat(frame.stackTopV2()).isEqualTo(2);

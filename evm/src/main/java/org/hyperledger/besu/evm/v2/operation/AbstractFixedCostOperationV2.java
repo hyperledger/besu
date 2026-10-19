@@ -72,6 +72,15 @@ abstract class AbstractFixedCostOperationV2 extends AbstractOperationV2 {
   }
 
   /**
+   * Returns the fixed gas cost of this operation.
+   *
+   * @return the gas cost
+   */
+  public long getGasCost() {
+    return gasCost;
+  }
+
+  /**
    * Execute fixed cost operation.
    *
    * @param frame the frame

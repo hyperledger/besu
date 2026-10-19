@@ -16,7 +16,7 @@ package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushBytes32;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setBytes32;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -48,7 +48,7 @@ public class Keccak256OperationV2 extends AbstractOperationV2 {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    pushBytes32(keccak256(frame.readMutableMemory(from, length)), stack, top - 2);
+    setBytes32(keccak256(frame.readMutableMemory(from, length)), stack, top - 2);
     frame.setTopV2(top - 1);
     return new OperationResult(cost, null);
   }

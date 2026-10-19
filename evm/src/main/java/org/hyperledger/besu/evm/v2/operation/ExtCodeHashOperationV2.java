@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushHash;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setHash;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setZero;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
@@ -66,9 +66,9 @@ public class ExtCodeHashOperationV2 extends AbstractOperationV2 {
     }
     final Account account = getAccount(address, frame);
     if (account == null || account.isEmpty()) {
-      pushZero(stack, top - 1);
+      setZero(stack, top - 1);
     } else {
-      pushHash(account.getCodeHash(), stack, top - 1);
+      setHash(account.getCodeHash(), stack, top - 1);
     }
     return new OperationResult(cost, null);
   }

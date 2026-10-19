@@ -37,7 +37,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @OutputTimeUnit(value = TimeUnit.NANOSECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @BenchmarkMode(Mode.AverageTime)
-public abstract class PushOperationBenchmarkBase {
+public abstract class PushOperationBenchmarkBase implements GasCostBenchmark {
   private static final int SAMPLE_SIZE = 30_000;
   private static final int SMALL_CODE_SIZE = 64;
   private static final int LARGE_CODE_SIZE = 24_576;
@@ -74,7 +74,7 @@ public abstract class PushOperationBenchmarkBase {
 
   @Setup
   public void setUp() {
-    frame = createFrame();
+    frame = BenchmarkHelper.createMessageCallFrame();
     code =
         new byte
             [switch (getCodeSize()) {
@@ -82,7 +82,7 @@ public abstract class PushOperationBenchmarkBase {
               case "BIG" -> LARGE_CODE_SIZE;
               default -> throw new IllegalArgumentException("unknown code size " + getCodeSize());
             }];
-    final Random random = new Random();
+    final Random random = new Random(42L);
     random.nextBytes(code);
 
     final boolean randomSize = "RANDOM".equals(getPushSize());
@@ -107,41 +107,24 @@ public abstract class PushOperationBenchmarkBase {
       pcPool[i] =
           switch (pcType) {
             case FIRST_16BYTES -> random.nextInt(16);
-            case MID -> random.nextInt(code.length - size);
+            case MID -> random.nextInt(code.length - size - 1);
             case END -> code.length - 1 - size;
             case TRUNCATED -> code.length - 1 - (size > 1 ? random.nextInt(1, size) : 0);
             case OOB -> code.length - 1;
-            default -> throw new IllegalArgumentException("unknown position " + getPc());
+            default -> throw new IllegalArgumentException("unknown position " + pcType);
           };
     }
     index = 0;
   }
 
   @Benchmark
+  @Override
   public void executeOperation(final Blackhole blackhole) {
     blackhole.consume(invoke(frame, code, pcPool[index], pushSizePool[index]));
 
-    popResult(frame);
+    frame.popStackItem();
 
     index = (index + 1) % SAMPLE_SIZE;
-  }
-
-  /**
-   * Creates the frame the PUSH operations run on.
-   *
-   * @return the frame
-   */
-  protected MessageFrame createFrame() {
-    return BenchmarkHelper.createMessageCallFrame();
-  }
-
-  /**
-   * Removes the item a PUSH operation pushed.
-   *
-   * @param frame the frame
-   */
-  protected void popResult(final MessageFrame frame) {
-    frame.popStackItem();
   }
 
   protected abstract Operation.OperationResult invoke(

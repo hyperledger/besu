@@ -48,7 +48,7 @@ final class StackUtil {
    * @param stack the flat limb array (4 longs per 256-bit word)
    * @param top the slot index to write to
    */
-  static void pushZero(final long[] stack, final int top) {
+  static void setZero(final long[] stack, final int top) {
     final int offset = top << 2;
     stack[offset] = 0;
     stack[offset + 1] = 0;
@@ -63,7 +63,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushWei(final Wei wei, final long[] stack, final int top) {
+  static void setWei(final Wei wei, final long[] stack, final int top) {
     // TODO EVMv2 store this representation at Wei object construction time when switching from v2
     // to v1
     int offset = top << 2;
@@ -83,12 +83,27 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushLong(final long value, final long[] stack, final int top) {
+  static void setLong(final long value, final long[] stack, final int top) {
     final int offset = top << 2;
     stack[offset] = 0L;
     stack[offset + 1] = 0L;
     stack[offset + 2] = 0L;
     stack[offset + 3] = value;
+  }
+
+  /**
+   * Writes a {@code UInt256} big-endian value at the given stack slot.
+   *
+   * @param value the UInt256 value to write
+   * @param stack the flat limb array
+   * @param top the slot index to write to
+   */
+  static void setUInt256(final UInt256 value, final long[] stack, final int top) {
+    final int offset = top << 2;
+    stack[offset] = value.u3();
+    stack[offset + 1] = value.u2();
+    stack[offset + 2] = value.u1();
+    stack[offset + 3] = value.u0();
   }
 
   /**
@@ -100,7 +115,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushAddress(final Address address, final long[] stack, final int top) {
+  static void setAddress(final Address address, final long[] stack, final int top) {
     final int offset = top << 2;
     final byte[] b = address.getBytes().toArrayUnsafe();
     stack[offset] = 0L;
@@ -117,7 +132,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushBytes32(final @Nullable Bytes32 value, final long[] stack, final int top) {
+  static void setBytes32(final @Nullable Bytes32 value, final long[] stack, final int top) {
     final int offset = top << 2;
     if (value == null) {
       stack[offset] = 0L;
@@ -136,7 +151,7 @@ final class StackUtil {
   /**
    * Writes a 32-byte hash value as four big-endian limbs at the given stack slot.
    *
-   * <p>Deliberately separate from {@link #pushBytes32}: it gives BLOCKHASH and BLOBHASH their own
+   * <p>Deliberately separate from {@link #setBytes32}: it gives BLOCKHASH and BLOBHASH their own
    * {@code toArrayUnsafe()} call site, so the JIT's type profile for it is not shared with other
    * callers. When other callers pass several {@code Bytes} implementations to a shared helper, the
    * call can no longer be inlined, which made BLOBHASH about 28% slower in JMH (see PR #10962).
@@ -145,7 +160,7 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushHash(final BytesHolder hash, final long[] stack, final int top) {
+  static void setHash(final BytesHolder hash, final long[] stack, final int top) {
     final int offset = top << 2;
     final byte[] b = hash.getBytes().toArrayUnsafe();
     stack[offset] = (long) LONG_BE.get(b, 0);
@@ -180,13 +195,13 @@ final class StackUtil {
    * @param stack the flat limb array
    * @param top the slot index to write to
    */
-  static void pushBytes(final @Nullable Bytes value, final long[] stack, final int top) {
+  static void setBytes(final @Nullable Bytes value, final long[] stack, final int top) {
     if (value == null) {
-      pushZero(stack, top);
+      setZero(stack, top);
     } else if (value.size() == Bytes32.SIZE) {
-      pushBytes32(Bytes32.wrap(value), stack, top);
+      setBytes32(Bytes32.wrap(value), stack, top);
     } else {
-      pushBytes32(Bytes32.leftPad(value), stack, top);
+      setBytes32(Bytes32.leftPad(value), stack, top);
     }
   }
 
@@ -347,82 +362,5 @@ final class StackUtil {
     stack[bOffset + 1] = a1;
     stack[bOffset + 2] = a2;
     stack[bOffset + 3] = a3;
-  }
-
-  /**
-   * Convert {@code length} bytes starting at {@code offset} (inclusive) to a UInt256 value. If
-   * {@code length} is less than 32, the most significant bytes of the UInt256 are set to 0. If
-   * {@code length} is greater than 32, the most significant bytes are truncated (the low-order 32
-   * bytes are kept).
-   *
-   * @param bytes raw bytes in BigEndian order.
-   * @param offset start index of the bytes array to convert, inclusive
-   * @param length amount of bytes to take for conversion, caller must ensure >= 0 - unguarded
-   * @return Big-endian UInt256 represented by the bytes.
-   */
-  static UInt256 fromBytesBE(final byte[] bytes, final int offset, final int length) {
-    long u0 = 0, u1 = 0, u2 = 0, u3 = 0;
-    int end = offset + length;
-    if (bytes.length >= 8) {
-      int i0 = Math.max(offset, end - 8);
-      int i1 = Math.max(offset, end - 16);
-      int i2 = Math.max(offset, end - 24);
-      int i3 = Math.max(offset, end - 32);
-      u0 = getLongUnsafe(bytes, i0, end);
-      u1 = getLongUnsafe(bytes, i1, i0);
-      u2 = getLongUnsafe(bytes, i2, i1);
-      u3 = getLongUnsafe(bytes, i3, i2);
-      return new UInt256(u3, u2, u1, u0);
-    } else if (bytes.length != 0) {
-      u0 = getLongSlow(bytes, offset, end);
-    }
-    return new UInt256(u3, u2, u1, u0);
-  }
-
-  /**
-   * Convert a sequence of bytes starting at {@code from} (inclusive) to {@code to} (exclusive) to a
-   * long value. If {@code to - from < 8}, the most significant bytes are set to 0. This method
-   * cannot be used when {@code to - from > 8} or {@code to > bytes.length} as it will give
-   * incorrect results, or it may crash.
-   *
-   * @param bytes raw bytes in BigEndian order
-   * @param from start index of the bytes array to convert, inclusive
-   * @param to end index of the bytes array, exclusive
-   * @return Big-endian long value
-   */
-  static long getLongBE(final byte[] bytes, final int from, final int to) {
-    long value = 0;
-    if (bytes.length >= 8) {
-      value = getLongUnsafe(bytes, from, to);
-    } else if (bytes.length != 0) {
-      value = getLongSlow(bytes, from, to);
-    }
-    return value;
-  }
-
-  private static long getLongUnsafe(final byte[] bytes, final int from, final int to) {
-    assert to <= bytes.length && to - from <= 8
-        : "to=" + to + " from=" + from + " indices out of bounds";
-
-    if (from >= to) return 0L;
-    int start = Math.max(0, to - 8);
-    long value = (long) LONG_BE.get(bytes, start);
-    // shift value to trim off any suffix of bits
-    int shift = (Long.BYTES - (to - start)) * 8;
-    value >>>= shift;
-    // mask out value to trim off any prefix of bits
-    shift = (Long.BYTES - (to - from)) * 8;
-    return value & (-1L >>> shift);
-  }
-
-  private static long getLongSlow(final byte[] bytes, final int from, final int to) {
-    assert to <= bytes.length && to - from <= 8
-        : "to=" + to + " from=" + from + " indices out of bounds";
-
-    long value = 0;
-    for (int i = to - 1, shift = 0; i >= from; i--, shift += 8) {
-      value |= ((bytes[i] & 0xFFL) << shift);
-    }
-    return value;
   }
 }

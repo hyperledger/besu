@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushBytes;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setBytes;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -46,7 +46,7 @@ public class MLoadOperationV2 extends AbstractOperationV2 {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    pushBytes(frame.readMutableMemory(location, 32, true), stack, top - 1);
+    setBytes(frame.readMutableMemory(location, 32, true), stack, top - 1);
     return new OperationResult(cost, null);
   }
 }

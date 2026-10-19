@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -65,7 +65,7 @@ public class ByteOperationV2 extends AbstractFixedCostOperationV2 {
       final long limb = stack[valueOffset + (index >>> 3)];
       result = (limb >>> ((7 - (index & 7)) << 3)) & 0xFFL;
     }
-    pushLong(result, stack, top - 2);
+    setLong(result, stack, top - 2);
     frame.setTopV2(top - 1);
     return BYTE_SUCCESS;
   }

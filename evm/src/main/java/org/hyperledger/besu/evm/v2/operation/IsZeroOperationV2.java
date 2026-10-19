@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.isZeroAt;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -56,7 +56,7 @@ public class IsZeroOperationV2 extends AbstractFixedCostOperationV2 {
     if (!frame.stackHasItemsV2(1)) return UNDERFLOW_RESPONSE;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
-    pushLong(isZeroAt(stack, top, 0) ? 1L : 0L, stack, top - 1);
+    setLong(isZeroAt(stack, top, 0) ? 1L : 0L, stack, top - 1);
     return ISZERO_SUCCESS;
   }
 }

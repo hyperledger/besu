@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -74,7 +74,7 @@ public class EqOperationV2 extends AbstractOperationV2 {
             && stack[aOffset + 1] == stack[bOffset + 1]
             && stack[aOffset + 2] == stack[bOffset + 2]
             && stack[aOffset + 3] == stack[bOffset + 3];
-    pushLong(equal ? 1L : 0L, stack, top - 2);
+    setLong(equal ? 1L : 0L, stack, top - 2);
     frame.setTopV2(top - 1);
     return EQ_SUCCESS;
   }

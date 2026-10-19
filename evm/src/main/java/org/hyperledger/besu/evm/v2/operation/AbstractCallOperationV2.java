@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -55,7 +55,7 @@ public abstract class AbstractCallOperationV2 extends AbstractCallOperation {
   @Override
   protected void popArgumentsAndPushResult(final MessageFrame frame, final boolean success) {
     final int resultSlot = frame.stackTopV2() - getStackItemsConsumed();
-    pushLong(success ? 1L : 0L, frame.stackDataV2(), resultSlot);
+    setLong(success ? 1L : 0L, frame.stackDataV2(), resultSlot);
     frame.setTopV2(resultSlot + 1);
   }
 }

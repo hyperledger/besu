@@ -17,9 +17,12 @@ package org.hyperledger.besu.ethereum.vm.operations;
 import static org.hyperledger.besu.evm.operation.PushOperation.staticOperation;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.operation.PushOperation;
 
 import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.infra.BenchmarkParams;
 
 public class PushOperationBenchmark extends PushOperationBenchmarkBase {
 
@@ -55,5 +58,11 @@ public class PushOperationBenchmark extends PushOperationBenchmarkBase {
   protected Operation.OperationResult invoke(
       final MessageFrame frame, final byte[] code, final int pc, final int pushSize) {
     return staticOperation(frame, code, pc, pushSize);
+  }
+
+  @Override
+  public long getGasCost(final BenchmarkParams params, final GasCalculator calc) {
+    // cost is the same throughout
+    return new PushOperation(32, calc).getGasCost();
   }
 }

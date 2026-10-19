@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushBytes32;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setBytes32;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setZero;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -46,18 +46,18 @@ public class CallDataLoadOperationV2 extends AbstractFixedCostOperationV2 {
     // An offset that does not fit in an int starts after any call data, so the word is zero.
     if ((stack[offset] | stack[offset + 1] | stack[offset + 2]) != 0
         || Long.compareUnsigned(stack[offset + 3], Integer.MAX_VALUE) > 0) {
-      pushZero(stack, top - 1);
+      setZero(stack, top - 1);
       return successResponse;
     }
     final int start = (int) stack[offset + 3];
     final Bytes data = frame.getInputData();
     if (start >= data.size()) {
-      pushZero(stack, top - 1);
+      setZero(stack, top - 1);
       return successResponse;
     }
     final MutableBytes32 word = MutableBytes32.create();
     data.slice(start, Math.min(Bytes32.SIZE, data.size() - start)).copyTo(word, 0);
-    pushBytes32(word, stack, top - 1);
+    setBytes32(word, stack, top - 1);
     return successResponse;
   }
 }

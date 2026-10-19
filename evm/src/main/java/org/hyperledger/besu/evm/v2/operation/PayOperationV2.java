@@ -15,9 +15,9 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.v2.operation.AbstractOperationV2.UNDERFLOW_RESPONSE;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushLong;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readWeiAt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -64,7 +64,7 @@ public class PayOperationV2 extends PayOperation {
   @Override
   protected void popArgumentsAndPushResult(final MessageFrame frame, final boolean success) {
     final int resultSlot = frame.stackTopV2() - getStackItemsConsumed();
-    pushLong(success ? 1L : 0L, frame.stackDataV2(), resultSlot);
+    setLong(success ? 1L : 0L, frame.stackDataV2(), resultSlot);
     frame.setTopV2(resultSlot + 1);
   }
 }
