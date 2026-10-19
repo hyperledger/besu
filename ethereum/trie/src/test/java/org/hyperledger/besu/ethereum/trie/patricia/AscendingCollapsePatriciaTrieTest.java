@@ -252,12 +252,16 @@ class AscendingCollapsePatriciaTrieTest {
         List.of(
             Bytes.fromHexString("0x12" + "00".repeat(31)),
             Bytes.fromHexString("0x13" + "00".repeat(31)));
-    final AscendingCollapsePatriciaTrie trie = new AscendingCollapsePatriciaTrie();
+    final List<Bytes> handed = new ArrayList<>();
+    final AscendingCollapsePatriciaTrie trie =
+        new AscendingCollapsePatriciaTrie((location, hash, node) -> handed.add(location));
     trie.insert(first, value(first));
     // The group's prefix is nibble 1, which the first key also starts with.
     assertThatThrownBy(() -> trie.insert(trie.prepare(group, values(group))))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("complete subtree");
+    // the split rejects the group before it hands the first key, which the group would finish
+    assertThat(handed).doesNotContain(Bytes.of(1, 1));
 
     // Keys that differ at the first nibble can only be the whole trie.
     final List<Bytes> whole =
@@ -269,6 +273,43 @@ class AscendingCollapsePatriciaTrieTest {
     assertThatThrownBy(() -> other.insert(other.prepare(whole, values(whole))))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("complete subtree");
+  }
+
+  @Test
+  void rejectsAKeyThePreparedKeysMissed() {
+    final List<Bytes> group =
+        List.of(
+            Bytes.fromHexString("0x00" + "00".repeat(31)),
+            Bytes.fromHexString("0x0550" + "00".repeat(30)));
+    final AscendingCollapsePatriciaTrie trie = new AscendingCollapsePatriciaTrie();
+    trie.insert(trie.prepare(group, values(group)));
+    // the missed key goes under the second prepared key, already collapsed
+    final Bytes missed = Bytes.fromHexString("0x0580" + "00".repeat(30));
+    assertThatThrownBy(() -> trie.insert(missed, value(missed)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("complete subtree");
+  }
+
+  @Test
+  void insertsAgainAKeyWhoseInsertThrew() {
+    final List<Bytes> keys = hashedKeys(2);
+    final boolean[] failing = {true};
+    final AscendingCollapsePatriciaTrie trie =
+        new AscendingCollapsePatriciaTrie(
+            (location, hash, node) -> {
+              if (failing[0]) {
+                failing[0] = false;
+                throw new IllegalStateException("sink down");
+              }
+            });
+    trie.insert(keys.get(0), value(keys.get(0)));
+    // the second key finishes the subtree of the first, which the sink fails to take
+    assertThatThrownBy(() -> trie.insert(keys.get(1), value(keys.get(1)))).hasMessage("sink down");
+    assertThat(trie.insertCount()).isEqualTo(1);
+
+    trie.insert(keys.get(1), value(keys.get(1)));
+    assertThat(trie.insertCount()).isEqualTo(2);
+    assertThat(trie.rootHash()).isEqualTo(plainRoot(keys));
   }
 
   @Test

@@ -89,7 +89,13 @@ public final class AscendingCollapsePatriciaTrie {
   }
 
   private final DefaultNodeFactory<Bytes> nodeFactory =
-      new DefaultNodeFactory<>(Function.identity());
+      new DefaultNodeFactory<>(Function.identity()) {
+        @Override
+        public Optional<Node<Bytes>> retrieve(final Bytes location, final Bytes32 hash) {
+          // only a key the prepared keys should have held reaches a collapsed subtree
+          throw new IllegalArgumentException("prepared keys do not form a complete subtree");
+        }
+      };
   private final NodeUpdater sink;
   private Node<Bytes> root = NullNode.instance();
   private Bytes lastKey;
@@ -115,7 +121,8 @@ public final class AscendingCollapsePatriciaTrie {
   /**
    * Inserts {@code (key, value)} in strictly ascending key order.
    *
-   * @throws IllegalArgumentException if order is violated or value is empty
+   * @throws IllegalArgumentException if order is violated, value is empty, or the key belongs to a
+   *     prepared subtree that misses it
    * @throws IllegalStateException if the trie has already been sealed
    */
   public void insert(final Bytes key, final Bytes value) {
@@ -130,10 +137,10 @@ public final class AscendingCollapsePatriciaTrie {
     }
     final Bytes path = bytesToPath(key);
     final Bytes finished = finished(lastPath, path);
+    root = root.accept(new AscendingCollapsePutVisitor(nodeFactory, value, finished, sink), path);
     lastKey = key;
     lastPath = path;
     insertCount++;
-    root = root.accept(new AscendingCollapsePutVisitor(nodeFactory, value, finished, sink), path);
   }
 
   /**
@@ -245,6 +252,7 @@ public final class AscendingCollapsePatriciaTrie {
     insert(
         new Subtree(
             keyUnder(location, (byte) 0),
+            // never written: the key is after every key in the trie, so only newNode places it
             Bytes.EMPTY,
             keyUnder(location, (byte) 0x0f),
             0,

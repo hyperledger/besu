@@ -18,8 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.patricia.DefaultNodeFactory;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
@@ -91,6 +95,25 @@ class RangeProofTest {
   }
 
   @Test
+  void acceptsAnEmptyTrieWithoutProof() {
+    final List<Bytes> handed = new ArrayList<>();
+    final RangeProof.Result result =
+        RangeProof.verify(
+            MerkleTrie.EMPTY_TRIE_NODE_HASH,
+            Bytes32.ZERO,
+            List.of(),
+            List.of(),
+            List.of(),
+            (location, hash, node) -> handed.add(node));
+
+    assertThat(result.valid()).isTrue();
+    assertThat(result.hasMore()).isFalse();
+    assertThat(handed).isEmpty();
+    // no keys without proof is the whole trie only when it is empty
+    assertThat(verify(Bytes32.ZERO, new TreeMap<>(), List.of()).valid()).isFalse();
+  }
+
+  @Test
   void rejectsAPartialTrieWithoutProof() {
     assertThat(verify(Bytes32.ZERO, firstEntriesFrom(Bytes32.ZERO, 10), List.of()).valid())
         .isFalse();
@@ -149,6 +172,23 @@ class RangeProofTest {
     slice.put(new ArrayList<>(slice.keySet()).get(5), Bytes.of(1, 2, 3));
 
     assertThat(verify(origin, slice, proof).valid()).isFalse();
+  }
+
+  // the sink only gets the nodes of a response whose root matches
+  @Test
+  void handsNothingForAnInvalidResponse() {
+    final Bytes32 origin = entries.firstKey();
+    final TreeMap<Bytes32, Bytes> slice = new TreeMap<>(firstEntriesFrom(origin, 30));
+    final List<Bytes> proof = proof(origin, slice.lastKey());
+    slice.put(new ArrayList<>(slice.keySet()).get(5), Bytes.of(1, 2, 3));
+    final TreeMap<Bytes32, Bytes> whole = new TreeMap<>(entries);
+    whole.put(whole.firstKey(), Bytes.of(1, 2, 3));
+    final List<Bytes> handed = new ArrayList<>();
+    final NodeUpdater sink = (location, hash, node) -> handed.add(node);
+
+    assertThat(verify(origin, slice, proof, sink).valid()).isFalse();
+    assertThat(verify(Bytes32.ZERO, whole, List.of(), sink).valid()).isFalse();
+    assertThat(handed).isEmpty();
   }
 
   @Test
@@ -270,6 +310,28 @@ class RangeProofTest {
             List.of(),
             List.of(),
             List.of(rootNode));
+    assertThat(result.valid()).isFalse();
+  }
+
+  @Test
+  void rejectsABranchBelowTheKeyDepth() {
+    // an extension of 63 nibbles over a branch puts the next branch at depth 64, below every key
+    final DefaultNodeFactory<Bytes> factory = new DefaultNodeFactory<>(Function.identity());
+    final Node<Bytes> leaf =
+        factory.createLeaf(Bytes.of(CompactEncoding.LEAF_TERMINATOR), Bytes.wrap(new byte[40]));
+    final Node<Bytes> deepest = factory.createBranch((byte) 0, leaf, (byte) 1, leaf);
+    final Node<Bytes> branch = factory.createBranch((byte) 1, deepest, (byte) 2, leaf);
+    final Node<Bytes> rootNode =
+        factory.createExtension(Bytes.fromHexString("0x" + "01".repeat(63)), branch);
+
+    final RangeProof.Result result =
+        RangeProof.verify(
+            rootNode.getHash(),
+            Bytes32.fromHexString("0x" + "11".repeat(32)),
+            List.of(),
+            List.of(),
+            List.of(
+                rootNode.getEncodedBytes(), branch.getEncodedBytes(), deepest.getEncodedBytes()));
     assertThat(result.valid()).isFalse();
   }
 

@@ -56,9 +56,9 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
 
     final byte extensionIndex = extensionPath.get(commonPathLength);
     validateSplitDirection(leafIndex, extensionIndex);
+    final Node<V> leaf = newNode(leafPath);
     final Node<V> updatedExtension =
         mapAttachedSibling(extensionNode.replacePath(extensionPath.slice(commonPathLength + 1)));
-    final Node<V> leaf = newNode(leafPath);
     final Node<V> branch =
         nodeFactory.createBranch(leafIndex, leaf, extensionIndex, updatedExtension);
 
@@ -104,9 +104,9 @@ public class PutVisitor<V> implements PathNodeVisitor<V> {
     final byte updatedLeafIndex = leafPath.get(commonPathLength);
 
     validateSplitDirection(newLeafIndex, updatedLeafIndex);
+    final Node<V> leaf = newNode(newLeafPath);
     final Node<V> updatedLeaf =
         mapAttachedSibling(leafNode.replacePath(leafPath.slice(commonPathLength + 1)));
-    final Node<V> leaf = newNode(newLeafPath);
     final Node<V> branch =
         nodeFactory.createBranch(updatedLeafIndex, updatedLeaf, newLeafIndex, leaf);
     if (commonPathLength > 0) {

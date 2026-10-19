@@ -66,14 +66,37 @@ public final class RangeProof {
       final List<Bytes32> keys,
       final List<Bytes> values,
       final List<Bytes> proof) {
-    return verify(rootHash, origin, keys, values, proof, null);
+    return check(rootHash, origin, keys, values, proof, null);
   }
 
   /**
-   * Verifies a range response and hands the nodes it rebuilds to the sink: those of the trie with a
-   * key in the range, then the root. The ranges of one root together give every node of its trie.
+   * Verifies a range response and, once the root matches, hands the nodes it rebuilds to the sink:
+   * those of the trie with a key in the range, then the root. The ranges of one root together give
+   * every node of its trie.
    */
   public static Result verify(
+      final Bytes32 rootHash,
+      final Bytes32 origin,
+      final List<Bytes32> keys,
+      final List<Bytes> values,
+      final List<Bytes> proof,
+      final NodeUpdater sink) {
+    final List<Handed> handed = new ArrayList<>();
+    final Result result =
+        check(
+            rootHash,
+            origin,
+            keys,
+            values,
+            proof,
+            (location, hash, node) -> handed.add(new Handed(location, hash, node)));
+    if (result.valid()) {
+      handed.forEach(node -> sink.store(node.location(), node.hash(), node.node()));
+    }
+    return result;
+  }
+
+  private static Result check(
       final Bytes32 rootHash,
       final Bytes32 origin,
       final List<Bytes32> keys,
@@ -85,7 +108,7 @@ public final class RangeProof {
     }
     try {
       if (proof.isEmpty()) {
-        if (keys.isEmpty() || !origin.isZero()) {
+        if (!origin.isZero()) {
           return Result.INVALID;
         }
         return computeRoot(keys, values, sink).equals(rootHash)
@@ -169,6 +192,8 @@ public final class RangeProof {
 
   private record Sealed(Bytes location, Bytes ref) {}
 
+  private record Handed(Bytes location, Bytes32 hash, Bytes node) {}
+
   private enum Relation {
     LEFT,
     RIGHT,
@@ -195,6 +220,9 @@ public final class RangeProof {
       final RLPInput in = RLP.input(rlp);
       final int items = in.enterList();
       if (items == 17) {
+        if (location.size() >= 64) {
+          throw new IllegalArgumentException("branch at the wrong depth");
+        }
         for (int i = 0; i < 16; i++) {
           final Bytes child = readRef(in);
           if (child != null) {
