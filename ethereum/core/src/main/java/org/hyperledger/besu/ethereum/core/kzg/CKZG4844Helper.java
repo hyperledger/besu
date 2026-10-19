@@ -167,6 +167,8 @@ public class CKZG4844Helper {
             bundle.getBlobCellsBytes().orElseThrow().toArrayUnsafe());
     final Bytes extendedCells = Bytes.wrap(recovered.getCells());
 
+    checkProofsAreTheRecoveredOnes(bundle, recovered);
+
     // The recovered cells are handed over rather than left to be computed from the blob: recovery
     // has just produced them, and they are the whole set, so the bundle can serve every cell.
     return new BlobProofBundle(
@@ -176,9 +178,38 @@ public class CKZG4844Helper {
         new Blob(extendedCells.slice(0, BLOB_SIZE)),
         extendedCells,
         bundle.getKzgCommitment(),
-        // the proofs the sender committed to, which recovery would only recompute
+        // the proofs the transaction arrived with, now known to be the blob's own
         bundle.getKzgProof(),
         bundle.getVersionedHash());
+  }
+
+  /**
+   * Checks the cell proofs the transaction arrived with against the ones recovery computed.
+   *
+   * <p>A partially sampled bundle can only have been verified over the cells it holds, so the
+   * proofs for every other cell arrived unchecked, and the recovered bundle presents all of them as
+   * the blob's. Recovery computes them anyway on its way to the cells, so comparing costs nothing
+   * beyond the comparison itself, and a cell proof is determined by the blob and the cell index:
+   * the recovered ones are therefore the only proofs the blob can have.
+   *
+   * <p>A mismatch means the transaction is not valid and no node will accept it. It is refused here
+   * rather than repaired with the recovered proofs, which would leave this node the only one
+   * holding a version of the transaction that verifies.
+   *
+   * @param bundle the bundle being recovered
+   * @param recovered what recovery returned for it
+   */
+  private static void checkProofsAreTheRecoveredOnes(
+      final BlobProofBundle bundle, final CellsAndProofs recovered) {
+    final List<KZGProof> sentProofs = bundle.getKzgProof();
+    final List<KZGProof> recoveredProofs = extractKZGProofs(recovered.getProofs());
+    for (int cellIndex = 0; cellIndex < recoveredProofs.size(); cellIndex++) {
+      checkArgument(
+          recoveredProofs.get(cellIndex).equals(sentProofs.get(cellIndex)),
+          "Proof for cell %s of blob %s is not the proof of the cell it recovers to",
+          cellIndex,
+          bundle.getVersionedHash());
+    }
   }
 
   /**
