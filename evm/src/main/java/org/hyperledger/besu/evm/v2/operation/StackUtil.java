@@ -33,7 +33,7 @@ import org.jspecify.annotations.Nullable;
  * where u3 is the most-significant limb. This class has a default modifier (package-private)
  * because it shouldn't be used outside the EVM operations
  */
-final class StackUtil {
+public final class StackUtil {
 
   private static final VarHandle LONG_BE =
       MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
@@ -213,7 +213,7 @@ final class StackUtil {
    * @param depth 0 for the topmost item, 1 for the item below, etc.
    * @return the word as 32 bytes
    */
-  static Bytes32 readBytes32At(final long[] stack, final int top, final int depth) {
+  public static Bytes32 readBytes32At(final long[] stack, final int top, final int depth) {
     final int off = (top - 1 - depth) << 2;
     final byte[] bytes = new byte[32];
     LONG_BE.set(bytes, 0, stack[off]);
@@ -221,6 +221,26 @@ final class StackUtil {
     LONG_BE.set(bytes, 16, stack[off + 2]);
     LONG_BE.set(bytes, 24, stack[off + 3]);
     return Bytes32.wrap(bytes);
+  }
+
+  /**
+   * Returns whether the 256-bit word at the given depth below the top of the stack equals the given
+   * 32 big-endian bytes.
+   *
+   * @param bytes the bytes to compare with
+   * @param stack the flat limb array
+   * @param top current stack-top (item count)
+   * @param depth 0 for the topmost item, 1 for the item below, etc.
+   * @return true if the word equals the bytes
+   */
+  public static boolean wordEquals(
+      final Bytes32 bytes, final long[] stack, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    final byte[] array = bytes.toArrayUnsafe();
+    return (long) LONG_BE.get(array, 0) == stack[off]
+        && (long) LONG_BE.get(array, 8) == stack[off + 1]
+        && (long) LONG_BE.get(array, 16) == stack[off + 2]
+        && (long) LONG_BE.get(array, 24) == stack[off + 3];
   }
 
   /**

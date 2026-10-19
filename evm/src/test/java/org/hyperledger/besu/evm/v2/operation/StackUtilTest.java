@@ -84,6 +84,22 @@ class StackUtilTest {
   }
 
   @Test
+  void comparesAWordWithItsBytes() {
+    final Bytes32 word =
+        Bytes32.fromHexString("0x0123456789abcdeffedcba98765432100f1e2d3c4b5a69788796a5b4c3d2e1f0");
+    final long[] stack = new long[8];
+    StackUtil.setBytes32(word, stack, 1);
+
+    assertThat(StackUtil.wordEquals(word, stack, 2, 0)).isTrue();
+    assertThat(StackUtil.wordEquals(word, stack, 2, 1)).isFalse();
+    for (int i = 0; i < 32; i += 8) {
+      final byte[] changed = word.toArray();
+      changed[i] ^= 1;
+      assertThat(StackUtil.wordEquals(Bytes32.wrap(changed), stack, 2, 0)).isFalse();
+    }
+  }
+
+  @Test
   void pushesShortAndMissingValuesRightAligned() {
     final long[] stack = new long[8];
     StackUtil.setBytes(Bytes.of(0x12, 0x34), stack, 0);

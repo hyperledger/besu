@@ -31,11 +31,9 @@ import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.v2.operation.StackUtil;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -204,9 +202,6 @@ public class MessageFrame {
 
   // Most frames stay far below the maximum, and a frame allocates its stack on every call.
   private static final int INITIAL_STACK_CAPACITY_V2 = 32;
-
-  private static final VarHandle LONG_BE =
-      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
 
   // Global data fields.
   private final WorldUpdater worldUpdater;
@@ -554,32 +549,16 @@ public class MessageFrame {
       throw new UnderflowException();
     }
     final int slot = stackTopV2 - 1 - offset;
-    final int index = slot << 2;
-    final long u3 = stackDataV2[index];
-    final long u2 = stackDataV2[index + 1];
-    final long u1 = stackDataV2[index + 2];
-    final long u0 = stackDataV2[index + 3];
     if (stackViewV2 == null) {
       stackViewV2 = new Bytes32[stackDataV2.length >> 2];
     } else if (stackViewV2.length < stackDataV2.length >> 2) {
       stackViewV2 = Arrays.copyOf(stackViewV2, stackDataV2.length >> 2);
     }
     final Bytes32 cached = stackViewV2[slot];
-    if (cached != null) {
-      final byte[] cachedBytes = cached.toArrayUnsafe();
-      if ((long) LONG_BE.get(cachedBytes, 0) == u3
-          && (long) LONG_BE.get(cachedBytes, 8) == u2
-          && (long) LONG_BE.get(cachedBytes, 16) == u1
-          && (long) LONG_BE.get(cachedBytes, 24) == u0) {
-        return cached;
-      }
+    if (cached != null && StackUtil.wordEquals(cached, stackDataV2, stackTopV2, offset)) {
+      return cached;
     }
-    final byte[] bytes = new byte[32];
-    LONG_BE.set(bytes, 0, u3);
-    LONG_BE.set(bytes, 8, u2);
-    LONG_BE.set(bytes, 16, u1);
-    LONG_BE.set(bytes, 24, u0);
-    final Bytes32 item = Bytes32.wrap(bytes);
+    final Bytes32 item = StackUtil.readBytes32At(stackDataV2, stackTopV2, offset);
     stackViewV2[slot] = item;
     return item;
   }
