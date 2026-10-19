@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.crypto;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1.SECP256K1_EC_UNCOMPRESSED;
 
 import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1;
@@ -52,7 +53,6 @@ public class SECP256K1 extends AbstractSECP256 {
   private static final Logger LOG = LoggerFactory.getLogger(SECP256K1.class);
 
   private boolean useNative;
-  private boolean useNativeEcdh;
 
   /** The constant CURVE_NAME. */
   public static final String CURVE_NAME = "secp256k1";
@@ -68,7 +68,6 @@ public class SECP256K1 extends AbstractSECP256 {
   @Override
   public void disableNative() {
     useNative = false;
-    useNativeEcdh = false;
   }
 
   /**
@@ -84,18 +83,22 @@ public class SECP256K1 extends AbstractSECP256 {
       LOG.info("Native secp256k1 not available - {}", e.getMessage());
       useNative = false;
     }
-    try {
-      useNativeEcdh = useNative && LibSecp256k1JNI.ENABLED;
-    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
-      LOG.info("Native secp256k1 ECDH not available - {}", e.getMessage());
-      useNativeEcdh = false;
-    }
     return useNative;
   }
 
   @Override
   public boolean isNative() {
     return useNative;
+  }
+
+  /**
+   * Whether the native ECDH and ecrecover can be used. They are in a second native library, which
+   * can fail to load on its own.
+   *
+   * @return true if the native library and its JNI functions are enabled.
+   */
+  public boolean isNativeJniEnabled() {
+    return useNative && LibSecp256k1JNI.ENABLED;
   }
 
   /**
@@ -165,21 +168,19 @@ public class SECP256K1 extends AbstractSECP256 {
   @Override
   public Bytes32 calculateECDHKeyAgreement(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
-    final byte[] sharedPoint = useNativeEcdh ? calculateECDHNative(privKey, theirPubKey) : null;
-    if (sharedPoint == null) {
-      return super.calculateECDHKeyAgreement(privKey, theirPubKey);
+    if (isNativeJniEnabled()) {
+      return Bytes32.wrap(calculateECDHNative(privKey, theirPubKey), 1);
     }
-    return Bytes32.wrap(sharedPoint, 1);
+    return super.calculateECDHKeyAgreement(privKey, theirPubKey);
   }
 
   @Override
   public Bytes calculateECDHKeyAgreementCompressed(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
-    final byte[] sharedPoint = useNativeEcdh ? calculateECDHNative(privKey, theirPubKey) : null;
-    if (sharedPoint == null) {
-      return super.calculateECDHKeyAgreementCompressed(privKey, theirPubKey);
+    if (isNativeJniEnabled()) {
+      return Bytes.wrap(calculateECDHNative(privKey, theirPubKey));
     }
-    return Bytes.wrap(sharedPoint);
+    return super.calculateECDHKeyAgreementCompressed(privKey, theirPubKey);
   }
 
   @Override
@@ -187,20 +188,16 @@ public class SECP256K1 extends AbstractSECP256 {
     return CURVE_NAME;
   }
 
-  /**
-   * Returns the compressed shared point, or null if the native library rejects the keys. Rejected
-   * keys go to the BouncyCastle path, so that invalid input fails with the same exceptions.
-   */
-  private byte @Nullable [] calculateECDHNative(
+  private byte[] calculateECDHNative(
       final SECPPrivateKey privKey, final SECPPublicKey theirPubKey) {
-    if (privKey == null || theirPubKey == null) {
-      return null;
-    }
+    checkArgument(privKey != null, "missing private key");
+    checkArgument(theirPubKey != null, "missing remote public key");
     final byte[] sharedPoint = new byte[33];
     if (LibSecp256k1JNI.secp256k1_ecdh_jni(
             theirPubKey.getEncoded(), privKey.getEncoded(), sharedPoint)
         != 0) {
-      return null;
+      throw new IllegalArgumentException(
+          "Could not calculate ECDH key agreement. Public key or private key is invalid.");
     }
     return sharedPoint;
   }

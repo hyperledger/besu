@@ -216,6 +216,30 @@ public class SECP256K1Test {
   }
 
   @Test
+  public void ecdhWithZeroPrivateKeyThrows() {
+    final SECPPrivateKey zero = secp256K1.createPrivateKey(Bytes32.ZERO);
+    final SECPPublicKey pub = secp256K1.generateKeyPair().getPublicKey();
+
+    assertThatThrownBy(() -> secp256K1.calculateECDHKeyAgreement(zero, pub))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> secp256K1.calculateECDHKeyAgreementCompressed(zero, pub))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void nativeEcdhWithPrivateKeyAboveCurveOrderThrows() {
+    assumeThat(secp256K1.isNative()).isTrue();
+    final BigInteger n = secp256K1.getHalfCurveOrder().multiply(BigInteger.TWO).add(BigInteger.ONE);
+    final SECPPrivateKey aboveOrder = secp256K1.createPrivateKey(n.add(BigInteger.ONE));
+    final SECPPublicKey pub = secp256K1.generateKeyPair().getPublicKey();
+
+    assertThatThrownBy(() -> secp256K1.calculateECDHKeyAgreement(aboveOrder, pub))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> secp256K1.calculateECDHKeyAgreementCompressed(aboveOrder, pub))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   public void invalidFileThrowsInvalidKeyPairException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
