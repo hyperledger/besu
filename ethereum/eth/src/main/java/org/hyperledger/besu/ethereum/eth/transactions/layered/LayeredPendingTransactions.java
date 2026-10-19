@@ -215,7 +215,18 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final long lowestNonce = reAddTxs.getFirst().getNonce();
       final int newNonceDistance = (int) Math.max(0, lowestNonce - stateSenderNonce);
 
-      reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW_RECONCILED));
+      if (newNonceDistance >= poolConfig.getMaxFutureBySender()) {
+        // re-added txs skip the nonce checks done for new ones, so drop them here
+        LOG.atTrace()
+            .setMessage(
+                "Drop {} reconciled transaction(s) of sender {}, too much in the future since current sender nonce is {}")
+            .addArgument(reAddTxs::size)
+            .addArgument(sender)
+            .addArgument(stateSenderNonce)
+            .log();
+      } else {
+        reAddTxs.forEach(ptx -> prioritizedTransactions.add(ptx, newNonceDistance, NEW_RECONCILED));
+      }
     }
 
     LOG.atDebug()
