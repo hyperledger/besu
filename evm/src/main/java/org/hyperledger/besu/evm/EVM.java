@@ -511,7 +511,6 @@ public class EVM {
   // Note: like runToHalt, this is performance-critical code. Benchmark before refactoring.
   private void runToHaltV2(final MessageFrame frame, final OperationTracer operationTracer) {
     evmSpecVersion.maybeWarnVersion();
-    frame.ensureStackV2();
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     final boolean tracing = operationTracer.tracesOperations();

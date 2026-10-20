@@ -275,6 +275,7 @@ final class ProgramRun {
     accesses.addTouchedAccount(CONTRACT);
     final MessageFrame frame =
         MessageFrame.builder()
+            .enableEvmV2(evm.getEvmConfiguration().enableEvmV2())
             .type(MessageFrame.Type.MESSAGE_CALL)
             .worldUpdater(updater)
             .initialGas(gas)

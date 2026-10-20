@@ -211,10 +211,10 @@ public class MessageFrame {
   private int pc;
   private final Memory memory = new Memory();
   // null on a frame EVM v2 runs, which only uses the v2 stack
-  private OperandStack stack;
+  private final OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
-  private long[] stackDataV2;
+  private final long[] stackDataV2;
   private int stackTopV2;
   private final int stackMaxSizeV2;
   // Tracer view of the v2 stack: the item last handed out per slot, reused while the slot is
@@ -505,18 +505,6 @@ public class MessageFrame {
 
   // region --- EVM v2 long[] stack operations ---
   // ---------------------------------------------------------------------------
-
-  /**
-   * Allocates the v2 operand stack if the frame was built without one, and drops the v1 stack,
-   * which v2 does not use. Frames are built in places that do not know which interpreter will run
-   * them, so the v2 interpreter calls this first.
-   */
-  public void ensureStackV2() {
-    if (stackDataV2 == null) {
-      stackDataV2 = new long[stackMaxSizeV2 * 4];
-      stack = null;
-    }
-  }
 
   /**
    * Returns whether EVM v2 runs the frame, and so whether its stack is the v2 stack rather than the

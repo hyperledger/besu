@@ -24,9 +24,9 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.TracedStack;
+import org.hyperledger.besu.evm.v2.testutils.TestMessageFrameBuilderV2;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -229,7 +229,7 @@ class TracedExecutionV2Test {
   }
 
   private static MessageFrame start(final Bytes code) {
-    final MessageFrame frame = new TestMessageFrameBuilder().code(new Code(code)).build();
+    final MessageFrame frame = new TestMessageFrameBuilderV2().code(new Code(code)).build();
     frame.setState(MessageFrame.State.CODE_EXECUTING);
     return frame;
   }
