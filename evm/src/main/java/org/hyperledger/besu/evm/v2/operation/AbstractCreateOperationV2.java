@@ -202,6 +202,7 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
     // frame addition is automatically handled by parent messageFrameStack
     MessageFrame.Builder builder =
         MessageFrame.builder()
+            .enableEvmV2(true)
             .parentMessageFrame(parent)
             .type(MessageFrame.Type.CONTRACT_CREATION)
             .initialGas(childGasStipend)

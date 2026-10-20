@@ -274,6 +274,7 @@ public abstract class AbstractCallOperationV2 extends AbstractOperationV2 {
 
     MessageFrame.Builder builder =
         MessageFrame.builder()
+            .enableEvmV2(true)
             .parentMessageFrame(frame)
             .type(MessageFrame.Type.MESSAGE_CALL)
             .initialGas(gasAvailableForChildCall(frame))

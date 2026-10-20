@@ -2013,7 +2013,7 @@ public class MessageFrame {
 
       MessageFrame messageFrame =
           new MessageFrame(
-              enableEvmV2 || (parentMessageFrame != null && parentMessageFrame.stackDataV2 != null),
+              enableEvmV2,
               type,
               updater,
               initialGas,
