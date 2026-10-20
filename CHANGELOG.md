@@ -87,6 +87,8 @@
 - `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
 - `--ethstats` no longer retains a few KB of heap per reconnect attempt while the ethstats server is unreachable. [#11614](https://github.com/besu-eth/besu/pull/11614)
 - `debug_traceBlockByNumber` now returns `BLOCK_NOT_FOUND` for a block number beyond the chain head, as `debug_traceBlockByHash` does for an unknown hash. Previously it returned a `null` result. [#11437](https://github.com/besu-eth/besu/pull/11437)
+- Debug traces with an opcode filter or a step limit report the post-execution gas of the last recorded operation; every later operation overwrote it. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
@@ -107,6 +109,10 @@
 - EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
 - Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
 - Block building checks the block access list item budget of each transaction without copying the whole list. [#11454](https://github.com/besu-eth/besu/pull/11454)
+- EVM v2 (`--Xevm-v2`) runs every opcode on its own stack and supports tracers. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- Debug traces with a step limit no longer take snapshots of the operations past the limit, which made a limited trace of a long transaction as slow as a full one. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- `OperationTracer.tracesOperations()` lets a tracer that only uses transaction or call hooks skip the per-operation calls on EVM v2. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- Tracers read the stack of a frame through `TracedStack`, which also reads the EVM v2 stack. With `--Xevm-v2`, a plugin tracer that calls `MessageFrame.getStackItem` or `stackSize` throws a `NullPointerException`, as those read only the EVM v1 stack. [#11524](https://github.com/besu-eth/besu/pull/11524)
 
 ## 26.9.0
 
