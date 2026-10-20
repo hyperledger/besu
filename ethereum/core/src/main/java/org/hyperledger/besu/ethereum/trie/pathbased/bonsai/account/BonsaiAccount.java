@@ -123,7 +123,13 @@ public class BonsaiAccount implements MutableAccount, TrieAccountValue {
     this.codeHash = tracked.getCodeHash();
     this.immutable = false;
     this.codeCache = codeCache;
-    this.code = new Code(tracked.getCode());
+    if (tracked.codeWasUpdated()) {
+      this.code = new Code(tracked.getCode());
+    } else if (Hash.EMPTY.equals(this.codeHash)) {
+      this.code = Code.EMPTY_CODE;
+    } else if (tracked.getWrappedAccount() != null) {
+      this.code = tracked.getWrappedAccount().code;
+    }
     this.storageRootStrategy = new MptStorageRootStrategy(Hash.EMPTY_TRIE_HASH);
     this.updatedStorage.putAll(tracked.getUpdatedStorage());
   }
@@ -285,6 +291,11 @@ public class BonsaiAccount implements MutableAccount, TrieAccountValue {
   @Override
   public Hash getCodeHash() {
     return codeHash;
+  }
+
+  @Override
+  public boolean hasCode() {
+    return !Hash.EMPTY.equals(codeHash);
   }
 
   @Override

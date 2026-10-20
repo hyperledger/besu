@@ -114,8 +114,9 @@ public class JournaledAccount implements MutableAccount, Undoable {
       this.nonce = UndoScalar.of(account.getNonce());
       this.balance = UndoScalar.of(account.getBalance());
 
-      this.code = UndoScalar.of(account.getCode());
-      this.codeHash = UndoScalar.of(account.getCodeHash());
+      final Hash initialCodeHash = account.getCodeHash();
+      this.code = UndoScalar.of(Hash.EMPTY.equals(initialCodeHash) ? Bytes.EMPTY : null);
+      this.codeHash = UndoScalar.of(initialCodeHash);
 
       this.deleted = UndoScalar.of(Boolean.FALSE);
 
@@ -211,7 +212,11 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   @Override
   public Bytes getCode() {
-    return code.get();
+    Bytes currentCode = code.get();
+    if (currentCode == null) {
+      currentCode = account == null ? Bytes.EMPTY : account.getCode();
+    }
+    return currentCode;
   }
 
   @Override
@@ -221,7 +226,7 @@ public class JournaledAccount implements MutableAccount, Undoable {
 
   @Override
   public boolean hasCode() {
-    return !code.get().isEmpty();
+    return !Hash.EMPTY.equals(codeHash.get());
   }
 
   /**
