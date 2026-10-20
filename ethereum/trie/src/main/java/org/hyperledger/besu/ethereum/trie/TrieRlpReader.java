@@ -98,8 +98,11 @@ public final class TrieRlpReader {
     return offset;
   }
 
-  /** Enters the next item, which must be a list, and returns its number of elements. */
-  public int enterList() {
+  /**
+   * Enters the next item, which must be a list, and returns its number of elements, counting at
+   * most {@code maxCount} of them.
+   */
+  public int enterList(final int maxCount) {
     parseItem();
     if (!itemIsList) {
       throw new MalformedRlpException("Expected current item to be a list, but it is not");
@@ -113,7 +116,7 @@ public final class TrieRlpReader {
 
     pos = firstElement;
     int count = 0;
-    while (pos < limit) {
+    while (pos < limit && count < maxCount) {
       parseItem();
       pos = itemEnd();
       count++;

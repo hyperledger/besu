@@ -15,13 +15,16 @@
 package org.hyperledger.besu.ethereum.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.TrieNodeDecoder;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,6 +35,8 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class TrieNodeDecoderTest {
 
@@ -229,6 +234,26 @@ public class TrieNodeDecoderTest {
         TrieNodeDecoder.breadthFirstDecoder((l, h) -> Optional.empty(), randomRootHash)
             .collect(Collectors.toList());
     assertThat(result.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void decodeBranchOf17Items() {
+    assertThat(TrieNodeDecoder.decode(null, emptyItems(17))).isInstanceOf(BranchNode.class);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 3, 16, 18})
+  public void decodeRejectsListsOfOtherSizes(final int size) {
+    assertThatThrownBy(() -> TrieNodeDecoder.decode(null, emptyItems(size)))
+        .isInstanceOf(MerkleTrieException.class);
+  }
+
+  // a list of empty byte strings
+  private static Bytes emptyItems(final int size) {
+    final byte[] rlp = new byte[1 + size];
+    rlp[0] = (byte) (0xc0 + size);
+    Arrays.fill(rlp, 1, rlp.length, (byte) 0x80);
+    return Bytes.wrap(rlp);
   }
 
   private static class BytesToByteNodeLoader implements NodeLoader {

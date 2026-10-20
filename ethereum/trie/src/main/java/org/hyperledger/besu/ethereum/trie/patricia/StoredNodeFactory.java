@@ -139,7 +139,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
 
   private Node<V> decode(
       final byte[] location, final TrieRlpReader nodeRLPs, final Supplier<String> errMessage) {
-    final int nodesCount = nodeRLPs.enterList();
+    // 3 items tell a branch (17 items) from a leaf or an extension (2 items)
+    final int nodesCount = nodeRLPs.enterList(3);
     switch (nodesCount) {
       case 1:
         final NullNode<V> nullNode = decodeNull(nodeRLPs, errMessage);
@@ -175,7 +176,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
           return extensionNode;
         }
 
-      case (RADIX + 1):
+      case 3:
+        // reading the 17 items and leaving the list reject any other size
         final BranchNode<V> branchNode = decodeBranch(location, nodeRLPs, errMessage);
         nodeRLPs.leaveList();
         return branchNode;
