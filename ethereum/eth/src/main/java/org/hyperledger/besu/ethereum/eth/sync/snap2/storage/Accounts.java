@@ -41,4 +41,9 @@ public final class Accounts {
     return new PatriciaTrieAccountValue(
         account.getNonce(), account.getBalance(), storageRoot, account.getCodeHash());
   }
+
+  /** Returns whether a storage trie can be built for this root: neither empty nor unknown. */
+  public static boolean hasBuildableStorage(final Hash storageRoot) {
+    return !storageRoot.equals(Hash.EMPTY_TRIE_HASH) && !storageRoot.equals(UNKNOWN_STORAGE_ROOT);
+  }
 }
