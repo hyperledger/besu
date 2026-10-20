@@ -514,8 +514,8 @@ public class EVM {
     frame.ensureStackV2();
 
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    Operation[] operationArray = operations.getOperations();
     final boolean tracing = operationTracer.tracesOperations();
+    final Operation[] operationArray = tracing ? operations.getOperations() : null;
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       int pc = frame.getPC();
       final int opcode = pc < code.length ? code[pc] & 0xff : 0;
