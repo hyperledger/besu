@@ -157,7 +157,7 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
    * @param frame the current frame
    * @return the initcode
    */
-  protected Code getInitCode(final MessageFrame frame) {
+  private Code getInitCode(final MessageFrame frame) {
     final Bytes inputData = frame.readMemory(inputOffset(frame), inputSize(frame));
     // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
     // addresses disk loading delay, and we already have the code.
@@ -170,7 +170,7 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
    * @param frame the current frame
    * @return the memory offset, clamped to Long.MAX_VALUE
    */
-  protected long inputOffset(final MessageFrame frame) {
+  private long inputOffset(final MessageFrame frame) {
     return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 1);
   }
 
@@ -180,7 +180,7 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
    * @param frame the current frame
    * @return the size, clamped to Long.MAX_VALUE
    */
-  protected long inputSize(final MessageFrame frame) {
+  private long inputSize(final MessageFrame frame) {
     return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 2);
   }
 
