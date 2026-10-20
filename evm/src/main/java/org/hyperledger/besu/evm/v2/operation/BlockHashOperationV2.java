@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushHash;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.pushZero;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setHash;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.setZero;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
@@ -53,7 +53,7 @@ public class BlockHashOperationV2 extends AbstractOperationV2 {
     final int offset = (top - 1) << 2;
     final long soughtBlock = stack[offset + 3];
     if ((stack[offset] | stack[offset + 1] | stack[offset + 2]) != 0 || soughtBlock < 0) {
-      pushZero(stack, top - 1);
+      setZero(stack, top - 1);
       return new OperationResult(cost, null);
     }
 
@@ -62,10 +62,10 @@ public class BlockHashOperationV2 extends AbstractOperationV2 {
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
     if (soughtBlock >= currentBlockNumber
         || soughtBlock < currentBlockNumber - blockHashLookup.getLookback()) {
-      pushZero(stack, top - 1);
+      setZero(stack, top - 1);
     } else {
       final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
-      pushHash(blockHash, stack, top - 1);
+      setHash(blockHash, stack, top - 1);
     }
     return new OperationResult(cost, null);
   }
