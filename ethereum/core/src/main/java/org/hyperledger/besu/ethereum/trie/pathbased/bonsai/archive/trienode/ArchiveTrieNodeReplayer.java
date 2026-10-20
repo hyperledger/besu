@@ -207,12 +207,16 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       LOG.error(e.getMessage());
     } catch (final Exception e) {
       failed = true;
-      LOG.error(
-          "Archive trie-node replayer: error capturing range ({}, {}]; cursor stays at {}",
-          from,
-          target,
-          cursor.get(),
-          e);
+      if (closed) {
+        LOG.debug("Archive trie-node replayer: catch-up interrupted by close", e);
+      } else {
+        LOG.error(
+            "Archive trie-node replayer: error capturing range ({}, {}]; cursor stays at {}",
+            from,
+            target,
+            cursor.get(),
+            e);
+      }
     } finally {
       final long reached = cursor.get();
       if (reached > from && reached >= target) {
@@ -247,10 +251,12 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   /**
    * Captures archive-history entries for all blocks in {@code (fromExclusive, toInclusive]}.
    *
-   * <p>On the first call (or after an error), creates a fresh layer over canonical head, rolls it
-   * back to {@code fromExclusive} via {@link #positionAtCursor}, then rolls forward. On subsequent
-   * calls the layer and state are kept alive between runs — no re-positioning needed — so the cost
-   * is proportional to the number of blocks captured rather than the size of the trie-log window.
+   * <p>On the first call (or after an error), pins a snapshot of the persisted world state, builds
+   * a layer over it, rolls the layer back from the snapshot's head to {@code fromExclusive} via
+   * {@link #positionAtCursor}, then rolls forward. On subsequent calls the layer and state are kept
+   * alive between runs — no re-positioning needed — so the cost is proportional to the number of
+   * blocks captured rather than the size of the trie-log window. The layer is released after a
+   * retention window's worth of blocks to bound its memory and the snapshot's age.
    *
    * <p>On exception the stateful context is torn down so the next call starts clean.
    */
@@ -335,7 +341,8 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   /**
    * Ensures {@link #replayerLayer}, {@link #replayerState}, and {@link #replayerStrategy} are
    * initialised and positioned at {@code fromExclusive}. Reuses the existing context when the state
-   * is already there; otherwise tears down any stale context and re-positions from HEAD.
+   * is already there; otherwise tears down any stale context and re-positions from the head of a
+   * fresh snapshot of the persisted world state.
    */
   private void ensureReplayerState(final long fromExclusive) {
     if (replayerState != null && replayerLayer.isClosed()) {
@@ -418,6 +425,13 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       // forward from there without re-positioning.
     } else {
       positionTarget = fromExclusive;
+    }
+
+    if (head < positionTarget) {
+      throw new IllegalStateException(
+          String.format(
+              "Replayer snapshot head %d is behind the replayer position %d; will retry",
+              head, positionTarget));
     }
 
     replayerStrategy =

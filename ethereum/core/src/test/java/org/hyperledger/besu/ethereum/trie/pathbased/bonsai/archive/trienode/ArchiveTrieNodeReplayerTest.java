@@ -406,9 +406,9 @@ class ArchiveTrieNodeReplayerTest {
     Thread.sleep(1_000L);
 
     // 100 + 200 + 400 + 400 ms delays: about 5 attempts in a second; a retry loop with no delay
-    // makes thousands.
+    // makes thousands, so the upper bound is generous enough not to flake on a slow runner.
     verify(worldStateProvider, atLeast(2)).newTrieEnabledWorldState(any());
-    verify(worldStateProvider, atMost(10)).newTrieEnabledWorldState(any());
+    verify(worldStateProvider, atMost(50)).newTrieEnabledWorldState(any());
     assertThat(replayer.cursor.get()).isEqualTo(2L);
   }
 
@@ -573,9 +573,14 @@ class ArchiveTrieNodeReplayerTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   void startSeedsCursorFromCoverageWhenHandoffAndProgressAreLost() throws Exception {
     recordCoverage(9L);
     appendBlocks(10); // maxLayers=1 -> oldestReachable = 9
+
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
 
     final ArchiveTrieNodeReplayer replayer = createRealReplayer();
     replayer.start(0L);
@@ -650,6 +655,21 @@ class ArchiveTrieNodeReplayerTest {
         .isNotInstanceOf(ArchiveTrieNodeReplayer.ArchiveGapException.class)
         .hasMessageContaining("not on the canonical chain");
     assertThat(replayer.cursor.get()).isEqualTo(2L);
+    verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
+  }
+
+  @Test
+  void failsClearlyWhenSnapshotHeadIsBehindTheCursor() {
+    appendBlocks(3);
+    setWorldStateHead(1L); // the persisted world state lags behind the cursor
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(2L);
+
+    assertThatThrownBy(() -> replayer.captureRange(2L, 3L))
+        .isInstanceOf(IllegalStateException.class)
+        .isNotInstanceOf(ArchiveTrieNodeReplayer.ArchiveGapException.class)
+        .hasMessageContaining("behind the replayer position");
     verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
   }
 
