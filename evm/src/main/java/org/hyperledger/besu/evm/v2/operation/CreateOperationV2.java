@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToInt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedIntAt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.Code;
@@ -37,8 +37,8 @@ public class CreateOperationV2 extends AbstractCreateOperationV2 {
 
   @Override
   protected long cost(final MessageFrame frame) {
-    final int inputOffset = clampedToInt(frame.stackDataV2(), frame.stackTopV2(), 1);
-    final int inputSize = clampedToInt(frame.stackDataV2(), frame.stackTopV2(), 2);
+    final int inputOffset = readClampedIntAt(frame.stackDataV2(), frame.stackTopV2(), 1);
+    final int inputSize = readClampedIntAt(frame.stackDataV2(), frame.stackTopV2(), 2);
     return clampedAdd(
         clampedAdd(
             gasCalculator().txCreateCost(),

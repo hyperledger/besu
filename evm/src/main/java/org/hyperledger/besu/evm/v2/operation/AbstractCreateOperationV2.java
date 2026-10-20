@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.v2.operation;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.INVALID_STATE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readWeiAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.setAddress;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.setZero;
@@ -171,7 +171,7 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
    * @return the memory offset, clamped to Long.MAX_VALUE
    */
   protected long inputOffset(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 1);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 1);
   }
 
   /**
@@ -181,7 +181,7 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
    * @return the size, clamped to Long.MAX_VALUE
    */
   protected long inputSize(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 2);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 2);
   }
 
   private void fail(final MessageFrame frame) {

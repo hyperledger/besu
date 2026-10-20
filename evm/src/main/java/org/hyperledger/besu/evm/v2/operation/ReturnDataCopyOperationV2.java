@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -45,9 +45,9 @@ public class ReturnDataCopyOperationV2 extends AbstractOperationV2 {
     if (!frame.stackHasItemsV2(3)) return UNDERFLOW_RESPONSE;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
-    final long memOffset = clampedToLong(stack, top, 0);
-    final long sourceOffset = clampedToLong(stack, top, 1);
-    final long numBytes = clampedToLong(stack, top, 2);
+    final long memOffset = readClampedLongAt(stack, top, 0);
+    final long sourceOffset = readClampedLongAt(stack, top, 1);
+    final long numBytes = readClampedLongAt(stack, top, 2);
 
     final Bytes returnData = frame.getReturnData();
     try {

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -38,7 +38,7 @@ public class MStore8OperationV2 extends AbstractOperationV2 {
     if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
-    final long location = clampedToLong(stack, top, 0);
+    final long location = readClampedLongAt(stack, top, 0);
     // the least significant byte of the value word
     final byte theByte = (byte) stack[((top - 2) << 2) + 3];
 

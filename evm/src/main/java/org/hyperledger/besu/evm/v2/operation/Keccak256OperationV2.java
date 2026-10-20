@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.setBytes32;
 
 import org.hyperledger.besu.evm.EVM;
@@ -40,8 +40,8 @@ public class Keccak256OperationV2 extends AbstractOperationV2 {
     if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
-    final long from = clampedToLong(stack, top, 0);
-    final long length = clampedToLong(stack, top, 1);
+    final long from = readClampedLongAt(stack, top, 0);
+    final long length = readClampedLongAt(stack, top, 1);
 
     final long cost = gasCalculator().keccak256OperationGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {

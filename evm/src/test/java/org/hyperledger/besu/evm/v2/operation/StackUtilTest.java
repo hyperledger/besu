@@ -38,7 +38,7 @@ class StackUtilTest {
     "0x0000000000000000000000000000000100000000000000000000000000000005, 9223372036854775807"
   })
   void clampsToLong(final String word, final long expected) {
-    assertThat(StackUtil.clampedToLong(stackOf(word), 1, 0)).isEqualTo(expected);
+    assertThat(StackUtil.readClampedLongAt(stackOf(word), 1, 0)).isEqualTo(expected);
   }
 
   @ParameterizedTest(name = "{0} clamps to {1}")
@@ -50,7 +50,7 @@ class StackUtilTest {
     "0x0000000000000000000000000000000100000000000000000000000000000005, 2147483647"
   })
   void clampsToInt(final String word, final int expected) {
-    assertThat(StackUtil.clampedToInt(stackOf(word), 1, 0)).isEqualTo(expected);
+    assertThat(StackUtil.readClampedIntAt(stackOf(word), 1, 0)).isEqualTo(expected);
   }
 
   @Test

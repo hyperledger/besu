@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.v2.operation;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_INSUFFICIENT_BALANCE;
 import static org.hyperledger.besu.evm.frame.SoftFailureReason.LEGACY_MAX_CALL_DEPTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.setLong;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTarget;
 import static org.hyperledger.besu.evm.worldstate.CodeDelegationHelper.getTargetAddress;
@@ -71,7 +71,7 @@ public abstract class AbstractCallOperationV2 extends AbstractOperationV2 {
    * @return the additional gas to provide the call operation
    */
   protected long gas(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 0);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 0);
   }
 
   /**

@@ -14,8 +14,8 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -51,22 +51,22 @@ public class DelegateCallOperationV2 extends AbstractCallOperationV2 {
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 2);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 2);
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 3);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 3);
   }
 
   @Override
   protected long outputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 4);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 4);
   }
 
   @Override
   protected long outputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.stackDataV2(), frame.stackTopV2(), 5);
+    return readClampedLongAt(frame.stackDataV2(), frame.stackTopV2(), 5);
   }
 
   @Override

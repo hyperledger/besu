@@ -278,7 +278,7 @@ public final class StackUtil {
    * @param depth 0 for the topmost item, 1 for the item below, etc.
    * @return the word as a long, or {@link Long#MAX_VALUE} if it does not fit
    */
-  static long clampedToLong(final long[] stack, final int top, final int depth) {
+  static long readClampedLongAt(final long[] stack, final int top, final int depth) {
     final int off = (top - 1 - depth) << 2;
     final long u0 = stack[off + 3];
     if (u0 < 0 || (stack[off] | stack[off + 1] | stack[off + 2]) != 0) {
@@ -297,7 +297,7 @@ public final class StackUtil {
    * @param depth 0 for the topmost item, 1 for the item below, etc.
    * @return the word as an int, or {@link Integer#MAX_VALUE} if it does not fit
    */
-  static int clampedToInt(final long[] stack, final int top, final int depth) {
+  static int readClampedIntAt(final long[] stack, final int top, final int depth) {
     final int off = (top - 1 - depth) << 2;
     final long u0 = stack[off + 3];
     if ((u0 >>> 31) != 0 || (stack[off] | stack[off + 1] | stack[off + 2]) != 0) {

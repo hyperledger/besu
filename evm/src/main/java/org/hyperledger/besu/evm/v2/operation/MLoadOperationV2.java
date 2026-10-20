@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.v2.operation;
 
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.setBytes;
 
 import org.hyperledger.besu.evm.EVM;
@@ -39,7 +39,7 @@ public class MLoadOperationV2 extends AbstractOperationV2 {
     if (!frame.stackHasItemsV2(1)) return UNDERFLOW_RESPONSE;
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
-    final long location = clampedToLong(stack, top, 0);
+    final long location = readClampedLongAt(stack, top, 0);
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {

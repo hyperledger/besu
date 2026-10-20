@@ -15,8 +15,8 @@
 package org.hyperledger.besu.evm.v2.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.v2.operation.StackUtil.clampedToLong;
 import static org.hyperledger.besu.evm.v2.operation.StackUtil.readAddressAt;
+import static org.hyperledger.besu.evm.v2.operation.StackUtil.readClampedLongAt;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
@@ -66,9 +66,9 @@ public class ExtCodeCopyOperationV2 extends AbstractOperationV2 {
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final Address address = readAddressAt(stack, top, 0);
-    final long memOffset = clampedToLong(stack, top, 1);
-    final long sourceOffset = clampedToLong(stack, top, 2);
-    final long numBytes = clampedToLong(stack, top, 3);
+    final long memOffset = readClampedLongAt(stack, top, 1);
+    final long sourceOffset = readClampedLongAt(stack, top, 2);
+    final long numBytes = readClampedLongAt(stack, top, 3);
 
     final boolean accountIsWarm =
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
