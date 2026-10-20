@@ -455,8 +455,8 @@ public class BonsaiFlatDbToArchiveMigratorTest {
     appendBlocks(20);
     Awaitility.await()
         .atMost(AWAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(migrator.ongoingTarget.get()).isEqualTo(21L));
-    assertThat(migrator.catchUpRunning.get()).isTrue();
+        .untilAsserted(() -> assertThat(migrator.targetBlock()).isEqualTo(21L));
+    assertThat(migrator.isCatchUpRunning()).isTrue();
     verify(spyExecutor, times(1)).submit(any(Runnable.class));
 
     // Release: the same in-flight drain reads the live target and walks all the way to block 21.

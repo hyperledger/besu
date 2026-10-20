@@ -174,10 +174,10 @@ class ArchiveTrieNodeReplayerTest {
   void startRegistersBlockObserver() {
     appendBlocks(3); // head=3
     final ControllableReplayer replayer = createControllableReplayer();
-    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
+    assertThat(replayer.observerId()).isEqualTo(OptionalLong.empty());
 
     replayer.start();
-    assertThat(replayer.blockObserverId).isNotEqualTo(OptionalLong.empty());
+    assertThat(replayer.observerId()).isNotEqualTo(OptionalLong.empty());
   }
 
   @Test
@@ -185,10 +185,10 @@ class ArchiveTrieNodeReplayerTest {
     appendBlocks(3);
     final ControllableReplayer replayer = createControllableReplayer();
     replayer.start();
-    assertThat(replayer.blockObserverId).isNotEqualTo(OptionalLong.empty());
+    assertThat(replayer.observerId()).isNotEqualTo(OptionalLong.empty());
 
     replayer.close();
-    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
+    assertThat(replayer.observerId()).isEqualTo(OptionalLong.empty());
   }
 
   @Test
@@ -197,7 +197,7 @@ class ArchiveTrieNodeReplayerTest {
     replayer.close();
 
     replayer.start();
-    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
+    assertThat(replayer.observerId()).isEqualTo(OptionalLong.empty());
   }
 
   // --- single-flight coalescing ---
@@ -211,14 +211,14 @@ class ArchiveTrieNodeReplayerTest {
     replayer.start();
 
     paused.awaitStart();
-    assertThat(replayer.catchUpRunning.get()).isTrue();
+    assertThat(replayer.isCatchUpRunning()).isTrue();
 
     // Burst of head events while catch-up is paused — each bumps replayTarget, CAS rejects
     // additional submissions
     appendBlocks(10);
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.replayTarget.get()).isEqualTo(12L));
+        .untilAsserted(() -> assertThat(replayer.targetBlock()).isEqualTo(12L));
 
     // Only one submission despite 10+ head events
     verify(spyExecutor, times(1)).submit(any(Runnable.class));
@@ -246,7 +246,7 @@ class ArchiveTrieNodeReplayerTest {
     appendBlocks(2); // head=5, target=5
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.replayTarget.get()).isEqualTo(5L));
+        .untilAsserted(() -> assertThat(replayer.targetBlock()).isEqualTo(5L));
 
     paused.release(); // first run sets cursor=3, then re-arms
     Awaitility.await()
@@ -332,8 +332,7 @@ class ArchiveTrieNodeReplayerTest {
         .thenThrow(new IllegalStateException("boom"));
 
     final ArchiveTrieNodeReplayer replayer = createRealReplayer();
-    replayer.initialRetryDelayMillis = 100L;
-    replayer.maxRetryDelayMillis = 400L;
+    replayer.setRetryDelaysMillis(100L, 400L);
     recordCoverage(2L);
     replayer.start(); // cursor 2, target 3
 
@@ -355,7 +354,7 @@ class ArchiveTrieNodeReplayerTest {
         .thenReturn(Optional.of(replayerWorldState));
 
     final ArchiveTrieNodeReplayer replayer = createRealReplayer();
-    replayer.initialRetryDelayMillis = 50L;
+    replayer.setRetryDelaysMillis(50L, 60_000L);
     recordCoverage(2L);
     replayer.start();
 
@@ -483,12 +482,12 @@ class ArchiveTrieNodeReplayerTest {
     appendBlocks(10);
 
     final ArchiveTrieNodeReplayer replayer = createRealReplayer();
-    replayer.initialRetryDelayMillis = 20L;
+    replayer.setRetryDelaysMillis(20L, 60_000L);
     replayer.start();
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.halted).isTrue());
+        .untilAsserted(() -> assertThat(replayer.isHalted()).isTrue());
     // a later head must not restart it either
     appendBlocks(1);
     Thread.sleep(200L);
@@ -507,7 +506,7 @@ class ArchiveTrieNodeReplayerTest {
 
     assertThat(replayer.cursor.get()).isEqualTo(9L);
     Thread.sleep(200L);
-    assertThat(replayer.halted).isFalse();
+    assertThat(replayer.isHalted()).isFalse();
   }
 
   @Test
@@ -557,13 +556,13 @@ class ArchiveTrieNodeReplayerTest {
     when(trieLogManager.getTrieLogLayer(hashOf(8L))).thenReturn(Optional.empty());
 
     final ArchiveTrieNodeReplayer replayer = createRealReplayer();
-    replayer.initialRetryDelayMillis = 20L;
+    replayer.setRetryDelaysMillis(20L, 60_000L);
     recordCoverage(7L);
     replayer.start();
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(replayer.halted).isTrue());
+        .untilAsserted(() -> assertThat(replayer.isHalted()).isTrue());
     assertThat(replayer.cursor.get()).isEqualTo(7L);
     verify(cacheManager, times(1)).getHeadWorldState(any());
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), eq(hashOf(8L)), any());

@@ -17,19 +17,15 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.TrailingBlockWorker;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.PathBasedWorldState;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.io.Closeable;
-import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -48,12 +44,10 @@ import org.slf4j.event.Level;
  * canonical. Because the target is always ≤ the finality/retention horizon, the capture path never
  * observes a reorg.
  */
-public class ArchiveTrieNodeReplayer implements Closeable {
+public class ArchiveTrieNodeReplayer extends TrailingBlockWorker {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArchiveTrieNodeReplayer.class);
 
-  private static final long INITIAL_RETRY_DELAY_MILLIS = 1_000L;
-  private static final long MAX_RETRY_DELAY_MILLIS = 60_000L;
   private static final long CLOSE_TIMEOUT_SECONDS = 30L;
   // Every run repositions a fresh state from the head, so runs triggered by new heads wait until
   // this many blocks are pending (capped relative to the retention window; see batchReady()).
@@ -63,24 +57,11 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   private final BonsaiWorldStateProvider worldStateProvider;
   private final TrieLogManager trieLogManager;
   private final Blockchain blockchain;
-  private final ScheduledExecutorService executorService;
   private final ExecutorService trieCapturePool;
   private final int shallowCheckpointInterval;
   private final int deepCheckpointInterval;
 
   final AtomicLong cursor = new AtomicLong(0L);
-  final AtomicLong replayTarget = new AtomicLong(0L);
-  final AtomicBoolean catchUpRunning = new AtomicBoolean(false);
-  volatile OptionalLong blockObserverId = OptionalLong.empty();
-  private volatile boolean closed = false;
-  // Set when the archive can no longer be extended without a gap; see ArchiveGapException.
-  volatile boolean halted = false;
-
-  // Package-private so unit tests can shorten the retry backoff.
-  volatile long initialRetryDelayMillis = INITIAL_RETRY_DELAY_MILLIS;
-  volatile long maxRetryDelayMillis = MAX_RETRY_DELAY_MILLIS;
-  // 0 means no failure in a row; only touched from the catch-up thread.
-  private long retryDelayMillis = 0L;
 
   public ArchiveTrieNodeReplayer(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
@@ -91,11 +72,11 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       final ExecutorService trieCapturePool,
       final int shallowCheckpointInterval,
       final int deepCheckpointInterval) {
+    super(blockchain, executorService, CLOSE_TIMEOUT_SECONDS);
     this.worldStateStorage = worldStateStorage;
     this.worldStateProvider = worldStateProvider;
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
-    this.executorService = executorService;
     this.trieCapturePool = trieCapturePool;
     this.shallowCheckpointInterval = shallowCheckpointInterval;
     this.deepCheckpointInterval = deepCheckpointInterval;
@@ -114,23 +95,13 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
             .lastCoveredBlock()
             .orElse(0L));
-    replayTarget.set(computeReplayTarget());
+    targetBlock.set(computeReplayTarget());
     LOG.info(
         "Archive trie-node replayer starting: cursor={} target={}",
         cursor.get(),
-        replayTarget.get());
+        targetBlock.get());
 
-    blockObserverId =
-        OptionalLong.of(
-            blockchain.observeBlockAdded(
-                event -> {
-                  if (event.isNewCanonicalHead()) {
-                    replayTarget.accumulateAndGet(computeReplayTarget(), Math::max);
-                    if (batchReady()) {
-                      scheduleCatchUpIfNeeded();
-                    }
-                  }
-                }));
+    startObserving();
     scheduleCatchUpIfNeeded();
   }
 
@@ -160,6 +131,16 @@ public class ArchiveTrieNodeReplayer implements Closeable {
                         - trieLogManager.getMaxLayersToLoad() / 2));
   }
 
+  @Override
+  protected long targetFor(final long headNumber) {
+    return computeReplayTarget();
+  }
+
+  @Override
+  protected long position() {
+    return cursor.get();
+  }
+
   /**
    * Whether enough blocks are pending to justify a run. Every run opens a fresh state and rolls it
    * back from the head to the cursor, so runs triggered by new heads wait for a batch instead of
@@ -167,47 +148,22 @@ public class ArchiveTrieNodeReplayer implements Closeable {
    * cursor trails the head by about half of it plus one batch, and the rollback must stay inside
    * the window.
    */
-  private boolean batchReady() {
+  @Override
+  protected boolean shouldCatchUp() {
     final long batch =
-        Math.max(1L, Math.min(CATCH_UP_BATCH_BLOCKS, trieLogManager.getMaxLayersToLoad() / 4));
-    return replayTarget.get() - cursor.get() >= batch;
+        Math.clamp(trieLogManager.getMaxLayersToLoad() / 4, 1L, CATCH_UP_BATCH_BLOCKS);
+    return targetBlock.get() - cursor.get() >= batch;
   }
 
-  private void scheduleCatchUpIfNeeded() {
-    if (closed || halted || !catchUpRunning.compareAndSet(false, true)) {
-      return;
-    }
-    try {
-      executorService.submit(this::catchUp);
-    } catch (final RejectedExecutionException e) {
-      catchUpRunning.set(false);
-      LOG.debug(
-          "Trie-node replayer executor shut down; skipping catch-up to {}", replayTarget.get());
-    }
-  }
-
-  private void catchUp() {
+  @Override
+  protected void catchUp() {
     final long from = cursor.get();
-    final long target = replayTarget.get();
-    boolean failed = false;
+    final long target = targetBlock.get();
     try {
       captureRange(from, target);
-      retryDelayMillis = 0L;
     } catch (final ArchiveGapException e) {
-      halted = true;
+      halt();
       LOG.error(e.getMessage());
-    } catch (final Exception e) {
-      failed = true;
-      if (closed) {
-        LOG.debug("Archive trie-node replayer: catch-up interrupted by close", e);
-      } else {
-        LOG.error(
-            "Archive trie-node replayer: error capturing range ({}, {}]; cursor stays at {}",
-            from,
-            target,
-            cursor.get(),
-            e);
-      }
     } finally {
       final long reached = cursor.get();
       if (reached > from && reached >= target) {
@@ -215,27 +171,6 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       } else if (reached > from) {
         LOG.debug("Archive trie-node replayer: advanced to {} (target {})", reached, target);
       }
-      if (failed && !closed) {
-        // Keep catchUpRunning set while backing off so head events cannot bypass the delay.
-        scheduleRetry();
-      } else {
-        catchUpRunning.set(false);
-        if (!closed && batchReady()) {
-          scheduleCatchUpIfNeeded();
-        }
-      }
-    }
-  }
-
-  private void scheduleRetry() {
-    final long delay = retryDelayMillis > 0 ? retryDelayMillis : initialRetryDelayMillis;
-    retryDelayMillis = Math.min(delay * 2, maxRetryDelayMillis);
-    LOG.debug("Archive trie-node replayer: retrying in {} ms", delay);
-    try {
-      executorService.schedule(this::catchUp, delay, TimeUnit.MILLISECONDS);
-    } catch (final RejectedExecutionException e) {
-      catchUpRunning.set(false);
-      LOG.debug("Trie-node replayer executor shut down; skipping retry");
     }
   }
 
@@ -245,7 +180,8 @@ public class ArchiveTrieNodeReplayer implements Closeable {
    * <p>Each run opens its own layered state over a snapshot of the persisted head, rolls it back to
    * {@code fromExclusive}, then rolls it forward one block at a time. The state is closed when the
    * run ends, so the layer's accumulated writes and the snapshot it pins are released and nothing
-   * outlives a run. Callers amortise the rollback by running in batches; see {@link #batchReady()}.
+   * outlives a run. Callers amortise the rollback by running in batches; see {@link
+   * #shouldCatchUp()}.
    */
   @VisibleForTesting
   void captureRange(final long fromExclusive, final long toInclusive) {
@@ -265,9 +201,10 @@ public class ArchiveTrieNodeReplayer implements Closeable {
 
       // Re-read cursor: opening the state may have advanced it past fromExclusive when the
       // retention window was exceeded. The loop start reflects the actual position of the state.
-      for (long b = cursor.get() + 1; b <= toInclusive && !closed; b++) {
-        final Hash blockHash = canonicalHash(b);
-        final long blockNumber = b;
+      for (long blockNumber = cursor.get() + 1;
+          blockNumber <= toInclusive && !closed;
+          blockNumber++) {
+        final Hash blockHash = canonicalHash(blockNumber);
         // A log that is missing for a block inside the target is pruned or was never stored, so
         // retrying cannot help: stop like any other gap rather than retry forever. Checked here
         // because rolling reports a missing log only as a generic rolling failure.
@@ -291,13 +228,13 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         canonicalTx.commit(); // archive history + coverage (the cursor), atomically
         canonicalTx = null;
         writer.setArchiveWriteTransaction(null);
-        cursor.set(b);
-        if (b % 1000 == 0) {
+        cursor.set(blockNumber);
+        if (blockNumber % 1000 == 0) {
           LOG.debug(
               "Archive trie-node replayer: block {} / {} ({} remaining)",
-              b,
+              blockNumber,
               toInclusive,
-              toInclusive - b);
+              toInclusive - blockNumber);
         }
       }
     } finally {
@@ -442,26 +379,5 @@ public class ArchiveTrieNodeReplayer implements Closeable {
 
   private Hash canonicalHash(final long blockNumber) {
     return blockchain.getBlockHeader(blockNumber).orElseThrow().getHash();
-  }
-
-  public long getCursor() {
-    return cursor.get();
-  }
-
-  @Override
-  public void close() {
-    closed = true;
-    blockObserverId.ifPresent(blockchain::removeObserver);
-    blockObserverId = OptionalLong.empty();
-    executorService.shutdownNow();
-    try {
-      if (!executorService.awaitTermination(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-        LOG.warn(
-            "Archive trie-node replayer catch-up did not stop within {}s of close",
-            CLOSE_TIMEOUT_SECONDS);
-      }
-    } catch (final InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
   }
 }

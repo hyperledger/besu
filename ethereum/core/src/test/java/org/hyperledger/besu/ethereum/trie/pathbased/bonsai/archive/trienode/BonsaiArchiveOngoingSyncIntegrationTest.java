@@ -212,7 +212,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
     // A non-canonical fork block fires (block observer sees non-canonical event)
     // The observer checks isNewCanonicalHead() → false, so replayTarget stays at 2
-    assertThat(replayer.replayTarget.get()).isEqualTo(2L);
+    assertThat(replayer.targetBlock()).isEqualTo(2L);
     assertThat(replayer.cursor.get()).isEqualTo(2L);
   }
 
@@ -237,7 +237,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     appendBlocks(5);
     // Wait a moment and verify cursor hasn't advanced past what was in-flight
     Thread.sleep(200);
-    assertThat(replayer.blockObserverId).isEqualTo(OptionalLong.empty());
+    assertThat(replayer.observerId()).isEqualTo(OptionalLong.empty());
   }
 
   // --- helpers ---
