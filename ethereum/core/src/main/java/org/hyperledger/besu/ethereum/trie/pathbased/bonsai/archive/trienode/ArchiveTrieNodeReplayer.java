@@ -79,6 +79,8 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   final AtomicBoolean catchUpRunning = new AtomicBoolean(false);
   volatile OptionalLong blockObserverId = OptionalLong.empty();
   private volatile boolean closed = false;
+  // Set when the archive can no longer be extended without a gap; see RetentionGapException.
+  volatile boolean halted = false;
 
   // Package-private so unit tests can shorten the retry backoff.
   volatile long initialRetryDelayMillis = INITIAL_RETRY_DELAY_MILLIS;
@@ -146,11 +148,15 @@ public class ArchiveTrieNodeReplayer implements Closeable {
 
   /**
    * The block number the replayer trails: the finalized block if a finality signal exists (QBFT
-   * instant finality, PoS ~2 epochs behind head), otherwise {@code head - maxLayersToLoad + 1} for
+   * instant finality, PoS ~2 epochs behind head), otherwise {@code head - maxLayersToLoad / 2} for
    * chains without finality (Clique/PoW). Every block at or below it is beyond any possible reorg,
-   * so the replayer never observes a competing fork. The {@code + 1} keeps the block before the
-   * target inside the trie-log retention window, so a cold replayer can always position at it by
-   * rolling back {@code maxLayersToLoad} layers from the head.
+   * so the replayer never observes a competing fork.
+   *
+   * <p>A cold replayer positions at {@code target - 1} by rolling back from the head, which needs
+   * trie logs for every block in between and so only works while {@code head - (target - 1)} is
+   * within {@code maxLayersToLoad}. Trailing by half the retention window leaves the other half as
+   * slack for the head to advance between catch-ups and rebuilds; trailing by the full window would
+   * leave no slack at all, and a rebuild even two blocks late would lose its position.
    */
   @VisibleForTesting
   long computeReplayTarget() {
@@ -163,12 +169,11 @@ public class ArchiveTrieNodeReplayer implements Closeable {
                 Math.max(
                     0L,
                     blockchain.getChainHeadBlockNumber()
-                        - trieLogManager.getMaxLayersToLoad()
-                        + 1));
+                        - trieLogManager.getMaxLayersToLoad() / 2));
   }
 
   private void scheduleCatchUpIfNeeded() {
-    if (closed || !catchUpRunning.compareAndSet(false, true)) {
+    if (closed || halted || !catchUpRunning.compareAndSet(false, true)) {
       return;
     }
     try {
@@ -187,6 +192,9 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     try {
       captureRange(from, target);
       retryDelayMillis = 0L;
+    } catch (final RetentionGapException e) {
+      halted = true;
+      LOG.error(e.getMessage());
     } catch (final Exception e) {
       failed = true;
       LOG.error(
@@ -338,9 +346,23 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     final long oldestReachable = Math.max(0L, head - maxLayers);
     final long positionTarget;
     if (fromExclusive < oldestReachable) {
+      if (new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
+          .hasCoverage()) {
+        // The archive already covers blocks up to the cursor. Skipping ahead would leave blocks
+        // without history entries inside the covered window, and proofs for them would silently
+        // read stale nodes. Stop instead and leave the coverage at its last contiguous block.
+        throw new RetentionGapException(
+            String.format(
+                "Archive trie-node replayer cannot continue: cursor %d is beyond trie-log retention"
+                    + " (head=%d, maxLayers=%d), so blocks %d-%d cannot be archived. Archive proof"
+                    + " coverage stays at block %d and the replayer is stopping; the archive must be"
+                    + " resynced to extend it.",
+                fromExclusive, head, maxLayers, fromExclusive + 1, oldestReachable, fromExclusive));
+      }
+      // Nothing archived yet (proofs just enabled): start from the oldest reachable block.
       LOG.warn(
           "Archive trie-node replayer cursor {} is beyond trie-log retention (head={}, maxLayers={})."
-              + " Advancing cursor to {} — blocks {}-{} will not be re-archived.",
+              + " Advancing cursor to {} — blocks {}-{} will not be archived.",
           fromExclusive,
           head,
           maxLayers,
@@ -366,6 +388,13 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     replayerState = worldStateProvider.newTrieEnabledWorldState(replayerLayer);
     positionAtCursor(replayerState, positionTarget, head);
     replayerStatePosition = positionTarget;
+  }
+
+  /** The cursor is older than trie-log retention while the archive already has coverage. */
+  static final class RetentionGapException extends IllegalStateException {
+    RetentionGapException(final String message) {
+      super(message);
+    }
   }
 
   private void rollbackQuietly(final SegmentedKeyValueStorageTransaction tx) {

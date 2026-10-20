@@ -59,6 +59,11 @@ public final class ArchiveCoverageTracker {
         .orElse(false);
   }
 
+  /** Returns {@code true} once any block has been recorded. */
+  public boolean hasCoverage() {
+    return storage.get(TRIE_BRANCH_STORAGE_ARCHIVE, COVERAGE_KEY).isPresent();
+  }
+
   /**
    * Writes updated progress for {@code block} into {@code tx}. The write is atomic with the
    * archive-node writes that precede it in the same transaction.

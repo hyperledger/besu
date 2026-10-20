@@ -69,7 +69,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   private static final long AWAIT_SECONDS = 5L;
   private static final int SHALLOW_INTERVAL = 128;
   private static final int DEEP_INTERVAL = 1024;
-  private static final int MAX_LAYERS = 3;
+  private static final int MAX_LAYERS = 4;
 
   @Mock private BonsaiWorldStateKeyValueStorage worldStateStorage;
   @Mock private BonsaiWorldStateProvider worldStateProvider;
@@ -107,7 +107,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
    */
   @Test
   void replayerCatchesUpEntireTargetGapInOneRun() throws Exception {
-    appendBlocks(10); // head=10, target = 10-3+1 = 8
+    appendBlocks(10); // head=10, target = 10-4/2 = 8
     final ControllableReplayer replayer = createControllableReplayer();
     replayer.start(0L);
 
@@ -195,12 +195,12 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   /**
    * The replayer never captures blocks above the target. When a reorg event fires for a block above
-   * the finality horizon, the target (head − maxLayers) does not change enough to pull in non-final
-   * blocks, and no capture happens above the target.
+   * the finality horizon, the target (head − maxLayers / 2) does not change enough to pull in
+   * non-final blocks, and no capture happens above the target.
    */
   @Test
   void captureNeverExceedsReplayTarget() throws Exception {
-    appendBlocks(4); // head=4, target = 4-3+1 = 2
+    appendBlocks(4); // head=4, target = 4-4/2 = 2
     final ControllableReplayer replayer = createControllableReplayer();
     replayer.start(0L);
 

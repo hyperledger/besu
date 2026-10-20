@@ -520,6 +520,69 @@ class ArchiveTrieNodeReplayerTest {
     assertThat(replayer.replayerLayer).isNull();
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  void coldRebuildAfterHeadAdvancesDoesNotSkipBlocksWithoutFinality() {
+    // No finality, maxLayers=4 -> target = head - 2. Steady state: head 10, cursor at target 8.
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
+    appendBlocks(10);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    assertThat(replayer.computeReplayTarget()).isEqualTo(8L);
+
+    // The head advances two blocks before the replayer is rebuilt cold (restart, error, layer
+    // closed by the flat-DB switch). Blocks 9 and 10 must still be archived, not skipped; with
+    // the old target of head - maxLayers + 1 the cursor would already be outside the window.
+    appendBlocks(2);
+    replayer.cursor.set(8L);
+    replayer.captureRange(8L, replayer.computeReplayTarget());
+
+    assertThat(replayer.cursor.get()).isEqualTo(10L);
+    verify(mockAccumulator, times(2)).rollForward(any());
+  }
+
+  @Test
+  void haltsInsteadOfSkippingWhenCoverageExistsAndCursorBeyondRetention() {
+    recordCoverage(5L);
+    appendBlocks(10); // maxLayers=1 -> oldestReachable = 9; cursor 5 cannot be repositioned
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(5L);
+
+    assertThatThrownBy(() -> replayer.captureRange(5L, 10L))
+        .isInstanceOf(ArchiveTrieNodeReplayer.RetentionGapException.class);
+    assertThat(replayer.cursor.get()).isEqualTo(5L);
+    verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
+  }
+
+  @Test
+  void stopsRetryingAfterRetentionGap() throws Exception {
+    recordCoverage(5L);
+    appendBlocks(10);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.initialRetryDelayMillis = 20L;
+    replayer.start(5L);
+
+    Awaitility.await()
+        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(replayer.halted).isTrue());
+    // a later head must not restart it either
+    appendBlocks(1);
+    Thread.sleep(200L);
+    assertThat(replayer.cursor.get()).isEqualTo(5L);
+    verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
+  }
+
+  private void recordCoverage(final long block) {
+    final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
+    new ArchiveCoverageTracker(archiveStorage).record(tx, block);
+    tx.commit();
+  }
+
   // --- replay target ---
 
   @Test
@@ -531,8 +594,8 @@ class ArchiveTrieNodeReplayerTest {
   }
 
   @Test
-  void replayTargetFallsBackToHeadMinusMaxLayersPlusOne() {
-    when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
+  void replayTargetFallsBackToHeadMinusHalfMaxLayers() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
     appendBlocks(10);
 
     assertThat(createRealReplayer().computeReplayTarget()).isEqualTo(8L);
@@ -545,8 +608,9 @@ class ArchiveTrieNodeReplayerTest {
 
     final long target = createRealReplayer().computeReplayTarget();
 
-    // A cold replayer positions at target - 1 by rolling back head - (target - 1) layers.
-    assertThat(10L - (target - 1)).isLessThanOrEqualTo(3L);
+    // A cold replayer positions at target - 1 by rolling back head - (target - 1) layers, and the
+    // head may advance a block before it does.
+    assertThat(11L - (target - 1)).isLessThanOrEqualTo(3L);
   }
 
   @Test

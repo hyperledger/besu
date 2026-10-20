@@ -44,6 +44,17 @@ class ArchiveCoverageTrackerTest {
   }
 
   @Test
+  void hasCoverageOnlyAfterFirstRecord() {
+    assertThat(progress.hasCoverage()).isFalse();
+
+    final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
+    progress.record(tx, 5L);
+    tx.commit();
+
+    assertThat(progress.hasCoverage()).isTrue();
+  }
+
+  @Test
   void coversRecordedBlockAfterRecord() {
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     progress.record(tx, 5L);
