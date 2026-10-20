@@ -55,6 +55,20 @@ class ArchiveCoverageTrackerTest {
   }
 
   @Test
+  void lastCoveredBlockIsHighestRecorded() {
+    assertThat(progress.lastCoveredBlock()).isEmpty();
+
+    final SegmentedKeyValueStorageTransaction tx1 = storage.startTransaction();
+    progress.record(tx1, 5L);
+    tx1.commit();
+    final SegmentedKeyValueStorageTransaction tx2 = storage.startTransaction();
+    progress.record(tx2, 10L);
+    tx2.commit();
+
+    assertThat(progress.lastCoveredBlock()).hasValue(10L);
+  }
+
+  @Test
   void coversRecordedBlockAfterRecord() {
     final SegmentedKeyValueStorageTransaction tx = storage.startTransaction();
     progress.record(tx, 5L);

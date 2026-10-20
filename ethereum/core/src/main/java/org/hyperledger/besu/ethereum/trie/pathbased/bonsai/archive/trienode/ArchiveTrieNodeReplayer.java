@@ -127,7 +127,14 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       return;
     }
     final long persisted = loadPersistedCursor().orElse(0L);
-    cursor.set(Math.max(initialCursor, persisted));
+    // The handoff value is the writer's in-memory last block, which is lost on restart, and the
+    // progress key is only written once the replayer has archived a block. The coverage record
+    // always knows how far the archive actually reaches.
+    final long covered =
+        new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
+            .lastCoveredBlock()
+            .orElse(0L);
+    cursor.set(Math.max(initialCursor, Math.max(persisted, covered)));
     replayTarget.set(computeReplayTarget());
     LOG.info(
         "Archive trie-node replayer starting: cursor={} target={}",

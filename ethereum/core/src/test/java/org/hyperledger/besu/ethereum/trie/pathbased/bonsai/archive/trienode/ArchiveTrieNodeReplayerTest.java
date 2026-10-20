@@ -577,6 +577,19 @@ class ArchiveTrieNodeReplayerTest {
     verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
   }
 
+  @Test
+  void startSeedsCursorFromCoverageWhenHandoffAndProgressAreLost() throws Exception {
+    recordCoverage(9L);
+    appendBlocks(10); // maxLayers=1 -> oldestReachable = 9
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.start(0L);
+
+    assertThat(replayer.cursor.get()).isEqualTo(9L);
+    Thread.sleep(200L);
+    assertThat(replayer.halted).isFalse();
+  }
+
   private void recordCoverage(final long block) {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     new ArchiveCoverageTracker(archiveStorage).record(tx, block);
