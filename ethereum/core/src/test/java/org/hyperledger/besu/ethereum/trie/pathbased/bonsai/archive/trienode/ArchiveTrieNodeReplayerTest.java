@@ -15,8 +15,15 @@
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE_ARCHIVE;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,16 +48,19 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
@@ -91,7 +101,9 @@ class ArchiveTrieNodeReplayerTest {
 
   @BeforeEach
   void setUp() {
-    archiveStorage = new SegmentedInMemoryKeyValueStorage(List.of(TRIE_BRANCH_STORAGE_ARCHIVE));
+    archiveStorage =
+        new SegmentedInMemoryKeyValueStorage(
+            List.of(TRIE_BRANCH_STORAGE, TRIE_BRANCH_STORAGE_ARCHIVE));
     blockDataGenerator = new BlockDataGenerator();
     blockchain = createInMemoryBlockchain(blockDataGenerator.genesisBlock());
     when(worldStateStorage.getComposedWorldStateStorage()).thenReturn(archiveStorage);
@@ -333,6 +345,181 @@ class ArchiveTrieNodeReplayerTest {
     verify(worldStateProvider, times(2)).newTrieEnabledWorldState(any());
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  void replayerLayerIsolatedFromCanonicalWritesAfterPositioning() {
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(0L);
+    replayer.captureRange(0L, 2L);
+
+    final byte[] key = "written-after-positioning".getBytes(StandardCharsets.UTF_8);
+    final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
+    tx.put(TRIE_BRANCH_STORAGE, key, new byte[] {1});
+    tx.commit();
+
+    assertThat(archiveStorage.get(TRIE_BRANCH_STORAGE, key)).isPresent();
+    assertThat(replayer.replayerLayer.getComposedWorldStateStorage().get(TRIE_BRANCH_STORAGE, key))
+        .isEmpty();
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void positionsFromWorldStateBlockNotChainHead() {
+    appendBlocks(3);
+    final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY,
+        Bytes.ofUnsignedLong(2L).toArrayUnsafe());
+    tx.commit();
+    final BlockHeader block2 = blockchain.getBlockHeader(2L).get();
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block2.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(1L);
+    replayer.captureRange(1L, 2L); // maxLayers=1: roll back block 2 only, then forward to 2
+
+    verify(trieLogManager, never()).getTrieLogLayer(block3.getHash());
+    verify(mockAccumulator, times(1)).rollBack(mockTrieLog);
+    assertThat(replayer.cursor.get()).isEqualTo(2L);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void failedCatchUpBacksOffInsteadOfRetryingImmediately() throws Exception {
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+    doThrow(new IllegalStateException("boom")).when(mockAccumulator).rollForward(any());
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.initialRetryDelayMillis = 100L;
+    replayer.maxRetryDelayMillis = 400L;
+    replayer.start(2L); // cursor 2, target 3
+
+    Thread.sleep(1_000L);
+
+    // 100 + 200 + 400 + 400 ms delays: about 5 attempts in a second; a retry loop with no delay
+    // makes thousands.
+    verify(worldStateProvider, atLeast(2)).newTrieEnabledWorldState(any());
+    verify(worldStateProvider, atMost(10)).newTrieEnabledWorldState(any());
+    assertThat(replayer.cursor.get()).isEqualTo(2L);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void catchUpRecoversAfterTransientFailure() {
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+    doThrow(new IllegalStateException("transient"))
+        .doNothing()
+        .when(mockAccumulator)
+        .rollForward(any());
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.initialRetryDelayMillis = 50L;
+    replayer.start(2L);
+
+    Awaitility.await()
+        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(replayer.cursor.get()).isEqualTo(3L));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void failedBlockRollsBackItsArchiveTransaction() {
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+    doThrow(new IllegalStateException("boom")).when(mockAccumulator).rollForward(any());
+
+    final SegmentedInMemoryKeyValueStorage spiedStorage = spy(archiveStorage);
+    final AtomicReference<SegmentedKeyValueStorageTransaction> openedTx = new AtomicReference<>();
+    doAnswer(
+            invocation -> {
+              final SegmentedKeyValueStorageTransaction tx =
+                  spy((SegmentedKeyValueStorageTransaction) invocation.callRealMethod());
+              openedTx.set(tx);
+              return tx;
+            })
+        .when(spiedStorage)
+        .startLowPriorityTransaction();
+    when(worldStateStorage.getComposedWorldStateStorage()).thenReturn(spiedStorage);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(2L);
+    assertThatThrownBy(() -> replayer.captureRange(2L, 3L))
+        .isInstanceOf(IllegalStateException.class);
+
+    assertThat(openedTx.get()).isNotNull();
+    verify(openedTx.get()).rollback();
+    verify(openedTx.get(), never()).commit();
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void closeWaitsForInFlightBlockBeforeReleasingState() throws Exception {
+    appendBlocks(3);
+    final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
+    when(trieLogManager.getTrieLogLayer(block3.getHash())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final CountDownLatch inBlock = new CountDownLatch(1);
+    final CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              inBlock.countDown();
+              // Ignore the interrupt from shutdownNow: the block is mid-commit and must finish.
+              boolean interrupted = false;
+              while (release.getCount() > 0) {
+                try {
+                  release.await();
+                } catch (final InterruptedException e) {
+                  interrupted = true;
+                }
+              }
+              if (interrupted) {
+                Thread.currentThread().interrupt();
+              }
+              return null;
+            })
+        .when(mockAccumulator)
+        .rollForward(any());
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.start(2L); // cursor 2, target 3
+    assertThat(inBlock.await(AWAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
+
+    final CompletableFuture<Void> closing = CompletableFuture.runAsync(replayer::close);
+    Thread.sleep(300L);
+    assertThat(closing).as("close() must wait for the in-flight catch-up").isNotDone();
+    assertThat(replayer.replayerLayer).as("state still in use").isNotNull();
+
+    release.countDown();
+    closing.get(AWAIT_SECONDS, TimeUnit.SECONDS);
+
+    verify(replayerWorldState, times(2)).persist(any()); // positioning + the in-flight block
+    assertThat(replayer.cursor.get()).isEqualTo(3L);
+    assertThat(replayer.replayerLayer).isNull();
+  }
+
   // --- replay target ---
 
   @Test
@@ -429,6 +616,13 @@ class ArchiveTrieNodeReplayerTest {
     for (final Block block : blocks) {
       blockchain.appendBlock(block, blockDataGenerator.receipts(block));
     }
+    // the replayer positions from the world state's block number, which tracks the chain head
+    final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY,
+        Bytes.ofUnsignedLong(blockchain.getChainHeadBlockNumber()).toArrayUnsafe());
+    tx.commit();
   }
 
   // --- test doubles ---

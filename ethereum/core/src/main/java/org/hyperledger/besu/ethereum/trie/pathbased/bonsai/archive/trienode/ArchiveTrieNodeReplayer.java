@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
@@ -33,6 +34,7 @@ import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -56,6 +58,10 @@ public class ArchiveTrieNodeReplayer implements Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ArchiveTrieNodeReplayer.class);
 
+  private static final long INITIAL_RETRY_DELAY_MILLIS = 1_000L;
+  private static final long MAX_RETRY_DELAY_MILLIS = 60_000L;
+  private static final long CLOSE_TIMEOUT_SECONDS = 30L;
+
   static final byte[] ARCHIVE_TRIE_NODE_SYNC_PROGRESS =
       "ARCHIVE_TRIE_NODE_SYNC_PROGRESS".getBytes(StandardCharsets.UTF_8);
 
@@ -74,11 +80,18 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   volatile OptionalLong blockObserverId = OptionalLong.empty();
   private volatile boolean closed = false;
 
+  // Package-private so unit tests can shorten the retry backoff.
+  volatile long initialRetryDelayMillis = INITIAL_RETRY_DELAY_MILLIS;
+  volatile long maxRetryDelayMillis = MAX_RETRY_DELAY_MILLIS;
+  // 0 means no failure in a row; only touched from the catch-up thread.
+  private long retryDelayMillis = 0L;
+
   // Stateful rolling context — kept alive between catch-up runs to avoid re-positioning from HEAD.
   // Null means not yet initialised or invalidated after an error. Always accessed from the single
   // catch-up executor thread.
   // Package-private so unit tests can close the layer the way a flat-DB mode switch does.
   BonsaiWorldStateLayerStorage replayerLayer;
+  private BonsaiSnapshotWorldStateKeyValueStorage replayerSnapshot;
   private BonsaiWorldState replayerState;
   private ArchiveTrieNodeStrategy replayerStrategy;
   // Package-private so unit tests can assert on positioning without going through the full stack.
@@ -170,9 +183,12 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   private void catchUp() {
     final long from = cursor.get();
     final long target = replayTarget.get();
+    boolean failed = false;
     try {
       captureRange(from, target);
+      retryDelayMillis = 0L;
     } catch (final Exception e) {
+      failed = true;
       LOG.error(
           "Archive trie-node replayer: error capturing range ({}, {}]; cursor stays at {}",
           from,
@@ -180,16 +196,33 @@ public class ArchiveTrieNodeReplayer implements Closeable {
           cursor.get(),
           e);
     } finally {
-      catchUpRunning.set(false);
       final long reached = cursor.get();
       if (reached > from && reached >= target) {
         LOG.info("Archive trie-node replayer: fully caught up at block {}", reached);
       } else if (reached > from) {
         LOG.debug("Archive trie-node replayer: advanced to {} (target {})", reached, target);
       }
-      if (!closed && reached < replayTarget.get()) {
-        scheduleCatchUpIfNeeded();
+      if (failed && !closed) {
+        // Keep catchUpRunning set while backing off so head events cannot bypass the delay.
+        scheduleRetry();
+      } else {
+        catchUpRunning.set(false);
+        if (!closed && reached < replayTarget.get()) {
+          scheduleCatchUpIfNeeded();
+        }
       }
+    }
+  }
+
+  private void scheduleRetry() {
+    final long delay = retryDelayMillis > 0 ? retryDelayMillis : initialRetryDelayMillis;
+    retryDelayMillis = Math.min(delay * 2, maxRetryDelayMillis);
+    LOG.debug("Archive trie-node replayer: retrying in {} ms", delay);
+    try {
+      executorService.schedule(this::catchUp, delay, TimeUnit.MILLISECONDS);
+    } catch (final RejectedExecutionException e) {
+      catchUpRunning.set(false);
+      LOG.debug("Trie-node replayer executor shut down; skipping retry");
     }
   }
 
@@ -209,6 +242,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       return;
     }
     boolean ok = false;
+    SegmentedKeyValueStorageTransaction canonicalTx = null;
     try {
       ensureReplayerState(fromExclusive);
 
@@ -223,11 +257,11 @@ public class ArchiveTrieNodeReplayer implements Closeable {
 
       final ArchiveTrieNodeWriter writer = replayerStrategy.getTrieNodeWriter();
 
-      for (long b = effectiveFrom + 1; b <= toInclusive; b++) {
+      for (long b = effectiveFrom + 1; b <= toInclusive && !closed; b++) {
         final BlockHeader header = blockchain.getBlockHeader(b).orElseThrow();
         final TrieLog log = trieLogManager.getTrieLogLayer(header.getHash()).orElseThrow();
 
-        final SegmentedKeyValueStorageTransaction canonicalTx =
+        canonicalTx =
             worldStateStorage.getComposedWorldStateStorage().startLowPriorityTransaction();
         writer.setArchiveWriteTransaction(canonicalTx);
 
@@ -243,6 +277,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
             ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
             Bytes.ofUnsignedLong(b).toArrayUnsafe());
         canonicalTx.commit(); // archive history + coverage + cursor, atomically
+        canonicalTx = null;
         writer.setArchiveWriteTransaction(null);
         cursor.set(b);
         replayerStatePosition = b;
@@ -257,6 +292,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       ok = true;
     } finally {
       if (!ok) {
+        rollbackQuietly(canonicalTx);
         tearDownReplayerState();
       }
     }
@@ -286,11 +322,18 @@ public class ArchiveTrieNodeReplayer implements Closeable {
       tearDownReplayerState();
     }
 
+    replayerSnapshot = new BonsaiSnapshotWorldStateKeyValueStorage(worldStateStorage);
+    final long head =
+        replayerSnapshot
+            .getWorldStateBlockNumber()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException("Replayer snapshot has no world state block number"));
+
     // Guard: if the cursor is older than the trie-log retention window, we cannot roll back
     // far enough to reposition. Advance cursor to the oldest reachable block and position the
     // state there. The current captureRange call will archive nothing (toInclusive == cursor),
     // but the state is ready for the next call to roll forward from.
-    final long head = blockchain.getChainHeadBlockNumber();
     final long maxLayers = trieLogManager.getMaxLayersToLoad();
     final long oldestReachable = Math.max(0L, head - maxLayers);
     final long positionTarget;
@@ -318,11 +361,22 @@ public class ArchiveTrieNodeReplayer implements Closeable {
             trieCapturePool,
             shallowCheckpointInterval,
             deepCheckpointInterval);
-    replayerLayer = new BonsaiWorldStateLayerStorage(worldStateStorage);
+    replayerLayer = new BonsaiWorldStateLayerStorage(replayerSnapshot);
     replayerLayer.setTrieNodeStrategy(replayerStrategy);
     replayerState = worldStateProvider.newTrieEnabledWorldState(replayerLayer);
     positionAtCursor(replayerState, positionTarget, head);
     replayerStatePosition = positionTarget;
+  }
+
+  private void rollbackQuietly(final SegmentedKeyValueStorageTransaction tx) {
+    if (tx == null) {
+      return;
+    }
+    try {
+      tx.rollback();
+    } catch (final Exception e) {
+      LOG.warn("Failed to roll back replayer archive transaction", e);
+    }
   }
 
   private void tearDownReplayerState() {
@@ -339,6 +393,17 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         LOG.warn("Failed to close replayer layer storage", e);
       }
       replayerLayer = null;
+    }
+    if (replayerSnapshot != null) {
+      try {
+        // Releases the pinned storage snapshot.
+        if (!replayerSnapshot.isClosed()) {
+          replayerSnapshot.close();
+        }
+      } catch (final Exception e) {
+        LOG.warn("Failed to close replayer snapshot storage", e);
+      }
+      replayerSnapshot = null;
     }
   }
 
@@ -395,6 +460,16 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     blockObserverId.ifPresent(blockchain::removeObserver);
     blockObserverId = OptionalLong.empty();
     executorService.shutdownNow();
+    try {
+      if (!executorService.awaitTermination(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+        LOG.warn(
+            "Archive trie-node replayer catch-up did not stop within {}s of close",
+            CLOSE_TIMEOUT_SECONDS);
+      }
+    } catch (final InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    // Only now is it safe to release the layer: the catch-up thread no longer uses it.
     tearDownReplayerState();
   }
 }
