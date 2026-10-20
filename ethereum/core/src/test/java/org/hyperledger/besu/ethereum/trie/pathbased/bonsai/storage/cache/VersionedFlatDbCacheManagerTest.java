@@ -23,9 +23,12 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.cache.FlatDbCacheManager.TrieNode;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -128,6 +131,57 @@ class VersionedFlatDbCacheManagerTest {
     assertThat(cacheManager.getCacheSize(TRIE_BRANCH_STORAGE)).isZero();
     assertThat(cacheManager.getTrieNode(accountNodeHash)).isEmpty();
     assertThat(cacheManager.getTrieNode(storageNodeHash)).isEmpty();
+  }
+
+  @Test
+  void trieNodes_batchQueuedBeforeClearIsDropped() throws Exception {
+    final Bytes node = Bytes.fromHexString("0xc58320aaaa01");
+    final Bytes32 nodeHash = Bytes32.wrap(Hash.hash(node).getBytes());
+    final Bytes queuedNode = Bytes.fromHexString("0xc58320bbbb02");
+    final Bytes32 queuedNodeHash = Bytes32.wrap(Hash.hash(queuedNode).getBytes());
+    final Bytes laterNode = Bytes.fromHexString("0xc58320cccc03");
+    final Bytes32 laterNodeHash = Bytes32.wrap(Hash.hash(laterNode).getBytes());
+
+    // keeps the maintenance worker busy until released, so the next batch stays queued
+    final CountDownLatch started = new CountDownLatch(1);
+    final CountDownLatch release = new CountDownLatch(1);
+    final List<TrieNode> blockingBatch =
+        new AbstractList<>() {
+          @Override
+          public TrieNode get(final int index) {
+            return new TrieNode(nodeHash, node);
+          }
+
+          @Override
+          public int size() {
+            return 1;
+          }
+
+          @Override
+          public void forEach(final Consumer<? super TrieNode> action) {
+            started.countDown();
+            try {
+              release.await();
+            } catch (final InterruptedException e) {
+              Thread.currentThread().interrupt();
+            }
+            super.forEach(action);
+          }
+        };
+    cacheManager.putTrieNodes(blockingBatch);
+    started.await();
+    cacheManager.putTrieNodes(List.of(new TrieNode(queuedNodeHash, queuedNode)));
+
+    final Thread clear = new Thread(() -> cacheManager.clear(TRIE_BRANCH_STORAGE));
+    clear.start();
+    await().until(() -> clear.getState() == Thread.State.BLOCKED || !clear.isAlive());
+    release.countDown();
+    clear.join();
+
+    cacheManager.putTrieNodes(List.of(new TrieNode(laterNodeHash, laterNode)));
+    await().until(() -> cacheManager.getTrieNode(laterNodeHash).isPresent());
+    assertThat(cacheManager.getTrieNode(nodeHash)).isEmpty();
+    assertThat(cacheManager.getTrieNode(queuedNodeHash)).isEmpty();
   }
 
   @Test

@@ -74,6 +74,14 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
    */
   private final Cache<CacheKey, Bytes> trieNodeCache;
 
+  /**
+   * Bumped by a clear, so that batches queued before it are dropped instead of refilling the cache.
+   * Changed and checked under {@link #trieNodeLock}.
+   */
+  private final AtomicLong trieNodeGeneration = new AtomicLong(0);
+
+  private final Object trieNodeLock = new Object();
+
   private final ThresholdDrainExecutor drainExecutor;
   private final ExecutorService maintenanceWorker;
   private final AtomicBoolean maintenanceScheduled = new AtomicBoolean(false);
@@ -296,7 +304,10 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
   @Override
   public void clear(final SegmentIdentifier segment) {
     if (segment == TRIE_BRANCH_STORAGE) {
-      trieNodeCache.invalidateAll();
+      synchronized (trieNodeLock) {
+        trieNodeGeneration.incrementAndGet();
+        trieNodeCache.invalidateAll();
+      }
       return;
     }
     final Cache<CacheKey, VersionedValue> cache = cacheForSegment(segment);
@@ -503,10 +514,15 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
     if (nodes.isEmpty()) {
       return;
     }
+    final long generation = trieNodeGeneration.get();
     try {
       maintenanceWorker.execute(
           () -> {
-            nodes.forEach(node -> trieNodeCache.put(CacheKey.of(node.hash()), node.node()));
+            synchronized (trieNodeLock) {
+              if (generation == trieNodeGeneration.get()) {
+                nodes.forEach(node -> trieNodeCache.put(CacheKey.of(node.hash()), node.node()));
+              }
+            }
             doMaintenance();
           });
     } catch (final RejectedExecutionException e) {
