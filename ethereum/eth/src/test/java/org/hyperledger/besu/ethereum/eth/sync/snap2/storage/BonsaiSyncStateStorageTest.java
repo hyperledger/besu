@@ -143,6 +143,17 @@ class BonsaiSyncStateStorageTest {
   }
 
   @Test
+  void abortDropsTheWritesOfABatch() {
+    final SyncStateStorage.Batch batch = storage.batch();
+    batch.putAccount(FIRST, ACCOUNT);
+    batch.putStorage(FIRST, key(0x01), value(1));
+    batch.abort();
+
+    assertThat(storage.getAccount(FIRST)).isEmpty();
+    assertThat(slotsOf(FIRST)).isEmpty();
+  }
+
+  @Test
   void storesTheCodeByItsHash() {
     final Bytes code = Bytes.fromHexString("0x6001600155");
     final Bytes32 codeHash = Bytes32.wrap(Hash.hash(code).getBytes());
@@ -202,8 +213,7 @@ class BonsaiSyncStateStorageTest {
     doReturn(trieLogs).when(provider).getStorageBySegmentIdentifier(TRIE_LOG_STORAGE);
     final SyncStateStorage sync =
         new BonsaiSyncStateStorage(
-            (BonsaiWorldStateKeyValueStorage)
-                provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
+            bonsai(provider, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
     final Bytes node = Bytes.fromHexString("0xc28080");
     final Bytes32 hash = Bytes32.wrap(Hash.hash(node).getBytes());
 
@@ -297,8 +307,12 @@ class BonsaiSyncStateStorageTest {
   }
 
   private static BonsaiWorldStateKeyValueStorage bonsai(final DataStorageConfiguration config) {
-    return (BonsaiWorldStateKeyValueStorage)
-        new InMemoryKeyValueStorageProvider().createWorldStateStorage(config);
+    return bonsai(new InMemoryKeyValueStorageProvider(), config);
+  }
+
+  private static BonsaiWorldStateKeyValueStorage bonsai(
+      final InMemoryKeyValueStorageProvider provider, final DataStorageConfiguration config) {
+    return (BonsaiWorldStateKeyValueStorage) provider.createWorldStateStorage(config);
   }
 
   private static Bytes32 key(final int last) {

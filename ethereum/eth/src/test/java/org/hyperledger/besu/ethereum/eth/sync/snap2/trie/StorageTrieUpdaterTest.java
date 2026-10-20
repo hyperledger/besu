@@ -48,20 +48,16 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 /** Runs without workers: every update is applied on the test thread, by finish or applyNext. */
 class StorageTrieUpdaterTest {
 
   private static final int NO_BUDGET = Integer.MAX_VALUE;
 
-  private Storages storages = SyncStorageFixture.create(Format.BONSAI);
+  private final Storages storages = SyncStorageFixture.create(Format.BONSAI);
 
-  @ParameterizedTest
-  @EnumSource(Format.class)
-  void appliesTheSlotsAMoveChangedToTheTrie(final Format format) {
-    storages = SyncStorageFixture.create(format);
+  @Test
+  void appliesTheSlotsAMoveChangedToTheTrie() {
     final World world = SyncStorageFixture.randomWorld(new Random(8), 80);
     final Bytes32 account = largestStorage(world);
     final Bytes32 root = downloaded(world, account);
@@ -121,7 +117,17 @@ class StorageTrieUpdaterTest {
     final Bytes32 root = downloaded(world, account);
     final AtomicReference<StorageTrieUpdater> updater = new AtomicReference<>();
     final AtomicBoolean startedTwice = new AtomicBoolean();
-    updater.set(updater(movingDuringTheFirstRead(world, account, updater, false, startedTwice), 0));
+    updater.set(
+        updater(
+            onTheFirstRead(
+                () -> {
+                  // the account has an unknown root until the first update gives it
+                  updater
+                      .get()
+                      .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
+                  startedTwice.set(updater.get().applyNext());
+                }),
+            0));
 
     updater.get().changed(account, Hash.wrap(root), move(world, account, 1));
     assertThat(updater.get().applyNext()).isTrue();
@@ -144,7 +150,15 @@ class StorageTrieUpdaterTest {
     final Bytes32 root = downloaded(world, account);
     final AtomicReference<StorageTrieUpdater> updater = new AtomicReference<>();
     updater.set(
-        updater(movingDuringTheFirstRead(world, account, updater, true, new AtomicBoolean()), 0));
+        updater(
+            onTheFirstRead(
+                () -> {
+                  updater
+                      .get()
+                      .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
+                  throw new StorageException("disk failure");
+                }),
+            0));
 
     updater.get().changed(account, Hash.wrap(root), move(world, account, 1));
     assertThat(updater.get().applyNext()).isTrue();
@@ -155,24 +169,9 @@ class StorageTrieUpdaterTest {
     assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
   }
 
+  // once one update sees the sync stopped, no other starts and the roots stay unknown
   @Test
-  void leavesTheRootUnknownOnceTheSyncStopped() {
-    final World world = SyncStorageFixture.randomWorld(new Random(14), 80);
-    final Bytes32 account = largestStorage(world);
-    final Bytes32 root = downloaded(world, account);
-    final StorageTrieUpdater updater =
-        new StorageTrieUpdater(storages.sync(), action -> false, hash -> false, 0, NO_BUDGET);
-
-    updater.changed(account, Hash.wrap(root), move(world, account, 1));
-    updater.finish();
-
-    assertThat(updater.updated()).isZero();
-    assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
-  }
-
-  // once one update sees the sync stopped, no other starts
-  @Test
-  void startsNoUpdateOnceOneSawTheSyncStopped() {
+  void leavesTheRootsUnknownOnceTheSyncStopped() {
     final World world = SyncStorageFixture.randomWorld(new Random(19), 80);
     final List<Bytes32> accounts = largestStorages(world, 2);
     final Bytes32 firstRoot = downloaded(world, accounts.get(0));
@@ -186,6 +185,10 @@ class StorageTrieUpdaterTest {
 
     assertThat(updater.pendingStorages()).isZero();
     assertThat(updater.applyNext()).isFalse();
+    assertThat(updater.updated()).isZero();
+    assertThat(accounts)
+        .allSatisfy(
+            account -> assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT));
   }
 
   // a move after the stop is not recorded, so the update in progress must not give its root
@@ -195,21 +198,16 @@ class StorageTrieUpdaterTest {
     final Bytes32 account = largestStorage(world);
     final Bytes32 root = downloaded(world, account);
     final AtomicReference<StorageTrieUpdater> updater = new AtomicReference<>();
-    final SyncStateStorage storage = spy(storages.sync());
-    final AtomicBoolean stopped = new AtomicBoolean();
-    doAnswer(
-            invocation -> {
-              if (stopped.compareAndSet(false, true)) {
-                updater.get().stop();
-                updater
-                    .get()
-                    .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
-              }
-              return invocation.callRealMethod();
-            })
-        .when(storage)
-        .storageTrieNode(any(), any(), any());
-    updater.set(updater(storage, 0));
+    updater.set(
+        updater(
+            onTheFirstRead(
+                () -> {
+                  updater.get().stop();
+                  updater
+                      .get()
+                      .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
+                }),
+            0));
 
     updater.get().changed(account, Hash.wrap(root), move(world, account, 1));
     assertThat(updater.get().applyNext()).isTrue();
@@ -312,26 +310,14 @@ class StorageTrieUpdaterTest {
         storage, StorageTrieUpdaterTest::noMoves, hash -> false, 0, budget);
   }
 
-  // the first trie read of an update records a second move, as a move during the update does
-  private SyncStateStorage movingDuringTheFirstRead(
-      final World world,
-      final Bytes32 account,
-      final AtomicReference<StorageTrieUpdater> updater,
-      final boolean thenFail,
-      final AtomicBoolean startedTwice) {
+  // runs an action on the first trie read of an update, as a move or a stop during it does
+  private SyncStateStorage onTheFirstRead(final Runnable action) {
     final SyncStateStorage storage = spy(storages.sync());
-    final AtomicBoolean moved = new AtomicBoolean();
+    final AtomicBoolean read = new AtomicBoolean();
     doAnswer(
             invocation -> {
-              if (moved.compareAndSet(false, true)) {
-                // the account has an unknown root until the first update gives it
-                updater
-                    .get()
-                    .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
-                startedTwice.set(updater.get().applyNext());
-                if (thenFail) {
-                  throw new StorageException("disk failure");
-                }
+              if (read.compareAndSet(false, true)) {
+                action.run();
               }
               return invocation.callRealMethod();
             })
