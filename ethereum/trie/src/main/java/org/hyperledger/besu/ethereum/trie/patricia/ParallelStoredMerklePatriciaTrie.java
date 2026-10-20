@@ -36,7 +36,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -318,50 +317,53 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     final int pathDepth = location.length;
 
     // Group updates by next nibble to distribute across branch children
-    final Map<Byte, List<UpdateEntry<V>>> groupedUpdates = groupUpdatesByNibble(updates, pathDepth);
+    final List<List<UpdateEntry<V>>> groupedUpdates = groupUpdatesByNibble(updates, pathDepth);
 
     // Wrap the branch to allow concurrent child updates
     final BranchWrapper branchWrapper = new BranchWrapper(branchNode);
 
-    // Partition groups into large (parallel) and small (sequential)
-    final Map<Boolean, Map<Byte, List<UpdateEntry<V>>>> partitionedGroups =
-        groupedUpdates.entrySet().stream()
-            .peek(e -> branchWrapper.loadChild(e.getKey())) // force load lazy nodes
-            .collect(
-                Collectors.partitioningBy(
-                    entry -> entry.getValue().size() > 1 && groupedUpdates.size() > 1,
-                    Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-    final Map<Byte, List<UpdateEntry<V>>> largeGroups = partitionedGroups.get(true);
-    final Map<Byte, List<UpdateEntry<V>>> smallGroups = partitionedGroups.get(false);
+    int groupCount = 0;
+    for (int i = 0; i < NB_CHILD; i++) {
+      if (groupedUpdates.get(i) != null) {
+        branchWrapper.loadChild((byte) i); // force load lazy nodes
+        groupCount++;
+      }
+    }
+    // Large groups (parallel) only when the updates go to more than one child
+    final boolean parallel = groupCount > 1;
 
     final List<ForkJoinTask<Void>> forkJoinTasks = new ArrayList<>();
 
     // Submit large groups to thread pool
-    if (!largeGroups.isEmpty()) {
-      for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : largeGroups.entrySet()) {
-        final byte nibble = entry.getKey();
-        final List<UpdateEntry<V>> childUpdates = entry.getValue();
-        final byte[] childLocation = Nibbles.append(location, nibble);
-
-        ForkJoinTask<Void> task =
-            ForkJoinTask.adapt(
-                () -> {
-                  final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
-                  final Node<V> updatedChild =
-                      processNode(currentChild, childLocation, depth, childUpdates);
-                  branchWrapper.setChild(nibble, updatedChild);
-                  return null;
-                });
-
-        task.fork();
-        forkJoinTasks.add(task);
+    for (int i = 0; i < NB_CHILD; i++) {
+      final List<UpdateEntry<V>> childUpdates = groupedUpdates.get(i);
+      if (childUpdates == null || !parallel || childUpdates.size() <= 1) {
+        continue;
       }
+      final byte nibble = (byte) i;
+      final byte[] childLocation = Nibbles.append(location, nibble);
+
+      ForkJoinTask<Void> task =
+          ForkJoinTask.adapt(
+              () -> {
+                final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
+                final Node<V> updatedChild =
+                    processNode(currentChild, childLocation, depth, childUpdates);
+                branchWrapper.setChild(nibble, updatedChild);
+                return null;
+              });
+
+      task.fork();
+      forkJoinTasks.add(task);
     }
 
     // Process small groups sequentially in current thread
-    for (final Map.Entry<Byte, List<UpdateEntry<V>>> entry : smallGroups.entrySet()) {
-      final byte nibble = entry.getKey();
-      final List<UpdateEntry<V>> childUpdates = entry.getValue();
+    for (int i = 0; i < NB_CHILD; i++) {
+      final List<UpdateEntry<V>> childUpdates = groupedUpdates.get(i);
+      if (childUpdates == null || (parallel && childUpdates.size() > 1)) {
+        continue;
+      }
+      final byte nibble = (byte) i;
       final byte[] childLocation = Nibbles.append(location, nibble);
 
       final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
@@ -584,11 +586,21 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    *
    * @param updates the updates to group
    * @param depth the depth at which to extract the nibble
-   * @return map of nibble -> list of updates
+   * @return the updates of each nibble, null for a nibble without updates
    */
-  private Map<Byte, List<UpdateEntry<V>>> groupUpdatesByNibble(
+  private List<List<UpdateEntry<V>>> groupUpdatesByNibble(
       final List<UpdateEntry<V>> updates, final int depth) {
-    return updates.stream().collect(Collectors.groupingBy(entry -> entry.getNibble(depth)));
+    final List<List<UpdateEntry<V>>> groups = new ArrayList<>(Collections.nCopies(NB_CHILD, null));
+    for (final UpdateEntry<V> update : updates) {
+      final int nibble = update.getNibble(depth);
+      List<UpdateEntry<V>> group = groups.get(nibble);
+      if (group == null) {
+        group = new ArrayList<>();
+        groups.set(nibble, group);
+      }
+      group.add(update);
+    }
+    return groups;
   }
 
   /**
