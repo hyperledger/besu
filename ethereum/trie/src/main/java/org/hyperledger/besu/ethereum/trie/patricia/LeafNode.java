@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.NodeVisitor;
 import org.hyperledger.besu.ethereum.trie.PathNodeVisitor;
 import org.hyperledger.besu.ethereum.trie.TrieRlp;
 
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +39,7 @@ public class LeafNode<V> implements Node<V> {
   private final NodeFactory<V> nodeFactory;
   protected final Function<V, Bytes> valueSerializer;
   protected WeakReference<byte[]> encodedBytes;
-  private SoftReference<byte[]> hash;
+  private byte[] hash;
   private boolean dirty = false;
 
   public LeafNode(
@@ -121,14 +120,11 @@ public class LeafNode<V> implements Node<V> {
 
   @Override
   public byte[] hash() {
-    if (hash != null) {
-      final byte[] hashed = hash.get();
-      if (hashed != null) {
-        return hashed;
-      }
+    byte[] hashed = hash;
+    if (hashed == null) {
+      hashed = Keccak256.hash(encoded());
+      hash = hashed;
     }
-    final byte[] hashed = Keccak256.hash(encoded());
-    hash = new SoftReference<>(hashed);
     return hashed;
   }
 
