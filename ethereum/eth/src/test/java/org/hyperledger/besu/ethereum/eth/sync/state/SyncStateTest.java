@@ -453,6 +453,129 @@ public class SyncStateTest {
   }
 
   @Test
+  public void syncStatus_reportsProgressWhileSnapSyncingWithNoSyncTarget() {
+    // Snap sync never sets a sync target; it reports progress via setSyncProgress instead.
+    updateChainState(syncTargetPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, TARGET_DIFFICULTY);
+    doReturn(Optional.of(syncTargetPeer.getEthPeer())).when(ethPeers).bestPeerWithHeightEstimate();
+
+    syncState.setSyncProgress(10L, 42L);
+
+    final Optional<SyncStatus> syncStatus = syncState.syncStatus();
+
+    assertThat(syncStatus).isPresent();
+    assertThat(syncStatus.get().getStartingBlock()).isEqualTo(10L);
+    assertThat(syncStatus.get().getCurrentBlock()).isEqualTo(42L);
+    // The highest block is the best chain height, not the pivot.
+    assertThat(syncStatus.get().getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
+  }
+
+  @Test
+  public void syncStatus_reportsPayloadHeightAsHighestBlockOnceDrivenByConsensusLayer() {
+    syncState.setSyncProgress(10L, 42L);
+    syncState.onNewPayload(
+        new BlockHeaderTestFixture().number(TARGET_CHAIN_HEIGHT + 50).buildHeader());
+
+    assertThat(syncState.syncStatus()).isPresent();
+    assertThat(syncState.syncStatus().get().getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT + 50);
+  }
+
+  @Test
+  public void syncStatus_highestBlockAdvancesWithoutAFurtherProgressReport() {
+    syncState.setSyncProgress(10L, 42L);
+    syncState.onNewPayload(new BlockHeaderTestFixture().number(200L).buildHeader());
+    assertThat(syncState.syncStatus().get().getHighestBlock()).isEqualTo(200L);
+
+    syncState.onNewPayload(new BlockHeaderTestFixture().number(400L).buildHeader());
+
+    final Optional<SyncStatus> syncStatus = syncState.syncStatus();
+    assertThat(syncStatus.get().getCurrentBlock()).isEqualTo(42L);
+    assertThat(syncStatus.get().getHighestBlock()).isEqualTo(400L);
+  }
+
+  @Test
+  public void syncStatus_isEmptyOnceInitialSyncPhaseIsDone() {
+    syncState.setSyncProgress(10L, 42L);
+    assertThat(syncState.syncStatus()).isPresent();
+
+    syncState.markInitialSyncPhaseAsDone();
+
+    assertThat(syncState.syncStatus()).isEmpty();
+  }
+
+  @Test
+  public void syncStatus_staysEmptyWhenProgressIsReportedAfterInitialSyncPhaseIsDone() {
+    syncState.setSyncProgress(10L, 42L);
+    syncState.markInitialSyncPhaseAsDone();
+
+    syncState.setSyncProgress(10L, 43L);
+
+    assertThat(syncState.syncStatus()).isEmpty();
+  }
+
+  @Test
+  public void syncStatusListener_receivesEmptyWhenInitialSyncPhaseIsDone() {
+    syncState.setSyncProgress(10L, 42L);
+
+    syncState.markInitialSyncPhaseAsDone();
+
+    verify(syncStatusListener, times(2)).onSyncStatusChanged(syncStatusCaptor.capture());
+    assertThat(syncStatusCaptor.getAllValues().getFirst()).isPresent();
+    assertThat(syncStatusCaptor.getAllValues().getLast()).isEmpty();
+  }
+
+  @Test
+  public void syncStatusListener_isNotNotifiedWhenInitialSyncPhaseIsDoneWithoutProgress() {
+    syncState.markInitialSyncPhaseAsDone();
+
+    verify(syncStatusListener, never()).onSyncStatusChanged(any());
+  }
+
+  @Test
+  public void syncStatusListener_isNotNotifiedOfProgressReportedAfterInitialSyncPhaseIsDone() {
+    syncState.markInitialSyncPhaseAsDone();
+
+    syncState.setSyncProgress(10L, 42L);
+
+    verify(syncStatusListener, never()).onSyncStatusChanged(any());
+  }
+
+  @Test
+  public void syncStatus_reportsProgressAgainAfterInitialSyncRestart() {
+    syncState.markInitialSyncPhaseAsDone();
+    syncState.markInitialSyncRestart();
+
+    syncState.setSyncProgress(10L, 42L);
+
+    assertThat(syncState.syncStatus()).isPresent();
+    assertThat(syncState.syncStatus().get().getCurrentBlock()).isEqualTo(42L);
+  }
+
+  @Test
+  public void syncStatus_prefersSyncTargetOverReportedProgress() {
+    syncState.setSyncProgress(10L, 42L);
+    syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
+
+    final Optional<SyncStatus> syncStatus = syncState.syncStatus();
+
+    assertThat(syncStatus).isPresent();
+    assertThat(syncStatus.get().getStartingBlock()).isEqualTo(3L);
+    assertThat(syncStatus.get().getCurrentBlock()).isEqualTo(OUR_CHAIN_HEAD_NUMBER);
+    assertThat(syncStatus.get().getHighestBlock()).isEqualTo(TARGET_CHAIN_HEIGHT);
+  }
+
+  @Test
+  public void syncStatusListener_stillReceivesEmptyOnClearedTargetDespiteReportedProgress() {
+    // An empty event is how listeners learn that the sync target is gone.
+    syncState.setSyncProgress(10L, 42L);
+    syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
+    syncState.clearSyncTarget();
+
+    verify(syncStatusListener, times(3)).onSyncStatusChanged(syncStatusCaptor.capture());
+
+    assertThat(syncStatusCaptor.getAllValues().getLast()).isEmpty();
+  }
+
+  @Test
   public void syncStatusListener_receivesEventWhenSyncTargetSet() {
     syncState.setSyncTarget(syncTargetPeer.getEthPeer(), blockchain.getBlockHeader(3L).get());
 
@@ -544,6 +667,85 @@ public class SyncStateTest {
     syncState.onNewPayload(new BlockHeaderTestFixture().number(998L).buildHeader());
 
     assertThat(syncState.bestChainHeight()).isEqualTo(998L);
+  }
+
+  @Test
+  public void isInSync_ignoresBetterPeerOnceDrivenByPayloads() {
+    updateChainState(otherPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, TARGET_DIFFICULTY);
+    lenient()
+        .doReturn(Optional.of(otherPeer.getEthPeer()))
+        .when(ethPeers)
+        .bestPeerWithHeightEstimate();
+    assertThat(syncState.isInSync()).isFalse(); // Sanity check
+
+    syncState.onNewPayload(payloadHeader(OUR_CHAIN_HEAD_NUMBER + 1));
+
+    assertThat(syncState.isInSync()).isTrue();
+    assertThat(syncState.isInSync(1)).isTrue();
+    assertThat(syncState.isInSync(0)).isFalse();
+  }
+
+  @Test
+  public void isInSync_outOfSyncWhilePayloadsAreAheadOfLocalChain() {
+    otherPeer.disconnect(DisconnectReason.REQUESTED);
+    syncTargetPeer.disconnect(DisconnectReason.REQUESTED);
+
+    syncState.onNewPayload(payloadHeader(TARGET_CHAIN_HEIGHT));
+
+    assertThat(syncState.isInSync()).isFalse();
+    assertThat(syncState.isInSync(TARGET_CHAIN_DELTA - 1)).isFalse();
+    assertThat(syncState.isInSync(TARGET_CHAIN_DELTA)).isTrue();
+
+    advanceLocalChain(TARGET_CHAIN_HEIGHT);
+
+    assertThat(syncState.isInSync()).isTrue();
+    assertThat(syncState.isInSync(0)).isTrue();
+  }
+
+  @Test
+  public void isInSync_syncTargetStillCountsOnceDrivenByPayloads() {
+    otherPeer.disconnect(DisconnectReason.REQUESTED);
+    setupOutOfSyncState();
+
+    syncState.onNewPayload(payloadHeader(OUR_CHAIN_HEAD_NUMBER + 1));
+
+    assertThat(syncState.isInSync()).isFalse();
+  }
+
+  @Test
+  public void inSyncListener_notifiedInSyncWhenPayloadsReplaceBetterPeer() {
+    updateChainState(otherPeer.getEthPeer(), TARGET_CHAIN_HEIGHT, TARGET_DIFFICULTY);
+    lenient()
+        .doReturn(Optional.of(otherPeer.getEthPeer()))
+        .when(ethPeers)
+        .bestPeerWithHeightEstimate();
+    advanceLocalChain(OUR_CHAIN_HEAD_NUMBER + 1);
+    verify(inSyncListener).onInSyncStatusChange(false);
+
+    syncState.onNewPayload(payloadHeader(blockchain.getChainHeadBlockNumber() + 1));
+
+    verify(inSyncListener).onInSyncStatusChange(true);
+    verifyNoMoreInteractions(inSyncListener);
+  }
+
+  @Test
+  public void inSyncListener_notifiedOutOfSyncWhenPayloadIsAhead() {
+    otherPeer.disconnect(DisconnectReason.REQUESTED);
+    syncTargetPeer.disconnect(DisconnectReason.REQUESTED);
+    advanceLocalChain(OUR_CHAIN_HEAD_NUMBER + 1);
+    verify(inSyncListener).onInSyncStatusChange(true);
+
+    final long payloadHeight = blockchain.getChainHeadBlockNumber() + TARGET_CHAIN_DELTA;
+    syncState.onNewPayload(payloadHeader(payloadHeight));
+    verify(inSyncListener).onInSyncStatusChange(false);
+
+    advanceLocalChain(payloadHeight);
+    verify(inSyncListener, times(2)).onInSyncStatusChange(true);
+    verifyNoMoreInteractions(inSyncListener);
+  }
+
+  private BlockHeader payloadHeader(final long blockNumber) {
+    return new BlockHeaderTestFixture().number(blockNumber).buildHeader();
   }
 
   private RespondingEthPeer createPeer(final long blockHeight) {
@@ -780,9 +982,9 @@ public class SyncStateTest {
     SyncStatusListener listener = mock(SyncStatusListener.class);
     syncState.subscribeSyncStatus(listener);
 
-    syncState.setSyncProgress(0, 10, 100);
-    syncState.setSyncProgress(0, 50, 100);
-    syncState.setSyncProgress(0, 100, 100);
+    syncState.setSyncProgress(0, 10);
+    syncState.setSyncProgress(0, 50);
+    syncState.setSyncProgress(0, 100);
 
     verify(listener, times(3)).onSyncStatusChanged(syncStatusCaptor.capture());
 

@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -32,15 +33,22 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
+import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -60,10 +68,12 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -289,6 +299,49 @@ public class TransactionPoolFactoryTest {
     assertThat(pool.isEnabled()).isTrue();
   }
 
+  @Test
+  public void txPoolReenabledWhenEnginePayloadsShowNodeAtChainHead() {
+    final long localHeight = 100L;
+    final BlockHeader localHead = new BlockHeaderTestFixture().number(localHeight).buildHeader();
+    when(blockchain.getChainHead())
+        .thenReturn(new ChainHead(localHead, Difficulty.ONE, localHeight));
+
+    // a peer following another chain reports a head far ahead of the local one
+    final ChainHeadEstimate peerChainHead =
+        new ChainHeadEstimate() {
+          @Override
+          public Difficulty getEstimatedTotalDifficulty() {
+            return Difficulty.ONE;
+          }
+
+          @Override
+          public long getEstimatedHeight() {
+            return localHeight + 2500L;
+          }
+        };
+    final EthPeer peerOnOtherChain = mock(EthPeer.class);
+    when(peerOnOtherChain.chainStateSnapshot()).thenReturn(peerChainHead);
+    final EthPeers ethPeersSpy = spy(ethPeers);
+    doReturn(Optional.of(peerOnOtherChain)).when(ethPeersSpy).bestPeerWithHeightEstimate();
+
+    syncState = new SyncState(blockchain, ethPeersSpy, false, Optional.empty());
+    final ArgumentCaptor<BlockAddedObserver> syncStateObserver =
+        ArgumentCaptor.forClass(BlockAddedObserver.class);
+    verify(blockchain).observeBlockAdded(syncStateObserver.capture());
+    setupInitialSyncPhase(syncState);
+    assertThat(pool.isEnabled()).isTrue();
+
+    syncStateObserver
+        .getValue()
+        .onBlockAdded(
+            BlockAddedEvent.createForHeadAdvancement(
+                new BlockDataGenerator().block(), List.of(), List.of()));
+    assertThat(pool.isEnabled()).isFalse();
+
+    syncState.onNewPayload(new BlockHeaderTestFixture().number(localHeight + 1).buildHeader());
+    assertThat(pool.isEnabled()).isTrue();
+  }
+
   private void setupInitialSyncPhase(final boolean hasInitialSyncPhase) {
     syncState = new SyncState(blockchain, ethPeers, hasInitialSyncPhase, Optional.empty());
     setupInitialSyncPhase(syncState);
@@ -408,7 +461,8 @@ public class TransactionPoolFactoryTest {
         newPooledTransactionHashesMessageSender,
         new BlobCache(),
         MiningConfiguration.newDefault(),
-        EthProtocolConfiguration.DEFAULT);
+        EthProtocolConfiguration.DEFAULT,
+        new TransactionEventNotifier(new DeterministicEthScheduler()));
   }
 
   private TransactionPool createAndEnableTransactionPool(

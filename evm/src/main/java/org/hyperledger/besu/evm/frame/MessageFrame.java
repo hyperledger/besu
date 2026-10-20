@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
@@ -494,6 +495,23 @@ public class MessageFrame {
   // ---------------------------------------------------------------------------
 
   /**
+   * Gets a UInt256 value from the stack.
+   *
+   * <p>This function is unguarded (e.g. can throw {@link ArrayIndexOutOfBoundsException}) as it
+   * should only be used in test code. Using it in production might introduce performance
+   * regressions.
+   *
+   * @param offset index from the stack counting from top to bottom, to take a UInt256 value
+   * @return UInt256 value at the respective stack height
+   */
+  @VisibleForTesting
+  public org.hyperledger.besu.evm.UInt256 getStackItemV2(final int offset) {
+    int index = (stackTopV2 - offset - 1) << 2;
+    return new org.hyperledger.besu.evm.UInt256(
+        stackDataV2[index], stackDataV2[index + 1], stackDataV2[index + 2], stackDataV2[index + 3]);
+  }
+
+  /**
    * Returns the backing long[] array of the operand stack.
    *
    * @return the raw data array
@@ -895,8 +913,9 @@ public class MessageFrame {
   }
 
   /**
-   * Decrements stateGasUsed for in-frame refunds (SSTORE 0→X→0, CREATE silent failure, same-tx
-   * SELFDESTRUCT). UndoScalar-scoped: refunds propagate to parents only on full success.
+   * Decrements stateGasUsed for in-frame refunds (SSTORE 0→X→0, CREATE silent failure).
+   * UndoScalar-scoped: refunds propagate to parents only on full success. A same-tx SELFDESTRUCT
+   * does not refund state gas (EIP-8037, "Gas refills for SELFDESTRUCT").
    *
    * @param amount the amount to subtract
    */

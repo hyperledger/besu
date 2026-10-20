@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
@@ -97,6 +96,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   protected Object resultByBlockHeader(
       final JsonRpcRequestContext request, final BlockHeader header) {
     CallParameter callParams = CallParameterUtil.validateAndGetCallParams(request);
+    CallParameterUtil.rejectBlobFieldsWithoutHashes(callParams);
     Optional<StateOverrideMap> maybeStateOverrides = getAddressStateOverrideMap(request);
     // TODO implement for block overrides
 
@@ -104,7 +104,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
         .process(
             callParams,
             maybeStateOverrides,
-            buildTransactionValidationParams(header, callParams),
+            CallParameterUtil.getTransactionValidationParams(header, callParams),
             OperationTracer.NO_TRACING,
             (mutableWorldState, transactionSimulatorResult) ->
                 transactionSimulatorResult.map(
@@ -170,12 +170,5 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
     return errorResponse(request, new JsonRpcError(rpcErrorType));
-  }
-
-  private TransactionValidationParams buildTransactionValidationParams(
-      final BlockHeader header, final CallParameter callParams) {
-    return CallParameterUtil.isAllowExceedingBalance(header, callParams)
-        ? TransactionValidationParams.transactionSimulatorAllowExceedingBalanceAndFutureNonce()
-        : TransactionValidationParams.transactionSimulatorAllowFutureNonce();
   }
 }

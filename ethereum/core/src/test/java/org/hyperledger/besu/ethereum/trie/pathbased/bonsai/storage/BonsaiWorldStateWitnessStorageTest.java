@@ -22,12 +22,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.cache.VersionedFlatDbCacheManager;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.trienode.TrieNodeKey;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.WorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.NoOpBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.cache.NoOpBonsaiWorldStateCacheManager;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -92,8 +94,8 @@ class BonsaiWorldStateWitnessStorageTest {
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG,
                 cacheManager)) {
       final var updater = cachedHead.updater();
-      updater.putAccountStateTrieNode(location, accountNodeHash, accountNode);
-      updater.putAccountStorageTrieNode(account, location, storageNodeHash, storageNode);
+      updater.putTrieNode(location, accountNodeHash, accountNode);
+      updater.putTrieNode(TrieNodeKey.of(account, location), storageNodeHash, storageNode);
       updater.commit();
       await()
           .untilAsserted(
@@ -101,16 +103,33 @@ class BonsaiWorldStateWitnessStorageTest {
 
       final BonsaiWorldStateWitnessStorage witnessStorage =
           new BonsaiWorldStateWitnessStorage(new NoOpMetricsSystem(), cachedHead);
-      assertThat(
-              witnessStorage.getAccountStateTrieNodeFromCacheOrStorage(location, accountNodeHash))
+      assertThat(witnessStorage.getTrieNodeFromCacheOrStorage(location, accountNodeHash))
           .contains(accountNode);
       assertThat(
-              witnessStorage.getAccountStorageTrieNodeFromCacheOrStorage(
-                  account, location, storageNodeHash))
+              witnessStorage.getTrieNodeFromCacheOrStorage(
+                  TrieNodeKey.of(account, location), storageNodeHash))
           .contains(storageNode);
 
       assertThat(witnessStorage.getTrieNodes()).containsExactlyInAnyOrder(accountNode, storageNode);
       witnessStorage.close();
+    }
+  }
+
+  @Test
+  void readsCodeTheWayTheParentStoresIt() throws Exception {
+    // PUSH1 0x5b; JUMPDEST; PUSH2 0x5b5b; JUMPDEST
+    final Bytes code = Bytes.fromHexString("0x605b5b615b5b5b");
+    final Hash codeHash = Hash.hash(code);
+    head.updater().putCode(Hash.EMPTY, codeHash, code).commit();
+
+    try (BonsaiWorldStateLayerStorage parentLayer = new BonsaiWorldStateLayerStorage(head);
+        BonsaiWorldStateWitnessStorage witnessStorage =
+            new BonsaiWorldStateWitnessStorage(new NoOpMetricsSystem(), parentLayer)) {
+      final Code read = witnessStorage.getCode(codeHash, Hash.EMPTY).orElseThrow();
+
+      assertThat(read.getBytes()).isEqualTo(code);
+      assertThat(read.getJumpDestBitMask()).containsExactly(0b1000100L);
+      assertThat(witnessStorage.getCodeBytes(codeHash, Hash.EMPTY)).contains(code);
     }
   }
 }
