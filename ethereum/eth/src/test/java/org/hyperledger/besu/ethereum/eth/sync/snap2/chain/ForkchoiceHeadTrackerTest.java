@@ -55,17 +55,21 @@ class ForkchoiceHeadTrackerTest {
   }
 
   @Test
-  void ignoresAForkchoiceWithoutHead() {
-    tracker.onNewUnverifiedForkchoice(new ForkchoiceEvent(Hash.ZERO, Hash.ZERO, Hash.ZERO));
+  void keepsTheHeadOnAForkchoiceWithoutHead() {
+    final Hash head = new BlockHeaderTestFixture().number(1).buildHeader().getHash();
+    tracker.onNewUnverifiedForkchoice(new ForkchoiceEvent(head, Hash.ZERO, Hash.ZERO));
 
-    assertThat(tracker.headHash()).isEmpty();
+    tracker.onNewUnverifiedForkchoice(new ForkchoiceEvent(Hash.ZERO, Hash.ZERO, Hash.ZERO));
+    tracker.onNewUnverifiedForkchoice(new ForkchoiceEvent(null, Hash.ZERO, Hash.ZERO));
+
+    assertThat(tracker.headHash()).contains(head);
   }
 
   @Test
   void forgetsTheOldestHeadersOnceTheCacheIsFull() {
     // one more header than the cache holds
     final List<BlockHeader> headers = new ArrayList<>();
-    for (int i = 0; i <= 512; i++) {
+    for (int i = 0; i <= ForkchoiceHeadTracker.CACHED_HEADERS; i++) {
       headers.add(new BlockHeaderTestFixture().number(i).buildHeader());
     }
 

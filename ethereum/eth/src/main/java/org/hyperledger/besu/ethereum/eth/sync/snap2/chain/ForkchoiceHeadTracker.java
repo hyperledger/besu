@@ -24,8 +24,11 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Follows the head the consensus layer sends with forkchoice updates. Headers received with new
@@ -38,7 +41,7 @@ public final class ForkchoiceHeadTracker
         NewPayloadListener,
         PivotBlockSelector {
 
-  private static final int CACHED_HEADERS = 512;
+  @VisibleForTesting static final int CACHED_HEADERS = 512;
 
   private final Runnable cleanup;
   private final Map<Hash, BlockHeader> headers =
@@ -51,7 +54,7 @@ public final class ForkchoiceHeadTracker
   private volatile Hash head;
 
   public ForkchoiceHeadTracker(final Runnable cleanup) {
-    this.cleanup = cleanup;
+    this.cleanup = Objects.requireNonNull(cleanup);
   }
 
   @Override
