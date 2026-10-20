@@ -206,7 +206,7 @@ dependencies {
 
     api 'io.consensys.protocols:jc-kzg-4844:2.1.8'
 
-    api 'io.consensys.protocols:discovery:26.8.0'
+    api 'io.consensys.protocols:discovery:26.10.1'
   }
 }
 
