@@ -14,10 +14,18 @@
 - `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
 - `--ethstats` no longer retains a few KB of heap per reconnect attempt while the ethstats server is unreachable. [#11614](https://github.com/besu-eth/besu/pull/11614)
 - `debug_traceBlockByNumber` now returns `BLOCK_NOT_FOUND` for a block number beyond the chain head, as `debug_traceBlockByHash` does for an unknown hash. Previously it returned a `null` result. [#11437](https://github.com/besu-eth/besu/pull/11437)
+- Fix incorrect sync status reporting. `eth_syncing` now reports progress during snap sync (previously it reported "not syncing" for the whole snap sync), with `highestBlock` taken from the best-chain height (the latest `engine_newPayload` head under PoS). The ethstats `syncing` field and `BackwardSyncContext.isSyncing()` no longer report the inverse of the actual state. `/readiness` no longer reports ready while the world state download, trie heal or flat database heal is still in progress. A backward sync session that completed synchronously is no longer reused by later calls. [#11260](https://github.com/besu-eth/besu/issues/11260)
+- Debug traces with an opcode filter or a step limit report the post-execution gas of the last recorded operation; every later operation overwrote it. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
 
 ### Additions and Improvements
+- EVM v2 (`--Xevm-v2`) runs every opcode on its own stack and supports tracers. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
 - Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
+- Block building checks the block access list item budget of each transaction without copying the whole list. [#11454](https://github.com/besu-eth/besu/pull/11454)
+- Debug traces with a step limit no longer take snapshots of the operations past the limit, which made a limited trace of a long transaction as slow as a full one. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- `OperationTracer.tracesOperations()` lets a tracer that only uses transaction or call hooks skip the per-operation calls on EVM v2. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- Tracers read the stack of a frame through `TracedStack`, which also reads the EVM v2 stack. With `--Xevm-v2`, a plugin tracer that calls `MessageFrame.getStackItem` or `stackSize` throws a `NullPointerException`, as those read only the EVM v1 stack. [#11524](https://github.com/besu-eth/besu/pull/11524)
 
 ## 26.10.0
 
@@ -36,6 +44,7 @@ opportunity to upgrade.
 - `trace_block` and `trace_replayBlockTransactions` now return a `Block not found` error (`-32000`) for a block number that is not on the chain instead of a `null` result, as `trace_call` and `trace_callMany` already do. [#11381](https://github.com/besu-eth/besu/pull/11381)
 - `trace_filter` now honours `blockHash` and traces exactly that block, as `eth_getLogs` does. Previously the member was parsed and ignored, so `{"blockHash": ...}` traced the latest block, and with `fromBlock` or `toBlock` the hash was dropped. A non-null `blockHash` combined with a non-null `fromBlock` or `toBlock` is now rejected with `Invalid filter params` (`-32602`). An unknown or noncanonical hash returns `Block not found` (`-32000`), a canonical block without a stored body, as after history pruning, returns `Pruned history unavailable` (`4444`), and a block that cannot be traced on its parent state returns `World state unavailable` (`-32000`), including with `count: 0`. A null `blockHash` is still ignored. [#11407](https://github.com/besu-eth/besu/pull/11407)
 - Bonsai databases storing code by its hash are upgraded on first start to store the jump destination analysis next to the code (Bonsai database version 4, archive version 3); the upgrade takes a few minutes on mainnet, after which the database cannot be opened by an older version of Besu. [#11327](https://github.com/besu-eth/besu/pull/11327)
+- Transaction added and dropped listeners registered by plugins with `BesuEvents` or `TransactionPoolService` are now notified asynchronously, on a Besu thread different from the one that changed the transaction pool, one event at a time and in the order the transaction pool notifies them, so slow or failing plugin listeners no longer affect the transaction pool. Previously the dropped events, and with the legacy transaction pool also the added events, were notified on the thread that changed the pool. [#11574](https://github.com/besu-eth/besu/pull/11574)
 
 ### Upcoming Breaking Changes
 - Plugin API
