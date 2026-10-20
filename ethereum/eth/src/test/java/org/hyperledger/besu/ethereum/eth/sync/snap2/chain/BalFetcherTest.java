@@ -47,12 +47,15 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.LongPredicate;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -72,44 +75,45 @@ class BalFetcherTest {
 
   @Test
   void fetchesTheListsFromSnap2Peers() {
-    sender.withoutLists.add(snap1Eth71);
+    sender.lacks(snap1Eth71, block -> true);
 
     assertThat(fetcher(5).fetch(headers)).isCompletedWithValue(lists(headers));
   }
 
   @Test
   void fetchesTheListsFromEth71Peers() {
-    sender.withoutLists.addAll(List.of(snap2Eth71, snap2Eth68));
+    sender.lacks(snap2Eth71, block -> true);
+    sender.lacks(snap2Eth68, block -> true);
 
     assertThat(fetcher(5).fetch(headers)).isCompletedWithValue(lists(headers));
   }
 
   @Test
   void givesUpWhenNoPeerHasTheLists() {
-    sender.withoutLists.addAll(sender.peers);
+    sender.peers.forEach(peer -> sender.lacks(peer, block -> true));
 
     final CompletableFuture<List<Bytes>> result = fetcher(1).fetch(headers);
-    assertThat(pauses).containsExactly(Duration.ofSeconds(1));
-    resume();
 
     assertThat(result).isCompletedExceptionally();
     assertThatThrownBy(result::join)
         .rootCause()
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("no peer served the block access list of block 1");
+    // no round is left to wait for
+    assertThat(pauses).isEmpty();
   }
 
   @Test
   void asksThePeersThatLackedTheListsAgainAfterFiveEmptyRounds() {
     final List<BlockHeader> batch = headers.subList(0, 4);
-    sender.withoutLists.addAll(sender.peers);
+    sender.peers.forEach(peer -> sender.lacks(peer, block -> true));
 
     final CompletableFuture<List<Bytes>> result = fetcher(10).fetch(batch);
     // each peer lacks the lists in turn, then no peer is left to ask
     for (int round = 1; round <= 4; round++) {
       resume();
     }
-    sender.withoutLists.clear();
+    sender.lacked.clear();
     assertThat(result).isNotDone();
     resume();
 
@@ -118,11 +122,81 @@ class BalFetcherTest {
   }
 
   @Test
+  void asksAgainTheBlocksAnAnswerDidNotReach() {
+    // answers cut short after one list, as a size limit does
+    sender.maxLists = 1;
+
+    // rounds that receive lists do not count, one round without any would fail the fetch
+    assertThat(fetcher(1).fetch(headers)).isCompletedWithValue(lists(headers));
+    assertThat(pauses).isEmpty();
+  }
+
+  @Test
+  void asksEachPeerForTheBlocksItDidNotLack() {
+    final List<BlockHeader> blocks = headers.subList(0, 8);
+    sender.lacks(snap2Eth71, block -> block == 3 || block == 4);
+    sender.lacks(snap1Eth71, block -> block == 7 || block == 8);
+    sender.lacks(snap2Eth68, block -> true);
+
+    // 3 and 4 then go to the peer that lacked 7 and 8, and the other way round
+    assertThat(fetcher(1).fetch(blocks)).isCompletedWithValue(lists(blocks));
+    assertThat(pauses).isEmpty();
+  }
+
+  @Test
+  void asksAgainAPeerThatTimedOut() {
+    final List<BlockHeader> batch = headers.subList(0, 4);
+    sender.timingOut.add(snap2Eth71);
+    sender.lacks(snap1Eth71, block -> true);
+    sender.lacks(snap2Eth68, block -> true);
+
+    final CompletableFuture<List<Bytes>> result = fetcher(10).fetch(batch);
+    for (int round = 1; round <= 3; round++) {
+      resume();
+    }
+
+    // the third round only had the peer that timed out left to ask
+    assertThat(result).isCompletedWithValue(lists(batch));
+    assertThat(pauses).extracting(Duration::toSeconds).containsExactly(1L, 2L, 3L);
+  }
+
+  @Test
+  void endsOnceTheSenderStops() {
+    sender.peers.forEach(peer -> sender.lacks(peer, block -> true));
+    final CompletableFuture<List<Bytes>> result = fetcher(10).fetch(headers);
+
+    sender.stop();
+    resume();
+
+    assertThatThrownBy(result::join)
+        .rootCause()
+        .isInstanceOfSatisfying(
+            RequestFailedException.class,
+            failure -> assertThat(failure.reason()).isEqualTo(Reason.STOPPED));
+    assertThat(pauses).hasSize(1);
+  }
+
+  @Test
+  void stopsAskingOnceTheCallerCancels() {
+    sender.peers.forEach(peer -> sender.lacks(peer, block -> true));
+    final CompletableFuture<List<Bytes>> result = fetcher(10).fetch(headers);
+    final int requests = sender.requests;
+
+    result.cancel(false);
+    resume();
+
+    assertThat(sender.requests).isEqualTo(requests);
+  }
+
+  @Test
   void rejectsAListThatDoesNotMatchItsHeader() {
     final BlockHeader header = headers.getFirst();
     final BalFetcher.BalRequest request = new BalFetcher.BalRequest(List.of(header), 1 << 20);
 
-    assertThat(request.decode(response(Protocol.ETH, List.of(Optional.of(bal(1)))), snap1Eth71))
+    assertThat(
+            request
+                .decode(response(Protocol.ETH, List.of(Optional.of(bal(1)))), snap1Eth71)
+                .lists())
         .containsEntry(header.getHash(), bal(1).encode());
     assertThatThrownBy(
             () -> request.decode(response(Protocol.ETH, List.of(Optional.of(bal(2)))), snap1Eth71))
@@ -151,12 +225,26 @@ class BalFetcherTest {
         .isEqualTo(EthProtocolMessages.GET_BLOCK_ACCESS_LISTS);
   }
 
-  private BalFetcher fetcher(final int rounds) {
+  @Test
+  void asksPeersThatReachedTheHighestBlock() {
+    final BalFetcher.BalRequest request =
+        new BalFetcher.BalRequest(List.of(headers.get(4), headers.get(2)), 1024);
+
+    assertThat(request.minimumPeerHeight()).isEqualTo(5);
+  }
+
+  @Test
+  void rejectsAnEmptyBatch() {
+    assertThatThrownBy(() -> new BalFetcher(sender, 0, 1024, 1))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  private BalFetcher fetcher(final int maxEmptyRounds) {
     return new BalFetcher(
         sender,
         4,
         1 << 20,
-        rounds,
+        maxEmptyRounds,
         pause -> {
           pauses.add(pause);
           return paused::add;
@@ -215,16 +303,34 @@ class BalFetcherTest {
   /** Serves the lists of the test blocks on the calling thread, asking the peers in turn. */
   private final class FakeSender implements RequestSender {
     private final List<EthPeer> peers = List.of(snap2Eth71, snap1Eth71, snap2Eth68);
-    private final Set<EthPeer> withoutLists = new HashSet<>();
+    // the blocks each peer answers as unavailable
+    private final Map<EthPeer, LongPredicate> lacked = new HashMap<>();
+    // the peers whose next request times out
+    private final Set<EthPeer> timingOut = new HashSet<>();
+    private int maxLists = Integer.MAX_VALUE;
     private int next;
+    private int requests;
+    private boolean stopped;
+
+    private void lacks(final EthPeer peer, final LongPredicate blocks) {
+      lacked.put(peer, blocks);
+    }
 
     @Override
     public <T> CompletableFuture<Response<T>> submit(
         final SyncRequest<T> request, final Set<EthPeer> excluded) {
+      if (stopped) {
+        return CompletableFuture.failedFuture(
+            new RequestFailedException(Reason.STOPPED, null, "stopped"));
+      }
       for (int i = 0; i < peers.size(); i++) {
         final EthPeer peer = peers.get(next++ % peers.size());
         if (!excluded.contains(peer) && request.canServe(peer)) {
-          return answer(request, peer);
+          requests++;
+          return timingOut.remove(peer)
+              ? CompletableFuture.failedFuture(
+                  new RequestFailedException(Reason.TIMEOUT, peer, "timed out"))
+              : answer(request, peer);
         }
       }
       return CompletableFuture.failedFuture(
@@ -235,12 +341,17 @@ class BalFetcherTest {
         final SyncRequest<T> request, final EthPeer peer) {
       final Protocol protocol = request.protocolFor(peer);
       final Bytes message = request.message(peer).getData();
+      final LongPredicate lacks = lacked.getOrDefault(peer, block -> false);
       final List<Optional<BlockAccessList>> lists = new ArrayList<>();
-      if (!withoutLists.contains(peer)) {
-        (protocol == Protocol.SNAP2
-                ? GetBlockAccessListsMessageData.decodeSnapRequest(message, false)
-                : GetBlockAccessListsMessageData.decodeEthRequest(message))
-            .forEach(hash -> lists.add(served(hash)));
+      for (final Hash hash :
+          protocol == Protocol.SNAP2
+              ? GetBlockAccessListsMessageData.decodeSnapRequest(message, false)
+              : GetBlockAccessListsMessageData.decodeEthRequest(message)) {
+        if (lists.size() == maxLists) {
+          break;
+        }
+        final long block = number(hash);
+        lists.add(lacks.test(block) ? Optional.empty() : Optional.of(bal(block)));
       }
       try {
         return CompletableFuture.completedFuture(
@@ -272,12 +383,17 @@ class BalFetcherTest {
       return Runnable::run;
     }
 
-    // the list of a test block, none for another hash
-    private Optional<BlockAccessList> served(final Hash hash) {
+    @Override
+    public void stop() {
+      stopped = true;
+    }
+
+    private long number(final Hash hash) {
       return headers.stream()
           .filter(header -> header.getHash().equals(hash))
           .findFirst()
-          .map(header -> bal(header.getNumber()));
+          .orElseThrow()
+          .getNumber();
     }
   }
 }

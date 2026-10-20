@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snap2.chain;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -24,6 +26,7 @@ import org.hyperledger.besu.ethereum.eth.messages.EthProtocolMessages;
 import org.hyperledger.besu.ethereum.eth.messages.GetBlockAccessListsMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV2;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestFailedException;
+import org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestFailedException.Reason;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestSender;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SnapMessages;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SyncRequest;
@@ -35,8 +38,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -50,29 +55,32 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Downloads block access lists, over snap/2 or eth/71 depending on the peer, and checks each one
- * against the block access list hash of its header. Blocks a peer could not serve are asked to
- * other peers until every list is received or the attempts run out.
+ * against the block access list hash of its header. Blocks a peer did not serve are asked to other
+ * peers, until every list is received or too many rounds in a row receive nothing.
  */
 public final class BalFetcher {
 
   private static final Logger LOG = LoggerFactory.getLogger(BalFetcher.class);
+  private static final int EMPTY_ROUNDS_BEFORE_ASKING_AGAIN = 5;
+  private static final int MAX_PAUSE_SECONDS = 10;
 
   private final RequestSender sender;
   private final int batchSize;
   private final long responseBytes;
-  private final int maxRounds;
+  private final int maxEmptyRounds;
   private final Function<Duration, Executor> pauses;
 
+  /** Creates a fetcher that fails after {@code maxEmptyRounds} rounds in a row without a list. */
   public BalFetcher(
       final RequestSender sender,
       final int batchSize,
       final long responseBytes,
-      final int maxRounds) {
+      final int maxEmptyRounds) {
     this(
         sender,
         batchSize,
         responseBytes,
-        maxRounds,
+        maxEmptyRounds,
         pause -> CompletableFuture.delayedExecutor(pause.toMillis(), TimeUnit.MILLISECONDS));
   }
 
@@ -82,12 +90,14 @@ public final class BalFetcher {
       final RequestSender sender,
       final int batchSize,
       final long responseBytes,
-      final int maxRounds,
+      final int maxEmptyRounds,
       final Function<Duration, Executor> pauses) {
+    checkArgument(batchSize > 0, "batch size must be positive");
+    checkArgument(maxEmptyRounds > 0, "max empty rounds must be positive");
     this.sender = sender;
     this.batchSize = batchSize;
     this.responseBytes = responseBytes;
-    this.maxRounds = maxRounds;
+    this.maxEmptyRounds = maxEmptyRounds;
     this.pauses = pauses;
   }
 
@@ -106,90 +116,141 @@ public final class BalFetcher {
                     + " has no block access list, snap/2 cannot sync it"));
       }
     }
-    final Fetch fetch = new Fetch(headers, maxRounds);
-    fetch.round(0);
+    final Fetch fetch = new Fetch(headers);
+    fetch.guarded(fetch::round);
     return fetch.result;
   }
 
   /** The lists of some headers, asked in rounds, each round to peers that did not lack them. */
   private final class Fetch {
     private final List<BlockHeader> headers;
-    private final int rounds;
     private final CompletableFuture<List<Bytes>> result = new CompletableFuture<>();
     // guarded by this
     private final Map<Hash, Bytes> received = new HashMap<>();
     private final Map<Hash, Set<EthPeer>> lacking = new HashMap<>();
+    // rounds run one after the other
+    private int emptyRounds;
 
-    private Fetch(final List<BlockHeader> headers, final int rounds) {
+    private Fetch(final List<BlockHeader> headers) {
       this.headers = headers;
-      this.rounds = rounds;
     }
 
-    private void round(final int round) {
+    private void round() {
+      if (result.isDone()) {
+        return;
+      }
       final List<BlockHeader> missing = missing();
       if (missing.isEmpty()) {
         result.complete(lists());
         return;
       }
-      if (round >= rounds) {
-        result.completeExceptionally(
-            new IllegalStateException(
-                "no peer served the block access list of block " + missing.getFirst().getNumber()));
-        return;
-      }
       final List<CompletableFuture<Void>> requests = new ArrayList<>();
-      for (int i = 0; i < missing.size(); i += batchSize) {
-        requests.add(request(missing.subList(i, Math.min(missing.size(), i + batchSize))));
-      }
+      // a batch leaves out only the peers that lacked all of its blocks
+      groupsByLackingPeers(missing)
+          .forEach(
+              (excluded, group) -> {
+                for (int i = 0; i < group.size(); i += batchSize) {
+                  final List<BlockHeader> batch =
+                      group.subList(i, Math.min(group.size(), i + batchSize));
+                  requests.add(request(batch, excluded));
+                }
+              });
       CompletableFuture.allOf(requests.toArray(CompletableFuture[]::new))
-          .whenComplete((unused, error) -> next(round, missing));
+          .whenComplete((unused, error) -> guarded(() -> next(missing)));
     }
 
-    private CompletableFuture<Void> request(final List<BlockHeader> batch) {
+    private CompletableFuture<Void> request(
+        final List<BlockHeader> batch, final Set<EthPeer> excluded) {
       return sender
-          .submit(new BalRequest(batch, responseBytes), excluded(batch))
+          .submit(new BalRequest(batch, responseBytes), excluded)
           .handle(
               (response, error) -> {
                 if (error == null) {
                   record(batch, response.value(), response.peer());
                 } else {
-                  RequestFailedException.from(error)
-                      .flatMap(RequestFailedException::peer)
-                      .ifPresent(peer -> record(batch, Map.of(), peer));
+                  onFailure(batch, error);
                 }
                 return null;
               });
     }
 
-    // a round that received nothing waits, peers that lacked the lists may catch up meanwhile
-    private void next(final int round, final List<BlockHeader> missing) {
-      if (receivedAny(missing)) {
-        round(round + 1);
+    // a peer that had none of the lists, or wrong ones, is left out for them
+    private void onFailure(final List<BlockHeader> batch, final Throwable error) {
+      final Optional<RequestFailedException> failure = RequestFailedException.from(error);
+      if (failure.isEmpty()) {
+        // the code of the request failed, it would on any peer
+        result.completeExceptionally(error);
         return;
       }
-      LOG.debug("No block access list received in round {}, retrying", round);
-      if (round % 5 == 4) {
-        forgetLacking();
+      final Reason reason = failure.get().reason();
+      if (reason == Reason.STOPPED) {
+        result.completeExceptionally(failure.get());
+      } else if (reason == Reason.EMPTY || reason == Reason.INVALID) {
+        failure.get().peer().ifPresent(peer -> lack(batch, peer));
       }
-      // once the sync stopped, the next round fails at once
-      pauses.apply(Duration.ofSeconds(Math.min(10, 1 + round))).execute(() -> round(round + 1));
     }
 
-    // keeps the lists the peer sent, and notes it lacked the others
+    // a round that received nothing waits, peers that lacked the lists may catch up meanwhile
+    private void next(final List<BlockHeader> missing) {
+      if (result.isDone()) {
+        return;
+      }
+      if (receivedAny(missing)) {
+        emptyRounds = 0;
+        round();
+        return;
+      }
+      emptyRounds++;
+      if (emptyRounds >= maxEmptyRounds) {
+        result.completeExceptionally(
+            new IllegalStateException(
+                "no peer served the block access list of block " + missing.getFirst().getNumber()));
+        return;
+      }
+      LOG.debug("No block access list received in {} rounds in a row, retrying", emptyRounds);
+      if (emptyRounds % EMPTY_ROUNDS_BEFORE_ASKING_AGAIN == 0) {
+        forgetLacking();
+      }
+      pauses
+          .apply(Duration.ofSeconds(Math.min(MAX_PAUSE_SECONDS, emptyRounds)))
+          .execute(() -> guarded(this::round));
+    }
+
+    // a bug fails the fetch rather than leaving it pending
+    private void guarded(final Runnable step) {
+      try {
+        step.run();
+      } catch (final RuntimeException e) {
+        result.completeExceptionally(e);
+      }
+    }
+
+    // keeps the lists the peer sent, and notes it lacked those it answered as unavailable
     private synchronized void record(
-        final List<BlockHeader> batch, final Map<Hash, Bytes> lists, final EthPeer peer) {
-      received.putAll(lists);
-      for (final BlockHeader header : batch) {
-        if (!lists.containsKey(header.getHash())) {
+        final List<BlockHeader> batch, final Served served, final EthPeer peer) {
+      received.putAll(served.lists());
+      // an answer cut short by its size says nothing of the blocks it did not reach
+      for (final BlockHeader header : batch.subList(0, served.reached())) {
+        if (!served.lists().containsKey(header.getHash())) {
           lacking.computeIfAbsent(header.getHash(), hash -> new HashSet<>()).add(peer);
         }
       }
     }
 
-    private synchronized Set<EthPeer> excluded(final List<BlockHeader> batch) {
-      final Set<EthPeer> excluded = new HashSet<>();
-      batch.forEach(header -> excluded.addAll(lacking.getOrDefault(header.getHash(), Set.of())));
-      return excluded;
+    private synchronized void lack(final List<BlockHeader> batch, final EthPeer peer) {
+      batch.forEach(
+          header -> lacking.computeIfAbsent(header.getHash(), hash -> new HashSet<>()).add(peer));
+    }
+
+    // the missing headers by the peers that lacked them, in header order
+    private synchronized Map<Set<EthPeer>, List<BlockHeader>> groupsByLackingPeers(
+        final List<BlockHeader> missing) {
+      final Map<Set<EthPeer>, List<BlockHeader>> groups = new LinkedHashMap<>();
+      for (final BlockHeader header : missing) {
+        final Set<EthPeer> peers = Set.copyOf(lacking.getOrDefault(header.getHash(), Set.of()));
+        groups.computeIfAbsent(peers, key -> new ArrayList<>()).add(header);
+      }
+      return groups;
     }
 
     private synchronized List<BlockHeader> missing() {
@@ -209,8 +270,16 @@ public final class BalFetcher {
     }
   }
 
+  /**
+   * The lists a peer sent, by block hash, and how many of the requested blocks its answer reached.
+   *
+   * @param lists the lists, by block hash
+   * @param reached the number of requested blocks the answer reached, unavailable ones included
+   */
+  record Served(Map<Hash, Bytes> lists, int reached) {}
+
   /** Requests block access lists by block hash; each returned list is checked. */
-  static final class BalRequest implements SyncRequest<Map<Hash, Bytes>> {
+  static final class BalRequest implements SyncRequest<Served> {
     private final List<BlockHeader> headers;
     private final long bytes;
 
@@ -234,7 +303,7 @@ public final class BalFetcher {
 
     @Override
     public long minimumPeerHeight() {
-      return headers.getLast().getNumber();
+      return headers.stream().mapToLong(BlockHeader::getNumber).max().orElse(0);
     }
 
     @Override
@@ -262,7 +331,7 @@ public final class BalFetcher {
     }
 
     @Override
-    public Map<Hash, Bytes> decode(final MessageData response, final EthPeer peer) {
+    public Served decode(final MessageData response, final EthPeer peer) {
       final List<Bytes> lists = blockAccessLists(response, protocolFor(peer));
       if (lists.size() > headers.size()) {
         throw new InvalidResponseException("more block access lists than requested", true);
@@ -284,7 +353,7 @@ public final class BalFetcher {
       if (out.isEmpty()) {
         throw new EmptyResponseException("no block access list");
       }
-      return out;
+      return new Served(out, lists.size());
     }
 
     // the raw lists, unavailable ones as RLP.NULL; the eth request manager strips the request id
