@@ -15,10 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.AMSTERDAM;
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -31,6 +34,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.Optional;
 
@@ -38,8 +42,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class DebugExecutionWitnessTest {
-
-  private static final long OSAKA_TIME = 1_000L;
 
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
   private final BlockchainQueries blockchainQueries = mock(BlockchainQueries.class);
@@ -53,30 +55,38 @@ class DebugExecutionWitnessTest {
 
   @Test
   void blockBeforeOsakaIsUnsupported() {
-    when(protocolSchedule.milestoneFor(OSAKA)).thenReturn(Optional.of(OSAKA_TIME));
-
-    assertThat(errorFor(blockAt(OSAKA_TIME - 1))).isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+    assertThat(errorFor(PRAGUE)).isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
   }
 
   @Test
-  void blockOnChainWithoutOsakaIsUnsupported() {
+  void blockOfNonMainnetForkIsUnsupported() {
+    assertThat(errorFor(mock(HardforkId.class))).isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+  }
+
+  @Test
+  void osakaBlockIsSupported() {
+    // Past the fork check, the request fails only because the test chain has no parent block.
+    assertThat(errorFor(OSAKA)).isEqualTo(RpcErrorType.BLOCK_NOT_FOUND);
+  }
+
+  @Test
+  void amsterdamBlockOnChainWithoutOsakaMilestoneIsSupported() {
+    // A genesis that schedules Amsterdam without Osaka has no Osaka milestone.
     when(protocolSchedule.milestoneFor(OSAKA)).thenReturn(Optional.empty());
 
-    assertThat(errorFor(blockAt(OSAKA_TIME))).isEqualTo(RpcErrorType.UNSUPPORTED_FORK);
+    assertThat(errorFor(AMSTERDAM)).isEqualTo(RpcErrorType.BLOCK_NOT_FOUND);
   }
 
-  private Block blockAt(final long timestamp) {
-    return blockDataGenerator.block(
-        BlockDataGenerator.BlockOptions.create().setTimestamp(timestamp));
-  }
-
-  private RpcErrorType errorFor(final Block block) {
+  private RpcErrorType errorFor(final HardforkId blockFork) {
+    final Block block = blockDataGenerator.block();
+    final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+    when(protocolSpec.getHardforkId()).thenReturn(blockFork);
+    when(protocolSchedule.getByBlockHeader(block.getHeader())).thenReturn(protocolSpec);
     final Hash blockHash = block.getHash();
     when(blockchainQueries.getBlockHeaderByHash(blockHash))
         .thenReturn(Optional.of(block.getHeader()));
     when(blockchain.getBlockByHash(blockHash)).thenReturn(Optional.of(block));
 
-    // The method resolves the Osaka milestone when it is created.
     final DebugExecutionWitness method =
         new DebugExecutionWitness(blockchainQueries, mock(ProtocolContext.class), protocolSchedule);
     final JsonRpcResponse response =

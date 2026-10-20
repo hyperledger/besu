@@ -16,6 +16,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.OSAKA;
 
+import org.hyperledger.besu.datatypes.HardforkId;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -59,7 +61,6 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
-  private final Optional<Long> osakaTimestamp;
 
   public DebugExecutionWitness(
       final BlockchainQueries blockchainQueries,
@@ -69,7 +70,6 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     blockchain = getBlockchainQueries().getBlockchain();
-    osakaTimestamp = protocolSchedule.milestoneFor(OSAKA);
   }
 
   @Override
@@ -201,15 +201,15 @@ public class DebugExecutionWitness extends AbstractBlockParameterOrBlockHashMeth
   }
 
   /**
-   * Returns whether this method serves a witness for {@code blockHeader}: only blocks from Osaka on
-   * are supported, so a chain that does not schedule Osaka has none.
+   * Returns whether this method serves a witness for {@code blockHeader}: only blocks of Osaka or a
+   * later fork are supported. The block's own fork decides, so a chain that schedules a later fork
+   * without Osaka, such as Amsterdam alone, is still supported.
    *
    * @param blockHeader the header of the block
-   * @return {@code true} if the block's timestamp is at or after Osaka's activation
+   * @return {@code true} if the block runs under Osaka or a later mainnet fork
    */
   private boolean isWitnessSupported(final BlockHeader blockHeader) {
-    // The timestamp is a uint64 carried in a long, so it is compared unsigned.
-    return osakaTimestamp.isPresent()
-        && Long.compareUnsigned(blockHeader.getTimestamp(), osakaTimestamp.get()) >= 0;
+    final HardforkId fork = protocolSchedule.getByBlockHeader(blockHeader).getHardforkId();
+    return fork instanceof MainnetHardforkId mainnetFork && mainnetFork.compareTo(OSAKA) >= 0;
   }
 }
