@@ -15,10 +15,6 @@
 package org.hyperledger.besu.evm.frame;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,66 +23,53 @@ class StacksV2Test {
   private static final int LENGTH = 1024 * 4;
 
   @Test
-  void nextFrameAtTheSameDepthReusesTheStack() {
-    final Deque<MessageFrame> frameStack = new ArrayDeque<>();
-    frameStack.addFirst(mock(MessageFrame.class));
+  void nextFrameAtTheSameDepthReusesTheReleasedStack() {
+    final long[] first = StacksV2.take(3, LENGTH);
+    StacksV2.release(3, first);
 
-    final long[] first = StacksV2.take(frameStack, LENGTH);
-    frameStack.addFirst(mock(MessageFrame.class));
-    frameStack.removeFirst();
-    final long[] second = StacksV2.take(frameStack, LENGTH);
-
-    assertThat(second).isSameAs(first);
+    assertThat(StacksV2.take(3, LENGTH)).isSameAs(first);
   }
 
   @Test
-  void nextTransactionReusesTheStack() {
-    final long[] first = StacksV2.take(new ArrayDeque<>(), LENGTH);
-    final long[] second = StacksV2.take(new ArrayDeque<>(), LENGTH);
+  void stackOfAFrameThatHasNotCompletedIsNotReused() {
+    final long[] running = StacksV2.take(3, LENGTH);
 
-    assertThat(second).isSameAs(first);
+    assertThat(StacksV2.take(3, LENGTH)).isNotSameAs(running);
   }
 
   @Test
-  void childFrameGetsItsOwnStack() {
-    final Deque<MessageFrame> frameStack = new ArrayDeque<>();
+  void releasedStackIsTakenOnlyOnce() {
+    final long[] released = StacksV2.take(3, LENGTH);
+    StacksV2.release(3, released);
 
-    final long[] parent = StacksV2.take(frameStack, LENGTH);
-    frameStack.addFirst(mock(MessageFrame.class));
-    final long[] child = StacksV2.take(frameStack, LENGTH);
+    final long[] first = StacksV2.take(3, LENGTH);
+    final long[] second = StacksV2.take(3, LENGTH);
 
-    assertThat(child).isNotSameAs(parent);
+    assertThat(first).isSameAs(released);
+    assertThat(second).isNotSameAs(released);
   }
 
   @Test
-  void runningFrameOfAnotherFrameStackKeepsItsStack() {
-    final Deque<MessageFrame> outer = new ArrayDeque<>();
-    final long[] running = StacksV2.take(outer, LENGTH);
-    outer.addFirst(mock(MessageFrame.class));
+  void frameAtAnotherDepthGetsItsOwnStack() {
+    final long[] parent = StacksV2.take(3, LENGTH);
+    StacksV2.release(3, parent);
 
-    final long[] nested = StacksV2.take(new ArrayDeque<>(), LENGTH);
-
-    assertThat(nested).isNotSameAs(running);
+    assertThat(StacksV2.take(4, LENGTH)).isNotSameAs(parent);
   }
 
   @Test
   void otherLengthGetsANewStack() {
-    final long[] first = StacksV2.take(new ArrayDeque<>(), LENGTH);
-    final long[] second = StacksV2.take(new ArrayDeque<>(), 16 * 4);
+    final long[] first = StacksV2.take(3, LENGTH);
+    StacksV2.release(3, first);
 
-    assertThat(second).isNotSameAs(first).hasSize(16 * 4);
+    assertThat(StacksV2.take(3, 16 * 4)).isNotSameAs(first).hasSize(16 * 4);
   }
 
   @Test
   void framesBelowTheCachedDepthsAllocate() {
-    final Deque<MessageFrame> frameStack = new ArrayDeque<>();
-    for (int i = 0; i < StacksV2.CACHED_DEPTHS; i++) {
-      frameStack.addFirst(mock(MessageFrame.class));
-    }
+    final long[] first = StacksV2.take(StacksV2.CACHED_DEPTHS, LENGTH);
+    StacksV2.release(StacksV2.CACHED_DEPTHS, first);
 
-    final long[] first = StacksV2.take(frameStack, LENGTH);
-    final long[] second = StacksV2.take(frameStack, LENGTH);
-
-    assertThat(second).isNotSameAs(first);
+    assertThat(StacksV2.take(StacksV2.CACHED_DEPTHS, LENGTH)).isNotSameAs(first);
   }
 }

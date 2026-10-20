@@ -294,7 +294,7 @@ public class MessageFrame {
     this.stack = enableEvmV2 ? null : new OperandStack(txValues.maxStackSize());
     this.stackDataV2 =
         enableEvmV2
-            ? StacksV2.take(txValues.messageFrameStack(), txValues.maxStackSize() * 4)
+            ? StacksV2.take(txValues.messageFrameStack().size(), txValues.maxStackSize() * 4)
             : null;
     this.stackTopV2 = 0;
     this.stackMaxSizeV2 = txValues.maxStackSize();
@@ -590,6 +590,17 @@ public class MessageFrame {
    */
   public boolean stackHasSpaceV2(final int n) {
     return stackTopV2 + n <= stackMaxSizeV2;
+  }
+
+  /**
+   * Hands the v2 stack to the next frame at this frame's depth. Call it once, after the frame has
+   * been removed from the frame stack and its completion has been notified; the stack must not be
+   * read afterwards.
+   */
+  public void releaseStackV2() {
+    if (stackDataV2 != null) {
+      StacksV2.release(txValues.messageFrameStack().size(), stackDataV2);
+    }
   }
 
   // ---------------------------------------------------------------------------

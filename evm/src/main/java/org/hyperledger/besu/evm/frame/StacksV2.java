@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.evm.frame;
 
-import java.util.Deque;
-
 /**
- * The EVM v2 stacks of a thread, one per call depth. A full stack is 32 KB, too large for the
+ * The free EVM v2 stacks of a thread, one per call depth. A full stack is 32 KB, too large for the
  * thread's allocation buffer, so allocating one per frame contends on the heap lock with every
  * other allocating thread.
  */
@@ -27,39 +25,42 @@ final class StacksV2 {
   // chain does not leave megabytes of stacks on the thread.
   static final int CACHED_DEPTHS = 21;
 
-  private static final ThreadLocal<StacksV2> STACKS = ThreadLocal.withInitial(StacksV2::new);
-
-  private final long[][] stacks = new long[CACHED_DEPTHS][];
-  // The frame stack of the frame that last took each stack
-  private final Deque<?>[] owners = new Deque<?>[CACHED_DEPTHS];
+  // Only stacks of completed frames are kept, so a stack is either here or used by one frame, and
+  // a transaction that aborts with frames on its frame stack leaves nothing of it behind.
+  private static final ThreadLocal<long[][]> STACKS =
+      ThreadLocal.withInitial(() -> new long[CACHED_DEPTHS][]);
 
   private StacksV2() {}
 
   /**
-   * Returns a stack for the frame about to be pushed onto the frame stack. Its contents are
-   * undefined.
+   * Returns a stack for a frame at the given call depth. Its contents are undefined.
    *
-   * @param frameStack the frame stack the frame is pushed onto
+   * @param depth the call depth of the frame
    * @param length the length of the stack in longs
    * @return the stack
    */
-  static long[] take(final Deque<MessageFrame> frameStack, final int length) {
-    final int depth = frameStack.size();
+  static long[] take(final int depth, final int length) {
     if (depth >= CACHED_DEPTHS) {
       return new long[length];
     }
-    return STACKS.get().takeAt(frameStack, depth, length);
+    final long[][] stacks = STACKS.get();
+    final long[] stack = stacks[depth];
+    if (stack == null || stack.length != length) {
+      return new long[length];
+    }
+    stacks[depth] = null;
+    return stack;
   }
 
-  private long[] takeAt(final Deque<MessageFrame> frameStack, final int depth, final int length) {
-    long[] stack = stacks[depth];
-    // The last frame at this depth has finished once its frame stack is no deeper than this depth.
-    // An unfinished one belongs to another EVM run on this thread and keeps its stack.
-    if (stack == null || stack.length != length || owners[depth].size() > depth) {
-      stack = new long[length];
-      stacks[depth] = stack;
+  /**
+   * Hands the stack of a completed frame to the next frame at its call depth on this thread.
+   *
+   * @param depth the call depth of the frame
+   * @param stack the stack, which nothing reads or writes afterwards
+   */
+  static void release(final int depth, final long[] stack) {
+    if (depth < CACHED_DEPTHS) {
+      STACKS.get()[depth] = stack;
     }
-    owners[depth] = frameStack;
-    return stack;
   }
 }
