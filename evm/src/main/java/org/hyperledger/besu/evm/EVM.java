@@ -94,7 +94,6 @@ import org.hyperledger.besu.evm.v2.operation.CountLeadingZerosOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DivOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DupNOperationV2;
 import org.hyperledger.besu.evm.v2.operation.DupOperationV2;
-import org.hyperledger.besu.evm.v2.operation.EqOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExchangeOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExpOperationV2;
 import org.hyperledger.besu.evm.v2.operation.GtOperationV2;
@@ -163,9 +162,6 @@ public class EVM {
 
   private final Operation[] operationsV2;
 
-  // a field of the final class, so that the loop's call to it is not a virtual call
-  private final EqOperationV2 eqOperationV2;
-
   /**
    * Instantiates a new Evm.
    *
@@ -195,7 +191,6 @@ public class EVM {
         evmConfiguration.enableEvmV2()
             ? OperationsV2.of(operations.getOperations(), gasCalculator, evmSpecVersion)
             : null;
-    eqOperationV2 = evmConfiguration.enableEvmV2() ? new EqOperationV2(gasCalculator) : null;
   }
 
   /**
@@ -550,7 +545,7 @@ public class EVM {
               case 0x11 -> GtOperationV2.staticOperation(frame);
               case 0x12 -> SLtOperationV2.staticOperation(frame);
               case 0x13 -> SGtOperationV2.staticOperation(frame);
-              case 0x14 -> eqOperationV2.execute(frame, this);
+              case 0x14 -> operationsV2[opcode].execute(frame, this);
               case 0x15 -> IsZeroOperationV2.staticOperation(frame);
               case 0x16 -> AndOperationV2.staticOperation(frame);
               case 0x17 -> OrOperationV2.staticOperation(frame);
