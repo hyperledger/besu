@@ -23,8 +23,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugAccountRa
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugBatchSendRawTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugExecutionWitness;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetBadBlocks;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetModifiedAccountsByHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetModifiedAccountsByNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawBlock;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawBlockAccessList;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawExecutionRequests;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawHeader;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawReceipts;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.DebugGetRawTransaction;
@@ -101,16 +104,19 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
     return mapOf(
         new DebugTraceTransaction(
-            blockchainQueries, new TransactionTracer(blockReplay), protocolSchedule),
+            blockchainQueries,
+            new TransactionTracer(blockReplay),
+            protocolSchedule,
+            apiConfiguration),
         new DebugAccountRange(blockchainQueries),
         new DebugStorageRangeAt(blockchainQueries, blockReplay),
         new DebugMetrics(metricsSystem),
         new DebugResyncWorldstate(protocolContext, synchronizer),
-        new DebugTraceBlock(protocolSchedule, blockchainQueries),
+        new DebugTraceBlock(protocolSchedule, blockchainQueries, apiConfiguration),
         new DebugSetHead(blockchainQueries, protocolContext),
         new DebugReplayBlock(blockchainQueries, protocolContext, protocolSchedule),
-        new DebugTraceBlockByNumber(protocolSchedule, blockchainQueries),
-        new DebugTraceBlockByHash(protocolSchedule, blockchainQueries),
+        new DebugTraceBlockByNumber(protocolSchedule, blockchainQueries, apiConfiguration),
+        new DebugTraceBlockByHash(protocolSchedule, blockchainQueries, apiConfiguration),
         new DebugBatchSendRawTransaction(transactionPool),
         new DebugGetBadBlocks(protocolContext, blockResult),
         new DebugStandardTraceBlockToFile(
@@ -122,9 +128,12 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new DebugGetRawBlock(blockchainQueries),
         new DebugGetRawReceipts(blockchainQueries),
         new DebugGetRawBlockAccessList(blockchainQueries),
+        new DebugGetRawExecutionRequests(blockchainQueries, protocolContext, protocolSchedule),
         new DebugGetRawTransaction(blockchainQueries),
         new DebugExecutionWitness(blockchainQueries, protocolContext, protocolSchedule),
         new DebugTraceCall(
-            blockchainQueries, protocolSchedule, transactionSimulator, apiConfiguration));
+            blockchainQueries, protocolSchedule, transactionSimulator, apiConfiguration),
+        new DebugGetModifiedAccountsByHash(blockchainQueries),
+        new DebugGetModifiedAccountsByNumber(blockchainQueries));
   }
 }

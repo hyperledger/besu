@@ -38,8 +38,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadPostExecutionValidationResultV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PayloadStatusV1;
-import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -52,8 +53,6 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -177,15 +176,14 @@ public sealed class EngineNewPayloadV1<
     final Optional<BlockHeader> maybeParentHeader =
         protocolContext.getBlockchain().getBlockHeader(blockParam.getParentHash());
 
-    final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
     final Optional<String> maybeBadBlockError;
-    if (badBlockManager.isBadBlock(blockParam.getBlockHash())) {
+    if (mergeCoordinator.isBadBlock(blockParam.getBlockHash())) {
       maybeBadBlockError = Optional.of("Block is a known bad block.");
     } else if (maybeParentHeader.isEmpty()) {
       maybeBadBlockError =
-          badBlockManager
+          mergeCoordinator
               .checkAndMarkBadDescendant(newBlockHeader)
-              .map(badParent -> "Block descends from bad block " + badParent.toLogString());
+              .map(BadBlockCause::getDescription);
     } else {
       // a parent that made it onto the chain cannot be bad, a stale entry, e.g. left by a
       // transient local failure, must not condemn its descendants
@@ -212,7 +210,7 @@ public sealed class EngineNewPayloadV1<
           .setMessage("Parent of block {} is not present, append it to backward sync")
           .addArgument(unvalidatedBlock::toLogString)
           .log();
-      mergeCoordinator.appendNewPayloadToSync(unvalidatedBlock);
+      appendNewPayloadToSync(unvalidatedBlock, blockParam);
     }
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(newBlockHeader);
@@ -245,14 +243,15 @@ public sealed class EngineNewPayloadV1<
           .setMessage("block {} already present")
           .addArgument(newBlockHeader::toLogString)
           .log();
-      return respondWith(reqId, blockParam, block.getHash(), VALID);
+      return respondWithValidStatus(
+          reqId, blockParam, block.getHash(), PayloadPostExecutionValidationResultV1.SUCCESS);
     }
 
     if (needsSync) {
       // 6. Client software MUST respond to this method call in the following way:
       // {status: SYNCING, latestValidHash: null, validationError: null} if requisite data for the
       // payload's acceptance or validation is missing
-      return respondWith(reqId, blockParam, null, SYNCING);
+      return respondWithSyncing(reqId, blockParam);
     }
 
     // an ancestor is always found here: the parent header is present in the chain (needsSync is
@@ -274,23 +273,24 @@ public sealed class EngineNewPayloadV1<
     final long startTimeNs = System.nanoTime();
     final BlockProcessingResult executionResult = rememberBlock(block, blockParam);
     if (executionResult.isSuccessful()) {
+      final PayloadPostExecutionValidationResultV1 postExecutionResult =
+          validatePostExecution(reqId, requestParameters, block, executionResult);
+
       lastExecutionTimeInNs = System.nanoTime() - startTimeNs;
       logImportedBlockInfo(
           block, lastExecutionTimeInNs, executionResult.getNbParallelizedTransactions());
-      return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
+      return respondWithValid(
+          reqId, blockParam, newBlockHeader, executionResult, postExecutionResult);
     } else {
       logger().debug("New payload is invalid: {}", executionResult);
       if (executionResult.isWorldStateUnavailable()) {
         // we respond with SYNCING here to ensure a VALID newPayload is not marked INVALID.
         // however besu should not trigger a worldstate resync until/unless this chain is
         // finalized via forkchoiceUpdated.
-        return respondWith(reqId, blockParam, null, SYNCING);
+        return respondWithSyncing(reqId, blockParam);
       }
-      if (executionResult.causedBy().isPresent()) {
-        Throwable causedBy = executionResult.causedBy().get();
-        if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
-          return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
-        }
+      if (executionResult.isLocalFailure()) {
+        return new JsonRpcErrorResponse(reqId, RpcErrorType.INTERNAL_ERROR);
       }
       protocolContext.getBadBlockManager().addLatestValidHash(block.getHash(), latestValidAncestor);
       return respondWithInvalid(
@@ -382,15 +382,48 @@ public sealed class EngineNewPayloadV1<
     }
   }
 
-  JsonRpcResponse respondWith(
+  /**
+   * Responds to a payload that was just executed and imported. Overridable so variants can answer
+   * with data derived from block processing (e.g. the EIP-8025 execution witness), or with an error
+   * if they cannot produce it; the default responds with the standard VALID payload status.
+   *
+   * <p>Note this covers only the freshly-executed path: a payload whose block is already present
+   * returns VALID without passing through here.
+   *
+   * @param requestId the JSON-RPC request id
+   * @param param the execution payload parameter
+   * @param newBlockHeader the header of the imported block
+   * @param executionResult the result of processing the block
+   * @param postExecutionResult the post-execution validation result
+   * @return the JSON-RPC response
+   */
+  protected JsonRpcResponse respondWithValid(
       final Object requestId,
       final ExecutionPayloadV1 param,
+      final BlockHeader newBlockHeader,
+      final BlockProcessingResult executionResult,
+      final PayloadPostExecutionValidationResultV1 postExecutionResult) {
+    return respondWithValidStatus(requestId, param, newBlockHeader.getHash(), postExecutionResult);
+  }
+
+  private JsonRpcResponse respondWithValidStatus(
+      final Object requestId,
+      final ExecutionPayloadV1 param,
+      final Hash validHash,
+      final PayloadPostExecutionValidationResultV1 postExecutionResult) {
+    logNewPayloadResponse(param, validHash, VALID);
+    return new JsonRpcSuccessResponse(
+        requestId, createValidPayloadStatus(validHash, postExecutionResult));
+  }
+
+  protected PayloadStatusV1 createValidPayloadStatus(
       final Hash latestValidHash,
-      final EngineStatus status) {
-    if (INVALID.equals(status) || INVALID_BLOCK_HASH.equals(status)) {
-      throw new IllegalArgumentException(
-          "Don't call respondWith() with invalid status of " + status);
-    }
+      final PayloadPostExecutionValidationResultV1 postExecutionResult) {
+    return new PayloadStatusV1(VALID, latestValidHash);
+  }
+
+  protected void logNewPayloadResponse(
+      final ExecutionPayloadV1 param, final Hash latestValidHash, final EngineStatus status) {
     logger()
         .atDebug()
         .setMessage(
@@ -402,8 +435,16 @@ public sealed class EngineNewPayloadV1<
             () -> latestValidHash == null ? null : latestValidHash.getBytes().toHexString())
         .addArgument(status::name)
         .log();
-    return new JsonRpcSuccessResponse(
-        requestId, new PayloadStatusV1(status, latestValidHash, Optional.empty()));
+  }
+
+  private JsonRpcResponse respondWithSyncing(
+      final Object requestId, final ExecutionPayloadV1 param) {
+    logNewPayloadResponse(param, null, SYNCING);
+    return new JsonRpcSuccessResponse(requestId, createSyncingPayloadStatus());
+  }
+
+  protected PayloadStatusV1 createSyncingPayloadStatus() {
+    return new PayloadStatusV1(SYNCING);
   }
 
   JsonRpcResponse respondWithInvalid(final Object requestId, final String validationError) {
@@ -437,8 +478,12 @@ public sealed class EngineNewPayloadV1<
       logger().warn(invalidBlockLogMessage);
     }
     return new JsonRpcSuccessResponse(
-        requestId,
-        new PayloadStatusV1(invalidStatus, latestValidHash, Optional.of(validationError)));
+        requestId, createInvalidPayloadStatus(invalidStatus, latestValidHash, validationError));
+  }
+
+  protected PayloadStatusV1 createInvalidPayloadStatus(
+      final EngineStatus invalidStatus, final Hash latestValidHash, final String validationError) {
+    return new PayloadStatusV1(invalidStatus, latestValidHash, validationError);
   }
 
   protected EngineStatus getInvalidBlockHashStatus() {
@@ -447,6 +492,25 @@ public sealed class EngineNewPayloadV1<
 
   protected ValidationResult<RpcErrorType> validateParameters(final NPRP requestParameters) {
     return ValidationResult.valid();
+  }
+
+  /**
+   * Extension point for version-specific validation that requires a successfully processed block
+   * (e.g. inclusion list satisfaction, EIP-7805). The result is passed to {@link
+   * #createValidPayloadStatus} so that the VALID response can report it.
+   *
+   * @param reqId the request id
+   * @param requestParameters the request parameters
+   * @param block the successfully processed block
+   * @param executionResult the result of processing the block
+   * @return the post-execution validation result
+   */
+  protected PayloadPostExecutionValidationResultV1 validatePostExecution(
+      final Object reqId,
+      final NPRP requestParameters,
+      final Block block,
+      final BlockProcessingResult executionResult) {
+    return PayloadPostExecutionValidationResultV1.SUCCESS;
   }
 
   protected ValidationResult<RpcErrorType> validateNewBlock(
@@ -498,6 +562,10 @@ public sealed class EngineNewPayloadV1<
 
   protected BlockProcessingResult rememberBlock(final Block block, final EP executionPayload) {
     return mergeCoordinator.rememberBlock(block, Optional.empty());
+  }
+
+  protected void appendNewPayloadToSync(final Block block, final EP executionPayload) {
+    mergeCoordinator.appendNewPayloadToSync(block, Optional.empty());
   }
 
   private void logImportedBlockInfo(

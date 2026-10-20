@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeReplayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveTrieNodeStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -120,7 +119,8 @@ public final class BonsaiArchiveFactory {
             blockchain,
             migrationExecutor,
             metricsSystem,
-            new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy()));
+            new BonsaiArchiveFlatDbStrategy(
+                metricsSystem, worldStateStorage.getFlatDbStrategy().getCodeStorageStrategy()));
     provider.setArchiveMigrationProgressSupplier(migrator::getMigratedBlockNumber);
 
     return new BonsaiArchiveService(

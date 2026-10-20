@@ -146,7 +146,7 @@ class ArchiveTrieNodeReplayerTest {
   // --- start cursor seeding ---
 
   @Test
-  void startPrefersPersisteedCursorWhenHigher() {
+  void startPrefersPersisteedCursorWhenHigher() throws Exception {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     tx.put(
         TRIE_BRANCH_STORAGE_ARCHIVE,
@@ -155,13 +155,18 @@ class ArchiveTrieNodeReplayerTest {
     tx.commit();
 
     appendBlocks(10); // head=10, target=9
-    final ControllableReplayer replayer = createControllableReplayer();
+    // hold the first catch-up so the assertion sees the cursor start() chose, not its progress
+    final PausedCapture paused = new PausedCapture();
+    final ControllableReplayer replayer =
+        createControllableReplayer(Executors.newScheduledThreadPool(1), paused);
     replayer.start(3L); // initial=3, persisted=5 → cursor=max(3,5)=5
+    paused.awaitStart();
     assertThat(replayer.cursor.get()).isEqualTo(5L);
+    paused.release();
   }
 
   @Test
-  void startPrefersInitialCursorWhenHigher() {
+  void startPrefersInitialCursorWhenHigher() throws Exception {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     tx.put(
         TRIE_BRANCH_STORAGE_ARCHIVE,
@@ -170,9 +175,14 @@ class ArchiveTrieNodeReplayerTest {
     tx.commit();
 
     appendBlocks(10); // head=10, target=9
-    final ControllableReplayer replayer = createControllableReplayer();
+    // hold the first catch-up so the assertion sees the cursor start() chose, not its progress
+    final PausedCapture paused = new PausedCapture();
+    final ControllableReplayer replayer =
+        createControllableReplayer(Executors.newScheduledThreadPool(1), paused);
     replayer.start(5L); // initial=5, persisted=2 → cursor=max(5,2)=5
+    paused.awaitStart();
     assertThat(replayer.cursor.get()).isEqualTo(5L);
+    paused.release();
   }
 
   // --- block observer registration ---

@@ -128,6 +128,12 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     when(protocolContext.safeConsensusContext(any())).thenReturn(Optional.of(mergeContext));
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
+    // the coordinator answers the bad block checks from the real manager, like production does
+    when(mergeCoordinator.isBadBlock(any()))
+        .thenAnswer(invocation -> badBlockManager.isBadBlock(invocation.getArgument(0)));
+    when(mergeCoordinator.checkAndMarkBadDescendant(any(BlockHeader.class)))
+        .thenAnswer(
+            invocation -> badBlockManager.checkAndMarkBadDescendant(invocation.getArgument(0)));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(ethPeers.peerCount()).thenReturn(1);
@@ -205,7 +211,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     var resp = resp(requestParams(mockEnginePayloadParam(mockHeader, emptyList())));
 
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash().get()).isEqualTo(mockHash);
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHash);
     assertThat(res.getStatus()).isEqualTo(INVALID);
     assertThat(res.getError()).isEqualTo("error 42");
     assertThat(badBlockManager.getLatestValidHash(mockHeader.getHash())).contains(mockHash);
@@ -221,7 +227,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
 
     final PayloadStatusV1 first = fromSuccessResp(resp(requestParams(payload)));
     assertThat(first.getStatus()).isEqualTo(INVALID);
-    assertThat(first.getLatestValidHash()).contains(mockHash);
+    assertThat(first.getLatestValidHash()).isEqualTo(mockHash);
     assertThat(badBlockManager.getLatestValidHash(mockHeader.getHash())).contains(mockHash);
 
     badBlockManager.addBadBlock(
@@ -232,7 +238,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
 
     final PayloadStatusV1 second = fromSuccessResp(resp(requestParams(payload)));
     assertThat(second.getStatus()).isEqualTo(INVALID);
-    assertThat(second.getLatestValidHash()).contains(mockHash);
+    assertThat(second.getLatestValidHash()).isEqualTo(mockHash);
     assertThat(second.getError()).isEqualTo("Block is a known bad block.");
   }
 
@@ -260,7 +266,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     var resp = resp(requestParams(mockEnginePayloadParam(mockHeader, emptyList())));
 
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEqualTo(Optional.of(latestValidHash));
+    assertThat(res.getLatestValidHash()).isEqualTo(latestValidHash);
     assertThat(res.getStatus()).isEqualTo(INVALID);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
@@ -328,7 +334,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     var resp = resp(requestParams(mockEnginePayloadParam(paramHeader, emptyList())));
 
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getLatestValidHash()).isNull();
     assertThat(res.getStatus()).isEqualTo(getExpectedInvalidBlockHashStatus());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
@@ -342,7 +348,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     var resp = resp(requestParams(executionPayload));
 
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getLatestValidHash()).isNull();
     assertThat(res.getStatus()).isEqualTo(INVALID);
     assertThat(res.getError()).startsWith("Failed to decode transactions from block parameter");
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -364,15 +370,15 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
   public void shouldRespondWithSyncingDuringBackwardsSync() {
     BlockHeader mockHeader = createBlockHeader(getMinSupportedTimestamp());
     when(mergeContext.isInitialSyncDone()).thenReturn(true);
-    when(mergeCoordinator.appendNewPayloadToSync(any()))
+    when(mergeCoordinator.appendNewPayloadToSync(any(), any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     var resp = resp(requestParams(mockEnginePayloadParam(mockHeader, emptyList())));
 
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getLatestValidHash()).isNull();
     assertThat(res.getStatus()).isEqualTo(SYNCING);
     assertThat(res.getError()).isNull();
-    verify(mergeCoordinator).appendNewPayloadToSync(any());
+    verify(mergeCoordinator).appendNewPayloadToSync(any(), any());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -383,10 +389,10 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     var resp = resp(requestParams(mockEnginePayloadParam(mockHeader, emptyList())));
 
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getLatestValidHash()).isNull();
     assertThat(res.getStatus()).isEqualTo(SYNCING);
     assertThat(res.getError()).isNull();
-    verify(mergeCoordinator, never()).appendNewPayloadToSync(any());
+    verify(mergeCoordinator, never()).appendNewPayloadToSync(any(), any());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -412,7 +418,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
     badBlockManager.addBadHeader(mockHeader, BadBlockCause.fromValidationFailure("error 42"));
     var resp = resp(requestParams(mockEnginePayloadParam(mockHeader, emptyList())));
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).isEmpty();
+    assertThat(res.getLatestValidHash()).isNull();
     assertThat(res.getStatus()).isEqualTo(INVALID);
     assertThat(res.getError()).isEqualTo("Block is a known bad block.");
     verify(engineCallListener, times(1)).executionEngineCalled();
@@ -437,11 +443,11 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
 
     PayloadStatusV1 res = fromSuccessResp(resp);
     assertThat(res.getStatus()).isEqualTo(INVALID);
-    assertThat(res.getLatestValidHash()).contains(latestValidHash);
+    assertThat(res.getLatestValidHash()).isEqualTo(latestValidHash);
     assertThat(res.getError())
-        .isEqualTo("Block descends from bad block " + badParentHeader.toLogString());
+        .isEqualTo("Descends from bad block " + badParentHeader.toLogString());
     assertThat(badBlockManager.isBadBlock(childHeader.getHash())).isTrue();
-    verify(mergeCoordinator, never()).appendNewPayloadToSync(any());
+    verify(mergeCoordinator, never()).appendNewPayloadToSync(any(), any());
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -587,7 +593,7 @@ public class EngineNewPayloadV1Test extends AbstractScheduledApiTest {
 
   protected void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
     PayloadStatusV1 res = fromSuccessResp(resp);
-    assertThat(res.getLatestValidHash()).contains(mockHeader.getHash());
+    assertThat(res.getLatestValidHash()).isEqualTo(mockHeader.getHash());
     assertThat(res.getStatus()).isEqualTo(VALID);
     assertThat(res.getError()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();

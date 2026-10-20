@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DefaultSyncStatus;
+import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Synchronizer.InSyncListener;
 import org.hyperledger.besu.ethereum.eth.manager.ChainHeadEstimate;
@@ -68,6 +69,16 @@ public class SyncState implements NewPayloadListener {
 
   private volatile long lastPayloadBlockNumber = 0L;
   private volatile boolean payloadReceived = false;
+
+  // Progress reported by snap sync, which has no sync target. Cleared once the initial sync phase
+  // is done.
+  private volatile TargetlessSyncProgress targetlessSyncProgress;
+
+  // Only set by markInitialSyncPhaseAsDone() (unlike isInitialSyncPhaseDone); drops late reports.
+  private boolean initialSyncPhaseCompleted;
+
+  // Guards the two fields above.
+  private final Object targetlessSyncProgressLock = new Object();
 
   public SyncState(final Blockchain blockchain, final EthPeers ethPeers) {
     this(blockchain, ethPeers, false, Optional.empty());
@@ -161,8 +172,28 @@ public class SyncState implements NewPayloadListener {
     return completionListenerSubscribers.unsubscribe(listenerId);
   }
 
+  /**
+   * The current sync status. Falls back to progress reported via {@link #setSyncProgress(long,
+   * long)}, as snap sync does not set a sync target.
+   *
+   * @return the current sync status, or empty when not syncing
+   */
   public Optional<SyncStatus> syncStatus() {
-    return syncStatus(syncTarget);
+    return syncStatus(syncTarget).or(this::targetlessSyncStatus);
+  }
+
+  // The highest block is resolved per read, as snap sync does not report progress between
+  // pipeline cycles and a stored value would go stale.
+  private Optional<SyncStatus> targetlessSyncStatus() {
+    return Optional.ofNullable(targetlessSyncProgress)
+        .map(
+            progress ->
+                new DefaultSyncStatus(
+                    progress.startingBlock(),
+                    progress.currentBlock(),
+                    bestChainHeight(),
+                    Optional.empty(),
+                    Optional.empty()));
   }
 
   public Optional<SyncTarget> syncTarget() {
@@ -174,12 +205,22 @@ public class SyncState implements NewPayloadListener {
     replaceSyncTarget(Optional.of(syncTarget));
   }
 
-  public void setSyncProgress(
-      final long startingBlock, final long currentBlock, final long highestBlock) {
-    final SyncStatus status =
-        new DefaultSyncStatus(
-            startingBlock, currentBlock, highestBlock, Optional.empty(), Optional.empty());
-    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(Optional.of(status)));
+  /**
+   * Reports the progress of a sync without a sync target, i.e. snap sync. Ignored once the initial
+   * sync phase is done, as nothing would clear it afterwards.
+   *
+   * @param startingBlock the block the sync started from
+   * @param currentBlock the block the sync has reached
+   */
+  public void setSyncProgress(final long startingBlock, final long currentBlock) {
+    synchronized (targetlessSyncProgressLock) {
+      if (initialSyncPhaseCompleted) {
+        return;
+      }
+      targetlessSyncProgress = new TargetlessSyncProgress(startingBlock, currentBlock);
+    }
+    final Optional<SyncStatus> status = targetlessSyncStatus();
+    syncStatusListeners.forEach(c -> c.onSyncStatusChanged(status));
   }
 
   public void setWorldStateDownloadStatus(final WorldStateDownloadStatus worldStateDownloadStatus) {
@@ -191,8 +232,9 @@ public class SyncState implements NewPayloadListener {
   }
 
   public boolean isInSync(final long syncTolerance) {
+    final ChainHead localChain = getLocalChainHead();
     return isInSync(
-        getLocalChainHead(), getSyncTargetChainHead(), getBestPeerChainHead(), syncTolerance);
+        localChain, getSyncTargetChainHead(), getBestKnownChainHead(localChain), syncTolerance);
   }
 
   public void setReachedTerminalDifficulty(final boolean stoppedAtTerminalDifficulty) {
@@ -210,14 +252,14 @@ public class SyncState implements NewPayloadListener {
   private boolean isInSync(
       final ChainHead localChain,
       final Optional<ChainHeadEstimate> syncTargetChain,
-      final Optional<ChainHeadEstimate> bestPeerChain,
+      final Optional<ChainHeadEstimate> bestKnownChain,
       final long syncTolerance) {
     return isInitialSyncPhaseDone
         && reachedTerminalDifficulty.orElse(true)
         // Sync target may be temporarily empty while we switch sync targets during a sync, so
-        // check both the sync target and our best peer to determine if we're in sync or not
+        // check both the sync target and the best known chain to determine if we're in sync or not
         && isInSync(localChain, syncTargetChain, syncTolerance)
-        && isInSync(localChain, bestPeerChain, syncTolerance);
+        && isInSync(localChain, bestKnownChain, syncTolerance);
   }
 
   private boolean isInSync(
@@ -239,6 +281,19 @@ public class SyncState implements NewPayloadListener {
 
   public Optional<ChainHeadEstimate> getBestPeerChainHead() {
     return ethPeers.bestPeerWithHeightEstimate().map(EthPeer::chainStateSnapshot);
+  }
+
+  /**
+   * The chain head the local chain is measured against to decide whether this node is in sync. Once
+   * a consensus client drives the node the latest payload is the reference, because peers can
+   * follow a different chain and still report a higher head.
+   */
+  private Optional<ChainHeadEstimate> getBestKnownChainHead(final ChainHead localChain) {
+    if (payloadReceived) {
+      return Optional.of(
+          new PayloadChainHead(lastPayloadBlockNumber, localChain.getTotalDifficulty()));
+    }
+    return getBestPeerChainHead();
   }
 
   public void disconnectSyncTarget(final DisconnectReason reason) {
@@ -297,7 +352,7 @@ public class SyncState implements NewPayloadListener {
   /**
    * Notified for each {@code engine_newPayload} received from the consensus layer. Once the first
    * payload arrives this node is being driven by a CL, so the payload head becomes the
-   * authoritative best chain height.
+   * authoritative best chain height and the reference for the in sync status.
    *
    * @param header the header reconstructed from the payload
    */
@@ -305,6 +360,7 @@ public class SyncState implements NewPayloadListener {
   public void onNewPayload(final BlockHeader header) {
     lastPayloadBlockNumber = header.getNumber();
     payloadReceived = true;
+    checkInSync();
   }
 
   public long bestChainHeight() {
@@ -331,7 +387,7 @@ public class SyncState implements NewPayloadListener {
     synchronized (inSyncLock) {
       final ChainHead localChain = getLocalChainHead();
       final Optional<ChainHeadEstimate> syncTargetChain = getSyncTargetChainHead();
-      final Optional<ChainHeadEstimate> bestPeerChain = getBestPeerChainHead();
+      final Optional<ChainHeadEstimate> bestKnownChain = getBestKnownChainHead(localChain);
 
       // Remove listener when we've found a peer.
       newPeerListenerId.ifPresent(
@@ -343,7 +399,21 @@ public class SyncState implements NewPayloadListener {
       inSyncTrackers
           .values()
           .forEach(
-              (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestPeerChain));
+              (syncTracker) -> syncTracker.checkState(localChain, syncTargetChain, bestKnownChain));
+    }
+  }
+
+  private record PayloadChainHead(long height, Difficulty totalDifficulty)
+      implements ChainHeadEstimate {
+
+    @Override
+    public Difficulty getEstimatedTotalDifficulty() {
+      return totalDifficulty;
+    }
+
+    @Override
+    public long getEstimatedHeight() {
+      return height;
     }
   }
 
@@ -358,6 +428,16 @@ public class SyncState implements NewPayloadListener {
   public void markInitialSyncPhaseAsDone() {
     isInitialSyncPhaseDone = true;
     isResyncNeeded = false;
+    final boolean hadProgress;
+    synchronized (targetlessSyncProgressLock) {
+      initialSyncPhaseCompleted = true;
+      hadProgress = targetlessSyncProgress != null;
+      targetlessSyncProgress = null;
+    }
+    if (hadProgress) {
+      // Listeners cache the last reported status, so tell them the progress is gone.
+      publishSyncStatus(syncTarget);
+    }
     completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncCompleted);
   }
 
@@ -371,6 +451,11 @@ public class SyncState implements NewPayloadListener {
 
   public void markInitialSyncRestart() {
     isInitialSyncPhaseDone = false;
+    synchronized (targetlessSyncProgressLock) {
+      initialSyncPhaseCompleted = false;
+    }
     completionListenerSubscribers.forEach(InitialSyncCompletionListener::onInitialSyncRestart);
   }
+
+  private record TargetlessSyncProgress(long startingBlock, long currentBlock) {}
 }

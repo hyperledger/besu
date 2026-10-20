@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.PathBasedWo
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.AccountConsumingMap;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -46,6 +47,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -60,6 +62,10 @@ import org.slf4j.LoggerFactory;
 public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends BonsaiAccount>
     extends AbstractWorldUpdater<BonsaiWorldView, ACCOUNT>
     implements BonsaiWorldView, TrieLogAccumulator {
+
+  /** Minimum number of updated accounts for {@link #commit} to process them in parallel. */
+  private static final int PARALLEL_COMMIT_MIN_ACCOUNTS = 64;
+
   private static final Logger LOG =
       LoggerFactory.getLogger(PathBasedWorldStateUpdateAccumulator.class);
   protected final Consumer<BonsaiValue<ACCOUNT>> accountPreloader;
@@ -67,6 +73,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
 
   private final AccountConsumingMap<BonsaiValue<ACCOUNT>> accountsToUpdate;
   private final Map<Address, BonsaiValue<Bytes>> codeToUpdate = new ConcurrentHashMap<>();
+  private final Map<Address, Code> loadedCode = new ConcurrentHashMap<>();
   private final Set<Address> storageToClear = Collections.synchronizedSet(new HashSet<>());
   protected final EvmConfiguration evmConfiguration;
 
@@ -95,6 +102,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
   public void cloneFromUpdater(final PathBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
+    loadedCode.putAll(source.loadedCode);
     storageToClear.addAll(source.storageToClear);
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
@@ -465,6 +473,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
                     .map(BonsaiValue::getPrior)
                     .map(BonsaiAccount::getCodeHash)
                     .orElse(Hash.EMPTY))
+            .map(Code::getBytes)
             .ifPresent(
                 deletedCode ->
                     codeToUpdate.put(deletedAddress, new BonsaiValue<>(deletedCode, null, true)));
@@ -510,113 +519,142 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    // The block updater is committed after every transaction, usually with a handful of accounts:
+    // forking parallel tasks for those costs more (waking pool threads) than the work itself.
+    final var updatedAccounts = getUpdatedAccounts();
+    // a failed task is rethrown once the others are done, so that a reset cannot run while they
+    // still write
+    final AtomicReference<RuntimeException> failure = new AtomicReference<>();
+    (updatedAccounts.size() >= PARALLEL_COMMIT_MIN_ACCOUNTS
+            ? updatedAccounts.parallelStream()
+            : updatedAccounts.stream())
         .forEach(
             tracked -> {
-              final Address updatedAddress = tracked.getAddress();
-              final ACCOUNT updatedAccount;
-              final BonsaiValue<ACCOUNT> updatedAccountValue = accountsToUpdate.get(updatedAddress);
-              final Map<StorageSlotKey, BonsaiValue<UInt256>> pendingStorageUpdates =
-                  storageToUpdate.computeIfAbsent(
-                      updatedAddress,
-                      k ->
-                          new StorageConsumingMap<>(
-                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
-
-              if (tracked.getWrappedAccount() == null) {
-                updatedAccount = createAccount(this, tracked);
-                tracked.setWrappedAccount(updatedAccount);
-                if (updatedAccountValue == null) {
-                  accountsToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount));
-                  codeToUpdate.put(
-                      updatedAddress, new BonsaiValue<>(null, updatedAccount.getCode()));
-                } else {
-                  updatedAccountValue.setUpdated(updatedAccount);
-                }
-              } else {
-                updatedAccount = tracked.getWrappedAccount();
-                updatedAccount.setBalance(tracked.getBalance());
-                updatedAccount.setNonce(tracked.getNonce());
-                if (tracked.codeWasUpdated()) {
-                  updatedAccount.setCode(tracked.getCode());
-                }
-                if (tracked.getStorageWasCleared()) {
-                  updatedAccount.clearStorage();
-                }
-                tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
-              }
-
-              if (tracked.codeWasUpdated()) {
-                final BonsaiValue<Bytes> pendingCode =
-                    codeToUpdate.computeIfAbsent(
-                        updatedAddress,
-                        addr ->
-                            new BonsaiValue<>(
-                                wrappedWorldView()
-                                    .getCode(
-                                        addr,
-                                        Optional.ofNullable(updatedAccountValue)
-                                            .map(BonsaiValue::getPrior)
-                                            .map(BonsaiAccount::getCodeHash)
-                                            .orElse(Hash.EMPTY))
-                                    .orElse(null),
-                                null));
-                pendingCode.setUpdated(updatedAccount.getCode());
-              }
-
-              if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
-                pendingStorageUpdates.clear();
-              }
-
-              // parallel stream here may cause database corruption
-              updatedAccount
-                  .getUpdatedStorage()
-                  .entrySet()
-                  .forEach(
-                      storageUpdate -> {
-                        final UInt256 keyUInt = storageUpdate.getKey();
-                        final StorageSlotKey slotKey =
-                            new StorageSlotKey(
-                                hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
-                        final UInt256 value = storageUpdate.getValue();
-                        final BonsaiValue<UInt256> pendingValue =
-                            pendingStorageUpdates.get(slotKey);
-                        if (pendingValue == null) {
-                          pendingStorageUpdates.put(
-                              slotKey,
-                              new BonsaiValue<>(
-                                  updatedAccount.getOriginalStorageValue(keyUInt), value));
-                        } else {
-                          pendingValue.setUpdated(value);
-                        }
-                      });
-
-              updatedAccount.getUpdatedStorage().clear();
-
-              if (pendingStorageUpdates.isEmpty()) {
-                storageToUpdate.remove(updatedAddress);
-              }
-
-              if (tracked.getStorageWasCleared()) {
-                tracked.setStorageWasCleared(false); // storage already cleared for this transaction
+              try {
+                commitUpdatedAccount(tracked);
+              } catch (final RuntimeException e) {
+                failure.compareAndSet(null, e);
               }
             });
+    if (failure.get() != null) {
+      throw failure.get();
+    }
+  }
+
+  private void commitUpdatedAccount(final UpdateTrackingAccount<ACCOUNT> tracked) {
+    final Address updatedAddress = tracked.getAddress();
+    final ACCOUNT updatedAccount;
+    final BonsaiValue<ACCOUNT> updatedAccountValue = accountsToUpdate.get(updatedAddress);
+    final Map<StorageSlotKey, BonsaiValue<UInt256>> pendingStorageUpdates =
+        storageToUpdate.computeIfAbsent(
+            updatedAddress,
+            k ->
+                new StorageConsumingMap<>(
+                    updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+
+    if (tracked.getWrappedAccount() == null) {
+      updatedAccount = createAccount(this, tracked);
+      tracked.setWrappedAccount(updatedAccount);
+      if (updatedAccountValue == null) {
+        accountsToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount));
+        codeToUpdate.put(updatedAddress, new BonsaiValue<>(null, updatedAccount.getCode()));
+      } else {
+        updatedAccountValue.setUpdated(updatedAccount);
+      }
+    } else {
+      updatedAccount = tracked.getWrappedAccount();
+      updatedAccount.setBalance(tracked.getBalance());
+      updatedAccount.setNonce(tracked.getNonce());
+      if (tracked.codeWasUpdated()) {
+        updatedAccount.setCode(tracked.getCode());
+      }
+      if (tracked.getStorageWasCleared()) {
+        updatedAccount.clearStorage();
+      }
+      tracked.getUpdatedStorage().forEach(updatedAccount::setStorageValue);
+    }
+
+    if (tracked.codeWasUpdated()) {
+      final BonsaiValue<Bytes> pendingCode =
+          codeToUpdate.computeIfAbsent(
+              updatedAddress,
+              addr ->
+                  new BonsaiValue<>(
+                      wrappedWorldView()
+                          .getCode(
+                              addr,
+                              Optional.ofNullable(updatedAccountValue)
+                                  .map(BonsaiValue::getPrior)
+                                  .map(BonsaiAccount::getCodeHash)
+                                  .orElse(Hash.EMPTY))
+                          .map(Code::getBytes)
+                          .orElse(null),
+                      null));
+      pendingCode.setUpdated(updatedAccount.getCode());
+    }
+
+    if (tracked.getStorageWasCleared()) {
+      storageToClear.add(updatedAddress);
+      pendingStorageUpdates.clear();
+    }
+
+    // parallel stream here may cause database corruption
+    updatedAccount
+        .getUpdatedStorage()
+        .entrySet()
+        .forEach(
+            storageUpdate -> {
+              final UInt256 keyUInt = storageUpdate.getKey();
+              final StorageSlotKey slotKey =
+                  new StorageSlotKey(hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
+              final UInt256 value = storageUpdate.getValue();
+              final BonsaiValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
+              if (pendingValue == null) {
+                pendingStorageUpdates.put(
+                    slotKey,
+                    new BonsaiValue<>(updatedAccount.getOriginalStorageValue(keyUInt), value));
+              } else {
+                pendingValue.setUpdated(value);
+              }
+            });
+
+    updatedAccount.getUpdatedStorage().clear();
+
+    if (pendingStorageUpdates.isEmpty()) {
+      storageToUpdate.remove(updatedAddress);
+    }
+
+    if (tracked.getStorageWasCleared()) {
+      tracked.setStorageWasCleared(false); // storage already cleared for this transaction
+    }
   }
 
   @Override
-  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
-    final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
-    if (localCode == null) {
-      final Supplier<Bytes> loader =
-          Suppliers.memoize(() -> wrappedWorldView().getCode(address, codeHash).orElse(null));
-      final BonsaiValue<Bytes> codeValue = BonsaiValue.withLazy(loader, loader);
+  public Optional<Code> getCode(final Address address, final Hash codeHash) {
+    BonsaiValue<Bytes> codeValue = codeToUpdate.get(address);
+    if (codeValue == null) {
+      final Supplier<Bytes> loader = Suppliers.memoize(() -> loadCode(address, codeHash));
+      codeValue = BonsaiValue.withLazy(loader, loader);
       onCodeValueLoaded(address, codeValue);
       codeToUpdate.put(address, codeValue);
-      return Optional.ofNullable(codeValue.getUpdated());
-    } else {
-      return Optional.ofNullable(localCode.getUpdated());
     }
+    return Optional.ofNullable(codeValue.getUpdated())
+        .map(code -> withLoadedAnalysis(address, code, codeHash));
+  }
+
+  private Bytes loadCode(final Address address, final Hash codeHash) {
+    final Code code = wrappedWorldView().getCode(address, codeHash).orElse(null);
+    if (code == null) {
+      return null;
+    }
+    loadedCode.put(address, code);
+    return code.getBytes();
+  }
+
+  /** Only the code as it was loaded carries its analysis, code set since then does not. */
+  private Code withLoadedAnalysis(final Address address, final Bytes code, final Hash codeHash) {
+    final Code loaded = loadedCode.get(address);
+    return loaded != null && loaded.getBytes() == code ? loaded : new Code(code, codeHash);
   }
 
   @Override
@@ -853,6 +891,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
           wrappedWorldView()
               .getCode(
                   address, Optional.ofNullable(expectedCode).map(Hash::hash).orElse(Hash.EMPTY))
+              .map(Code::getBytes)
               .orElse(Bytes.EMPTY);
       if (!storedCode.isEmpty()) {
         codeValue = new BonsaiValue<>(storedCode, storedCode);
@@ -1011,6 +1050,7 @@ public abstract class PathBasedWorldStateUpdateAccumulator<ACCOUNT extends Bonsa
     storageToClear.clear();
     storageToUpdate.clear();
     codeToUpdate.clear();
+    loadedCode.clear();
     accountsToUpdate.clear();
     resetAccumulatorStateChanged();
     updatedAccounts.clear();
