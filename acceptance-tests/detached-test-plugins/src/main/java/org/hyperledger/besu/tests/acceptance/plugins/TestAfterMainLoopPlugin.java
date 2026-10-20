@@ -18,24 +18,28 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 import org.hyperledger.besu.plugin.RegistrationContext;
 import org.hyperledger.besu.plugin.RunningContext;
 import org.hyperledger.besu.plugin.StartContext;
+import org.hyperledger.besu.plugin.services.Subscription;
 import org.hyperledger.besu.plugin.services.p2p.P2PService;
+import org.hyperledger.besu.plugin.services.sync.SyncEventService;
 import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
+import org.hyperledger.besu.plugin.services.sync.spi.InitialSyncCompletionListener;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
 
 import com.google.auto.service.AutoService;
 
 /**
- * Records in {@code afterMainLoop()} what the running-tier services report, so the acceptance test
- * can check that the hook runs once the network and the synchronizer have started.
+ * Records in {@code afterMainLoop()} what the running-tier services report and whether the
+ * synchronizer had delivered the initial-sync-completion event, which it does from its own start,
+ * so the acceptance test can check that the hook runs once the main loop has started.
  */
 @AutoService(BesuPlugin.class)
 public class TestAfterMainLoopPlugin implements BesuPlugin {
   private File callbackDir;
   private volatile boolean started;
+  private volatile boolean initialSyncCompletionSeen;
+  private Subscription initialSyncCompletion;
 
   @Override
   public void register(final RegistrationContext context) {
@@ -45,36 +49,41 @@ public class TestAfterMainLoopPlugin implements BesuPlugin {
   @Override
   public void start(final StartContext context) {
     started = true;
+    initialSyncCompletion =
+        context
+            .getBesuService(SyncEventService.class)
+            .subscribeInitialSyncCompletion(
+                new InitialSyncCompletionListener() {
+                  @Override
+                  public void onInitialSyncCompleted() {
+                    initialSyncCompletionSeen = true;
+                  }
+
+                  @Override
+                  public void onInitialSyncRestart() {}
+                });
   }
 
   @Override
   public void afterMainLoop(final RunningContext context) {
     final P2PService p2pService = context.getBesuService(P2PService.class);
     final SynchronizationService syncService = context.getBesuService(SynchronizationService.class);
-    writeCallbackFile(
+    PluginCallbackDir.write(
+        callbackDir,
         "afterMainLoop",
         List.of(
             "started=" + started,
             "p2pEnabled=" + p2pService.isP2pEnabled(),
             "peerCount=" + p2pService.getPeerCount(),
-            "initialSyncPhaseDone=" + syncService.isInitialSyncPhaseDone(),
+            "initialSyncCompletionSeen=" + initialSyncCompletionSeen,
             "inSync=" + syncService.isInSync()));
   }
 
   @Override
-  public void stop() {}
-
-  private void writeCallbackFile(final String name, final List<String> lines) {
-    try {
-      final File callbackFile = new File(callbackDir, name);
-      if (!callbackFile.getParentFile().exists()) {
-        callbackFile.getParentFile().mkdirs();
-        callbackFile.getParentFile().deleteOnExit();
-      }
-      Files.write(callbackFile.toPath(), lines);
-      callbackFile.deleteOnExit();
-    } catch (final IOException ioe) {
-      throw new RuntimeException(ioe);
+  public void stop() {
+    if (initialSyncCompletion != null) {
+      initialSyncCompletion.close();
+      initialSyncCompletion = null;
     }
   }
 }

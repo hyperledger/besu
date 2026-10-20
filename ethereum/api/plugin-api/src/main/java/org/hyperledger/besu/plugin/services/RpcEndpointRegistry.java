@@ -53,7 +53,13 @@ public interface RpcEndpointRegistry extends RegistrationService {
    * <p>The endpoint is served when the operator enables its namespace with {@code --rpc-http-api}:
    * on every enabled JSON-RPC interface (HTTP, WebSocket and IPC) and through {@link
    * InProcessRpcService}. WebSocket also serves it when the namespace is enabled with {@code
-   * --rpc-ws-api}.
+   * --rpc-ws-api}. The interfaces open only after every plugin's {@link
+   * org.hyperledger.besu.plugin.BesuPlugin#start} has returned; a call through {@link
+   * InProcessRpcService} from an earlier plugin's {@code start()}, or one made after this plugin's
+   * {@code start()} failed under {@code --plugin-continue-on-error}, can still reach the handler
+   * first, so it should throw a {@link
+   * org.hyperledger.besu.plugin.services.exception.PluginRpcEndpointException} until the services
+   * it obtains in {@code start()} are in place.
    *
    * @param namespace The namespace of the method, must be alphanumeric.
    * @param functionName The name of the function, must be alphanumeric.

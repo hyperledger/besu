@@ -28,8 +28,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@code afterMainLoop()} runs once the network and the synchronizer have started: the test plugin
- * records what the running-tier services report from inside the hook.
+ * {@code afterMainLoop()} runs once the main loop has started: the test plugin records from inside
+ * the hook whether the synchronizer's start had already delivered the initial-sync-completion event
+ * it subscribed to in {@code start()}.
  */
 public class AfterMainLoopPluginTest extends AcceptanceTestBase {
   private BesuNode node;
@@ -41,13 +42,14 @@ public class AfterMainLoopPluginTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void afterMainLoopRunsWithTheNetworkAndTheSynchronizerStarted() throws IOException {
+  public void afterMainLoopRunsAfterTheSynchronizerHasStarted() throws IOException {
     final Path callbackFile = node.homeDirectory().resolve("plugins/afterMainLoop");
     waitForFile(callbackFile);
 
-    // a full-sync node marks the initial sync phase done as its synchronizer starts
+    // a full-sync node delivers the completion event from DefaultSynchronizer.start(), which only
+    // runs with the main loop, so the value is false if the hook ran before it
     assertThat(Files.readAllLines(callbackFile))
-        .contains("started=true", "p2pEnabled=true", "initialSyncPhaseDone=true")
+        .contains("started=true", "p2pEnabled=true", "initialSyncCompletionSeen=true")
         .anyMatch(line -> line.startsWith("peerCount="));
   }
 }

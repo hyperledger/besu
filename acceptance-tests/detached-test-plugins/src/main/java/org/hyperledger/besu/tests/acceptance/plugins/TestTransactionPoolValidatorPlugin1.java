@@ -34,8 +34,7 @@ public class TestTransactionPoolValidatorPlugin1 implements BesuPlugin {
   @Option(names = "--plugin-txpool-validator1-test-enabled")
   boolean enabled = false;
 
-  // obtained in start(): the validator depends on it, and the pool only consults the validator
-  // once every plugin has started
+  // assigned in start() only, so the validator can report being consulted before start() has run
   private volatile BlockchainService blockchainService;
 
   @Override
@@ -52,14 +51,15 @@ public class TestTransactionPoolValidatorPlugin1 implements BesuPlugin {
 
   private Optional<String> validate(
       final Transaction tx, final boolean isLocal, final boolean hasPriority) {
-    final BlockchainService service = blockchainService;
-    if (service == null) {
+    if (!enabled) {
+      return Optional.empty();
+    }
+    if (blockchainService == null) {
       return Optional.of("Pool validator consulted before start() returned");
     }
-    service.getChainHeadHeader();
-    return enabled && !tx.getType().equals(TransactionType.FRONTIER)
-        ? Optional.of("Only Frontier transactions are allowed here")
-        : Optional.empty();
+    return tx.getType().equals(TransactionType.FRONTIER)
+        ? Optional.empty()
+        : Optional.of("Only Frontier transactions are allowed here");
   }
 
   @Override
