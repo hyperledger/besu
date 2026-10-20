@@ -58,8 +58,7 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
   /** Upper bound for Caffeine {@code initialCapacity} (must fit in a positive int). */
   private static final long MAX_INITIAL_CAPACITY = Integer.MAX_VALUE;
 
-  private static final long ACCOUNT_TRIE_NODE_CACHE_SIZE = 100_000;
-  private static final long STORAGE_TRIE_NODE_CACHE_SIZE = 200_000;
+  private static final long TRIE_NODE_CACHE_SIZE = 300_000;
 
   private final AtomicLong globalVersion = new AtomicLong(0);
 
@@ -73,9 +72,8 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
    * Trie nodes committed by recent blocks, keyed by hash. Every node on a modified path gets a new
    * hash, so the next block's walk down that path would otherwise read back what was just written.
    */
-  private final Cache<CacheKey, Bytes> accountTrieNodeCache;
+  private final Cache<CacheKey, Bytes> trieNodeCache;
 
-  private final Cache<CacheKey, Bytes> storageTrieNodeCache;
   private final ThresholdDrainExecutor drainExecutor;
   private final ExecutorService maintenanceWorker;
   private final AtomicBoolean maintenanceScheduled = new AtomicBoolean(false);
@@ -129,8 +127,7 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
 
     this.accountCache = createCache(accountCacheSize);
     this.storageCache = createCache(storageCacheSize);
-    this.accountTrieNodeCache = createCache(ACCOUNT_TRIE_NODE_CACHE_SIZE);
-    this.storageTrieNodeCache = createCache(STORAGE_TRIE_NODE_CACHE_SIZE);
+    this.trieNodeCache = createCache(TRIE_NODE_CACHE_SIZE);
 
     this.cacheRequestCounter =
         metricsSystem.createCounter(
@@ -239,8 +236,7 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
       final int drained = drainExecutor.drain();
       accountCache.cleanUp();
       storageCache.cleanUp();
-      accountTrieNodeCache.cleanUp();
-      storageTrieNodeCache.cleanUp();
+      trieNodeCache.cleanUp();
       if (drained > 0) {
         LOG.trace("Cache maintenance drained {} tasks", drained);
       }
@@ -300,8 +296,7 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
   @Override
   public void clear(final SegmentIdentifier segment) {
     if (segment == TRIE_BRANCH_STORAGE) {
-      accountTrieNodeCache.invalidateAll();
-      storageTrieNodeCache.invalidateAll();
+      trieNodeCache.invalidateAll();
       return;
     }
     final Cache<CacheKey, VersionedValue> cache = cacheForSegment(segment);
@@ -492,17 +487,8 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
   }
 
   @Override
-  public Optional<Bytes> getAccountTrieNode(final Bytes32 nodeHash) {
-    return getTrieNode(accountTrieNodeCache, nodeHash);
-  }
-
-  @Override
-  public Optional<Bytes> getStorageTrieNode(final Bytes32 nodeHash) {
-    return getTrieNode(storageTrieNodeCache, nodeHash);
-  }
-
-  private Optional<Bytes> getTrieNode(final Cache<CacheKey, Bytes> cache, final Bytes32 nodeHash) {
-    final Bytes node = cache.getIfPresent(CacheKey.of(nodeHash));
+  public Optional<Bytes> getTrieNode(final Bytes32 nodeHash) {
+    final Bytes node = trieNodeCache.getIfPresent(CacheKey.of(nodeHash));
     if (node == null) {
       trieNodeCacheMissCounter.inc();
       return Optional.empty();
@@ -513,17 +499,14 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
 
   /** Runs on the maintenance worker, so the committing thread does not pay for the inserts. */
   @Override
-  public void putTrieNodes(final List<TrieNode> accountNodes, final List<TrieNode> storageNodes) {
-    if (accountNodes.isEmpty() && storageNodes.isEmpty()) {
+  public void putTrieNodes(final List<TrieNode> nodes) {
+    if (nodes.isEmpty()) {
       return;
     }
     try {
       maintenanceWorker.execute(
           () -> {
-            accountNodes.forEach(
-                node -> accountTrieNodeCache.put(CacheKey.of(node.hash()), node.node()));
-            storageNodes.forEach(
-                node -> storageTrieNodeCache.put(CacheKey.of(node.hash()), node.node()));
+            nodes.forEach(node -> trieNodeCache.put(CacheKey.of(node.hash()), node.node()));
             doMaintenance();
           });
     } catch (final RejectedExecutionException e) {
@@ -534,7 +517,7 @@ public class VersionedFlatDbCacheManager implements FlatDbCacheManager, Closeabl
   @Override
   public long getCacheSize(final SegmentIdentifier segment) {
     if (segment == TRIE_BRANCH_STORAGE) {
-      return accountTrieNodeCache.estimatedSize() + storageTrieNodeCache.estimatedSize();
+      return trieNodeCache.estimatedSize();
     }
     final Cache<CacheKey, VersionedValue> cache = cacheForSegment(segment);
     return cache != null ? cache.estimatedSize() : 0;

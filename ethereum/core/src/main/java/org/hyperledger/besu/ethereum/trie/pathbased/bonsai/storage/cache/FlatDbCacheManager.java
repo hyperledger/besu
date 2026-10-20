@@ -102,17 +102,12 @@ public interface FlatDbCacheManager {
    * Trie nodes are cached by hash, so an entry is valid at every version. A hit only says what the
    * node is, not that storage holds it.
    */
-  default Optional<Bytes> getAccountTrieNode(final Bytes32 nodeHash) {
+  default Optional<Bytes> getTrieNode(final Bytes32 nodeHash) {
     return Optional.empty();
   }
 
-  /** See {@link #getAccountTrieNode(Bytes32)}. */
-  default Optional<Bytes> getStorageTrieNode(final Bytes32 nodeHash) {
-    return Optional.empty();
-  }
-
-  /** Caches committed trie nodes. The lists must not be modified after the call. */
-  default void putTrieNodes(final List<TrieNode> accountNodes, final List<TrieNode> storageNodes) {
+  /** Caches committed trie nodes. The list must not be modified after the call. */
+  default void putTrieNodes(final List<TrieNode> nodes) {
     // No-op
   }
 

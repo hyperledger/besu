@@ -444,11 +444,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
    * @return the node, or empty if it is neither cached nor stored under {@code key}
    */
   public Optional<Bytes> getTrieNodeFromCacheOrStorage(final Bytes key, final Bytes32 nodeHash) {
-    final Optional<Bytes> cached =
-        TrieNodeKey.hasTriePrefix(key)
-            ? cacheManager.getStorageTrieNode(nodeHash)
-            : cacheManager.getAccountTrieNode(nodeHash);
-    return cached.or(() -> getTrieNode(key, nodeHash));
+    return cacheManager.getTrieNode(nodeHash).or(() -> getTrieNode(key, nodeHash));
   }
 
   /**
@@ -737,8 +733,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     /** Single map per segment. Value {@code null} encodes a staged removal (last-write-wins). */
     private final Map<SegmentIdentifier, Map<Bytes, Bytes>> pending = new HashMap<>();
 
-    private List<FlatDbCacheManager.TrieNode> pendingAccountTrieNodes = new ArrayList<>();
-    private List<FlatDbCacheManager.TrieNode> pendingStorageTrieNodes = new ArrayList<>();
+    private List<FlatDbCacheManager.TrieNode> pendingTrieNodes = new ArrayList<>();
 
     public CachedUpdater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
@@ -790,8 +785,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
     public synchronized Updater putTrieNode(
         final Bytes key, final Bytes32 nodeHash, final Bytes node) {
       if (!nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
-        (TrieNodeKey.hasTriePrefix(key) ? pendingStorageTrieNodes : pendingAccountTrieNodes)
-            .add(new FlatDbCacheManager.TrieNode(nodeHash, node));
+        pendingTrieNodes.add(new FlatDbCacheManager.TrieNode(nodeHash, node));
       }
       return super.putTrieNode(key, nodeHash, node);
     }
@@ -810,9 +804,8 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
 
     private void clearStaged() {
       pending.clear();
-      // not cleared in place: the cache manager may still be reading the lists handed to it
-      pendingAccountTrieNodes = new ArrayList<>();
-      pendingStorageTrieNodes = new ArrayList<>();
+      // not cleared in place: the cache manager may still be reading the list handed to it
+      pendingTrieNodes = new ArrayList<>();
     }
 
     protected void incrementCacheVersion() {
@@ -830,7 +823,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
                       cacheManager.putInCache(segment, key, value, cacheVersion);
                     }
                   }));
-      cacheManager.putTrieNodes(pendingAccountTrieNodes, pendingStorageTrieNodes);
+      cacheManager.putTrieNodes(pendingTrieNodes);
       clearStaged();
       cacheManager.scheduleAsyncMaintenance();
     }

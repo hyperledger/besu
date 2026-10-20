@@ -116,8 +116,9 @@ class BonsaiCachedMerkleTrieLoaderTest {
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG,
                 cacheManager)) {
       cacheManager.putTrieNodes(
-          List.of(new TrieNode(accountNodeHash, accountNode)),
-          List.of(new TrieNode(storageNodeHash, storageNode)));
+          List.of(
+              new TrieNode(accountNodeHash, accountNode),
+              new TrieNode(storageNodeHash, storageNode)));
       await()
           .untilAsserted(
               () -> assertThat(cacheManager.getCacheSize(TRIE_BRANCH_STORAGE)).isEqualTo(2));

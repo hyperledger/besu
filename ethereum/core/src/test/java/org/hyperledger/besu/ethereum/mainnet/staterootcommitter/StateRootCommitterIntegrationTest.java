@@ -625,11 +625,10 @@ class StateRootCommitterIntegrationTest {
               .untilAsserted(
                   () -> {
                     assertThat(
-                            cacheManager.getAccountTrieNode(
+                            cacheManager.getTrieNode(
                                 Bytes32.wrap(blockHeader.getStateRoot().getBytes())))
                         .isPresent();
-                    assertThat(
-                            cacheManager.getStorageTrieNode(Bytes32.wrap(storageRoot.getBytes())))
+                    assertThat(cacheManager.getTrieNode(Bytes32.wrap(storageRoot.getBytes())))
                         .isPresent();
                   });
         } finally {

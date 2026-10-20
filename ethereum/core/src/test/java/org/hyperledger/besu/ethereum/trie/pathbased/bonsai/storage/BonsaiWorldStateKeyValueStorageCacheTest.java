@@ -494,7 +494,7 @@ public class BonsaiWorldStateKeyValueStorageCacheTest {
     commitAccountTrieNode(STORAGE_TRIE_NODE_HASH, STORAGE_TRIE_NODE);
     awaitCachedTrieNodes(1);
 
-    assertThat(head.getCacheManager().getAccountTrieNode(ACCOUNT_TRIE_NODE_HASH)).isEmpty();
+    assertThat(head.getCacheManager().getTrieNode(ACCOUNT_TRIE_NODE_HASH)).isEmpty();
   }
 
   @Test

@@ -113,22 +113,21 @@ class VersionedFlatDbCacheManagerTest {
     final Bytes32 storageNodeHash = Bytes32.wrap(Hash.hash(storageNode).getBytes());
 
     cacheManager.putTrieNodes(
-        List.of(new TrieNode(accountNodeHash, accountNode)),
-        List.of(new TrieNode(storageNodeHash, storageNode)));
+        List.of(
+            new TrieNode(accountNodeHash, accountNode),
+            new TrieNode(storageNodeHash, storageNode)));
     await()
         .untilAsserted(
             () -> assertThat(cacheManager.getCacheSize(TRIE_BRANCH_STORAGE)).isEqualTo(2));
 
-    assertThat(cacheManager.getAccountTrieNode(accountNodeHash)).contains(accountNode);
-    assertThat(cacheManager.getStorageTrieNode(storageNodeHash)).contains(storageNode);
-    assertThat(cacheManager.getStorageTrieNode(accountNodeHash)).isEmpty();
-    assertThat(cacheManager.getAccountTrieNode(storageNodeHash)).isEmpty();
+    assertThat(cacheManager.getTrieNode(accountNodeHash)).contains(accountNode);
+    assertThat(cacheManager.getTrieNode(storageNodeHash)).contains(storageNode);
 
     cacheManager.clear(TRIE_BRANCH_STORAGE);
 
     assertThat(cacheManager.getCacheSize(TRIE_BRANCH_STORAGE)).isZero();
-    assertThat(cacheManager.getAccountTrieNode(accountNodeHash)).isEmpty();
-    assertThat(cacheManager.getStorageTrieNode(storageNodeHash)).isEmpty();
+    assertThat(cacheManager.getTrieNode(accountNodeHash)).isEmpty();
+    assertThat(cacheManager.getTrieNode(storageNodeHash)).isEmpty();
   }
 
   @Test
@@ -137,8 +136,8 @@ class VersionedFlatDbCacheManagerTest {
     final Bytes32 nodeHash = Bytes32.wrap(Hash.hash(node).getBytes());
     cacheManager.close();
 
-    cacheManager.putTrieNodes(List.of(new TrieNode(nodeHash, node)), List.of());
+    cacheManager.putTrieNodes(List.of(new TrieNode(nodeHash, node)));
 
-    assertThat(cacheManager.getAccountTrieNode(nodeHash)).isEmpty();
+    assertThat(cacheManager.getTrieNode(nodeHash)).isEmpty();
   }
 }
