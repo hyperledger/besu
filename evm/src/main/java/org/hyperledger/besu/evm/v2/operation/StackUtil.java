@@ -281,7 +281,7 @@ public final class StackUtil {
   static long clampedToLong(final long[] stack, final int top, final int depth) {
     final int off = (top - 1 - depth) << 2;
     final long u0 = stack[off + 3];
-    if ((stack[off] | stack[off + 1] | stack[off + 2]) != 0 || u0 < 0) {
+    if (u0 < 0 || (stack[off] | stack[off + 1] | stack[off + 2]) != 0) {
       return Long.MAX_VALUE;
     }
     return u0;
@@ -300,7 +300,7 @@ public final class StackUtil {
   static int clampedToInt(final long[] stack, final int top, final int depth) {
     final int off = (top - 1 - depth) << 2;
     final long u0 = stack[off + 3];
-    if ((stack[off] | stack[off + 1] | stack[off + 2]) != 0 || (u0 >>> 31) != 0) {
+    if ((u0 >>> 31) != 0 || (stack[off] | stack[off + 1] | stack[off + 2]) != 0) {
       return Integer.MAX_VALUE;
     }
     return (int) u0;
