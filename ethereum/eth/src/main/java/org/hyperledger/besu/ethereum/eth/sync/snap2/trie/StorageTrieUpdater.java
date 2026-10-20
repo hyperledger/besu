@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snap2.trie;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.Accounts;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStateStorage;
@@ -85,7 +87,8 @@ public final class StorageTrieUpdater {
   /**
    * Creates the updater.
    *
-   * @param withoutMoves runs an action exclusive with pivot moves, false once the sync stopped
+   * @param withoutMoves runs an action exclusive with pivot moves, false once the sync stopped; the
+   *     download writes the account of a downloaded storage only in a move
    * @param trieLeft whether the download completed the storage of an account without its trie
    */
   public StorageTrieUpdater(
@@ -94,6 +97,7 @@ public final class StorageTrieUpdater {
       final Predicate<Bytes32> trieLeft,
       final int threads) {
     this(storage, withoutMoves, trieLeft, threads, MAX_PENDING_SLOTS);
+    checkArgument(threads >= 1, "the updates need a worker");
   }
 
   @VisibleForTesting
@@ -166,7 +170,10 @@ public final class StorageTrieUpdater {
     return pendingSlots;
   }
 
-  /** Applies the changes still waiting, on this thread too, then stops. */
+  /**
+   * Applies the changes still waiting, on this thread too, then stops. As for {@link #stop()}, the
+   * caller must not hold what {@code withoutMoves} waits for.
+   */
   public void finish() {
     synchronized (this) {
       if (!pending.isEmpty()) {
@@ -192,12 +199,7 @@ public final class StorageTrieUpdater {
    * withoutMoves}, so the caller must not hold what it waits for.
    */
   public void stop() {
-    synchronized (this) {
-      stopped = true;
-      pending.clear();
-      pendingSlots = 0;
-      notifyAll();
-    }
+    cancel();
     workers.shutdownNow();
     try {
       if (!workers.awaitTermination(1, TimeUnit.MINUTES)) {
@@ -206,6 +208,14 @@ public final class StorageTrieUpdater {
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+  }
+
+  // no update starts or publishes a root from now on
+  private synchronized void cancel() {
+    stopped = true;
+    pending.clear();
+    pendingSlots = 0;
+    notifyAll();
   }
 
   /** Applies on this thread an update that can start, returns whether there was one. */
@@ -271,6 +281,8 @@ public final class StorageTrieUpdater {
       process(update, writer);
       return true;
     } catch (final CancellationException e) {
+      // the sync stopped: the other updates stop too
+      cancel();
       return false;
     } catch (final RuntimeException e) {
       writer.abort();
@@ -333,6 +345,10 @@ public final class StorageTrieUpdater {
             () -> {
               final Update next;
               synchronized (this) {
+                // a move after the stop left the root unknown, for the final build
+                if (stopped) {
+                  throw new CancellationException("storage trie updates stopped");
+                }
                 next = pending.get(accountHash);
                 if (next != null) {
                   next.base = root;
@@ -355,9 +371,15 @@ public final class StorageTrieUpdater {
         .ifPresent(
             account -> {
               final SyncStateStorage.Batch batch = storage.batch();
-              batch.putAccount(
-                  accountHash, Accounts.encode(Accounts.withStorageRoot(account, Hash.wrap(root))));
-              batch.commit();
+              try {
+                batch.putAccount(
+                    accountHash,
+                    Accounts.encode(Accounts.withStorageRoot(account, Hash.wrap(root))));
+                batch.commit();
+              } catch (final RuntimeException e) {
+                batch.abort();
+                throw e;
+              }
             });
   }
 }

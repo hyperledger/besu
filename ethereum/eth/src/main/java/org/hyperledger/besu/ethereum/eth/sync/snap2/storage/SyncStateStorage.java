@@ -80,6 +80,9 @@ public interface SyncStateStorage {
     void putCode(Bytes32 codeHash, Bytes code);
 
     void commit();
+
+    /** Drops the writes not committed yet. */
+    void abort();
   }
 
   /** Visitor of the flat state. */

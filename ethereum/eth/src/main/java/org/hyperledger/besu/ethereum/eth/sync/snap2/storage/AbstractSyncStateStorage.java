@@ -124,16 +124,21 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
     try (Stream<Pair<byte[], byte[]>> slots =
         flat.streamFromKey(storageSegment, concat(prefix, ZEROS), concat(prefix, ONES))) {
       Batch batch = batch();
-      int pending = 0;
-      for (final Iterator<Pair<byte[], byte[]>> it = slots.iterator(); it.hasNext(); ) {
-        batch.removeStorage(accountHash, Bytes32.wrap(it.next().getKey(), 32));
-        if (++pending == DELETES_PER_COMMIT) {
-          batch.commit();
-          batch = batch();
-          pending = 0;
+      try {
+        int pending = 0;
+        for (final Iterator<Pair<byte[], byte[]>> it = slots.iterator(); it.hasNext(); ) {
+          batch.removeStorage(accountHash, Bytes32.wrap(it.next().getKey(), 32));
+          if (++pending == DELETES_PER_COMMIT) {
+            batch.commit();
+            batch = batch();
+            pending = 0;
+          }
         }
+        batch.commit();
+      } catch (final RuntimeException e) {
+        batch.abort();
+        throw e;
       }
-      batch.commit();
     }
   }
 
@@ -150,10 +155,8 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
         return;
       }
       final Pair<byte[], byte[]> slot = slots.next();
-      visitor.onSlot(
-          Bytes32.wrap(Arrays.copyOfRange(key, 0, 32)),
-          Bytes32.wrap(Arrays.copyOfRange(key, 32, 64)),
-          Bytes.wrap(slot.getValue()));
+      // each key is a fresh array
+      visitor.onSlot(Bytes32.wrap(key, 0), Bytes32.wrap(key, 32), Bytes.wrap(slot.getValue()));
     }
   }
 

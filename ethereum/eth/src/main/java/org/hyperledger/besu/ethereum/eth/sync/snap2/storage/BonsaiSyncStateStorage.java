@@ -106,6 +106,11 @@ public final class BonsaiSyncStateStorage extends AbstractSyncStateStorage {
       public void commit() {
         updater.commitComposedOnly();
       }
+
+      @Override
+      public void abort() {
+        updater.rollback();
+      }
     };
   }
 
@@ -200,7 +205,7 @@ public final class BonsaiSyncStateStorage extends AbstractSyncStateStorage {
 
   @Override
   public void completeSync() {
-    if (bonsai.getFlatDbMode() != FlatDbMode.FULL) {
+    if (bonsai.getFlatDbMode() == FlatDbMode.PARTIAL) {
       bonsai.upgradeToFullFlatDbMode();
     }
     bonsai.clearCrossBlockCache();

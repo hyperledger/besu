@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snap2.trie;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -168,6 +170,63 @@ class StorageTrieUpdaterTest {
     assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
   }
 
+  // once one update sees the sync stopped, no other starts
+  @Test
+  void startsNoUpdateOnceOneSawTheSyncStopped() {
+    final World world = SyncStorageFixture.randomWorld(new Random(19), 80);
+    final List<Bytes32> accounts = largestStorages(world, 2);
+    final Bytes32 firstRoot = downloaded(world, accounts.get(0));
+    final Bytes32 secondRoot = downloaded(world, accounts.get(1));
+    final StorageTrieUpdater updater =
+        new StorageTrieUpdater(storages.sync(), action -> false, hash -> false, 0, 0);
+    updater.changed(accounts.get(0), Hash.wrap(firstRoot), move(world, accounts.get(0), 1));
+    updater.changed(accounts.get(1), Hash.wrap(secondRoot), move(world, accounts.get(1), 1));
+
+    assertThat(updater.applyNext()).isTrue();
+
+    assertThat(updater.pendingStorages()).isZero();
+    assertThat(updater.applyNext()).isFalse();
+  }
+
+  // a move after the stop is not recorded, so the update in progress must not give its root
+  @Test
+  void writesNoRootOnceStoppedDuringAnUpdate() {
+    final World world = SyncStorageFixture.randomWorld(new Random(20), 80);
+    final Bytes32 account = largestStorage(world);
+    final Bytes32 root = downloaded(world, account);
+    final AtomicReference<StorageTrieUpdater> updater = new AtomicReference<>();
+    final SyncStateStorage storage = spy(storages.sync());
+    final AtomicBoolean stopped = new AtomicBoolean();
+    doAnswer(
+            invocation -> {
+              if (stopped.compareAndSet(false, true)) {
+                updater.get().stop();
+                updater
+                    .get()
+                    .changed(account, Accounts.UNKNOWN_STORAGE_ROOT, move(world, account, 2));
+              }
+              return invocation.callRealMethod();
+            })
+        .when(storage)
+        .storageTrieNode(any(), any(), any());
+    updater.set(updater(storage, 0));
+
+    updater.get().changed(account, Hash.wrap(root), move(world, account, 1));
+    assertThat(updater.get().applyNext()).isTrue();
+
+    assertThat(updater.get().updated()).isZero();
+    assertThat(storageRoot(account)).isEqualTo(Accounts.UNKNOWN_STORAGE_ROOT);
+  }
+
+  @Test
+  void needsAWorker() {
+    assertThatThrownBy(
+            () ->
+                new StorageTrieUpdater(
+                    storages.sync(), StorageTrieUpdaterTest::noMoves, hash -> false, 0))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
   @Test
   void ignoresAStorageLeftToTheFinalBuild() {
     final World world = SyncStorageFixture.randomWorld(new Random(15), 80);
@@ -282,10 +341,18 @@ class StorageTrieUpdaterTest {
   }
 
   private static Bytes32 largestStorage(final World world) {
+    return largestStorages(world, 1).getFirst();
+  }
+
+  private static List<Bytes32> largestStorages(final World world, final int count) {
     return world.storage.entrySet().stream()
-        .max(Comparator.comparingInt(entry -> entry.getValue().size()))
-        .orElseThrow()
-        .getKey();
+        .sorted(
+            Comparator.<Map.Entry<Bytes32, TreeMap<Bytes32, UInt256>>>comparingInt(
+                    entry -> entry.getValue().size())
+                .reversed())
+        .limit(count)
+        .map(Map.Entry::getKey)
+        .toList();
   }
 
   // the storage as the download leaves it: its slots, its trie and its root in the account

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snap2.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_LOG_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -195,10 +196,14 @@ class BonsaiSyncStateStorageTest {
   // the sync writes trie nodes and the world state, never a trie log
   @Test
   void opensNoTrieLogTransaction() {
-    final BonsaiWorldStateKeyValueStorage spied = spy(bonsai);
-    final KeyValueStorage trieLogs = spy(bonsai.getTrieLogStorage());
-    doReturn(trieLogs).when(spied).getTrieLogStorage();
-    final SyncStateStorage sync = new BonsaiSyncStateStorage(spied);
+    // the trie log storage Bonsai is built with, which its updaters use
+    final InMemoryKeyValueStorageProvider provider = spy(new InMemoryKeyValueStorageProvider());
+    final KeyValueStorage trieLogs = spy(provider.getStorageBySegmentIdentifier(TRIE_LOG_STORAGE));
+    doReturn(trieLogs).when(provider).getStorageBySegmentIdentifier(TRIE_LOG_STORAGE);
+    final SyncStateStorage sync =
+        new BonsaiSyncStateStorage(
+            (BonsaiWorldStateKeyValueStorage)
+                provider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
     final Bytes node = Bytes.fromHexString("0xc28080");
     final Bytes32 hash = Bytes32.wrap(Hash.hash(node).getBytes());
 
@@ -255,6 +260,20 @@ class BonsaiSyncStateStorageTest {
     new BonsaiSyncStateStorage(partial).completeSync();
 
     assertThat(partial.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
+  }
+
+  @Test
+  void completeSyncKeepsAnArchiveDatabase() {
+    final BonsaiWorldStateKeyValueStorage archive =
+        bonsai(
+            ImmutableDataStorageConfiguration.builder()
+                .dataStorageFormat(DataStorageFormat.X_BONSAI_ARCHIVE)
+                .build());
+    archive.upgradeToArchiveFlatDbMode();
+
+    new BonsaiSyncStateStorage(archive).completeSync();
+
+    assertThat(archive.getFlatDbMode()).isEqualTo(FlatDbMode.ARCHIVE);
   }
 
   // the slots stored for an account, by a scan of its key alone
