@@ -62,8 +62,14 @@ public final class TrieRlp {
   }
 
   public static int writeHash(final byte[] out, final int pos, final byte[] hash) {
+    return writeHash(out, pos, hash, 0);
+  }
+
+  /** Writes the hash found at {@code offset} in {@code source}. */
+  public static int writeHash(
+      final byte[] out, final int pos, final byte[] source, final int offset) {
     out[pos] = (byte) (SHORT_STRING_OFFSET + Keccak256.SIZE);
-    System.arraycopy(hash, 0, out, pos + 1, Keccak256.SIZE);
+    System.arraycopy(source, offset, out, pos + 1, Keccak256.SIZE);
     return pos + HASH_REF_SIZE;
   }
 

@@ -214,10 +214,8 @@ public class StoredNodeFactory<V> implements NodeFactory<V> {
             decode(location == null ? null : Nibbles.append(location, i), nodeRLPs, errMessage);
         children.add(child);
       } else {
-        final byte[] childHash = nodeRLPs.readHash();
-        children.add(
-            new StoredNode<>(
-                this, location == null ? null : Nibbles.append(location, i), childHash));
+        final int hashOffset = nodeRLPs.readHashOffset();
+        children.add(new StoredNode<>(this, location, (byte) i, nodeRLPs.data(), hashOffset));
       }
     }
 

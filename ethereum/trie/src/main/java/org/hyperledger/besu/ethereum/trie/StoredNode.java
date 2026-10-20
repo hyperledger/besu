@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,14 +24,46 @@ import org.apache.tuweni.bytes.Bytes32;
 public class StoredNode<V> implements Node<V> {
 
   private final NodeFactory<V> nodeFactory;
-  private final byte[] location;
-  private final byte[] hash;
+  private byte[] location;
+  private byte[] hash;
   private Node<V> loaded;
+
+  // a child of a decoded branch copies its location and its hash out of the branch when needed
+  private final byte[] branchLocation;
+  private final byte childIndex;
+  private final byte[] branchEncoding;
+  private final int hashOffset;
 
   public StoredNode(final NodeFactory<V> nodeFactory, final byte[] location, final byte[] hash) {
     this.nodeFactory = nodeFactory;
     this.location = location;
     this.hash = hash;
+    this.branchLocation = null;
+    this.childIndex = 0;
+    this.branchEncoding = null;
+    this.hashOffset = 0;
+  }
+
+  /**
+   * A child of a decoded branch, most of which are never visited.
+   *
+   * @param nodeFactory the node factory
+   * @param branchLocation the location of the branch, null when unknown
+   * @param childIndex the index of the child in the branch
+   * @param branchEncoding the encoding holding the branch
+   * @param hashOffset where the hash of the child is in {@code branchEncoding}
+   */
+  public StoredNode(
+      final NodeFactory<V> nodeFactory,
+      final byte[] branchLocation,
+      final byte childIndex,
+      final byte[] branchEncoding,
+      final int hashOffset) {
+    this.nodeFactory = nodeFactory;
+    this.branchLocation = branchLocation;
+    this.childIndex = childIndex;
+    this.branchEncoding = branchEncoding;
+    this.hashOffset = hashOffset;
   }
 
   public StoredNode(final NodeFactory<V> nodeFactory, final Bytes location, final Bytes32 hash) {
@@ -88,7 +121,12 @@ public class StoredNode<V> implements Node<V> {
 
   @Override
   public byte[] location() {
-    return location;
+    byte[] childLocation = location;
+    if (childLocation == null && branchLocation != null) {
+      childLocation = Nibbles.append(branchLocation, childIndex);
+      location = childLocation;
+    }
+    return childLocation;
   }
 
   @Override
@@ -120,12 +158,20 @@ public class StoredNode<V> implements Node<V> {
 
   @Override
   public int writeEncodedRef(final byte[] out, final int pos) {
-    return TrieRlp.writeHash(out, pos, hash);
+    final byte[] childHash = hash;
+    return childHash != null
+        ? TrieRlp.writeHash(out, pos, childHash)
+        : TrieRlp.writeHash(out, pos, branchEncoding, hashOffset);
   }
 
   @Override
   public byte[] hash() {
-    return hash;
+    byte[] childHash = hash;
+    if (childHash == null) {
+      childHash = Arrays.copyOfRange(branchEncoding, hashOffset, hashOffset + Keccak256.SIZE);
+      hash = childHash;
+    }
+    return childHash;
   }
 
   @Override
@@ -135,18 +181,19 @@ public class StoredNode<V> implements Node<V> {
 
   private Node<V> load() {
     if (loaded == null) {
-      loaded =
-          nodeFactory
-              .retrieve(location, hash)
-              .orElseThrow(
-                  () ->
-                      new MerkleTrieException(
-                          "Unable to load trie node value for hash "
-                              + Nibbles.toHexString(hash)
-                              + " location "
-                              + Nibbles.toHexString(location),
-                          Bytes32.wrap(hash),
-                          location == null ? null : Bytes.wrap(location)));
+      final byte[] nodeLocation = location();
+      final byte[] nodeHash = hash();
+      final Optional<Node<V>> node = nodeFactory.retrieve(nodeLocation, nodeHash);
+      if (node.isEmpty()) {
+        throw new MerkleTrieException(
+            "Unable to load trie node value for hash "
+                + Nibbles.toHexString(nodeHash)
+                + " location "
+                + Nibbles.toHexString(nodeLocation),
+            Bytes32.wrap(nodeHash),
+            nodeLocation == null ? null : Bytes.wrap(nodeLocation));
+      }
+      loaded = node.get();
     }
 
     return loaded;

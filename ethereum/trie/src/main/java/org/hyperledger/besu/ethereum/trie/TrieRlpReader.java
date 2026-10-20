@@ -82,14 +82,20 @@ public final class TrieRlpReader {
 
   /** Reads the next item, which must be a 32 bytes string. */
   public byte[] readHash() {
+    final int offset = readHashOffset();
+    return Arrays.copyOfRange(data, offset, offset + Keccak256.SIZE);
+  }
+
+  /** Skips the next item, which must be a 32 bytes string, and returns where it is in data. */
+  public int readHashOffset() {
     requireBytes();
     if (payloadLength != Keccak256.SIZE) {
       throw new MalformedRlpException(
           "Cannot read a 32 bytes value, current item is of size " + payloadLength);
     }
-    final byte[] hash = Arrays.copyOfRange(data, payloadOffset, payloadOffset + Keccak256.SIZE);
+    final int offset = payloadOffset;
     pos = itemEnd();
-    return hash;
+    return offset;
   }
 
   /** Enters the next item, which must be a list, and returns its number of elements. */
