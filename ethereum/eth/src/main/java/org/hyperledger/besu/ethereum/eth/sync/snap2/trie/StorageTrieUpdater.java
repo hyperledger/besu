@@ -45,11 +45,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Applies the slots pivot moves change to the storage tries written while downloading, as a block
- * import does. The changes of all the moves are applied once per storage at the end of the
- * download, in key order, or earlier past a memory budget, to read each trie as little as possible.
- * A changed storage keeps an unknown root in its account until its trie gives the new one; without
- * a trie, the final build makes it.
+ * Updates the storage tries written during the download with the slots that pivot moves changed, as
+ * a block import does. Each storage gets one update for all its moves, at the end of the download
+ * in key order, or earlier past a memory budget, so that each trie is read as little as possible.
+ * Until then its account keeps an unknown storage root; a storage without a trie gets its root from
+ * the final build.
  */
 public final class StorageTrieUpdater {
 
@@ -182,12 +182,9 @@ public final class StorageTrieUpdater {
       finishing = true;
       notifyAll();
     }
-    final SyncStateStorage.TrieWriter writer = storage.trieWriter();
     try {
-      Update update;
-      while ((update = next(true)) != null && apply(update, writer)) {
-        // the caller applies updates beside the workers, so finishing needs none
-      }
+      // this thread applies updates beside the workers, so finishing needs none
+      applyUpdates(true);
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
     }
@@ -233,14 +230,20 @@ public final class StorageTrieUpdater {
   }
 
   private void run() {
-    final SyncStateStorage.TrieWriter writer = storage.trieWriter();
     try {
-      Update update;
-      while ((update = next(false)) != null && apply(update, writer)) {
-        // applied, take the next one
-      }
+      applyUpdates(false);
     } catch (final InterruptedException e) {
       // stopped while waiting
+    }
+  }
+
+  // applies updates until the updates stop, or until none is left when draining
+  private void applyUpdates(final boolean draining) throws InterruptedException {
+    final SyncStateStorage.TrieWriter writer = storage.trieWriter();
+    boolean running = true;
+    while (running) {
+      final Update update = next(draining);
+      running = update != null && apply(update, writer);
     }
   }
 

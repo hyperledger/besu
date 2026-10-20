@@ -67,14 +67,14 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
       while (accountIterator.hasNext()) {
         final Pair<byte[], byte[]> account = accountIterator.next();
         final byte[] accountKey = account.getKey();
-        visitSlots(slots.iterator, accountKey, false, visitor);
+        visitSlotsBefore(slots.iterator, accountKey, visitor);
         if (visitor.onAccount(Bytes32.wrap(accountKey), Bytes.wrap(account.getValue()))) {
-          visitSlots(slots.iterator, accountKey, true, visitor);
+          visitSlotsUpTo(slots.iterator, accountKey, visitor);
         } else {
           slots.skip(accountKey);
         }
       }
-      visitSlots(slots.iterator, ONES, true, visitor);
+      visitSlotsUpTo(slots.iterator, ONES, visitor);
     }
   }
 
@@ -98,8 +98,7 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
     }
 
     private void skip(final byte[] accountKey) {
-      if (!iterator.hasNext()
-          || Arrays.compareUnsigned(iterator.peek().getKey(), 0, 32, accountKey, 0, 32) != 0) {
+      if (!iterator.hasNext() || compareAccount(iterator.peek().getKey(), accountKey) != 0) {
         return;
       }
       stream.close();
@@ -142,22 +141,35 @@ abstract class AbstractSyncStateStorage implements SyncStateStorage {
     }
   }
 
-  // visits slots of accounts before the given one, or of the given account when inclusive
-  private static void visitSlots(
+  // visits the slots of the accounts before the given one
+  private static void visitSlotsBefore(
       final PeekingIterator<Pair<byte[], byte[]>> slots,
       final byte[] accountKey,
-      final boolean inclusive,
       final ScanVisitor visitor) {
-    while (slots.hasNext()) {
-      final byte[] key = slots.peek().getKey();
-      final int cmp = Arrays.compareUnsigned(key, 0, 32, accountKey, 0, 32);
-      if (cmp > 0 || (cmp == 0 && !inclusive)) {
-        return;
-      }
-      final Pair<byte[], byte[]> slot = slots.next();
-      // each key is a fresh array
-      visitor.onSlot(Bytes32.wrap(key, 0), Bytes32.wrap(key, 32), Bytes.wrap(slot.getValue()));
+    while (slots.hasNext() && compareAccount(slots.peek().getKey(), accountKey) < 0) {
+      visitSlot(slots.next(), visitor);
     }
+  }
+
+  // visits the slots of the accounts up to the given one, included
+  private static void visitSlotsUpTo(
+      final PeekingIterator<Pair<byte[], byte[]>> slots,
+      final byte[] accountKey,
+      final ScanVisitor visitor) {
+    while (slots.hasNext() && compareAccount(slots.peek().getKey(), accountKey) <= 0) {
+      visitSlot(slots.next(), visitor);
+    }
+  }
+
+  private static void visitSlot(final Pair<byte[], byte[]> slot, final ScanVisitor visitor) {
+    final byte[] key = slot.getKey();
+    // each key is a fresh array
+    visitor.onSlot(Bytes32.wrap(key, 0), Bytes32.wrap(key, 32), Bytes.wrap(slot.getValue()));
+  }
+
+  // compares the account of a slot key with an account key
+  private static int compareAccount(final byte[] slotKey, final byte[] accountKey) {
+    return Arrays.compareUnsigned(slotKey, 0, 32, accountKey, 0, 32);
   }
 
   private static byte[] concat(final byte[] a, final byte[] b) {
