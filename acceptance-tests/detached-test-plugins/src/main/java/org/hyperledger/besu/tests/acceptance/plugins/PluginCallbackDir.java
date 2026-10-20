@@ -34,15 +34,23 @@ final class PluginCallbackDir {
         .toFile();
   }
 
-  /** Writes a signal file into the directory, creating it if needed; both go at JVM exit. */
+  /** Writes the lines as a signal file, each followed by a line separator. */
   static void write(final File dir, final String name, final List<String> lines) {
+    write(dir, name, String.join(System.lineSeparator(), lines) + System.lineSeparator());
+  }
+
+  /**
+   * Writes the content as is into the directory, creating the directory if needed; both go at JVM
+   * exit.
+   */
+  static void write(final File dir, final String name, final String content) {
     try {
       final File file = new File(dir, name);
       if (!dir.exists()) {
         dir.mkdirs();
         dir.deleteOnExit();
       }
-      Files.write(file.toPath(), lines);
+      Files.writeString(file.toPath(), content);
       file.deleteOnExit();
     } catch (final IOException ioe) {
       throw new RuntimeException(ioe);
