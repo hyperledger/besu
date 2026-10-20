@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetAccountRangeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetBytecodeFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.snap.RetryingGetStorageRangeFromPeerTask;
@@ -33,11 +34,13 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
+import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,21 +124,35 @@ public class RequestDataStep {
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestStorage(
       final List<Task<SnapDataRequest>> requestTasks) {
+    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
+    final Hash stateRoot = blockHeader.getStateRoot();
+    // Peers send nothing for an account without storage, which would never complete its requests,
+    // so the requests of an account that a refresh proved empty at this pivot are completed here.
+    final List<StorageRangeDataRequest> requestsToSend = new ArrayList<>();
+    for (final Task<SnapDataRequest> task : requestTasks) {
+      // the storage pipelines only carry storage range requests
+      final StorageRangeDataRequest request = (StorageRangeDataRequest) task.getData();
+      if (isProvenWithoutStorage(request.getAccountHash(), stateRoot)) {
+        request.setRootHash(stateRoot);
+        request.addResponse(
+            downloadState, worldStateProofProvider, new TreeMap<>(), new ArrayDeque<>());
+      } else {
+        requestsToSend.add(request);
+      }
+    }
+    if (requestsToSend.isEmpty()) {
+      return CompletableFuture.completedFuture(requestTasks);
+    }
     final List<Hash> accountHashes =
-        requestTasks.stream()
-            .map(Task::getData)
-            .map(StorageRangeDataRequest.class::cast)
+        requestsToSend.stream()
             .map(StorageRangeDataRequest::getAccountHash)
             .collect(Collectors.toList());
-    final BlockHeader blockHeader = fastSyncState.getPivotBlockHeader().get();
     final Bytes32 minRange =
-        requestTasks.size() == 1
-            ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getStartKeyHash()
+        requestsToSend.size() == 1
+            ? requestsToSend.get(0).getStartKeyHash()
             : RangeManager.MIN_RANGE;
     final Bytes32 maxRange =
-        requestTasks.size() == 1
-            ? ((StorageRangeDataRequest) requestTasks.get(0).getData()).getEndKeyHash()
-            : RangeManager.MAX_RANGE;
+        requestsToSend.size() == 1 ? requestsToSend.get(0).getEndKeyHash() : RangeManager.MAX_RANGE;
     final List<Bytes32> accountHashesAsBytes32 =
         accountHashes.stream()
             .map(hash -> Bytes32.wrap(hash.getBytes()))
@@ -168,9 +185,8 @@ public class RequestDataStep {
                     slots.addAll(response.slots());
                   }
                   for (int i = 0; i < slots.size(); i++) {
-                    final StorageRangeDataRequest request =
-                        (StorageRangeDataRequest) requestTasks.get(i).getData();
-                    request.setRootHash(blockHeader.getStateRoot());
+                    final StorageRangeDataRequest request = requestsToSend.get(i);
+                    request.setRootHash(stateRoot);
                     request.addResponse(
                         downloadState,
                         worldStateProofProvider,
@@ -186,9 +202,29 @@ public class RequestDataStep {
                     .setMessage("Error handling storage range request task: {}")
                     .addArgument(error)
                     .log();
+                if (ExceptionUtils.rootCause(error) instanceof MaxRetriesReachedException) {
+                  // Peers kept sending nothing, as they do for an account without storage. If
+                  // the storage root is from an older pivot, the account's storage may have been
+                  // cleared or the account removed: refresh its storage root.
+                  requestsToSend.stream()
+                      .filter(request -> !request.isStorageRootValidAt(stateRoot))
+                      .forEach(
+                          request ->
+                              downloadState.requestStorageRootRefresh(request.getAccountHash()));
+                }
               }
               return requestTasks;
             });
+  }
+
+  private boolean isProvenWithoutStorage(final Hash accountHash, final Hash stateRoot) {
+    return downloadState
+        .getRefreshedStorageRoot(accountHash)
+        .filter(
+            refreshed ->
+                refreshed.stateRoot().equals(stateRoot)
+                    && refreshed.storageRoot().equals(MerkleTrie.EMPTY_TRIE_NODE_HASH))
+        .isPresent();
   }
 
   public CompletableFuture<List<Task<SnapDataRequest>>> requestCode(
