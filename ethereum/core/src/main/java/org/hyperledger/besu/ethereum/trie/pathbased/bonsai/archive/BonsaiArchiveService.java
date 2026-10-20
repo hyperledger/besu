@@ -93,9 +93,7 @@ public final class BonsaiArchiveService implements Closeable {
               && synchronizer.getBestPeerChainHead().isPresent()
               && replayerStarted.compareAndSet(false, true)) {
             LOG.info("Node is in sync, starting archive trie-node replayer");
-            capture
-                .replayer()
-                .start(Math.max(0L, capture.strategy().getTrieNodeWriter().lastArchivedBlock()));
+            capture.replayer().start();
           }
         },
         maxLayersToLoad);

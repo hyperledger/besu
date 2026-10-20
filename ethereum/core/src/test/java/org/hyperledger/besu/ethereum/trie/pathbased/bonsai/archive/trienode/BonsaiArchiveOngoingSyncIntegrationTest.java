@@ -43,7 +43,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,7 +108,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   void replayerCatchesUpEntireTargetGapInOneRun() throws Exception {
     appendBlocks(10); // head=10, target = 10-4/2 = 8
     final ControllableReplayer replayer = createControllableReplayer();
-    replayer.start(0L);
+    replayer.start();
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
@@ -118,13 +117,13 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   /**
    * After a crash and restart (new replayer instance over same storage), the replayer resumes from
-   * the persisted cursor rather than from the Phase-A handoff value passed to start().
+   * the archive's coverage record.
    */
   @Test
-  void restartResumesFromPersistedCursorNotInitialHandoff() throws Exception {
+  void restartResumesFromCoverageCursor() throws Exception {
     appendBlocks(10); // head=10, target=8
     final ControllableReplayer firstReplayer = createControllableReplayer();
-    firstReplayer.start(0L);
+    firstReplayer.start();
 
     // Wait for first replayer to capture to target=8
     Awaitility.await()
@@ -135,9 +134,9 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     // Simulate 3 more blocks arriving before the restart
     appendBlocks(3); // head=13, target=11
 
-    // Second replayer: start(0) — but persisted cursor = 8, so cursor = max(0, 8) = 8
+    // Second replayer: coverage = 8, so cursor = 8
     final ControllableReplayer secondReplayer = createControllableReplayer();
-    secondReplayer.start(0L);
+    secondReplayer.start();
     assertThat(secondReplayer.cursor.get()).isEqualTo(8L);
 
     // It then catches up from 8 to 11
@@ -147,8 +146,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   }
 
   /**
-   * Phase-A handoff: if Phase A captured up to block H, the replayer seeds cursor from H (not 0),
-   * avoiding re-archiving blocks Phase A already wrote.
+   * Phase-A handoff: if live capture archived up to block H, the coverage record says so and the
+   * replayer seeds its cursor from H (not 0), avoiding re-archiving blocks already written.
    */
   @Test
   void phaseAHandoffCursorSeedsPhaseBCorrectly() throws Exception {
@@ -156,7 +155,10 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     final ControllableReplayer replayer = createControllableReplayer();
 
     // Simulate Phase A having archived up to block 5
-    replayer.start(5L);
+    final SegmentedKeyValueStorageTransaction coverageTx = archiveStorage.startTransaction();
+    new ArchiveCoverageTracker(archiveStorage).record(coverageTx, 5L);
+    coverageTx.commit();
+    replayer.start();
     assertThat(replayer.cursor.get()).isEqualTo(5L);
 
     // Phase B should catch up from 5 to 8 (not from 0)
@@ -174,7 +176,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   void targetAdvanceDrivesOngoingCatchUps() throws Exception {
     appendBlocks(5); // head=5, target=3
     final ControllableReplayer replayer = createControllableReplayer();
-    replayer.start(0L);
+    replayer.start();
 
     // Wait to reach the initial target
     Awaitility.await()
@@ -202,7 +204,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   void captureNeverExceedsReplayTarget() throws Exception {
     appendBlocks(4); // head=4, target = 4-4/2 = 2
     final ControllableReplayer replayer = createControllableReplayer();
-    replayer.start(0L);
+    replayer.start();
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
@@ -224,7 +226,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     final PausedCapture paused = new PausedCapture();
     final ControllableReplayer replayer =
         createControllableReplayer(Executors.newScheduledThreadPool(1), paused);
-    replayer.start(0L);
+    replayer.start();
 
     paused.awaitStart(); // paused mid-capture
     paused.release();
@@ -328,12 +330,9 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
       }
       if (toInclusive > fromExclusive) {
         cursor.set(toInclusive);
-        // Persist cursor so restart tests can verify durability
+        // Record coverage, the durable cursor, so restart tests can verify durability
         final SegmentedKeyValueStorageTransaction tx = persistStorage.startTransaction();
-        tx.put(
-            TRIE_BRANCH_STORAGE_ARCHIVE,
-            ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
-            Bytes.ofUnsignedLong(toInclusive).toArrayUnsafe());
+        new ArchiveCoverageTracker(persistStorage).record(tx, toInclusive);
         tx.commit();
       }
     }

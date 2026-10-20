@@ -175,8 +175,13 @@ public class ArchiveTrieNodeWriter implements Closeable {
     this.archiveWriteTransactionOverride = tx;
   }
 
-  public long lastArchivedBlock() {
-    return lastArchivedBlock;
+  /**
+   * Declares that the archive holds this writer's chain up to {@code block}, so the next block
+   * diffs against its history. Callers that persist throwaway writes through this writer, such as
+   * when positioning a replayer state, use it to undo the continuity marker those writes moved.
+   */
+  public void markArchivedThrough(final long block) {
+    this.lastArchivedBlock = block;
   }
 
   public void onBeforeCommit(final SegmentedKeyValueStorageTransaction transaction) {

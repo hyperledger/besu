@@ -14,23 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE_ARCHIVE;
-
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateLayerStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.PathBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.PathBasedWorldState;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.io.Closeable;
-import java.nio.charset.StandardCharsets;
 import java.util.OptionalLong;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -40,9 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 /**
  * Background component that keeps the trie-node archive advancing after initial sync.
@@ -62,9 +55,9 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   private static final long INITIAL_RETRY_DELAY_MILLIS = 1_000L;
   private static final long MAX_RETRY_DELAY_MILLIS = 60_000L;
   private static final long CLOSE_TIMEOUT_SECONDS = 30L;
-
-  static final byte[] ARCHIVE_TRIE_NODE_SYNC_PROGRESS =
-      "ARCHIVE_TRIE_NODE_SYNC_PROGRESS".getBytes(StandardCharsets.UTF_8);
+  // Every run repositions a fresh state from the head, so runs triggered by new heads wait until
+  // this many blocks are pending (capped relative to the retention window; see batchReady()).
+  private static final long CATCH_UP_BATCH_BLOCKS = 32L;
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
   private final BonsaiWorldStateProvider worldStateProvider;
@@ -89,19 +82,6 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   // 0 means no failure in a row; only touched from the catch-up thread.
   private long retryDelayMillis = 0L;
 
-  // Stateful rolling context — kept alive between catch-up runs to avoid re-positioning from HEAD.
-  // Null means not yet initialised or invalidated after an error. Always accessed from the single
-  // catch-up executor thread.
-  // Package-private so unit tests can close the layer the way a flat-DB mode switch does.
-  BonsaiWorldStateLayerStorage replayerLayer;
-  private BonsaiSnapshotWorldStateKeyValueStorage replayerSnapshot;
-  private BonsaiWorldState replayerState;
-  private ArchiveTrieNodeStrategy replayerStrategy;
-  // Package-private so unit tests can assert on positioning without going through the full stack.
-  long replayerStatePosition = -1L;
-  // Blocks rolled forward on the current layer; only touched from the catch-up thread.
-  private long blocksSinceRebuild = 0L;
-
   public ArchiveTrieNodeReplayer(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final BonsaiWorldStateProvider worldStateProvider,
@@ -122,22 +102,18 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   }
 
   /**
-   * Seeds the cursor from the Phase-A handoff, registers a block observer, and schedules an initial
-   * catch-up.
+   * Seeds the cursor from the archive's coverage record, registers a block observer, and schedules
+   * an initial catch-up. The coverage record is written atomically with each archived block, by the
+   * replayer or by the live capture before it, so it always says how far the archive reaches.
    */
-  public void start(final long initialCursor) {
+  public void start() {
     if (closed) {
       return;
     }
-    final long persisted = loadPersistedCursor().orElse(0L);
-    // The handoff value is the writer's in-memory last block, which is lost on restart, and the
-    // progress key is only written once the replayer has archived a block. The coverage record
-    // always knows how far the archive actually reaches.
-    final long covered =
+    cursor.set(
         new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
             .lastCoveredBlock()
-            .orElse(0L);
-    cursor.set(Math.max(initialCursor, Math.max(persisted, covered)));
+            .orElse(0L));
     replayTarget.set(computeReplayTarget());
     LOG.info(
         "Archive trie-node replayer starting: cursor={} target={}",
@@ -150,7 +126,9 @@ public class ArchiveTrieNodeReplayer implements Closeable {
                 event -> {
                   if (event.isNewCanonicalHead()) {
                     replayTarget.accumulateAndGet(computeReplayTarget(), Math::max);
-                    scheduleCatchUpIfNeeded();
+                    if (batchReady()) {
+                      scheduleCatchUpIfNeeded();
+                    }
                   }
                 }));
     scheduleCatchUpIfNeeded();
@@ -180,6 +158,19 @@ public class ArchiveTrieNodeReplayer implements Closeable {
                     0L,
                     blockchain.getChainHeadBlockNumber()
                         - trieLogManager.getMaxLayersToLoad() / 2));
+  }
+
+  /**
+   * Whether enough blocks are pending to justify a run. Every run opens a fresh state and rolls it
+   * back from the head to the cursor, so runs triggered by new heads wait for a batch instead of
+   * rolling back once per block. The batch is capped at a quarter of the retention window: the
+   * cursor trails the head by about half of it plus one batch, and the rollback must stay inside
+   * the window.
+   */
+  private boolean batchReady() {
+    final long batch =
+        Math.max(1L, Math.min(CATCH_UP_BATCH_BLOCKS, trieLogManager.getMaxLayersToLoad() / 4));
+    return replayTarget.get() - cursor.get() >= batch;
   }
 
   private void scheduleCatchUpIfNeeded() {
@@ -229,7 +220,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         scheduleRetry();
       } else {
         catchUpRunning.set(false);
-        if (!closed && reached < replayTarget.get()) {
+        if (!closed && batchReady()) {
           scheduleCatchUpIfNeeded();
         }
       }
@@ -251,75 +242,56 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   /**
    * Captures archive-history entries for all blocks in {@code (fromExclusive, toInclusive]}.
    *
-   * <p>On the first call (or after an error), pins a snapshot of the persisted world state, builds
-   * a layer over it, rolls the layer back from the snapshot's head to {@code fromExclusive} via
-   * {@link #positionAtCursor}, then rolls forward. On subsequent calls the layer and state are kept
-   * alive between runs — no re-positioning needed — so the cost is proportional to the number of
-   * blocks captured rather than the size of the trie-log window. The layer is released after a
-   * retention window's worth of blocks to bound its memory and the snapshot's age.
-   *
-   * <p>On exception the stateful context is torn down so the next call starts clean.
+   * <p>Each run opens its own layered state over a snapshot of the persisted head, rolls it back to
+   * {@code fromExclusive}, then rolls it forward one block at a time. The state is closed when the
+   * run ends, so the layer's accumulated writes and the snapshot it pins are released and nothing
+   * outlives a run. Callers amortise the rollback by running in batches; see {@link #batchReady()}.
    */
   @VisibleForTesting
   void captureRange(final long fromExclusive, final long toInclusive) {
     if (toInclusive <= fromExclusive) {
       return;
     }
-    boolean ok = false;
+    final ArchiveTrieNodeStrategy strategy =
+        ArchiveTrieNodeStrategy.createReplayerStrategy(
+            worldStateStorage.getComposedWorldStateStorage(),
+            trieCapturePool,
+            shallowCheckpointInterval,
+            deepCheckpointInterval);
+    final PathBasedWorldState state = openPositionedState(fromExclusive, strategy);
     SegmentedKeyValueStorageTransaction canonicalTx = null;
     try {
-      ensureReplayerState(fromExclusive);
+      final ArchiveTrieNodeWriter writer = strategy.getTrieNodeWriter();
 
-      // Re-read cursor: ensureReplayerState may have advanced it past fromExclusive when the
-      // retention window was exceeded. The loop start reflects the actual position of
-      // replayerState.
-      final long effectiveFrom = cursor.get();
-      if (toInclusive <= effectiveFrom) {
-        ok = true;
-        return;
-      }
-
-      final ArchiveTrieNodeWriter writer = replayerStrategy.getTrieNodeWriter();
-
-      for (long b = effectiveFrom + 1; b <= toInclusive && !closed; b++) {
-        final BlockHeader header = blockchain.getBlockHeader(b).orElseThrow();
+      // Re-read cursor: opening the state may have advanced it past fromExclusive when the
+      // retention window was exceeded. The loop start reflects the actual position of the state.
+      for (long b = cursor.get() + 1; b <= toInclusive && !closed; b++) {
+        final Hash blockHash = canonicalHash(b);
         final long blockNumber = b;
         // A log that is missing for a block inside the target is pruned or was never stored, so
-        // retrying cannot help: stop like any other gap rather than retry forever.
-        final TrieLog log =
-            trieLogManager
-                .getTrieLogLayer(header.getHash())
-                .orElseThrow(
-                    () ->
-                        new ArchiveGapException(
-                            String.format(
-                                "Archive trie-node replayer cannot continue: the trie log for block %d"
-                                    + " is missing, so it cannot be archived. Archive proof coverage"
-                                    + " stays at block %d and the replayer is stopping; the archive"
-                                    + " must be resynced to extend it.",
-                                blockNumber, blockNumber - 1)));
+        // retrying cannot help: stop like any other gap rather than retry forever. Checked here
+        // because rolling reports a missing log only as a generic rolling failure.
+        if (trieLogManager.getTrieLogLayer(blockHash).isEmpty()) {
+          throw new ArchiveGapException(
+              String.format(
+                  "Archive trie-node replayer cannot continue: the trie log for block %d"
+                      + " is missing, so it cannot be archived. Archive proof coverage"
+                      + " stays at block %d and the replayer is stopping; the archive"
+                      + " must be resynced to extend it.",
+                  blockNumber, blockNumber - 1));
+        }
 
         canonicalTx =
             worldStateStorage.getComposedWorldStateStorage().startLowPriorityTransaction();
         writer.setArchiveWriteTransaction(canonicalTx);
 
-        final PathBasedWorldStateUpdateAccumulator<?> acc =
-            (PathBasedWorldStateUpdateAccumulator<?>) replayerState.getAccumulator();
-        acc.rollForward(log);
-        acc.commit();
-        replayerState.persist(
-            header); // recompute → emits node writes → onBeforeCommit → canonicalTx
+        // Recomputes the trie → emits node writes → onBeforeCommit → canonicalTx
+        rollTo(state, blockHash);
 
-        canonicalTx.put(
-            TRIE_BRANCH_STORAGE_ARCHIVE,
-            ARCHIVE_TRIE_NODE_SYNC_PROGRESS,
-            Bytes.ofUnsignedLong(b).toArrayUnsafe());
-        canonicalTx.commit(); // archive history + coverage + cursor, atomically
+        canonicalTx.commit(); // archive history + coverage (the cursor), atomically
         canonicalTx = null;
         writer.setArchiveWriteTransaction(null);
         cursor.set(b);
-        replayerStatePosition = b;
-        blocksSinceRebuild++;
         if (b % 1000 == 0) {
           LOG.debug(
               "Archive trie-node replayer: block {} / {} ({} remaining)",
@@ -328,145 +300,114 @@ public class ArchiveTrieNodeReplayer implements Closeable {
               toInclusive - b);
         }
       }
-      ok = true;
-      releaseLayerIfWorn();
     } finally {
-      if (!ok) {
-        rollbackQuietly(canonicalTx);
-        tearDownReplayerState();
-      }
+      rollbackQuietly(canonicalTx);
+      closeQuietly(state);
     }
   }
 
   /**
-   * Ensures {@link #replayerLayer}, {@link #replayerState}, and {@link #replayerStrategy} are
-   * initialised and positioned at {@code fromExclusive}. Reuses the existing context when the state
-   * is already there; otherwise tears down any stale context and re-positions from the head of a
-   * fresh snapshot of the persisted world state.
+   * Takes a layered state over a snapshot of the persisted head from the world state cache manager,
+   * installs {@code strategy} on it and rolls it back to {@code fromExclusive}, or to the oldest
+   * block the trie logs reach if the cursor is older than that and nothing has been archived yet.
    */
-  private void ensureReplayerState(final long fromExclusive) {
-    if (replayerState != null && replayerLayer.isClosed()) {
-      // The layer subscribes to the canonical storage and closes itself when that is notified of
-      // a flat-DB mode change (the archive migration finishing). Rebuild it at the same cursor.
-      LOG.info("Archive trie-node replayer layer storage was closed; rebuilding replayer state");
-      tearDownReplayerState();
-    }
-    if (replayerState != null && replayerStatePosition == fromExclusive) {
-      // State is already positioned at fromExclusive from the previous run — nothing to do.
-      return;
-    }
-    if (replayerState != null) {
-      LOG.warn(
-          "Archive trie-node replayer state is at {} but fromExclusive={}; re-positioning",
-          replayerStatePosition,
-          fromExclusive);
-      tearDownReplayerState();
-    }
-
-    replayerSnapshot = new BonsaiSnapshotWorldStateKeyValueStorage(worldStateStorage);
-    final long head =
-        replayerSnapshot
-            .getWorldStateBlockNumber()
+  private PathBasedWorldState openPositionedState(
+      final long fromExclusive, final ArchiveTrieNodeStrategy strategy) {
+    final PathBasedWorldState state =
+        worldStateProvider
+            .getWorldStateCacheManager()
+            .getHeadWorldState(
+                hash ->
+                    blockchain
+                        .getBlockHeader(hash)
+                        .map(org.hyperledger.besu.plugin.data.BlockHeader.class::cast))
             .orElseThrow(
                 () ->
-                    new IllegalStateException("Replayer snapshot has no world state block number"));
-    // Positioning rolls back using the canonical headers' trie logs, so the snapshot must hold
-    // exactly the canonical block at its head. A reorg between persisting and snapshotting
-    // would otherwise only surface later as a state root mismatch.
-    final Hash snapshotHeadHash =
-        replayerSnapshot
-            .getWorldStateBlockHash()
-            .orElseThrow(
-                () -> new IllegalStateException("Replayer snapshot has no world state block hash"));
-    if (!blockchain
-        .getBlockHeader(head)
-        .map(header -> header.getHash().equals(snapshotHeadHash))
-        .orElse(false)) {
-      throw new IllegalStateException(
-          String.format(
-              "Replayer snapshot head %d (%s) is not on the canonical chain; will retry",
-              head, snapshotHeadHash));
-    }
-
-    // Guard: if the cursor is older than the trie-log retention window, we cannot roll back
-    // far enough to reposition. Advance cursor to the oldest reachable block and position the
-    // state there. The current captureRange call will archive nothing (toInclusive == cursor),
-    // but the state is ready for the next call to roll forward from.
-    final long maxLayers = trieLogManager.getMaxLayersToLoad();
-    final long oldestReachable = Math.max(0L, head - maxLayers);
-    final long positionTarget;
-    if (fromExclusive < oldestReachable) {
-      if (new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
-          .hasCoverage()) {
-        // The archive already covers blocks up to the cursor. Skipping ahead would leave blocks
-        // without history entries inside the covered window, and proofs for them would silently
-        // read stale nodes. Stop instead and leave the coverage at its last contiguous block.
-        throw new ArchiveGapException(
-            String.format(
-                "Archive trie-node replayer cannot continue: cursor %d is beyond trie-log retention"
-                    + " (head=%d, maxLayers=%d), so blocks %d-%d cannot be archived. Archive proof"
-                    + " coverage stays at block %d and the replayer is stopping; the archive must be"
-                    + " resynced to extend it.",
-                fromExclusive, head, maxLayers, fromExclusive + 1, oldestReachable, fromExclusive));
+                    new IllegalStateException(
+                        "Replayer found no head world state to start from; will retry"));
+    try {
+      if (state.isTrieDisabled()) {
+        throw new IllegalStateException(
+            "Replayer world state has the trie disabled, so no trie nodes can be archived");
       }
-      // Nothing archived yet (proofs just enabled): start from the oldest reachable block.
-      LOG.warn(
-          "Archive trie-node replayer cursor {} is beyond trie-log retention (head={}, maxLayers={})."
-              + " Advancing cursor to {} — blocks {}-{} will not be archived.",
-          fromExclusive,
-          head,
-          maxLayers,
-          oldestReachable,
-          fromExclusive + 1,
-          oldestReachable);
-      cursor.set(oldestReachable);
-      positionTarget = oldestReachable;
-      // Fall through: position replayerState at oldestReachable so the next catch-up can roll
-      // forward from there without re-positioning.
-    } else {
-      positionTarget = fromExclusive;
-    }
+      final long head =
+          blockchain
+              .getBlockHeader(state.blockHash())
+              .map(BlockHeader::getNumber)
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Replayer world state head " + state.blockHash() + " is unknown"));
 
-    if (head < positionTarget) {
-      throw new IllegalStateException(
-          String.format(
-              "Replayer snapshot head %d is behind the replayer position %d; will retry",
-              head, positionTarget));
-    }
+      // Guard: if the cursor is older than the trie-log retention window, we cannot roll back
+      // far enough to reposition.
+      final ArchiveCoverageTracker coverage =
+          new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage());
+      final long maxLayers = trieLogManager.getMaxLayersToLoad();
+      final long oldestReachable = Math.max(0L, head - maxLayers);
+      final long positionTarget;
+      if (fromExclusive < oldestReachable) {
+        if (coverage.hasCoverage()) {
+          // The archive already covers blocks up to the cursor. Skipping ahead would leave blocks
+          // without history entries inside the covered window, and proofs for them would silently
+          // read stale nodes. Stop instead and leave the coverage at its last contiguous block.
+          throw new ArchiveGapException(
+              String.format(
+                  "Archive trie-node replayer cannot continue: cursor %d is beyond trie-log retention"
+                      + " (head=%d, maxLayers=%d), so blocks %d-%d cannot be archived. Archive proof"
+                      + " coverage stays at block %d and the replayer is stopping; the archive must be"
+                      + " resynced to extend it.",
+                  fromExclusive,
+                  head,
+                  maxLayers,
+                  fromExclusive + 1,
+                  oldestReachable,
+                  fromExclusive));
+        }
+        // Nothing archived yet (proofs just enabled): start from the oldest reachable block.
+        LOG.warn(
+            "Archive trie-node replayer cursor {} is beyond trie-log retention (head={}, maxLayers={})."
+                + " Advancing cursor to {} — blocks {}-{} will not be archived.",
+            fromExclusive,
+            head,
+            maxLayers,
+            oldestReachable,
+            fromExclusive + 1,
+            oldestReachable);
+        cursor.set(oldestReachable);
+        positionTarget = oldestReachable;
+      } else {
+        positionTarget = fromExclusive;
+      }
 
-    replayerStrategy =
-        ArchiveTrieNodeStrategy.createReplayerStrategy(
-            worldStateStorage.getComposedWorldStateStorage(),
-            trieCapturePool,
-            shallowCheckpointInterval,
-            deepCheckpointInterval);
-    replayerLayer = new BonsaiWorldStateLayerStorage(replayerSnapshot);
-    replayerLayer.setTrieNodeStrategy(replayerStrategy);
-    replayerState = worldStateProvider.newTrieEnabledWorldState(replayerLayer);
-    positionAtCursor(replayerState, positionTarget, head);
-    replayerStatePosition = positionTarget;
+      if (head < positionTarget) {
+        throw new IllegalStateException(
+            String.format(
+                "Replayer snapshot head %d is behind the replayer position %d; will retry",
+                head, positionTarget));
+      }
+
+      state.getWorldStateStorage().setTrieNodeStrategy(strategy);
+      // No archive redirect is set yet, so any node writes while rolling back go to the discarded
+      // layer transaction, not to canonical.
+      rollTo(state, canonicalHash(positionTarget));
+      // Those discarded writes moved the writer's continuity marker. Restore it when the archive
+      // reaches the position, so the first archived block diffs against its history rather than
+      // writing full entries.
+      if (coverage.hasArchiveBlock(positionTarget)) {
+        strategy.getTrieNodeWriter().markArchivedThrough(positionTarget);
+      }
+      return state;
+    } catch (final RuntimeException e) {
+      closeQuietly(state);
+      throw e;
+    }
   }
 
   /** The archive cannot be extended without leaving a gap, and retrying cannot fix that. */
   static final class ArchiveGapException extends IllegalStateException {
     ArchiveGapException(final String message) {
       super(message);
-    }
-  }
-
-  /**
-   * The layer keeps every key written by the blocks rolled forward on it, and its snapshot pins old
-   * storage versions, so both grow for as long as the layer lives. After a retention window's worth
-   * of blocks, drop them: the cursor is consistent after a successful run, so the next catch-up
-   * just repositions from a fresh snapshot.
-   */
-  private void releaseLayerIfWorn() {
-    if (blocksSinceRebuild >= Math.max(1L, trieLogManager.getMaxLayersToLoad())) {
-      LOG.debug(
-          "Archive trie-node replayer: releasing layer after {} blocks; cursor {}",
-          blocksSinceRebuild,
-          cursor.get());
-      tearDownReplayerState();
     }
   }
 
@@ -481,76 +422,26 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     }
   }
 
-  private void tearDownReplayerState() {
-    blocksSinceRebuild = 0L;
-    replayerState = null;
-    replayerStrategy = null;
-    replayerStatePosition = -1L;
-    if (replayerLayer != null) {
-      try {
-        // Closing an already-closed layer logs an "access closed worldstate" warning.
-        if (!replayerLayer.isClosed()) {
-          replayerLayer.close();
-        }
-      } catch (final Exception e) {
-        LOG.warn("Failed to close replayer layer storage", e);
-      }
-      replayerLayer = null;
-    }
-    if (replayerSnapshot != null) {
-      try {
-        // Releases the pinned storage snapshot.
-        if (!replayerSnapshot.isClosed()) {
-          replayerSnapshot.close();
-        }
-      } catch (final Exception e) {
-        LOG.warn("Failed to close replayer snapshot storage", e);
-      }
-      replayerSnapshot = null;
+  private static void closeQuietly(final PathBasedWorldState state) {
+    // Closing an already-closed layer logs an "access closed worldstate" warning.
+    if (state != null && !state.getWorldStateStorage().isClosed()) {
+      state.close();
     }
   }
 
-  private void positionAtCursor(
-      final BonsaiWorldState state, final long targetBlock, final long head) {
-    final long rollbackDepth = head - targetBlock;
-    final long maxLayers = trieLogManager.getMaxLayersToLoad();
-    if (rollbackDepth > maxLayers) {
+  /**
+   * Rolls {@code state} to {@code blockHash} using Bonsai's own trie-log rollback and roll-forward.
+   * A no-op when the state is already there.
+   */
+  private void rollTo(final PathBasedWorldState state, final Hash blockHash) {
+    if (worldStateProvider.rollFullWorldStateToBlockHash(state, blockHash, Level.WARN).isEmpty()) {
       throw new IllegalStateException(
-          String.format(
-              "Cannot position replayer at block %d: rollback depth %d exceeds trie-log retention %d (head=%d). "
-                  + "Cursor is too far behind head to reposition via trie-log rollback.",
-              targetBlock, rollbackDepth, maxLayers, head));
+          "Archive trie-node replayer failed to roll its world state to block " + blockHash);
     }
-    final PathBasedWorldStateUpdateAccumulator<?> acc =
-        (PathBasedWorldStateUpdateAccumulator<?>) state.getAccumulator();
-    for (long b = head; b > targetBlock; b--) {
-      final BlockHeader header = blockchain.getBlockHeader(b).orElseThrow();
-      final long blockNum = b;
-      final TrieLog log =
-          trieLogManager
-              .getTrieLogLayer(header.getHash())
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Trie-log missing for block "
-                              + blockNum
-                              + " while positioning replayer at "
-                              + targetBlock));
-      acc.rollBack(log);
-    }
-    acc.commit();
-    // No archive redirect during positioning (override is null): any node writes go to the
-    // discarded layer transaction, not to canonical.
-    state.persist(blockchain.getBlockHeader(targetBlock).orElseThrow());
   }
 
-  @VisibleForTesting
-  OptionalLong loadPersistedCursor() {
-    return worldStateStorage
-        .getComposedWorldStateStorage()
-        .get(TRIE_BRANCH_STORAGE_ARCHIVE, ARCHIVE_TRIE_NODE_SYNC_PROGRESS)
-        .map(b -> OptionalLong.of(Bytes.wrap(b).toLong()))
-        .orElse(OptionalLong.empty());
+  private Hash canonicalHash(final long blockNumber) {
+    return blockchain.getBlockHeader(blockNumber).orElseThrow().getHash();
   }
 
   public long getCursor() {
@@ -572,7 +463,5 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    // Only now is it safe to release the layer: the catch-up thread no longer uses it.
-    tearDownReplayerState();
   }
 }

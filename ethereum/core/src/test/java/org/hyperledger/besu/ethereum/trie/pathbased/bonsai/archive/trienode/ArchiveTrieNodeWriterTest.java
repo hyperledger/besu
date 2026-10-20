@@ -140,6 +140,19 @@ class ArchiveTrieNodeWriterTest {
   }
 
   @Test
+  void markArchivedThroughMakesTheNextBlockDiffAgainstHistory() {
+    final Bytes nk = ArchiveNodeKey.account(LOCATION);
+    enqueueAndCommit(0L, nk, LOCATION, branchNode(0), null);
+    // the archive holds this chain up to block 4 (e.g. after repositioning past throwaway writes)
+    trieNodeWriter.markArchivedThrough(4L);
+    enqueueAndCommit(5L, nk, LOCATION, branchNode(5), branchNode(4));
+
+    final var entry = historyStore.getLatestBefore(nk, 5L).orElseThrow();
+    assertThat(entry.block()).isEqualTo(5L);
+    assertThat(entry.codecEntry().isFull()).isFalse();
+  }
+
+  @Test
   void rootSparseChange_producesDiffBetweenCheckpoints() {
     final Bytes nk = ArchiveNodeKey.account(ROOT_LOCATION);
     enqueueAndCommit(0L, nk, ROOT_LOCATION, branchNode(0), null);

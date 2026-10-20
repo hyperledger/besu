@@ -293,7 +293,17 @@ public abstract class PathBasedWorldStateProvider implements WorldStateArchive {
             () -> new IllegalStateException("Missing trie log for block hash " + blockHash));
   }
 
-  private Optional<PathBasedWorldState> rollFullWorldStateToBlockHash(
+  /**
+   * Rolls {@code mutableState} to {@code blockHash} by trie-log rollback and roll-forward from the
+   * block the state currently sits at, then persists it there. A rollback or roll-forward across a
+   * fork is handled by walking both branches back to their common ancestor.
+   *
+   * @param mutableState the state to roll
+   * @param blockHash the target block hash
+   * @param rollingFailureLogLevel level at which a rolling failure is logged
+   * @return the rolled state, or empty if the rolling failed
+   */
+  public Optional<PathBasedWorldState> rollFullWorldStateToBlockHash(
       final PathBasedWorldState mutableState,
       final Hash blockHash,
       final Level rollingFailureLogLevel) {
