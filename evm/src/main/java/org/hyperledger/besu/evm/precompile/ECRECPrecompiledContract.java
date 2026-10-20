@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.precompile;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
@@ -117,7 +116,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
     }
 
     Bytes resultBytes;
-    if (signatureAlgorithm instanceof SECP256K1 secp256k1 && secp256k1.isNativeJniEnabled()) {
+    if (signatureAlgorithm.isNativeJniEnabled()) {
       resultBytes = computeK1Native(safeInput);
     } else {
       resultBytes = computeDefault(safeInput);
