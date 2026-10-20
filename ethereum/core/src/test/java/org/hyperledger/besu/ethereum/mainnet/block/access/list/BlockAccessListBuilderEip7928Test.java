@@ -18,10 +18,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.tuweni.units.bigints.UInt256;
 import org.assertj.core.api.Assertions;
@@ -135,7 +137,7 @@ class BlockAccessListBuilderEip7928Test {
   }
 
   @Test
-  void itemCountIfAppliedDropsWritesReplacedAtASharedIndex() {
+  void applyDropsWritesReplacedAtASharedIndex() {
     final PartialBlockAccessView.PartialBlockAccessViewBuilder first =
         new PartialBlockAccessView.PartialBlockAccessViewBuilder()
             .withTxIndex(0)
@@ -149,40 +151,56 @@ class BlockAccessListBuilderEip7928Test {
             .withTxIndex(0)
             .withSharedIndex(true);
     second.getOrCreateAccountBuilder(ADDR_1).withNonceChange(1L);
+    builder.apply(second.build());
 
-    Assertions.assertThat(builder.eip7928ItemCountIfApplied(second.build())).isEqualTo(1L);
-    Assertions.assertThat(builder.eip7928ItemCount()).isEqualTo(2L);
+    Assertions.assertThat(builder.eip7928ItemCount()).isEqualTo(1L);
+  }
+
+  @Test
+  void itemCountIfAppliedRejectsSharedIndexViews() {
+    final PartialBlockAccessView view =
+        new PartialBlockAccessView.PartialBlockAccessViewBuilder()
+            .withTxIndex(0)
+            .withSharedIndex(true)
+            .build();
+
+    Assertions.assertThatThrownBy(() -> BlockAccessList.builder().eip7928ItemCountIfApplied(view))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   /**
-   * Random views over a few accounts and slots often overlap the list and each other, repeat
-   * accounts and slots within a view, and reuse the shared indexes of earlier views.
+   * Random views over a few accounts and slots often overlap the list, repeat slots within an
+   * account, and reuse the shared indexes of earlier views. The expected counts come from {@link
+   * ItemModel}, which does not share code with the builder.
    */
   @ParameterizedTest
   @ValueSource(longs = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
-  void itemCountIfAppliedMatchesApplyingToACopy(final long seed) {
+  void itemCountMatchesIndependentModel(final long seed) {
     final Random random = new Random(seed);
     final BlockAccessList.BlockAccessListBuilder builder = BlockAccessList.builder();
+    final ItemModel model = new ItemModel();
     long nextTxIndex = 0;
     for (int round = 0; round < 500; round++) {
       final PartialBlockAccessView view = randomView(random, nextTxIndex);
-      final BlockAccessList before = builder.build();
-      final BlockAccessList.BlockAccessListBuilder copy = BlockAccessList.builder();
-      copy.mergeFrom(before);
-      copy.apply(view);
-      final long expected = copy.build().eip7928ItemCount();
 
-      Assertions.assertThat(builder.eip7928ItemCountIfApplied(view))
-          .as("round %d, view %s", round, view)
-          .isEqualTo(expected);
-      Assertions.assertThat(builder.build()).isEqualTo(before);
+      if (!view.isSharedIndex()) {
+        final BlockAccessList before = builder.build();
+        final ItemModel modelIfApplied = model.copy();
+        modelIfApplied.apply(view);
+        Assertions.assertThat(builder.eip7928ItemCountIfApplied(view))
+            .as("round %d, view %s", round, view)
+            .isEqualTo(modelIfApplied.count());
+        Assertions.assertThat(builder.build()).isEqualTo(before);
+      }
 
       if (random.nextBoolean()) {
         builder.apply(view);
+        model.apply(view);
         nextTxIndex++;
         Assertions.assertThat(builder.eip7928ItemCount())
+            .as("round %d, view %s", round, view)
             .isEqualTo(builder.build().eip7928ItemCount())
-            .isEqualTo(expected);
+            .isEqualTo(model.count());
       }
     }
   }
@@ -206,29 +224,30 @@ class BlockAccessListBuilderEip7928Test {
   }
 
   private static PartialBlockAccessView randomView(final Random random, final long nextTxIndex) {
-    final List<PartialBlockAccessView.AccountChanges> accounts = new ArrayList<>();
-    for (int i = random.nextInt(5); i > 0; i--) {
-      final List<PartialBlockAccessView.SlotChange> writes = new ArrayList<>();
-      for (int w = random.nextInt(4); w > 0; w--) {
-        writes.add(
-            new PartialBlockAccessView.SlotChange(
-                randomSlot(random), UInt256.ZERO, UInt256.valueOf(random.nextInt(3))));
-      }
-      final List<StorageSlotKey> reads = new ArrayList<>();
-      for (int r = random.nextInt(4); r > 0; r--) {
-        reads.add(randomSlot(random));
-      }
-      accounts.add(
-          new PartialBlockAccessView.AccountChanges(
-              Address.fromHexString(String.format("0x%040x", 0x100 + random.nextInt(6))),
-              random.nextBoolean() ? Optional.of(Wei.of(random.nextInt(100))) : Optional.empty(),
-              random.nextBoolean() ? Optional.of(random.nextLong(10)) : Optional.empty(),
-              Optional.empty(),
-              reads,
-              writes));
-    }
     final long txIndex = random.nextInt(4) == 0 ? random.nextLong(nextTxIndex + 1) : nextTxIndex;
-    return new PartialBlockAccessView(accounts, txIndex, random.nextInt(3) == 0);
+    final PartialBlockAccessView.PartialBlockAccessViewBuilder view =
+        new PartialBlockAccessView.PartialBlockAccessViewBuilder()
+            .withTxIndex(txIndex)
+            .withSharedIndex(random.nextInt(3) == 0);
+    for (int i = random.nextInt(5); i > 0; i--) {
+      final PartialBlockAccessView.AccountChangesBuilder account =
+          view.getOrCreateAccountBuilder(
+              Address.fromHexString(String.format("0x%040x", 0x100 + random.nextInt(6))));
+      if (random.nextBoolean()) {
+        account.withPostBalance(Wei.of(random.nextInt(100)));
+      }
+      if (random.nextBoolean()) {
+        account.withNonceChange(random.nextLong(10));
+      }
+      for (int w = random.nextInt(4); w > 0; w--) {
+        account.addStorageChange(
+            randomSlot(random), UInt256.ZERO, UInt256.valueOf(random.nextInt(3)));
+      }
+      for (int r = random.nextInt(4); r > 0; r--) {
+        account.addStorageRead(randomSlot(random));
+      }
+    }
+    return view.build();
   }
 
   private static StorageSlotKey randomSlot(final Random random) {
@@ -242,5 +261,59 @@ class BlockAccessListBuilderEip7928Test {
     b.getOrCreateAccountBuilder(addr)
         .addStorageChange(new StorageSlotKey(UInt256.ONE), null, UInt256.ZERO);
     return b.build();
+  }
+
+  /**
+   * Tracks which transactions wrote each slot and which slots were only read, per account, to count
+   * EIP-7928 items: one per account plus one per slot read or written.
+   */
+  private static final class ItemModel {
+    private final Map<Address, Map<StorageSlotKey, Set<Long>>> writes = new HashMap<>();
+    private final Map<Address, Set<StorageSlotKey>> reads = new HashMap<>();
+
+    void apply(final PartialBlockAccessView view) {
+      for (PartialBlockAccessView.AccountChanges account : view.accountChanges()) {
+        final Map<StorageSlotKey, Set<Long>> accountWrites =
+            writes.computeIfAbsent(account.getAddress(), __ -> new HashMap<>());
+        final Set<StorageSlotKey> accountReads =
+            reads.computeIfAbsent(account.getAddress(), __ -> new HashSet<>());
+        if (view.isSharedIndex()) {
+          accountWrites.values().forEach(txIndexes -> txIndexes.remove(view.getTxIndex()));
+          accountWrites.values().removeIf(Set::isEmpty);
+        }
+        for (PartialBlockAccessView.SlotChange change : account.getStorageChanges()) {
+          accountWrites
+              .computeIfAbsent(change.slot(), __ -> new HashSet<>())
+              .add(view.getTxIndex());
+          accountReads.remove(change.slot());
+        }
+        for (StorageSlotKey read : account.getStorageReads()) {
+          if (!accountWrites.containsKey(read)) {
+            accountReads.add(read);
+          }
+        }
+      }
+    }
+
+    long count() {
+      long count = writes.size();
+      for (Address address : writes.keySet()) {
+        count += writes.get(address).size() + reads.get(address).size();
+      }
+      return count;
+    }
+
+    ItemModel copy() {
+      final ItemModel copy = new ItemModel();
+      writes.forEach(
+          (address, accountWrites) -> {
+            final Map<StorageSlotKey, Set<Long>> copied = new HashMap<>();
+            accountWrites.forEach((slot, txIndexes) -> copied.put(slot, new HashSet<>(txIndexes)));
+            copy.writes.put(address, copied);
+          });
+      reads.forEach(
+          (address, accountReads) -> copy.reads.put(address, new HashSet<>(accountReads)));
+      return copy;
+    }
   }
 }

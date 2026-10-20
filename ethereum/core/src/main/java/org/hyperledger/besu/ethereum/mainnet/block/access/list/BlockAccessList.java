@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.block.access.list;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
@@ -302,7 +305,12 @@ public record BlockAccessList(List<AccountChanges> accountChanges, Optional<Byte
               Arrays.compareUnsigned(
                   left.address().getBytes().toArrayUnsafe(),
                   right.address().getBytes().toArrayUnsafe()));
-      return new BlockAccessList(accountChanges);
+      final BlockAccessList blockAccessList = new BlockAccessList(accountChanges);
+      checkState(
+          itemCount == blockAccessList.eip7928ItemCount(),
+          "Block access list item count %s does not match the built list",
+          itemCount);
+      return blockAccessList;
     }
 
     public long eip7928ItemCount() {
@@ -314,24 +322,16 @@ public record BlockAccessList(List<AccountChanges> accountChanges, Optional<Byte
      * #apply(PartialBlockAccessView)}, without changing the builder.
      */
     public long eip7928ItemCountIfApplied(final PartialBlockAccessView view) {
-      if (view.isSharedIndex()) {
-        return sharedIndexItemCountIfApplied(view);
-      }
+      checkArgument(!view.isSharedIndex(), "Only transaction views can be counted before applying");
       // Without a shared index applying only adds accounts and slots, and a slot counts once
       // whether read or written, so only those not in the list yet add to the count.
-      final Map<Address, Set<StorageSlotKey>> newSlotsByAccount = new HashMap<>();
       long count = itemCount;
       for (PartialBlockAccessView.AccountChanges account : view.accountChanges()) {
-        final Address address = account.getAddress();
-        final AccountBuilder existing = accountChangesBuilders.get(address);
-        Set<StorageSlotKey> newSlots = newSlotsByAccount.get(address);
-        if (newSlots == null) {
-          newSlots = new HashSet<>();
-          newSlotsByAccount.put(address, newSlots);
-          if (existing == null) {
-            count++;
-          }
+        final AccountBuilder existing = accountChangesBuilders.get(account.getAddress());
+        if (existing == null) {
+          count++;
         }
+        final Set<StorageSlotKey> newSlots = new HashSet<>();
         for (PartialBlockAccessView.SlotChange change : account.getStorageChanges()) {
           if (isNewSlot(existing, newSlots, change.slot())) {
             count++;
@@ -351,22 +351,6 @@ public record BlockAccessList(List<AccountChanges> accountChanges, Optional<Byte
         final Set<StorageSlotKey> newSlots,
         final StorageSlotKey slot) {
       return (existing == null || !existing.hasSlot(slot)) && newSlots.add(slot);
-    }
-
-    private long sharedIndexItemCountIfApplied(final PartialBlockAccessView view) {
-      // Applying a shared-index view first drops earlier writes at its index, so replay it on
-      // copies of just the accounts it touches.
-      final BlockAccessListBuilder touchedAccounts = new BlockAccessListBuilder();
-      for (PartialBlockAccessView.AccountChanges account : view.accountChanges()) {
-        final Address address = account.getAddress();
-        final AccountBuilder existing = accountChangesBuilders.get(address);
-        if (existing != null && !touchedAccounts.accountChangesBuilders.containsKey(address)) {
-          existing.copySlotsTo(touchedAccounts.getOrCreateAccountBuilder(address));
-        }
-      }
-      final long itemCountBefore = touchedAccounts.itemCount;
-      touchedAccounts.apply(view);
-      return itemCount + touchedAccounts.itemCount - itemCountBefore;
     }
 
     public static class AccountBuilder {
@@ -451,14 +435,6 @@ public record BlockAccessList(List<AccountChanges> accountChanges, Optional<Byte
 
       boolean hasSlot(final StorageSlotKey slot) {
         return slotWrites.containsKey(slot) || slotReads.contains(slot);
-      }
-
-      void copySlotsTo(final AccountBuilder target) {
-        slotWrites.forEach(
-            (slot, changes) ->
-                changes.forEach(
-                    change -> target.addStorageWrite(slot, change.txIndex(), change.newValue())));
-        slotReads.forEach(target::addStorageRead);
       }
 
       void removeChangesAt(final long txIndex) {
