@@ -41,8 +41,9 @@ import org.apache.tuweni.bytes.MutableBytes;
  * keccak256(slotKey)}).
  *
  * <p>{@link #prepare} builds and hashes a complete subtree (every key under a nibble prefix) from
- * any thread; {@link #insert(Subtree)} attaches it, hashing only its top node. {@link
- * #insertSealed} attaches a subtree known only by its reference, as range proofs give them.
+ * any thread, and {@link #subtreeBuilder} does it key by key; {@link #insert(Subtree)} attaches it,
+ * hashing only its top node. {@link #insertSealed} attaches a subtree known only by its reference,
+ * as range proofs give them.
  */
 public final class AscendingCollapsePatriciaTrie {
 
@@ -157,37 +158,98 @@ public final class AscendingCollapsePatriciaTrie {
     if (keys.isEmpty() || keys.size() != values.size()) {
       throw new IllegalArgumentException("prepare needs as many values as keys, at least one");
     }
-    Node<Bytes> top = NullNode.instance();
-    Bytes previous = null;
-    Bytes previousPath = null;
+    final SubtreeBuilder subtree = subtreeBuilder(sink);
     for (int i = 0; i < keys.size(); i++) {
-      final Bytes key = keys.get(i);
-      final Bytes value = values.get(i);
+      subtree.insert(keys.get(i), values.get(i));
+    }
+    return subtree.build();
+  }
+
+  /**
+   * Starts a subtree built key by key, as {@link #prepare} builds one from lists, without holding
+   * its keys. Thread-safe: it reads no state of this trie.
+   *
+   * @param sink receives the nodes of the subtree below its top, on the thread that builds it
+   * @return the builder
+   */
+  public SubtreeBuilder subtreeBuilder(final NodeUpdater sink) {
+    return new SubtreeBuilder(sink);
+  }
+
+  /** A subtree built key by key: live memory is its rightmost path. */
+  public final class SubtreeBuilder {
+    private final NodeUpdater sink;
+    private Node<Bytes> top = NullNode.instance();
+    private Bytes firstKey;
+    private Bytes firstValue;
+    private Bytes lastKey;
+    private Bytes lastPath;
+    private int size;
+    private boolean built;
+
+    private SubtreeBuilder(final NodeUpdater sink) {
+      this.sink = sink;
+    }
+
+    /**
+     * Adds {@code (key, value)} after every key added so far.
+     *
+     * @throws IllegalArgumentException if order is violated or value is empty
+     * @throws IllegalStateException if the subtree has already been built
+     */
+    public void insert(final Bytes key, final Bytes value) {
+      if (built) {
+        throw new IllegalStateException("subtree already built");
+      }
       if (value == null || value.isEmpty()) {
         throw new IllegalArgumentException("Patricia trie rejects empty values");
       }
-      if (previous != null && key.compareTo(previous) <= 0) {
+      if (lastKey != null && key.compareTo(lastKey) <= 0) {
         throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
       }
       final Bytes path = bytesToPath(key);
       top =
           top.accept(
-              new AscendingCollapsePutVisitor(
-                  nodeFactory, value, finished(previousPath, path), sink),
+              new AscendingCollapsePutVisitor(nodeFactory, value, finished(lastPath, path), sink),
               path);
-      previous = key;
-      previousPath = path;
+      if (firstKey == null) {
+        firstKey = key;
+        firstValue = value;
+      }
+      lastKey = key;
+      lastPath = path;
+      size++;
     }
-    return new Subtree(
-        keys.getFirst(), values.getFirst(), previous, keys.size(), collapsed(top, Bytes.EMPTY));
+
+    /** Returns whether no key was added. */
+    public boolean isEmpty() {
+      return size == 0;
+    }
+
+    /**
+     * Returns the subtree of the keys added, to {@link #insert(Subtree)} later.
+     *
+     * @throws IllegalStateException if no key was added, or the subtree has already been built
+     */
+    public Subtree build() {
+      if (size == 0) {
+        throw new IllegalStateException("a subtree needs at least one key");
+      }
+      if (built) {
+        throw new IllegalStateException("subtree already built");
+      }
+      built = true;
+      return new Subtree(firstKey, firstValue, lastKey, size, collapsed(top, Bytes.EMPTY, sink));
+    }
   }
 
   /** {@code top} with the children of its branch handed to the sink and replaced by stubs. */
-  private Node<Bytes> collapsed(final Node<Bytes> top, final Bytes location) {
+  private Node<Bytes> collapsed(
+      final Node<Bytes> top, final Bytes location, final NodeUpdater sink) {
     if (top instanceof ExtensionNode<Bytes> extension) {
       return nodeFactory.createExtension(
           extension.getPath(),
-          collapsed(extension.getChild(), Bytes.concatenate(location, extension.getPath())));
+          collapsed(extension.getChild(), Bytes.concatenate(location, extension.getPath()), sink));
     }
     if (top instanceof BranchNode<Bytes> branch) {
       final List<Node<Bytes>> children = new ArrayList<>(branch.maxChild());
@@ -205,9 +267,10 @@ public final class AscendingCollapsePatriciaTrie {
   }
 
   /**
-   * Attaches a {@link #prepare prepared} subtree; its keys count as inserted.
+   * Attaches a {@link #prepare prepared} or {@link SubtreeBuilder built} subtree; its keys count as
+   * inserted.
    *
-   * @param subtree prepared by this trie
+   * @param subtree prepared or built by this trie
    * @throws IllegalArgumentException if its keys are not after every key inserted so far, or do not
    *     form a complete subtree
    * @throws IllegalStateException if the trie has already been sealed
