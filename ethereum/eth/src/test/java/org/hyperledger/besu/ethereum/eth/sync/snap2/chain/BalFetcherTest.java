@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -58,6 +59,7 @@ import java.util.concurrent.Executor;
 import java.util.function.LongPredicate;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 class BalFetcherTest {
@@ -72,6 +74,12 @@ class BalFetcherTest {
   private final List<BlockHeader> headers = headersWithLists(12);
   private final List<Duration> pauses = new ArrayList<>();
   private final List<Runnable> paused = new ArrayList<>();
+
+  @AfterEach
+  void tearDown() {
+    // every request went over a protocol its peer agreed
+    assertThat(sender.unagreed).isEmpty();
+  }
 
   @Test
   void fetchesTheListsFromSnap2Peers() {
@@ -113,6 +121,7 @@ class BalFetcherTest {
     for (int round = 1; round <= 4; round++) {
       resume();
     }
+    assertThat(sender.requests).isEqualTo(3);
     sender.lacked.clear();
     assertThat(result).isNotDone();
     resume();
@@ -168,6 +177,7 @@ class BalFetcherTest {
     sender.stop();
     resume();
 
+    assertThat(result).isCompletedExceptionally();
     assertThatThrownBy(result::join)
         .rootCause()
         .isInstanceOfSatisfying(
@@ -294,6 +304,14 @@ class BalFetcherTest {
             BlockAccessListsMessageData.encodeEthResponse(lists));
   }
 
+  // block access lists need snap/2, or eth/71 on the eth lane
+  private static boolean agreed(final EthPeer peer, final Protocol protocol) {
+    final Set<Capability> capabilities = peer.getAgreedCapabilities();
+    return protocol == Protocol.SNAP2
+        ? capabilities.contains(SnapProtocol.SNAP2)
+        : capabilities.stream().anyMatch(EthProtocol::isEth71Compatible);
+  }
+
   private static EthPeer peer(final Capability snap, final Capability eth) {
     final EthPeer peer = mock(EthPeer.class);
     when(peer.getAgreedCapabilities()).thenReturn(Set.of(snap, eth));
@@ -307,6 +325,8 @@ class BalFetcherTest {
     private final Map<EthPeer, LongPredicate> lacked = new HashMap<>();
     // the peers whose next request times out
     private final Set<EthPeer> timingOut = new HashSet<>();
+    // the requests sent over a protocol their peer did not agree
+    private final List<String> unagreed = new ArrayList<>();
     private int maxLists = Integer.MAX_VALUE;
     private int next;
     private int requests;
@@ -340,6 +360,9 @@ class BalFetcherTest {
     private <T> CompletableFuture<Response<T>> answer(
         final SyncRequest<T> request, final EthPeer peer) {
       final Protocol protocol = request.protocolFor(peer);
+      if (!agreed(peer, protocol)) {
+        unagreed.add(request.name() + " over " + protocol);
+      }
       final Bytes message = request.message(peer).getData();
       final LongPredicate lacks = lacked.getOrDefault(peer, block -> false);
       final List<Optional<BlockAccessList>> lists = new ArrayList<>();

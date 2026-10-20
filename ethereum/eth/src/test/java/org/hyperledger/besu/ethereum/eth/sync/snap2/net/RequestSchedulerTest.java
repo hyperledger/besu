@@ -189,18 +189,8 @@ class RequestSchedulerTest {
 
   @Test
   void neverSendsARequestToAnExcludedPeer() {
-    final CompletableFuture<RequestSender.Response<List<BlockHeader>>> response =
-        scheduler.submit(headers(1, 2), Set.of(peer.getEthPeer()));
-
-    assertFailure(() -> response.get(10, TimeUnit.SECONDS), Reason.NO_PEER);
-    assertThat(peer.hasOutstandingRequests()).isFalse();
-  }
-
-  @Test
-  void failsARequestOnlyExcludedPeersServeWithoutWaitingForTheQueueTimeout() {
-    // a clock that never reaches the queue timeout
+    // a clock that never reaches the queue timeout: the request fails at once
     newScheduler(TIMEOUT, 4, clock::get);
-
     final CompletableFuture<RequestSender.Response<List<BlockHeader>>> response =
         scheduler.submit(headers(1, 2), Set.of(peer.getEthPeer()));
 
