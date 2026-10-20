@@ -32,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
@@ -86,13 +87,12 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     try {
       final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
           new StoredMerklePatriciaTrie<>(
-              (location, hash) -> {
-                Optional<Bytes> node =
-                    getAccountStateTrieNode(worldStateKeyValueStorage, location, hash);
-                // hash is a slice of the parent node's RLP; copy it so the key doesn't pin that
-                node.ifPresent(bytes -> accountNodes.put(hash.copy(), bytes));
-                return node;
-              },
+              (location, hash) ->
+                  loadAndCache(
+                      accountNodes,
+                      hash,
+                      () ->
+                          worldStateKeyValueStorage.getTrieNodeFromCacheOrStorage(location, hash)),
               Bytes32.wrap(worldStateRootHash.getBytes()),
               Function.identity(),
               Function.identity());
@@ -127,13 +127,13 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
                 try {
                   final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
                       new StoredMerklePatriciaTrie<Bytes, Bytes>(
-                          (location, hash) -> {
-                            Optional<Bytes> node =
-                                getAccountStorageTrieNode(
-                                    worldStateKeyValueStorage, accountHash, location, hash);
-                            node.ifPresent(bytes -> storageNodes.put(hash.copy(), bytes));
-                            return node;
-                          },
+                          (location, hash) ->
+                              loadAndCache(
+                                  storageNodes,
+                                  hash,
+                                  () ->
+                                      worldStateKeyValueStorage.getTrieNodeFromCacheOrStorage(
+                                          TrieNodeKey.of(accountHash, location), hash)),
                           Bytes32.wrap(Hash.hash(storageRoot).getBytes()),
                           Function.identity(),
                           Function.identity());
@@ -145,6 +145,24 @@ public class BonsaiCachedMerkleTrieLoader implements StorageSubscriber {
     } finally {
       worldStateKeyValueStorage.unSubscribe(storageSubscriberId);
     }
+  }
+
+  /** Only a node that was not cached yet is put, so a hit costs no write. */
+  private static Optional<Bytes> loadAndCache(
+      final Cache<Bytes, Bytes> cache,
+      final Bytes32 nodeHash,
+      final Supplier<Optional<Bytes>> loader) {
+    if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
+      return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+    }
+    final Bytes cached = cache.getIfPresent(nodeHash);
+    if (cached != null) {
+      return Optional.of(cached);
+    }
+    final Optional<Bytes> node = loader.get();
+    // nodeHash is a slice of the parent node's RLP; copy it so the key doesn't pin that
+    node.ifPresent(bytes -> cache.put(nodeHash.copy(), bytes));
+    return node;
   }
 
   public Optional<Bytes> getAccountStateTrieNode(
