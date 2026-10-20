@@ -590,6 +590,30 @@ class ArchiveTrieNodeReplayerTest {
     assertThat(replayer.halted).isFalse();
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  void releasesLayerAfterRollingForwardAFullRetentionWindow() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
+    appendBlocks(10); // head 10, oldestReachable 7
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(7L);
+    replayer.captureRange(7L, 9L); // 2 blocks: below the window, layer is kept
+    assertThat(replayer.replayerLayer).isNotNull();
+
+    replayer.captureRange(9L, 10L); // 3rd block reaches the window: layer and snapshot released
+    assertThat(replayer.replayerLayer).isNull();
+    assertThat(replayer.cursor.get()).isEqualTo(10L);
+
+    appendBlocks(1);
+    replayer.captureRange(10L, 11L); // repositions from a fresh snapshot, nothing is skipped
+    assertThat(replayer.cursor.get()).isEqualTo(11L);
+    verify(worldStateProvider, times(2)).newTrieEnabledWorldState(any());
+  }
+
   private void recordCoverage(final long block) {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     new ArchiveCoverageTracker(archiveStorage).record(tx, block);

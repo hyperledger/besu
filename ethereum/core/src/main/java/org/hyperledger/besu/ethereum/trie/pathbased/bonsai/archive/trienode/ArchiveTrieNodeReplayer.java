@@ -98,6 +98,8 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   private ArchiveTrieNodeStrategy replayerStrategy;
   // Package-private so unit tests can assert on positioning without going through the full stack.
   long replayerStatePosition = -1L;
+  // Blocks rolled forward on the current layer; only touched from the catch-up thread.
+  private long blocksSinceRebuild = 0L;
 
   public ArchiveTrieNodeReplayer(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
@@ -296,6 +298,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         writer.setArchiveWriteTransaction(null);
         cursor.set(b);
         replayerStatePosition = b;
+        blocksSinceRebuild++;
         if (b % 1000 == 0) {
           LOG.debug(
               "Archive trie-node replayer: block {} / {} ({} remaining)",
@@ -305,6 +308,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         }
       }
       ok = true;
+      releaseLayerIfWorn();
     } finally {
       if (!ok) {
         rollbackQuietly(canonicalTx);
@@ -404,6 +408,22 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     }
   }
 
+  /**
+   * The layer keeps every key written by the blocks rolled forward on it, and its snapshot pins old
+   * storage versions, so both grow for as long as the layer lives. After a retention window's worth
+   * of blocks, drop them: the cursor is consistent after a successful run, so the next catch-up
+   * just repositions from a fresh snapshot.
+   */
+  private void releaseLayerIfWorn() {
+    if (blocksSinceRebuild >= Math.max(1L, trieLogManager.getMaxLayersToLoad())) {
+      LOG.debug(
+          "Archive trie-node replayer: releasing layer after {} blocks; cursor {}",
+          blocksSinceRebuild,
+          cursor.get());
+      tearDownReplayerState();
+    }
+  }
+
   private void rollbackQuietly(final SegmentedKeyValueStorageTransaction tx) {
     if (tx == null) {
       return;
@@ -416,6 +436,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   }
 
   private void tearDownReplayerState() {
+    blocksSinceRebuild = 0L;
     replayerState = null;
     replayerStrategy = null;
     replayerStatePosition = -1L;
