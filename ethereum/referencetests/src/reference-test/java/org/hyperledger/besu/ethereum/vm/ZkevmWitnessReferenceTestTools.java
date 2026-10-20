@@ -80,9 +80,15 @@ public class ZkevmWitnessReferenceTestTools {
               });
 
   static {
-    // Stateless-verifier format fixtures: they exercise optional-proof encoding rather than witness
-    // derivation from execution.
-    params.ignore("eip8025_optional_proofs");
+    // Fixtures whose executionWitness EELS deliberately altered (a missing or extra node, code or
+    // header, or reordered entries) to test stateless validation.
+    params.ignore(
+        "::test_validation_codes_",
+        "::test_validation_headers_",
+        "::test_validation_state_missing_",
+        "::test_validation_state_complete_witness_still_validates",
+        "::test_validation_state_unchanged_\\w+\\[[^\\]]*(missing_proof_leaf|missing_storage_root)",
+        "::test_witness_headers_extra_unused_older_ancestor");
   }
 
   private ZkevmWitnessReferenceTestTools() {
