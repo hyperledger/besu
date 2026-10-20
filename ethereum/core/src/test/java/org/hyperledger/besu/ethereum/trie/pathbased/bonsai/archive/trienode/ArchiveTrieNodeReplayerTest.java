@@ -372,12 +372,7 @@ class ArchiveTrieNodeReplayerTest {
   @SuppressWarnings("unchecked")
   void positionsFromWorldStateBlockNotChainHead() {
     appendBlocks(3);
-    final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
-    tx.put(
-        TRIE_BRANCH_STORAGE,
-        BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY,
-        Bytes.ofUnsignedLong(2L).toArrayUnsafe());
-    tx.commit();
+    setWorldStateHead(2L);
     final BlockHeader block2 = blockchain.getBlockHeader(2L).get();
     final BlockHeader block3 = blockchain.getBlockHeader(3L).get();
     when(trieLogManager.getTrieLogLayer(block2.getHash())).thenReturn(Optional.of(mockTrieLog));
@@ -639,6 +634,25 @@ class ArchiveTrieNodeReplayerTest {
     verify(worldStateProvider, times(1)).newTrieEnabledWorldState(any());
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  void failsClearlyWhenSnapshotHeadIsNotOnCanonicalChain() {
+    // e.g. a reorg replaced block 3 after the world state persisted the old one
+    appendBlocks(3);
+    setWorldStateHead(3L, blockDataGenerator.hash().getBytes());
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.cursor.set(2L);
+
+    assertThatThrownBy(() -> replayer.captureRange(2L, 3L))
+        .isInstanceOf(IllegalStateException.class)
+        .isNotInstanceOf(ArchiveTrieNodeReplayer.ArchiveGapException.class)
+        .hasMessageContaining("not on the canonical chain");
+    assertThat(replayer.cursor.get()).isEqualTo(2L);
+    verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
+  }
+
   private void recordCoverage(final long block) {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     new ArchiveCoverageTracker(archiveStorage).record(tx, block);
@@ -742,12 +756,24 @@ class ArchiveTrieNodeReplayerTest {
     for (final Block block : blocks) {
       blockchain.appendBlock(block, blockDataGenerator.receipts(block));
     }
-    // the replayer positions from the world state's block number, which tracks the chain head
+    // the replayer positions from the world state's head, which tracks the chain head
+    setWorldStateHead(blockchain.getChainHeadBlockNumber());
+  }
+
+  private void setWorldStateHead(final long block) {
+    setWorldStateHead(block, blockchain.getBlockHeader(block).get().getHash().getBytes());
+  }
+
+  private void setWorldStateHead(final long block, final Bytes hash) {
     final SegmentedKeyValueStorageTransaction tx = archiveStorage.startTransaction();
     tx.put(
         TRIE_BRANCH_STORAGE,
         BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY,
-        Bytes.ofUnsignedLong(blockchain.getChainHeadBlockNumber()).toArrayUnsafe());
+        Bytes.ofUnsignedLong(block).toArrayUnsafe());
+    tx.put(
+        TRIE_BRANCH_STORAGE,
+        BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY,
+        hash.toArrayUnsafe());
     tx.commit();
   }
 

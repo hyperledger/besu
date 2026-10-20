@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE_ARCHIVE;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
@@ -362,6 +363,23 @@ public class ArchiveTrieNodeReplayer implements Closeable {
             .orElseThrow(
                 () ->
                     new IllegalStateException("Replayer snapshot has no world state block number"));
+    // Positioning rolls back using the canonical headers' trie logs, so the snapshot must hold
+    // exactly the canonical block at its head. A reorg between persisting and snapshotting
+    // would otherwise only surface later as a state root mismatch.
+    final Hash snapshotHeadHash =
+        replayerSnapshot
+            .getWorldStateBlockHash()
+            .orElseThrow(
+                () -> new IllegalStateException("Replayer snapshot has no world state block hash"));
+    if (!blockchain
+        .getBlockHeader(head)
+        .map(header -> header.getHash().equals(snapshotHeadHash))
+        .orElse(false)) {
+      throw new IllegalStateException(
+          String.format(
+              "Replayer snapshot head %d (%s) is not on the canonical chain; will retry",
+              head, snapshotHeadHash));
+    }
 
     // Guard: if the cursor is older than the trie-log retention window, we cannot roll back
     // far enough to reposition. Advance cursor to the oldest reachable block and position the
