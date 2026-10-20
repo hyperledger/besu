@@ -48,7 +48,7 @@ public final class EqOperationV2 extends AbstractFixedCostOperationV2 {
   public OperationResult executeFixedCostOperation(final MessageFrame frame) {
     // v1 charges the cost on a stack underflow of EQ, unlike the shared UNDERFLOW_RESPONSE, and
     // traces show it
-    if (!frame.stackHasItemsV2(2)) return underflowResponse;
+    if (!frame.stackHasItemsV2(2)) return haltPoppingAll(frame, underflowResponse);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int aOffset = (top - 1) << 2;

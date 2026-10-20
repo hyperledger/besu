@@ -37,7 +37,7 @@ public class TStoreOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(2)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final Bytes32 key = readBytes32At(stack, top, 0);
@@ -46,9 +46,11 @@ public class TStoreOperationV2 extends AbstractOperationV2 {
     final long cost = gasCalculator().getTransientStoreOperationGasCost();
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
-      return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return haltPopping(
+          frame, 2, new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
     } else if (remainingGas < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 2, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
     frame.setTransientStorageValue(frame.getRecipientAddress(), key, value);
     frame.setTopV2(top - 2);

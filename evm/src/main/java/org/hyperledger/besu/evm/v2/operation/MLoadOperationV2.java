@@ -43,7 +43,8 @@ public class MLoadOperationV2 extends AbstractOperationV2 {
 
     final long cost = gasCalculator().mLoadOperationGasCost(frame, location);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 1, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     setBytes(frame.readMutableMemory(location, 32, true), stack, top - 1);

@@ -35,7 +35,7 @@ public class MCopyOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(3)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(3)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final long dst = readClampedLongAt(stack, top, 0);
@@ -44,7 +44,8 @@ public class MCopyOperationV2 extends AbstractOperationV2 {
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, Math.max(src, dst), length);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 3, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     frame.copyMemory(dst, src, length, true);

@@ -62,7 +62,7 @@ public class ExtCodeCopyOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(4)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(4)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final Address address = readAddressAt(stack, top, 0);
@@ -74,7 +74,8 @@ public class ExtCodeCopyOperationV2 extends AbstractOperationV2 {
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 4, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final Account account = getAccount(address, frame);

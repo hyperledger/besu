@@ -97,7 +97,6 @@ import org.hyperledger.besu.evm.v2.operation.DupOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExchangeOperationV2;
 import org.hyperledger.besu.evm.v2.operation.ExpOperationV2;
 import org.hyperledger.besu.evm.v2.operation.GtOperationV2;
-import org.hyperledger.besu.evm.v2.operation.HaltedStackV2;
 import org.hyperledger.besu.evm.v2.operation.InvalidOperationV2;
 import org.hyperledger.besu.evm.v2.operation.IsZeroOperationV2;
 import org.hyperledger.besu.evm.v2.operation.JumpDestOperationV2;
@@ -665,9 +664,6 @@ public class EVM {
       }
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
-        if (tracing) {
-          HaltedStackV2.popAsV1(frame, opcode, haltReason);
-        }
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);
         frame.setExceptionalHaltReason(Optional.of(haltReason));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);

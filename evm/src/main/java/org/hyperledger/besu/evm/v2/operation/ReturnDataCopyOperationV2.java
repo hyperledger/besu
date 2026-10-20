@@ -42,7 +42,7 @@ public class ReturnDataCopyOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(3)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(3)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final long memOffset = readClampedLongAt(stack, top, 0);
@@ -53,15 +53,16 @@ public class ReturnDataCopyOperationV2 extends AbstractOperationV2 {
     try {
       final long end = Math.addExact(sourceOffset, numBytes);
       if (end > returnData.size()) {
-        return INVALID_RETURN_DATA_BUFFER_ACCESS;
+        return haltPopping(frame, 3, INVALID_RETURN_DATA_BUFFER_ACCESS);
       }
     } catch (final ArithmeticException ae) {
-      return OUT_OF_BOUNDS;
+      return haltPopping(frame, 3, OUT_OF_BOUNDS);
     }
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 3, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     frame.writeMemory(memOffset, sourceOffset, numBytes, returnData, true);

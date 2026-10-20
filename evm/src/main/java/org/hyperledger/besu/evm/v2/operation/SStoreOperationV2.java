@@ -60,7 +60,7 @@ public class SStoreOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(2)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final UInt256 key = UInt256.fromBytes(readBytes32At(stack, top, 0));

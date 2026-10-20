@@ -83,8 +83,10 @@ public abstract class AbstractCreateOperationV2 extends AbstractOperationV2 {
     // memory (which would expand memory based on an unvalidated length) and before
     // state gas is charged below.
     if (inputSize(frame) > evm.getMaxInitcodeSize()) {
-      frame.setTopV2(frame.stackTopV2() - getStackItemsConsumed());
-      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+      return haltPopping(
+          frame,
+          getStackItemsConsumed(),
+          new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE));
     }
 
     final Wei value = readWeiAt(frame.stackDataV2(), frame.stackTopV2(), 0);

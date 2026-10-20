@@ -62,7 +62,8 @@ public class ExtCodeHashOperationV2 extends AbstractOperationV2 {
         frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
     final long cost = cost(accountIsWarm);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 1, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
     final Account account = getAccount(address, frame);
     if (account == null || account.isEmpty()) {

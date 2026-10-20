@@ -53,7 +53,7 @@ public class ExpOperationV2 extends AbstractOperationV2 {
    */
   public static OperationResult staticOperation(
       final MessageFrame frame, final GasCalculator gasCalculator) {
-    if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(2)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final int baseOffset = (top - 1) << 2;
@@ -62,7 +62,8 @@ public class ExpOperationV2 extends AbstractOperationV2 {
     final int exponentBits = bitLength(stack, exponentOffset);
     final long cost = gasCalculator.expOperationGasCost((exponentBits + 7) >>> 3);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 2, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final UInt256 base =

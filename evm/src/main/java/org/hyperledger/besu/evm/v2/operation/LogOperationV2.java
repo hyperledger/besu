@@ -46,25 +46,27 @@ public class LogOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(2)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final long dataLocation = readClampedLongAt(stack, top, 0);
     final long numBytes = readClampedLongAt(stack, top, 1);
 
     if (frame.isStatic()) {
-      return new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      return haltPopping(
+          frame, 2, new OperationResult(0, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
     }
 
     final long cost = gasCalculator().logOperationGasCost(frame, dataLocation, numBytes, numTopics);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 2, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     final Address address = frame.getRecipientAddress();
     final Bytes data = frame.readMemory(dataLocation, numBytes);
     // checked after the gas, like the v1 operation, so that both halt for the same reason
-    if (!frame.stackHasItemsV2(numTopics + 2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(numTopics + 2)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final ImmutableList.Builder<LogTopic> builder =
         ImmutableList.builderWithExpectedSize(numTopics);
     for (int i = 0; i < numTopics; i++) {

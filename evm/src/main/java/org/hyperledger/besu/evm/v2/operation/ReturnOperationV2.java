@@ -38,7 +38,7 @@ public class ReturnOperationV2 extends AbstractOperationV2 {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    if (!frame.stackHasItemsV2(2)) return UNDERFLOW_RESPONSE;
+    if (!frame.stackHasItemsV2(2)) return haltPoppingAll(frame, UNDERFLOW_RESPONSE);
     final long[] stack = frame.stackDataV2();
     final int top = frame.stackTopV2();
     final long from = readClampedLongAt(stack, top, 0);
@@ -46,7 +46,8 @@ public class ReturnOperationV2 extends AbstractOperationV2 {
 
     final long cost = gasCalculator().memoryExpansionGasCost(frame, from, length);
     if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+      return haltPopping(
+          frame, 2, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
     frame.setTopV2(top - 2);

@@ -42,6 +42,11 @@ class ExpOperationV2Test extends BinaryOperationV2Test {
     super(new ExpOperationV2(GAS_CALCULATOR));
   }
 
+  @Override
+  protected int poppedOnInsufficientGas() {
+    return 2;
+  }
+
   @ParameterizedTest(name = "{0} ** {1} = {2}")
   @CsvSource({
     "0x02, 0x0a, 0x0400",
