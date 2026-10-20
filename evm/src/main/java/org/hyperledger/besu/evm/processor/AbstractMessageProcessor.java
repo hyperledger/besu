@@ -86,6 +86,16 @@ public abstract class AbstractMessageProcessor {
   }
 
   /**
+   * Returns whether EVM v2 runs the frames of this processor. A frame built for it from the start
+   * does not allocate the EVM v1 stack.
+   *
+   * @return true if EVM v2 is enabled
+   */
+  public boolean runsOnEvmV2() {
+    return evm.getEvmConfiguration().enableEvmV2();
+  }
+
+  /**
    * Start.
    *
    * @param frame the frame
