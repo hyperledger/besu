@@ -79,7 +79,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
   final AtomicBoolean catchUpRunning = new AtomicBoolean(false);
   volatile OptionalLong blockObserverId = OptionalLong.empty();
   private volatile boolean closed = false;
-  // Set when the archive can no longer be extended without a gap; see RetentionGapException.
+  // Set when the archive can no longer be extended without a gap; see ArchiveGapException.
   volatile boolean halted = false;
 
   // Package-private so unit tests can shorten the retry backoff.
@@ -201,7 +201,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     try {
       captureRange(from, target);
       retryDelayMillis = 0L;
-    } catch (final RetentionGapException e) {
+    } catch (final ArchiveGapException e) {
       halted = true;
       LOG.error(e.getMessage());
     } catch (final Exception e) {
@@ -276,7 +276,21 @@ public class ArchiveTrieNodeReplayer implements Closeable {
 
       for (long b = effectiveFrom + 1; b <= toInclusive && !closed; b++) {
         final BlockHeader header = blockchain.getBlockHeader(b).orElseThrow();
-        final TrieLog log = trieLogManager.getTrieLogLayer(header.getHash()).orElseThrow();
+        final long blockNumber = b;
+        // A log that is missing for a block inside the target is pruned or was never stored, so
+        // retrying cannot help: stop like any other gap rather than retry forever.
+        final TrieLog log =
+            trieLogManager
+                .getTrieLogLayer(header.getHash())
+                .orElseThrow(
+                    () ->
+                        new ArchiveGapException(
+                            String.format(
+                                "Archive trie-node replayer cannot continue: the trie log for block %d"
+                                    + " is missing, so it cannot be archived. Archive proof coverage"
+                                    + " stays at block %d and the replayer is stopping; the archive"
+                                    + " must be resynced to extend it.",
+                                blockNumber, blockNumber - 1)));
 
         canonicalTx =
             worldStateStorage.getComposedWorldStateStorage().startLowPriorityTransaction();
@@ -362,7 +376,7 @@ public class ArchiveTrieNodeReplayer implements Closeable {
         // The archive already covers blocks up to the cursor. Skipping ahead would leave blocks
         // without history entries inside the covered window, and proofs for them would silently
         // read stale nodes. Stop instead and leave the coverage at its last contiguous block.
-        throw new RetentionGapException(
+        throw new ArchiveGapException(
             String.format(
                 "Archive trie-node replayer cannot continue: cursor %d is beyond trie-log retention"
                     + " (head=%d, maxLayers=%d), so blocks %d-%d cannot be archived. Archive proof"
@@ -401,9 +415,9 @@ public class ArchiveTrieNodeReplayer implements Closeable {
     replayerStatePosition = positionTarget;
   }
 
-  /** The cursor is older than trie-log retention while the archive already has coverage. */
-  static final class RetentionGapException extends IllegalStateException {
-    RetentionGapException(final String message) {
+  /** The archive cannot be extended without leaving a gap, and retrying cannot fix that. */
+  static final class ArchiveGapException extends IllegalStateException {
+    ArchiveGapException(final String message) {
       super(message);
     }
   }

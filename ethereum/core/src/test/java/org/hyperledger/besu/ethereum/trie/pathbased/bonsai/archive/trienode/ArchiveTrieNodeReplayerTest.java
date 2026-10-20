@@ -553,7 +553,7 @@ class ArchiveTrieNodeReplayerTest {
     replayer.cursor.set(5L);
 
     assertThatThrownBy(() -> replayer.captureRange(5L, 10L))
-        .isInstanceOf(ArchiveTrieNodeReplayer.RetentionGapException.class);
+        .isInstanceOf(ArchiveTrieNodeReplayer.ArchiveGapException.class);
     assertThat(replayer.cursor.get()).isEqualTo(5L);
     verify(worldStateProvider, never()).newTrieEnabledWorldState(any());
   }
@@ -612,6 +612,31 @@ class ArchiveTrieNodeReplayerTest {
     replayer.captureRange(10L, 11L); // repositions from a fresh snapshot, nothing is skipped
     assertThat(replayer.cursor.get()).isEqualTo(11L);
     verify(worldStateProvider, times(2)).newTrieEnabledWorldState(any());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  void haltsWithoutRetryWhenTrieLogMissingForBlockToArchive() {
+    when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
+    appendBlocks(10); // head 10, target 9
+    final BlockHeader block8 = blockchain.getBlockHeader(8L).get();
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    // block 8's log exists while positioning rolls back through it, then is gone when it is
+    // rolled forward
+    when(trieLogManager.getTrieLogLayer(block8.getHash()))
+        .thenReturn(Optional.of(mockTrieLog), Optional.empty());
+    when(worldStateProvider.newTrieEnabledWorldState(any())).thenReturn(replayerWorldState);
+    when(replayerWorldState.getAccumulator()).thenReturn(mockAccumulator);
+
+    final ArchiveTrieNodeReplayer replayer = createRealReplayer();
+    replayer.initialRetryDelayMillis = 20L;
+    replayer.start(7L);
+
+    Awaitility.await()
+        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(replayer.halted).isTrue());
+    assertThat(replayer.cursor.get()).isEqualTo(7L);
+    verify(worldStateProvider, times(1)).newTrieEnabledWorldState(any());
   }
 
   private void recordCoverage(final long block) {
