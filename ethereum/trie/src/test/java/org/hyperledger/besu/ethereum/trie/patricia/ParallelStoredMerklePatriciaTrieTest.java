@@ -18,12 +18,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.trie.KeyValueMerkleStorage;
 import org.hyperledger.besu.ethereum.trie.MerkleStorage;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -509,6 +515,41 @@ class ParallelStoredMerklePatriciaTrieTest {
     sequentialTrie.commit(sequentialStorage::put);
 
     assertThat(parallelTrie.getRootHash()).isEqualTo(sequentialTrie.getRootHash());
+  }
+
+  @Test
+  void shouldCommitTheSameNodesAsTheSequentialTrie() {
+    final Bytes keyA = createKey(0x00, 0x00, 0x00, 0x00);
+    final Bytes keyB = createKey(0x01, 0x00, 0x00, 0x00);
+    final Bytes keyC = createKey(0x10, 0x00, 0x00, 0x00);
+    final Bytes keyD = createKey(0x20, 0x00, 0x00, 0x00);
+    final Map<Bytes32, Bytes> storage = new HashMap<>();
+    final NodeLoader nodeLoader = (location, hash) -> Optional.ofNullable(storage.get(hash));
+    final StoredMerklePatriciaTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(nodeLoader, Function.identity(), Function.identity());
+    for (final Bytes key : List.of(keyA, keyB, keyC, keyD)) {
+      trie.put(key, Bytes32.leftPad(Bytes.of(1)));
+    }
+    trie.commit((location, hash, value) -> storage.put(hash, value));
+
+    final ParallelStoredMerklePatriciaTrie<Bytes, Bytes> parallel =
+        new ParallelStoredMerklePatriciaTrie<>(
+            nodeLoader, trie.getRootHash(), Function.identity(), Function.identity());
+    final StoredMerklePatriciaTrie<Bytes, Bytes> sequential =
+        new StoredMerklePatriciaTrie<>(
+            nodeLoader, trie.getRootHash(), Function.identity(), Function.identity());
+    for (final MerkleTrie<Bytes, Bytes> updated : List.of(parallel, sequential)) {
+      // removing B collapses the branch of A and B, so the updated leaf of A moves up a nibble
+      updated.put(keyA, Bytes32.leftPad(Bytes.of(2)));
+      updated.remove(keyB);
+      updated.put(keyC, Bytes32.leftPad(Bytes.of(2)));
+    }
+    final Map<Bytes, Bytes> parallelNodes = new HashMap<>();
+    final Map<Bytes, Bytes> sequentialNodes = new HashMap<>();
+    parallel.commit((location, hash, value) -> parallelNodes.put(location, value));
+    sequential.commit((location, hash, value) -> sequentialNodes.put(location, value));
+
+    assertThat(parallelNodes).isEqualTo(sequentialNodes);
   }
 
   // Helper methods to create 4-byte keys

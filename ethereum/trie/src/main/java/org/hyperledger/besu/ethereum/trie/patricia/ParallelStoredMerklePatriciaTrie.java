@@ -254,23 +254,13 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final List<UpdateEntry<V>> entries = new ArrayList<>();
       pendingUpdates.forEach((k, update) -> entries.add(update.toEntry(keyToPath(k))));
 
-      final CommitCache commitCache = new CommitCache();
-      final boolean shouldCommit = maybeNodeUpdater.isPresent();
-
       this.root =
           forkJoinPool.invoke(
-              ForkJoinTask.adapt(
-                  () ->
-                      processNode(
-                          root,
-                          Nibbles.EMPTY,
-                          0,
-                          entries,
-                          shouldCommit ? Optional.of(commitCache) : Optional.empty())));
+              ForkJoinTask.adapt(() -> processNode(root, Nibbles.EMPTY, 0, entries)));
 
-      // Persist all nodes to storage if committing
+      // Persist all nodes to storage if committing, once their hashes are all computed
       if (maybeNodeUpdater.isPresent()) {
-        commitCache.flushTo(maybeNodeUpdater.get());
+        root.accept(Nibbles.EMPTY, new CommitVisitor<>(maybeNodeUpdater.get()));
         storeAndResetRoot(maybeNodeUpdater.get());
       }
 
@@ -287,28 +277,25 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param location the location of the node
    * @param depth the current depth in the trie
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated node
    */
   private Node<V> processNode(
       final Node<V> node,
       final byte[] location,
       final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+      final List<UpdateEntry<V>> updates) {
 
     // Load the node if it's a lazy reference
     final Node<V> loadedNode = loadNode(node);
     // Dispatch based on node type
     return switch (loadedNode) {
-      case BranchNode<V> branch ->
-          handleBranchNode(branch, location, depth, updates, maybeCommitCache);
-      case ExtensionNode<V> ext -> handleExtension(ext, location, depth, updates, maybeCommitCache);
-      case LeafNode<V> leaf -> handleLeafNode(leaf, location, depth, updates, maybeCommitCache);
-      case NullNode<V> ignored -> handleNullNode(location, depth, updates, maybeCommitCache);
+      case BranchNode<V> branch -> handleBranchNode(branch, location, depth, updates);
+      case ExtensionNode<V> ext -> handleExtension(ext, location, depth, updates);
+      case LeafNode<V> leaf -> handleLeafNode(leaf, location, depth, updates);
+      case NullNode<V> ignored -> handleNullNode(location, depth, updates);
       case null, default ->
           // Unknown node type: fallback to sequential processing
-          applyUpdatesSequentially(loadedNode, location, updates, maybeCommitCache);
+          applyUpdatesSequentially(loadedNode, location, updates);
     };
   }
 
@@ -320,15 +307,13 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param location the location of the branch node
    * @param depth the current depth in the trie
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated branch node
    */
   private Node<V> handleBranchNode(
       final BranchNode<V> branchNode,
       final byte[] location,
       final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+      final List<UpdateEntry<V>> updates) {
 
     final int pathDepth = location.length;
 
@@ -363,8 +348,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
                 () -> {
                   final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
                   final Node<V> updatedChild =
-                      processNode(
-                          currentChild, childLocation, depth, childUpdates, maybeCommitCache);
+                      processNode(currentChild, childLocation, depth, childUpdates);
                   branchWrapper.setChild(nibble, updatedChild);
                   return null;
                 });
@@ -381,8 +365,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final byte[] childLocation = Nibbles.append(location, nibble);
 
       final Node<V> currentChild = branchWrapper.getPendingChildren().get(nibble);
-      final Node<V> updatedChild =
-          processNode(currentChild, childLocation, depth, childUpdates, maybeCommitCache);
+      final Node<V> updatedChild = processNode(currentChild, childLocation, depth, childUpdates);
       branchWrapper.setChild(nibble, updatedChild);
     }
 
@@ -391,7 +374,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
 
     // Apply all child updates
     final Node<V> newBranch = branchWrapper.applyUpdates();
-    commitOrHashNode(newBranch, location, maybeCommitCache);
+    hashNode(newBranch);
 
     return newBranch;
   }
@@ -404,15 +387,13 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param location the location of the extension node
    * @param depth the current depth in the trie
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated extension or restructured node
    */
   private Node<V> handleExtension(
       final ExtensionNode<V> extensionNode,
       final byte[] location,
       final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+      final List<UpdateEntry<V>> updates) {
 
     final byte[] extensionPath = extensionNode.path();
     final int pathDepth = location.length;
@@ -424,32 +405,21 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     if (divergenceIndex == extensionPath.length) {
       final byte[] newLocation = Nibbles.concat(location, extensionPath);
       final Node<V> newChild =
-          processNode(
-              extensionNode.getChild(),
-              newLocation,
-              depth + extensionPath.length,
-              updates,
-              maybeCommitCache);
+          processNode(extensionNode.getChild(), newLocation, depth + extensionPath.length, updates);
 
       final Node<V> newExtension = extensionNode.replaceChild(newChild);
-      commitOrHashNode(newExtension, location, maybeCommitCache);
+      hashNode(newExtension);
       return newExtension;
     }
 
     // Divergence within extension: only expand if we have multiple updates
     if (updates.size() > 1) {
       return expandExtensionToDivergencePoint(
-          extensionNode,
-          extensionPath,
-          location,
-          depth,
-          updates,
-          maybeCommitCache,
-          divergenceIndex);
+          extensionNode, extensionPath, location, depth, updates, divergenceIndex);
     }
 
     // Single update: let visitor handle restructuring (avoids unnecessary expansion)
-    return applyUpdatesSequentially(extensionNode, location, updates, maybeCommitCache);
+    return applyUpdatesSequentially(extensionNode, location, updates);
   }
 
   /**
@@ -461,7 +431,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param location the current location
    * @param depth the current depth
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache
    * @param divergenceIndex the index where updates diverge (already computed)
    * @return the processed and optimized node structure
    */
@@ -471,7 +440,6 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       final byte[] location,
       final int depth,
       final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache,
       final int divergenceIndex) {
 
     final byte[] commonPrefix = Nibbles.slice(extensionPath, 0, divergenceIndex);
@@ -501,7 +469,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       currentNode = nodeFactory.createBranch(children, Optional.empty());
     }
 
-    return processNode(currentNode, location, depth, updates, maybeCommitCache);
+    return processNode(currentNode, location, depth, updates);
   }
 
   private int findDivergencePoint(
@@ -532,24 +500,22 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param location the location of the node
    * @param depth the current depth in the trie
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated node (may be a branch if expanded)
    */
   private Node<V> handleLeafNode(
       final LeafNode<V> leaf,
       final byte[] location,
       final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+      final List<UpdateEntry<V>> updates) {
     // Check if parallel processing would be beneficial
     if (updates.size() > 1) {
       // Build a branch incorporating the leaf, then process updates
       final BranchNode<V> branch = buildBranchFromLeaf(leaf);
-      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+      return handleBranchNode(branch, location, depth, updates);
     }
 
     // Sequential processing for small update sets or non-diverging updates
-    return applyUpdatesSequentially(leaf, location, updates, maybeCommitCache);
+    return applyUpdatesSequentially(leaf, location, updates);
   }
 
   /**
@@ -559,24 +525,20 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param location the location of the node
    * @param depth the current depth in the trie
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated node (may be a branch if expanded)
    */
   private Node<V> handleNullNode(
-      final byte[] location,
-      final int depth,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+      final byte[] location, final int depth, final List<UpdateEntry<V>> updates) {
 
     // Check if parallel processing would be beneficial
     if (updates.size() > 1) {
       // Build an empty branch, then process updates
       final BranchNode<V> branch = buildEmptyBranch();
-      return handleBranchNode(branch, location, depth, updates, maybeCommitCache);
+      return handleBranchNode(branch, location, depth, updates);
     }
 
     // Sequential processing for small update sets or non-diverging updates
-    return applyUpdatesSequentially(NullNode.instance(), location, updates, maybeCommitCache);
+    return applyUpdatesSequentially(NullNode.instance(), location, updates);
   }
 
   /**
@@ -630,22 +592,12 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
   }
 
   /**
-   * Commits or hashes a node depending on whether we're committing.
+   * Hashes a node in the task that built it, so that subtrees are hashed in parallel.
    *
-   * @param node the node to commit or hash
-   * @param location the storage location of the node
-   * @param maybeCommitCache optional commit cache for storing nodes
+   * @param node the node to hash
    */
-  private void commitOrHashNode(
-      final Node<V> node, final byte[] location, final Optional<CommitCache> maybeCommitCache) {
-    if (maybeCommitCache.isPresent()) {
-      node.accept(
-          location,
-          new CommitVisitor<>(
-              (loc, hash, value) -> maybeCommitCache.get().store(loc, hash, value)));
-    } else {
-      Objects.requireNonNull(node.hash());
-    }
+  private void hashNode(final Node<V> node) {
+    Objects.requireNonNull(node.hash());
   }
 
   /**
@@ -654,14 +606,10 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
    * @param node the starting node
    * @param location the location of the node
    * @param updates the updates to apply
-   * @param maybeCommitCache optional commit cache for storing nodes
    * @return the updated node
    */
   private Node<V> applyUpdatesSequentially(
-      final Node<V> node,
-      final byte[] location,
-      final List<UpdateEntry<V>> updates,
-      final Optional<CommitCache> maybeCommitCache) {
+      final Node<V> node, final byte[] location, final List<UpdateEntry<V>> updates) {
 
     final int pathOffset = location.length;
     Node<V> updatedNode = node;
@@ -674,7 +622,7 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
       updatedNode = updatedNode.accept(visitor, entry.path, pathOffset);
     }
 
-    commitOrHashNode(updatedNode, location, maybeCommitCache);
+    hashNode(updatedNode);
     return updatedNode;
   }
 
@@ -799,21 +747,5 @@ public class ParallelStoredMerklePatriciaTrie<K extends Bytes, V>
     Node<V> applyUpdates() {
       return originalBranch.replaceAllChildren(pendingChildren, true);
     }
-  }
-
-  private static class CommitCache {
-    private final Map<Bytes, NodeData> cache = new ConcurrentHashMap<>();
-
-    void store(final Bytes location, final Bytes32 hash, final Bytes encodedBytes) {
-      cache.put(location, new NodeData(hash, encodedBytes));
-    }
-
-    void flushTo(final NodeUpdater nodeUpdater) {
-      cache.forEach(
-          (location, nodeData) ->
-              nodeUpdater.store(location, nodeData.hash, nodeData.encodedBytes));
-    }
-
-    private record NodeData(Bytes32 hash, Bytes encodedBytes) {}
   }
 }
