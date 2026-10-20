@@ -91,12 +91,7 @@ public class SECP256K1 extends AbstractSECP256 {
     return useNative;
   }
 
-  /**
-   * Whether the native ECDH and ecrecover can be used. They are in a second native library, which
-   * can fail to load on its own.
-   *
-   * @return true if the native library and its JNI functions are enabled.
-   */
+  @Override
   public boolean isNativeJniEnabled() {
     return useNative && LibSecp256k1JNI.ENABLED;
   }
