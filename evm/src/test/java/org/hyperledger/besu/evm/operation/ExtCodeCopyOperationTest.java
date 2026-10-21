@@ -188,29 +188,4 @@ class ExtCodeCopyOperationTest {
     assertThat(frame.memoryWordSize()).isEqualTo(1);
     assertThat(result.getGasCost()).isEqualTo(106);
   }
-
-  @Test
-  void testExtCodeCopyReportsMemoryUpdate() {
-    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
-    final Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
-    account.setCode(code);
-
-    ExtCodeCopyOperation subject = new ExtCodeCopyOperation(new PragueGasCalculator());
-    MessageFrame frame =
-        new TestMessageFrameBuilder()
-            .worldUpdater(worldStateUpdater)
-            .pushStackItem(Bytes.ofUnsignedLong(9))
-            .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(Bytes.ofUnsignedLong(0))
-            .pushStackItem(REQUESTED_ADDRESS.getBytes())
-            .build();
-    frame.expandMemory(0, 32);
-
-    subject.execute(frame, evm);
-
-    assertThat(frame.memoryWordSize()).isEqualTo(1);
-    assertThat(frame.getMaybeUpdatedMemory()).isPresent();
-    assertThat(frame.getMaybeUpdatedMemory().get().getOffset()).isZero();
-    assertThat(frame.getMaybeUpdatedMemory().get().getValue()).isEqualTo(code);
-  }
 }

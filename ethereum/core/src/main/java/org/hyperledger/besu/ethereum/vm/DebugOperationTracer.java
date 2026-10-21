@@ -45,6 +45,8 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
   private Bytes inputData;
   private int stepCount;
   private boolean limitReached;
+  // set when a frame is added, as the next operation's starting gas is that frame's remaining gas
+  private boolean lastFrameNeedsGasPostExecution;
 
   /**
    * Creates the operation tracer.
@@ -65,6 +67,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
   protected void capturePreExecutionState(final MessageFrame frame) {
     if (options.limit() > 0 && stepCount >= options.limit()) {
       limitReached = true;
+      traceOpcode = false;
       return;
     }
     limitReached = false;
@@ -87,19 +90,20 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
     final WorldUpdater worldUpdater = frame.getWorldUpdater();
     final Bytes outputData = frame.getOutputData();
-    final Optional<Bytes[]> memory = preExecutionMemory;
-    final Optional<Bytes> returnData = preExecutionReturnData;
-    final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
-    if (!traceFrames.isEmpty()) {
+    if (lastFrameNeedsGasPostExecution) {
       final TraceFrame lastTraceFrame = traceFrames.removeLast();
       final TraceFrame updatedLast =
           TraceFrame.from(lastTraceFrame).setGasRemainingPostExecution(gasRemaining).build();
       traceFrames.add(updatedLast);
+      lastFrameNeedsGasPostExecution = false;
     }
-    if (limitReached || !traceOpcode) {
+    if (!traceOpcode) {
       return;
     }
+    final Optional<Bytes[]> memory = preExecutionMemory;
+    final Optional<Bytes> returnData = preExecutionReturnData;
+    final Optional<Bytes[]> stackPostExecution = captureStack(frame);
 
     final Optional<Map<UInt256, UInt256>> storage =
         captureStorage(frame, currentOperation, operationResult);
@@ -144,6 +148,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
             .build();
 
     traceFrames.add(lastFrame);
+    lastFrameNeedsGasPostExecution = true;
     frame.reset();
   }
 
@@ -174,6 +179,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
               .setPrecompileIOData(recipient, inputData, output)
               .build();
       traceFrames.add(traceFrame);
+      lastFrameNeedsGasPostExecution = true;
     } else {
       final TraceFrame lastTraceFrame = traceFrames.removeLast();
       final TraceFrame updatedTraceFrame =
@@ -237,6 +243,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
             .setVirtualOperation(true)
             .build();
     traceFrames.add(traceFrame);
+    lastFrameNeedsGasPostExecution = true;
   }
 
   private Optional<Bytes> captureReturnData(final MessageFrame frame) {
@@ -291,6 +298,7 @@ public class DebugOperationTracer extends AbstractDebugOperationTracer {
     preExecutionGasRefund = 0;
     stepCount = 0;
     limitReached = false;
+    lastFrameNeedsGasPostExecution = false;
     preExecutionStorageKey = Optional.empty();
   }
 
