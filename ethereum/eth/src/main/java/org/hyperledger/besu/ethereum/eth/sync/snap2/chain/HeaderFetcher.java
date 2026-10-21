@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snap2.chain;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.peertask.task.GetHeadersFromPeerTask.Direction;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.PeerTaskRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestSender;
+import org.hyperledger.besu.ethereum.eth.sync.snap2.net.RequestSender.Response;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.net.SyncRequest.Priority;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
@@ -34,7 +37,8 @@ import java.util.concurrent.CompletableFuture;
  */
 public final class HeaderFetcher {
 
-  private static final long HEAD_TOLERANCE = 8;
+  // peers announce their range at most once per epoch, so one at the tip can look 32 blocks behind
+  private static final long HEAD_TOLERANCE = 32;
 
   private final RequestSender sender;
   private final ProtocolSchedule protocolSchedule;
@@ -46,6 +50,7 @@ public final class HeaderFetcher {
       final ProtocolSchedule protocolSchedule,
       final ChainHeadSource heads,
       final int headersPerRequest) {
+    checkArgument(headersPerRequest > 0, "headersPerRequest must be positive");
     this.sender = sender;
     this.protocolSchedule = protocolSchedule;
     this.heads = heads;
@@ -54,21 +59,27 @@ public final class HeaderFetcher {
 
   /** Returns the header with the given hash. */
   public CompletableFuture<BlockHeader> byHash(final Hash hash, final Priority priority) {
-    // a head just announced is only known by the peers closest to the tip
-    final long recent =
-        priority == Priority.PIVOT ? Math.max(0, sender.bestPeerHeight() - HEAD_TOLERANCE) : 0;
     return heads
         .knownHeader(hash)
         .map(CompletableFuture::completedFuture)
-        .orElseGet(() -> fetch(hash, 1, priority, recent).thenApply(List::getFirst));
+        .orElseGet(
+            () -> {
+              // a head just announced is only known by the peers closest to the tip
+              final long recent =
+                  priority == Priority.PIVOT ? announced(sender.bestPeerHeight()) : 0;
+              return fetch(hash, 1, priority, recent).thenApply(List::getFirst);
+            });
   }
 
   /**
    * Returns the headers from {@code lowest} up to {@code top} included, in ascending order, each
-   * linked to the next by its hash.
+   * linked to the next by its hash; none when {@code lowest} is above {@code top}.
    */
   public CompletableFuture<List<BlockHeader>> chainDown(
       final BlockHeader top, final long lowest, final Priority priority) {
+    if (lowest > top.getNumber()) {
+      return CompletableFuture.completedFuture(List.of());
+    }
     final List<BlockHeader> descending = new ArrayList<>();
     descending.add(top);
     return walkDown(descending, lowest, priority)
@@ -86,14 +97,26 @@ public final class HeaderFetcher {
       return CompletableFuture.completedFuture(descending);
     }
     final int count = (int) Math.min(headersPerRequest, cursor.getNumber() - lowest);
-    return fetch(cursor.getParentHash(), count, priority, cursor.getNumber() - 1)
+    return fetch(cursor.getParentHash(), count, priority, announced(cursor.getNumber() - 1))
         .thenCompose(
             headers -> {
+              final int walked = descending.size();
               for (final BlockHeader header : headers) {
                 if (header.getNumber() < lowest) {
                   break;
                 }
                 descending.add(header);
+              }
+              // no header added: the top does not follow its parent, asking again would loop
+              if (descending.size() == walked) {
+                return CompletableFuture.failedFuture(
+                    new IllegalStateException(
+                        "block "
+                            + cursor.getNumber()
+                            + " has parent "
+                            + headers.getFirst().getNumber()
+                            + ", below "
+                            + lowest));
               }
               return walkDown(descending, lowest, priority);
             });
@@ -109,8 +132,14 @@ public final class HeaderFetcher {
                     new GetHeadersFromPeerTask(
                         hash, count, 0, Direction.REVERSE, 0, protocolSchedule),
                 priority,
-                "headers",
+                // peers are rated per name: short pivot lookups apart from full batches
+                priority == Priority.PIVOT ? "pivot_headers" : "headers",
                 minimumPeerHeight))
-        .thenApply(response -> response.value());
+        .thenApply(Response::value);
+  }
+
+  // a peer that holds this block may have announced a lower height, as announcements lag
+  private static long announced(final long height) {
+    return Math.max(0, height - HEAD_TOLERANCE);
   }
 }

@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 
 class HeaderFetcherTest {
 
-  private final List<BlockHeader> chain = chain(20);
+  private final List<BlockHeader> chain = chain(60);
   private final FakeSender sender = new FakeSender();
 
   @Test
@@ -63,8 +63,11 @@ class HeaderFetcherTest {
 
     assertThat(fetcher.byHash(header.getHash(), Priority.PIVOT)).isCompletedWithValue(header);
     assertThat(fetcher.byHash(header.getHash(), Priority.HEADERS)).isCompletedWithValue(header);
-    assertThat(sender.requests.get(0).minimumPeerHeight()).isEqualTo(92);
+    assertThat(sender.requests.get(0).minimumPeerHeight()).isEqualTo(68);
     assertThat(sender.requests.get(1).minimumPeerHeight()).isZero();
+    assertThat(sender.requests)
+        .extracting(SyncRequest::name)
+        .containsExactly("pivot_headers", "headers");
   }
 
   @Test
@@ -78,10 +81,50 @@ class HeaderFetcherTest {
   }
 
   @Test
+  void walksDownShortAnswers() {
+    sender.maxAnswer = 2;
+
+    assertThat(fetcher(Optional::empty).chainDown(chain.get(17), 5, Priority.HEADERS))
+        .isCompletedWithValue(chain.subList(5, 18));
+    // each request asks for what is left, up to 5, and moves down by the 2 answered
+    assertThat(sender.messages)
+        .extracting(GetBlockHeadersMessage::maxHeaders)
+        .containsExactly(5, 5, 5, 5, 4, 2);
+  }
+
+  @Test
+  void asksTheWalkToPeersThatReachedTheParent() {
+    assertThat(fetcher(Optional::empty).chainDown(chain.get(59), 50, Priority.HEADERS))
+        .isCompletedWithValue(chain.subList(50, 60));
+    // parents 58 and 53, less the 32 blocks an announced height may lag
+    assertThat(sender.requests)
+        .extracting(SyncRequest::minimumPeerHeight)
+        .containsExactly(26L, 21L);
+  }
+
+  @Test
   void returnsTheTopAloneWhenItIsTheLowest() {
     assertThat(fetcher(Optional::empty).chainDown(chain.get(5), 5, Priority.HEADERS))
         .isCompletedWithValue(List.of(chain.get(5)));
     assertThat(sender.requests).isEmpty();
+  }
+
+  @Test
+  void returnsNothingWhenTheLowestIsAboveTheTop() {
+    assertThat(fetcher(Optional::empty).chainDown(chain.get(5), 6, Priority.HEADERS))
+        .isCompletedWithValue(List.of());
+    assertThat(sender.requests).isEmpty();
+  }
+
+  @Test
+  void failsWhenAnAnswerDoesNotMoveTheWalkDown() {
+    // numbered 18, but its parent is block 3
+    final BlockHeader top =
+        new BlockHeaderTestFixture().number(18).parentHash(chain.get(3).getHash()).buildHeader();
+
+    assertThat(fetcher(Optional::empty).chainDown(top, 5, Priority.HEADERS))
+        .isCompletedExceptionally();
+    assertThat(sender.requests).hasSize(1);
   }
 
   private HeaderFetcher fetcher(final ChainHeadSource heads) {
@@ -122,6 +165,8 @@ class HeaderFetcherTest {
     private final List<SyncRequest<?>> requests = new ArrayList<>();
     private final List<GetBlockHeadersMessage> messages = new ArrayList<>();
     private long bestPeerHeight;
+    // the most headers an answer carries, fewer than asked as a peer may send
+    private int maxAnswer = Integer.MAX_VALUE;
 
     private FakeSender() {
       when(peer.getAgreedCapabilities()).thenReturn(Set.of(EthProtocol.LATEST));
@@ -138,7 +183,7 @@ class HeaderFetcherTest {
       // a reverse request by hash, from that header down
       int number = (int) header(message.hash().orElseThrow()).getNumber();
       final List<BlockHeader> headers = new ArrayList<>();
-      while (number >= 0 && headers.size() < message.maxHeaders()) {
+      while (number >= 0 && headers.size() < Math.min(message.maxHeaders(), maxAnswer)) {
         headers.add(chain.get(number--));
       }
       return CompletableFuture.completedFuture(
