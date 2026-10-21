@@ -25,6 +25,7 @@
 - Debug traces with an opcode filter or a step limit report the post-execution gas of the last recorded operation; every later operation overwrote it. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
 - A peer that answers a header, body or sync block body request with malformed RLP is now disconnected for breach of protocol, as it already was for pooled transactions, receipts and block access lists. Previously the decoding failure was logged at ERROR as a server error and the peer stayed connected. [#11451](https://github.com/besu-eth/besu/pull/11451)
+- `eth_simulateV1` accepts `movePrecompileToAddress` for a precompile that exists in the fork of the simulated block, such as a BLS12-381 precompile moved in a block whose `time` override puts it in Prague. Previously the source address was checked against the precompiles of the base block's fork, and the request failed with `Invalid precompile address` (`-32000`). [#11643](https://github.com/besu-eth/besu/issues/11643)
 
 ### Additions and Improvements
 - `trace_filter` accepts `mode`: `intersection`, the default, or `union`, which matches a trace in either `fromAddress` or `toAddress`. An unknown value is rejected with `-32602`. [#11436](https://github.com/besu-eth/besu/pull/11436)
