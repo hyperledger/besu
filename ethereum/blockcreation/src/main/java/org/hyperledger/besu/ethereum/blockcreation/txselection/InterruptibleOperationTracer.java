@@ -85,6 +85,13 @@ public class InterruptibleOperationTracer implements OperationTracer {
   }
 
   @Override
+  public void traceStartTransactionFailed(
+      final WorldView worldView, final Transaction transaction) {
+    checkInterrupt();
+    delegate.traceStartTransactionFailed(worldView, transaction);
+  }
+
+  @Override
   public boolean isCodeAccessTracing() {
     checkInterrupt();
     return delegate.isCodeAccessTracing();

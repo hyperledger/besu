@@ -53,7 +53,9 @@ public interface CodeAccessTracer {
   /**
    * Trace a write of an account's code: a CREATE/CREATE2 code deposit or an EIP-7702 delegation
    * designator. A write made by a frame that later reverts is undone with that frame, which the
-   * tracer sees exit as {@code COMPLETED_FAILED}. Only emitted when {@link #isCodeAccessTracing()}.
+   * tracer sees exit as {@code COMPLETED_FAILED}. A delegation designator written while charging a
+   * transaction's top frame is discarded if those charges fail, see {@code
+   * OperationTracer#traceStartTransactionFailed}. Only emitted when {@link #isCodeAccessTracing()}.
    *
    * @param address the account whose code was written
    * @param codeHash the hash of the code written

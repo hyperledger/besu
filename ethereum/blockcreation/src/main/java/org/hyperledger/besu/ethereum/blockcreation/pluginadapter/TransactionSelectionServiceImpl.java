@@ -236,6 +236,14 @@ public class TransactionSelectionServiceImpl implements TransactionSelectionServ
     }
 
     @Override
+    public void traceStartTransactionFailed(
+        final WorldView worldView, final Transaction transaction) {
+      blockAwareOperationTracers.forEach(
+          blockAwareOperationTracer ->
+              blockAwareOperationTracer.traceStartTransactionFailed(worldView, transaction));
+    }
+
+    @Override
     public boolean isCodeAccessTracing() {
       return blockAwareOperationTracers.stream()
           .anyMatch(BlockAwareOperationTracer::isCodeAccessTracing);
