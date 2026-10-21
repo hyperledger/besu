@@ -86,6 +86,7 @@ import org.hyperledger.besu.evm.operation.VirtualOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 import org.hyperledger.besu.evm.operation.XorOperationOptimized;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.v2.operation.AbstractOperationV2;
 import org.hyperledger.besu.evm.v2.operation.AddModOperationV2;
 import org.hyperledger.besu.evm.v2.operation.AddOperationV2;
 import org.hyperledger.besu.evm.v2.operation.AndOperationV2;
@@ -517,101 +518,635 @@ public class EVM {
     }
   }
 
+  // The untraced loop switches on a dense case index: a table up to the highest copied opcode would
+  // be loop bytecode, which counts against C2's inlining budget.
+  // BEGIN GENERATED case table for the copies of the operations' code in the untraced loop
+  // below; do not edit, run ./gradlew :evm:generateEvmV2Loop
+  private static final int COPIED_PUSH1 = 1;
+  private static final int COPIED_PUSH2_TO_8 = 2;
+  private static final int COPIED_DUP = 3;
+  private static final int COPIED_SWAP = 4;
+  private static final int COPIED_JUMPDEST = 5;
+  private static final int COPIED_POP = 6;
+  private static final int COPIED_JUMPI = 7;
+  private static final int COPIED_JUMP = 8;
+  private static final int COPIED_ADD = 9;
+  private static final int COPIED_ISZERO = 10;
+  private static final int COPIED_AND = 11;
+  private static final int COPIED_SUB = 12;
+  private static final int COPIED_LT = 13;
+  private static final int COPIED_SHL = 14;
+  private static final int COPIED_GT = 15;
+  private static final int COPIED_PUSH0 = 16;
+
+  // Per opcode: its case in the low byte, and above it the distance of the case's
+  // constant from the stack top and pc that its copied code reads
+  private static final int[] DISPATCH = new int[256];
+
+  static {
+    dispatch(COPIED_PUSH1, 0x60, 0x60);
+    dispatch(COPIED_PUSH2_TO_8, 0x61, 0x67);
+    dispatch(COPIED_DUP, 0x80, 0x8f);
+    dispatch(COPIED_SWAP, 0x90, 0x9f);
+    dispatch(COPIED_JUMPDEST, 0x5b, 0x5b);
+    dispatch(COPIED_POP, 0x50, 0x50);
+    dispatch(COPIED_JUMPI, 0x57, 0x57);
+    dispatch(COPIED_JUMP, 0x56, 0x56);
+    dispatch(COPIED_ADD, 0x01, 0x01);
+    dispatch(COPIED_ISZERO, 0x15, 0x15);
+    dispatch(COPIED_AND, 0x16, 0x16);
+    dispatch(COPIED_SUB, 0x03, 0x03);
+    dispatch(COPIED_LT, 0x10, 0x10);
+    dispatch(COPIED_SHL, 0x1b, 0x1b);
+    dispatch(COPIED_GT, 0x11, 0x11);
+    dispatch(COPIED_PUSH0, 0x5f, 0x5f);
+  }
+
+  private static void dispatch(final int copiedCase, final int first, final int last) {
+    for (int op = first; op <= last; op++) {
+      DISPATCH[op] = ((copiedCase * 64) << 8) | copiedCase;
+    }
+  }
+
+  // copied from JumpiOperationV2.INVALID_JUMP_RESPONSE
+  private static final OperationResult JUMPI_OPERATION_V2_INVALID_JUMP_RESPONSE =
+      new OperationResult(10L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+
+  // copied from JumpOperationV2.INVALID_JUMP_RESPONSE
+  private static final OperationResult JUMP_OPERATION_V2_INVALID_JUMP_RESPONSE =
+      new OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
+
+  // copied from StackUtil.setLong
+  private static void stackUtilSetLong(final long value, final long[] stack, final int top) {
+    final int offset = top << 2;
+    stack[offset] = 0L;
+    stack[offset + 1] = 0L;
+    stack[offset + 2] = 0L;
+    stack[offset + 3] = value;
+  }
+
+  // copied from StackUtil.copyWord
+  private static void stackUtilCopyWord(final long[] stack, final int from, final int to) {
+    final int src = from << 2;
+    final int dst = to << 2;
+    stack[dst] = stack[src];
+    stack[dst + 1] = stack[src + 1];
+    stack[dst + 2] = stack[src + 2];
+    stack[dst + 3] = stack[src + 3];
+  }
+
+  // copied from StackUtil.swapWords
+  private static void stackUtilSwapWords(final long[] stack, final int a, final int b) {
+    final int aOffset = a << 2;
+    final int bOffset = b << 2;
+    final long a0 = stack[aOffset];
+    final long a1 = stack[aOffset + 1];
+    final long a2 = stack[aOffset + 2];
+    final long a3 = stack[aOffset + 3];
+    stack[aOffset] = stack[bOffset];
+    stack[aOffset + 1] = stack[bOffset + 1];
+    stack[aOffset + 2] = stack[bOffset + 2];
+    stack[aOffset + 3] = stack[bOffset + 3];
+    stack[bOffset] = a0;
+    stack[bOffset + 1] = a1;
+    stack[bOffset + 2] = a2;
+    stack[bOffset + 3] = a3;
+  }
+
+  // copied from StackUtil.isZeroAt
+  private static boolean stackUtilIsZeroAt(final long[] stack, final int top, final int depth) {
+    final int off = (top - 1 - depth) << 2;
+    return (stack[off] | stack[off + 1] | stack[off + 2] | stack[off + 3]) == 0;
+  }
+
+  // copied from StackUtil.compareUnsigned
+  private static int stackUtilCompareUnsigned(
+      final long[] stack, final int aOffset, final int bOffset) {
+    if (stack[aOffset] != stack[bOffset]) {
+      return Long.compareUnsigned(stack[aOffset], stack[bOffset]);
+    }
+    if (stack[aOffset + 1] != stack[bOffset + 1]) {
+      return Long.compareUnsigned(stack[aOffset + 1], stack[bOffset + 1]);
+    }
+    if (stack[aOffset + 2] != stack[bOffset + 2]) {
+      return Long.compareUnsigned(stack[aOffset + 2], stack[bOffset + 2]);
+    }
+    return Long.compareUnsigned(stack[aOffset + 3], stack[bOffset + 3]);
+  }
+
+  // END GENERATED case table
+
   /**
-   * The v2 interpreter loop for untraced execution, which is every block import. Only the most
-   * frequent operations are dispatched here, in order of mainnet frequency, and everything else
-   * goes through {@link #executeOperationV2}, so that C2 can inline them and the loop's own steps
-   * into it. C2 inlines in parse order into one budget of 8000 bytes of bytecode for the loop and
-   * everything inlined into it, so the previous operation's result is applied first, before C2
-   * reaches any operation (EvmV2LoopCompilationTest). PUSH9-32, MSTORE, MLOAD and CALLDATALOAD stay
-   * on the general path: each inlines to more bytecode than any operation here.
+   * The v2 interpreter loop for untraced execution, which is every block import. The program
+   * counter, the gas and the stack live in locals, so that C2 keeps them in registers, and the most
+   * frequent operations run inline, as copies of their own code. Every other operation, and every
+   * operation that does not end with one of its constant successes, goes through {@link
+   * #executeOperationV2} and {@link #completeOperation}, with the state handed to the frame and
+   * read back after.
+   *
+   * <p>The cases between the generated markers are written by {@code ./gradlew
+   * :evm:generateEvmV2Loop} from the operations' code, which the build checks they match; see
+   * EvmV2LoopGenerator.
    */
   private void runToHaltV2Untraced(final MessageFrame frame) {
-    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    OperationResult result = null;
+    if (frame.getState() != State.CODE_EXECUTING) {
+      return;
+    }
+    final Code codeObject = frame.getCode();
+    final byte[] code = codeObject.getBytes().toArrayUnsafe();
+    // analysed now, so that no copied jump takes the branch that analyses the code
+    codeObject.isJumpDestInvalid(0);
+    final boolean constantinople = enableConstantinople;
+    final boolean shanghai = enableShanghai;
+    final long[] s = frame.stackDataV2();
+    // the stack array holds as many items as the stack may
+    final int maxItems = s.length >> 2;
+    int sp = frame.stackTopV2();
+    int pc = frame.getPC();
+    long gas = frame.getRemainingGas();
     while (true) {
-      if (result != null) {
-        completeOperation(frame, result);
+      final int opcode = pc < code.length ? code[pc] & 0xff : 0;
+      // set by a copy that succeeded, and applied once below: the same update in every case would
+      // be one computation, which C2 places before the dispatch
+      long cost = -1;
+      int step = 0;
+      OperationResult result = null;
+      // each case reads the stack top and pc as a base plus a constant of its own, which the table
+      // cancels, so that their indices are expressions of their own and stay in the case
+      final int entry = DISPATCH[opcode];
+      final int bias = entry >> 8;
+      final int spBase = sp - bias;
+      final int pcBase = pc - bias;
+      switch (entry & 0xff) {
+        // BEGIN GENERATED cases: copies of the operations' code;
+        // edit those, then run ./gradlew :evm:generateEvmV2Loop
+        // BEGIN copied from PushOperationV2.SingleByte.staticOperation
+        case COPIED_PUSH1 -> {
+          int pushSize = 1;
+          if (!((spBase + 64) + 1 <= maxItems)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.OVERFLOW_RESPONSE;
+            break;
+          }
+          long u0 = 0;
+          final int start = (pcBase + 64) + 1;
+          if (pushSize != 0 && start < code.length) {
+            u0 = code[start] & 0xFFL;
+          }
+          final int top = (spBase + 64);
+          stackUtilSetLong(u0, s, top);
+          sp = top + 1;
+          pc = (pcBase + 64) + pushSize;
+          if (pushSize == 0) {
+            cost = 2L;
+            step = 1;
+          } else {
+            cost = 3L;
+            step = 1;
+          }
+        }
+        // END copied from PushOperationV2.SingleByte.staticOperation
+        // BEGIN copied from PushOperationV2.SingleLimb.staticOperation
+        case COPIED_PUSH2_TO_8 -> {
+          final int pushSize = opcode - PUSH_BASE;
+          if (!((spBase + 128) + 1 <= maxItems)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.OVERFLOW_RESPONSE;
+            break;
+          }
+          final int start = (pcBase + 128) + 1;
+          final int end = start + pushSize;
+          long u0 = UInt256.getLongBE(code, start, Math.min(end, code.length));
+          if (end > code.length) {
+            final int remainingSize = code.length - start;
+            final int shift = (pushSize - remainingSize) * 8;
+            u0 <<= shift;
+          }
+          final int top = (spBase + 128);
+          stackUtilSetLong(u0, s, top);
+          sp = top + 1;
+          pc = (pcBase + 128) + pushSize;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from PushOperationV2.SingleLimb.staticOperation
+        // BEGIN copied from DupOperationV2.staticOperation
+        case COPIED_DUP -> {
+          final int index = opcode - DupOperationV2.DUP_BASE;
+          if (!((spBase + 192) >= index)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+            break;
+          }
+          if (!((spBase + 192) + 1 <= maxItems)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.OVERFLOW_RESPONSE;
+            break;
+          }
+          final int top = (spBase + 192);
+          stackUtilCopyWord(s, top - index, top);
+          sp = top + 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from DupOperationV2.staticOperation
+        // BEGIN copied from SwapOperationV2.staticOperation
+        case COPIED_SWAP -> {
+          final int index = opcode - SwapOperationV2.SWAP_BASE;
+          if (!((spBase + 256) >= index + 1)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+            break;
+          }
+          final int top = (spBase + 256);
+          stackUtilSwapWords(s, top - 1, top - 1 - index);
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from SwapOperationV2.staticOperation
+        // BEGIN copied from JumpDestOperationV2.JUMPDEST_SUCCESS
+        case COPIED_JUMPDEST -> {
+          cost = 1L;
+          step = 1;
+        }
+        // END copied from JumpDestOperationV2.JUMPDEST_SUCCESS
+        // BEGIN copied from PopOperationV2.staticOperation
+        case COPIED_POP -> {
+          if (!((spBase + 384) >= 1)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+            break;
+          }
+          sp = (spBase + 384) - 1;
+          cost = 2L;
+          step = 1;
+        }
+        // END copied from PopOperationV2.staticOperation
+        // BEGIN copied from JumpiOperationV2.staticOperation
+        case COPIED_JUMPI -> {
+          if (!((spBase + 448) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          final long[] stack = s;
+          final int top = (spBase + 448);
+          sp = top - 2;
+          if (stackUtilIsZeroAt(stack, top, 1)) {
+            cost = 10L;
+            step = 1;
+            break;
+          }
+          {
+            final int destinationOffset = (top - 1) << 2;
+            final long destination = stack[destinationOffset + 3];
+            if ((stack[destinationOffset]
+                        | stack[destinationOffset + 1]
+                        | stack[destinationOffset + 2])
+                    != 0
+                || Long.compareUnsigned(destination, Integer.MAX_VALUE) > 0
+                || codeObject.isJumpDestInvalid((int) destination)) {
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = JUMPI_OPERATION_V2_INVALID_JUMP_RESPONSE;
+              break;
+            }
+            pc = (int) destination;
+            cost = 10L;
+            step = 0;
+          }
+        }
+        // END copied from JumpiOperationV2.staticOperation
+        // BEGIN copied from JumpOperationV2.staticOperation
+        case COPIED_JUMP -> {
+          if (!((spBase + 512) >= 1)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+            break;
+          }
+          final int top = (spBase + 512);
+          sp = top - 1;
+          {
+            final int destinationOffset = (top - 1) << 2;
+            final long destination = s[destinationOffset + 3];
+            if ((s[destinationOffset] | s[destinationOffset + 1] | s[destinationOffset + 2]) != 0
+                || Long.compareUnsigned(destination, Integer.MAX_VALUE) > 0
+                || codeObject.isJumpDestInvalid((int) destination)) {
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = JUMP_OPERATION_V2_INVALID_JUMP_RESPONSE;
+              break;
+            }
+            pc = (int) destination;
+            cost = 8L;
+            step = 0;
+          }
+        }
+        // END copied from JumpOperationV2.staticOperation
+        // BEGIN copied from AddOperationV2.staticOperation
+        case COPIED_ADD -> {
+          if (!((spBase + 576) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          long[] stack = s;
+          int top = (spBase + 576);
+          final int aOffset = (top - 1) << 2;
+          final int bOffset = (top - 2) << 2;
+          final UInt256 valueA =
+              new UInt256(
+                  stack[aOffset], stack[aOffset + 1], stack[aOffset + 2], stack[aOffset + 3]);
+          final UInt256 valueB =
+              new UInt256(
+                  stack[bOffset], stack[bOffset + 1], stack[bOffset + 2], stack[bOffset + 3]);
+          final UInt256 r = valueA.add(valueB);
+          stack[bOffset] = r.u3();
+          stack[bOffset + 1] = r.u2();
+          stack[bOffset + 2] = r.u1();
+          stack[bOffset + 3] = r.u0();
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from AddOperationV2.staticOperation
+        // BEGIN copied from IsZeroOperationV2.staticOperation
+        case COPIED_ISZERO -> {
+          if (!((spBase + 640) >= 1)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+            break;
+          }
+          final long[] stack = s;
+          final int top = (spBase + 640);
+          stackUtilSetLong(stackUtilIsZeroAt(stack, top, 0) ? 1L : 0L, stack, top - 1);
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from IsZeroOperationV2.staticOperation
+        // BEGIN copied from AndOperationV2.staticOperation
+        case COPIED_AND -> {
+          if (!((spBase + 704) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          long[] stack = s;
+          int top = (spBase + 704);
+          final int aOffset = (top - 1) << 2;
+          final int bOffset = (top - 2) << 2;
+          final UInt256 valueA =
+              new UInt256(
+                  stack[aOffset], stack[aOffset + 1], stack[aOffset + 2], stack[aOffset + 3]);
+          final UInt256 valueB =
+              new UInt256(
+                  stack[bOffset], stack[bOffset + 1], stack[bOffset + 2], stack[bOffset + 3]);
+          final UInt256 r = valueA.and(valueB);
+          stack[bOffset] = r.u3();
+          stack[bOffset + 1] = r.u2();
+          stack[bOffset + 2] = r.u1();
+          stack[bOffset + 3] = r.u0();
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from AndOperationV2.staticOperation
+        // BEGIN copied from SubOperationV2.staticOperation
+        case COPIED_SUB -> {
+          if (!((spBase + 768) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          long[] stack = s;
+          int top = (spBase + 768);
+          final int aOffset = (top - 1) << 2;
+          final int bOffset = (top - 2) << 2;
+          final UInt256 valueA =
+              new UInt256(
+                  stack[aOffset], stack[aOffset + 1], stack[aOffset + 2], stack[aOffset + 3]);
+          final UInt256 valueB =
+              new UInt256(
+                  stack[bOffset], stack[bOffset + 1], stack[bOffset + 2], stack[bOffset + 3]);
+          final UInt256 r = valueA.sub(valueB);
+          stack[bOffset] = r.u3();
+          stack[bOffset + 1] = r.u2();
+          stack[bOffset + 2] = r.u1();
+          stack[bOffset + 3] = r.u0();
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from SubOperationV2.staticOperation
+        // BEGIN copied from LtOperationV2.staticOperation
+        case COPIED_LT -> {
+          if (!((spBase + 832) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          final long[] stack = s;
+          final int top = (spBase + 832);
+          final boolean lessThan =
+              stackUtilCompareUnsigned(stack, (top - 1) << 2, (top - 2) << 2) < 0;
+          stackUtilSetLong(lessThan ? 1L : 0L, stack, top - 2);
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from LtOperationV2.staticOperation
+        // BEGIN copied from ShlOperationV2.staticOperation
+        case COPIED_SHL -> {
+          if (constantinople) {
+            {
+              if (!((spBase + 896) >= 2)) {
+                {
+                  sp = 0;
+                  frame.setTopV2(sp);
+                  frame.setPC(pc);
+                  frame.setGasRemaining(gas);
+                  result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+                  break;
+                }
+              }
+              long[] stack = s;
+              int top = (spBase + 896);
+              final int shiftOffset = (--top) << 2;
+              final UInt256 shift =
+                  new UInt256(
+                      stack[shiftOffset],
+                      stack[shiftOffset + 1],
+                      stack[shiftOffset + 2],
+                      stack[shiftOffset + 3]);
+              final int valueOffset = (--top) << 2;
+              final UInt256 value =
+                  new UInt256(
+                      stack[valueOffset],
+                      stack[valueOffset + 1],
+                      stack[valueOffset + 2],
+                      stack[valueOffset + 3]);
+              final UInt256 result2 = value.shl(shift);
+              int resultOffset = top << 2;
+              stack[resultOffset] = result2.u3();
+              stack[resultOffset + 1] = result2.u2();
+              stack[resultOffset + 2] = result2.u1();
+              stack[resultOffset + 3] = result2.u0();
+              sp = ++top;
+              cost = 3L;
+              step = 1;
+            }
+          } else {
+            {
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = new OperationResult(0, ExceptionalHaltReason.newInvalidOperation(opcode));
+            }
+          }
+        }
+        // END copied from ShlOperationV2.staticOperation
+        // BEGIN copied from GtOperationV2.staticOperation
+        case COPIED_GT -> {
+          if (!((spBase + 960) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          final long[] stack = s;
+          final int top = (spBase + 960);
+          final boolean greaterThan =
+              stackUtilCompareUnsigned(stack, (top - 1) << 2, (top - 2) << 2) > 0;
+          stackUtilSetLong(greaterThan ? 1L : 0L, stack, top - 2);
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from GtOperationV2.staticOperation
+        // BEGIN copied from PushOperationV2.SingleByte.staticOperation
+        case COPIED_PUSH0 -> {
+          if (shanghai) {
+            {
+              int pushSize = 0;
+              if (!((spBase + 1024) + 1 <= maxItems)) {
+                frame.setTopV2(sp);
+                frame.setPC(pc);
+                frame.setGasRemaining(gas);
+                result = AbstractOperationV2.OVERFLOW_RESPONSE;
+                break;
+              }
+              long u0 = 0;
+              final int start = (pcBase + 1024) + 1;
+              if (pushSize != 0 && start < code.length) {
+                u0 = code[start] & 0xFFL;
+              }
+              final int top = (spBase + 1024);
+              stackUtilSetLong(u0, s, top);
+              sp = top + 1;
+              pc = (pcBase + 1024) + pushSize;
+              if (pushSize == 0) {
+                cost = 2L;
+                step = 1;
+              } else {
+                cost = 3L;
+                step = 1;
+              }
+            }
+          } else {
+            {
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = new OperationResult(0, ExceptionalHaltReason.newInvalidOperation(opcode));
+            }
+          }
+        }
+        // END copied from PushOperationV2.SingleByte.staticOperation
+        // END GENERATED cases
+        default -> {
+          // everything else goes through executeOperationV2 below
+        }
       }
+      if (cost >= 0) {
+        if (gas < cost) {
+          haltOutOfGas(frame, sp, pc, gas - cost);
+          return;
+        }
+        gas -= cost;
+        pc += step;
+        continue;
+      }
+      if (result == null) {
+        frame.setTopV2(sp);
+        frame.setPC(pc);
+        frame.setGasRemaining(gas);
+        result = executeOperationV2(frame, code, pc, opcode);
+      }
+      completeOperation(frame, result);
       if (frame.getState() != State.CODE_EXECUTING) {
         return;
       }
-      final int pc = frame.getPC();
-      final int opcode = pc < code.length ? code[pc] & 0xff : 0;
-      try {
-        result =
-            switch (opcode) {
-              case 0x60 -> // PUSH1
-                  PushOperationV2.SingleByte.staticOperation(frame, code, pc, 1);
-              case 0x61, // PUSH2-8
-                  0x62,
-                  0x63,
-                  0x64,
-                  0x65,
-                  0x66,
-                  0x67 ->
-                  PushOperationV2.SingleLimb.staticOperation(frame, code, pc, opcode - PUSH_BASE);
-              case 0x80, // DUP1-16
-                  0x81,
-                  0x82,
-                  0x83,
-                  0x84,
-                  0x85,
-                  0x86,
-                  0x87,
-                  0x88,
-                  0x89,
-                  0x8a,
-                  0x8b,
-                  0x8c,
-                  0x8d,
-                  0x8e,
-                  0x8f ->
-                  DupOperationV2.staticOperation(frame, opcode - DupOperationV2.DUP_BASE);
-              case 0x90, // SWAP1-16
-                  0x91,
-                  0x92,
-                  0x93,
-                  0x94,
-                  0x95,
-                  0x96,
-                  0x97,
-                  0x98,
-                  0x99,
-                  0x9a,
-                  0x9b,
-                  0x9c,
-                  0x9d,
-                  0x9e,
-                  0x9f ->
-                  SwapOperationV2.staticOperation(frame, opcode - SwapOperationV2.SWAP_BASE);
-              case 0x5b -> JumpDestOperationV2.JUMPDEST_SUCCESS;
-              case 0x50 -> PopOperationV2.staticOperation(frame);
-              case 0x57 -> JumpiOperationV2.staticOperation(frame);
-              case 0x56 -> JumpOperationV2.staticOperation(frame);
-              case 0x01 -> AddOperationV2.staticOperation(frame);
-              case 0x15 -> IsZeroOperationV2.staticOperation(frame);
-              case 0x16 -> AndOperationV2.staticOperation(frame);
-              case 0x03 -> SubOperationV2.staticOperation(frame);
-              case 0x14 -> operationsV2[opcode].execute(frame, this); // EQ
-              case 0x10 -> LtOperationV2.staticOperation(frame);
-              case 0x1b ->
-                  enableConstantinople
-                      ? ShlOperationV2.staticOperation(frame)
-                      : InvalidOperationV2.invalidOperationResult(opcode);
-              case 0x11 -> GtOperationV2.staticOperation(frame);
-              case 0x5f -> // PUSH0
-                  enableShanghai
-                      ? PushOperationV2.SingleByte.staticOperation(frame, code, pc, 0)
-                      : InvalidOperationV2.invalidOperationResult(opcode);
-              default -> executeOperationV2(frame, code, pc, opcode);
-            };
-      } catch (final OverflowException oe) {
-        result = OVERFLOW_RESPONSE;
-      } catch (final UnderflowException ue) {
-        result = UNDERFLOW_RESPONSE;
-      }
+      sp = frame.stackTopV2();
+      pc = frame.getPC();
+      gas = frame.getRemainingGas();
     }
+  }
+
+  /** Halts the frame as {@link #completeOperation} does for an operation it cannot pay for. */
+  private static void haltOutOfGas(
+      final MessageFrame frame, final int sp, final int pc, final long gasLeft) {
+    frame.setTopV2(sp);
+    frame.setPC(pc);
+    frame.setGasRemaining(gasLeft);
+    frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+    frame.setState(State.EXCEPTIONAL_HALT);
   }
 
   /**
@@ -625,14 +1160,7 @@ public class EVM {
       final int opcode = pc < code.length ? code[pc] & 0xff : 0;
       frame.setCurrentOperation(pc < code.length ? operationArray[opcode] : endOfScriptStop);
       operationTracer.tracePreExecution(frame);
-      OperationResult result;
-      try {
-        result = executeOperationV2(frame, code, pc, opcode);
-      } catch (final OverflowException oe) {
-        result = OVERFLOW_RESPONSE;
-      } catch (final UnderflowException ue) {
-        result = UNDERFLOW_RESPONSE;
-      }
+      final OperationResult result = executeOperationV2(frame, code, pc, opcode);
       completeOperation(frame, result);
       operationTracer.tracePostExecution(frame, result);
     }
@@ -649,138 +1177,144 @@ public class EVM {
    */
   private OperationResult executeOperationV2(
       final MessageFrame frame, final byte[] code, final int pc, final int opcode) {
-    return switch (opcode) {
-      case 0x00 -> StopOperationV2.staticOperation(frame);
-      case 0x01 -> AddOperationV2.staticOperation(frame);
-      case 0x02 -> MulOperationV2.staticOperation(frame);
-      case 0x03 -> SubOperationV2.staticOperation(frame);
-      case 0x04 -> DivOperationV2.staticOperation(frame);
-      case 0x05 -> SDivOperationV2.staticOperation(frame);
-      case 0x06 -> ModOperationV2.staticOperation(frame);
-      case 0x07 -> SModOperationV2.staticOperation(frame);
-      case 0x08 -> AddModOperationV2.staticOperation(frame);
-      case 0x09 -> MulModOperationV2.staticOperation(frame);
-      case 0x0a -> ExpOperationV2.staticOperation(frame, gasCalculator);
-      case 0x0b -> SignExtendOperationV2.staticOperation(frame);
-      case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperationV2.invalidOperationResult(opcode);
-      case 0x10 -> LtOperationV2.staticOperation(frame);
-      case 0x11 -> GtOperationV2.staticOperation(frame);
-      case 0x12 -> SLtOperationV2.staticOperation(frame);
-      case 0x13 -> SGtOperationV2.staticOperation(frame);
-      case 0x14 -> operationsV2[opcode].execute(frame, this);
-      case 0x15 -> IsZeroOperationV2.staticOperation(frame);
-      case 0x16 -> AndOperationV2.staticOperation(frame);
-      case 0x17 -> OrOperationV2.staticOperation(frame);
-      case 0x18 -> XorOperationV2.staticOperation(frame);
-      case 0x19 -> NotOperationV2.staticOperation(frame);
-      case 0x1a -> ByteOperationV2.staticOperation(frame);
-      case 0x1b ->
-          enableConstantinople
-              ? ShlOperationV2.staticOperation(frame)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0x1c ->
-          enableConstantinople
-              ? ShrOperationV2.staticOperation(frame)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0x1d ->
-          enableConstantinople
-              ? SarOperationV2.staticOperation(frame)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0x1e ->
-          enableOsaka
-              ? CountLeadingZerosOperationV2.staticOperation(frame)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0x50 -> PopOperationV2.staticOperation(frame);
-      case 0x56 -> JumpOperationV2.staticOperation(frame);
-      case 0x57 -> JumpiOperationV2.staticOperation(frame);
-      case 0x5b -> JumpDestOperationV2.JUMPDEST_SUCCESS;
-      case 0x5F -> // PUSH0
-          enableShanghai
-              ? PushOperationV2.SingleByte.staticOperation(frame, code, pc, 0)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0x60 -> // PUSH1
-          PushOperationV2.SingleByte.staticOperation(frame, code, pc, 1);
-      case 0x61, // PUSH2-8
-          0x62,
-          0x63,
-          0x64,
-          0x65,
-          0x66,
-          0x67 ->
-          PushOperationV2.SingleLimb.staticOperation(frame, code, pc, opcode - PUSH_BASE);
-      case 0x68, // PUSH9-32
-          0x69,
-          0x6a,
-          0x6b,
-          0x6c,
-          0x6d,
-          0x6e,
-          0x6f,
-          0x70,
-          0x71,
-          0x72,
-          0x73,
-          0x74,
-          0x75,
-          0x76,
-          0x77,
-          0x78,
-          0x79,
-          0x7a,
-          0x7b,
-          0x7c,
-          0x7d,
-          0x7e,
-          0x7f ->
-          PushOperationV2.MultiLimb.staticOperation(frame, code, pc, opcode - PUSH_BASE);
-      case 0x80, // DUP1-16
-          0x81,
-          0x82,
-          0x83,
-          0x84,
-          0x85,
-          0x86,
-          0x87,
-          0x88,
-          0x89,
-          0x8a,
-          0x8b,
-          0x8c,
-          0x8d,
-          0x8e,
-          0x8f ->
-          DupOperationV2.staticOperation(frame, opcode - DupOperationV2.DUP_BASE);
-      case 0x90, // SWAP1-16
-          0x91,
-          0x92,
-          0x93,
-          0x94,
-          0x95,
-          0x96,
-          0x97,
-          0x98,
-          0x99,
-          0x9a,
-          0x9b,
-          0x9c,
-          0x9d,
-          0x9e,
-          0x9f ->
-          SwapOperationV2.staticOperation(frame, opcode - SwapOperationV2.SWAP_BASE);
-      case 0xe6 -> // DUPN (EIP-8024)
-          enableAmsterdam
-              ? DupNOperationV2.staticOperation(frame, code, pc)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0xe7 -> // SWAPN (EIP-8024)
-          enableAmsterdam
-              ? SwapNOperationV2.staticOperation(frame, code, pc)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      case 0xe8 -> // EXCHANGE (EIP-8024)
-          enableAmsterdam
-              ? ExchangeOperationV2.staticOperation(frame, code, pc)
-              : InvalidOperationV2.invalidOperationResult(opcode);
-      default -> operationsV2[opcode].execute(frame, this);
-    };
+    try {
+      return switch (opcode) {
+        case 0x00 -> StopOperationV2.staticOperation(frame);
+        case 0x01 -> AddOperationV2.staticOperation(frame);
+        case 0x02 -> MulOperationV2.staticOperation(frame);
+        case 0x03 -> SubOperationV2.staticOperation(frame);
+        case 0x04 -> DivOperationV2.staticOperation(frame);
+        case 0x05 -> SDivOperationV2.staticOperation(frame);
+        case 0x06 -> ModOperationV2.staticOperation(frame);
+        case 0x07 -> SModOperationV2.staticOperation(frame);
+        case 0x08 -> AddModOperationV2.staticOperation(frame);
+        case 0x09 -> MulModOperationV2.staticOperation(frame);
+        case 0x0a -> ExpOperationV2.staticOperation(frame, gasCalculator);
+        case 0x0b -> SignExtendOperationV2.staticOperation(frame);
+        case 0x0c, 0x0d, 0x0e, 0x0f -> InvalidOperationV2.invalidOperationResult(opcode);
+        case 0x10 -> LtOperationV2.staticOperation(frame);
+        case 0x11 -> GtOperationV2.staticOperation(frame);
+        case 0x12 -> SLtOperationV2.staticOperation(frame);
+        case 0x13 -> SGtOperationV2.staticOperation(frame);
+        case 0x14 -> operationsV2[opcode].execute(frame, this);
+        case 0x15 -> IsZeroOperationV2.staticOperation(frame);
+        case 0x16 -> AndOperationV2.staticOperation(frame);
+        case 0x17 -> OrOperationV2.staticOperation(frame);
+        case 0x18 -> XorOperationV2.staticOperation(frame);
+        case 0x19 -> NotOperationV2.staticOperation(frame);
+        case 0x1a -> ByteOperationV2.staticOperation(frame);
+        case 0x1b ->
+            enableConstantinople
+                ? ShlOperationV2.staticOperation(frame)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0x1c ->
+            enableConstantinople
+                ? ShrOperationV2.staticOperation(frame)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0x1d ->
+            enableConstantinople
+                ? SarOperationV2.staticOperation(frame)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0x1e ->
+            enableOsaka
+                ? CountLeadingZerosOperationV2.staticOperation(frame)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0x50 -> PopOperationV2.staticOperation(frame);
+        case 0x56 -> JumpOperationV2.staticOperation(frame);
+        case 0x57 -> JumpiOperationV2.staticOperation(frame);
+        case 0x5b -> JumpDestOperationV2.JUMPDEST_SUCCESS;
+        case 0x5F -> // PUSH0
+            enableShanghai
+                ? PushOperationV2.SingleByte.staticOperation(frame, code, pc, 0)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0x60 -> // PUSH1
+            PushOperationV2.SingleByte.staticOperation(frame, code, pc, 1);
+        case 0x61, // PUSH2-8
+            0x62,
+            0x63,
+            0x64,
+            0x65,
+            0x66,
+            0x67 ->
+            PushOperationV2.SingleLimb.staticOperation(frame, code, pc, opcode - PUSH_BASE);
+        case 0x68, // PUSH9-32
+            0x69,
+            0x6a,
+            0x6b,
+            0x6c,
+            0x6d,
+            0x6e,
+            0x6f,
+            0x70,
+            0x71,
+            0x72,
+            0x73,
+            0x74,
+            0x75,
+            0x76,
+            0x77,
+            0x78,
+            0x79,
+            0x7a,
+            0x7b,
+            0x7c,
+            0x7d,
+            0x7e,
+            0x7f ->
+            PushOperationV2.MultiLimb.staticOperation(frame, code, pc, opcode - PUSH_BASE);
+        case 0x80, // DUP1-16
+            0x81,
+            0x82,
+            0x83,
+            0x84,
+            0x85,
+            0x86,
+            0x87,
+            0x88,
+            0x89,
+            0x8a,
+            0x8b,
+            0x8c,
+            0x8d,
+            0x8e,
+            0x8f ->
+            DupOperationV2.staticOperation(frame, opcode - DupOperationV2.DUP_BASE);
+        case 0x90, // SWAP1-16
+            0x91,
+            0x92,
+            0x93,
+            0x94,
+            0x95,
+            0x96,
+            0x97,
+            0x98,
+            0x99,
+            0x9a,
+            0x9b,
+            0x9c,
+            0x9d,
+            0x9e,
+            0x9f ->
+            SwapOperationV2.staticOperation(frame, opcode - SwapOperationV2.SWAP_BASE);
+        case 0xe6 -> // DUPN (EIP-8024)
+            enableAmsterdam
+                ? DupNOperationV2.staticOperation(frame, code, pc)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0xe7 -> // SWAPN (EIP-8024)
+            enableAmsterdam
+                ? SwapNOperationV2.staticOperation(frame, code, pc)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        case 0xe8 -> // EXCHANGE (EIP-8024)
+            enableAmsterdam
+                ? ExchangeOperationV2.staticOperation(frame, code, pc)
+                : InvalidOperationV2.invalidOperationResult(opcode);
+        default -> operationsV2[opcode].execute(frame, this);
+      };
+    } catch (final OverflowException oe) {
+      return OVERFLOW_RESPONSE;
+    } catch (final UnderflowException ue) {
+      return UNDERFLOW_RESPONSE;
+    }
   }
 
   /**

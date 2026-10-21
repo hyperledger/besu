@@ -203,7 +203,8 @@ final class ProgramRun {
 
   /**
    * As {@link #run}, with a tracer that records what it sees before and after every operation: the
-   * operation, pc, depth, gas, refund, memory size, stack, gas cost and halt reason.
+   * operation, pc, depth, gas, refund, memory size, stack, gas cost and halt reason, and the pc a
+   * halting operation leaves behind.
    *
    * @param evm the EVM to run it on
    * @param code the contract's code
@@ -429,8 +430,9 @@ final class ProgramRun {
         final MessageFrame frame, final Operation.OperationResult result) {
       steps.add(
           String.format(
-              "%s -> cost %d halt %s gas %d stack %s",
+              "%s -> pc %d cost %d halt %s gas %d stack %s",
               before,
+              frame.getPC(),
               result.getGasCost(),
               result.getHaltReason(),
               frame.getRemainingGas(),

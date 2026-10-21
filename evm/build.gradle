@@ -78,3 +78,56 @@ publishing {
     }
   }
 }
+
+// The untraced EVM v2 loop runs copies of the most frequent operations' code. The copies are
+// generated into EVM.java from the operation classes, and every build checks that they are current.
+sourceSets {
+  loopgen
+}
+
+dependencies {
+  loopgenAnnotationProcessor(platform(project(':platform')))
+}
+
+def evmV2LoopSources = 'src/main/java'
+
+tasks.register('generateEvmV2Loop', JavaExec) {
+  group = 'build'
+  description = 'Copies the most frequent EVM v2 operations\' code into the untraced loop in EVM.java'
+  classpath = sourceSets.loopgen.runtimeClasspath
+  mainClass = 'org.hyperledger.besu.evm.loopgen.EvmV2LoopGenerator'
+  workingDir = projectDir
+  argumentProviders.add({
+    [
+      'write',
+      evmV2LoopSources,
+      sourceSets.main.compileClasspath.asPath
+    ]
+  } as CommandLineArgumentProvider)
+  finalizedBy 'spotlessApply'
+}
+
+def checkEvmV2Loop = tasks.register('checkEvmV2Loop', JavaExec) {
+  group = 'verification'
+  description = 'Checks that EVM.java holds the current copies of the operations\' code the untraced EVM v2 loop runs'
+  classpath = sourceSets.loopgen.runtimeClasspath
+  mainClass = 'org.hyperledger.besu.evm.loopgen.EvmV2LoopGenerator'
+  workingDir = projectDir
+  def marker = layout.buildDirectory.file('evmV2Loop/checked')
+  inputs.dir(evmV2LoopSources)
+  inputs.files(sourceSets.loopgen.runtimeClasspath)
+  inputs.files(sourceSets.main.compileClasspath)
+  outputs.file(marker)
+  argumentProviders.add({
+    [
+      'check',
+      evmV2LoopSources,
+      sourceSets.main.compileClasspath.asPath,
+      marker.get().asFile.path
+    ]
+  } as CommandLineArgumentProvider)
+}
+
+tasks.named('compileJava') {
+  dependsOn checkEvmV2Loop
+}

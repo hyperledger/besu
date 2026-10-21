@@ -61,6 +61,36 @@ public class ByteCodeBuilder {
   }
 
   /**
+   * Appends bytecode as it is.
+   *
+   * @param hex the bytecode in hex, which may hold spaces
+   * @return this
+   */
+  public ByteCodeBuilder hex(final String hex) {
+    byteCode.append(hex.replace(" ", ""));
+    return this;
+  }
+
+  /**
+   * The size of the bytecode so far, which is the offset of what comes next.
+   *
+   * @return the size in bytes
+   */
+  public int size() {
+    return (byteCode.length() - 2) / 2;
+  }
+
+  /**
+   * Operation to push a value as two bytes, so that a jump destination keeps its size.
+   *
+   * @param value the value, at most 0xffff
+   * @return this
+   */
+  public ByteCodeBuilder push2(final int value) {
+    return push(Bytes.of(value >>> 8, value & 0xff));
+  }
+
+  /**
    * Operation to push the value to the EVM stack
    *
    * @param value Integer value to push

@@ -52,17 +52,13 @@ class EvmV2LoopCompilationTest {
 
   private static final String LOOP = "org.hyperledger.besu.evm.EVM::runToHaltV2Untraced";
 
-  /** What the loop calls on every step besides the operation. */
-  private static final Set<String> STEP =
-      Set.of(
-          "EVM::completeOperation",
-          "MessageFrame::getState",
-          "MessageFrame::getPC",
-          "MessageFrame::setPC",
-          "MessageFrame::decrementRemainingGas",
-          "Operation$OperationResult::getHaltReason",
-          "Operation$OperationResult::getGasCost",
-          "Operation$OperationResult::getPcIncrement");
+  /**
+   * What the loop calls without needing it inlined: the general path, and what it does once an
+   * operation halts, which ends the loop. Any other call keeps the loop's locals in memory around
+   * it.
+   */
+  private static final Set<String> MAY_CALL =
+      Set.of("EVM::executeOperationV2", "EVM::completeOperation", "EVM::haltOutOfGas");
 
   /**
    * The most the loop and everything inlined into it may take of C2's 8000, leaving room for what a
@@ -83,9 +79,11 @@ class EvmV2LoopCompilationTest {
     for (final List<String> compilation : compilations) {
       final String report = String.join("\n", compilation);
       int inlined = EvmV2LoopMethodSizeTest.methodSizes().get("runToHaltV2Untraced");
-      final List<String> stepCalls = new ArrayList<>();
+      final List<String> calls = new ArrayList<>();
       final List<String> clipped = new ArrayList<>();
       int top = Integer.MAX_VALUE;
+      // the report indents a callee's calls below it
+      int skipBelow = Integer.MAX_VALUE;
       for (final String line : compilation) {
         final Matcher call = CALL.matcher(line);
         call.find();
@@ -99,8 +97,16 @@ class EvmV2LoopCompilationTest {
         }
         final String callee =
             call.group(2).substring(call.group(2).lastIndexOf('.') + 1) + "::" + call.group(3);
-        if (STEP.contains(callee) && !isInlined(decision)) {
-          stepCalls.add(line.strip());
+        if (call.start() <= skipBelow) {
+          skipBelow = Integer.MAX_VALUE;
+          if (MAY_CALL.contains(callee)) {
+            skipBelow = call.start();
+          } else if (!isInlined(decision)
+              && !decision.contains("intrinsic")
+              && !decision.contains("never executed")) {
+            // a call the profile never saw run is a trap until it runs, not a call
+            calls.add(line.strip());
+          }
         }
         if (call.start() == top && callee.equals("EVM::executeOperationV2")) {
           assertThat(isInlined(decision))
@@ -109,7 +115,7 @@ class EvmV2LoopCompilationTest {
         }
       }
       assertThat(clipped).as("calls C2 refused for the loop's budget:%n%s", report).isEmpty();
-      assertThat(stepCalls).as("steps of the loop C2 did not inline:%n%s", report).isEmpty();
+      assertThat(calls).as("calls in the loop C2 did not inline:%n%s", report).isEmpty();
       assertThat(inlined)
           .as("bytes of bytecode in the loop and inlined into it:%n%s", report)
           .isLessThanOrEqualTo(BUDGET);

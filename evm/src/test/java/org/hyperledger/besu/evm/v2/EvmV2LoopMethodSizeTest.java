@@ -41,10 +41,11 @@ class EvmV2LoopMethodSizeTest {
   private static final int FREQ_INLINE_SIZE = 325;
 
   /**
-   * The loop's own bytecode counts against the 8000 bytes C2 inlines into it, so it is held well
-   * under that. Raising this is a decision about the room left for the operations, not a formality.
+   * The loop's own bytecode, which holds the copies of the most frequent operations, counts against
+   * the 8000 bytes C2 inlines into it, together with what the copies call. Raising this is a
+   * decision about the room left for that, not a formality.
    */
-  private static final int LOOP_BUDGET = 1000;
+  private static final int LOOP_BUDGET = 3500;
 
   @Test
   void theUntracedLoopLeavesRoomToInlineInto() {
