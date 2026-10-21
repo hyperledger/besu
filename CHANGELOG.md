@@ -4,6 +4,7 @@
 
 ### Breaking Changes
 - `eth_call`, `eth_estimateGas`, `eth_createAccessList`, `trace_call` and `trace_callMany` now reject a call that sets `maxFeePerBlobGas` without blob versioned hashes, or that sets an empty `blobVersionedHashes` list, with `Invalid blob count` (`-32602`) at every fork. Previously a `maxFeePerBlobGas` without hashes was accepted and the call ran without blobs, and a `maxFeePerBlobGas` of 0 also set the blob base fee the call saw to 0. An empty list failed with `Internal error` (`-32603`). Each call in a `trace_callMany` bundle gets the same rule. `debug_traceCall` and `eth_simulateV1` reject only an empty `blobVersionedHashes` list, and still accept a `maxFeePerBlobGas` without hashes. [#11556](https://github.com/besu-eth/besu/pull/11556)
+- `trace_filter` now matches a block reward's author against `toAddress` in range queries, as it already did for a single block, so a filter on an author's address returns its reward traces. [#11436](https://github.com/besu-eth/besu/pull/11436)
 
 ### Bug fixes
 - The layered transaction pool no longer logs an `IndexOutOfBoundsException` when a sender's pending transactions are reconciled against an account nonce that leaves them `--tx-pool-max-future-by-sender` or more nonces ahead, as on a node that has fallen behind the chain head. Those transactions are now dropped during the reconciliation, as a new transaction that far ahead would be. [#11501](https://github.com/besu-eth/besu/issues/11501)
@@ -25,6 +26,7 @@
 - The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
 
 ### Additions and Improvements
+- `trace_filter` accepts `mode`: `intersection`, the default, or `union`, which matches a trace in either `fromAddress` or `toAddress`. An unknown value is rejected with `-32602`. [#11436](https://github.com/besu-eth/besu/pull/11436)
 - EVM v2 (`--Xevm-v2`) runs every opcode on its own stack and supports tracers. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
 - Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
@@ -118,7 +120,6 @@ opportunity to upgrade.
 - Snap sync no longer stalls when a download completes while the pipeline stage is handing on another result. [#11514](https://github.com/besu-eth/besu/pull/11514)
 
 ### Additions and Improvements
-- `trace_filter` accepts `mode`: `intersection`, the default, matches a trace in every populated `fromAddress` and `toAddress` list, and `union` matches a trace in either. A null `mode` is the default and an unknown value is rejected as invalid filter params (`-32602`). Previously any `mode`, including `intersection`, was rejected. A block reward is now matched by its author against `toAddress`, so a reward to a listed author is returned when `fromAddress` is empty, or in union mode. [#11436](https://github.com/besu-eth/besu/pull/11436)
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
 - Update Jackson to 2.21.6 to address CVE `CVE-2026-68497` [#11396](https://github.com/besu-eth/besu/pull/11396)
 - Update Jackson to 2.21.7 to address CVE `CVE-2026-91777` [#11503](https://github.com/besu-eth/besu/pull/11503)
