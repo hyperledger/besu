@@ -12,15 +12,12 @@
           {
             "stateOverrides": {
               "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
-                "comment": "Authorizer recipient",
                 "balance": "0x90000000000000000000000"
               },
               "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
-                "comment": "Sender account",
                 "balance": "0x90000000000000000000000"
               },
               "0xcccccccccccccccccccccccccccccccccccccccc": {
-                "comment": "Contract sends all its Ether to the address provided as a call data.",
                 "code": "5F5F5F5F475F355AF100"
               }
             },
