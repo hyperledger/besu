@@ -74,10 +74,33 @@ public class BlockStateCallResultTest {
   }
 
   @Test
-  public void revertWithPanicReturnsBareMessageWithData() {
+  public void revertWithPanicReturnsMessageWithPanicReason() {
     final Bytes panic =
         Bytes.fromHexString(
             "0x4e487b710000000000000000000000000000000000000000000000000000000000000011");
+    final JsonRpcError error = callError(failed(Optional.of(panic), Optional.empty()));
+
+    assertThat(error.getCode()).isEqualTo(3);
+    assertThat(error.getMessage())
+        .isEqualTo("execution reverted: arithmetic underflow or overflow");
+    assertThat(error.getData()).isEqualTo(panic.toHexString());
+  }
+
+  @Test
+  public void revertWithUnknownPanicCodeReturnsMessageWithCode() {
+    final Bytes panic =
+        Bytes.fromHexString(
+            "0x4e487b7100000000000000000000000000000000000000000000000000000000000000ff");
+    final JsonRpcError error = callError(failed(Optional.of(panic), Optional.empty()));
+
+    assertThat(error.getCode()).isEqualTo(3);
+    assertThat(error.getMessage()).isEqualTo("execution reverted: unknown panic code: 0xff");
+    assertThat(error.getData()).isEqualTo(panic.toHexString());
+  }
+
+  @Test
+  public void revertWithTruncatedPanicReturnsBareMessageWithData() {
+    final Bytes panic = Bytes.fromHexString("0x4e487b710011");
     final JsonRpcError error = callError(failed(Optional.of(panic), Optional.empty()));
 
     assertThat(error.getCode()).isEqualTo(3);
