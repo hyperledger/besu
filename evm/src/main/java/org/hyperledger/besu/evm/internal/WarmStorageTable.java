@@ -40,52 +40,57 @@ import org.apache.tuweni.bytes.Bytes32;
 public final class WarmStorageTable implements Undoable {
 
   private static final int INITIAL_CAPACITY = 64;
-  private static final long[] MULTIPLIERS = new long[15];
+
+  // a cell whose hash is zero is empty, so no entry may hash to zero
+  private static final long EMPTY_CELL = 0L;
+
+  // a key as words: the slot's four, then the address's two and a half
+  private static final int KEY_WORDS = 7;
+
+  private static final long LOW_32_BITS = 0xffffffffL;
+
+  private static final long[] HASH_SEEDS = new long[15];
 
   static {
     final SecureRandom random = SecureRandomProvider.createSecureRandom();
-    for (int i = 0; i < MULTIPLIERS.length; i++) {
-      MULTIPLIERS[i] = random.nextLong();
+    for (int i = 0; i < HASH_SEEDS.length; i++) {
+      HASH_SEEDS[i] = random.nextLong();
     }
   }
 
-  private static final VarHandle LONG_BE =
+  private static final VarHandle LONG_BIG_ENDIAN =
       MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
-  private static final VarHandle INT_BE =
+
+  private static final VarHandle INT_BIG_ENDIAN =
       MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
 
-  // a key as words: the slot's four, then the address's two and a half
-  private static final int WORDS = 7;
+  // The table: one entry per cell, spread over parallel arrays.
+  private long[] cellHashes;
 
-  private long[] hashes;
   // compared instead of the keys themselves, whose equals reads them a byte at a time
-  private long[] words;
-  private Address[] addresses;
-  private Bytes32[] slots;
-  private int mask;
-  private int size;
-  // the key being looked up; a table belongs to one transaction, so one thread
-  private final long[] probe = new long[WORDS];
+  private long[] cellKeys;
 
-  private long[] logLevels;
-  private Address[] logAddresses;
-  private Bytes32[] logSlots;
-  private int logSize;
+  private Address[] cellAddresses;
+  private Bytes32[] cellSlots;
+  private int indexMask;
+  private int size;
+
+  // a table belongs to one transaction and so to one thread, which lets lookups share one key
+  private final long[] lookupKey = new long[KEY_WORDS];
+
+  // The undo log: every inserted entry with the mark it was inserted at, oldest first.
+  private long[] undoLogMarks;
+  private Address[] undoLogAddresses;
+  private Bytes32[] undoLogSlots;
+  private int undoLogSize;
 
   /** Creates an empty table. */
   public WarmStorageTable() {
-    allocate(INITIAL_CAPACITY);
-    logLevels = new long[INITIAL_CAPACITY];
-    logAddresses = new Address[INITIAL_CAPACITY];
-    logSlots = new Bytes32[INITIAL_CAPACITY];
-  }
+    allocateCells(INITIAL_CAPACITY);
 
-  private void allocate(final int capacity) {
-    hashes = new long[capacity];
-    words = new long[capacity * WORDS];
-    addresses = new Address[capacity];
-    slots = new Bytes32[capacity];
-    mask = capacity - 1;
+    undoLogMarks = new long[INITIAL_CAPACITY];
+    undoLogAddresses = new Address[INITIAL_CAPACITY];
+    undoLogSlots = new Bytes32[INITIAL_CAPACITY];
   }
 
   /**
@@ -96,27 +101,21 @@ public final class WarmStorageTable implements Undoable {
    * @return true if the slot was already warm
    */
   public boolean warmUp(final Address address, final Bytes32 slot) {
-    final long[] key = load(address, slot);
+    final long[] key = readKey(address, slot);
     final long hash = hash(key);
-    int index = (int) hash & mask;
-    while (true) {
-      final long candidate = hashes[index];
-      if (candidate == 0L) {
-        break;
-      }
-      if (candidate == hash && holds(index, key)) {
-        return true;
-      }
-      index = (index + 1) & mask;
+
+    final int cell = findCell(key, hash);
+    if (cellHashes[cell] != EMPTY_CELL) {
+      return true;
     }
-    hashes[index] = hash;
-    System.arraycopy(key, 0, words, index * WORDS, WORDS);
-    addresses[index] = address;
-    slots[index] = slot;
+
+    fillCell(cell, hash, key, address, slot);
     size++;
-    log(address, slot);
-    if (size * 2 > hashes.length) {
-      grow();
+    appendToUndoLog(address, slot);
+
+    // at most half full, so probe runs stay short
+    if (size * 2 > cellHashes.length) {
+      doubleCapacity();
     }
     return false;
   }
@@ -129,8 +128,9 @@ public final class WarmStorageTable implements Undoable {
    * @return true if the slot is warm
    */
   public boolean contains(final Address address, final Bytes32 slot) {
-    final long[] key = load(address, slot);
-    return find(key, hash(key)) >= 0;
+    final long[] key = readKey(address, slot);
+    final int cell = findCell(key, hash(key));
+    return cellHashes[cell] != EMPTY_CELL;
   }
 
   /**
@@ -157,153 +157,207 @@ public final class WarmStorageTable implements Undoable {
    * @param visitor receives the account and the slot
    */
   public void forEach(final BiConsumer<Address, Bytes32> visitor) {
-    for (int i = 0; i < hashes.length; i++) {
-      if (hashes[i] != 0L) {
-        visitor.accept(addresses[i], slots[i]);
+    for (int cell = 0; cell < cellHashes.length; cell++) {
+      if (cellHashes[cell] != EMPTY_CELL) {
+        visitor.accept(cellAddresses[cell], cellSlots[cell]);
       }
     }
   }
 
   @Override
   public long lastUpdate() {
-    return logSize == 0 ? 0L : logLevels[logSize - 1];
+    return undoLogSize == 0 ? 0L : undoLogMarks[undoLogSize - 1];
   }
 
   @Override
   public void undo(final long mark) {
-    while (logSize > 0 && logLevels[logSize - 1] > mark) {
-      logSize--;
-      final Address address = logAddresses[logSize];
-      final Bytes32 slot = logSlots[logSize];
-      logAddresses[logSize] = null;
-      logSlots[logSize] = null;
-      final long[] key = load(address, slot);
-      remove(find(key, hash(key)));
+    while (undoLogSize > 0 && undoLogMarks[undoLogSize - 1] > mark) {
+      undoLogSize--;
+
+      final Address address = undoLogAddresses[undoLogSize];
+      final Bytes32 slot = undoLogSlots[undoLogSize];
+      undoLogAddresses[undoLogSize] = null;
+      undoLogSlots[undoLogSize] = null;
+
+      final long[] key = readKey(address, slot);
+      removeCell(findCell(key, hash(key)));
     }
-  }
-
-  private void log(final Address address, final Bytes32 slot) {
-    if (logSize == logLevels.length) {
-      final int capacity = logSize * 2;
-      logLevels = Arrays.copyOf(logLevels, capacity);
-      logAddresses = Arrays.copyOf(logAddresses, capacity);
-      logSlots = Arrays.copyOf(logSlots, capacity);
-    }
-    logLevels[logSize] = Undoable.incrementMarkStatic();
-    logAddresses[logSize] = address;
-    logSlots[logSize] = slot;
-    logSize++;
-  }
-
-  private int find(final long[] key, final long hash) {
-    int index = (int) hash & mask;
-    while (true) {
-      final long candidate = hashes[index];
-      if (candidate == 0L) {
-        return -1;
-      }
-      if (candidate == hash && holds(index, key)) {
-        return index;
-      }
-      index = (index + 1) & mask;
-    }
-  }
-
-  private boolean holds(final int index, final long[] key) {
-    final int base = index * WORDS;
-    return words[base] == key[0]
-        && words[base + 1] == key[1]
-        && words[base + 2] == key[2]
-        && words[base + 3] == key[3]
-        && words[base + 4] == key[4]
-        && words[base + 5] == key[5]
-        && words[base + 6] == key[6];
-  }
-
-  private long[] load(final Address address, final Bytes32 slot) {
-    final byte[] slotBytes = slot.toArrayUnsafe();
-    final byte[] addressBytes = address.getBytes().toArrayUnsafe();
-    final long[] key = probe;
-    key[0] = (long) LONG_BE.get(slotBytes, 0);
-    key[1] = (long) LONG_BE.get(slotBytes, 8);
-    key[2] = (long) LONG_BE.get(slotBytes, 16);
-    key[3] = (long) LONG_BE.get(slotBytes, 24);
-    key[4] = (long) LONG_BE.get(addressBytes, 0);
-    key[5] = (long) LONG_BE.get(addressBytes, 8);
-    key[6] = (int) INT_BE.get(addressBytes, 16) & 0xffffffffL;
-    return key;
   }
 
   /**
-   * Removes the entry at an index, shifting later entries of the same probe run back so every
-   * remaining entry stays reachable from its home index.
+   * Returns the cell holding the key, or, if the table does not hold it, the empty cell that ends
+   * its probe run.
    */
-  private void remove(final int index) {
-    int hole = index;
-    int next = (hole + 1) & mask;
-    while (hashes[next] != 0L) {
-      final int home = (int) hashes[next] & mask;
-      // the entry can move into the hole only if the hole lies on its way from home
-      final boolean movable =
-          hole <= next ? (home <= hole || home > next) : (home <= hole && home > next);
-      if (movable) {
-        hashes[hole] = hashes[next];
-        System.arraycopy(words, next * WORDS, words, hole * WORDS, WORDS);
-        addresses[hole] = addresses[next];
-        slots[hole] = slots[next];
-        hole = next;
+  private int findCell(final long[] key, final long hash) {
+    int cell = homeCell(hash);
+    while (cellHashes[cell] != EMPTY_CELL) {
+      if (cellHashes[cell] == hash && keyEquals(cell, key)) {
+        return cell;
       }
-      next = (next + 1) & mask;
+      cell = nextCell(cell);
     }
-    hashes[hole] = 0L;
-    addresses[hole] = null;
-    slots[hole] = null;
+    return cell;
+  }
+
+  private int homeCell(final long hash) {
+    return (int) hash & indexMask;
+  }
+
+  private int nextCell(final int cell) {
+    return (cell + 1) & indexMask;
+  }
+
+  private boolean keyEquals(final int cell, final long[] key) {
+    final int offset = cell * KEY_WORDS;
+    return cellKeys[offset] == key[0]
+        && cellKeys[offset + 1] == key[1]
+        && cellKeys[offset + 2] == key[2]
+        && cellKeys[offset + 3] == key[3]
+        && cellKeys[offset + 4] == key[4]
+        && cellKeys[offset + 5] == key[5]
+        && cellKeys[offset + 6] == key[6];
+  }
+
+  private void fillCell(
+      final int cell,
+      final long hash,
+      final long[] key,
+      final Address address,
+      final Bytes32 slot) {
+    cellHashes[cell] = hash;
+    System.arraycopy(key, 0, cellKeys, cell * KEY_WORDS, KEY_WORDS);
+    cellAddresses[cell] = address;
+    cellSlots[cell] = slot;
+  }
+
+  private void moveCell(final int from, final int to) {
+    cellHashes[to] = cellHashes[from];
+    System.arraycopy(cellKeys, from * KEY_WORDS, cellKeys, to * KEY_WORDS, KEY_WORDS);
+    cellAddresses[to] = cellAddresses[from];
+    cellSlots[to] = cellSlots[from];
+  }
+
+  private void clearCell(final int cell) {
+    cellHashes[cell] = EMPTY_CELL;
+    cellAddresses[cell] = null;
+    cellSlots[cell] = null;
+  }
+
+  /**
+   * Empties a cell and shifts the later entries of its probe run back, so the table needs no
+   * tombstones and every remaining entry stays reachable from its home cell.
+   */
+  private void removeCell(final int removed) {
+    int hole = removed;
+    int cell = nextCell(hole);
+
+    while (cellHashes[cell] != EMPTY_CELL) {
+      final int home = homeCell(cellHashes[cell]);
+      // a lookup walks from the home cell onwards, so the entry may only move back as far as that
+      if (probeDistance(home, hole) < probeDistance(home, cell)) {
+        moveCell(cell, hole);
+        hole = cell;
+      }
+      cell = nextCell(cell);
+    }
+
+    clearCell(hole);
     size--;
   }
 
-  private void grow() {
-    final long[] oldHashes = hashes;
-    final long[] oldWords = words;
-    final Address[] oldAddresses = addresses;
-    final Bytes32[] oldSlots = slots;
-    allocate(oldHashes.length * 2);
-    for (int i = 0; i < oldHashes.length; i++) {
-      final long hash = oldHashes[i];
-      if (hash != 0L) {
-        int index = (int) hash & mask;
-        while (hashes[index] != 0L) {
-          index = (index + 1) & mask;
-        }
-        hashes[index] = hash;
-        System.arraycopy(oldWords, i * WORDS, words, index * WORDS, WORDS);
-        addresses[index] = oldAddresses[i];
-        slots[index] = oldSlots[i];
+  private int probeDistance(final int home, final int cell) {
+    return (cell - home) & indexMask;
+  }
+
+  private void allocateCells(final int capacity) {
+    cellHashes = new long[capacity];
+    cellKeys = new long[capacity * KEY_WORDS];
+    cellAddresses = new Address[capacity];
+    cellSlots = new Bytes32[capacity];
+    indexMask = capacity - 1;
+  }
+
+  private void doubleCapacity() {
+    final long[] oldHashes = cellHashes;
+    final long[] oldKeys = cellKeys;
+    final Address[] oldAddresses = cellAddresses;
+    final Bytes32[] oldSlots = cellSlots;
+
+    allocateCells(oldHashes.length * 2);
+
+    for (int oldCell = 0; oldCell < oldHashes.length; oldCell++) {
+      final long hash = oldHashes[oldCell];
+      if (hash == EMPTY_CELL) {
+        continue;
       }
+
+      int cell = homeCell(hash);
+      while (cellHashes[cell] != EMPTY_CELL) {
+        cell = nextCell(cell);
+      }
+
+      cellHashes[cell] = hash;
+      System.arraycopy(oldKeys, oldCell * KEY_WORDS, cellKeys, cell * KEY_WORDS, KEY_WORDS);
+      cellAddresses[cell] = oldAddresses[oldCell];
+      cellSlots[cell] = oldSlots[oldCell];
     }
   }
 
+  private void appendToUndoLog(final Address address, final Bytes32 slot) {
+    if (undoLogSize == undoLogMarks.length) {
+      final int capacity = undoLogSize * 2;
+      undoLogMarks = Arrays.copyOf(undoLogMarks, capacity);
+      undoLogAddresses = Arrays.copyOf(undoLogAddresses, capacity);
+      undoLogSlots = Arrays.copyOf(undoLogSlots, capacity);
+    }
+
+    undoLogMarks[undoLogSize] = Undoable.incrementMarkStatic();
+    undoLogAddresses[undoLogSize] = address;
+    undoLogSlots[undoLogSize] = slot;
+    undoLogSize++;
+  }
+
+  private long[] readKey(final Address address, final Bytes32 slot) {
+    final byte[] slotBytes = slot.toArrayUnsafe();
+    final byte[] addressBytes = address.getBytes().toArrayUnsafe();
+
+    final long[] key = lookupKey;
+    key[0] = (long) LONG_BIG_ENDIAN.get(slotBytes, 0);
+    key[1] = (long) LONG_BIG_ENDIAN.get(slotBytes, 8);
+    key[2] = (long) LONG_BIG_ENDIAN.get(slotBytes, 16);
+    key[3] = (long) LONG_BIG_ENDIAN.get(slotBytes, 24);
+    key[4] = (long) LONG_BIG_ENDIAN.get(addressBytes, 0);
+    key[5] = (long) LONG_BIG_ENDIAN.get(addressBytes, 8);
+    key[6] = (int) INT_BIG_ENDIAN.get(addressBytes, 16) & LOW_32_BITS;
+    return key;
+  }
+
   private static long hash(final long[] key) {
-    final long hash = multiplyMix(key);
-    // zero marks an empty cell
-    return hash == 0L ? 1L : hash;
+    final long hash = pairMultiplyShift(key);
+    return hash == EMPTY_CELL ? 1L : hash;
   }
 
   /**
    * Pair-multiply-shift over the 32-bit lanes of the slot and the address: each pair of lanes is
-   * offset by secret constants, multiplied, and the products summed; the top 32 bits of the sum are
-   * the hash. Summing single-lane products modulo 2^64 would let two keys that differ only in the
-   * top bits of two lanes collide regardless of the secret, which is why the lanes are paired and
-   * the high half is taken.
+   * offset by secret seeds, multiplied, and the products summed; the top 32 bits of the sum are the
+   * hash. Summing single-lane products modulo 2^64 would let two keys that differ only in the top
+   * bits of two lanes collide regardless of the seeds, which is why the lanes are paired and the
+   * high half is taken.
    */
-  private static long multiplyMix(final long[] key) {
-    long sum = MULTIPLIERS[14];
-    sum += (MULTIPLIERS[0] + (key[0] >>> 32)) * (MULTIPLIERS[1] + (key[0] & 0xffffffffL));
-    sum += (MULTIPLIERS[2] + (key[1] >>> 32)) * (MULTIPLIERS[3] + (key[1] & 0xffffffffL));
-    sum += (MULTIPLIERS[4] + (key[2] >>> 32)) * (MULTIPLIERS[5] + (key[2] & 0xffffffffL));
-    sum += (MULTIPLIERS[6] + (key[3] >>> 32)) * (MULTIPLIERS[7] + (key[3] & 0xffffffffL));
-    sum += (MULTIPLIERS[8] + (key[4] >>> 32)) * (MULTIPLIERS[9] + (key[4] & 0xffffffffL));
-    sum += (MULTIPLIERS[10] + (key[5] >>> 32)) * (MULTIPLIERS[11] + (key[5] & 0xffffffffL));
-    sum += (MULTIPLIERS[12] + key[6]) * MULTIPLIERS[13];
+  private static long pairMultiplyShift(final long[] key) {
+    long sum = HASH_SEEDS[14];
+    sum += multiplyLanes(key[0], HASH_SEEDS[0], HASH_SEEDS[1]);
+    sum += multiplyLanes(key[1], HASH_SEEDS[2], HASH_SEEDS[3]);
+    sum += multiplyLanes(key[2], HASH_SEEDS[4], HASH_SEEDS[5]);
+    sum += multiplyLanes(key[3], HASH_SEEDS[6], HASH_SEEDS[7]);
+    sum += multiplyLanes(key[4], HASH_SEEDS[8], HASH_SEEDS[9]);
+    sum += multiplyLanes(key[5], HASH_SEEDS[10], HASH_SEEDS[11]);
+    // the last key word holds a single lane, the address's final four bytes
+    sum += (HASH_SEEDS[12] + key[6]) * HASH_SEEDS[13];
     return sum >>> 32;
+  }
+
+  private static long multiplyLanes(final long word, final long highSeed, final long lowSeed) {
+    return (highSeed + (word >>> 32)) * (lowSeed + (word & LOW_32_BITS));
   }
 }
