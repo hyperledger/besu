@@ -23,6 +23,7 @@
 - `eth_getLogs` and GraphQL `logs` now enforce the `--rpc-max-log-filter-addresses` cap on the address list that `eth_newFilter` and `eth_subscribe` already applied, closing that bypass of the fix for [GHSA-p6f8-q9mp-7mj9](https://github.com/besu-eth/besu/security/advisories/GHSA-p6f8-q9mp-7mj9). A request naming more addresses than the cap is rejected before any block is read: JSON-RPC returns `Filter address count exceeds limit` (`-32005`) and GraphQL returns `Invalid params`. The default stays 1000 addresses; `--rpc-max-log-filter-addresses=0` keeps the previous uncapped behaviour. [#11667](https://github.com/besu-eth/besu/pull/11667)
 - Debug traces with an opcode filter or a step limit report the post-execution gas of the last recorded operation; every later operation overwrote it. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
+- A peer that answers a header, body or sync block body request with malformed RLP is now disconnected for breach of protocol, as it already was for pooled transactions, receipts and block access lists. Previously the decoding failure was logged at ERROR as a server error and the peer stayed connected. [#11451](https://github.com/besu-eth/besu/pull/11451)
 
 ### Additions and Improvements
 - EVM v2 (`--Xevm-v2`) runs every opcode on its own stack and supports tracers. [#11524](https://github.com/besu-eth/besu/pull/11524)
