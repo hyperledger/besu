@@ -87,6 +87,8 @@ sourceSets {
 
 dependencies {
   loopgenAnnotationProcessor(platform(project(':platform')))
+  // EvmV2LoopGeneratorTest runs the generator on a small example of an operation
+  testImplementation sourceSets.loopgen.output
 }
 
 def evmV2LoopSources = 'src/main/java'

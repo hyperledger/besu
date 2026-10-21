@@ -36,8 +36,8 @@ import com.sun.source.util.TreePath;
 
 /**
  * What copied code names but EVM cannot see, because the operations declare it private or package
- * private: their result constants and their static helpers. Each is copied into EVM once, as it is,
- * and the copies name the copy.
+ * private: their result constants and their static helpers. Each is copied into EVM once, with the
+ * names in it written as EVM can resolve them, and the copies name the copy.
  */
 final class CopiedDeclarations {
 
@@ -99,9 +99,16 @@ final class CopiedDeclarations {
     final String name =
         upperSnake(owner.getSimpleName().toString()) + "_" + constant.getSimpleName();
     if (!constants.containsKey(name)) {
+      final NewClassTree creation = creation(constant);
+      final TreePath creationPath = new TreePath(sources.pathTo(constant), creation);
+      final SourceCopier copier = new SourceCopier(sources, this, null);
       final List<String> arguments = new ArrayList<>();
-      for (final ExpressionTree argument : creation(constant).getArguments()) {
-        arguments.add(argument.toString());
+      for (final ExpressionTree argument : creation.getArguments()) {
+        arguments.add(
+            copier.copy(
+                new TreePath(creationPath, argument),
+                new Scope(null),
+                SourceCopier.State.IN_FRAME));
       }
       constants.put(
           name,

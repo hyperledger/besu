@@ -80,6 +80,9 @@ import com.sun.source.util.TreePath;
  * The frame's stack became the loop's {@code sp}, read as {@code spBase} plus the case's constant.
  * The success it returned became its gas cost and pc step. The halt it returned hands the loop's
  * state to the frame and leaves the result for the loop to complete, as the general path does.
+ *
+ * <p>{@code EvmV2LoopGeneratorTest} runs the generator on a smaller example, which shows each rule:
+ * {@code src/test/resources/loopgen-example} holds its input and the EVM.java written from it.
  */
 public final class EvmV2LoopGenerator {
 
@@ -107,7 +110,7 @@ public final class EvmV2LoopGenerator {
 
     final String generated;
     try {
-      generated = generate(sourceRoot, args[2], current);
+      generated = generate(sourceRoot, args[2], current, CopiedOperations.ALL);
     } catch (final GeneratorException e) {
       System.err.println("The EVM v2 loop generator stopped: " + e.getMessage());
       System.exit(1);
@@ -135,15 +138,28 @@ public final class EvmV2LoopGenerator {
     }
   }
 
-  /** EVM.java's text with the generated regions replaced by fresh copies. */
-  private static String generate(
-      final Path sourceRoot, final String classPath, final String current) throws IOException {
+  /**
+   * EVM.java's text with the generated regions replaced by fresh copies.
+   *
+   * @param sourceRoot the directory with EVM.java and the operations under their packages
+   * @param classPath the class path they compile against
+   * @param current EVM.java's current text
+   * @param operations the operations to copy, in the order of the loop's switch
+   * @return the new text
+   * @throws IOException if a source cannot be read
+   */
+  static String generate(
+      final Path sourceRoot,
+      final String classPath,
+      final String current,
+      final List<CopiedOperations.Operation> operations)
+      throws IOException {
     try (JavaSources sources = JavaSources.read(sourceRoot, EVM_JAVA, classPath)) {
       final Map<Integer, TreePath> generalPathCases = sources.executeOperationV2Cases();
       final CopiedDeclarations declarations = new CopiedDeclarations(sources);
       final List<GeneratedRegions.CopiedCase> cases = new ArrayList<>();
       int index = 1;
-      for (final CopiedOperations.Operation operation : CopiedOperations.ALL) {
+      for (final CopiedOperations.Operation operation : operations) {
         final TreePath generalPathCase = generalPathCases.get(operation.opcode());
         if (generalPathCase == null) {
           throw new GeneratorException(
@@ -165,8 +181,7 @@ public final class EvmV2LoopGenerator {
   }
 
   /** Where two texts first differ once whitespace, which the formatter decides, is ignored. */
-  private static String firstDifferenceIgnoringWhitespace(
-      final String expected, final String actual) {
+  static String firstDifferenceIgnoringWhitespace(final String expected, final String actual) {
     final String a = expected.replaceAll("\\s", "");
     final String b = actual.replaceAll("\\s", "");
     if (a.equals(b)) {
