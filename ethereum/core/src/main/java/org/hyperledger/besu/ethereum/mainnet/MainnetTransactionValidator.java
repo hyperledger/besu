@@ -335,7 +335,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
       }
     }
 
-    if (Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {
+    if (!validationParams.isAllowPastNonce()
+        && Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_LOW,
           String.format(
@@ -394,11 +395,10 @@ public class MainnetTransactionValidator implements TransactionValidator {
               halfCurveOrder, signature.getS()));
     }
 
-    // org.bouncycastle.math.ec.ECCurve.AbstractFp.decompressPoint throws an
-    // IllegalArgumentException for "Invalid point compression" for bad signatures.
+    // sender recovery throws for a signature that does not recover a public key
     try {
       transaction.getSender();
-    } catch (final IllegalArgumentException e) {
+    } catch (final IllegalArgumentException | IllegalStateException e) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_SIGNATURE,
           "sender could not be extracted from transaction signature");

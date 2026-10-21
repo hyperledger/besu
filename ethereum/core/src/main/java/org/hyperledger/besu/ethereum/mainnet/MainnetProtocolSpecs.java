@@ -58,15 +58,11 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidatorBuilder;
-import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.TransactionReceiptFactory;
-import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessListFactory;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunPreExecutionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierPreExecutionProcessor;
@@ -1100,87 +1096,6 @@ public abstract class MainnetProtocolSpecs {
         BPO2);
   }
 
-  static ProtocolSpecBuilder bpo3Definition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningConfiguration miningConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-    ProtocolSpecBuilder builder =
-        bpo2Definition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            balConfiguration,
-            metricsSystem);
-    return applyBlobSchedule(
-        builder,
-        genesisConfigOptions,
-        BlobScheduleOptions::getBpo3,
-        GenesisConfigOptions::getBpo3Time,
-        BPO3);
-  }
-
-  static ProtocolSpecBuilder bpo4Definition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningConfiguration miningConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-    ProtocolSpecBuilder builder =
-        bpo3Definition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            balConfiguration,
-            metricsSystem);
-    return applyBlobSchedule(
-        builder,
-        genesisConfigOptions,
-        BlobScheduleOptions::getBpo4,
-        GenesisConfigOptions::getBpo4Time,
-        BPO4);
-  }
-
-  static ProtocolSpecBuilder bpo5Definition(
-      final Optional<BigInteger> chainId,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningConfiguration miningConfiguration,
-      final boolean isParallelTxProcessingEnabled,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem) {
-    ProtocolSpecBuilder builder =
-        bpo4Definition(
-            chainId,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningConfiguration,
-            isParallelTxProcessingEnabled,
-            balConfiguration,
-            metricsSystem);
-    return applyBlobSchedule(
-        builder,
-        genesisConfigOptions,
-        BlobScheduleOptions::getBpo5,
-        GenesisConfigOptions::getBpo5Time,
-        BPO5);
-  }
-
   static ProtocolSpecBuilder amsterdamDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1191,7 +1106,7 @@ public abstract class MainnetProtocolSpecs {
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
     final ProtocolSpecBuilder amsterdamSpecBuilder =
-        bpo5Definition(
+        bpo2Definition(
                 chainId,
                 enableRevertReason,
                 genesisConfigOptions,
@@ -1317,6 +1232,87 @@ public abstract class MainnetProtocolSpecs {
     return amsterdamSpecBuilder;
   }
 
+  static ProtocolSpecBuilder bpo3Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        amsterdamDefinition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem);
+    return applyBlobSchedule(
+        builder,
+        genesisConfigOptions,
+        BlobScheduleOptions::getBpo3,
+        GenesisConfigOptions::getBpo3Time,
+        BPO3);
+  }
+
+  static ProtocolSpecBuilder bpo4Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        bpo3Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem);
+    return applyBlobSchedule(
+        builder,
+        genesisConfigOptions,
+        BlobScheduleOptions::getBpo4,
+        GenesisConfigOptions::getBpo4Time,
+        BPO4);
+  }
+
+  static ProtocolSpecBuilder bpo5Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningConfiguration miningConfiguration,
+      final boolean isParallelTxProcessingEnabled,
+      final BalConfiguration balConfiguration,
+      final MetricsSystem metricsSystem) {
+    ProtocolSpecBuilder builder =
+        bpo4Definition(
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningConfiguration,
+            isParallelTxProcessingEnabled,
+            balConfiguration,
+            metricsSystem);
+    return applyBlobSchedule(
+        builder,
+        genesisConfigOptions,
+        BlobScheduleOptions::getBpo5,
+        GenesisConfigOptions::getBpo5Time,
+        BPO5);
+  }
+
   static ProtocolSpecBuilder bogotaDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -1326,7 +1322,7 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem) {
-    return amsterdamDefinition(
+    return bpo5Definition(
             chainId,
             enableRevertReason,
             genesisConfigOptions,
@@ -1492,23 +1488,9 @@ public abstract class MainnetProtocolSpecs {
   record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
 
     @Override
-    public BlockProcessingResult processBlock(
-        final ProtocolContext protocolContext,
-        final Blockchain blockchain,
-        final MutableWorldState worldState,
-        final Block block) {
-      return processBlock(protocolContext, blockchain, worldState, block, Optional.empty());
-    }
-
-    @Override
-    public BlockProcessingResult processBlock(
-        final ProtocolContext protocolContext,
-        final Blockchain blockchain,
-        final MutableWorldState worldState,
-        final Block block,
-        final Optional<BlockAccessList> blockAccessList) {
-      updateWorldStateForDao(worldState);
-      return wrapped.processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
+    public BlockProcessingResult processBlock(final BlockExecutionContext context) {
+      updateWorldStateForDao(context.getWorldState());
+      return wrapped.processBlock(context);
     }
 
     private static final Address DAO_REFUND_CONTRACT_ADDRESS =
