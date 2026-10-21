@@ -42,8 +42,8 @@ public final class Accounts {
         account.getNonce(), account.getBalance(), storageRoot, account.getCodeHash());
   }
 
-  /** Returns whether a storage trie can be built for this root: neither empty nor unknown. */
-  public static boolean hasBuildableStorage(final Hash storageRoot) {
+  /** Returns whether the storage trie of this root is known: neither empty nor unknown. */
+  public static boolean hasKnownStorageTrie(final Hash storageRoot) {
     return !storageRoot.equals(Hash.EMPTY_TRIE_HASH) && !storageRoot.equals(UNKNOWN_STORAGE_ROOT);
   }
 }

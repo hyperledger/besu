@@ -244,7 +244,7 @@ public final class WorldStateTrieBuilder {
         throw new CancellationException("trie build cancelled");
       }
       final PatriciaTrieAccountValue value = Accounts.decode(rlp);
-      if (Accounts.hasBuildableStorage(value.getStorageRoot()) && !trieLeft.test(hash)) {
+      if (Accounts.hasKnownStorageTrie(value.getStorageRoot()) && !trieLeft.test(hash)) {
         accountTrie.insert(hash, rlp);
         accounts.increment();
         keptStorageTries.increment();

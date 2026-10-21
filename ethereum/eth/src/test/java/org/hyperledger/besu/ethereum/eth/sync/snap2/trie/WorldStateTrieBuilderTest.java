@@ -26,6 +26,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.Accounts;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStateStorage;
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.SyncStorageFixture;
@@ -72,6 +73,7 @@ class WorldStateTrieBuilderTest {
     final WorldStateTrieBuilder.Result result = builder(storages.sync(), hash -> false).build();
 
     assertThat(result.root()).isEqualTo(world.root());
+    assertThat(Hash.hash(result.rootNode()).getBytes()).isEqualTo(result.root());
     assertThat(result.accounts()).isEqualTo(world.accounts.size());
     assertThat(result.slots())
         .isEqualTo(world.storage.values().stream().mapToLong(slots -> slots.size()).sum());
@@ -175,6 +177,7 @@ class WorldStateTrieBuilderTest {
       final WorldStateTrieBuilder.Result result = builder(storages.sync(), hash -> false).build();
 
       assertThat(result.root()).isEqualTo(world.root());
+      assertThat(Hash.hash(result.rootNode()).getBytes()).isEqualTo(result.root());
     }
   }
 
