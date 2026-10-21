@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.PathBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
@@ -249,7 +249,7 @@ public class DebugGetModifiedAccountsTest {
 
   private static AccountValue account(
       final long nonce, final long balance, final Hash storageRoot, final Hash codeHash) {
-    return new PmtStateTrieAccountValue(nonce, Wei.of(balance), storageRoot, codeHash);
+    return new PatriciaTrieAccountValue(nonce, Wei.of(balance), storageRoot, codeHash);
   }
 
   private static RpcErrorType errorType(final JsonRpcResponse response) {
