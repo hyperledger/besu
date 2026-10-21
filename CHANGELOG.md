@@ -37,6 +37,7 @@
 - `OperationTracer.tracesOperations()` lets a tracer that only uses transaction or call hooks skip the per-operation calls on EVM v2. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - Tracers read the stack of a frame through `TracedStack`, which also reads the EVM v2 stack. With `--Xevm-v2`, a plugin tracer that calls `MessageFrame.getStackItem` or `stackSize` throws a `NullPointerException`, as those read only the EVM v1 stack. [#11524](https://github.com/besu-eth/besu/pull/11524)
 - Snap sync checks the flat database ranges of its heal stage in parallel, which shortens that stage on mainnet from about 3 h 40 min to 34 min. [#11495](https://github.com/besu-eth/besu/pull/11495)
+- EVM v2 (`--Xevm-v2`) tracks the warm storage slots of a transaction in a hash set, which makes warming up a slot 5-7 times faster; on EVM v2, `MessageFrame.getWarmedUpStorage` returns null and `getWarmedUpStorageV2` returns the slots. [#11691](https://github.com/besu-eth/besu/pull/11691)
 
 ## 26.10.0
 
