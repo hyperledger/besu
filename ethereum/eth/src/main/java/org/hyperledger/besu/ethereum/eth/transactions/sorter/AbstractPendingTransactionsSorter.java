@@ -195,8 +195,13 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   void removeTransaction(
       final PendingTransaction pendingTransaction, final SequencedRemovalReason reason) {
-    removeTransaction(pendingTransaction.getTransaction(), false);
-    eventEmitter.notifyPendingTransactionDropped(pendingTransaction, reason);
+    // notify while holding the lock and only if actually removed, so that the events are notified
+    // in the order they happen and a tx is not notified as dropped more than once
+    synchronized (lock) {
+      if (removeTransaction(pendingTransaction.getTransaction(), false)) {
+        eventEmitter.notifyPendingTransactionDropped(pendingTransaction, reason);
+      }
+    }
   }
 
   @Override
@@ -413,7 +418,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         : pendingTransactionsForSender.maybeNextNonce();
   }
 
-  private void removeTransaction(final Transaction transaction, final boolean addedToBlock) {
+  private boolean removeTransaction(final Transaction transaction, final boolean addedToBlock) {
     synchronized (lock) {
       final PendingTransaction removedPendingTx = pendingTransactions.remove(transaction.getHash());
       if (removedPendingTx != null) {
@@ -425,7 +430,9 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
             && addedToBlock) {
           this.blobCache.cacheBlobs(removedPendingTx.getTransaction());
         }
+        return true;
       }
+      return false;
     }
   }
 
@@ -472,12 +479,14 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
       pendingTransactions.put(pendingTransaction.getHash(), pendingTransaction);
       prioritizeTransaction(pendingTransaction);
+      // notify while holding the lock and before evicting, since the eviction could drop the added
+      // tx itself, so that the events are notified in the order they happen
+      eventEmitter.notifyPendingTransactionAdded(pendingTransaction);
 
       if (pendingTransactions.size() > poolConfig.getTxPoolMaxSize()) {
         evictLessPriorityTransactions();
       }
     }
-    eventEmitter.notifyPendingTransactionAdded(pendingTransaction);
     return ADDED;
   }
 
