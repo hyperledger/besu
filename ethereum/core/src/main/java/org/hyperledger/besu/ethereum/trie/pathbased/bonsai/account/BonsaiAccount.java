@@ -124,7 +124,7 @@ public class BonsaiAccount implements MutableAccount, TrieAccountValue {
     this.immutable = false;
     this.codeCache = codeCache;
     if (tracked.codeWasUpdated()) {
-      this.code = new Code(tracked.getCode());
+      this.code = new Code(tracked.getCode(), this.codeHash);
     } else if (Hash.EMPTY.equals(this.codeHash)) {
       this.code = Code.EMPTY_CODE;
     } else if (tracked.getWrappedAccount() != null) {

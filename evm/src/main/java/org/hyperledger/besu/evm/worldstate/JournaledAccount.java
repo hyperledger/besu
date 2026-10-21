@@ -255,8 +255,13 @@ public class JournaledAccount implements MutableAccount, Undoable {
     if (immutable) {
       throw new ModificationNotAllowedException();
     }
+    final Hash newCodeHash = code == null ? Hash.EMPTY : Hash.hash(code);
+    // the code may not be loaded, so compare hashes: setting the same code is not an update
+    if (newCodeHash.equals(codeHash.get())) {
+      return;
+    }
     this.code.set(code == null ? Bytes.EMPTY : code);
-    this.codeHash.set(code == null ? Hash.EMPTY : Hash.hash(code));
+    this.codeHash.set(newCodeHash);
   }
 
   /** Mark transaction boundary. */

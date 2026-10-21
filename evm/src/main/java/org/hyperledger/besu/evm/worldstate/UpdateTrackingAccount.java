@@ -110,7 +110,9 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
       this.oldCode = Code.EMPTY_CODE;
     } else if (account instanceof UpdateTrackingAccount<?> parentTracker
         && parentTracker.updatedCode != null) {
-      this.oldCode = parentTracker.updatedCode;
+      // code set in this transaction is in memory: sharing it through the cache keeps its jump
+      // destination analysis done once
+      this.oldCode = parentTracker.getOrCreateCachedCode();
     }
 
     this.updatedStorage = new TreeMap<>();
