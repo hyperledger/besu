@@ -1464,8 +1464,10 @@ public class RunnerBuilder {
         new PendingTransactionSubscriptionService(subscriptionManager);
     final PendingTransactionDroppedSubscriptionService pendingTransactionsRemoved =
         new PendingTransactionDroppedSubscriptionService(subscriptionManager);
-    transactionPool.subscribePendingTransactions(pendingTransactions);
-    transactionPool.subscribeDroppedTransactions(pendingTransactionsRemoved);
+    // notified on a services thread, so the work for the subscribers is not done while holding the
+    // transaction pool lock
+    transactionPool.subscribePendingTransactionsAsync(pendingTransactions);
+    transactionPool.subscribeDroppedTransactionsAsync(pendingTransactionsRemoved);
     vertx.deployVerticle(subscriptionManager);
 
     return subscriptionManager;

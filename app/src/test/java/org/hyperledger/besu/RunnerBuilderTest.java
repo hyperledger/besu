@@ -20,6 +20,8 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
@@ -43,6 +45,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.PendingTransactionDroppedSubscriptionService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.pending.PendingTransactionSubscriptionService;
 import org.hyperledger.besu.ethereum.api.pluginadapter.RpcEndpointServiceImpl;
 import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
@@ -449,6 +453,8 @@ public final class RunnerBuilderTest {
   @Test
   public void whenEngineApiAddedEthSubscribeAvailable() {
     setupBlockchainAndBlock();
+    final TransactionPool transactionPool = mock(TransactionPool.class, RETURNS_DEEP_STUBS);
+    when(besuController.getTransactionPool()).thenReturn(transactionPool);
 
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
@@ -491,6 +497,14 @@ public final class RunnerBuilderTest {
     runner.startExternalServices();
     // assert that rpc method collection has eth_subscribe in it.
     runner.stop();
+
+    // the pending transaction subscriptions are notified outside the transaction pool lock
+    verify(transactionPool)
+        .subscribePendingTransactionsAsync(any(PendingTransactionSubscriptionService.class));
+    verify(transactionPool)
+        .subscribeDroppedTransactionsAsync(any(PendingTransactionDroppedSubscriptionService.class));
+    verify(transactionPool, never()).subscribePendingTransactions(any());
+    verify(transactionPool, never()).subscribeDroppedTransactions(any());
   }
 
   @Test

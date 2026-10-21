@@ -63,7 +63,10 @@ public class FilterManager extends AbstractVerticle {
     this.maxLogRange = maxLogRange;
     checkNotNull(blockchainQueries.getBlockchain());
     blockchainQueries.getBlockchain().observeBlockAdded(this::recordBlockEvent);
-    transactionPool.subscribePendingTransactions(this::recordPendingTransactionEvent);
+    // notified on a services thread, so the work for the filters is not done while holding the
+    // transaction pool lock
+    transactionPool.subscribePendingTransactionsAsync(
+        this::recordPendingTransactionEvent, FilterManager.class.getName());
     this.blockchainQueries = blockchainQueries;
   }
 
