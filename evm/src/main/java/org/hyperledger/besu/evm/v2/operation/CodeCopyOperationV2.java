@@ -48,7 +48,8 @@ public class CodeCopyOperationV2 extends AbstractOperationV2 {
           frame, 3, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    frame.writeMemory(memOffset, sourceOffset, numBytes, frame.getCode().getBytes(), true);
+    frame.writeMemory(
+        memOffset, sourceOffset, numBytes, frame.getCode().getBytes(), frame.tracesOperationsV2());
     frame.setTopV2(top - 3);
     return new OperationResult(cost, null);
   }

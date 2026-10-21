@@ -222,6 +222,9 @@ public class MessageFrame {
   // Tracer view of the v2 stack: the item last handed out per slot, reused while the slot is
   // unchanged so that tracers snapshotting the stack every step share objects, as on v1
   private Bytes32[] stackViewV2;
+  // Whether EVM v2 runs the frame for a tracer that sees each operation, the only reader of the
+  // memory and storage updates that operations record
+  private boolean tracesOperationsV2 = true;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -602,6 +605,26 @@ public class MessageFrame {
       StacksV2.release(stackDepthV2, stackDataV2);
       stackDataV2 = null;
     }
+  }
+
+  /**
+   * Returns whether EVM v2 runs the frame for a tracer that traces operations. Only such a tracer
+   * reads the memory and storage updates recorded through {@link #getMaybeUpdatedMemory} and {@link
+   * #getMaybeUpdatedStorage}, so the v2 operations record them only if this is true.
+   *
+   * @return true unless EVM v2 runs the frame without tracing its operations
+   */
+  public boolean tracesOperationsV2() {
+    return tracesOperationsV2;
+  }
+
+  /**
+   * Sets whether EVM v2 runs the frame for a tracer that traces operations.
+   *
+   * @param tracesOperations true if the tracer traces operations
+   */
+  public void setTracesOperationsV2(final boolean tracesOperations) {
+    this.tracesOperationsV2 = tracesOperations;
   }
 
   // ---------------------------------------------------------------------------

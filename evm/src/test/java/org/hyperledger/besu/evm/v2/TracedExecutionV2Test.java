@@ -34,6 +34,7 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
 /** Tracers read the stack through the frame, which shows them the v2 stack on EVM v2. */
@@ -206,6 +207,44 @@ class TracedExecutionV2Test {
     assertThat(calls).isEmpty();
     assertThat(frame.getCurrentOperation()).isNull();
     assertThat(frame.stackTopV2()).isEqualTo(1);
+  }
+
+  @Test
+  void operationsRecordMemoryAndStorageUpdatesOnlyForATracerThatTracesOperations() {
+    // PUSH1 0x2a PUSH1 0 MSTORE PUSH1 7 PUSH1 1 SSTORE STOP
+    final Bytes code = Bytes.fromHexString("0x602a600052600760015500");
+    final EVM v1 = MainnetEVMs.osaka(BigInteger.ONE, ProgramRun.V1);
+    final EVM v2 = MainnetEVMs.osaka(BigInteger.ONE, ProgramRun.V2);
+
+    final MessageFrame untracedV1 =
+        ProgramRun.execute(v1, code, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of()).frame();
+    final MessageFrame untracedV2 =
+        ProgramRun.execute(v2, code, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of()).frame();
+    final List<String> tracedV2 =
+        ProgramRun.runTraced(v2, code, Bytes.EMPTY, Bytes.EMPTY, 100_000, false, List.of()).steps();
+
+    assertThat(untracedV2.getState()).isEqualTo(MessageFrame.State.COMPLETED_SUCCESS);
+    assertThat(untracedV2.getMaybeUpdatedMemory()).isEmpty();
+    assertThat(untracedV2.getMaybeUpdatedStorage()).isEmpty();
+    // v1 records them whether or not anything traces
+    assertThat(untracedV1.getMaybeUpdatedMemory()).isPresent();
+    assertThat(untracedV1.getMaybeUpdatedStorage()).isPresent();
+    assertThat(tracedV2)
+        .anyMatch(
+            step ->
+                step.contains(" MSTORE ")
+                    && step.endsWith(
+                        "updated memory 0 "
+                            + Bytes32.leftPad(Bytes.of(0x2a)).toHexString()
+                            + " storage none"))
+        .anyMatch(
+            step ->
+                step.contains(" SSTORE ")
+                    && step.endsWith(
+                        "updated memory none storage "
+                            + UInt256.ONE.toHexString()
+                            + " "
+                            + UInt256.valueOf(7).toHexString()));
   }
 
   @Test

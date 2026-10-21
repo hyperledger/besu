@@ -132,7 +132,9 @@ public class SStoreOperationV2 extends AbstractOperationV2 {
     frame.incrementRemainingGas(cost);
 
     account.setStorageValue(key, newValue);
-    frame.storageWasUpdated(key, newValue);
+    if (frame.tracesOperationsV2()) {
+      frame.storageWasUpdated(key, newValue);
+    }
     frame.getEip7928AccessList().ifPresent(t -> t.addSlotAccessForAccount(address, key));
     return new OperationResult(cost, null);
   }

@@ -203,7 +203,8 @@ final class ProgramRun {
 
   /**
    * As {@link #run}, with a tracer that records what it sees before and after every operation: the
-   * operation, pc, depth, gas, refund, memory size, stack, gas cost and halt reason.
+   * operation, pc, depth, gas, refund, memory size, stack, gas cost, halt reason and the memory and
+   * storage updates recorded for tracers.
    *
    * @param evm the EVM to run it on
    * @param code the contract's code
@@ -429,12 +430,22 @@ final class ProgramRun {
         final MessageFrame frame, final Operation.OperationResult result) {
       steps.add(
           String.format(
-              "%s -> cost %d halt %s gas %d stack %s",
+              "%s -> cost %d halt %s gas %d stack %s updated memory %s storage %s",
               before,
               result.getGasCost(),
               result.getHaltReason(),
               frame.getRemainingGas(),
-              tracedStack(frame)));
+              tracedStack(frame),
+              frame
+                  .getMaybeUpdatedMemory()
+                  .map(m -> m.getOffset() + " " + m.getValue().toHexString())
+                  .orElse("none"),
+              frame
+                  .getMaybeUpdatedStorage()
+                  .map(s -> s.getOffset().toHexString() + " " + s.getValue().toHexString())
+                  .orElse("none")));
+      // as the debug tracer does, so that each step shows only the updates it recorded itself
+      frame.reset();
     }
 
     private static List<String> tracedStack(final MessageFrame frame) {

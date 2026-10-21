@@ -48,7 +48,7 @@ public class MCopyOperationV2 extends AbstractOperationV2 {
           frame, 3, new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS));
     }
 
-    frame.copyMemory(dst, src, length, true);
+    frame.copyMemory(dst, src, length, frame.tracesOperationsV2());
     frame.setTopV2(top - 3);
     return new OperationResult(cost, null);
   }
