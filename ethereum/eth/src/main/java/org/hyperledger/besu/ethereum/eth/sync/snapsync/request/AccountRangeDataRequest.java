@@ -205,7 +205,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
           accountValue == null
               ? MerkleTrie.EMPTY_TRIE_NODE_HASH
               : Bytes32.wrap(
-                  PmtStateTrieAccountValue.readFrom(RLP.input(accountValue))
+                  PatriciaTrieAccountValue.readFrom(RLP.input(accountValue))
                       .getStorageRoot()
                       .getBytes());
       downloadState.completeStorageRootRefresh(accountHash, getRootHash(), storageRoot);
