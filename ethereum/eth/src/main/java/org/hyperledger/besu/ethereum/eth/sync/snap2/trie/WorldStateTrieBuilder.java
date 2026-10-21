@@ -36,8 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -67,9 +67,9 @@ public final class WorldStateTrieBuilder {
   private final Predicate<Bytes32> trieLeft;
   private final Supplier<ExecutorService> executors;
   private final int accountsPerCommit;
-  private final AtomicLong accounts = new AtomicLong();
-  private final AtomicLong slots = new AtomicLong();
-  private final AtomicLong keptStorageTries = new AtomicLong();
+  private final LongAdder accounts = new LongAdder();
+  private final LongAdder slots = new LongAdder();
+  private final LongAdder keptStorageTries = new LongAdder();
   private final AtomicBoolean cancelled = new AtomicBoolean();
   private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
@@ -121,17 +121,17 @@ public final class WorldStateTrieBuilder {
 
   /** Returns the number of accounts processed so far. */
   public long accountsProcessed() {
-    return accounts.get();
+    return accounts.sum();
   }
 
   /** Returns the number of slots processed so far. */
   public long slotsProcessed() {
-    return slots.get();
+    return slots.sum();
   }
 
   /** Returns the number of storage tries built while downloading and kept so far. */
   public long keptStorageTries() {
-    return keptStorageTries.get();
+    return keptStorageTries.sum();
   }
 
   /** Stops a running build, which then throws a {@link CancellationException}. */
@@ -166,7 +166,7 @@ public final class WorldStateTrieBuilder {
       if (cancelled.get()) {
         throw new CancellationException("trie build cancelled");
       }
-      return new Result(root, rootNode[0], accounts.get(), slots.get(), keptStorageTries.get());
+      return new Result(root, rootNode[0], accounts.sum(), slots.sum(), keptStorageTries.sum());
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new CancellationException("trie build interrupted");
@@ -227,6 +227,7 @@ public final class WorldStateTrieBuilder {
     private int pendingFixes;
     private Bytes32 accountHash;
     private Bytes account;
+    private PatriciaTrieAccountValue accountValue;
     private AscendingCollapsePatriciaTrie storageTrie;
     private long partitionSlots;
 
@@ -242,18 +243,16 @@ public final class WorldStateTrieBuilder {
       if (cancelled.get()) {
         throw new CancellationException("trie build cancelled");
       }
-      final Hash storageRoot = Accounts.decode(rlp).getStorageRoot();
-      if (Accounts.hasBuildableStorage(storageRoot) && !trieLeft.test(hash)) {
+      final PatriciaTrieAccountValue value = Accounts.decode(rlp);
+      if (Accounts.hasBuildableStorage(value.getStorageRoot()) && !trieLeft.test(hash)) {
         accountTrie.insert(hash, rlp);
-        accounts.incrementAndGet();
-        keptStorageTries.incrementAndGet();
+        accounts.increment();
+        keptStorageTries.increment();
         return false;
       }
       accountHash = hash;
       account = rlp;
-      storageTrie =
-          new AscendingCollapsePatriciaTrie(
-              (location, nodeHash, node) -> writer.storageNode(hash, location, nodeHash, node));
+      accountValue = value;
       return true;
     }
 
@@ -267,23 +266,30 @@ public final class WorldStateTrieBuilder {
       if (++partitionSlots % SLOTS_PER_CANCEL_CHECK == 0 && cancelled.get()) {
         throw new CancellationException("trie build cancelled");
       }
+      if (storageTrie == null) {
+        // made on the first slot, most accounts have none
+        final Bytes32 hash = accountHash;
+        storageTrie =
+            new AscendingCollapsePatriciaTrie(
+                (location, nodeHash, node) -> writer.storageNode(hash, location, nodeHash, node));
+      }
       storageTrie.insert(slotHash, RLP.encodeOne(value.trimLeadingZeros()));
-      slots.incrementAndGet();
+      slots.increment();
     }
 
     private void finishAccount() {
       if (accountHash == null) {
         return;
       }
-      final Bytes32 storageRoot = storageTrie.rootHash();
-      final PatriciaTrieAccountValue value = Accounts.decode(account);
+      final Bytes32 storageRoot =
+          storageTrie == null ? MerkleTrie.EMPTY_TRIE_NODE_HASH : storageTrie.rootHash();
       Bytes leaf = account;
-      if (!value.getStorageRoot().getBytes().equals(storageRoot)) {
-        leaf = Accounts.encode(Accounts.withStorageRoot(value, Hash.wrap(storageRoot)));
+      if (!accountValue.getStorageRoot().getBytes().equals(storageRoot)) {
+        leaf = Accounts.encode(Accounts.withStorageRoot(accountValue, Hash.wrap(storageRoot)));
         fixes().putAccount(accountHash, leaf);
       }
       accountTrie.insert(accountHash, leaf);
-      accounts.incrementAndGet();
+      accounts.increment();
       accountHash = null;
       storageTrie = null;
     }
