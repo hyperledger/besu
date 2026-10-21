@@ -43,7 +43,7 @@ public final class WarmStorageTable implements Undoable {
   private static final long[] MULTIPLIERS = new long[15];
 
   static {
-    final SecureRandom random = SecureRandomProvider.publicSecureRandom();
+    final SecureRandom random = SecureRandomProvider.createSecureRandom();
     for (int i = 0; i < MULTIPLIERS.length; i++) {
       MULTIPLIERS[i] = random.nextLong();
     }
