@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.AscendingCollapsePatriciaTrie
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -41,6 +42,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -67,12 +70,13 @@ public final class WorldStateTrieBuilder {
   private final AtomicLong slots = new AtomicLong();
   private final AtomicLong keptStorageTries = new AtomicLong();
   private final AtomicBoolean cancelled = new AtomicBoolean();
-  private final AtomicReference<RuntimeException> failure = new AtomicReference<>();
+  private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
   /**
    * Creates a build.
    *
-   * @param trieLeft whether the download completed the storage of an account without its trie
+   * @param trieLeft whether the download completed the storage of an account without its trie; the
+   *     partitions call it from several threads
    */
   public WorldStateTrieBuilder(
       final SyncStateStorage storage, final int threads, final Predicate<Bytes32> trieLeft) {
@@ -128,11 +132,11 @@ public final class WorldStateTrieBuilder {
     cancelled.set(true);
   }
 
-  /** Builds the tries and writes their nodes. */
+  /** Builds the tries and writes their nodes; an instance builds once. */
   public Result build() {
     final ExecutorService executor = executors.get();
+    final SyncStateStorage.TrieWriter writer = storage.trieWriter();
     try {
-      final SyncStateStorage.TrieWriter writer = storage.trieWriter();
       final Bytes[] rootNode = {MerkleTrie.EMPTY_TRIE_NODE};
       final AscendingCollapsePatriciaTrie top =
           new AscendingCollapsePatriciaTrie(
@@ -152,29 +156,30 @@ public final class WorldStateTrieBuilder {
       }
       final Bytes32 root = top.rootHash();
       writer.commit();
+      if (cancelled.get()) {
+        throw new CancellationException("trie build cancelled");
+      }
       return new Result(root, rootNode[0], accounts.get(), slots.get(), keptStorageTries.get());
     } catch (final InterruptedException e) {
-      cancel();
       Thread.currentThread().interrupt();
       throw new CancellationException("trie build interrupted");
     } catch (final ExecutionException e) {
-      cancel();
-      final RuntimeException first = failure.get();
-      throw first != null ? first : new IllegalStateException("trie build failed", e.getCause());
+      final Throwable first = Objects.requireNonNullElse(failure.get(), e.getCause());
+      Throwables.throwIfUnchecked(first);
+      throw new IllegalStateException("trie build failed", first);
     } finally {
+      // whatever ended the build stops the partitions, and drops the nodes it did not commit
+      cancel();
       executor.shutdownNow();
       awaitPartitions(executor);
+      writer.abort();
     }
   }
 
-  // no partition writes once the build returned
+  // no partition writes once the build returned, even when interrupted
   private static void awaitPartitions(final ExecutorService executor) {
-    try {
-      if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
-        LOG.warn("Trie build partitions still running a minute after the build stopped");
-      }
-    } catch (final InterruptedException e) {
-      Thread.currentThread().interrupt();
+    if (!Uninterruptibles.awaitTerminationUninterruptibly(executor, 1, TimeUnit.MINUTES)) {
+      LOG.warn("Trie build partitions still running a minute after the build stopped");
     }
   }
 
@@ -186,9 +191,9 @@ public final class WorldStateTrieBuilder {
     from[0] = (byte) prefix;
     to[0] = (byte) prefix;
     final SyncStateStorage.TrieWriter writer = storage.trieWriter();
+    final PartitionVisitor visitor =
+        new PartitionVisitor(writer, top.subtreeBuilder(writer::accountNode));
     try {
-      final PartitionVisitor visitor =
-          new PartitionVisitor(writer, top.subtreeBuilder(writer::accountNode));
       storage.scan(Bytes32.wrap(from), Bytes32.wrap(to), visitor);
       visitor.finishAccount();
       final Optional<Subtree> subtree =
@@ -198,10 +203,11 @@ public final class WorldStateTrieBuilder {
       visitor.commitFixes();
       writer.commit();
       return subtree;
-    } catch (final RuntimeException e) {
+    } catch (final Throwable e) {
       // the other partitions stop too, and the build reports the first failure
       failure.compareAndSet(null, e);
       cancel();
+      visitor.abortFixes();
       writer.abort();
       throw e;
     }
@@ -286,11 +292,20 @@ public final class WorldStateTrieBuilder {
       return fixes;
     }
 
+    // a failed commit leaves no batch to abort
     private void commitFixes() {
+      final SyncStateStorage.Batch batch = fixes;
+      fixes = null;
+      pendingFixes = 0;
+      if (batch != null) {
+        batch.commit();
+      }
+    }
+
+    private void abortFixes() {
       if (fixes != null) {
-        fixes.commit();
+        fixes.abort();
         fixes = null;
-        pendingFixes = 0;
       }
     }
   }
