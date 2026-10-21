@@ -219,7 +219,8 @@ class UntracedLoopV2Test {
     a.hex("6005600514 15 50"); // EQ, ISZERO
     a.hex("60ff60000b 50 600160200b 50"); // SIGNEXTEND, of a byte and past the word
     a.hex("6002600301 50 6002600303 50 6003600516 50"); // ADD, SUB, AND
-    a.hex(shl ? "600160041b 50" : "58 50"); // SHL from Constantinople, else PC
+    a.hex(shl ? "600160041b 50 600160041c 50" : "58 50"); // SHL, SHR from Constantinople, else PC
+    a.hex("6003600517 50 600519 50"); // OR, NOT
     a.hex("5a 50"); // GAS
     a.hex(push0 ? "5f 50" : "58 50"); // PUSH0 from Shanghai, else PC
     a.hex("610102 62010203 6301020304 640102030405 65010203040506 5050505050"); // PUSH2 to PUSH6

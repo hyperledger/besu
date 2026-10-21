@@ -528,16 +528,18 @@ public class EVM {
   private static final int COPIED_SWAP = 4;
   private static final int COPIED_JUMPDEST = 5;
   private static final int COPIED_POP = 6;
-  private static final int COPIED_JUMPI = 7;
-  private static final int COPIED_JUMP = 8;
-  private static final int COPIED_ADD = 9;
-  private static final int COPIED_ISZERO = 10;
-  private static final int COPIED_AND = 11;
-  private static final int COPIED_SUB = 12;
-  private static final int COPIED_LT = 13;
-  private static final int COPIED_SHL = 14;
-  private static final int COPIED_GT = 15;
-  private static final int COPIED_PUSH0 = 16;
+  private static final int COPIED_ADD = 7;
+  private static final int COPIED_ISZERO = 8;
+  private static final int COPIED_AND = 9;
+  private static final int COPIED_SUB = 10;
+  private static final int COPIED_LT = 11;
+  private static final int COPIED_SHL = 12;
+  private static final int COPIED_GT = 13;
+  private static final int COPIED_PUSH0 = 14;
+  private static final int COPIED_SHR = 15;
+  private static final int COPIED_OR = 16;
+  private static final int COPIED_NOT = 17;
+  private static final int COPIED_SLT = 18;
 
   // Per opcode: its case in the low byte, and above it the distance of the case's
   // constant from the stack top and pc that its copied code reads
@@ -550,8 +552,6 @@ public class EVM {
     dispatch(COPIED_SWAP, 0x90, 0x9f);
     dispatch(COPIED_JUMPDEST, 0x5b, 0x5b);
     dispatch(COPIED_POP, 0x50, 0x50);
-    dispatch(COPIED_JUMPI, 0x57, 0x57);
-    dispatch(COPIED_JUMP, 0x56, 0x56);
     dispatch(COPIED_ADD, 0x01, 0x01);
     dispatch(COPIED_ISZERO, 0x15, 0x15);
     dispatch(COPIED_AND, 0x16, 0x16);
@@ -560,6 +560,10 @@ public class EVM {
     dispatch(COPIED_SHL, 0x1b, 0x1b);
     dispatch(COPIED_GT, 0x11, 0x11);
     dispatch(COPIED_PUSH0, 0x5f, 0x5f);
+    dispatch(COPIED_SHR, 0x1c, 0x1c);
+    dispatch(COPIED_OR, 0x17, 0x17);
+    dispatch(COPIED_NOT, 0x19, 0x19);
+    dispatch(COPIED_SLT, 0x12, 0x12);
   }
 
   private static void dispatch(final int copiedCase, final int first, final int last) {
@@ -567,14 +571,6 @@ public class EVM {
       DISPATCH[op] = ((copiedCase * 64) << 8) | copiedCase;
     }
   }
-
-  // copied from JumpiOperationV2.INVALID_JUMP_RESPONSE
-  private static final OperationResult JUMPI_OPERATION_V2_INVALID_JUMP_RESPONSE =
-      new OperationResult(10L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
-
-  // copied from JumpOperationV2.INVALID_JUMP_RESPONSE
-  private static final OperationResult JUMP_OPERATION_V2_INVALID_JUMP_RESPONSE =
-      new OperationResult(8L, ExceptionalHaltReason.INVALID_JUMP_DESTINATION);
 
   // copied from StackUtil.setLong
   private static void stackUtilSetLong(final long value, final long[] stack, final int top) {
@@ -634,6 +630,15 @@ public class EVM {
     return Long.compareUnsigned(stack[aOffset + 3], stack[bOffset + 3]);
   }
 
+  // copied from StackUtil.compareSigned
+  private static int stackUtilCompareSigned(
+      final long[] stack, final int aOffset, final int bOffset) {
+    if (stack[aOffset] != stack[bOffset]) {
+      return Long.compare(stack[aOffset], stack[bOffset]);
+    }
+    return stackUtilCompareUnsigned(stack, aOffset, bOffset);
+  }
+
   // END GENERATED case table
 
   /**
@@ -654,8 +659,6 @@ public class EVM {
     }
     final Code codeObject = frame.getCode();
     final byte[] code = codeObject.getBytes().toArrayUnsafe();
-    // analysed now, so that no copied jump takes the branch that analyses the code
-    codeObject.isJumpDestInvalid(0);
     final boolean constantinople = enableConstantinople;
     final boolean shanghai = enableShanghai;
     final long[] s = frame.stackDataV2();
@@ -794,8 +797,8 @@ public class EVM {
           step = 1;
         }
         // END copied from PopOperationV2.staticOperation
-        // BEGIN copied from JumpiOperationV2.staticOperation
-        case COPIED_JUMPI -> {
+        // BEGIN copied from AddOperationV2.staticOperation
+        case COPIED_ADD -> {
           if (!((spBase + 448) >= 2)) {
             {
               sp = 0;
@@ -806,78 +809,8 @@ public class EVM {
               break;
             }
           }
-          final long[] stack = s;
-          final int top = (spBase + 448);
-          sp = top - 2;
-          if (stackUtilIsZeroAt(stack, top, 1)) {
-            cost = 10L;
-            step = 1;
-            break;
-          }
-          {
-            final int destinationOffset = (top - 1) << 2;
-            final long destination = stack[destinationOffset + 3];
-            if ((stack[destinationOffset]
-                        | stack[destinationOffset + 1]
-                        | stack[destinationOffset + 2])
-                    != 0
-                || Long.compareUnsigned(destination, Integer.MAX_VALUE) > 0
-                || codeObject.isJumpDestInvalid((int) destination)) {
-              frame.setTopV2(sp);
-              frame.setPC(pc);
-              frame.setGasRemaining(gas);
-              result = JUMPI_OPERATION_V2_INVALID_JUMP_RESPONSE;
-              break;
-            }
-            pc = (int) destination;
-            cost = 10L;
-            step = 0;
-          }
-        }
-        // END copied from JumpiOperationV2.staticOperation
-        // BEGIN copied from JumpOperationV2.staticOperation
-        case COPIED_JUMP -> {
-          if (!((spBase + 512) >= 1)) {
-            frame.setTopV2(sp);
-            frame.setPC(pc);
-            frame.setGasRemaining(gas);
-            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
-            break;
-          }
-          final int top = (spBase + 512);
-          sp = top - 1;
-          {
-            final int destinationOffset = (top - 1) << 2;
-            final long destination = s[destinationOffset + 3];
-            if ((s[destinationOffset] | s[destinationOffset + 1] | s[destinationOffset + 2]) != 0
-                || Long.compareUnsigned(destination, Integer.MAX_VALUE) > 0
-                || codeObject.isJumpDestInvalid((int) destination)) {
-              frame.setTopV2(sp);
-              frame.setPC(pc);
-              frame.setGasRemaining(gas);
-              result = JUMP_OPERATION_V2_INVALID_JUMP_RESPONSE;
-              break;
-            }
-            pc = (int) destination;
-            cost = 8L;
-            step = 0;
-          }
-        }
-        // END copied from JumpOperationV2.staticOperation
-        // BEGIN copied from AddOperationV2.staticOperation
-        case COPIED_ADD -> {
-          if (!((spBase + 576) >= 2)) {
-            {
-              sp = 0;
-              frame.setTopV2(sp);
-              frame.setPC(pc);
-              frame.setGasRemaining(gas);
-              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
-              break;
-            }
-          }
           long[] stack = s;
-          int top = (spBase + 576);
+          int top = (spBase + 448);
           final int aOffset = (top - 1) << 2;
           final int bOffset = (top - 2) << 2;
           final UInt256 valueA =
@@ -898,7 +831,7 @@ public class EVM {
         // END copied from AddOperationV2.staticOperation
         // BEGIN copied from IsZeroOperationV2.staticOperation
         case COPIED_ISZERO -> {
-          if (!((spBase + 640) >= 1)) {
+          if (!((spBase + 512) >= 1)) {
             frame.setTopV2(sp);
             frame.setPC(pc);
             frame.setGasRemaining(gas);
@@ -906,7 +839,7 @@ public class EVM {
             break;
           }
           final long[] stack = s;
-          final int top = (spBase + 640);
+          final int top = (spBase + 512);
           stackUtilSetLong(stackUtilIsZeroAt(stack, top, 0) ? 1L : 0L, stack, top - 1);
           cost = 3L;
           step = 1;
@@ -914,7 +847,7 @@ public class EVM {
         // END copied from IsZeroOperationV2.staticOperation
         // BEGIN copied from AndOperationV2.staticOperation
         case COPIED_AND -> {
-          if (!((spBase + 704) >= 2)) {
+          if (!((spBase + 576) >= 2)) {
             {
               sp = 0;
               frame.setTopV2(sp);
@@ -925,7 +858,7 @@ public class EVM {
             }
           }
           long[] stack = s;
-          int top = (spBase + 704);
+          int top = (spBase + 576);
           final int aOffset = (top - 1) << 2;
           final int bOffset = (top - 2) << 2;
           final UInt256 valueA =
@@ -946,7 +879,7 @@ public class EVM {
         // END copied from AndOperationV2.staticOperation
         // BEGIN copied from SubOperationV2.staticOperation
         case COPIED_SUB -> {
-          if (!((spBase + 768) >= 2)) {
+          if (!((spBase + 640) >= 2)) {
             {
               sp = 0;
               frame.setTopV2(sp);
@@ -957,7 +890,7 @@ public class EVM {
             }
           }
           long[] stack = s;
-          int top = (spBase + 768);
+          int top = (spBase + 640);
           final int aOffset = (top - 1) << 2;
           final int bOffset = (top - 2) << 2;
           final UInt256 valueA =
@@ -978,7 +911,7 @@ public class EVM {
         // END copied from SubOperationV2.staticOperation
         // BEGIN copied from LtOperationV2.staticOperation
         case COPIED_LT -> {
-          if (!((spBase + 832) >= 2)) {
+          if (!((spBase + 704) >= 2)) {
             {
               sp = 0;
               frame.setTopV2(sp);
@@ -989,7 +922,7 @@ public class EVM {
             }
           }
           final long[] stack = s;
-          final int top = (spBase + 832);
+          final int top = (spBase + 704);
           final boolean lessThan =
               stackUtilCompareUnsigned(stack, (top - 1) << 2, (top - 2) << 2) < 0;
           stackUtilSetLong(lessThan ? 1L : 0L, stack, top - 2);
@@ -1002,7 +935,7 @@ public class EVM {
         case COPIED_SHL -> {
           if (constantinople) {
             {
-              if (!((spBase + 896) >= 2)) {
+              if (!((spBase + 768) >= 2)) {
                 {
                   sp = 0;
                   frame.setTopV2(sp);
@@ -1013,7 +946,7 @@ public class EVM {
                 }
               }
               long[] stack = s;
-              int top = (spBase + 896);
+              int top = (spBase + 768);
               final int shiftOffset = (--top) << 2;
               final UInt256 shift =
                   new UInt256(
@@ -1050,7 +983,7 @@ public class EVM {
         // END copied from ShlOperationV2.staticOperation
         // BEGIN copied from GtOperationV2.staticOperation
         case COPIED_GT -> {
-          if (!((spBase + 960) >= 2)) {
+          if (!((spBase + 832) >= 2)) {
             {
               sp = 0;
               frame.setTopV2(sp);
@@ -1061,7 +994,7 @@ public class EVM {
             }
           }
           final long[] stack = s;
-          final int top = (spBase + 960);
+          final int top = (spBase + 832);
           final boolean greaterThan =
               stackUtilCompareUnsigned(stack, (top - 1) << 2, (top - 2) << 2) > 0;
           stackUtilSetLong(greaterThan ? 1L : 0L, stack, top - 2);
@@ -1075,7 +1008,7 @@ public class EVM {
           if (shanghai) {
             {
               int pushSize = 0;
-              if (!((spBase + 1024) + 1 <= maxItems)) {
+              if (!((spBase + 896) + 1 <= maxItems)) {
                 frame.setTopV2(sp);
                 frame.setPC(pc);
                 frame.setGasRemaining(gas);
@@ -1083,14 +1016,14 @@ public class EVM {
                 break;
               }
               long u0 = 0;
-              final int start = (pcBase + 1024) + 1;
+              final int start = (pcBase + 896) + 1;
               if (pushSize != 0 && start < code.length) {
                 u0 = code[start] & 0xFFL;
               }
-              final int top = (spBase + 1024);
+              final int top = (spBase + 896);
               stackUtilSetLong(u0, s, top);
               sp = top + 1;
-              pc = (pcBase + 1024) + pushSize;
+              pc = (pcBase + 896) + pushSize;
               if (pushSize == 0) {
                 cost = 2L;
                 step = 1;
@@ -1109,6 +1042,133 @@ public class EVM {
           }
         }
         // END copied from PushOperationV2.SingleByte.staticOperation
+        // BEGIN copied from ShrOperationV2.staticOperation
+        case COPIED_SHR -> {
+          if (constantinople) {
+            {
+              if (!((spBase + 960) >= 2)) {
+                {
+                  sp = 0;
+                  frame.setTopV2(sp);
+                  frame.setPC(pc);
+                  frame.setGasRemaining(gas);
+                  result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+                  break;
+                }
+              }
+              long[] stack = s;
+              int top = (spBase + 960);
+              final int shiftOffset = (--top) << 2;
+              final UInt256 shift =
+                  new UInt256(
+                      stack[shiftOffset],
+                      stack[shiftOffset + 1],
+                      stack[shiftOffset + 2],
+                      stack[shiftOffset + 3]);
+              final int valueOffset = (--top) << 2;
+              final UInt256 value =
+                  new UInt256(
+                      stack[valueOffset],
+                      stack[valueOffset + 1],
+                      stack[valueOffset + 2],
+                      stack[valueOffset + 3]);
+              final UInt256 result2 = value.shr(shift);
+              int resultOffset = top << 2;
+              stack[resultOffset] = result2.u3();
+              stack[resultOffset + 1] = result2.u2();
+              stack[resultOffset + 2] = result2.u1();
+              stack[resultOffset + 3] = result2.u0();
+              sp = ++top;
+              cost = 3L;
+              step = 1;
+            }
+          } else {
+            {
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = new OperationResult(0, ExceptionalHaltReason.newInvalidOperation(opcode));
+            }
+          }
+        }
+        // END copied from ShrOperationV2.staticOperation
+        // BEGIN copied from OrOperationV2.staticOperation
+        case COPIED_OR -> {
+          if (!((spBase + 1024) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          long[] stack = s;
+          int top = (spBase + 1024);
+          final int aOffset = (top - 1) << 2;
+          final int bOffset = (top - 2) << 2;
+          final UInt256 valueA =
+              new UInt256(
+                  stack[aOffset], stack[aOffset + 1], stack[aOffset + 2], stack[aOffset + 3]);
+          final UInt256 valueB =
+              new UInt256(
+                  stack[bOffset], stack[bOffset + 1], stack[bOffset + 2], stack[bOffset + 3]);
+          final UInt256 r = valueA.or(valueB);
+          stack[bOffset] = r.u3();
+          stack[bOffset + 1] = r.u2();
+          stack[bOffset + 2] = r.u1();
+          stack[bOffset + 3] = r.u0();
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from OrOperationV2.staticOperation
+        // BEGIN copied from NotOperationV2.staticOperation
+        case COPIED_NOT -> {
+          if (!((spBase + 1088) >= 1)) {
+            frame.setTopV2(sp);
+            frame.setPC(pc);
+            frame.setGasRemaining(gas);
+            result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+            break;
+          }
+          long[] stack = s;
+          final int aOffset = ((spBase + 1088) - 1) << 2;
+          final UInt256 valueA =
+              new UInt256(
+                  stack[aOffset], stack[aOffset + 1], stack[aOffset + 2], stack[aOffset + 3]);
+          final UInt256 r = valueA.not();
+          stack[aOffset] = r.u3();
+          stack[aOffset + 1] = r.u2();
+          stack[aOffset + 2] = r.u1();
+          stack[aOffset + 3] = r.u0();
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from NotOperationV2.staticOperation
+        // BEGIN copied from SLtOperationV2.staticOperation
+        case COPIED_SLT -> {
+          if (!((spBase + 1152) >= 2)) {
+            {
+              sp = 0;
+              frame.setTopV2(sp);
+              frame.setPC(pc);
+              frame.setGasRemaining(gas);
+              result = AbstractOperationV2.UNDERFLOW_RESPONSE;
+              break;
+            }
+          }
+          final long[] stack = s;
+          final int top = (spBase + 1152);
+          final boolean lessThan =
+              stackUtilCompareSigned(stack, (top - 1) << 2, (top - 2) << 2) < 0;
+          stackUtilSetLong(lessThan ? 1L : 0L, stack, top - 2);
+          sp = top - 1;
+          cost = 3L;
+          step = 1;
+        }
+        // END copied from SLtOperationV2.staticOperation
         // END GENERATED cases
         default -> {
           // everything else goes through executeOperationV2 below

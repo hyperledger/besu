@@ -104,7 +104,9 @@ public final class EvmV2LoopGenerator {
 
   /**
    * The opcodes whose code the loop runs inline, one case per case of executeOperationV2, in the
-   * order of their frequency on mainnet. Each name is the case's constant in EVM.java.
+   * order of their frequency on mainnet. Each name is the case's constant in EVM.java. JUMP and
+   * JUMPI stay on the general path: their check of the destination can analyse the code, a call C2
+   * keeps in the loop, and around it the loop's state could not stay in registers.
    */
   private static final Map<String, Integer> HOT = new LinkedHashMap<>();
 
@@ -115,8 +117,6 @@ public final class EvmV2LoopGenerator {
     HOT.put("SWAP", 0x90);
     HOT.put("JUMPDEST", 0x5b);
     HOT.put("POP", 0x50);
-    HOT.put("JUMPI", 0x57);
-    HOT.put("JUMP", 0x56);
     HOT.put("ADD", 0x01);
     HOT.put("ISZERO", 0x15);
     HOT.put("AND", 0x16);
@@ -125,6 +125,10 @@ public final class EvmV2LoopGenerator {
     HOT.put("SHL", 0x1b);
     HOT.put("GT", 0x11);
     HOT.put("PUSH0", 0x5f);
+    HOT.put("SHR", 0x1c);
+    HOT.put("OR", 0x17);
+    HOT.put("NOT", 0x19);
+    HOT.put("SLT", 0x12);
   }
 
   /**
