@@ -195,10 +195,12 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
   void removeTransaction(
       final PendingTransaction pendingTransaction, final SequencedRemovalReason reason) {
-    // notify while holding the lock and only if actually removed, so that the events are notified
-    // in the order they happen and a tx is not notified as dropped more than once
+    // notify while holding the lock, so that the events are notified in the order they happen, and
+    // only if this pending tx is still in the pool, since it could have been removed already, and
+    // the same tx added again, like after a timed eviction scan
     synchronized (lock) {
-      if (removeTransaction(pendingTransaction.getTransaction(), false)) {
+      if (pendingTransaction.equals(pendingTransactions.get(pendingTransaction.getHash()))) {
+        removeTransaction(pendingTransaction.getTransaction(), false);
         eventEmitter.notifyPendingTransactionDropped(pendingTransaction, reason);
       }
     }
@@ -418,7 +420,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
         : pendingTransactionsForSender.maybeNextNonce();
   }
 
-  private boolean removeTransaction(final Transaction transaction, final boolean addedToBlock) {
+  private void removeTransaction(final Transaction transaction, final boolean addedToBlock) {
     synchronized (lock) {
       final PendingTransaction removedPendingTx = pendingTransactions.remove(transaction.getHash());
       if (removedPendingTx != null) {
@@ -430,9 +432,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
             && addedToBlock) {
           this.blobCache.cacheBlobs(removedPendingTx.getTransaction());
         }
-        return true;
       }
-      return false;
     }
   }
 

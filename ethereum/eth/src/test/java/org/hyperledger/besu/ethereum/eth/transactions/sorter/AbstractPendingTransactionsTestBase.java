@@ -409,6 +409,25 @@ public abstract class AbstractPendingTransactionsTestBase {
   }
 
   @Test
+  public void shouldNotRemoveTransactionAddedAgainWhenRemovingItsPreviousPendingTransaction() {
+    final PendingTransaction pendingTransaction1 = createRemotePendingTransaction(transaction1);
+    transactions.addTransaction(pendingTransaction1, Optional.empty());
+    transactions.removeTransaction(pendingTransaction1, EVICTED);
+
+    final PendingTransaction addedAgain = createRemotePendingTransaction(transaction1);
+    transactions.addTransaction(addedAgain, Optional.empty());
+
+    transactionEventNotifier.subscribePendingTransactionDropped(droppedListener);
+
+    // like a timed eviction that found the previous pending tx before it was removed
+    transactions.removeTransaction(pendingTransaction1, TIMED_EVICTION);
+
+    assertTransactionPending(transaction1);
+    verifyNoInteractions(droppedListener);
+    assertThat(metricsSystem.getCounterValue(REMOVED_COUNTER, REMOTE, DROPPED)).isEqualTo(1);
+  }
+
+  @Test
   public void selectTransactionsInCorrectOrder() {
     assertThat(
             transactionsLarge.addTransaction(
