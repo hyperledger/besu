@@ -22,10 +22,9 @@ import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfig;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
-import org.hyperledger.besu.consensus.merge.NewPayloadListener;
-import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.cryptoservices.NodeKey;
+import org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -63,10 +62,10 @@ import org.hyperledger.besu.ethereum.eth.manager.snap.SnapProtocolManager;
 import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
 import org.hyperledger.besu.ethereum.eth.peervalidation.RequiredBlocksPeerValidator;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.MissingCodeFetcher;
 import org.hyperledger.besu.ethereum.eth.sync.PivotBlockSelector;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorAtHead;
 import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromPeers;
 import org.hyperledger.besu.ethereum.eth.sync.common.PivotSelectorFromSafeBlock;
 import org.hyperledger.besu.ethereum.eth.sync.common.SingleBlockHeaderDownloader;
@@ -94,7 +93,6 @@ import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.Arch
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.code.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.BonsaiCachedMerkleTrieLoader;
@@ -117,6 +115,7 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -921,6 +920,11 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
       ethPeers.snapServerPeersNeeded(false);
     }
 
+    // a stored account missing its code is healed by fetching the code by hash from peers
+    if (protocolContext.getWorldStateArchive() instanceof BonsaiWorldStateProvider bonsaiArchive) {
+      bonsaiArchive.setCodeFetcher(new MissingCodeFetcher(ethContext, blockchain));
+    }
+
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(
             protocolContext,
@@ -1108,7 +1112,8 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
     final ScheduledExecutorService migrationExecutor =
         MonitoredExecutors.newScheduledThreadPool("archive-migrator", 1, metricsSystem);
     final BonsaiArchiveFlatDbStrategy archiveStrategy =
-        new BonsaiArchiveFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+        new BonsaiArchiveFlatDbStrategy(
+            metricsSystem, worldStateKeyValueStorage.getFlatDbStrategy().getCodeStorageStrategy());
     return new BonsaiFlatDbToArchiveMigrator(
         worldStateKeyValueStorage,
         trieLogManager,
@@ -1194,48 +1199,24 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             cleanups.forEach(Runnable::run);
           };
 
-      final PivotBlockSelector selector;
-      final NewPayloadListener newPayloadListener;
-      final UnverifiedForkchoiceListener forkchoiceListener;
-      if (Boolean.TRUE.equals(syncConfig.getSnapSyncConfiguration().isSnap2Enabled())) {
-        final PivotSelectorAtHead atHeadSelector =
-            new PivotSelectorAtHead(
-                protocolContext,
-                genesisConfigOptions,
-                headerDownloader,
-                protocolSchedule,
-                ethContext,
-                syncConfig.getSyncMinimumPeerCount(),
-                Clock.systemUTC(),
-                syncConfig.getSnapSyncConfiguration().getPivotBlockWindowValidity(),
-                cleanupAction);
-        selector = atHeadSelector;
-        newPayloadListener = atHeadSelector;
-        forkchoiceListener = atHeadSelector;
-      } else {
-        final PivotSelectorFromSafeBlock safeBlockSelector =
-            new PivotSelectorFromSafeBlock(
-                protocolContext,
-                genesisConfigOptions,
-                headerDownloader,
-                protocolSchedule,
-                Clock.systemUTC(),
-                syncConfig.getSnapSyncConfiguration().getPivotBlockWindowValidity(),
-                cleanupAction);
-        selector = safeBlockSelector;
-        newPayloadListener = safeBlockSelector;
-        forkchoiceListener = safeBlockSelector;
-      }
+      final PivotSelectorFromSafeBlock selector =
+          new PivotSelectorFromSafeBlock(
+              protocolContext,
+              genesisConfigOptions,
+              headerDownloader,
+              protocolSchedule,
+              Clock.systemUTC(),
+              syncConfig.getSnapSyncConfiguration().getPivotBlockWindowValidity(),
+              cleanupAction);
 
-      final long newPayloadSubscriptionId = mergeContext.addNewPayloadListener(newPayloadListener);
+      final long newPayloadSubscriptionId = mergeContext.addNewPayloadListener(selector);
       cleanups.add(
           () -> {
             mergeContext.removeNewPayloadListener(newPayloadSubscriptionId);
             LOG.info("Unsubscribed newPayload listener");
           });
 
-      final long selectorSubscriptionId =
-          mergeContext.addNewUnverifiedForkchoiceListener(forkchoiceListener);
+      final long selectorSubscriptionId = mergeContext.addNewUnverifiedForkchoiceListener(selector);
       cleanups.add(
           () -> {
             mergeContext.removeNewUnverifiedForkchoiceListener(selectorSubscriptionId);
@@ -1434,12 +1415,27 @@ public abstract class BesuControllerBuilder implements MiningConfigurationOverri
             metricsSystem));
   }
 
+  /**
+   * Returns the earliest milestone of Amsterdam or any later fork, so that a schedule activating a
+   * later fork without an explicit Amsterdam milestone still gets Amsterdam behaviour.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @return the earliest Amsterdam-or-later milestone, if any
+   */
+  static Optional<Long> amsterdamOrLaterMilestone(final ProtocolSchedule protocolSchedule) {
+    return Arrays.stream(MainnetHardforkId.values())
+        .filter(hardforkId -> hardforkId.ordinal() >= AMSTERDAM.ordinal())
+        .map(protocolSchedule::milestoneFor)
+        .flatMap(Optional::stream)
+        .min(Long::compareUnsigned);
+  }
+
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final ProtocolSchedule protocolSchedule) {
-    final Optional<Long> amsterdamMilestone = protocolSchedule.milestoneFor(AMSTERDAM);
+    final Optional<Long> amsterdamMilestone = amsterdamOrLaterMilestone(protocolSchedule);
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =

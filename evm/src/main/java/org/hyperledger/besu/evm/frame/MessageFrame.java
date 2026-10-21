@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.v2.operation.StackUtil;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -209,12 +210,16 @@ public class MessageFrame {
   private long gasRemaining;
   private int pc;
   private final Memory memory = new Memory();
+  // null on a frame EVM v2 runs, which only uses the v2 stack
   private final OperandStack stack;
   // EVM v2 stack: 4 longs per 256-bit word (index 0 = most significant, index 3 = least
   // significant)
   private final long[] stackDataV2;
   private int stackTopV2;
   private final int stackMaxSizeV2;
+  // Tracer view of the v2 stack: the item last handed out per slot, reused while the slot is
+  // unchanged so that tracers snapshotting the stack every step share objects, as on v1
+  private Bytes32[] stackViewV2;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
@@ -286,7 +291,7 @@ public class MessageFrame {
     this.type = type;
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
-    this.stack = new OperandStack(txValues.maxStackSize());
+    this.stack = enableEvmV2 ? null : new OperandStack(txValues.maxStackSize());
     this.stackDataV2 = enableEvmV2 ? new long[txValues.maxStackSize() * 4] : null;
     this.stackTopV2 = 0;
     this.stackMaxSizeV2 = txValues.maxStackSize();
@@ -434,9 +439,13 @@ public class MessageFrame {
   /**
    * Returns the item at the specified offset in the stack.
    *
+   * <p>Reads the EVM v1 stack only. A tracer reads the stack of a frame EVM v2 runs through {@link
+   * org.hyperledger.besu.evm.tracing.TracedStack}.
+   *
    * @param offset The item's position relative to the top of the stack
    * @return The item at the specified offset in the stack
    * @throws UnderflowException if the offset is out of range
+   * @throws NullPointerException if EVM v2 runs the frame, which has no EVM v1 stack
    */
   public Bytes getStackItem(final int offset) {
     return stack.get(offset);
@@ -484,7 +493,11 @@ public class MessageFrame {
   /**
    * Return the current stack size.
    *
+   * <p>Reads the EVM v1 stack only. A tracer reads the stack of a frame EVM v2 runs through {@link
+   * org.hyperledger.besu.evm.tracing.TracedStack}.
+   *
    * @return The current stack size
+   * @throws NullPointerException if EVM v2 runs the frame, which has no EVM v1 stack
    */
   public int stackSize() {
     return stack.size();
@@ -492,6 +505,42 @@ public class MessageFrame {
 
   // region --- EVM v2 long[] stack operations ---
   // ---------------------------------------------------------------------------
+
+  /**
+   * Returns whether EVM v2 runs the frame, and so whether its stack is the v2 stack rather than the
+   * one {@link #getStackItem} and {@link #stackSize} read.
+   *
+   * @return true if the frame has a v2 stack
+   */
+  public boolean runsOnEvmV2() {
+    return stackDataV2 != null;
+  }
+
+  /**
+   * Returns the item at the specified offset in the v2 stack, for tracers. Repeated reads of an
+   * unchanged item return the same object, so that tracers snapshotting the stack every step share
+   * items, as they do on v1.
+   *
+   * @param offset the item's position relative to the top of the stack
+   * @return the item at the specified offset in the stack
+   * @throws UnderflowException if the offset is out of range
+   */
+  public Bytes stackItemV2(final int offset) {
+    if (offset < 0 || offset >= stackTopV2) {
+      throw new UnderflowException();
+    }
+    final int slot = stackTopV2 - 1 - offset;
+    if (stackViewV2 == null) {
+      stackViewV2 = new Bytes32[stackMaxSizeV2];
+    }
+    final Bytes32 cached = stackViewV2[slot];
+    if (cached != null && StackUtil.wordEquals(cached, stackDataV2, stackTopV2, offset)) {
+      return cached;
+    }
+    final Bytes32 item = StackUtil.readBytes32At(stackDataV2, stackTopV2, offset);
+    stackViewV2[slot] = item;
+    return item;
+  }
 
   /**
    * Returns the backing long[] array of the operand stack.
@@ -895,8 +944,9 @@ public class MessageFrame {
   }
 
   /**
-   * Decrements stateGasUsed for in-frame refunds (SSTORE 0→X→0, CREATE silent failure, same-tx
-   * SELFDESTRUCT). UndoScalar-scoped: refunds propagate to parents only on full success.
+   * Decrements stateGasUsed for in-frame refunds (SSTORE 0→X→0, CREATE silent failure).
+   * UndoScalar-scoped: refunds propagate to parents only on full success. A same-tx SELFDESTRUCT
+   * does not refund state gas (EIP-8037, "Gas refills for SELFDESTRUCT").
    *
    * @param amount the amount to subtract
    */
@@ -1867,7 +1917,9 @@ public class MessageFrame {
     }
 
     /**
-     * Sets whether the experimental EVM v2 (long[] stack) is enabled.
+     * Sets whether the experimental EVM v2 (long[] stack) runs the frame. A frame built for EVM v2
+     * has no v1 stack. A child frame runs on the interpreter of its parent, so it is built for EVM
+     * v2 when its parent runs on it.
      *
      * @param enableEvmV2 true to enable EVM v2
      * @return the builder

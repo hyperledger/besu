@@ -57,7 +57,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration.WorldUpdaterMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -82,7 +81,7 @@ public class BlockchainReferenceTestTools {
         final String networks =
                 System.getProperty(
                         "test.ethereum.blockchain.eips",
-                        "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k,"
+                        "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k,BPO2ToAmsterdamAtTime15k,"
                                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
                                 + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
         NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
@@ -152,7 +151,7 @@ public class BlockchainReferenceTestTools {
                     bso ->
                         ReferenceTestProtocolSchedules.create(
                             new StubGenesisConfigOptions().blobScheduleOptions(bso),
-                            EvmConfiguration.DEFAULT))
+                            ReferenceTestProtocolSchedules.evmConfiguration()))
                 .orElse(PROTOCOL_SCHEDULES);
         final ProtocolSchedule schedule = protocolSchedules.getByName(spec.getNetwork());
 
