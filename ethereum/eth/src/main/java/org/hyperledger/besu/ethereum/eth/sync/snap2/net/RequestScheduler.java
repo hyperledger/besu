@@ -326,10 +326,13 @@ public final class RequestScheduler implements RequestSender {
 
   @Override
   public long bestPeerHeight() {
-    return validatedPeers()
-        .mapToLong(peer -> peer.chainState().getEstimatedHeight())
-        .max()
-        .orElse(0);
+    final long[] heights =
+        validatedPeers()
+            .mapToLong(peer -> peer.chainState().getEstimatedHeight())
+            .sorted()
+            .toArray();
+    // the second highest: a peer announcing a height no other reaches cannot raise it alone
+    return heights.length == 0 ? 0 : heights[Math.max(0, heights.length - 2)];
   }
 
   @Override
