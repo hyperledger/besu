@@ -17,11 +17,12 @@ package org.hyperledger.besu.evm.tracing;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.WarmStorageTable;
+import org.hyperledger.besu.evm.internal.WarmStorageKeyV2;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -34,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class AccessListOperationTracer implements OperationTracer {
 
   private Table<Address, Bytes32, Boolean> warmedUpStorage;
-  private WarmStorageTable warmedUpStorageV2;
+  private Set<WarmStorageKeyV2> warmedUpStorageV2;
 
   /** Default constructor. */
   private AccessListOperationTracer() {
@@ -75,10 +76,11 @@ public class AccessListOperationTracer implements OperationTracer {
   }
 
   private List<AccessListEntry> getAccessListV2() {
-    // the table has no order, so sort by address and slot as the v1 table does
+    // the set has no order, so sort by address and slot as the v1 table does
     final SortedMap<Address, SortedSet<Bytes32>> byAddress = new TreeMap<>();
-    warmedUpStorageV2.forEach(
-        (address, slot) -> byAddress.computeIfAbsent(address, a -> new TreeSet<>()).add(slot));
+    for (final WarmStorageKeyV2 key : warmedUpStorageV2) {
+      byAddress.computeIfAbsent(key.address(), a -> new TreeSet<>()).add(key.slot());
+    }
     final List<AccessListEntry> list = new ArrayList<>(byAddress.size());
     byAddress.forEach(
         (address, slots) -> list.add(new AccessListEntry(address, new ArrayList<>(slots))));

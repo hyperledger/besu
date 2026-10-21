@@ -30,7 +30,7 @@ import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
-import org.hyperledger.besu.evm.internal.WarmStorageTable;
+import org.hyperledger.besu.evm.internal.WarmStorageKeyV2;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.v2.operation.StackUtil;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -1258,7 +1258,7 @@ public class MessageFrame {
    * @return true if the storage slot was already warmed up
    */
   public boolean warmUpStorageV2(final Address address, final Bytes32 slot) {
-    return txValues.warmedUpStorageV2().warmUp(address, slot);
+    return !txValues.warmedUpStorageV2().add(new WarmStorageKeyV2(address, slot));
   }
 
   /**
@@ -1541,7 +1541,7 @@ public class MessageFrame {
    *
    * @return the warmed up storage
    */
-  public WarmStorageTable getWarmedUpStorageV2() {
+  public Set<WarmStorageKeyV2> getWarmedUpStorageV2() {
     return txValues.warmedUpStorageV2();
   }
 

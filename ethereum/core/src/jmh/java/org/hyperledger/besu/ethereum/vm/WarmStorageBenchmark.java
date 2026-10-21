@@ -14,12 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.evm.internal.WarmStorageTable;
+import org.hyperledger.besu.evm.internal.WarmStorageKeyV2;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -57,10 +59,10 @@ public class WarmStorageBenchmark {
   private static final int REVERT_AT = 1000;
   private static final int REVERT_LENGTH = 500;
 
-  /** Warm-slot table implementations under test. */
+  /** Warm-slot implementations under test: EVM v1's table of tree maps and EVM v2's hash set. */
   public enum Implementation {
     TREE_TABLE,
-    OPEN_TABLE
+    HASH_SET
   }
 
   /** Minimal view of a warm-slot table. */
@@ -72,7 +74,7 @@ public class WarmStorageBenchmark {
     void undo(long mark);
   }
 
-  @Param({"TREE_TABLE", "OPEN_TABLE"})
+  @Param({"TREE_TABLE", "HASH_SET"})
   private Implementation implementation;
 
   @Param({"1", "8"})
@@ -150,7 +152,7 @@ public class WarmStorageBenchmark {
   private static WarmSlots create(final Implementation implementation) {
     return switch (implementation) {
       case TREE_TABLE -> undoTable(UndoTable.of(TreeBasedTable.create()));
-      case OPEN_TABLE -> open(new WarmStorageTable());
+      case HASH_SET -> undoSet(UndoSet.of(new HashSet<>()));
     };
   }
 
@@ -173,21 +175,21 @@ public class WarmStorageBenchmark {
     };
   }
 
-  private static WarmSlots open(final WarmStorageTable table) {
+  private static WarmSlots undoSet(final UndoSet<WarmStorageKeyV2> set) {
     return new WarmSlots() {
       @Override
       public boolean warmUp(final Address address, final Bytes32 slot) {
-        return table.warmUp(address, slot);
+        return !set.add(new WarmStorageKeyV2(address, slot));
       }
 
       @Override
       public long mark() {
-        return table.mark();
+        return set.mark();
       }
 
       @Override
       public void undo(final long mark) {
-        table.undo(mark);
+        set.undo(mark);
       }
     };
   }

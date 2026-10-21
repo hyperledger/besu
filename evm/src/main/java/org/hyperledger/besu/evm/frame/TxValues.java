@@ -23,7 +23,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.blockhash.BlockHashLookup;
 import org.hyperledger.besu.evm.internal.AddressStorageSlotKey;
-import org.hyperledger.besu.evm.internal.WarmStorageTable;
+import org.hyperledger.besu.evm.internal.WarmStorageKeyV2;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -49,7 +49,7 @@ public class TxValues {
   private final UndoSet<Address> warmedUpAddresses;
   // null on a transaction EVM v2 runs, which tracks its warm slots in warmedUpStorageV2
   private final UndoTable<Address, Bytes32, Boolean> warmedUpStorage;
-  private final WarmStorageTable warmedUpStorageV2;
+  private final UndoSet<WarmStorageKeyV2> warmedUpStorageV2;
   private final Address originator;
   private final Wei gasPrice;
   private final Wei blobGasPrice;
@@ -69,7 +69,7 @@ public class TxValues {
       final int maxStackSize,
       final UndoSet<Address> warmedUpAddresses,
       final UndoTable<Address, Bytes32, Boolean> warmedUpStorage,
-      final WarmStorageTable warmedUpStorageV2,
+      final UndoSet<WarmStorageKeyV2> warmedUpStorageV2,
       final Address originator,
       final Wei gasPrice,
       final Wei blobGasPrice,
@@ -138,7 +138,7 @@ public class TxValues {
         maxStackSize,
         warmedUpAddresses,
         enableEvmV2 ? null : UndoTable.of(TreeBasedTable.create()),
-        enableEvmV2 ? new WarmStorageTable() : null,
+        enableEvmV2 ? UndoSet.of(new HashSet<>()) : null,
         originator,
         gasPrice,
         blobGasPrice,
@@ -215,7 +215,7 @@ public class TxValues {
    *
    * @return the warmed-up storage slots, or null if EVM v1 runs the transaction
    */
-  public WarmStorageTable warmedUpStorageV2() {
+  public UndoSet<WarmStorageKeyV2> warmedUpStorageV2() {
     return warmedUpStorageV2;
   }
 

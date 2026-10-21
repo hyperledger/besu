@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.WarmStorageKeyV2;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 
@@ -156,7 +157,8 @@ class WarmStorageHashDosTest {
           });
 
       for (final Bytes32 slot : slots) {
-        assertThat(frame.getWarmedUpStorageV2().contains(Address.ZERO, slot)).isTrue();
+        assertThat(frame.getWarmedUpStorageV2().contains(new WarmStorageKeyV2(Address.ZERO, slot)))
+            .isTrue();
       }
     }
   }

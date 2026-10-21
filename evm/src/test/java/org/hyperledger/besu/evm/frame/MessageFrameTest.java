@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.WarmStorageKeyV2;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 
@@ -115,7 +116,8 @@ class MessageFrameTest {
             .build();
 
     assertThat(messageFrame.getWarmedUpStorage()).isNull();
-    assertThat(messageFrame.getWarmedUpStorageV2().contains(address, WORD1)).isTrue();
+    assertThat(messageFrame.getWarmedUpStorageV2().contains(new WarmStorageKeyV2(address, WORD1)))
+        .isTrue();
     assertThat(messageFrame.warmUpStorageV2(address, WORD1)).isTrue();
     assertThat(messageFrame.warmUpStorageV2(address, WORD2)).isFalse();
   }
@@ -133,7 +135,9 @@ class MessageFrameTest {
 
     messageFrame.rollback();
 
-    assertThat(messageFrame.getWarmedUpStorageV2().contains(address, WORD1)).isTrue();
-    assertThat(messageFrame.getWarmedUpStorageV2().contains(address, WORD2)).isFalse();
+    assertThat(messageFrame.getWarmedUpStorageV2().contains(new WarmStorageKeyV2(address, WORD1)))
+        .isTrue();
+    assertThat(messageFrame.getWarmedUpStorageV2().contains(new WarmStorageKeyV2(address, WORD2)))
+        .isFalse();
   }
 }
