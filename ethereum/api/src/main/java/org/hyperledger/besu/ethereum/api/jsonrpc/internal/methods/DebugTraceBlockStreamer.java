@@ -305,31 +305,7 @@ public class DebugTraceBlockStreamer {
         new StreamingDebugOperationTracer(
             traceOptions.opCodeTracerConfig(),
             true,
-            (pc,
-                opcode,
-                gasRemaining,
-                gasCost,
-                depth,
-                stack,
-                memory,
-                refund,
-                returnData,
-                storage,
-                halt,
-                revert) ->
-                writeStructLog(
-                    pc,
-                    opcode,
-                    gasRemaining,
-                    gasCost,
-                    depth,
-                    stack,
-                    memory,
-                    refund,
-                    returnData,
-                    storage,
-                    halt,
-                    revert));
+                this::writeStructLog);
 
     try {
       if (!firstTx) writeByte(COMMA);

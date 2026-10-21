@@ -24,7 +24,6 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -166,12 +165,7 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
     if ("SSTORE".equals(opName)) {
       return frame
           .getMaybeUpdatedStorage()
-          .map(
-              entry -> {
-                final Map<UInt256, UInt256> map = new TreeMap<>();
-                map.put(entry.getOffset(), UInt256.fromBytes(entry.getValue()));
-                return map;
-              });
+          .map(entry -> Map.of(entry.getOffset(), UInt256.fromBytes(entry.getValue())));
     }
     if ("SLOAD".equals(opName) && operationResult.getHaltReason() == null) {
       return preExecutionStorageKey.flatMap(
@@ -179,10 +173,7 @@ public abstract class AbstractDebugOperationTracer implements OperationTracer {
             if (frame.stackSize() == 0) {
               return Optional.empty();
             }
-            final UInt256 loadedValue = UInt256.fromBytes(frame.getStackItem(0));
-            final Map<UInt256, UInt256> map = new TreeMap<>();
-            map.put(key, loadedValue);
-            return Optional.of(map);
+            return Optional.of(Map.of(key, UInt256.fromBytes(frame.getStackItem(0))));
           });
     }
     return Optional.empty();
