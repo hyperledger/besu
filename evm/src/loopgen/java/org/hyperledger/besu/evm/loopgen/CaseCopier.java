@@ -131,11 +131,6 @@ final class CaseCopier {
       return copyConditionalReturn(value, conditional, scope, endsCase);
     }
     final Element element = sources.element(value);
-    if (leaf instanceof IdentifierTree && element != null && scope.bindingOf(element) != null) {
-      // a parameter that holds an argument: return the argument, which may be a result constant
-      final Scope.Binding binding = scope.bindingOf(element);
-      return copyReturn(binding.argument(), binding.scope(), endsCase, asBlock);
-    }
     if ((leaf instanceof IdentifierTree || leaf instanceof MemberSelectTree)
         && CopiedDeclarations.isResultConstant(element)) {
       final VariableElement constant = (VariableElement) element;
@@ -143,7 +138,14 @@ final class CaseCopier {
       if (!result.halts()) {
         return "cost = " + result.gasCost() + "L;\nstep = " + result.pcStep() + ";" + leaveCase;
       }
-      return handToFrame(declarations.nameOfResultConstant(constant), leaveCase);
+      if (!JavaSources.visibleFromEvm(constant)) {
+        throw copier.reject(value, "a halt EVM cannot name: " + constant);
+      }
+      return handToFrame(
+          sources.nameInEvm((TypeElement) constant.getEnclosingElement())
+              + "."
+              + constant.getSimpleName(),
+          leaveCase);
     }
     if (leaf instanceof MethodInvocationTree call
         && element instanceof ExecutableElement method

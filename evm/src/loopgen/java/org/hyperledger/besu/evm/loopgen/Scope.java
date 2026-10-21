@@ -30,8 +30,8 @@ import com.sun.source.util.TreePath;
  *
  * <ul>
  *   <li>declared by the copy, under a name {@link CaseLocals#declare} chose;
- *   <li>a parameter bound to the argument the call passed, which the copy repeats where the
- *       parameter is used, so that a constant result passed in is still recognised as one;
+ *   <li>a parameter bound to an argument without side effects, which the copy repeats where the
+ *       parameter is used;
  *   <li>a name for the frame, which the copy may use only as {@link UntracedLoop} allows.
  * </ul>
  */

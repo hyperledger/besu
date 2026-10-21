@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -35,9 +34,9 @@ import com.sun.source.tree.VariableTree;
 import com.sun.source.util.TreePath;
 
 /**
- * What copied code names but EVM cannot see, because the operations declare it private or package
- * private: their result constants and their static helpers. Each is copied into EVM once, with the
- * names in it written as EVM can resolve them, and the copies name the copy.
+ * What copied code needs from the operations besides their code: what their result constants say,
+ * and their static helpers that EVM cannot call because they are package private. Each such helper
+ * is copied into EVM once, and the copies call the copy.
  */
 final class CopiedDeclarations {
 
@@ -51,7 +50,6 @@ final class CopiedDeclarations {
   record ResultConstant(long gasCost, long pcStep, boolean halts) {}
 
   private final JavaSources sources;
-  private final Map<String, String> constants = new LinkedHashMap<>();
   private final Map<ExecutableElement, String> helperNames = new HashMap<>();
   private final Map<String, String> helpers = new LinkedHashMap<>();
 
@@ -59,10 +57,9 @@ final class CopiedDeclarations {
     this.sources = sources;
   }
 
-  /** The text to write into EVM: the copied constants, then the copied helpers. */
+  /** The text to write into EVM: the copied helpers. */
   String text() {
     final StringBuilder text = new StringBuilder();
-    constants.values().forEach(constant -> text.append('\n').append(constant));
     helpers.values().forEach(helper -> text.append('\n').append(helper));
     return text.toString();
   }
@@ -88,42 +85,6 @@ final class CopiedDeclarations {
     final long gasCost = literal(arguments.get(0), constant);
     final long pcStep = arguments.size() == 3 ? literal(arguments.get(2), constant) : 1;
     return new ResultConstant(gasCost, pcStep, false);
-  }
-
-  /** The name under which EVM can use a result constant, copying it into EVM if it must. */
-  String nameOfResultConstant(final VariableElement constant) {
-    final TypeElement owner = (TypeElement) constant.getEnclosingElement();
-    if (JavaSources.visibleFromEvm(constant)) {
-      return sources.nameInEvm(owner) + "." + constant.getSimpleName();
-    }
-    final String name =
-        upperSnake(owner.getSimpleName().toString()) + "_" + constant.getSimpleName();
-    if (!constants.containsKey(name)) {
-      final NewClassTree creation = creation(constant);
-      final TreePath creationPath = new TreePath(sources.pathTo(constant), creation);
-      final SourceCopier copier = new SourceCopier(sources, this, null);
-      final List<String> arguments = new ArrayList<>();
-      for (final ExpressionTree argument : creation.getArguments()) {
-        arguments.add(
-            copier.copy(
-                new TreePath(creationPath, argument),
-                new Scope(null),
-                SourceCopier.State.IN_FRAME));
-      }
-      constants.put(
-          name,
-          """
-          // copied from %s.%s
-          private static final OperationResult %s =
-              new OperationResult(%s);
-          """
-              .formatted(
-                  owner.getSimpleName(),
-                  constant.getSimpleName(),
-                  name,
-                  String.join(", ", arguments)));
-    }
-    return name;
   }
 
   private NewClassTree creation(final VariableElement constant) {
@@ -210,10 +171,6 @@ final class CopiedDeclarations {
             name,
             String.join(", ", parameters),
             body);
-  }
-
-  private static String upperSnake(final String camel) {
-    return camel.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toUpperCase(Locale.ROOT);
   }
 
   private static String lowerFirst(final String name) {
