@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatD
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -138,7 +138,7 @@ public class RequestDataStepLocalFlatDataTest {
     final Hash accountHash = Hash.wrap(Bytes32.leftPad(Bytes.of(1)));
     final Bytes32 storageRoot =
         Bytes32.wrap(
-            PmtStateTrieAccountValue.readFrom(
+            PatriciaTrieAccountValue.readFrom(
                     RLP.input(worldStateStorage.getAccount(accountHash).orElseThrow()))
                 .getStorageRoot()
                 .getBytes());

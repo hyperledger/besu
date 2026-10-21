@@ -22,8 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.evm.account.Account;
@@ -140,7 +139,7 @@ public class ForestMutableWorldState implements MutableWorldState {
   private WorldStateAccount deserializeAccount(
       final Address address, final Hash addressHash, final Bytes encoded) throws RLPException {
     final RLPInput in = RLP.input(encoded);
-    final PmtStateTrieAccountValue accountValue = PmtStateTrieAccountValue.readFrom(in);
+    final PatriciaTrieAccountValue accountValue = PatriciaTrieAccountValue.readFrom(in);
     return new WorldStateAccount(address, addressHash, accountValue);
   }
 
@@ -236,7 +235,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     private final Address address;
     private final Hash addressHash;
 
-    final PmtStateTrieAccountValue accountValue;
+    final PatriciaTrieAccountValue accountValue;
 
     // Lazily initialized since we don't always access storage.
     private volatile MerkleTrie<Bytes32, Bytes> storageTrie;
@@ -244,7 +243,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     private WorldStateAccount(
         final Address address,
         final Hash addressHash,
-        final PmtStateTrieAccountValue accountValue) {
+        final PatriciaTrieAccountValue accountValue) {
 
       this.address = address;
       this.addressHash = addressHash;
@@ -297,10 +296,7 @@ public class ForestMutableWorldState implements MutableWorldState {
       if (codeHash.equals(Hash.EMPTY)) {
         return Bytes.EMPTY;
       }
-      final Optional<Bytes> code = worldStateKeyValueStorage.getCode(codeHash);
-      // a storage fault, not empty code; asserted so that nodes without -ea skip the check
-      assert MerkleTrieException.checkCodeFound(address, codeHash, code.isPresent());
-      return code.orElse(Bytes.EMPTY);
+      return worldStateKeyValueStorage.getCode(codeHash).orElse(Bytes.EMPTY);
     }
 
     @Override
@@ -460,8 +456,8 @@ public class ForestMutableWorldState implements MutableWorldState {
 
     private static Bytes serializeAccount(
         final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
-      final PmtStateTrieAccountValue accountValue =
-          new PmtStateTrieAccountValue(nonce, balance, storageRoot, codeHash);
+      final PatriciaTrieAccountValue accountValue =
+          new PatriciaTrieAccountValue(nonce, balance, storageRoot, codeHash);
       return RLP.encode(accountValue::writeTo);
     }
   }
