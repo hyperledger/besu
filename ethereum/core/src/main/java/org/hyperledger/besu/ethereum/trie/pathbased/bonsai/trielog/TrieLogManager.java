@@ -23,6 +23,7 @@ import org.hyperledger.besu.plugin.ServiceManager;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.services.TrieLogService;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
+import org.hyperledger.besu.plugin.services.trielogs.TrieLogAccumulator;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogProvider;
@@ -59,17 +60,43 @@ public class TrieLogManager {
     this.trieLogFactory = setupTrieLogFactory(pluginContext);
   }
 
-  public synchronized void saveTrieLog(
+  public void saveTrieLog(
       final PathBasedWorldStateUpdateAccumulator<?> localUpdater,
       final Hash forWorldStateRootHash,
       final BlockHeader forBlockHeader,
       final PathBasedWorldState forWorldState) {
+    storeTrieLog(
+        localUpdater, forWorldStateRootHash, forBlockHeader, forWorldState.getWorldStateStorage());
+  }
+
+  /**
+   * Prepares to save a block's trie log later: after the accumulator it is built from has been
+   * reset, and the world state it belongs to closed.
+   *
+   * @param localUpdater the block's updates
+   * @param forWorldStateRootHash the block's state root
+   * @param forBlockHeader the block
+   * @return the save, which skips a trie log that has been saved by then
+   */
+  public Runnable deferTrieLog(
+      final PathBasedWorldStateUpdateAccumulator<?> localUpdater,
+      final Hash forWorldStateRootHash,
+      final BlockHeader forBlockHeader) {
+    final TrieLogAccumulator changes = TrieLogChanges.copyOf(localUpdater);
+    return () ->
+        storeTrieLog(changes, forWorldStateRootHash, forBlockHeader, rootWorldStateStorage);
+  }
+
+  protected synchronized void storeTrieLog(
+      final TrieLogAccumulator localUpdater,
+      final Hash forWorldStateRootHash,
+      final BlockHeader forBlockHeader,
+      final BonsaiWorldStateKeyValueStorage storage) {
     // do not overwrite a trielog layer that already exists in the database.
     // if it's only in memory we need to save it
     // for example, in case of reorg we don't replace a trielog layer
     if (rootWorldStateStorage.getTrieLog(forBlockHeader.getBlockHash()).isEmpty()) {
-      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater =
-          forWorldState.getWorldStateStorage().updater();
+      final BonsaiWorldStateKeyValueStorage.Updater stateUpdater = storage.updater();
       boolean success = false;
       try {
         final TrieLog trieLog = prepareTrieLog(forBlockHeader, localUpdater);
@@ -94,7 +121,7 @@ public class TrieLogManager {
   }
 
   private TrieLog prepareTrieLog(
-      final BlockHeader blockHeader, final PathBasedWorldStateUpdateAccumulator<?> localUpdater) {
+      final BlockHeader blockHeader, final TrieLogAccumulator localUpdater) {
     LOG.atDebug()
         .setMessage("Adding layered world state for {}")
         .addArgument(blockHeader::toLogString)
