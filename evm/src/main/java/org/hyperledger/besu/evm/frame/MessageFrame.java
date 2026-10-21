@@ -47,6 +47,7 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -1246,7 +1247,18 @@ public class MessageFrame {
    * @return true if the storage slot was already warmed up
    */
   public boolean warmUpStorage(final Address address, final Bytes32 slot) {
-    return txValues.warmedUpStorage().warmUp(address, slot);
+    return txValues.warmedUpStorage().put(address, slot, Boolean.TRUE) != null;
+  }
+
+  /**
+   * "Warms up" the storage slot as per EIP-2929, on a frame EVM v2 runs.
+   *
+   * @param address the address whose storage is being warmed up
+   * @param slot the slot being warmed up
+   * @return true if the storage slot was already warmed up
+   */
+  public boolean warmUpStorageV2(final Address address, final Bytes32 slot) {
+    return txValues.warmedUpStorageV2().warmUp(address, slot);
   }
 
   /**
@@ -1520,8 +1532,17 @@ public class MessageFrame {
    *
    * @return the warmed up storage
    */
-  public WarmStorageTable getWarmedUpStorage() {
+  public Table<Address, Bytes32, Boolean> getWarmedUpStorage() {
     return txValues.warmedUpStorage();
+  }
+
+  /**
+   * Gets warmedUp Storage of a frame EVM v2 runs.
+   *
+   * @return the warmed up storage
+   */
+  public WarmStorageTable getWarmedUpStorageV2() {
+    return txValues.warmedUpStorageV2();
   }
 
   /**
@@ -2004,7 +2025,8 @@ public class MessageFrame {
                 blockValues,
                 miningBeneficiary,
                 versionedHashes,
-                initialStateGasReservoir);
+                initialStateGasReservoir,
+                enableEvmV2);
         updater = worldUpdater;
         newStatic = isStatic;
       } else {
@@ -2038,8 +2060,14 @@ public class MessageFrame {
       for (Address a : eip2930AccessListWarmAddresses) {
         messageFrame.warmUpAddress(a);
       }
-      for (var e : eip2930AccessListWarmStorage.entries()) {
-        messageFrame.warmUpStorage(e.getKey(), e.getValue());
+      if (enableEvmV2) {
+        for (var e : eip2930AccessListWarmStorage.entries()) {
+          messageFrame.warmUpStorageV2(e.getKey(), e.getValue());
+        }
+      } else {
+        for (var e : eip2930AccessListWarmStorage.entries()) {
+          messageFrame.warmUpStorage(e.getKey(), e.getValue());
+        }
       }
       return messageFrame;
     }

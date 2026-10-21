@@ -59,7 +59,7 @@ class SLoadOperationV2Test {
   void chargesAWarmSlotLess() {
     worldUpdater.getOrCreate(ADDRESS);
     final MessageFrame frame = frame();
-    frame.warmUpStorage(ADDRESS, KEY);
+    frame.warmUpStorageV2(ADDRESS, KEY);
 
     final Operation.OperationResult result = operation.execute(frame, null);
 

@@ -61,7 +61,7 @@ public class SLoadOperationV2 extends AbstractOperationV2 {
     final int top = frame.stackTopV2();
     final Address address = account.getAddress();
     final UInt256 key = UInt256.fromBytes(readBytes32At(stack, top, 0));
-    final boolean slotIsWarm = frame.warmUpStorage(address, key);
+    final boolean slotIsWarm = frame.warmUpStorageV2(address, key);
     final long cost = slotIsWarm ? warmCost : coldCost;
     if (frame.getRemainingGas() < cost) {
       return haltPopping(

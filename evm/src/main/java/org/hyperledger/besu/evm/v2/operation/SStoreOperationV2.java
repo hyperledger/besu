@@ -83,7 +83,7 @@ public class SStoreOperationV2 extends AbstractOperationV2 {
     }
 
     final Address address = account.getAddress();
-    final boolean slotIsWarm = frame.warmUpStorage(address, key);
+    final boolean slotIsWarm = frame.warmUpStorageV2(address, key);
 
     // EIP-8038: the repriced access cost can exceed the EIP-2200 stipend, so the sentry above no
     // longer guarantees the access is affordable. Check before the current-value read below, which

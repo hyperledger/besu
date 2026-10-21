@@ -28,7 +28,8 @@ import java.util.function.BiConsumer;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * The set of storage slots a transaction has already touched, as EIP-2929 defines warmth.
+ * The set of storage slots a transaction has already touched, as EIP-2929 defines warmth, on EVM
+ * v2.
  *
  * <p>Every SLOAD and SSTORE consults it, so it is a flat open-addressing table keyed by a hash of
  * the address and the slot rather than a map of maps, and it supports nothing beyond membership,

@@ -27,12 +27,14 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.common.collect.Table;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Access List Operation Tracer. */
 public class AccessListOperationTracer implements OperationTracer {
 
-  private WarmStorageTable warmedUpStorage;
+  private Table<Address, Bytes32, Boolean> warmedUpStorage;
+  private WarmStorageTable warmedUpStorageV2;
 
   /** Default constructor. */
   private AccessListOperationTracer() {
@@ -41,7 +43,11 @@ public class AccessListOperationTracer implements OperationTracer {
 
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
-    warmedUpStorage = frame.getWarmedUpStorage();
+    if (frame.runsOnEvmV2()) {
+      warmedUpStorageV2 = frame.getWarmedUpStorageV2();
+    } else {
+      warmedUpStorage = frame.getWarmedUpStorage();
+    }
   }
 
   /**
@@ -50,17 +56,33 @@ public class AccessListOperationTracer implements OperationTracer {
    * @return the access list
    */
   public List<AccessListEntry> getAccessList() {
+    if (warmedUpStorageV2 != null && !warmedUpStorageV2.isEmpty()) {
+      return getAccessListV2();
+    }
     if (warmedUpStorage != null && !warmedUpStorage.isEmpty()) {
-      // sorted by address and slot so the list is the same whichever order the slots were touched
-      final SortedMap<Address, SortedSet<Bytes32>> byAddress = new TreeMap<>();
-      warmedUpStorage.forEach(
-          (address, slot) -> byAddress.computeIfAbsent(address, a -> new TreeSet<>()).add(slot));
-      final List<AccessListEntry> list = new ArrayList<>(byAddress.size());
-      byAddress.forEach(
-          (address, slots) -> list.add(new AccessListEntry(address, new ArrayList<>(slots))));
+      final List<AccessListEntry> list = new ArrayList<>(warmedUpStorage.size());
+      warmedUpStorage
+          .rowMap()
+          .forEach(
+              (address, storageKeys) ->
+                  list.add(
+                      new AccessListEntry(
+                          address,
+                          new ArrayList<>(storageKeys.keySet().stream().sorted().toList()))));
       return list;
     }
     return List.of();
+  }
+
+  private List<AccessListEntry> getAccessListV2() {
+    // the table has no order, so sort by address and slot as the v1 table does
+    final SortedMap<Address, SortedSet<Bytes32>> byAddress = new TreeMap<>();
+    warmedUpStorageV2.forEach(
+        (address, slot) -> byAddress.computeIfAbsent(address, a -> new TreeSet<>()).add(slot));
+    final List<AccessListEntry> list = new ArrayList<>(byAddress.size());
+    byAddress.forEach(
+        (address, slots) -> list.add(new AccessListEntry(address, new ArrayList<>(slots))));
+    return list;
   }
 
   /**

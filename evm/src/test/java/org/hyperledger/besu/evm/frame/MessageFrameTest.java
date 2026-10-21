@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 
+import com.google.common.collect.ImmutableMultimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,5 +103,37 @@ class MessageFrameTest {
     assertThat(messageFrame.runsOnEvmV2()).isTrue();
     assertThat(StacksV2.take(0, stack.length)).isSameAs(stack);
     assertThat(StacksV2.take(0, stack.length)).isNotSameAs(stack);
+  }
+
+  @Test
+  void v2FrameWarmsAccessListSlotsInTheV2Table() {
+    final Address address = Address.fromHexString("0x0a");
+    final MessageFrame messageFrame =
+        messageFrameBuilder
+            .enableEvmV2(true)
+            .eip2930AccessListWarmStorage(ImmutableMultimap.of(address, WORD1))
+            .build();
+
+    assertThat(messageFrame.getWarmedUpStorage()).isNull();
+    assertThat(messageFrame.getWarmedUpStorageV2().contains(address, WORD1)).isTrue();
+    assertThat(messageFrame.warmUpStorageV2(address, WORD1)).isTrue();
+    assertThat(messageFrame.warmUpStorageV2(address, WORD2)).isFalse();
+  }
+
+  @Test
+  void rollbackForgetsSlotsTheV2FrameWarmed() {
+    final Address address = Address.fromHexString("0x0a");
+    final MessageFrame messageFrame =
+        messageFrameBuilder
+            .enableEvmV2(true)
+            .eip2930AccessListWarmStorage(ImmutableMultimap.of(address, WORD1))
+            .build();
+    messageFrame.advanceUndoMark();
+    messageFrame.warmUpStorageV2(address, WORD2);
+
+    messageFrame.rollback();
+
+    assertThat(messageFrame.getWarmedUpStorageV2().contains(address, WORD1)).isTrue();
+    assertThat(messageFrame.getWarmedUpStorageV2().contains(address, WORD2)).isFalse();
   }
 }

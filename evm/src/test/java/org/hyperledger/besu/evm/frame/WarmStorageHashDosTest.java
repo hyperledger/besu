@@ -69,6 +69,10 @@ class WarmStorageHashDosTest {
   }
 
   private static MessageFrame newFrame(final Address address) {
+    return newFrame(address, false);
+  }
+
+  private static MessageFrame newFrame(final Address address, final boolean enableEvmV2) {
     return MessageFrame.builder()
         .worldUpdater(new ToyWorld())
         .originator(Address.ZERO)
@@ -87,6 +91,7 @@ class WarmStorageHashDosTest {
         .apparentValue(Wei.ZERO)
         .code(Code.EMPTY_CODE)
         .completer(messageFrame -> {})
+        .enableEvmV2(enableEvmV2)
         .build();
   }
 
@@ -131,6 +136,27 @@ class WarmStorageHashDosTest {
 
       for (final Bytes32 slot : slots) {
         assertThat(frame.getWarmedUpStorage().contains(Address.ZERO, slot)).isTrue();
+      }
+    }
+
+    @Test
+    void warmedUpStorageV2ResistsHashCollisionFlood() {
+      final MessageFrame frame = newFrame(Address.ZERO, true);
+      final List<Bytes32> slots = new ArrayList<>(SLOT_COUNT);
+      for (int i = 0; i < SLOT_COUNT; i++) {
+        slots.add(collidingSlot(i));
+      }
+
+      assertTimeoutPreemptively(
+          ofSeconds(10),
+          () -> {
+            for (final Bytes32 slot : slots) {
+              frame.warmUpStorageV2(Address.ZERO, slot);
+            }
+          });
+
+      for (final Bytes32 slot : slots) {
+        assertThat(frame.getWarmedUpStorageV2().contains(Address.ZERO, slot)).isTrue();
       }
     }
   }
