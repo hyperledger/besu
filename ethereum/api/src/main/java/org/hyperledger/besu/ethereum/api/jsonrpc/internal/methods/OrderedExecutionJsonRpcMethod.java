@@ -94,4 +94,21 @@ public abstract class OrderedExecutionJsonRpcMethod extends ExecutionEngineJsonR
       return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INTERNAL_ERROR);
     }
   }
+
+  /**
+   * Queues work on the thread that ordered calls run on. Queued while a call runs, the work runs
+   * after that call returns, and before any ordered call received after it.
+   *
+   * @param work the work to run
+   */
+  protected final void queueOnOrderedThread(final Runnable work) {
+    orderedExecutor
+        .<Void>executeBlocking(
+            () -> {
+              work.run();
+              return null;
+            },
+            false)
+        .onFailure(e -> logger().error("Work queued by {} failed", getName(), e));
+  }
 }

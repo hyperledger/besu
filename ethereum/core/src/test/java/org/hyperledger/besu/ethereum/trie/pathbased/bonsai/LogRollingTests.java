@@ -345,6 +345,50 @@ class LogRollingTests {
         .isEqualByComparingTo(worldState.rootHash().getBytes());
   }
 
+  @Test
+  void deferredTrieLogMatchesOneWrittenWhilePersisting() {
+    final BonsaiWorldState worldState =
+        new BonsaiWorldState(
+            archive,
+            new BonsaiWorldStateKeyValueStorage(
+                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
+            EvmConfiguration.DEFAULT,
+            createStatefulConfigWithTrie(),
+            new BonsaiCodeCache());
+    applyBlockOne(worldState.updater());
+    worldState.persist(headerOne);
+
+    final BonsaiWorldStateKeyValueStorage secondStorage =
+        secondArchive.getWorldStateKeyValueStorage();
+    final BonsaiWorldState frozenWorldState =
+        new BonsaiWorldState(
+            secondArchive,
+            secondStorage,
+            EvmConfiguration.DEFAULT,
+            createStatefulConfigWithTrie(),
+            new BonsaiCodeCache());
+    frozenWorldState.freezeStorage();
+    frozenWorldState.deferTrieLog();
+    applyBlockOne(frozenWorldState.updater());
+    frozenWorldState.persist(headerOne);
+
+    assertThat(secondStorage.getTrieLog(headerOne.getHash())).isEmpty();
+
+    // the accumulator was reset when the world state persisted
+    frozenWorldState.takeTrieLogWrite().run();
+
+    assertThat(secondStorage.getTrieLog(headerOne.getHash()).map(Bytes::wrap))
+        .isEqualTo(
+            trieLogStorage.get(headerOne.getHash().getBytes().toArrayUnsafe()).map(Bytes::wrap));
+  }
+
+  private static void applyBlockOne(final WorldUpdater updater) {
+    final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
+    mutableAccount.setCode(Bytes.of(0, 1, 2));
+    mutableAccount.setStorageValue(UInt256.ONE, UInt256.ONE);
+    updater.commit();
+  }
+
   private TrieLogLayer getTrieLogLayer(final KeyValueStorage storage, final Hash key) {
     return storage
         .get(key.getBytes().toArrayUnsafe())
