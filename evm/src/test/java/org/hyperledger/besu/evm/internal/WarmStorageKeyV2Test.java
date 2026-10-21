@@ -77,16 +77,17 @@ class WarmStorageKeyV2Test {
     final Set<Integer> hashes = new HashSet<>();
     hashes.add(new WarmStorageKeyV2(A, Bytes32.wrap(base)).hashCode());
 
-    // every 32-bit lane of the slot starts at a multiple of four bytes
-    for (int first = 0; first < 8; first++) {
-      for (int second = first + 1; second < 8; second++) {
+    // the top byte of a 32-bit lane is its first or its last, depending on the byte order
+    final int[] topBytes = {0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27, 28, 31};
+    for (int first = 0; first < topBytes.length; first++) {
+      for (int second = first + 1; second < topBytes.length; second++) {
         final byte[] slot = base.clone();
-        slot[first * 4] ^= (byte) 0x80;
-        slot[second * 4] ^= (byte) 0x80;
+        slot[topBytes[first]] ^= (byte) 0x80;
+        slot[topBytes[second]] ^= (byte) 0x80;
         hashes.add(new WarmStorageKeyV2(A, Bytes32.wrap(slot)).hashCode());
       }
     }
 
-    assertThat(hashes).hasSize(1 + 28);
+    assertThat(hashes).hasSize(1 + 120);
   }
 }

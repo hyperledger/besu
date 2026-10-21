@@ -36,9 +36,6 @@ import org.apache.tuweni.bytes.Bytes32;
  */
 public final class WarmStorageKeyV2 implements Comparable<WarmStorageKeyV2> {
 
-  // the slot's four words, then the address's two and a half
-  private static final int WORDS = 7;
-
   private static final long LOW_32_BITS = 0xffffffffL;
 
   private static final long[] HASH_SEEDS = new long[15];
@@ -50,19 +47,19 @@ public final class WarmStorageKeyV2 implements Comparable<WarmStorageKeyV2> {
     }
   }
 
-  private static final VarHandle LONG_BIG_ENDIAN =
-      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.BIG_ENDIAN);
+  // the hash does not depend on the byte order, so words are read in the one most CPUs use
+  private static final VarHandle LONG_LITTLE_ENDIAN =
+      MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
-  private static final VarHandle INT_BIG_ENDIAN =
-      MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.BIG_ENDIAN);
+  private static final VarHandle INT_LITTLE_ENDIAN =
+      MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
 
   private final Address address;
   private final Bytes32 slot;
 
   // compared instead of the slot, whose equals tells a UInt256 from a Bytes32 of the same value
-  private final long[] words;
-
-  private final int hash;
+  private final byte[] addressBytes;
+  private final byte[] slotBytes;
 
   /**
    * Creates the key of a storage slot.
@@ -73,8 +70,8 @@ public final class WarmStorageKeyV2 implements Comparable<WarmStorageKeyV2> {
   public WarmStorageKeyV2(final Address address, final Bytes32 slot) {
     this.address = address;
     this.slot = slot;
-    this.words = toWords(address, slot);
-    this.hash = pairMultiplyShift(words);
+    this.addressBytes = address.getBytes().toArrayUnsafe();
+    this.slotBytes = slot.toArrayUnsafe();
   }
 
   /**
@@ -96,50 +93,44 @@ public final class WarmStorageKeyV2 implements Comparable<WarmStorageKeyV2> {
   }
 
   @Override
-  public int hashCode() {
-    return hash;
-  }
-
-  @Override
   public boolean equals(final Object other) {
-    return other instanceof WarmStorageKeyV2 key && Arrays.equals(words, key.words);
+    return other instanceof WarmStorageKeyV2 key
+        && Arrays.equals(slotBytes, key.slotBytes)
+        && Arrays.equals(addressBytes, key.addressBytes);
   }
 
   @Override
   public int compareTo(final WarmStorageKeyV2 other) {
-    return Arrays.compareUnsigned(words, other.words);
-  }
-
-  private static long[] toWords(final Address address, final Bytes32 slot) {
-    final byte[] slotBytes = slot.toArrayUnsafe();
-    final byte[] addressBytes = address.getBytes().toArrayUnsafe();
-
-    final long[] words = new long[WORDS];
-    words[0] = (long) LONG_BIG_ENDIAN.get(slotBytes, 0);
-    words[1] = (long) LONG_BIG_ENDIAN.get(slotBytes, 8);
-    words[2] = (long) LONG_BIG_ENDIAN.get(slotBytes, 16);
-    words[3] = (long) LONG_BIG_ENDIAN.get(slotBytes, 24);
-    words[4] = (long) LONG_BIG_ENDIAN.get(addressBytes, 0);
-    words[5] = (long) LONG_BIG_ENDIAN.get(addressBytes, 8);
-    words[6] = (int) INT_BIG_ENDIAN.get(addressBytes, 16) & LOW_32_BITS;
-    return words;
+    final int byAddress = Arrays.compareUnsigned(addressBytes, other.addressBytes);
+    return byAddress != 0 ? byAddress : Arrays.compareUnsigned(slotBytes, other.slotBytes);
   }
 
   /**
-   * Pair-multiply-shift over the 32-bit lanes of the key: each pair of lanes is offset by secret
-   * seeds, multiplied, and the products summed; the top 32 bits of the sum are the hash. Summing
-   * single-lane products would let two keys that differ only in the top bits of two lanes collide
-   * whatever the seeds, which is why the lanes are paired and the high half is taken.
+   * Pair-multiply-shift over the 32-bit lanes of the slot and the address: each pair of lanes is
+   * offset by secret seeds, multiplied, and the products summed; the top 32 bits of the sum are the
+   * hash. Summing single-lane products would let two keys that differ only in the top bits of two
+   * lanes collide whatever the seeds, which is why the lanes are paired and the high half is taken.
    */
-  private static int pairMultiplyShift(final long[] words) {
+  @Override
+  public int hashCode() {
     long sum = HASH_SEEDS[14];
-    for (int i = 0; i < 6; i++) {
-      final long high = words[i] >>> 32;
-      final long low = words[i] & LOW_32_BITS;
-      sum += (HASH_SEEDS[2 * i] + high) * (HASH_SEEDS[2 * i + 1] + low);
-    }
-    // the last word holds a single lane, the address's final four bytes
-    sum += (HASH_SEEDS[12] + words[6]) * HASH_SEEDS[13];
+    sum += multiplyLanes(word(slotBytes, 0), HASH_SEEDS[0], HASH_SEEDS[1]);
+    sum += multiplyLanes(word(slotBytes, 8), HASH_SEEDS[2], HASH_SEEDS[3]);
+    sum += multiplyLanes(word(slotBytes, 16), HASH_SEEDS[4], HASH_SEEDS[5]);
+    sum += multiplyLanes(word(slotBytes, 24), HASH_SEEDS[6], HASH_SEEDS[7]);
+    sum += multiplyLanes(word(addressBytes, 0), HASH_SEEDS[8], HASH_SEEDS[9]);
+    sum += multiplyLanes(word(addressBytes, 8), HASH_SEEDS[10], HASH_SEEDS[11]);
+    // an address has an odd number of lanes, so its last one is not paired
+    final long lastLane = (int) INT_LITTLE_ENDIAN.get(addressBytes, 16) & LOW_32_BITS;
+    sum += (HASH_SEEDS[12] + lastLane) * HASH_SEEDS[13];
     return (int) (sum >>> 32);
+  }
+
+  private static long word(final byte[] bytes, final int offset) {
+    return (long) LONG_LITTLE_ENDIAN.get(bytes, offset);
+  }
+
+  private static long multiplyLanes(final long word, final long highSeed, final long lowSeed) {
+    return (highSeed + (word >>> 32)) * (lowSeed + (word & LOW_32_BITS));
   }
 }
