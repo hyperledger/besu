@@ -233,6 +233,27 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
   }
 
   @Test
+  public void shouldRejectTransactionWithUnrecoverableSignature() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+    // r = 5 is a valid scalar but not the x-coordinate of any curve point
+    final Transaction transaction =
+        Transaction.builder()
+            .copiedFrom(basicTransaction)
+            .sender(null)
+            .signature(
+                SIGNATURE_ALGORITHM.createSignature(
+                    BigInteger.valueOf(5), BigInteger.ONE, (byte) 0))
+            .build();
+
+    assertThat(
+            validator.validate(
+                transaction, Optional.empty(), Optional.empty(), transactionProcessingParams))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.INVALID_SIGNATURE));
+  }
+
+  @Test
   public void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
     final TransactionValidator validator =
         createTransactionValidator(
@@ -275,6 +296,23 @@ public class MainnetTransactionValidatorTest extends TrustedSetupClassLoaderExte
     final Account account = accountWithNonce(basicTransaction.getNonce() - 1);
     assertThat(validator.validateForSender(basicTransaction, account, transactionPoolParams))
         .isEqualTo(ValidationResult.valid());
+  }
+
+  @Test
+  public void shouldAcceptTransactionNonceBelowAccountNonceInNonStrictBlockSimulation() {
+    final TransactionValidator validator =
+        createTransactionValidator(
+            gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
+
+    final Account account = accountWithNonce(basicTransaction.getNonce() + 1);
+    assertThat(
+            validator.validateForSender(
+                basicTransaction, account, TransactionValidationParams.blockSimulatorNonStrict()))
+        .isEqualTo(ValidationResult.valid());
+    assertThat(
+            validator.validateForSender(
+                basicTransaction, account, TransactionValidationParams.blockSimulatorStrict()))
+        .isEqualTo(ValidationResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW));
   }
 
   @Test

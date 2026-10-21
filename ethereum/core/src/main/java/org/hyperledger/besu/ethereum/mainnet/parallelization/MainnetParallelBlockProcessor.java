@@ -18,12 +18,11 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.BalConfiguration;
-import org.hyperledger.besu.ethereum.mainnet.BlockProcessingMetrics;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
@@ -60,10 +59,6 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   private static final Executor cpuExecutor = BlockProcessingExecutors.cpuExecutor();
 
   private final Executor executor;
-  // Reruns the block sequentially if parallel processing fails (not for conflicting transactions,
-  // which processTransaction already reruns). The rerun is a plain MainnetBlockProcessor, so shared
-  // rules must come from the ProtocolSpec or be final in AbstractBlockProcessor.
-  private final Optional<BlockProcessor> sequentialBlockProcessor;
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
   private final Optional<Counter> conflictingButCachedTransactionCounter;
 
@@ -81,34 +76,7 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
         protocolSchedule,
         balConfiguration,
         metricsSystem,
-        new BlockProcessingMetrics(metricsSystem));
-  }
-
-  private MainnetParallelBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final ProtocolSchedule protocolSchedule,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem,
-      final BlockProcessingMetrics blockProcessingMetrics) {
-    this(
-        transactionProcessor,
-        transactionReceiptFactory,
-        miningBeneficiaryCalculator,
-        protocolSchedule,
-        balConfiguration,
-        metricsSystem,
-        blockProcessingMetrics,
-        cpuExecutor,
-        Optional.of(
-            new MainnetBlockProcessor(
-                transactionProcessor,
-                transactionReceiptFactory,
-                miningBeneficiaryCalculator,
-                protocolSchedule,
-                balConfiguration,
-                blockProcessingMetrics)));
+        cpuExecutor);
   }
 
   @VisibleForTesting
@@ -119,39 +87,15 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final ProtocolSchedule protocolSchedule,
       final BalConfiguration balConfiguration,
       final MetricsSystem metricsSystem,
-      final Executor executor,
-      final Optional<BlockProcessor> sequentialBlockProcessor) {
-    this(
-        transactionProcessor,
-        transactionReceiptFactory,
-        miningBeneficiaryCalculator,
-        protocolSchedule,
-        balConfiguration,
-        metricsSystem,
-        new BlockProcessingMetrics(metricsSystem),
-        executor,
-        sequentialBlockProcessor);
-  }
-
-  private MainnetParallelBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final ProtocolSchedule protocolSchedule,
-      final BalConfiguration balConfiguration,
-      final MetricsSystem metricsSystem,
-      final BlockProcessingMetrics blockProcessingMetrics,
-      final Executor executor,
-      final Optional<BlockProcessor> sequentialBlockProcessor) {
+      final Executor executor) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
         miningBeneficiaryCalculator,
         protocolSchedule,
         balConfiguration,
-        blockProcessingMetrics);
+        metricsSystem);
     this.executor = executor;
-    this.sequentialBlockProcessor = sequentialBlockProcessor;
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             metricsSystem.createCounter(
@@ -168,27 +112,40 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   }
 
   @Override
-  public BlockProcessingResult processBlock(
-      final ProtocolContext protocolContext,
-      final Blockchain blockchain,
-      final MutableWorldState worldState,
-      final Block block,
-      final Optional<BlockAccessList> blockAccessList) {
-    final BlockProcessingResult blockProcessingResult =
-        super.processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
-    if (blockProcessingResult.isFailed() && sequentialBlockProcessor.isPresent()) {
-      LOG.info(
-          "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
-          block.getHeader().getNumber(),
-          block.getHash());
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
-      }
-      return sequentialBlockProcessor
-          .get()
-          .processBlock(protocolContext, blockchain, worldState, block, blockAccessList);
+  public final BlockProcessingResult processBlock(final BlockExecutionContext context) {
+    final BlockProcessingResult blockProcessingResult = super.processBlock(context);
+    // Return the result as-is if the block succeeded or this processor does not rerun failed
+    // blocks.
+    if (!blockProcessingResult.isFailed() || !shouldRerunSequentially()) {
+      return blockProcessingResult;
     }
-    return blockProcessingResult;
+    // The block already ran sequentially, so there is no parallel attempt to fall back from.
+    if (context.isSequentialExecutionRequested()) {
+      return blockProcessingResult;
+    }
+    final Block block = context.getBlock();
+    LOG.info(
+        "Parallel transaction processing failure. Falling back to non-parallel processing for block #{} ({})",
+        block.getHeader().getNumber(),
+        block.getHash());
+    final MutableWorldState worldState = context.getWorldState();
+    if (worldState instanceof BonsaiWorldState) {
+      ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+    }
+    return processBlockSequentially(context);
+  }
+
+  /** Returns whether a block whose parallel processing failed is rerun sequentially. */
+  protected boolean shouldRerunSequentially() {
+    return true;
+  }
+
+  /**
+   * Reruns the block on this processor with sequential execution requested, after the parallel
+   * attempt failed and the world state was reset.
+   */
+  protected BlockProcessingResult processBlockSequentially(final BlockExecutionContext context) {
+    return super.processBlock(context.toBuilder().sequentialExecutionRequested(true).build());
   }
 
   @Override

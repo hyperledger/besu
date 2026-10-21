@@ -24,12 +24,14 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockAccessListValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
+import org.hyperledger.besu.ethereum.mainnet.BlockExecutionContext;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.block.access.list.BlockAccessList;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.MissingCodeException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
@@ -39,7 +41,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Supplier;
 
+import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,6 +183,54 @@ public class MainnetBlockValidator implements BlockValidator {
       return retval;
     }
 
+    final Supplier<BlockProcessingResult> process =
+        () ->
+            processOnParentWorldState(
+                context,
+                block,
+                parentHeader,
+                ommerValidationMode,
+                blockAccessList,
+                shouldUpdateHead,
+                shouldRecordBadBlock);
+    final Supplier<BlockProcessingResult> processWithHeadLock =
+        () ->
+            shouldUpdateHead
+                ? context.getWorldStateArchive().withHeadWorldStateLock(process)
+                : process.get();
+    final BlockProcessingResult result = processWithHeadLock.get();
+    return healMissingCode(context, result) ? processWithHeadLock.get() : result;
+  }
+
+  /** Fetches and stores the missing code a result failed on, returns whether it was healed. */
+  private static boolean healMissingCode(
+      final ProtocolContext context, final BlockProcessingResult result) {
+    return result
+        .causedBy()
+        .flatMap(MainnetBlockValidator::findMissingCode)
+        .map(
+            missingCode ->
+                context
+                    .getWorldStateArchive()
+                    .healMissingCode(missingCode.getAddress(), missingCode.getCodeHash()))
+        .orElse(false);
+  }
+
+  private static Optional<MissingCodeException> findMissingCode(final Throwable throwable) {
+    return Throwables.getCausalChain(throwable).stream()
+        .filter(MissingCodeException.class::isInstance)
+        .map(MissingCodeException.class::cast)
+        .findFirst();
+  }
+
+  private BlockProcessingResult processOnParentWorldState(
+      final ProtocolContext context,
+      final Block block,
+      final BlockHeader parentHeader,
+      final HeaderValidationMode ommerValidationMode,
+      final Optional<BlockAccessList> blockAccessList,
+      final boolean shouldUpdateHead,
+      final boolean shouldRecordBadBlock) {
     final WorldStateQueryParams worldStateQueryParams =
         WorldStateQueryParams.newBuilder()
             .withBlockHeader(parentHeader)
@@ -357,7 +409,12 @@ public class MainnetBlockValidator implements BlockValidator {
       final Optional<BlockAccessList> blockAccessList) {
 
     return blockProcessor.processBlock(
-        context, context.getBlockchain(), worldState, block, blockAccessList);
+        BlockExecutionContext.builder()
+            .protocolContext(context)
+            .worldState(worldState)
+            .block(block)
+            .blockAccessList(blockAccessList)
+            .build());
   }
 
   @Override

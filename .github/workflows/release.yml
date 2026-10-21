@@ -104,7 +104,6 @@ jobs:
     uses: ./.github/workflows/docker-build-test.yml
     with:
       version: ${{ github.ref_name }}
-      cache_scope: release-build
 
   draftRelease:
     needs: [build, dockerBuildTest]
@@ -218,7 +217,6 @@ jobs:
     uses: ./.github/workflows/docker-publish.yml
     with:
       version: ${{ github.ref_name }}
-      cache_scope: release-build
     secrets: inherit
 
 
