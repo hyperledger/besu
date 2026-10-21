@@ -260,6 +260,19 @@ public class EthCreateAccessListTest {
   }
 
   @Test
+  public void shouldSimulateWithZeroFeesWhenFeeFieldsAreZero() {
+    final CallParameter callParameter =
+        ImmutableCallParameter.builder()
+            .sender(Address.fromHexString("0x0"))
+            .to(Address.fromHexString("0x0"))
+            .maxFeePerGas(Wei.ZERO)
+            .maxPriorityFeePerGas(Wei.ZERO)
+            .build();
+
+    assertThat(validationParamsUsedFor(callParameter).isAllowExceedingBalance()).isTrue();
+  }
+
+  @Test
   public void shouldSimulateWithCallerFeesWhenFeeFieldsAreGiven() {
     final CallParameter callParameter =
         ImmutableCallParameter.builder()
