@@ -4,6 +4,39 @@
 
 ### Breaking Changes
 - `eth_call`, `eth_estimateGas`, `eth_createAccessList`, `trace_call` and `trace_callMany` now reject a call that sets `maxFeePerBlobGas` without blob versioned hashes, or that sets an empty `blobVersionedHashes` list, with `Invalid blob count` (`-32602`) at every fork. Previously a `maxFeePerBlobGas` without hashes was accepted and the call ran without blobs, and a `maxFeePerBlobGas` of 0 also set the blob base fee the call saw to 0. An empty list failed with `Internal error` (`-32603`). Each call in a `trace_callMany` bundle gets the same rule. `debug_traceCall` and `eth_simulateV1` reject only an empty `blobVersionedHashes` list, and still accept a `maxFeePerBlobGas` without hashes. [#11556](https://github.com/besu-eth/besu/pull/11556)
+
+### Bug fixes
+- The layered transaction pool no longer logs an `IndexOutOfBoundsException` when a sender's pending transactions are reconciled against an account nonce that leaves them `--tx-pool-max-future-by-sender` or more nonces ahead, as on a node that has fallen behind the chain head. Those transactions are now dropped during the reconciliation, as a new transaction that far ahead would be. [#11501](https://github.com/besu-eth/besu/issues/11501)
+- `eth_simulateV1` now numbers `logIndex` over the logs that the calls of a block return, starting at `0`, as execution-apis specifies. Previously each call that returned no logs, such as a failed call, still used one index. [#11584](https://github.com/besu-eth/besu/pull/11584)
+- Fix incorrect sync status reporting. `eth_syncing` now reports progress during snap sync (previously it reported "not syncing" for the whole snap sync), with `highestBlock` taken from the best-chain height (the latest `engine_newPayload` head under PoS). The ethstats `syncing` field and `BackwardSyncContext.isSyncing()` no longer report the inverse of the actual state. `/readiness` no longer reports ready while the world state download, trie heal or flat database heal is still in progress. A backward sync session that completed synchronously is no longer reused by later calls. [#11260](https://github.com/besu-eth/besu/issues/11260)
+- `eth_simulateV1` with `validation` disabled now returns `-32603` for a call whose sender nonce is `2^64-1`, as EIP-2681 requires. Previously the nonce wrapped to 0 and the call succeeded. A call whose nonce is below the sender nonce now runs instead of failing with `-38010`, because disabled validation skips the check that the call nonce equals the sender nonce. [#11578](https://github.com/besu-eth/besu/pull/11578)
+- `evmtool t8n` now reports a failure while processing execution layer requests, such as a malformed deposit event, as `blockException` in its result, like block import rejects the block. It previously failed the whole transition, so `t8n-server` answered with HTTP 500. [#11570](https://github.com/besu-eth/besu/pull/11570)
+- `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
+- `--ethstats` no longer retains a few KB of heap per reconnect attempt while the ethstats server is unreachable. [#11614](https://github.com/besu-eth/besu/pull/11614)
+- `debug_traceBlockByNumber` now returns `BLOCK_NOT_FOUND` for a block number beyond the chain head, as `debug_traceBlockByHash` does for an unknown hash. Previously it returned a `null` result. [#11437](https://github.com/besu-eth/besu/pull/11437)
+- Fix incorrect sync status reporting. `eth_syncing` now reports progress during snap sync (previously it reported "not syncing" for the whole snap sync), with `highestBlock` taken from the best-chain height (the latest `engine_newPayload` head under PoS). The ethstats `syncing` field and `BackwardSyncContext.isSyncing()` no longer report the inverse of the actual state. `/readiness` no longer reports ready while the world state download, trie heal or flat database heal is still in progress. A backward sync session that completed synchronously is no longer reused by later calls. [#11260](https://github.com/besu-eth/besu/issues/11260)
+- `PipelineBuilder.inBatches` now rejects a non-positive maximum batch size when a custom stop condition is used, matching the overload without a stop condition. [#11479](https://github.com/besu-eth/besu/pull/11479)
+- `newPendingTransactions` subscriptions with full transactions now include `blockHash`, `blockNumber`, `transactionIndex` and `blockTimestamp` as `null`, as `eth_getTransactionByHash` and the `txpool` methods return them for a pending transaction. [#11427](https://github.com/besu-eth/besu/pull/11427)
+- Debug traces with an opcode filter or a step limit report the post-execution gas of the last recorded operation; every later operation overwrote it. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- The PAY opcode (EIP-5920, future EIPs fork only) pays from the current address instead of the caller. [#11544](https://github.com/besu-eth/besu/pull/11544)
+
+### Additions and Improvements
+- EVM v2 (`--Xevm-v2`) runs every opcode on its own stack and supports tracers. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
+- Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
+- Block building checks the block access list item budget of each transaction without copying the whole list. [#11454](https://github.com/besu-eth/besu/pull/11454)
+- Debug traces with a step limit no longer take snapshots of the operations past the limit, which made a limited trace of a long transaction as slow as a full one. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- `OperationTracer.tracesOperations()` lets a tracer that only uses transaction or call hooks skip the per-operation calls on EVM v2. [#11524](https://github.com/besu-eth/besu/pull/11524)
+- Tracers read the stack of a frame through `TracedStack`, which also reads the EVM v2 stack. With `--Xevm-v2`, a plugin tracer that calls `MessageFrame.getStackItem` or `stackSize` throws a `NullPointerException`, as those read only the EVM v1 stack. [#11524](https://github.com/besu-eth/besu/pull/11524)
+
+## 26.10.0
+
+This release contains security fixes. Operators are advised to upgrade promptly.
+Details will be published in security advisories on
+https://github.com/besu-eth/besu/security/advisories after operators have had an
+opportunity to upgrade.
+
+### Breaking Changes
 - `--Xsnapsync-synchronizer-pivot-block-distance-before-caching` has been removed; it was deprecated as a no-op since 26.6.1. [#11499](https://github.com/besu-eth/besu/pull/11499)
 - The default discovery mode is now `BOTH`: nodes run DiscV4 and DiscV5 concurrently unless `--discovery-mode=V4` or `--discovery-mode=V5` selects a single protocol. [#11344](https://github.com/besu-eth/besu/pull/11344)
 - `trace_call` and `trace_callMany` now select transaction validation as `eth_call` does, including its `strict` flag. Unless `strict` is `true`, a call whose `gasPrice`, `maxFeePerGas` and `maxPriorityFeePerGas` are all zero or omitted runs with `GASPRICE` and `BASEFEE` 0 and pays no execution gas fees. Previously such a call was rejected as underpriced at a block with a base fee, or, with its fees omitted, was charged at the base fee. Calls that `eth_call` validates and charges are still validated and charged, each call in a `trace_callMany` bundle is priced on its own, and, as in `eth_call`, a nonce above the sender's is accepted. A `trace_call` that fails validation now returns the reason, such as `Gas price below current base fee` (`-32009`), instead of `Internal error`. [#11404](https://github.com/besu-eth/besu/pull/11404)
@@ -32,17 +65,17 @@
 - `--rpc-tx-feecap` will treat a value of 0 as limiting fees to 0. Today it treats 0 as "do not cap fees". To achieve similar behaviour set it to a suitably large value to effectively prevent any fee capping.
 
 ### Bug fixes
+- RocksDB is now closed on shutdown. `KeyValueStorageProvider.close()` filtered its `Map.Entry` elements by `instanceof AutoCloseable`, which is always false, so no storage instance was ever closed and every restart replayed the RocksDB WAL. [#11390](https://github.com/besu-eth/besu/issues/11390)
+- `eth_getLogs` and GraphQL `logs` now enforce the `--rpc-max-log-filter-addresses` cap on the address list that `eth_newFilter` and `eth_subscribe` already applied, closing that bypass of the fix for [GHSA-p6f8-q9mp-7mj9](https://github.com/besu-eth/besu/security/advisories/GHSA-p6f8-q9mp-7mj9). A request naming more addresses than the cap is rejected before any block is read: JSON-RPC returns `Filter address count exceeds limit` (`-32005`) and GraphQL returns `Invalid params`. The default stays 1000 addresses; `--rpc-max-log-filter-addresses=0` keeps the previous uncapped behaviour. [#11667](https://github.com/besu-eth/besu/pull/11667)
 - Receipts received from a peer carrying a transaction type byte that no type defines are now rejected on decode, on both the EIP-2718 and eth/69 paths.
 - `evmtool t8n-server` keeps serving requests again. Since `evmtool` began exiting with the subcommand's exit code, the server process exited right after printing `Transition server listening on`, so filling tests with Besu as the transition tool failed. A server that cannot bind its port now exits with a non-zero code instead of 0. [#11555](https://github.com/besu-eth/besu/pull/11555)
 - DNS-discovered dual-stack peers now respect `--p2p-ipv6-outbound-enabled` when choosing the connection address. [#11422](https://github.com/besu-eth/besu/issues/11422)
-- The layered transaction pool no longer logs an `IndexOutOfBoundsException` when a sender's pending transactions are reconciled against an account nonce that leaves them `--tx-pool-max-future-by-sender` or more nonces ahead, as on a node that has fallen behind the chain head. Those transactions are now dropped during the reconciliation, as a new transaction that far ahead would be. [#11501](https://github.com/besu-eth/besu/issues/11501)
 - Block propagation no longer repeatedly re-requests an announced block that is already saved as pending while waiting for its parent. The repeated header and body requests could use up the announcing peer's request capacity and starve the parent request, leaving a node that connects well behind the chain head stuck at its starting block. [#11517](https://github.com/besu-eth/besu/issues/11517)
 - `admin_logsRemoveCache` now returns an error when any log bloom cache segment could not be deleted, instead of reporting `Cache Removed` after a partial deletion. [#11067](https://github.com/besu-eth/besu/issues/11067)
 - `txparse --corpus-file` now closes the corpus file stream after processing instead of leaking the underlying file descriptor (it previously suppressed the `StreamResourceLeak` warning rather than releasing the resource). [#11423](https://github.com/besu-eth/besu/pull/11423)
 - `besu blocks export --include-bals` no longer truncates an existing RLP output when the BAL sidecar cannot be opened. [#11467](https://github.com/besu-eth/besu/pull/11467)
 - `eth_simulateV1` blocks after Amsterdam now carry `slotNumber` (the parent's plus one), a block access list that includes the system calls, and a header `gasUsed` that follows EIP-8037, as real blocks do. Previously `slotNumber` was missing, and the block hash differed from other clients. [#11394](https://github.com/besu-eth/besu/pull/11394)
 - `eth_simulateV1` now returns `-38014` when a call's value exceeds the sender balance. It returned `-32603`. [#11394](https://github.com/besu-eth/besu/pull/11394)
-- `eth_simulateV1` now numbers `logIndex` over the logs that the calls of a block return, starting at `0`, as execution-apis specifies. Previously each call that returned no logs, such as a failed call, still used one index. [#11584](https://github.com/besu-eth/besu/pull/11584)
 - Publish the chain head only after sync block bodies and receipts are committed, so readers cannot observe a head absent from storage. [#10842](https://github.com/besu-eth/besu/pull/10842)
 - Transaction objects returned by `eth_getTransactionBy*`, `eth_getBlockBy*` with full transactions, `eth_simulateV1` and the `txpool` methods now carry `"to": null` for a contract creation instead of omitting the field, as other clients do and the execution-apis schema describes. [#11434](https://github.com/besu-eth/besu/pull/11434)
 - `debug_traceCall` now accepts a block hash as its block parameter, as execution-apis specifies. A hash was rejected with `-32602 Invalid block param`; an unknown hash now returns `-32000 Block not found`, as an unknown block number does. [#11433](https://github.com/besu-eth/besu/pull/11433)
@@ -80,12 +113,6 @@
 - Snap sync now restarts instead of staying idle when one of its world state download pipelines fails. [#11515](https://github.com/besu-eth/besu/pull/11515)
 - Snap sync no longer downloads the storage and code of an account twice when an account range response goes past the end of the range. [#11516](https://github.com/besu-eth/besu/pull/11516)
 - Snap sync no longer stalls when a download completes while the pipeline stage is handing on another result. [#11514](https://github.com/besu-eth/besu/pull/11514)
-- Fix incorrect sync status reporting. `eth_syncing` now reports progress during snap sync (previously it reported "not syncing" for the whole snap sync), with `highestBlock` taken from the best-chain height (the latest `engine_newPayload` head under PoS). The ethstats `syncing` field and `BackwardSyncContext.isSyncing()` no longer report the inverse of the actual state. `/readiness` no longer reports ready while the world state download, trie heal or flat database heal is still in progress. A backward sync session that completed synchronously is no longer reused by later calls. [#11260](https://github.com/besu-eth/besu/issues/11260)
-- `eth_simulateV1` with `validation` disabled now returns `-32603` for a call whose sender nonce is `2^64-1`, as EIP-2681 requires. Previously the nonce wrapped to 0 and the call succeeded. A call whose nonce is below the sender nonce now runs instead of failing with `-38010`, because disabled validation skips the check that the call nonce equals the sender nonce. [#11578](https://github.com/besu-eth/besu/pull/11578)
-- `evmtool t8n` now reports a failure while processing execution layer requests, such as a malformed deposit event, as `blockException` in its result, like block import rejects the block. It previously failed the whole transition, so `t8n-server` answered with HTTP 500. [#11570](https://github.com/besu-eth/besu/pull/11570)
-- `--ethstats` connections no longer drop at the next garbage collection, a regression since 26.8.1. [#11589](https://github.com/besu-eth/besu/pull/11589)
-- `--ethstats` no longer retains a few KB of heap per reconnect attempt while the ethstats server is unreachable. [#11614](https://github.com/besu-eth/besu/pull/11614)
-- `debug_traceBlockByNumber` now returns `BLOCK_NOT_FOUND` for a block number beyond the chain head, as `debug_traceBlockByHash` does for an unknown hash. Previously it returned a `null` result. [#11437](https://github.com/besu-eth/besu/pull/11437)
 
 ### Additions and Improvements
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
@@ -103,9 +130,6 @@
 - Schedule the Amsterdam fork on Hoodi at timestamp `1793036568` (Mon, 26 Oct 2026, 17:42:48 UTC). [#11531](https://github.com/besu-eth/besu/pull/11531)
 - The EVM no longer calls the operation tracer for every operation when tracing is disabled.
 - New `besu storage revert-code-format` subcommand reverts the contract code storage and the database metadata, so that a database upgraded to store the jump destination analysis can be opened by an older Besu version again; Besu logs how to run it after the upgrade. [#11364](https://github.com/besu-eth/besu/pull/11364)
-- EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
-- Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
-- Block building checks the block access list item budget of each transaction without copying the whole list. [#11454](https://github.com/besu-eth/besu/pull/11454)
 
 ## 26.9.0
 
