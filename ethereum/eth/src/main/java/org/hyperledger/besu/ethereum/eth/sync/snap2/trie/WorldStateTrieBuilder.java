@@ -66,6 +66,7 @@ public final class WorldStateTrieBuilder {
   private final SyncStateStorage storage;
   private final Predicate<Bytes32> trieLeft;
   private final Supplier<ExecutorService> executors;
+  private final int accountsPerCommit;
   private final AtomicLong accounts = new AtomicLong();
   private final AtomicLong slots = new AtomicLong();
   private final AtomicLong keptStorageTries = new AtomicLong();
@@ -86,18 +87,24 @@ public final class WorldStateTrieBuilder {
         () ->
             Executors.newFixedThreadPool(
                 Math.max(1, threads),
-                Thread.ofPlatform().name("snap2-trie-builder-", 0).daemon().factory()));
+                Thread.ofPlatform().name("snap2-trie-builder-", 0).daemon().factory()),
+        ACCOUNTS_PER_COMMIT);
   }
 
-  /** Creates a build whose partitions run on the executor {@code executors} gives. */
+  /**
+   * Creates a build whose partitions run on the executor {@code executors} gives, and commit their
+   * fixes {@code accountsPerCommit} at a time.
+   */
   @VisibleForTesting
   WorldStateTrieBuilder(
       final SyncStateStorage storage,
       final Predicate<Bytes32> trieLeft,
-      final Supplier<ExecutorService> executors) {
+      final Supplier<ExecutorService> executors,
+      final int accountsPerCommit) {
     this.storage = storage;
     this.trieLeft = trieLeft;
     this.executors = executors;
+    this.accountsPerCommit = accountsPerCommit;
   }
 
   /**
@@ -281,14 +288,15 @@ public final class WorldStateTrieBuilder {
       storageTrie = null;
     }
 
+    // the batch for one more fix, committing a full one first
     private SyncStateStorage.Batch fixes() {
+      if (pendingFixes == accountsPerCommit) {
+        commitFixes();
+      }
       if (fixes == null) {
         fixes = storage.batch();
       }
-      if (++pendingFixes >= ACCOUNTS_PER_COMMIT) {
-        commitFixes();
-        fixes = storage.batch();
-      }
+      pendingFixes++;
       return fixes;
     }
 

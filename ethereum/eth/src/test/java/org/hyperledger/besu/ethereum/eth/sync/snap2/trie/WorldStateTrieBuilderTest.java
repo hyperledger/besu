@@ -23,6 +23,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.eth.sync.snap2.storage.Accounts;
@@ -58,6 +59,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 class WorldStateTrieBuilderTest {
+
+  private static final int ACCOUNTS_PER_COMMIT = 3;
 
   @ParameterizedTest
   @EnumSource(Format.class)
@@ -176,6 +179,31 @@ class WorldStateTrieBuilderTest {
   }
 
   @Test
+  void commitsTheFixesInFullBatches() {
+    final Storages storages = SyncStorageFixture.create(Format.BONSAI);
+    final World world = SyncStorageFixture.randomWorld(new Random(5), 2000);
+    world.writeFlat(storages.sync());
+    final SyncStateStorage storage = spy(storages.sync());
+
+    final WorldStateTrieBuilder.Result result = builder(storage, hash -> false).build();
+
+    assertThat(result.root()).isEqualTo(world.root());
+    // every flat root is stale, so each partition fixes all its accounts
+    final long batches =
+        world.accounts.keySet().stream()
+            .collect(Collectors.groupingBy(hash -> hash.get(0), Collectors.counting()))
+            .values()
+            .stream()
+            .mapToLong(fixes -> (fixes + ACCOUNTS_PER_COMMIT - 1) / ACCOUNTS_PER_COMMIT)
+            .sum();
+    verify(storage, times((int) batches)).batch();
+    for (final Bytes32 hash : world.accounts.keySet()) {
+      final PatriciaTrieAccountValue flat = Accounts.decode(storage.getAccount(hash).orElseThrow());
+      assertThat(flat.getStorageRoot().getBytes()).isEqualTo(world.storageRoot(hash));
+    }
+  }
+
+  @Test
   void throwsWhenCancelledOnceThePartitionsAreDone() {
     final Storages storages = SyncStorageFixture.create(Format.BONSAI);
     final World world = SyncStorageFixture.randomWorld(new Random(4), 100);
@@ -243,7 +271,10 @@ class WorldStateTrieBuilderTest {
     final OnDemandExecutor partitions = new OnDemandExecutor();
 
     assertThatThrownBy(
-            () -> new WorldStateTrieBuilder(storage, hash -> false, () -> partitions).build())
+            () ->
+                new WorldStateTrieBuilder(
+                        storage, hash -> false, () -> partitions, ACCOUNTS_PER_COMMIT)
+                    .build())
         .isSameAs(diskFailure);
     // the partitions the build did not wait for run now, as on other threads, and write nothing
     final long ran = partitions.tasks.stream().filter(FutureTask::isDone).count();
@@ -293,10 +324,11 @@ class WorldStateTrieBuilderTest {
     verify(batches.getLast()).abort();
   }
 
-  // the partitions run one after the other, on the test thread
+  // the partitions run one after the other on the test thread, with small batches of fixes
   private static WorldStateTrieBuilder builder(
       final SyncStateStorage storage, final Predicate<Bytes32> trieLeft) {
-    return new WorldStateTrieBuilder(storage, trieLeft, MoreExecutors::newDirectExecutorService);
+    return new WorldStateTrieBuilder(
+        storage, trieLeft, MoreExecutors::newDirectExecutorService, ACCOUNTS_PER_COMMIT);
   }
 
   // runs each task on the test thread once the build waits for it, the others when the test says
