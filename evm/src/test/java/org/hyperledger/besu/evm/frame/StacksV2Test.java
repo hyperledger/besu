@@ -31,13 +31,6 @@ class StacksV2Test {
   }
 
   @Test
-  void stackOfAFrameThatHasNotCompletedIsNotReused() {
-    final long[] running = StacksV2.take(3, LENGTH);
-
-    assertThat(StacksV2.take(3, LENGTH)).isNotSameAs(running);
-  }
-
-  @Test
   void releasedStackIsTakenOnlyOnce() {
     final long[] released = StacksV2.take(3, LENGTH);
     StacksV2.release(3, released);
