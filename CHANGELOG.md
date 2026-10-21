@@ -88,7 +88,6 @@
 - `debug_traceBlockByNumber` now returns `BLOCK_NOT_FOUND` for a block number beyond the chain head, as `debug_traceBlockByHash` does for an unknown hash. Previously it returned a `null` result. [#11437](https://github.com/besu-eth/besu/pull/11437)
 
 ### Additions and Improvements
-- Penalise sequenced transaction pool transactions that fail to complete execution within the block period, so they are selected after the others
 - Update `Bouncycastle` to 1.85 to address CVEs `CVE-2026-8763` and `CVE-2026-13506`. [#11336](https://github.com/besu-eth/besu/pull/11336)
 - Update Jackson to 2.21.6 to address CVE `CVE-2026-68497` [#11396](https://github.com/besu-eth/besu/pull/11396)
 - Update Jackson to 2.21.7 to address CVE `CVE-2026-91777` [#11503](https://github.com/besu-eth/besu/pull/11503)
@@ -107,6 +106,7 @@
 - EVM v2: add DUP1-16 and SWAP1-16. [#11482](https://github.com/besu-eth/besu/pull/11482)
 - Bound the cost of jump destination analysis on code crafted to slow it down. [#11400](https://github.com/besu-eth/besu/pull/11400)
 - Block building checks the block access list item budget of each transaction without copying the whole list. [#11454](https://github.com/besu-eth/besu/pull/11454)
+- Penalise sequenced transaction pool transactions that fail to complete execution within the block period, so they are re-selected after the others (https://github.com/besu-eth/besu/pull/11681)
 
 ## 26.9.0
 
