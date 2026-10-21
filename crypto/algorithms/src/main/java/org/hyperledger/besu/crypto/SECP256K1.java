@@ -83,6 +83,9 @@ public class SECP256K1 extends AbstractSECP256 {
       LOG.info("Native secp256k1 not available - {}", e.getMessage());
       useNative = false;
     }
+    if (useNative && !LibSecp256k1JNI.ENABLED) {
+      LOG.info("Native secp256k1 ECDH and ecrecover not available, using the Java implementation");
+    }
     return useNative;
   }
 

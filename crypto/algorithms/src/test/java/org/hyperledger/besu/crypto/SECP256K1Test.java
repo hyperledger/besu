@@ -182,7 +182,7 @@ public class SECP256K1Test {
 
   @Test
   public void nativeEcdhMatchesJavaEcdh() {
-    assumeThat(secp256K1.isNative()).isTrue();
+    assumeThat(secp256K1.isNativeJniEnabled()).isTrue();
     final SECP256K1 javaSecp256K1 = new SECP256K1();
     javaSecp256K1.disableNative();
 
@@ -228,7 +228,7 @@ public class SECP256K1Test {
 
   @Test
   public void nativeEcdhWithPrivateKeyAboveCurveOrderThrows() {
-    assumeThat(secp256K1.isNative()).isTrue();
+    assumeThat(secp256K1.isNativeJniEnabled()).isTrue();
     final BigInteger n = secp256K1.getHalfCurveOrder().multiply(BigInteger.TWO).add(BigInteger.ONE);
     final SECPPrivateKey aboveOrder = secp256K1.createPrivateKey(n.add(BigInteger.ONE));
     final SECPPublicKey pub = secp256K1.generateKeyPair().getPublicKey();
