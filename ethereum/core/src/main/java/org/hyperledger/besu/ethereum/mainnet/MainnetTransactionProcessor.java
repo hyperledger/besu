@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.MissingCodeException;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -389,7 +390,8 @@ public class MainnetTransactionProcessor {
               .completer(__ -> {})
               .miningBeneficiary(miningBeneficiary)
               .blockHashLookup(blockHashLookup)
-              .eip2930AccessListWarmStorage(eip2930StorageList);
+              .eip2930AccessListWarmStorage(eip2930StorageList)
+              .enableEvmV2(messageCallProcessor.runsOnEvmV2());
 
       accessLocationTracker.ifPresent(commonMessageFrameBuilder::eip7928AccessList);
 
@@ -693,7 +695,8 @@ public class MainnetTransactionProcessor {
         failedResult.setExecutionGasUsedForBlock(gasResult.executionGas());
         return failedResult;
       }
-    } catch (final MerkleTrieException re) {
+    } catch (final MerkleTrieException | MissingCodeException re) {
+      // a fault of the local storage, the transaction itself is not invalid
       operationTracer.traceEndTransaction(
           worldState.updater(),
           transaction,
