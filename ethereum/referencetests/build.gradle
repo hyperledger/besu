@@ -491,7 +491,7 @@ dependencies {
     )
   zkevmTarConfig(
     group: 'ethereum', name: 'execution-specs-zkevm',
-    version: 'tests-zkevm@v21.0.0', classifier: 'fixtures_zkevm', ext: 'tar.gz'
+    version: 'tests-zkevm@v21.0.6', classifier: 'fixtures_zkevm', ext: 'tar.gz'
     )
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
@@ -511,6 +511,14 @@ dependencies {
 // "Could not complete execution for Gradle Test Executor N" rather than as a test failure.
 tasks.withType(Test).configureEach {
   maxHeapSize = '2g'
+}
+
+// -Dtest.evm.v2=true runs the reference tests on EVM v2 (--Xevm-v2).
+tasks.withType(Test).configureEach {
+  def evmV2 = System.getProperty('test.evm.v2')
+  if (evmV2 != null) {
+    systemProperty 'test.evm.v2', evmV2
+  }
 }
 
 tasks.register('referenceTests', Test) {

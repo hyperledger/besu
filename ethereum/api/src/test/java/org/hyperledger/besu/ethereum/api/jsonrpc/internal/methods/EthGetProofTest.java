@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.proof.GetProofResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -31,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.trie.common.PmtStateTrieAccountValue;
+import org.hyperledger.besu.ethereum.trie.common.PatriciaTrieAccountValue;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -106,6 +108,31 @@ class EthGetProofTest {
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Invalid storage keys parameters (index 1)");
+  }
+
+  @Test
+  void acceptsMaxStorageKeys() {
+    final JsonRpcRequestContext request =
+        requestWithParams(address.toString(), storageKeys(EthGetProof.MAX_STORAGE_KEYS), "latest");
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).isInstanceOf(JsonRpcSuccessResponse.class);
+    assertThat(((GetProofResult) ((JsonRpcSuccessResponse) response).getResult()).getStorageProof())
+        .hasSize(EthGetProof.MAX_STORAGE_KEYS);
+  }
+
+  @Test
+  void errorWhenTooManyStorageKeysSupplied() {
+    final JsonRpcRequestContext request =
+        requestWithParams(
+            address.toString(), storageKeys(EthGetProof.MAX_STORAGE_KEYS + 1), "latest");
+
+    Assertions.assertThatThrownBy(() -> method.response(request))
+        .isInstanceOf(InvalidJsonRpcParameters.class)
+        .hasMessage("Too many storage keys requested (max 1024, got 1025)")
+        .extracting(e -> ((InvalidJsonRpcParameters) e).getRpcErrorType())
+        .isEqualTo(RpcErrorType.INVALID_STORAGE_KEYS_PARAMS);
   }
 
   @Test
@@ -193,11 +220,11 @@ class EthGetProofTest {
             Function.identity());
 
     // Retrieve the account from the trie and decode it if present
-    Optional<PmtStateTrieAccountValue> accountInTrie =
+    Optional<PatriciaTrieAccountValue> accountInTrie =
         trie.get(Bytes32.wrap(address.addressHash().getBytes()))
             .map(
                 rlp -> {
-                  return PmtStateTrieAccountValue.readFrom(RLP.input(rlp));
+                  return PatriciaTrieAccountValue.readFrom(RLP.input(rlp));
                 });
     final Hash storageRoot =
         Hash.fromHexString("0xbe3d75a1729be157e79c3b77f00206db4d54e3ea14375a015451c88ec067c790");
@@ -206,7 +233,7 @@ class EthGetProofTest {
     assertThat(accountInTrie).isPresent();
     assertThat(accountInTrie)
         .contains(
-            new PmtStateTrieAccountValue(
+            new PatriciaTrieAccountValue(
                 1L, // account nonce
                 Wei.fromHexString("0x01"), // account balance
                 storageRoot,
@@ -268,11 +295,11 @@ class EthGetProofTest {
             Function.identity());
 
     // Retrieve the account from the trie and decode it if present
-    Optional<PmtStateTrieAccountValue> accountInTrie =
+    Optional<PatriciaTrieAccountValue> accountInTrie =
         trie.get(Bytes32.wrap(address.addressHash().getBytes()))
             .map(
                 rlp -> {
-                  return PmtStateTrieAccountValue.readFrom(RLP.input(rlp));
+                  return PatriciaTrieAccountValue.readFrom(RLP.input(rlp));
                 });
     // Validate that the account is empty
     assertThat(accountInTrie).isEmpty();
@@ -312,6 +339,12 @@ class EthGetProofTest {
                   .as("proof nodes for non-existent account must be empty")
                   .isEmpty();
             });
+  }
+
+  private static String[] storageKeys(final int count) {
+    return IntStream.range(0, count)
+        .mapToObj(i -> UInt256.valueOf(i).toHexString())
+        .toArray(String[]::new);
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
