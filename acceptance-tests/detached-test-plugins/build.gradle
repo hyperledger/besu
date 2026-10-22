@@ -50,11 +50,12 @@ spotless {
     licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*(ConsenSys AG|Hyperledger Besu)\\.)")
   }
   // spotless check applied to build.gradle (groovy) files
-  groovyGradle {
-    target '*.gradle'
-    greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
-    endWithNewline()
-  }
+  // temporary disabled till Eclipse Foundation is available
+//  groovyGradle {
+//    target '*.gradle'
+//    greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
+//    endWithNewline()
+//  }
 }
 
 def preparePlugins = tasks.register('preparePlugins', GradleBuild) {
