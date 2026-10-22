@@ -62,7 +62,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 class WorldStateTrieBuilderTest {
 
-  private static final int ACCOUNTS_PER_COMMIT = 3;
+  private static final int FIXES_PER_COMMIT = 3;
 
   @ParameterizedTest
   @EnumSource(Format.class)
@@ -82,26 +82,8 @@ class WorldStateTrieBuilderTest {
     // the written nodes can be read back by the storage format
     final MerkleTrie<Bytes32, Bytes> accountTrie = storages.accountTrie(result.root());
     world.accountLeaves().forEach((hash, leaf) -> assertThat(accountTrie.get(hash)).contains(leaf));
-    world.storage.keySet().stream()
-        .limit(100)
-        .forEach(
-            account -> {
-              final MerkleTrie<Bytes32, Bytes> storageTrie =
-                  storages.storageTrie(account, world.storageRoot(account));
-              world
-                  .storageLeaves(account)
-                  .forEach((slot, leaf) -> assertThat(storageTrie.get(slot)).contains(leaf));
-            });
-
-    // the flat accounts now carry the right storage roots
-    world.accounts.keySet().stream()
-        .limit(200)
-        .forEach(
-            hash -> {
-              final PatriciaTrieAccountValue flat =
-                  Accounts.decode(storages.sync().getAccount(hash).orElseThrow());
-              assertThat(flat.getStorageRoot().getBytes()).isEqualTo(world.storageRoot(hash));
-            });
+    world.storage.keySet().forEach(account -> assertStorageTrieStored(storages, world, account));
+    assertFlatStorageRoots(storages.sync(), world);
   }
 
   @ParameterizedTest
@@ -111,32 +93,16 @@ class WorldStateTrieBuilderTest {
     final World world = SyncStorageFixture.randomWorld(new Random(7), 500);
     world.writeFlat(storages.sync());
     builder(storages.sync(), hash -> false).build();
-    final long withStorage =
-        world.storage.values().stream().filter(slots -> !slots.isEmpty()).count();
 
     // a slot changes after its trie was written, as in a pivot move
-    final Bytes32 changed =
-        world.storage.entrySet().stream()
-            .filter(entry -> !entry.getValue().isEmpty())
-            .findFirst()
-            .orElseThrow()
-            .getKey();
-    final Bytes32 slot = world.storage.get(changed).firstKey();
-    world.storage.get(changed).put(slot, UInt256.valueOf(424242));
-    final SyncStateStorage.Batch batch = storages.sync().batch();
-    batch.putStorage(changed, slot, UInt256.valueOf(424242));
-    batch.putAccount(
-        changed,
-        Accounts.encode(
-            Accounts.withStorageRoot(
-                Accounts.decode(storages.sync().getAccount(changed).orElseThrow()),
-                Accounts.UNKNOWN_STORAGE_ROOT)));
-    batch.commit();
+    final Bytes32 changed = world.storage.firstKey();
+    changeASlot(storages, world, changed);
+    setStorageRoot(storages, changed, Accounts.UNKNOWN_STORAGE_ROOT);
 
     final WorldStateTrieBuilder.Result result = builder(storages.sync(), hash -> false).build();
 
     assertThat(result.root()).isEqualTo(world.root());
-    assertThat(result.keptStorageTries()).isEqualTo(withStorage - 1);
+    assertThat(result.keptStorageTries()).isEqualTo(world.storage.size() - 1);
     assertThat(result.slots()).isEqualTo(world.storage.get(changed).size());
   }
 
@@ -149,17 +115,8 @@ class WorldStateTrieBuilderTest {
     builder(storages.sync(), hash -> false).build();
 
     // a slot of a storage the download completed without its trie, its root still known
-    final Bytes32 left =
-        world.storage.entrySet().stream()
-            .filter(entry -> !entry.getValue().isEmpty())
-            .findFirst()
-            .orElseThrow()
-            .getKey();
-    final Bytes32 slot = world.storage.get(left).firstKey();
-    world.storage.get(left).put(slot, UInt256.valueOf(424242));
-    final SyncStateStorage.Batch batch = storages.sync().batch();
-    batch.putStorage(left, slot, UInt256.valueOf(424242));
-    batch.commit();
+    final Bytes32 left = world.storage.firstKey();
+    changeASlot(storages, world, left);
 
     final WorldStateTrieBuilder.Result result = builder(storages.sync(), left::equals).build();
 
@@ -176,30 +133,15 @@ class WorldStateTrieBuilderTest {
     builder(storages.sync(), hash -> false).build();
 
     // a storage whose flat root is right, but whose trie at that root was never stored
-    final Bytes32 lost =
-        world.storage.entrySet().stream()
-            .filter(entry -> !entry.getValue().isEmpty())
-            .findFirst()
-            .orElseThrow()
-            .getKey();
-    final Bytes32 slot = world.storage.get(lost).firstKey();
-    world.storage.get(lost).put(slot, UInt256.valueOf(424242));
-    final SyncStateStorage.Batch batch = storages.sync().batch();
-    batch.putStorage(lost, slot, UInt256.valueOf(424242));
-    batch.putAccount(
-        lost,
-        Accounts.encode(
-            Accounts.withStorageRoot(
-                Accounts.decode(storages.sync().getAccount(lost).orElseThrow()),
-                Hash.wrap(world.storageRoot(lost)))));
-    batch.commit();
+    final Bytes32 lost = world.storage.firstKey();
+    changeASlot(storages, world, lost);
+    setStorageRoot(storages, lost, Hash.wrap(world.storageRoot(lost)));
 
     final WorldStateTrieBuilder.Result result = builder(storages.sync(), hash -> false).build();
 
     assertThat(result.root()).isEqualTo(world.root());
     assertThat(result.slots()).isEqualTo(world.storage.get(lost).size());
-    final MerkleTrie<Bytes32, Bytes> trie = storages.storageTrie(lost, world.storageRoot(lost));
-    world.storageLeaves(lost).forEach((key, leaf) -> assertThat(trie.get(key)).contains(leaf));
+    assertStorageTrieStored(storages, world, lost);
   }
 
   @Test
@@ -253,13 +195,10 @@ class WorldStateTrieBuilderTest {
             .collect(Collectors.groupingBy(hash -> hash.get(0), Collectors.counting()))
             .values()
             .stream()
-            .mapToLong(fixes -> (fixes + ACCOUNTS_PER_COMMIT - 1) / ACCOUNTS_PER_COMMIT)
+            .mapToLong(fixes -> (fixes + FIXES_PER_COMMIT - 1) / FIXES_PER_COMMIT)
             .sum();
     verify(storage, times((int) batches)).batch();
-    for (final Bytes32 hash : world.accounts.keySet()) {
-      final PatriciaTrieAccountValue flat = Accounts.decode(storage.getAccount(hash).orElseThrow());
-      assertThat(flat.getStorageRoot().getBytes()).isEqualTo(world.storageRoot(hash));
-    }
+    assertFlatStorageRoots(storage, world);
   }
 
   @Test
@@ -289,13 +228,7 @@ class WorldStateTrieBuilderTest {
                             .filter(world.storage::containsKey)
                             .forEach(
                                 account -> {
-                                  final MerkleTrie<Bytes32, Bytes> trie =
-                                      storages.storageTrie(account, world.storageRoot(account));
-                                  world
-                                      .storageLeaves(account)
-                                      .forEach(
-                                          (slot, leaf) ->
-                                              assertThat(trie.get(slot)).contains(leaf));
+                                  assertStorageTrieStored(storages, world, account);
                                   checked.add(account);
                                 });
                         return null;
@@ -335,37 +268,6 @@ class WorldStateTrieBuilderTest {
   }
 
   @Test
-  void stopsEveryPartitionWhenOneFails() {
-    final Storages storages = SyncStorageFixture.create(Format.BONSAI);
-    final World world = SyncStorageFixture.randomWorld(new Random(3), 2000);
-    world.writeFlat(storages.sync());
-    final SyncStateStorage storage = spy(storages.sync());
-    final IllegalStateException diskFailure = new IllegalStateException("disk failure");
-    final Set<Integer> completed = new HashSet<>();
-    doAnswer(
-            invocation -> {
-              final Bytes32 from = invocation.getArgument(0);
-              final int prefix = from.get(0) & 0xff;
-              if (prefix == 0) {
-                throw diskFailure;
-              }
-              invocation.callRealMethod();
-              completed.add(prefix);
-              return null;
-            })
-        .when(storage)
-        .scan(any(), any(), any());
-
-    assertThatThrownBy(() -> builder(storage, hash -> false).build()).isSameAs(diskFailure);
-    // the partitions after the failed one stop at their first account
-    final Set<Integer> withAccounts =
-        world.accounts.keySet().stream()
-            .map(hash -> hash.get(0) & 0xff)
-            .collect(Collectors.toSet());
-    assertThat(completed).doesNotContainAnyElementsOf(withAccounts);
-  }
-
-  @Test
   void stopsThePartitionsWhenTheBuildFailsOnItsOwnThread() {
     final Storages storages = SyncStorageFixture.create(Format.BONSAI);
     final World world = SyncStorageFixture.randomWorld(new Random(6), 2000);
@@ -381,7 +283,7 @@ class WorldStateTrieBuilderTest {
     assertThatThrownBy(
             () ->
                 new WorldStateTrieBuilder(
-                        storage, hash -> false, () -> partitions, ACCOUNTS_PER_COMMIT)
+                        storage, hash -> false, () -> partitions, FIXES_PER_COMMIT)
                     .build())
         .isSameAs(diskFailure);
     // the partitions the build did not wait for run now, as on other threads, and write nothing
@@ -397,7 +299,7 @@ class WorldStateTrieBuilderTest {
   }
 
   @Test
-  void abortsTheFixesOfAFailedPartition() {
+  void aFailedPartitionStopsTheOthersAndAbortsItsFixes() {
     final Storages storages = SyncStorageFixture.create(Format.BONSAI);
     final World world = SyncStorageFixture.randomWorld(new Random(3), 2000);
     world.writeFlat(storages.sync());
@@ -413,23 +315,66 @@ class WorldStateTrieBuilderTest {
         .batch();
     // the first partition fails once it read its accounts, its last fixes not committed
     final IllegalStateException diskFailure = new IllegalStateException("disk failure");
+    final Set<Integer> completed = new HashSet<>();
     doAnswer(
             invocation -> {
               invocation.callRealMethod();
               final Bytes32 from = invocation.getArgument(0);
-              if (from.get(0) == 0) {
+              final int prefix = from.get(0) & 0xff;
+              if (prefix == 0) {
                 throw diskFailure;
               }
+              completed.add(prefix);
               return null;
             })
         .when(storage)
         .scan(any(), any(), any());
 
     assertThatThrownBy(() -> builder(storage, hash -> false).build()).isSameAs(diskFailure);
-    // the other partitions stop before their first fix: the last batch is the failed one's
-    assertThat(batches).isNotEmpty();
+    // the other partitions stop at their first account, before any fix
+    final Set<Integer> withAccounts =
+        world.accounts.keySet().stream()
+            .map(hash -> hash.get(0) & 0xff)
+            .collect(Collectors.toSet());
+    assertThat(completed).doesNotContainAnyElementsOf(withAccounts);
+    // so the last batch is the failed partition's
     verify(batches.getLast(), never()).commit();
     verify(batches.getLast()).abort();
+  }
+
+  // a slot of the account changes in the flat state and in the world, as in a pivot move
+  private static void changeASlot(
+      final Storages storages, final World world, final Bytes32 account) {
+    final Bytes32 slot = world.storage.get(account).firstKey();
+    world.storage.get(account).put(slot, UInt256.valueOf(424242));
+    final SyncStateStorage.Batch batch = storages.sync().batch();
+    batch.putStorage(account, slot, UInt256.valueOf(424242));
+    batch.commit();
+  }
+
+  private static void setStorageRoot(
+      final Storages storages, final Bytes32 account, final Hash storageRoot) {
+    final PatriciaTrieAccountValue flat =
+        Accounts.decode(storages.sync().getAccount(account).orElseThrow());
+    final SyncStateStorage.Batch batch = storages.sync().batch();
+    batch.putAccount(account, Accounts.encode(Accounts.withStorageRoot(flat, storageRoot)));
+    batch.commit();
+  }
+
+  // every slot of the account reads back from its stored storage trie
+  private static void assertStorageTrieStored(
+      final Storages storages, final World world, final Bytes32 account) {
+    final MerkleTrie<Bytes32, Bytes> trie =
+        storages.storageTrie(account, world.storageRoot(account));
+    world.storageLeaves(account).forEach((slot, leaf) -> assertThat(trie.get(slot)).contains(leaf));
+  }
+
+  // every flat account carries the storage root of the world
+  private static void assertFlatStorageRoots(final SyncStateStorage storage, final World world) {
+    for (final Bytes32 hash : world.accounts.keySet()) {
+      final PatriciaTrieAccountValue flat = Accounts.decode(storage.getAccount(hash).orElseThrow());
+      assertThat(flat.getStorageRoot().getBytes()).isEqualTo(world.storageRoot(hash));
+    }
   }
 
   // the slots a scan gives outside the accounts, all of which it skips
@@ -456,7 +401,7 @@ class WorldStateTrieBuilderTest {
   private static WorldStateTrieBuilder builder(
       final SyncStateStorage storage, final Predicate<Bytes32> trieLeft) {
     return new WorldStateTrieBuilder(
-        storage, trieLeft, MoreExecutors::newDirectExecutorService, ACCOUNTS_PER_COMMIT);
+        storage, trieLeft, MoreExecutors::newDirectExecutorService, FIXES_PER_COMMIT);
   }
 
   // runs each task on the test thread once the build waits for it, the others when the test says

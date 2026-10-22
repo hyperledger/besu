@@ -52,21 +52,22 @@ import org.slf4j.LoggerFactory;
 /**
  * Builds the account trie and the storage tries from the flat state, in parallel over the 256
  * first-byte partitions of the account key space, and fixes the storage roots of the flat accounts.
- * The storage tries the download wrote are kept, only their root node read: a storage with a known
- * root has its trie unless the download left it, and a storage a move changed has an unknown root
- * until its trie is updated.
+ *
+ * <p>A storage trie the download wrote is kept without being read again, once its root node is
+ * found: a storage with a known root has its trie unless the download left it, and a storage a
+ * pivot move changed has an unknown root until the trie updater updates its trie.
  */
 public final class WorldStateTrieBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorldStateTrieBuilder.class);
   private static final int PARTITIONS = 256;
-  private static final int ACCOUNTS_PER_COMMIT = 10_000;
+  private static final int FIXES_PER_COMMIT = 10_000;
   private static final int SLOTS_PER_CANCEL_CHECK = 65_536;
 
   private final SyncStateStorage storage;
   private final Predicate<Bytes32> trieLeft;
   private final Supplier<ExecutorService> executors;
-  private final int accountsPerCommit;
+  private final int fixesPerCommit;
   private final LongAdder accounts = new LongAdder();
   private final LongAdder slots = new LongAdder();
   private final LongAdder keptStorageTries = new LongAdder();
@@ -88,23 +89,23 @@ public final class WorldStateTrieBuilder {
             Executors.newFixedThreadPool(
                 Math.max(1, threads),
                 Thread.ofPlatform().name("snap2-trie-builder-", 0).daemon().factory()),
-        ACCOUNTS_PER_COMMIT);
+        FIXES_PER_COMMIT);
   }
 
   /**
    * Creates a build whose partitions run on the executor {@code executors} gives, and commit their
-   * fixes {@code accountsPerCommit} at a time.
+   * fixes {@code fixesPerCommit} at a time.
    */
   @VisibleForTesting
   WorldStateTrieBuilder(
       final SyncStateStorage storage,
       final Predicate<Bytes32> trieLeft,
       final Supplier<ExecutorService> executors,
-      final int accountsPerCommit) {
+      final int fixesPerCommit) {
     this.storage = storage;
     this.trieLeft = trieLeft;
     this.executors = executors;
-    this.accountsPerCommit = accountsPerCommit;
+    this.fixesPerCommit = fixesPerCommit;
   }
 
   /**
@@ -144,6 +145,7 @@ public final class WorldStateTrieBuilder {
     final ExecutorService executor = executors.get();
     final SyncStateStorage.TrieWriter writer = storage.trieWriter();
     try {
+      // the sink gets the root node last, at the empty location
       final Bytes[] rootNode = {MerkleTrie.EMPTY_TRIE_NODE};
       final AscendingCollapsePatriciaTrie top =
           new AscendingCollapsePatriciaTrie(
@@ -207,14 +209,13 @@ public final class WorldStateTrieBuilder {
           visitor.accountTrie.isEmpty()
               ? Optional.empty()
               : Optional.of(visitor.accountTrie.build());
-      visitor.commitFixes();
+      visitor.commit();
       return subtree;
     } catch (final Throwable e) {
       // the other partitions stop too, and the build reports the first failure
       failure.compareAndSet(null, e);
       cancel();
-      visitor.abortFixes();
-      writer.abort();
+      visitor.abort();
       throw e;
     }
   }
@@ -224,6 +225,7 @@ public final class WorldStateTrieBuilder {
     private final SubtreeBuilder accountTrie;
     private SyncStateStorage.Batch fixes;
     private int pendingFixes;
+    // the account whose slots come next, null once it is finished
     private Bytes32 accountHash;
     private Bytes account;
     private PatriciaTrieAccountValue accountValue;
@@ -244,7 +246,7 @@ public final class WorldStateTrieBuilder {
       }
       final PatriciaTrieAccountValue value = Accounts.decode(rlp);
       final Hash storageRoot = value.getStorageRoot();
-      // a known root keeps its trie once its root node is found, as the trie updater checks it
+      // the trie the download wrote is kept if its root node is stored, as the trie updater checks
       if (Accounts.hasKnownStorageTrie(storageRoot)
           && !trieLeft.test(hash)
           && storage.hasStorageTrie(hash, Bytes32.wrap(storageRoot.getBytes()))) {
@@ -299,8 +301,8 @@ public final class WorldStateTrieBuilder {
 
     // the batch for one more fix, committing a full one first
     private SyncStateStorage.Batch fixes() {
-      if (pendingFixes == accountsPerCommit) {
-        commitFixes();
+      if (pendingFixes == fixesPerCommit) {
+        commit();
       }
       if (fixes == null) {
         fixes = storage.batch();
@@ -309,11 +311,11 @@ public final class WorldStateTrieBuilder {
       return fixes;
     }
 
-    // a failed commit leaves no batch to abort
-    private void commitFixes() {
-      // the nodes first: a committed root always has its trie
+    // the nodes before the fixes: a committed root always has its trie
+    private void commit() {
       writer.commit();
       final SyncStateStorage.Batch batch = fixes;
+      // dropped first, so a failed commit leaves no batch to abort
       fixes = null;
       pendingFixes = 0;
       if (batch != null) {
@@ -321,11 +323,12 @@ public final class WorldStateTrieBuilder {
       }
     }
 
-    private void abortFixes() {
+    private void abort() {
       if (fixes != null) {
         fixes.abort();
         fixes = null;
       }
+      writer.abort();
     }
   }
 }

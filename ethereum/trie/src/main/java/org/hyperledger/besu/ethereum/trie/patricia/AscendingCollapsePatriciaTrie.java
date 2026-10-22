@@ -130,12 +130,7 @@ public final class AscendingCollapsePatriciaTrie {
     if (sealed) {
       throw new IllegalStateException("ascending Patricia trie already sealed");
     }
-    if (value == null || value.isEmpty()) {
-      throw new IllegalArgumentException("Patricia trie rejects empty values");
-    }
-    if (lastKey != null && key.compareTo(lastKey) <= 0) {
-      throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
-    }
+    checkInsert(lastKey, key, value);
     final Bytes path = bytesToPath(key);
     final Bytes finished = finished(lastPath, path);
     root = root.accept(new AscendingCollapsePutVisitor(nodeFactory, value, finished, sink), path);
@@ -167,7 +162,7 @@ public final class AscendingCollapsePatriciaTrie {
 
   /**
    * Starts a subtree built key by key, as {@link #prepare} builds one from lists, without holding
-   * its keys. Thread-safe: it reads no state of this trie.
+   * its keys. Builders can run on other threads: they only read the node factory of this trie.
    *
    * @param sink receives the nodes of the subtree below its top, on the thread that builds it
    * @return the builder
@@ -201,12 +196,7 @@ public final class AscendingCollapsePatriciaTrie {
       if (built) {
         throw new IllegalStateException("subtree already built");
       }
-      if (value == null || value.isEmpty()) {
-        throw new IllegalArgumentException("Patricia trie rejects empty values");
-      }
-      if (lastKey != null && key.compareTo(lastKey) <= 0) {
-        throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
-      }
+      checkInsert(lastKey, key, value);
       final Bytes path = bytesToPath(key);
       top =
           top.accept(
@@ -240,6 +230,16 @@ public final class AscendingCollapsePatriciaTrie {
       }
       built = true;
       return new Subtree(firstKey, firstValue, lastKey, size, collapsed(top, Bytes.EMPTY, sink));
+    }
+  }
+
+  // a key must come after every key inserted so far, with a value
+  private static void checkInsert(final Bytes lastKey, final Bytes key, final Bytes value) {
+    if (value == null || value.isEmpty()) {
+      throw new IllegalArgumentException("Patricia trie rejects empty values");
+    }
+    if (lastKey != null && key.compareTo(lastKey) <= 0) {
+      throw new IllegalArgumentException("keys must be inserted in strictly ascending order");
     }
   }
 

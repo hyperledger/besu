@@ -42,7 +42,7 @@ public final class Accounts {
         account.getNonce(), account.getBalance(), storageRoot, account.getCodeHash());
   }
 
-  /** Returns whether the storage trie of this root is known: neither empty nor unknown. */
+  /** Returns whether this storage root has a trie the sync may keep: neither empty nor unknown. */
   public static boolean hasKnownStorageTrie(final Hash storageRoot) {
     return !storageRoot.equals(Hash.EMPTY_TRIE_HASH) && !storageRoot.equals(UNKNOWN_STORAGE_ROOT);
   }
