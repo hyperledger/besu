@@ -143,6 +143,28 @@ class RequestSchedulerPeersTest {
   }
 
   @Test
+  void ignoresThePeersWithoutAKnownHeight() {
+    final EthPeer known = connect(List.of(), EthProtocol.LATEST);
+    connect(List.of(), EthProtocol.LATEST);
+    known.chainState().updateHeightEstimate(1_000);
+
+    assertThat(scheduler.bestPeerHeight()).isEqualTo(1_000);
+  }
+
+  @Test
+  void takesTheLowerHeightOfTwoPeers() {
+    connect(List.of(), EthProtocol.LATEST).chainState().updateHeightEstimate(900);
+    connect(List.of(), EthProtocol.LATEST).chainState().updateHeightEstimate(1_000);
+
+    assertThat(scheduler.bestPeerHeight()).isEqualTo(900);
+  }
+
+  @Test
+  void knowsNoHeightWithoutPeers() {
+    assertThat(scheduler.bestPeerHeight()).isZero();
+  }
+
+  @Test
   void prefersThePeersAtTheBestHeight() {
     runTheLoopOnTheTestThread();
     final EthPeer behind = connect(List.of(), EthProtocol.LATEST);

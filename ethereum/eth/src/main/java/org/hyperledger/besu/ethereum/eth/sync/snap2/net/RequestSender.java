@@ -61,8 +61,8 @@ public interface RequestSender {
   int peerCount(Protocol protocol);
 
   /**
-   * Returns the highest chain height that two connected peers reach, that of the only one if alone,
-   * 0 if unknown.
+   * Returns the highest chain height that two validated peers reach, that of the only one if alone,
+   * 0 if no peer's height is known.
    */
   default long bestPeerHeight() {
     return 0;
