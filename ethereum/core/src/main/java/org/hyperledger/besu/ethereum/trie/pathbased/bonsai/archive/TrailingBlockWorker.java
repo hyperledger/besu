@@ -18,7 +18,9 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 
 import java.io.Closeable;
 import java.util.OptionalLong;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -152,7 +154,7 @@ public abstract class TrailingBlockWorker implements Closeable {
    * Runs {@code task} on the worker's executor, after any in-flight catch-up, and waits for it.
    *
    * @param task the work to run, returning whether it succeeded
-   * @return the task's result, or false if it threw or the worker is closed
+   * @return the task's result, or false if it threw, or the worker closed before it ran
    */
   protected final boolean runAndWait(final BooleanSupplier task) {
     if (closed) {
@@ -160,7 +162,7 @@ public abstract class TrailingBlockWorker implements Closeable {
     }
     try {
       return executorService.submit(task::getAsBoolean).get();
-    } catch (final RejectedExecutionException e) {
+    } catch (final RejectedExecutionException | CancellationException e) {
       return false;
     } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -227,7 +229,13 @@ public abstract class TrailingBlockWorker implements Closeable {
     closed = true;
     blockObserverId.ifPresent(blockchain::removeObserver);
     blockObserverId = OptionalLong.empty();
-    executorService.shutdownNow();
+    // shutdownNow drops queued tasks without completing their futures; cancel them so callers
+    // blocked in runAndWait are released instead of waiting forever.
+    for (final Runnable dropped : executorService.shutdownNow()) {
+      if (dropped instanceof Future<?> future) {
+        future.cancel(false);
+      }
+    }
     try {
       if (!executorService.awaitTermination(closeTimeoutSeconds, TimeUnit.SECONDS)) {
         LOG.warn(

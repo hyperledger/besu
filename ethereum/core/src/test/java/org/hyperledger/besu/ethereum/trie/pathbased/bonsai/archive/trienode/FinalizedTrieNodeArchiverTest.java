@@ -480,6 +480,67 @@ class FinalizedTrieNodeArchiverTest {
   }
 
   @Test
+  void catchUpContinuesFromCoverageLiveCaptureExtendedInsteadOfHalting() throws Exception {
+    // maxLayers=1 (setUp), so only the block before the head can be repositioned to.
+    appendBlocks(6);
+    recordCoverage(5L);
+    when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
+    final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    final FinalizedTrieNodeArchiver archiver =
+        new FinalizedTrieNodeArchiver(
+            worldStateStorage,
+            worldStateProvider,
+            trieLogManager,
+            blockchain,
+            executor,
+            Executors.newFixedThreadPool(2),
+            SHALLOW_INTERVAL,
+            DEEP_INTERVAL);
+    archivers.add(archiver);
+    archiver.start();
+    Awaitility.await()
+        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(6L));
+
+    // Hold the archiver while the node falls behind and live capture archives blocks 7-9.
+    final CountDownLatch release = new CountDownLatch(1);
+    executor.submit(
+        () -> {
+          release.await();
+          return null;
+        });
+    appendBlocks(4); // head 10; the archiver's catch-up queues behind the held task
+    recordCoverage(9L);
+    release.countDown();
+
+    // From its stale cursor 6 the archiver would see blocks 7-9 as an unrecoverable gap.
+    Awaitility.await()
+        .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
+        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(10L));
+    assertThat(archiver.isHalted()).isFalse();
+    verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), eq(hashOf(7L)), any());
+    verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(10L), WARN);
+  }
+
+  @Test
+  void closeReleasesCatchUpToQueuedBehindARun() throws Exception {
+    appendBlocks(3);
+    recordCoverage(1L);
+    final PausedCapture paused = new PausedCapture();
+    final ControllableArchiver archiver =
+        createControllableArchiver(Executors.newScheduledThreadPool(1), paused);
+    archiver.start();
+    paused.awaitStart();
+
+    final CompletableFuture<Boolean> caughtUp =
+        CompletableFuture.supplyAsync(() -> archiver.catchUpTo(3L));
+    Thread.sleep(200L); // let it queue behind the paused run
+    archiver.close();
+
+    assertThat(caughtUp.get(AWAIT_SECONDS, TimeUnit.SECONDS)).isFalse();
+  }
+
+  @Test
   void catchUpToWithoutCoverageHasNothingToFill() {
     appendBlocks(10);
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();

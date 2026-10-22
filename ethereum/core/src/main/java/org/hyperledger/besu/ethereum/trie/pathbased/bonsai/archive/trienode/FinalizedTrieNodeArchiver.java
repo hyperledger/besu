@@ -170,20 +170,31 @@ public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
   public boolean catchUpTo(final long target) {
     return runAndWait(
         () -> {
-          final Optional<ArchiveCoverageTracker.Coverage> coverage =
-              new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
-                  .getCoverage();
-          if (coverage.isEmpty()) {
+          if (advanceCursorToCoverage().isEmpty()) {
             return true;
           }
-          cursor.accumulateAndGet(coverage.get().lastBlock(), Math::max);
           captureRange(cursor.get(), target);
           return cursor.get() >= target;
         });
   }
 
+  /**
+   * Moves the cursor up to the end of the archive's coverage. Live capture extends coverage while
+   * the node is behind the network, so blocks it archived must be neither archived again nor
+   * mistaken for a gap when they fall outside trie-log retention.
+   *
+   * @return the coverage, or empty if nothing has been archived
+   */
+  private Optional<ArchiveCoverageTracker.Coverage> advanceCursorToCoverage() {
+    final Optional<ArchiveCoverageTracker.Coverage> coverage =
+        new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage()).getCoverage();
+    coverage.ifPresent(c -> cursor.accumulateAndGet(c.lastBlock(), Math::max));
+    return coverage;
+  }
+
   @Override
   protected void catchUp() {
+    advanceCursorToCoverage();
     final long from = cursor.get();
     final long target = targetBlock.get();
     try {
