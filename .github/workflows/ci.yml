@@ -20,7 +20,8 @@ on:
   workflow_dispatch:
 
 # Runs on release process branches each validate a different commit, so they get a group
-# of their own and are never cancelled by a newer push.
+# of their own and are never cancelled by a newer push. Pull requests, including those targeting
+# rebase/**, keep the usual behaviour: only their latest head is relevant.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ (startsWith(github.ref, 'refs/heads/rebase/') || startsWith(github.ref, 'refs/heads/ci/') || startsWith(github.ref, 'refs/heads/ds/')) && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: ${{ !(startsWith(github.ref, 'refs/heads/rebase/') || startsWith(github.ref, 'refs/heads/ci/') || startsWith(github.ref, 'refs/heads/ds/')) }}
@@ -48,7 +49,7 @@ permissions:
 #
 #   workflow_dispatch, push to ds/**: as pull_request (full CI).
 #   push to rebase/** or ci/**, pull_request to rebase/**: as pull_request, with unitTests as the
-#                  only test suite (fast checks).
+#                  only test suite and no dockerBuildTest (fast checks).
 #
 #   testScope selects between them: none (push to main), fast or full.
 
@@ -303,8 +304,10 @@ jobs:
       contents: read
     uses: ./.github/workflows/acceptance-tests.yml
 
+  # not part of the fast checks
   dockerBuildTest:
-    needs: build
+    needs: [testScope, build]
+    if: needs.testScope.outputs.scope != 'fast'
     permissions:
       actions: read
       contents: read
@@ -330,7 +333,7 @@ jobs:
     needs: [testScope, verifySourceMetadata, unitTests, integrationTests, referenceTests, referenceTestsEvmV2, devnetTests, devnetTestsEvmV2, acceptanceTests, dockerBuildTest]
     if: always() && needs.testScope.outputs.scope != 'none'
     steps:
-      # fast checks skip every suite but unitTests, so only those two must have run
+      # fast checks skip every suite but unitTests, so that one must have run
       - name: Fail on workflow error
         run: exit 1
         if: >-
@@ -339,5 +342,4 @@ jobs:
             || contains(needs.*.result, 'cancelled')
             || (needs.testScope.outputs.scope == 'full' && contains(needs.*.result, 'skipped'))
             || needs.unitTests.result != 'success'
-            || needs.dockerBuildTest.result != 'success'
           }}
