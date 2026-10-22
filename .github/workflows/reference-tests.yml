@@ -2,18 +2,14 @@ name: reference-tests
 
 on:
   workflow_call:
-    inputs:
-      evm_v2:
-        description: 'Run the reference tests on EVM v2 (-Dtest.evm.v2=true)'
-        required: false
-        type: boolean
-        default: false
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
   total-runners: 4
 
 jobs:
+  # Each shard runs its slice on EVM v1 and then on EVM v2, so the checkout and the generation and
+  # compilation of the test classes, about four minutes, are done once per slice rather than twice.
   referenceTests:
     runs-on: besu-research-ubuntu-8 # since eest-v5.1.0 this job needs more disk space
     timeout-minutes: 30
@@ -64,8 +60,21 @@ jobs:
         run: tr '\n' ' ' < testClasses.txt > refTestArgs.txt
       - name: refTestArgs.txt
         run: cat refTestArgs.txt
-      - name: run reference tests
-        run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` ${{ inputs.evm_v2 && '-Dtest.evm.v2=true' || '' }}
+      - name: run reference tests on EVM v1
+        run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt`
+      # The EVM v2 run writes its reports to the same directory, so keep the v1 reports apart.
+      - name: move EVM v1 test reports aside
+        if: success() || failure()
+        run: |
+          if [ -d ethereum/referencetests/build/test-results/referenceTests ]; then
+            mv ethereum/referencetests/build/test-results/referenceTests ethereum/referencetests/build/test-results/referenceTestsEvmV1
+          fi
+      # EVM v2 is behind the experimental --Xevm-v2 flag; this keeps it in consensus with EVM v1.
+      # test.evm.v2 is read when the build is configured, so v2 needs its own Gradle invocation.
+      # Runs even if v1 failed, so one run reports the failures on both.
+      - name: run reference tests on EVM v2
+        if: success() || failure()
+        run: ./gradlew ethereum:referenceTests:referenceTests `cat refTestArgs.txt` -Dtest.evm.v2=true
       - name: verify test file count matches
         run: |
           listed=$(wc -l < filenames.txt | tr -d ' ')
@@ -75,11 +84,17 @@ jobs:
             echo "::error::Test file count mismatch: filenames.txt has $listed entries but $actual files found on disk"
             exit 1
           fi
-      - name: Upload Test Report
+      - name: Upload EVM v1 Test Report
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         if: always() # always run even if the previous step fails
         with:
-          name: reference-test-node-${{matrix.runner_index}}${{ inputs.evm_v2 && '-evm-v2' || '' }}-results
+          name: reference-test-node-${{matrix.runner_index}}-results
+          path: '**/build/test-results/referenceTestsEvmV1/TEST-*.xml'
+      - name: Upload EVM v2 Test Report
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        if: always() # always run even if the previous step fails
+        with:
+          name: reference-test-node-${{matrix.runner_index}}-evm-v2-results
           path: '**/build/test-results/referenceTests/TEST-*.xml'
 
   referenceTestsPassed:

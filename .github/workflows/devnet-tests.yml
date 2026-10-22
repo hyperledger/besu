@@ -3,12 +3,6 @@ name: devnet-tests
 
 on:
   workflow_call:
-    inputs:
-      evm_v2:
-        description: 'Run the devnet tests on EVM v2 (-Dtest.evm.v2=true)'
-        required: false
-        type: boolean
-        default: false
 
 env:
   GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
@@ -18,16 +12,17 @@ permissions:
   contents: read
 
 jobs:
+  # One job runs both consume tasks on EVM v1 and then on EVM v2. Each task takes a few minutes, so
+  # separate jobs mostly repeated checkout, setup and fixture extraction, and each waited for its own
+  # besu-research-ubuntu-8 runner.
   devnetTests:
-    runs-on: besu-research-ubuntu-8 # the devnet fixtures need the extra disk space
+    # the devnet fixtures need the extra disk space; ubuntu-16 rather than ubuntu-8 as the ubuntu-8
+    # pool is shared by the reference test shards and queues, and the consume tasks use every core
+    runs-on: besu-research-ubuntu-16
     timeout-minutes: 30
     permissions:
       contents: read
       packages: read
-    strategy:
-      fail-fast: false
-      matrix:
-        task: [consumeEngineTestsStable, consumeRlpTestsStable]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -43,8 +38,15 @@ jobs:
         uses: gradle/actions/setup-gradle@39e147cb9de83bb9910b8ef8bd7fff0ee20fcd6f # v6.0.1
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
-      - name: Run ${{ matrix.task }}
-        run: ./gradlew :ethereum:evmtool:${{ matrix.task }} ${{ inputs.evm_v2 && '-Dtest.evm.v2=true' || '' }}
+      # Each step runs even if an earlier one failed, so one run reports every failing combination.
+      # --continue keeps the second task running when the first fails.
+      - name: Run consume tasks on EVM v1
+        run: ./gradlew --continue :ethereum:evmtool:consumeEngineTestsStable :ethereum:evmtool:consumeRlpTestsStable
+      # EVM v2 is behind the experimental --Xevm-v2 flag; this keeps it in consensus with EVM v1.
+      # test.evm.v2 is read when the build is configured, so v2 needs its own Gradle invocation.
+      - name: Run consume tasks on EVM v2
+        if: success() || failure()
+        run: ./gradlew --continue :ethereum:evmtool:consumeEngineTestsStable :ethereum:evmtool:consumeRlpTestsStable -Dtest.evm.v2=true
 
   devnetTestsPassed:
     name: devnetTestsPassed
