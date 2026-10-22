@@ -45,7 +45,7 @@ public class TransactionPoolEvictionService {
     timerId =
         Optional.of(
             vertx.setPeriodic(
-                Math.max(1, evictionInterval.toMillis()),
+                Math.max(1000, evictionInterval.toMillis()),
                 id -> {
                   if (transactionPool.isEnabled()) {
                     transactionPool.evictOldTransactions();
