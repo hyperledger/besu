@@ -219,6 +219,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     besuPluginContext.startPlugins();
 
+    runner.enableTransactionPool();
     runner.startExternalServices();
 
     runner.startEthereumMainLoop();
