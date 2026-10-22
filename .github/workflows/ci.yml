@@ -19,12 +19,11 @@ on:
   # full CI on any branch
   workflow_dispatch:
 
-# Pushes other than to main (release process branches) and manual runs each validate a different
-# commit, so every such run gets a group of its own and is never cancelled. Pull requests,
-# including those targeting rebase/**, and pushes to main keep the usual behaviour: only the
-# latest commit is relevant.
+# Pushes to ci/** and ds/** and manual runs each validate a different commit, so every such run
+# gets a group of its own and is never cancelled. Pull requests and pushes to main and rebase/**
+# keep the usual behaviour: only the latest commit is relevant.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref != 'refs/heads/main')) && format('-{0}', github.run_id) || '' }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}${{ (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/heads/ci/') || startsWith(github.ref, 'refs/heads/ds/')) && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 env:
@@ -48,8 +47,8 @@ permissions:
 #                  → dockerBuildTest (docker-build-test.yml: build + goss-test; dockerPublish skipped - not on main)
 #                  → allTestsPassed (PR merge gate; needs build, the suites and dockerBuildTest).
 #
-#   workflow_dispatch, push to ds/**: as pull_request (full CI).
-#   push to rebase/** or ci/**, pull_request to rebase/**: as pull_request, with only build and
+#   workflow_dispatch, push to rebase/** or ds/**: as pull_request (full CI).
+#   push to ci/**, pull_request to rebase/**: as pull_request, with only build and
 #                  unitTests (fast checks): verifySourceMetadata, the other suites and dockerBuildTest
 #                  are skipped, and allTestsPassed requires build and unitTests.
 #
@@ -68,11 +67,11 @@ jobs:
           SCOPE: >-
             ${{
               (github.event_name == 'workflow_dispatch'
+                || startsWith(github.ref, 'refs/heads/rebase/')
                 || startsWith(github.ref, 'refs/heads/ds/')
                 || (github.event_name == 'pull_request' && !startsWith(github.base_ref, 'rebase/')))
               && 'full'
               || ((github.event_name == 'pull_request'
-                    || startsWith(github.ref, 'refs/heads/rebase/')
                     || startsWith(github.ref, 'refs/heads/ci/'))
                   && 'fast' || 'none')
             }}
