@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview;
 
-import static com.google.common.base.Preconditions.checkState;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_NUMBER_KEY;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
@@ -393,31 +392,6 @@ public abstract class PathBasedWorldState
   @Override
   public Hash frontierRootHash() {
     return resolveDefaultCommitter().compute(this, null, accumulator.copy()).root();
-  }
-
-  /**
-   * Computes the state root of a frozen world state on its accumulator, not on a copy, so {@link
-   * #saveTrieLog} does not compute it again. Computed once on purpose. Call it after the last
-   * change.
-   *
-   * @return the state root
-   */
-  public Hash rootHashForTrieLog() {
-    checkState(isStorageFrozen, "only for a frozen world state");
-    worldStateRootHash = resolveDefaultCommitter().compute(this, null, accumulator).root();
-    accumulator.resetAccumulatorStateChanged();
-    return worldStateRootHash;
-  }
-
-  /**
-   * Saves the trie log of a block, with the root computed by {@link #rootHashForTrieLog()}. The
-   * root check only guards against a header with another root.
-   *
-   * @param blockHeader the block header
-   */
-  public void saveTrieLog(final BlockHeader blockHeader) {
-    verifyWorldStateRoot(worldStateRootHash, blockHeader);
-    trieLogManager.saveTrieLog(accumulator, worldStateRootHash, blockHeader, this);
   }
 
   @Override
