@@ -26,8 +26,8 @@ import org.apache.tuweni.bytes.Bytes32;
 final class StorageTask {
 
   private final Bytes32 accountHash;
-  private volatile Bytes32 storageRoot;
-  private volatile boolean rootStale;
+  private Bytes32 storageRoot;
+  private boolean rootStale;
   private final KeyRangeSet covered = new KeyRangeSet();
   private long slots;
   // the trie of the ranges, given up once they come at several roots
@@ -46,20 +46,20 @@ final class StorageTask {
   }
 
   /** Returns the storage root at the current pivot, unless {@link #isRootStale()}. */
-  public Bytes32 storageRoot() {
+  public synchronized Bytes32 storageRoot() {
     return storageRoot;
   }
 
   /** Returns whether the storage changed since the root was learned, so it must be refreshed. */
-  public boolean isRootStale() {
+  public synchronized boolean isRootStale() {
     return rootStale;
   }
 
-  public void markRootStale() {
+  public synchronized void markRootStale() {
     rootStale = true;
   }
 
-  public void refreshRoot(final Bytes32 root) {
+  public synchronized void refreshRoot(final Bytes32 root) {
     storageRoot = root.copy();
     rootStale = false;
   }
@@ -103,9 +103,9 @@ final class StorageTask {
     }
   }
 
-  /** Returns the root node of the trie, once every range came at the current root. */
+  /** Returns the root node of the trie, once every range came at the current, fresh root. */
   public synchronized Optional<Bytes> trieRootNode() {
-    return trieGivenUp || !storageRoot.equals(trieRoot)
+    return trieGivenUp || rootStale || !storageRoot.equals(trieRoot)
         ? Optional.empty()
         : Optional.ofNullable(trieRootNode);
   }

@@ -51,6 +51,8 @@ class KeyRangeSetTest {
   void rejectsARangeThatEndsBeforeItStarts() {
     assertThatThrownBy(() -> new KeyRangeSet().add(key(2), key(1)))
         .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> KeyRangeSet.fraction(key(2), key(1)))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -99,6 +101,17 @@ class KeyRangeSetTest {
       added++;
     }
     assertThat(set.isFull()).isTrue();
+    assertThat(set.coverage()).isEqualTo(1.0);
+  }
+
+  @Test
+  void neverCoversMoreThanTheWholeKeySpace() {
+    final KeyRangeSet set = new KeyRangeSet();
+    // nine ranges a key apart: their shares, each rounded up, add up to more than one
+    RangeManager.generateRanges(RangeManager.MIN_RANGE, RangeManager.MAX_RANGE, 9)
+        .forEach((start, end) -> set.add(KeyRangeSet.next(start).orElseThrow(), end));
+
+    assertThat(set.isFull()).isFalse();
     assertThat(set.coverage()).isEqualTo(1.0);
   }
 }

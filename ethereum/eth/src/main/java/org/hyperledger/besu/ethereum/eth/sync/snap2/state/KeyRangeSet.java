@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Thread-safe set of disjoint, inclusive key ranges; adjacent ranges are merged. */
 final class KeyRangeSet {
 
-  private static final double KEY_SPACE = BigInteger.ONE.shiftLeft(256).doubleValue();
+  private static final double KEY_SPACE = Math.pow(2, 256);
 
   private final TreeMap<Bytes32, Bytes32> ranges = new TreeMap<>();
 
@@ -47,6 +47,9 @@ final class KeyRangeSet {
 
   /** Returns the share of the key space covered by {@code [from, to]}. */
   static double fraction(final Bytes32 from, final Bytes32 to) {
+    if (from.compareTo(to) > 0) {
+      throw new IllegalArgumentException("from after to");
+    }
     final BigInteger size =
         to.toUnsignedBigInteger().subtract(from.toUnsignedBigInteger()).add(BigInteger.ONE);
     return size.doubleValue() / KEY_SPACE;
@@ -58,27 +61,20 @@ final class KeyRangeSet {
       throw new IllegalArgumentException("start after end");
     }
     // bounds often slice a whole network message, keep a compact copy instead
-    Bytes32 newStart = start.copy();
-    Bytes32 newEnd = end.copy();
+    Bytes32 from = start.copy();
+    Bytes32 to = end.copy();
     final Map.Entry<Bytes32, Bytes32> floor = ranges.floorEntry(start);
     if (floor != null && touches(floor.getValue(), start)) {
-      newStart = floor.getKey();
-      if (floor.getValue().compareTo(newEnd) > 0) {
-        newEnd = floor.getValue();
-      }
-      ranges.remove(floor.getKey());
+      from = floor.getKey();
     }
-    while (true) {
-      final Map.Entry<Bytes32, Bytes32> next = ranges.ceilingEntry(newStart);
-      if (next == null || !touches(newEnd, next.getKey())) {
-        break;
-      }
-      if (next.getValue().compareTo(newEnd) > 0) {
-        newEnd = next.getValue();
-      }
-      ranges.remove(next.getKey());
+    // the ranges starting from there up to the key after the end merge, the last ends furthest
+    final NavigableMap<Bytes32, Bytes32> merged =
+        ranges.subMap(from, true, next(to).orElse(to), true);
+    if (!merged.isEmpty() && merged.lastEntry().getValue().compareTo(to) > 0) {
+      to = merged.lastEntry().getValue();
     }
-    ranges.put(newStart, newEnd);
+    merged.clear();
+    ranges.put(from, to);
   }
 
   /** Returns whether {@code key} is in the set. */
@@ -100,7 +96,8 @@ final class KeyRangeSet {
     for (final Map.Entry<Bytes32, Bytes32> range : ranges.entrySet()) {
       total += fraction(range.getKey(), range.getValue());
     }
-    return total;
+    // each share is rounded, so their sum can pass one
+    return Math.min(1.0, total);
   }
 
   /** Returns a copy of the ranges, keyed by start. */

@@ -62,6 +62,7 @@ class StorageTaskTest {
     task.trieWritten(Optional.of(ROOT_NODE));
 
     task.refreshRoot(OTHER_ROOT);
+    assertThat(task.storageRoot()).isEqualTo(OTHER_ROOT);
     // no root node for a trie written at an older root
     assertThat(task.trieRootNode()).isEmpty();
     assertThat(task.writesTrieAt(OTHER_ROOT)).isFalse();
@@ -72,16 +73,20 @@ class StorageTaskTest {
   }
 
   @Test
-  void keepsAStaleRootUntilItIsRefreshed() {
+  void hidesTheRootNodeWhileTheRootIsStale() {
     final StorageTask task = new StorageTask(Bytes32.ZERO, ROOT);
+    assertThat(task.writesTrieAt(ROOT)).isTrue();
+    task.trieWritten(Optional.of(ROOT_NODE));
 
     task.markRootStale();
     assertThat(task.isRootStale()).isTrue();
     assertThat(task.storageRoot()).isEqualTo(ROOT);
+    assertThat(task.trieRootNode()).isEmpty();
 
-    task.refreshRoot(OTHER_ROOT);
+    // the storage a move changed is back at the same root
+    task.refreshRoot(ROOT);
     assertThat(task.isRootStale()).isFalse();
-    assertThat(task.storageRoot()).isEqualTo(OTHER_ROOT);
+    assertThat(task.trieRootNode()).contains(ROOT_NODE);
   }
 
   @Test
