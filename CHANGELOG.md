@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 26.10.1
+
+### Additions and Improvements
+- Unschedule the Amsterdam fork on Hoodi, which 26.10.0 scheduled at timestamp `1793036568`. [#11709](https://github.com/besu-eth/besu/pull/11709)
+
+
+## 26.10.0
 
 ### Breaking Changes
 - `--Xsnapsync-synchronizer-pivot-block-distance-before-caching` has been removed; it was deprecated as a no-op since 26.6.1. [#11499](https://github.com/besu-eth/besu/pull/11499)
