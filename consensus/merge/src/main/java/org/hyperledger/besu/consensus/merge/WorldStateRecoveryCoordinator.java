@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +25,11 @@ import org.slf4j.LoggerFactory;
 public final class WorldStateRecoveryCoordinator {
   private static final Logger LOG = LoggerFactory.getLogger(WorldStateRecoveryCoordinator.class);
 
-  private final Synchronizer synchronizer;
-  private RecoveryTarget activeTarget;
+  @Nullable private final Synchronizer synchronizer;
+  @Nullable private RecoveryTarget activeTarget;
   private long nextGeneration;
 
-  public WorldStateRecoveryCoordinator(@NonNull final Synchronizer synchronizer) {
+  public WorldStateRecoveryCoordinator(@Nullable final Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
   }
 
