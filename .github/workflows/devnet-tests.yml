@@ -16,7 +16,9 @@ jobs:
   # separate jobs mostly repeated checkout, setup and fixture extraction, and each waited for its own
   # besu-research-ubuntu-8 runner.
   devnetTests:
-    runs-on: besu-research-ubuntu-8 # the devnet fixtures need the extra disk space
+    # the devnet fixtures need the extra disk space; ubuntu-16 rather than ubuntu-8 as the ubuntu-8
+    # pool is shared by the reference test shards and queues, and the consume tasks use every core
+    runs-on: besu-research-ubuntu-16
     timeout-minutes: 45
     permissions:
       contents: read
