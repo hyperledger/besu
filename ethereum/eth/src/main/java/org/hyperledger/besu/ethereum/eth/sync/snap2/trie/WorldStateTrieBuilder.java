@@ -52,9 +52,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Builds the account trie and the storage tries from the flat state, in parallel over the 256
  * first-byte partitions of the account key space, and fixes the storage roots of the flat accounts.
- * The storage tries the download wrote are kept without reading them: a storage with a known root
- * has its trie unless the download left it, and a storage a move changed has an unknown root until
- * its trie is updated.
+ * The storage tries the download wrote are kept, only their root node read: a storage with a known
+ * root has its trie unless the download left it, and a storage a move changed has an unknown root
+ * until its trie is updated.
  */
 public final class WorldStateTrieBuilder {
 
@@ -243,7 +243,11 @@ public final class WorldStateTrieBuilder {
         throw new CancellationException("trie build cancelled");
       }
       final PatriciaTrieAccountValue value = Accounts.decode(rlp);
-      if (Accounts.hasKnownStorageTrie(value.getStorageRoot()) && !trieLeft.test(hash)) {
+      final Hash storageRoot = value.getStorageRoot();
+      // a known root keeps its trie once its root node is found, as the trie updater checks it
+      if (Accounts.hasKnownStorageTrie(storageRoot)
+          && !trieLeft.test(hash)
+          && storage.hasStorageTrie(hash, Bytes32.wrap(storageRoot.getBytes()))) {
         accountTrie.insert(hash, rlp);
         accounts.increment();
         keptStorageTries.increment();

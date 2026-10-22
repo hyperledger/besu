@@ -168,6 +168,41 @@ class WorldStateTrieBuilderTest {
 
   @ParameterizedTest
   @EnumSource(Format.class)
+  void rebuildsAKnownStorageTrieWhoseRootNodeIsMissing(final Format format) {
+    final Storages storages = SyncStorageFixture.create(format);
+    final World world = SyncStorageFixture.randomWorld(new Random(11), 500);
+    world.writeFlat(storages.sync());
+    builder(storages.sync(), hash -> false).build();
+
+    // a storage whose flat root is right, but whose trie at that root was never stored
+    final Bytes32 lost =
+        world.storage.entrySet().stream()
+            .filter(entry -> !entry.getValue().isEmpty())
+            .findFirst()
+            .orElseThrow()
+            .getKey();
+    final Bytes32 slot = world.storage.get(lost).firstKey();
+    world.storage.get(lost).put(slot, UInt256.valueOf(424242));
+    final SyncStateStorage.Batch batch = storages.sync().batch();
+    batch.putStorage(lost, slot, UInt256.valueOf(424242));
+    batch.putAccount(
+        lost,
+        Accounts.encode(
+            Accounts.withStorageRoot(
+                Accounts.decode(storages.sync().getAccount(lost).orElseThrow()),
+                Hash.wrap(world.storageRoot(lost)))));
+    batch.commit();
+
+    final WorldStateTrieBuilder.Result result = builder(storages.sync(), hash -> false).build();
+
+    assertThat(result.root()).isEqualTo(world.root());
+    assertThat(result.slots()).isEqualTo(world.storage.get(lost).size());
+    final MerkleTrie<Bytes32, Bytes> trie = storages.storageTrie(lost, world.storageRoot(lost));
+    world.storageLeaves(lost).forEach((key, leaf) -> assertThat(trie.get(key)).contains(leaf));
+  }
+
+  @ParameterizedTest
+  @EnumSource(Format.class)
   void buildsSmallStates(final Format format) {
     for (int size : new int[] {0, 1, 2, 5}) {
       final Storages storages = SyncStorageFixture.create(format);
