@@ -56,10 +56,10 @@ import org.mockito.quality.Strictness;
 /**
  * Integration tests for ongoing archive proof sync.
  *
- * <p>Uses {@code ControllableArchiver} (a test subclass that stubs out {@code captureRange}) to
- * verify: cursor persistence across restarts, single-catch-up coverage of multi-block gaps, reorg
- * safety (target constraint prevents above-target capture), and the Phase-A → Phase-B handoff
- * cursor seed.
+ * <p>Uses {@code ControllableArchiver} (a test subclass that stubs out {@code archiveBlocks}) to
+ * verify: archived block number persistence across restarts, single-catch-up coverage of
+ * multi-block gaps, reorg safety (target constraint prevents above-target capture), and the Phase-A
+ * → Phase-B handoff archived block number seed.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -102,7 +102,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   /**
    * A archiver catches up over a multi-block gap in a single run when the target is large enough.
-   * Verifies that {@code captureRange(0, target)} is called and cursor reaches the target.
+   * Verifies that {@code archiveBlocks(0, target)} is called and archived block number reaches the
+   * target.
    */
   @Test
   void archiverCatchesUpEntireTargetGapInOneRun() throws Exception {
@@ -112,7 +113,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(8L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(8L));
   }
 
   /**
@@ -128,26 +129,27 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     // Wait for first archiver to capture to target=8
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(firstArchiver.cursor.get()).isEqualTo(8L));
+        .untilAsserted(() -> assertThat(firstArchiver.archivedBlockNumber.get()).isEqualTo(8L));
     firstArchiver.close();
 
     // Simulate 3 more blocks arriving before the restart
     appendBlocks(3); // head=13, target=11
 
-    // Second archiver: coverage = 8, so cursor = 8
+    // Second archiver: coverage = 8, so archived block number = 8
     final ControllableArchiver secondArchiver = createControllableArchiver();
     secondArchiver.start();
-    assertThat(secondArchiver.cursor.get()).isEqualTo(8L);
+    assertThat(secondArchiver.archivedBlockNumber.get()).isEqualTo(8L);
 
     // It then catches up from 8 to 11
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(secondArchiver.cursor.get()).isEqualTo(11L));
+        .untilAsserted(() -> assertThat(secondArchiver.archivedBlockNumber.get()).isEqualTo(11L));
   }
 
   /**
    * Phase-A handoff: if live capture archived up to block H, the coverage record says so and the
-   * archiver seeds its cursor from H (not 0), avoiding re-archiving blocks already written.
+   * archiver seeds its archived block number from H (not 0), avoiding re-archiving blocks already
+   * written.
    */
   @Test
   void phaseAHandoffCursorSeedsPhaseBCorrectly() throws Exception {
@@ -159,12 +161,12 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     new ArchiveCoverageTracker(archiveStorage).record(coverageTx, 5L);
     coverageTx.commit();
     archiver.start();
-    assertThat(archiver.cursor.get()).isEqualTo(5L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L);
 
     // Phase B should catch up from 5 to 8 (not from 0)
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(8L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(8L));
   }
 
   /**
@@ -181,18 +183,18 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     // Wait to reach the initial target
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(3L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L));
 
     // Add more blocks, advancing target to 5, then 7
     appendBlocks(2); // head=7, target=5
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(5L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L));
 
     appendBlocks(2); // head=9, target=7
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(7L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(7L));
   }
 
   /**
@@ -208,17 +210,17 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(2L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L));
 
     // A non-canonical fork block fires (block observer sees non-canonical event)
     // The observer checks isNewCanonicalHead() → false, so replayTarget stays at 2
     assertThat(archiver.targetBlock()).isEqualTo(2L);
-    assertThat(archiver.cursor.get()).isEqualTo(2L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
   }
 
   /**
    * After close, the archiver ignores subsequent block-added events and does not advance the
-   * cursor.
+   * archived block number.
    */
   @Test
   void archiverDoesNotAdvanceAfterClose() throws Exception {
@@ -235,7 +237,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
     // After close, adding blocks should not trigger new catch-ups
     appendBlocks(5);
-    // Wait a moment and verify cursor hasn't advanced past what was in-flight
+    // Wait a moment and verify archived block number hasn't advanced past what was in-flight
     Thread.sleep(200);
     assertThat(archiver.observerId()).isEqualTo(OptionalLong.empty());
   }
@@ -248,7 +250,8 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
   private ControllableArchiver createControllableArchiver(
       final ScheduledExecutorService executor, final PausedCapture paused) {
-    // ControllableArchiver persists its cursor advances to archiveStorage so restart tests work
+    // ControllableArchiver persists its archived block number advances to archiveStorage so restart
+    // tests work
     final ControllableArchiver archiver =
         new ControllableArchiver(
             worldStateStorage,
@@ -288,12 +291,12 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
   // --- test doubles ---
 
   /**
-   * A archiver that stubs captureRange: updates cursor and persists it to real storage so restart
-   * tests can verify durability.
+   * A archiver that stubs archiveBlocks: updates archived block number and persists it to real
+   * storage so restart tests can verify durability.
    */
   static class ControllableArchiver extends FinalizedTrieNodeArchiver {
 
-    final AtomicInteger captureRangeCalls = new AtomicInteger();
+    final AtomicInteger archiveBlocksCalls = new AtomicInteger();
     private final PausedCapture paused;
     private final SegmentedInMemoryKeyValueStorage persistStorage;
 
@@ -322,15 +325,16 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
     }
 
     @Override
-    void captureRange(final long fromExclusive, final long toInclusive) {
-      captureRangeCalls.incrementAndGet();
+    void archiveBlocks(final long fromExclusive, final long toInclusive) {
+      archiveBlocksCalls.incrementAndGet();
       if (paused != null) {
         paused.started.countDown();
         paused.awaitRelease();
       }
       if (toInclusive > fromExclusive) {
-        cursor.set(toInclusive);
-        // Record coverage, the durable cursor, so restart tests can verify durability
+        archivedBlockNumber.set(toInclusive);
+        // Record coverage, the durable archived block number, so restart tests can verify
+        // durability
         final SegmentedKeyValueStorageTransaction tx = persistStorage.startTransaction();
         new ArchiveCoverageTracker(persistStorage).record(tx, toInclusive);
         tx.commit();
@@ -344,7 +348,7 @@ class BonsaiArchiveOngoingSyncIntegrationTest {
 
     void awaitStart() throws InterruptedException {
       if (!started.await(AWAIT_SECONDS, TimeUnit.SECONDS)) {
-        throw new AssertionError("captureRange did not start within " + AWAIT_SECONDS + "s");
+        throw new AssertionError("archiveBlocks did not start within " + AWAIT_SECONDS + "s");
       }
     }
 

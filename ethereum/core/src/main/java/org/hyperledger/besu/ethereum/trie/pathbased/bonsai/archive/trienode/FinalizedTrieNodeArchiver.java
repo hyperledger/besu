@@ -18,15 +18,18 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.TrailingBlockWorker;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.archive.trienode.ArchiveCoverageTracker.Coverage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.PathBasedWorldState;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
+import org.hyperledger.besu.util.log.LogUtil;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -35,23 +38,22 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 /**
- * Background component that keeps the trie-node archive advancing after initial sync.
+ * Archives trie-node history for finalized blocks once the node is in sync.
  *
- * <p>Trails a finalized target ({@code finalized} block, or {@code head − maxLayersToLoad} for
- * chains without finality). Per catch-up: takes a mutable layer over canonical head, rolls it back
- * to the cursor, then rolls forward one block at a time. Each block's {@code persist()} recomputes
- * the trie and emits {@code putFlat*TrieNode} writes that the archive capture strategy records via
- * a canonical archive transaction. Base (layer) writes stay in the discarded layer, never reaching
- * canonical. Because the target is always ≤ the finality/retention horizon, the capture path never
- * observes a reorg.
+ * <p>The archiver trails the finalized block, or {@code head - maxLayersToLoad / 2} on chains
+ * without finality. Each run rolls a layered world state back from the persisted head to the last
+ * archived block, then forward one block at a time; the capture strategy writes each block's trie
+ * nodes and coverage atomically to the archive, and the layer's own writes are discarded.
+ *
+ * <p>Live capture calls {@link #catchUpTo} before it starts or resumes, so coverage stays
+ * contiguous. If a block can no longer be archived, the archiver halts rather than leave a gap.
  */
 public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
 
   private static final Logger LOG = LoggerFactory.getLogger(FinalizedTrieNodeArchiver.class);
-
+  private static final int LOG_INTERVAL_SECONDS = 60;
+  private static final long CATCHUP_LOG_THRESHOLD = 1_000L;
   private static final long CLOSE_TIMEOUT_SECONDS = 30L;
-  // Every run repositions a fresh state from the head, so runs triggered by new heads wait until
-  // this many blocks are pending (capped relative to the retention window; see batchReady()).
   private static final long CATCH_UP_BATCH_BLOCKS = 32L;
 
   private final BonsaiWorldStateKeyValueStorage worldStateStorage;
@@ -61,9 +63,23 @@ public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
   private final ExecutorService trieCapturePool;
   private final int shallowCheckpointInterval;
   private final int deepCheckpointInterval;
+  private final ArchiveCoverageTracker coverage;
+  private final AtomicBoolean shouldLogProgress = new AtomicBoolean(true);
 
-  final AtomicLong cursor = new AtomicLong(0L);
+  final AtomicLong archivedBlockNumber = new AtomicLong(0L);
 
+  /**
+   * Creates a new FinalizedTrieNodeArchiver.
+   *
+   * @param worldStateStorage the Bonsai world state storage
+   * @param worldStateProvider the world state provider for opening and rolling archiver states
+   * @param trieLogManager the trie log manager for reading trie logs
+   * @param blockchain the blockchain for reading block headers
+   * @param executorService the executor service for running catch-ups on a separate thread
+   * @param trieCapturePool the pool for computing archive history entries
+   * @param shallowCheckpointInterval the shallow checkpoint interval for archive entries
+   * @param deepCheckpointInterval the deep checkpoint interval for archive entries
+   */
   public FinalizedTrieNodeArchiver(
       final BonsaiWorldStateKeyValueStorage worldStateStorage,
       final BonsaiWorldStateProvider worldStateProvider,
@@ -81,129 +97,84 @@ public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
     this.trieCapturePool = trieCapturePool;
     this.shallowCheckpointInterval = shallowCheckpointInterval;
     this.deepCheckpointInterval = deepCheckpointInterval;
+    this.coverage = new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage());
   }
 
-  /**
-   * Seeds the cursor from the archive's coverage record, registers a block observer, and schedules
-   * an initial catch-up. The coverage record is written atomically with each archived block, by the
-   * archiver or by the live capture before it, so it always says how far the archive reaches.
-   */
+  /** Starts archiving from the end of the archive's coverage and follows new canonical heads. */
   public void start() {
     if (closed) {
       return;
     }
-    cursor.set(
-        new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage())
-            .getCoverage()
-            .map(ArchiveCoverageTracker.Coverage::lastBlock)
-            .orElse(0L));
-    targetBlock.set(computeReplayTarget());
+    archivedBlockNumber.set(coverage.getCoverage().map(Coverage::lastBlock).orElse(0L));
+    targetBlock.set(archiveTarget(blockchain.getChainHeadBlockNumber()));
     LOG.info(
-        "Finalized trie-node archiver starting: cursor={} target={}",
-        cursor.get(),
+        "Finalized trie-node archiver starting: archived={} target={}",
+        archivedBlockNumber.get(),
         targetBlock.get());
 
     startObserving();
     scheduleCatchUpIfNeeded();
   }
 
-  /**
-   * The block number the archiver trails: the finalized block if a finality signal exists (QBFT
-   * instant finality, PoS ~2 epochs behind head), otherwise {@code head - maxLayersToLoad / 2} for
-   * chains without finality (Clique/PoW). Every block at or below it is beyond any possible reorg,
-   * so the archiver never observes a competing fork.
-   *
-   * <p>A cold archiver positions at {@code target - 1} by rolling back from the head, which needs
-   * trie logs for every block in between and so only works while {@code head - (target - 1)} is
-   * within {@code maxLayersToLoad}. Trailing by half the retention window leaves the other half as
-   * slack for the head to advance between catch-ups and rebuilds; trailing by the full window would
-   * leave no slack at all, and a rebuild even two blocks late would lose its position.
-   */
+  // Trailing by half the retention window leaves the other half as slack for the head to advance
+  // before a run rolls back to the archived block.
   @VisibleForTesting
-  long computeReplayTarget() {
+  long archiveTarget(final long headNumber) {
     return blockchain
         .getFinalized()
         .flatMap(blockchain::getBlockHeader)
         .map(BlockHeader::getNumber)
-        .orElseGet(
-            () ->
-                Math.max(
-                    0L,
-                    blockchain.getChainHeadBlockNumber()
-                        - trieLogManager.getMaxLayersToLoad() / 2));
+        .orElse(Math.max(0L, headNumber - trieLogManager.getMaxLayersToLoad() / 2));
   }
 
   @Override
   protected long targetFor(final long headNumber) {
-    return computeReplayTarget();
+    return archiveTarget(headNumber);
   }
 
   @Override
   protected long position() {
-    return cursor.get();
+    return archivedBlockNumber.get();
   }
 
-  /**
-   * Whether enough blocks are pending to justify a run. Every run opens a fresh state and rolls it
-   * back from the head to the cursor, so runs triggered by new heads wait for a batch instead of
-   * rolling back once per block. The batch is capped at a quarter of the retention window: the
-   * cursor trails the head by about half of it plus one batch, and the rollback must stay inside
-   * the window.
-   */
   @Override
   protected boolean shouldCatchUp() {
+    // Every run rolls back from the head, so wait for a batch of blocks rather than run per block.
     final long batch =
         Math.clamp(trieLogManager.getMaxLayersToLoad() / 4, 1L, CATCH_UP_BATCH_BLOCKS);
-    return targetBlock.get() - cursor.get() >= batch;
+    return targetBlock.get() - archivedBlockNumber.get() >= batch;
   }
 
   /**
-   * Archives every block from the end of coverage up to {@code target}, on the archiver's executor,
-   * and waits for it. Live capture calls this before it starts or resumes, so blocks imported while
-   * it was off are archived before coverage moves past them. Works whether or not the archiver has
-   * been started.
+   * Archives every block from the end of coverage up to the target and waits for it to finish.
+   * Called by live capture before it starts or resumes.
    *
    * @param target the last block to archive; must be final
-   * @return whether the archive now reaches {@code target}, or true when there is no coverage to
-   *     extend
+   * @return true if the archive now reaches the target or has no coverage to extend
    */
   public boolean catchUpTo(final long target) {
     return runAndWait(
         () -> {
-          if (advanceCursorToCoverage().isEmpty()) {
+          if (advanceToArchiveProgress().isEmpty()) {
             return true;
           }
-          captureRange(cursor.get(), target);
-          return cursor.get() >= target;
+          archiveBlocks(archivedBlockNumber.get(), target);
+          return archivedBlockNumber.get() >= target;
         });
-  }
-
-  /**
-   * Moves the cursor up to the end of the archive's coverage. Live capture extends coverage while
-   * the node is behind the network, so blocks it archived must be neither archived again nor
-   * mistaken for a gap when they fall outside trie-log retention.
-   *
-   * @return the coverage, or empty if nothing has been archived
-   */
-  private Optional<ArchiveCoverageTracker.Coverage> advanceCursorToCoverage() {
-    final Optional<ArchiveCoverageTracker.Coverage> coverage =
-        new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage()).getCoverage();
-    coverage.ifPresent(c -> cursor.accumulateAndGet(c.lastBlock(), Math::max));
-    return coverage;
   }
 
   @Override
   protected void catchUp() {
-    advanceCursorToCoverage();
-    final long from = cursor.get();
+    advanceToArchiveProgress();
+    final long from = archivedBlockNumber.get();
     final long target = targetBlock.get();
     try {
-      captureRange(from, target);
+      archiveBlocks(from, target);
     } catch (final ArchiveGapException e) {
       halt();
       LOG.error(e.getMessage());
     } finally {
-      final long reached = cursor.get();
+      final long reached = archivedBlockNumber.get();
       if (reached > from && reached >= target) {
         LOG.info("Finalized trie-node archiver: fully caught up at block {}", reached);
       } else if (reached > from) {
@@ -212,166 +183,71 @@ public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
     }
   }
 
-  /**
-   * Captures archive-history entries for all blocks in {@code (fromExclusive, toInclusive]}.
-   *
-   * <p>Each run opens its own layered state over a snapshot of the persisted head, rolls it back to
-   * {@code fromExclusive}, then rolls it forward one block at a time. The state is closed when the
-   * run ends, so the layer's accumulated writes and the snapshot it pins are released and nothing
-   * outlives a run. Callers amortise the rollback by running in batches; see {@link
-   * #shouldCatchUp()}.
-   */
   @VisibleForTesting
-  void captureRange(final long fromExclusive, final long toInclusive) {
+  void archiveBlocks(final long fromExclusive, final long toInclusive) {
     if (toInclusive <= fromExclusive) {
       return;
     }
-    final ArchiveTrieNodeStrategy strategy =
-        ArchiveTrieNodeStrategy.createFinalizedArchiverStrategy(
-            worldStateStorage.getComposedWorldStateStorage(),
-            trieCapturePool,
-            shallowCheckpointInterval,
-            deepCheckpointInterval);
-    final PathBasedWorldState state = openPositionedState(fromExclusive, strategy);
-    SegmentedKeyValueStorageTransaction canonicalTx = null;
+    final boolean shouldLog = toInclusive - fromExclusive >= CATCHUP_LOG_THRESHOLD;
+    // Not closed after the run, as that would shut down the shared capture pool.
+    final ArchiveTrieNodeStrategy strategy = createArchiveStrategy();
+    final PathBasedWorldState state = openArchiveState(fromExclusive, strategy);
     try {
-      final ArchiveTrieNodeWriter writer = strategy.getTrieNodeWriter();
-
-      // Re-read cursor: opening the state may have advanced it past fromExclusive when the
-      // retention window was exceeded. The loop start reflects the actual position of the state.
-      for (long blockNumber = cursor.get() + 1;
+      // Opening the state can move the archived block number forward past fromExclusive.
+      for (long blockNumber = archivedBlockNumber.get() + 1;
           blockNumber <= toInclusive && !closed;
           blockNumber++) {
-        final Hash blockHash = canonicalHash(blockNumber);
-        // A log that is missing for a block inside the target is pruned or was never stored, so
-        // retrying cannot help: stop like any other gap rather than retry forever. Checked here
-        // because rolling reports a missing log only as a generic rolling failure.
-        if (trieLogManager.getTrieLogLayer(blockHash).isEmpty()) {
-          throw new ArchiveGapException(
-              String.format(
-                  "Finalized trie-node archiver cannot continue: the trie log for block %d"
-                      + " is missing, so it cannot be archived. Archive proof coverage"
-                      + " stays at block %d and the archiver is stopping; the archive"
-                      + " must be resynced to extend it.",
-                  blockNumber, blockNumber - 1));
-        }
-
-        canonicalTx =
-            worldStateStorage.getComposedWorldStateStorage().startLowPriorityTransaction();
-        writer.setArchiveWriteTransaction(canonicalTx);
-
-        // Recomputes the trie → emits node writes → onBeforeCommit → canonicalTx
-        rollTo(state, blockHash);
-
-        canonicalTx.commit(); // archive history + coverage (the cursor), atomically
-        canonicalTx = null;
-        writer.setArchiveWriteTransaction(null);
-        cursor.set(blockNumber);
-        if (blockNumber % 1000 == 0) {
-          LOG.debug(
-              "Finalized trie-node archiver: block {} / {} ({} remaining)",
-              blockNumber,
-              toInclusive,
-              toInclusive - blockNumber);
+        archiveBlock(state, strategy.getTrieNodeWriter(), blockNumber);
+        if (shouldLog) {
+          logProgress(blockNumber, toInclusive);
         }
       }
     } finally {
-      rollbackQuietly(canonicalTx);
       closeQuietly(state);
     }
   }
 
-  /**
-   * Takes a layered state over a snapshot of the persisted head from the world state cache manager,
-   * installs {@code strategy} on it and rolls it back to {@code fromExclusive}, or to the oldest
-   * block the trie logs reach if the cursor is older than that and nothing has been archived yet.
-   */
-  private PathBasedWorldState openPositionedState(
-      final long fromExclusive, final ArchiveTrieNodeStrategy strategy) {
-    final PathBasedWorldState state =
-        worldStateProvider
-            .getWorldStateCacheManager()
-            .getHeadWorldState(
-                hash ->
-                    blockchain
-                        .getBlockHeader(hash)
-                        .map(org.hyperledger.besu.plugin.data.BlockHeader.class::cast))
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Archiver found no head world state to start from; will retry"));
+  private void archiveBlock(
+      final PathBasedWorldState state, final ArchiveTrieNodeWriter writer, final long blockNumber) {
+    final Hash blockHash = canonicalHash(blockNumber);
+    requireTrieLog(blockNumber, blockHash);
+    final SegmentedKeyValueStorageTransaction tx =
+        worldStateStorage.getComposedWorldStateStorage().startLowPriorityTransaction();
+    writer.setArchiveWriteTransaction(tx);
     try {
-      if (state.isTrieDisabled()) {
-        throw new IllegalStateException(
-            "Archiver world state has the trie disabled, so no trie nodes can be archived");
-      }
-      final long head =
-          blockchain
-              .getBlockHeader(state.blockHash())
-              .map(BlockHeader::getNumber)
-              .orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Archiver world state head " + state.blockHash() + " is unknown"));
+      rollTo(state, blockHash);
+      tx.commit();
+    } catch (final RuntimeException e) {
+      rollbackQuietly(tx);
+      throw e;
+    } finally {
+      writer.setArchiveWriteTransaction(null);
+    }
+    archivedBlockNumber.set(blockNumber);
+  }
 
-      // Guard: if the cursor is older than the trie-log retention window, we cannot roll back
-      // far enough to reposition.
-      final ArchiveCoverageTracker coverage =
-          new ArchiveCoverageTracker(worldStateStorage.getComposedWorldStateStorage());
-      final long maxLayers = trieLogManager.getMaxLayersToLoad();
-      final long oldestReachable = Math.max(0L, head - maxLayers);
-      final long positionTarget;
-      if (fromExclusive < oldestReachable) {
-        if (coverage.hasCoverage()) {
-          // The archive already covers blocks up to the cursor. Skipping ahead would leave blocks
-          // without history entries inside the covered window, and proofs for them would silently
-          // read stale nodes. Stop instead and leave the coverage at its last contiguous block.
-          throw new ArchiveGapException(
-              String.format(
-                  "Finalized trie-node archiver cannot continue: cursor %d is beyond trie-log retention"
-                      + " (head=%d, maxLayers=%d), so blocks %d-%d cannot be archived. Archive proof"
-                      + " coverage stays at block %d and the archiver is stopping; the archive must be"
-                      + " resynced to extend it.",
-                  fromExclusive,
-                  head,
-                  maxLayers,
-                  fromExclusive + 1,
-                  oldestReachable,
-                  fromExclusive));
-        }
-        // Nothing archived yet (proofs just enabled): start from the oldest reachable block.
-        LOG.warn(
-            "Finalized trie-node archiver cursor {} is beyond trie-log retention (head={}, maxLayers={})."
-                + " Advancing cursor to {} — blocks {}-{} will not be archived.",
-            fromExclusive,
-            head,
-            maxLayers,
-            oldestReachable,
-            fromExclusive + 1,
-            oldestReachable);
-        cursor.set(oldestReachable);
-        positionTarget = oldestReachable;
-      } else {
-        positionTarget = fromExclusive;
-      }
+  private void requireTrieLog(final long blockNumber, final Hash blockHash) {
+    // A missing trie log cannot be fixed by retrying, so treat it as a gap.
+    if (trieLogManager.getTrieLogLayer(blockHash).isEmpty()) {
+      throw new ArchiveGapException("the trie log for block " + blockNumber + " is missing");
+    }
+  }
 
-      if (head < positionTarget) {
-        throw new IllegalStateException(
-            String.format(
-                "Archiver snapshot head %d is behind the archiver position %d; will retry",
-                head, positionTarget));
-      }
+  private ArchiveTrieNodeStrategy createArchiveStrategy() {
+    return ArchiveTrieNodeStrategy.createFinalizedArchiverStrategy(
+        worldStateStorage.getComposedWorldStateStorage(),
+        trieCapturePool,
+        shallowCheckpointInterval,
+        deepCheckpointInterval);
+  }
 
-      state.getWorldStateStorage().setTrieNodeStrategy(strategy);
-      // No archive redirect is set yet, so any node writes while rolling back go to the discarded
-      // layer transaction, not to canonical.
-      rollTo(state, canonicalHash(positionTarget));
-      // Those discarded writes moved the writer's continuity marker. Restore it when the archive
-      // reaches the position, so the first archived block diffs against its history rather than
-      // writing full entries.
-      if (coverage.hasArchiveBlock(positionTarget)) {
-        strategy.getTrieNodeWriter().markArchivedThrough(positionTarget);
-      }
+  private PathBasedWorldState openArchiveState(
+      final long fromExclusive, final ArchiveTrieNodeStrategy strategy) {
+    final PathBasedWorldState state = openHeadWorldState();
+    try {
+      requireTrieEnabled(state);
+      final long startBlock = resolveStartBlock(fromExclusive, headBlockNumber(state));
+      positionState(state, strategy, startBlock);
       return state;
     } catch (final RuntimeException e) {
       closeQuietly(state);
@@ -379,17 +255,103 @@ public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
     }
   }
 
-  /** The archive cannot be extended without leaving a gap, and retrying cannot fix that. */
+  private PathBasedWorldState openHeadWorldState() {
+    return worldStateProvider
+        .getWorldStateCacheManager()
+        .getHeadWorldState(
+            hash ->
+                blockchain
+                    .getBlockHeader(hash)
+                    .map(org.hyperledger.besu.plugin.data.BlockHeader.class::cast))
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Archiver found no head world state to start from; will retry"));
+  }
+
+  private static void requireTrieEnabled(final PathBasedWorldState state) {
+    if (state.isTrieDisabled()) {
+      throw new IllegalStateException(
+          "Archiver world state has the trie disabled, so no trie nodes can be archived");
+    }
+  }
+
+  private long headBlockNumber(final PathBasedWorldState state) {
+    return blockchain
+        .getBlockHeader(state.blockHash())
+        .map(BlockHeader::getNumber)
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Archiver world state head " + state.blockHash() + " is unknown"));
+  }
+
+  private long resolveStartBlock(final long fromExclusive, final long head) {
+    if (head < fromExclusive) {
+      throw new IllegalStateException(
+          "Archiver snapshot head " + head + " is behind the archiver position " + fromExclusive);
+    }
+    final long maxLayers = trieLogManager.getMaxLayersToLoad();
+    final long oldestReachable = Math.max(0L, head - maxLayers);
+    if (fromExclusive >= oldestReachable) {
+      return fromExclusive;
+    }
+    final String outOfRetention =
+        String.format(
+            "blocks %d-%d are outside trie-log retention (head=%d, maxLayers=%d)",
+            fromExclusive + 1, oldestReachable, head, maxLayers);
+    // Skipping ahead would leave a gap where proofs silently read stale nodes.
+    if (coverage.hasCoverage()) {
+      throw new ArchiveGapException(outOfRetention);
+    }
+    // Nothing archived yet, so start from the oldest reachable block.
+    LOG.warn("Finalized trie-node archiver skipping {}", outOfRetention);
+    archivedBlockNumber.set(oldestReachable);
+    return oldestReachable;
+  }
+
+  private void positionState(
+      final PathBasedWorldState state,
+      final ArchiveTrieNodeStrategy strategy,
+      final long startBlock) {
+    state.getWorldStateStorage().setTrieNodeStrategy(strategy);
+    // No archive transaction is set yet, so writes while rolling back stay in the discarded layer.
+    rollTo(state, canonicalHash(startBlock));
+    // Rolling back moved the writer's continuity marker; restore it so the next block is diffed.
+    if (coverage.hasArchiveBlock(startBlock)) {
+      strategy.getTrieNodeWriter().markArchivedThrough(startBlock);
+    }
+  }
+
+  private Optional<Coverage> advanceToArchiveProgress() {
+    // Live capture can extend coverage while the archiver is idle.
+    final Optional<Coverage> progress = coverage.getCoverage();
+    progress.ifPresent(c -> archivedBlockNumber.accumulateAndGet(c.lastBlock(), Math::max));
+    return progress;
+  }
+
+  private void logProgress(final long blockNumber, final long endBlock) {
+    LogUtil.throttledLog(
+        () ->
+            LOG.info(
+                "Finalized trie-node archiver progress: block {}/{} ({} remaining)",
+                blockNumber,
+                endBlock,
+                endBlock - blockNumber),
+        shouldLogProgress,
+        LOG_INTERVAL_SECONDS);
+  }
+
   static final class ArchiveGapException extends IllegalStateException {
-    ArchiveGapException(final String message) {
-      super(message);
+    ArchiveGapException(final String reason) {
+      super(
+          "Finalized trie-node archiver stopping: "
+              + reason
+              + "; archive coverage stays where it is until the archive is resynced");
     }
   }
 
   private void rollbackQuietly(final SegmentedKeyValueStorageTransaction tx) {
-    if (tx == null) {
-      return;
-    }
     try {
       tx.rollback();
     } catch (final Exception e) {
@@ -398,16 +360,12 @@ public class FinalizedTrieNodeArchiver extends TrailingBlockWorker {
   }
 
   private static void closeQuietly(final PathBasedWorldState state) {
-    // Closing an already-closed layer logs an "access closed worldstate" warning.
-    if (state != null && !state.getWorldStateStorage().isClosed()) {
+    // Closing an already-closed layer logs a warning.
+    if (!state.getWorldStateStorage().isClosed()) {
       state.close();
     }
   }
 
-  /**
-   * Rolls {@code state} to {@code blockHash} using Bonsai's own trie-log rollback and roll-forward.
-   * A no-op when the state is already there.
-   */
   private void rollTo(final PathBasedWorldState state, final Hash blockHash) {
     if (worldStateProvider.rollFullWorldStateToBlockHash(state, blockHash, Level.WARN).isEmpty()) {
       throw new IllegalStateException(

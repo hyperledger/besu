@@ -91,7 +91,7 @@ class FinalizedTrieNodeArchiverTest {
 
   @Mock private PathBasedWorldStateCacheManager cacheManager;
 
-  // Used by real-captureRange tests only.
+  // Used by real-archiveBlocks tests only.
   @Mock private BonsaiWorldState archiverWorldState;
   @Mock private BonsaiWorldStateKeyValueStorage archiverStorage;
   private final AtomicBoolean archiverStorageClosed = new AtomicBoolean(false);
@@ -140,19 +140,20 @@ class FinalizedTrieNodeArchiverTest {
         });
   }
 
-  // --- start cursor seeding ---
+  // --- start archived block number seeding ---
 
   @Test
   void startSeedsCursorFromCoverage() throws Exception {
     recordCoverage(5L);
     appendBlocks(10); // head=10, target=9
-    // hold the first catch-up so the assertion sees the cursor start() chose, not its progress
+    // hold the first catch-up so the assertion sees the archived block number start() chose, not
+    // its progress
     final PausedCapture paused = new PausedCapture();
     final ControllableArchiver archiver =
         createControllableArchiver(Executors.newScheduledThreadPool(1), paused);
     archiver.start();
     paused.awaitStart();
-    assertThat(archiver.cursor.get()).isEqualTo(5L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L);
     paused.release();
   }
 
@@ -164,7 +165,7 @@ class FinalizedTrieNodeArchiverTest {
         createControllableArchiver(Executors.newScheduledThreadPool(1), paused);
     archiver.start();
     paused.awaitStart();
-    assertThat(archiver.cursor.get()).isEqualTo(0L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(0L);
     paused.release();
   }
 
@@ -223,11 +224,12 @@ class FinalizedTrieNodeArchiverTest {
     // Only one submission despite 10+ head events
     verify(spyExecutor, times(1)).submit(any(Runnable.class));
 
-    // Release: cursor advances to first run's toInclusive, then re-arm catches remaining blocks
+    // Release: archived block number advances to first run's toInclusive, then re-arm catches
+    // remaining blocks
     paused.release();
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(12L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(12L));
   }
 
   // --- re-arm after target advance during run ---
@@ -240,7 +242,7 @@ class FinalizedTrieNodeArchiverTest {
         createControllableArchiver(Executors.newScheduledThreadPool(1), paused);
     archiver.start();
 
-    paused.awaitStart(); // first captureRange(0, 3) running
+    paused.awaitStart(); // first archiveBlocks(0, 3) running
 
     // Advance target while paused
     appendBlocks(2); // head=5, target=5
@@ -248,47 +250,51 @@ class FinalizedTrieNodeArchiverTest {
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
         .untilAsserted(() -> assertThat(archiver.targetBlock()).isEqualTo(5L));
 
-    paused.release(); // first run sets cursor=3, then re-arms
+    paused.release(); // first run sets archived=3, then re-arms
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(5L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L));
   }
 
-  // --- retention-gap advance in the real captureRange ---
+  // --- retention-gap advance in the real archiveBlocks ---
   //
-  // These tests exercise the actual captureRange / openPositionedState path (not
-  // ControllableArchiver). When cursor < head - maxLayers the retention-gap branch must advance
-  // the cursor AND fall through to position the archiver state, otherwise the archiver would spin
+  // These tests exercise the actual archiveBlocks / openPositionedState path (not
+  // ControllableArchiver). When archived block number < head - maxLayers the retention-gap branch
+  // must advance
+  // the archived block number AND fall through to position the archiver state, otherwise the
+  // archiver would spin
   // without archiving anything.
 
   @Test
-  void captureRangeAdvancesCursorAndPositionsStateWhenBeyondRetention() {
+  void archiveBlocksAdvancesCursorAndPositionsStateWhenBeyondRetention() {
     // maxLayers=1 (setUp), 3 blocks → head=3, oldestReachable=2, target=2
-    // captureRange(0, 2): cursor 0 < 2 → advance cursor to 2, position state at block 2.
+    // archiveBlocks(0, 2): archived block number 0 < 2 → advance archived block number to 2,
+    // position state at block 2.
     // Loop is empty (effectiveFrom == toInclusive=2), but the state is ready for the next call.
     appendBlocks(3);
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(0L);
-    archiver.captureRange(0L, 2L);
+    archiver.archivedBlockNumber.set(0L);
+    archiver.archiveBlocks(0L, 2L);
 
-    assertThat(archiver.cursor.get()).isEqualTo(2L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
     verify(archiverWorldState).close();
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(2L), WARN);
   }
 
   @Test
-  void captureRangeArchivesNextBlockAfterRetentionGapAdvance() {
-    // Same setup; the second call opens a new state at 2 and archives block 3 (cursor 2 → 3).
+  void archiveBlocksArchivesNextBlockAfterRetentionGapAdvance() {
+    // Same setup; the second call opens a new state at 2 and archives block 3 (archived block
+    // number 2 → 3).
     appendBlocks(3);
     when(trieLogManager.getTrieLogLayer(hashOf(3L))).thenReturn(Optional.of(mockTrieLog));
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(0L);
-    archiver.captureRange(0L, 2L); // retention-gap advance, state positioned at 2
-    archiver.captureRange(2L, 3L); // new state, rolls forward to 3
+    archiver.archivedBlockNumber.set(0L);
+    archiver.archiveBlocks(0L, 2L); // retention-gap advance, state positioned at 2
+    archiver.archiveBlocks(2L, 3L); // new state, rolls forward to 3
 
-    assertThat(archiver.cursor.get()).isEqualTo(3L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L);
     verify(cacheManager, times(2)).getHeadWorldState(any());
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(3L), WARN);
   }
@@ -301,10 +307,10 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getTrieLogLayer(hashOf(3L))).thenReturn(Optional.of(mockTrieLog));
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(2L);
-    archiver.captureRange(2L, 3L);
+    archiver.archivedBlockNumber.set(2L);
+    archiver.archiveBlocks(2L, 3L);
 
-    assertThat(archiver.cursor.get()).isEqualTo(3L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L);
   }
 
   @Test
@@ -314,14 +320,14 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getTrieLogLayer(hashOf(2L))).thenReturn(Optional.of(mockTrieLog));
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(1L);
-    archiver.captureRange(1L, 2L); // maxLayers=1: position at 1 from the state's head, then 2
+    archiver.archivedBlockNumber.set(1L);
+    archiver.archiveBlocks(1L, 2L); // maxLayers=1: position at 1 from the state's head, then 2
 
     verify(trieLogManager, never()).getTrieLogLayer(hashOf(3L));
     final InOrder inOrder = inOrder(worldStateProvider);
     inOrder.verify(worldStateProvider).rollFullWorldStateToBlockHash(any(), eq(hashOf(1L)), any());
     inOrder.verify(worldStateProvider).rollFullWorldStateToBlockHash(any(), eq(hashOf(2L)), any());
-    assertThat(archiver.cursor.get()).isEqualTo(2L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
   }
 
   @Test
@@ -334,7 +340,7 @@ class FinalizedTrieNodeArchiverTest {
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
     archiver.setRetryDelaysMillis(100L, 400L);
     recordCoverage(2L);
-    archiver.start(); // cursor 2, target 3
+    archiver.start(); // archived 2, target 3
 
     Thread.sleep(1_000L);
 
@@ -342,7 +348,7 @@ class FinalizedTrieNodeArchiverTest {
     // makes thousands, so the upper bound is generous enough not to flake on a slow runner.
     verify(cacheManager, atLeast(2)).getHeadWorldState(any());
     verify(cacheManager, atMost(50)).getHeadWorldState(any());
-    assertThat(archiver.cursor.get()).isEqualTo(2L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
   }
 
   @Test
@@ -360,7 +366,7 @@ class FinalizedTrieNodeArchiverTest {
 
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(3L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L));
   }
 
   @Test
@@ -384,8 +390,8 @@ class FinalizedTrieNodeArchiverTest {
     when(worldStateStorage.getComposedWorldStateStorage()).thenReturn(spiedStorage);
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(2L);
-    assertThatThrownBy(() -> archiver.captureRange(2L, 3L))
+    archiver.archivedBlockNumber.set(2L);
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
         .isInstanceOf(IllegalStateException.class);
 
     assertThat(openedTx.get()).isNotNull();
@@ -422,7 +428,7 @@ class FinalizedTrieNodeArchiverTest {
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
     recordCoverage(2L);
-    archiver.start(); // cursor 2, target 3
+    archiver.start(); // archived 2, target 3
     assertThat(inBlock.await(AWAIT_SECONDS, TimeUnit.SECONDS)).isTrue();
 
     final CompletableFuture<Void> closing = CompletableFuture.runAsync(archiver::close);
@@ -435,28 +441,30 @@ class FinalizedTrieNodeArchiverTest {
 
     // positioning + the in-flight block
     verify(worldStateProvider, times(2)).rollFullWorldStateToBlockHash(any(), any(), any());
-    assertThat(archiver.cursor.get()).isEqualTo(3L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(3L);
     verify(archiverWorldState).close();
   }
 
   @Test
   void coldRebuildAfterHeadAdvancesDoesNotSkipBlocksWithoutFinality() {
-    // No finality, maxLayers=4 -> target = head - 2. Steady state: head 10, cursor at target 8.
+    // No finality, maxLayers=4 -> target = head - 2. Steady state: head 10, archived block number
+    // at target 8.
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
     appendBlocks(10);
     when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    assertThat(archiver.computeReplayTarget()).isEqualTo(8L);
+    assertThat(archiver.archiveTarget(blockchain.getChainHeadBlockNumber())).isEqualTo(8L);
 
     // The head advances two blocks before the archiver is rebuilt cold (restart, error, layer
     // closed by the flat-DB switch). Blocks 9 and 10 must still be archived, not skipped; with
-    // the old target of head - maxLayers + 1 the cursor would already be outside the window.
+    // the old target of head - maxLayers + 1 the archived block number would already be outside the
+    // window.
     appendBlocks(2);
-    archiver.cursor.set(8L);
-    archiver.captureRange(8L, archiver.computeReplayTarget());
+    archiver.archivedBlockNumber.set(8L);
+    archiver.archiveBlocks(8L, archiver.archiveTarget(blockchain.getChainHeadBlockNumber()));
 
-    assertThat(archiver.cursor.get()).isEqualTo(10L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L);
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(9L), WARN);
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(10L), WARN);
   }
@@ -474,7 +482,7 @@ class FinalizedTrieNodeArchiverTest {
 
     assertThat(archiver.catchUpTo(10L)).isTrue();
 
-    assertThat(archiver.cursor.get()).isEqualTo(10L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L);
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(9L), WARN);
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(10L), WARN);
   }
@@ -500,7 +508,7 @@ class FinalizedTrieNodeArchiverTest {
     archiver.start();
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(6L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(6L));
 
     // Hold the archiver while the node falls behind and live capture archives blocks 7-9.
     final CountDownLatch release = new CountDownLatch(1);
@@ -513,10 +521,11 @@ class FinalizedTrieNodeArchiverTest {
     recordCoverage(9L);
     release.countDown();
 
-    // From its stale cursor 6 the archiver would see blocks 7-9 as an unrecoverable gap.
+    // From its stale archived block number 6 the archiver would see blocks 7-9 as an unrecoverable
+    // gap.
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(10L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L));
     assertThat(archiver.isHalted()).isFalse();
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), eq(hashOf(7L)), any());
     verify(worldStateProvider).rollFullWorldStateToBlockHash(archiverWorldState, hashOf(10L), WARN);
@@ -553,12 +562,12 @@ class FinalizedTrieNodeArchiverTest {
   @Test
   void catchUpToReportsFailureWhenRangeCannotBeArchived() {
     recordCoverage(5L);
-    appendBlocks(10); // maxLayers=1 -> cursor 5 cannot be repositioned
+    appendBlocks(10); // maxLayers=1 -> archived 5 cannot be repositioned
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
 
     assertThat(archiver.catchUpTo(10L)).isFalse();
-    assertThat(archiver.cursor.get()).isEqualTo(5L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L);
   }
 
   @Test
@@ -574,14 +583,14 @@ class FinalizedTrieNodeArchiverTest {
   @Test
   void haltsInsteadOfSkippingWhenCoverageExistsAndCursorBeyondRetention() {
     recordCoverage(5L);
-    appendBlocks(10); // maxLayers=1 -> oldestReachable = 9; cursor 5 cannot be repositioned
+    appendBlocks(10); // maxLayers=1 -> oldestReachable = 9; archived 5 cannot be repositioned
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(5L);
+    archiver.archivedBlockNumber.set(5L);
 
-    assertThatThrownBy(() -> archiver.captureRange(5L, 10L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(5L, 10L))
         .isInstanceOf(FinalizedTrieNodeArchiver.ArchiveGapException.class);
-    assertThat(archiver.cursor.get()).isEqualTo(5L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L);
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), any(), any());
     verify(archiverWorldState).close();
   }
@@ -601,7 +610,7 @@ class FinalizedTrieNodeArchiverTest {
     // a later head must not restart it either
     appendBlocks(1);
     Thread.sleep(200L);
-    assertThat(archiver.cursor.get()).isEqualTo(5L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(5L);
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), any(), any());
   }
 
@@ -614,7 +623,7 @@ class FinalizedTrieNodeArchiverTest {
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
     archiver.start();
 
-    assertThat(archiver.cursor.get()).isEqualTo(9L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(9L);
     Thread.sleep(200L);
     assertThat(archiver.isHalted()).isFalse();
   }
@@ -626,12 +635,12 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(7L);
-    archiver.captureRange(7L, 9L);
+    archiver.archivedBlockNumber.set(7L);
+    archiver.archiveBlocks(7L, 9L);
     verify(archiverWorldState, times(1)).close();
 
-    archiver.captureRange(9L, 10L); // repositions from a fresh snapshot, nothing is skipped
-    assertThat(archiver.cursor.get()).isEqualTo(10L);
+    archiver.archiveBlocks(9L, 10L); // repositions from a fresh snapshot, nothing is skipped
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L);
     verify(archiverWorldState, times(2)).close();
     verify(cacheManager, times(2)).getHeadWorldState(any());
   }
@@ -644,17 +653,17 @@ class FinalizedTrieNodeArchiverTest {
     archiver.start(); // the initial run is not batched
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.cursor.get()).isEqualTo(10L));
+        .untilAsserted(() -> assertThat(archiver.archivedBlockNumber.get()).isEqualTo(10L));
 
     appendBlocks(10); // target 20: 10 pending, fewer than a batch
     Thread.sleep(200L);
-    assertThat(archiver.captureRangeCalls.get()).isEqualTo(1);
+    assertThat(archiver.archiveBlocksCalls.get()).isEqualTo(1);
 
     appendBlocks(30); // 40 pending
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
-        .untilAsserted(() -> assertThat(archiver.captureRangeCalls.get()).isEqualTo(2));
-    assertThat(archiver.cursor.get()).isGreaterThanOrEqualTo(42L);
+        .untilAsserted(() -> assertThat(archiver.archiveBlocksCalls.get()).isEqualTo(2));
+    assertThat(archiver.archivedBlockNumber.get()).isGreaterThanOrEqualTo(42L);
   }
 
   @Test
@@ -662,7 +671,7 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
     appendBlocks(10); // head 10, target 9
     when(trieLogManager.getTrieLogLayer(any())).thenReturn(Optional.of(mockTrieLog));
-    // block 8 is the first block to roll forward from cursor 7, and its log is gone
+    // block 8 is the first block to roll forward from archived block number 7, and its log is gone
     when(trieLogManager.getTrieLogLayer(hashOf(8L))).thenReturn(Optional.empty());
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
@@ -673,7 +682,7 @@ class FinalizedTrieNodeArchiverTest {
     Awaitility.await()
         .atMost(AWAIT_SECONDS, TimeUnit.SECONDS)
         .untilAsserted(() -> assertThat(archiver.isHalted()).isTrue());
-    assertThat(archiver.cursor.get()).isEqualTo(7L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(7L);
     verify(cacheManager, times(1)).getHeadWorldState(any());
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), eq(hashOf(8L)), any());
   }
@@ -685,13 +694,13 @@ class FinalizedTrieNodeArchiverTest {
     setWorldStateHead(3L, blockDataGenerator.hash().getBytes());
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(2L);
+    archiver.archivedBlockNumber.set(2L);
 
-    assertThatThrownBy(() -> archiver.captureRange(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
         .isInstanceOf(IllegalStateException.class)
         .isNotInstanceOf(FinalizedTrieNodeArchiver.ArchiveGapException.class)
         .hasMessageContaining("is unknown");
-    assertThat(archiver.cursor.get()).isEqualTo(2L);
+    assertThat(archiver.archivedBlockNumber.get()).isEqualTo(2L);
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), any(), any());
     verify(archiverWorldState).close();
   }
@@ -699,12 +708,12 @@ class FinalizedTrieNodeArchiverTest {
   @Test
   void failsClearlyWhenSnapshotHeadIsBehindTheCursor() {
     appendBlocks(3);
-    setWorldStateHead(1L); // the persisted world state lags behind the cursor
+    setWorldStateHead(1L); // the persisted world state lags behind the archived
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(2L);
+    archiver.archivedBlockNumber.set(2L);
 
-    assertThatThrownBy(() -> archiver.captureRange(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
         .isInstanceOf(IllegalStateException.class)
         .isNotInstanceOf(FinalizedTrieNodeArchiver.ArchiveGapException.class)
         .hasMessageContaining("behind the archiver position");
@@ -717,9 +726,9 @@ class FinalizedTrieNodeArchiverTest {
     when(archiverWorldState.isTrieDisabled()).thenReturn(true);
 
     final FinalizedTrieNodeArchiver archiver = createRealArchiver();
-    archiver.cursor.set(2L);
+    archiver.archivedBlockNumber.set(2L);
 
-    assertThatThrownBy(() -> archiver.captureRange(2L, 3L))
+    assertThatThrownBy(() -> archiver.archiveBlocks(2L, 3L))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("trie disabled");
     verify(worldStateProvider, never()).rollFullWorldStateToBlockHash(any(), any(), any());
@@ -751,7 +760,8 @@ class FinalizedTrieNodeArchiverTest {
     appendBlocks(5);
     blockchain.setFinalized(blockchain.getBlockHeader(2L).get().getHash());
 
-    assertThat(createRealArchiver().computeReplayTarget()).isEqualTo(2L);
+    assertThat(createRealArchiver().archiveTarget(blockchain.getChainHeadBlockNumber()))
+        .isEqualTo(2L);
   }
 
   @Test
@@ -759,7 +769,8 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(4L);
     appendBlocks(10);
 
-    assertThat(createRealArchiver().computeReplayTarget()).isEqualTo(8L);
+    assertThat(createRealArchiver().archiveTarget(blockchain.getChainHeadBlockNumber()))
+        .isEqualTo(8L);
   }
 
   @Test
@@ -767,7 +778,7 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(3L);
     appendBlocks(10);
 
-    final long target = createRealArchiver().computeReplayTarget();
+    final long target = createRealArchiver().archiveTarget(blockchain.getChainHeadBlockNumber());
 
     // A cold archiver positions at target - 1 by rolling back head - (target - 1) layers, and the
     // head may advance a block before it does.
@@ -779,7 +790,8 @@ class FinalizedTrieNodeArchiverTest {
     when(trieLogManager.getMaxLayersToLoad()).thenReturn(512L);
     appendBlocks(3);
 
-    assertThat(createRealArchiver().computeReplayTarget()).isEqualTo(0L);
+    assertThat(createRealArchiver().archiveTarget(blockchain.getChainHeadBlockNumber()))
+        .isEqualTo(0L);
   }
 
   // --- helpers ---
@@ -789,7 +801,7 @@ class FinalizedTrieNodeArchiverTest {
   }
 
   /**
-   * Creates a real (non-overriding) archiver for tests that need to exercise {@code captureRange}.
+   * Creates a real (non-overriding) archiver for tests that need to exercise {@code archiveBlocks}.
    */
   private FinalizedTrieNodeArchiver createRealArchiver() {
     final FinalizedTrieNodeArchiver archiver =
@@ -865,13 +877,14 @@ class FinalizedTrieNodeArchiverTest {
   // --- test doubles ---
 
   /**
-   * A archiver subclass that overrides {@code captureRange} so tests focus on scheduling / cursor
-   * behaviour without requiring a real world-state stack. Each call advances the cursor to {@code
-   * toInclusive}, optionally pausing first (for concurrency tests).
+   * A archiver subclass that overrides {@code archiveBlocks} so tests focus on scheduling /
+   * archived block number behaviour without requiring a real world-state stack. Each call advances
+   * the archived block number to {@code toInclusive}, optionally pausing first (for concurrency
+   * tests).
    */
   static class ControllableArchiver extends FinalizedTrieNodeArchiver {
 
-    final AtomicInteger captureRangeCalls = new AtomicInteger();
+    final AtomicInteger archiveBlocksCalls = new AtomicInteger();
     private final PausedCapture paused;
 
     ControllableArchiver(
@@ -897,14 +910,14 @@ class FinalizedTrieNodeArchiverTest {
     }
 
     @Override
-    void captureRange(final long fromExclusive, final long toInclusive) {
-      captureRangeCalls.incrementAndGet();
+    void archiveBlocks(final long fromExclusive, final long toInclusive) {
+      archiveBlocksCalls.incrementAndGet();
       if (paused != null) {
         paused.started.countDown();
         paused.awaitRelease();
       }
       if (toInclusive > fromExclusive) {
-        cursor.set(toInclusive);
+        archivedBlockNumber.set(toInclusive);
       }
     }
   }
@@ -915,7 +928,7 @@ class FinalizedTrieNodeArchiverTest {
 
     void awaitStart() throws InterruptedException {
       if (!started.await(AWAIT_SECONDS, TimeUnit.SECONDS)) {
-        throw new AssertionError("captureRange did not start within " + AWAIT_SECONDS + "s");
+        throw new AssertionError("archiveBlocks did not start within " + AWAIT_SECONDS + "s");
       }
     }
 
