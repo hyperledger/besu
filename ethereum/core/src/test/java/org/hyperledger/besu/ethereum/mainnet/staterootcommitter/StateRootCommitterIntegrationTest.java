@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.staterootcommitter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.WorldStateConfig.createStatefulConfigWithTrie;
 
 import org.hyperledger.besu.config.GenesisConfig;
@@ -48,15 +49,19 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.account.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.code.BonsaiCodeCache;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.provider.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.storage.cache.FlatDbCacheManager;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.BonsaiTrieLogFactory;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.pathbased.bonsai.worldview.accumulator.preload.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableExtraStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateQueryParams;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -66,8 +71,10 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.worldstate.MutableWorldState;
 import org.hyperledger.besu.plugin.services.worldstate.StateRootCommitter;
+import org.hyperledger.besu.plugin.services.worldstate.TrieBranchType;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.io.Closeable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +85,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -382,6 +390,30 @@ class StateRootCommitterIntegrationTest {
     }
 
     @Test
+    void timedPersist_writesTheWorldStateKeysToTheCommitterTrieBranch() {
+      final BlockChange blockChange = BlockChange.complex();
+      final BlockHeader parent = harness.persistParent();
+      final BlockHeader blockHeader = harness.childHeader(parent, blockChange);
+      final StateRootCommitter committer =
+          new DefaultStateRootCommitter().timed(NoOpMetricsSystem.NO_OP_OPERATION_TIMER);
+
+      try (BonsaiWorldState worldState = harness.newWritableWorldState()) {
+        blockChange.apply(worldState.updater());
+        worldState.updater().commit();
+        worldState.persist(blockHeader, committer);
+      }
+
+      assertThat(committer.getTrieBranchType()).isEqualTo(TrieBranchType.PATRICIA);
+      final BonsaiWorldStateKeyValueStorage worldStateStorage = harness.worldStateStorage();
+      assertThat(worldStateStorage.getWorldStateRootHash(TrieBranchType.PATRICIA))
+          .contains(blockHeader.getStateRoot().getBytes());
+      assertThat(worldStateStorage.getWorldStateBlockHash(TrieBranchType.PATRICIA))
+          .contains(blockHeader.getBlockHash());
+      assertThat(worldStateStorage.getWorldStateBlockNumber(TrieBranchType.PATRICIA))
+          .contains(blockHeader.getNumber());
+    }
+
+    @Test
     void frozenPersist_writesTrieLogWithoutFlatAccountData() {
       final BlockChange blockChange = BlockChange.complex();
       final BlockHeader parent = harness.persistParent();
@@ -549,6 +581,60 @@ class StateRootCommitterIntegrationTest {
       }
 
       balHarness.assertFlatDbMatches(defaultSnapshot);
+    }
+
+    @Test
+    void defaultAndBalPersist_cacheCommittedTrieNodes() throws Exception {
+      final BlockChange blockChange = BlockChange.complex();
+      final StateRootCommitterFactory factory = new StateRootCommitterFactory(balConfiguration());
+
+      for (final Optional<BlockAccessList> maybeBal :
+          List.of(Optional.<BlockAccessList>empty(), Optional.of(blockChange.toBal()))) {
+        final BonsaiKvHarness cachedHarness =
+            BonsaiKvHarness.create(
+                ImmutableDataStorageConfiguration.builder()
+                    .from(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG)
+                    .extraStorageConfiguration(
+                        ImmutableExtraStorageConfiguration.builder()
+                            .unstable(
+                                ImmutableExtraStorageConfiguration.Unstable.builder()
+                                    .bonsaiCrossBlockCacheEnabled(true)
+                                    .build())
+                            .build())
+                    .build());
+        final FlatDbCacheManager cacheManager = cachedHarness.cacheManager();
+        try {
+          final BlockHeader parent = cachedHarness.persistParent();
+          final BlockHeader blockHeader = cachedHarness.childHeader(parent, blockChange);
+          final Hash storageRoot;
+
+          try (BonsaiWorldState worldState = cachedHarness.newWritableWorldState()) {
+            blockChange.apply(worldState.updater());
+            worldState.updater().commit();
+            worldState.persist(
+                blockHeader,
+                factory.forBlock(
+                    cachedHarness.protocolContext(),
+                    blockHeader,
+                    maybeBal,
+                    worldState.isStorageFrozen()));
+            storageRoot = ((BonsaiAccount) worldState.get(CONTRACT)).getStorageRoot();
+          }
+
+          await()
+              .untilAsserted(
+                  () -> {
+                    assertThat(
+                            cacheManager.getTrieNode(
+                                Bytes32.wrap(blockHeader.getStateRoot().getBytes())))
+                        .isPresent();
+                    assertThat(cacheManager.getTrieNode(Bytes32.wrap(storageRoot.getBytes())))
+                        .isPresent();
+                  });
+        } finally {
+          ((Closeable) cacheManager).close();
+        }
+      }
     }
   }
 
@@ -889,6 +975,10 @@ class StateRootCommitterIntegrationTest {
     }
 
     static BonsaiKvHarness create() {
+      return create(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+    }
+
+    static BonsaiKvHarness create(final DataStorageConfiguration dataStorageConfiguration) {
       final InMemoryKeyValueStorageProvider provider = new InMemoryKeyValueStorageProvider();
       final var protocolSchedule =
           new ProtocolScheduleBuilder(
@@ -909,12 +999,12 @@ class StateRootCommitterIntegrationTest {
           InMemoryKeyValueStorageProvider.createInMemoryBlockchain(genesisState.getBlock());
       final BonsaiWorldStateKeyValueStorage kvStorage =
           new BonsaiWorldStateKeyValueStorage(
-              provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+              provider, new NoOpMetricsSystem(), dataStorageConfiguration);
       final BonsaiWorldStateProvider archive =
           new BonsaiWorldStateProvider(
               kvStorage,
               blockchain,
-              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG.getExtraStorageConfiguration(),
+              dataStorageConfiguration.getExtraStorageConfiguration(),
               new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem()),
               null,
               EvmConfiguration.DEFAULT,
@@ -937,6 +1027,14 @@ class StateRootCommitterIntegrationTest {
 
     ProtocolContext protocolContext() {
       return protocolContext;
+    }
+
+    FlatDbCacheManager cacheManager() {
+      return archive.getWorldStateKeyValueStorage().getCacheManager();
+    }
+
+    BonsaiWorldStateKeyValueStorage worldStateStorage() {
+      return archive.getWorldStateKeyValueStorage();
     }
 
     BonsaiWorldState newWritableWorldState() {

@@ -517,6 +517,7 @@ public class EvmToolCommand implements Runnable {
             createTransaction ? Address.contractAddress(receiver, 0) : receiver;
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
+                .enableEvmV2(evm.getEvmConfiguration().enableEvmV2())
                 .type(
                     createTransaction
                         ? MessageFrame.Type.CONTRACT_CREATION
