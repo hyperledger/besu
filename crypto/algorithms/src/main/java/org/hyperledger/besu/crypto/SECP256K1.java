@@ -26,6 +26,7 @@ import org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1JNI;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
@@ -51,6 +52,9 @@ import org.slf4j.LoggerFactory;
 public class SECP256K1 extends AbstractSECP256 {
 
   private static final Logger LOG = LoggerFactory.getLogger(SECP256K1.class);
+
+  // Startup creates several instances and calls maybeEnableNative on them repeatedly
+  private static final AtomicBoolean JNI_UNAVAILABLE_LOGGED = new AtomicBoolean();
 
   private boolean useNative;
 
@@ -83,7 +87,9 @@ public class SECP256K1 extends AbstractSECP256 {
       LOG.info("Native secp256k1 not available - {}", e.getMessage());
       useNative = false;
     }
-    if (useNative && !LibSecp256k1JNI.ENABLED) {
+    if (useNative
+        && !LibSecp256k1JNI.ENABLED
+        && JNI_UNAVAILABLE_LOGGED.compareAndSet(false, true)) {
       LOG.info("Native secp256k1 ECDH and ecrecover not available, using the Java implementation");
     }
     return useNative;

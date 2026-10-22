@@ -229,7 +229,7 @@ public class SECP256K1Test {
   @Test
   public void nativeEcdhWithPrivateKeyAboveCurveOrderThrows() {
     assumeThat(secp256K1.isNativeJniEnabled()).isTrue();
-    final BigInteger n = secp256K1.getHalfCurveOrder().multiply(BigInteger.TWO).add(BigInteger.ONE);
+    final BigInteger n = secp256K1.getCurve().getN();
     final SECPPrivateKey aboveOrder = secp256K1.createPrivateKey(n.add(BigInteger.ONE));
     final SECPPublicKey pub = secp256K1.generateKeyPair().getPublicKey();
 
