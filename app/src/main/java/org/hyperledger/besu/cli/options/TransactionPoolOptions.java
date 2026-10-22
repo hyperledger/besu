@@ -235,7 +235,11 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         names = {TX_POOL_RETENTION_HOURS},
         paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
         description =
-            "Maximum retention period of pending transactions in hours (default: ${DEFAULT-VALUE})")
+            "Maximum retention period of pending transactions in hours. If "
+                + TX_POOL_RETENTION_SECONDS
+                + " is also configured then "
+                + TX_POOL_RETENTION_HOURS
+                + " is ignored and a warning is logged. (default: ${DEFAULT-VALUE})")
     Integer pendingTxRetentionPeriod = TransactionPoolConfiguration.DEFAULT_TX_RETENTION_HOURS;
 
     @CommandLine.Option(
