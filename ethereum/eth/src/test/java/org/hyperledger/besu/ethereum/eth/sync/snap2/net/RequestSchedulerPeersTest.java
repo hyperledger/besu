@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
-import org.hyperledger.besu.ethereum.eth.SnapProtocol;
+import org.hyperledger.besu.ethereum.eth.SnapProtocolVersion;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeerImmutableAttributes;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -80,8 +80,10 @@ class RequestSchedulerPeersTest {
 
   @Test
   void sendsTheSnap2OnlyRequestsToSnap2Peers() {
-    final EthPeer snap1 = connect(List.of(), EthProtocol.LATEST, SnapProtocol.SNAP1);
-    final EthPeer snap2 = connect(List.of(), EthProtocol.LATEST, SnapProtocol.SNAP2);
+    final EthPeer snap1 =
+        connect(List.of(), EthProtocol.LATEST, SnapProtocolVersion.V1.getCapability());
+    final EthPeer snap2 =
+        connect(List.of(), EthProtocol.LATEST, SnapProtocolVersion.V2.getCapability());
     assertThat(scheduler.peerCount(Protocol.SNAP)).isEqualTo(2);
     assertThat(scheduler.peerCount(Protocol.SNAP2)).isEqualTo(1);
 
@@ -125,9 +127,13 @@ class RequestSchedulerPeersTest {
 
   @Test
   void countsOnlyTheFullyValidatedPeers() {
-    final EthPeer validated = connect(List.of(), EthProtocol.LATEST, SnapProtocol.SNAP2);
+    final EthPeer validated =
+        connect(List.of(), EthProtocol.LATEST, SnapProtocolVersion.V2.getCapability());
     final EthPeer pending =
-        connect(List.of(mock(PeerValidator.class)), EthProtocol.LATEST, SnapProtocol.SNAP2);
+        connect(
+            List.of(mock(PeerValidator.class)),
+            EthProtocol.LATEST,
+            SnapProtocolVersion.V2.getCapability());
     validated.chainState().updateHeightEstimate(10);
     pending.chainState().updateHeightEstimate(1_000);
 
